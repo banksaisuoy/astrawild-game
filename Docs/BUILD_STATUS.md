@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `ec3a2b55adec3060dbe710bbfe428c07972c126c`
+**Latest repository commit:** `3483ada717345566996deb391d66be913489172d`
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -15,8 +15,8 @@
 
 | Layer | Status | Evidence or limitation |
 |---|---|---|
-| Git branch and repository sync | **PASS** | Latest active branch was pushed to GitHub at commit `b6e63f4`. |
-| Python content-contract validation | **PASS** | `python3 Scripts/validate_content_contracts.py` passed after the latest source/data package. |
+| Git branch and repository sync | **PASS** | Latest active branch was pushed to GitHub at commit `3483ada` with the current spire-default fix at `3483ada`. |
+| Python content-contract validation | **PASS** | `python3 Scripts/validate_content_contracts.py`, `python3 Scripts/validate_runtime_contracts.py`, and `python3 Scripts/validate_generated_headers.py` passed after the latest source/data package. |
 | Git whitespace/diff gate | **PASS** | `git diff --check` passed before the latest milestone commits. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
 | Unreal 5.8 C++ compile | **NOT RUN HERE** | Requires the user’s Windows machine with UE 5.8 and MSVC 2022. |
@@ -32,7 +32,7 @@ The release branch now contains the following source/data preparation slices. Th
 
 | Slice | Delivered preparation |
 |---|---|
-| World and survival | 4.096 km square / 8×8 cell contract, four biome rows, spawn rules, 16 spire rows, environment-hazard component, World Partition handoff, and discovered-spire save field. |
+| World and survival | 4.096 km square / 8×8 cell contract, four biome rows, spawn rules, 16 spire rows, environment-hazard component, data-driven weather rows, persistent day/night clock, World Partition handoff, default-spire initialization, and discovered-spire save field. |
 | EchoDex | 30 original species rows, append-only elemental expansion with legacy Aether preservation, multi-element affinity fields, trait/work/mount/breeding metadata, and element automation-test source. |
 | Mount and breeding | Native mount eligibility/attachment framework, 21 mount profiles, breeding-group and trait tables, deterministic egg inheritance/incubation, and additive egg save state. |
 | Colony and SAN | Echo SAN component, work suitability and efficiency fields, building-hosted colony work queues, authority guards, completion events, and SAN save fields. |
@@ -45,7 +45,7 @@ The release branch now contains the following source/data preparation slices. Th
 
 ## Source data inventory
 
-The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The main production tables are `DT_Biomes.csv`, `DT_SpawnRules.csv`, `DT_FastTravelSpires.csv`, `DT_EchoDex.csv`, `DT_EchoTraits.csv`, `DT_BreedingGroups.csv`, `DT_MountProfiles.csv`, `DT_TechnologyNodes.csv`, `DT_Recipes.csv`, `DT_RangedWeapons.csv`, `DT_Dungeons.csv`, and `DT_Evolutions.csv`.
+The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The main production tables are `DT_Biomes.csv`, `DT_SpawnRules.csv`, `DT_FastTravelSpires.csv`, `DT_EchoDex.csv`, `DT_EchoTraits.csv`, `DT_BreedingGroups.csv`, `DT_MountProfiles.csv`, `DT_TechnologyNodes.csv`, `DT_Recipes.csv`, `DT_RangedWeapons.csv`, `DT_Dungeons.csv`, `DT_Evolutions.csv`, and `DT_Weather.csv`.
 
 The repository deliberately does not pretend that CSV files are Unreal DataTable assets. Import them into `Content/Astrawild/Data/Imported/` with the row structs named in the relevant handoff documents. Keep the CSV sources under review and commit derived `.uasset` files with Git LFS when they are authored and tested.
 
@@ -92,5 +92,5 @@ ASTRAWILD uses original names and data contracts. Do not copy or import characte
 
 | Date | Operator | Commit | Engine/build | Evidence | Result |
 |---|---|---|---|---|---|
-| 2026-08-27 | Manus | `ec3a2b5` | Sandbox static checks | Content validator, runtime cross-table validator, generated-header validator, diff check, zero tracked UE binary assets | Source package **PASS**; UE compile/PIE/package pending Windows |
+| 2026-08-27 | Manus | `3483ada` | Sandbox static checks | Content validator, runtime cross-table validator, generated-header validator, diff check, zero tracked UE binary assets; weather/day-night and default-spire contracts included | Source package **PASS**; UE compile/PIE/package pending Windows |
 |  | Windows owner |  | UE 5.8 / MSVC 2022 | Add compile log, automation result, PIE/network screenshots, and package path here | **PENDING** |
