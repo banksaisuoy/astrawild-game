@@ -73,8 +73,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Echo")
 	bool CastAbility(int32 AbilityIndex, AActor* TargetActor);
 
-	UFUNCTION(BlueprintCallable, Category = "Echo|Role")
-	bool ActivateRolePerk();
+    UFUNCTION(BlueprintCallable, Category = "Echo|Role")
+    bool ActivateRolePerk();
+
+    UFUNCTION(BlueprintCallable, Category = "Echo|Partner")
+    bool ActivatePartnerSkill();
+
+    UFUNCTION(BlueprintPure, Category = "Echo|Partner")
+    FGameplayTag GetPartnerSkillTag() const { return InstanceData.PartnerSkillTag; }
 
 	UFUNCTION(BlueprintPure, Category = "Echo")
 	FAstrawildEchoInstance ExportCapturedData() const;

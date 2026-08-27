@@ -199,30 +199,60 @@ bool AAstrawildEchoBase::CastAbility(int32 AbilityIndex, AActor* TargetActor)
 
 bool AAstrawildEchoBase::ActivateRolePerk()
 {
+	return ActivatePartnerSkill();
+}
+
+bool AAstrawildEchoBase::ActivatePartnerSkill()
+{
 	if (!SpeciesData)
 	{
 		return false;
 	}
 
-	switch (SpeciesData->Role)
+	const FGameplayTag SkillTag = InstanceData.PartnerSkillTag.IsValid() ? InstanceData.PartnerSkillTag : SpeciesData->PartnerSkillTag;
+	const FString SkillName = SkillTag.ToString();
+	if (SkillName.StartsWith(TEXT("Partner."), ESearchCase::CaseSensitive))
 	{
-	case EAstrawildEchoRole::Exploration:
-		// Radar Pulse: scouts surroundings
-		UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated [Exploration Pulse]: Scanning nearby harvest nodes and resources within 20m..."), *GetName());
-		break;
-	case EAstrawildEchoRole::Combat:
-		// Bastion Shield: grants 50% defense power for 8 seconds
-		if (Attributes)
+		if (SkillName.Contains(TEXT("Rush")) || SkillName.Contains(TEXT("Charge")) || SkillName.Contains(TEXT("Lunge")) || SkillName.Contains(TEXT("Redline")))
 		{
-			Attributes->DefensePower *= 1.5f;
-			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated [Bastion Shield]: Defense boosted to %.1f!"), *GetName(), Attributes->DefensePower);
+			if (Attributes)
+			{
+				Attributes->AttackPower *= 1.15f;
+			}
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated partner combat skill [%s]."), *GetName(), *SkillName);
 		}
-		break;
-	case EAstrawildEchoRole::BaseUtility:
-		// Productivity Aura: grants crafting / harvesting efficiency
-		UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated [Harmonic Inspiration Aura]: Camp productivity increased by %.1fx!"),
-			*GetName(), SpeciesData->WorkEfficiencyMultiplier * 1.5f);
-		break;
+		else if (SkillName.Contains(TEXT("Mend")) || SkillName.Contains(TEXT("Renewal")) || SkillName.Contains(TEXT("Drain")) || SkillName.Contains(TEXT("Ward")))
+		{
+			if (Attributes)
+			{
+				Attributes->ModifyHealth(FMath::Max(5.0f, Attributes->MaxHealth * 0.1f), this);
+			}
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated partner sustain skill [%s]."), *GetName(), *SkillName);
+		}
+		else
+		{
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated partner utility skill [%s]."), *GetName(), *SkillName);
+		}
+	}
+	else
+	{
+		// Safe fallback for legacy assets that have no PartnerSkillTag.
+		switch (SpeciesData->Role)
+		{
+		case EAstrawildEchoRole::Exploration:
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated legacy exploration pulse."), *GetName());
+			break;
+		case EAstrawildEchoRole::Combat:
+			if (Attributes)
+			{
+				Attributes->DefensePower *= 1.5f;
+			}
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated legacy bastion shield."), *GetName());
+			break;
+		case EAstrawildEchoRole::BaseUtility:
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated legacy productivity aura at %.1fx."), *GetName(), SpeciesData->WorkEfficiencyMultiplier * 1.5f);
+			break;
+		}
 	}
 
 	OnRoleAbilityUsed.Broadcast(this, SpeciesData->Role);
