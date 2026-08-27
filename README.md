@@ -65,7 +65,8 @@ ASTRAWILD/
 - [Feature Benchmark Matrix](Docs/FEATURE_BENCHMARK_MATRIX.md)
 - [Feature Roadmap](Docs/FEATURE_ROADMAP.md)
 - [Progression, Survival and Save Contract](Docs/PROGRESSION_SURVIVAL_SAVE_CONTRACT.md)
+- [Code-Complete Handoff](Docs/CODE_COMPLETE_HANDOFF.md)
 
 ## Validation without Unreal Editor
 
-Run `python Scripts/validate_content_contracts.py` to validate the P0-P4 source contracts and CSV headers. This does not replace an Unreal C++ compile, DataTable import, Blueprint validation, or PIE test.
+Run `python Scripts/validate_content_contracts.py` to validate the P0-P4 source contracts and CSV headers. On Windows, also run `powershell -ExecutionPolicy Bypass -File Tools/Validate_Astrawild.ps1`. These checks do not replace an Unreal C++ compile, DataTable import, Blueprint validation, or PIE test.
