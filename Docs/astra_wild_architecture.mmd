@@ -1,0 +1,38 @@
+flowchart TB
+    UI[UI / ViewModel / Input] --> PC[PlayerController]
+    PC --> ASC[Ability System]
+    PC --> Inv[Inventory Component]
+    PC --> Quest[Quest & Progression]
+    PC --> Net[Network Commands]
+
+    GM[GameMode - Server Rules] --> GS[GameState - World State]
+    PS[PlayerState - Player/Party State] --> GS
+    Net --> GM
+    GM --> World[World Subsystems]
+    World --> WP[World Partition / Streaming]
+    World --> Weather[Weather & World Events]
+    World --> Spawn[Spawn & Resource Simulation]
+
+    ASC --> Combat[Combat / Damage / Status]
+    Combat --> Echo[Echo Actor & AI]
+    Echo --> AI[StateTree / Behavior Tree]
+    AI --> Mass[Far-field Mass/Lightweight Simulation]
+
+    Inv --> Craft[Crafting Service]
+    Craft --> Base[Building / Production / Power]
+    Base --> Save[Save Subsystem]
+    Quest --> Save
+    Inv --> Save
+    Echo --> Save
+    GS --> Save
+
+    Net --> Rep[Replication / Relevancy / Rate Limit]
+    Rep --> Client[Co-op Clients]
+    Save --> Backup[Versioned Save + Checksum + Backup]
+
+    classDef server fill:#f7d9a8,stroke:#8a5a00,color:#2b1b00;
+    classDef client fill:#cfe8ff,stroke:#2b6ca3,color:#0d263d;
+    classDef data fill:#d7f2d0,stroke:#3f7d3a,color:#173516;
+    class GM,GS,PS,World,WP,Weather,Spawn,Net,Rep,Save,Backup server;
+    class UI,PC,ASC,Inv,Quest,Client client;
+    class Craft,Base,Echo,AI,Mass,Combat data;
