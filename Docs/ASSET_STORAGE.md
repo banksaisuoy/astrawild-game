@@ -6,6 +6,8 @@ GitHub stores source code, Unreal configuration, documentation, small reference 
 
 ## Google Drive
 
+**Project folder:** https://drive.google.com/drive/folders/1hkCl5lYaDu8Cn_uikzdc5kbrAkWbLlon
+
 Google Drive stores the complete pre-production archive, large source packages, concept art collections, raw audio, high-resolution meshes, video references, exported builds, and backup snapshots. Each archive should include a date and project version, for example `ASTRAWILD_Prototype_0.1.0_2026-08-27.zip`.
 
 ## Naming

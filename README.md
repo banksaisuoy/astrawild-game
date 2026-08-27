@@ -18,6 +18,10 @@ Use the Unreal Engine version specified in `ASTRAWILD.uproject` and a Windows de
 4. Create a test map under `Content/ASTRAWILD/Maps/Prototype`.
 5. Implement the Vertical Slice backlog in `Docs/astra_wild_production_roadmap.md`.
 
+## Large-file archive
+
+The project archive and large-file backups are stored in the [ASTRAWILD Google Drive folder](https://drive.google.com/drive/folders/1hkCl5lYaDu8Cn_uikzdc5kbrAkWbLlon). GitHub remains the source-of-truth for code, configuration, documentation, and actively versioned assets; Drive stores dated archives, raw source assets, and review packages.
+
 ## Repository policy
 
 Unreal-generated directories such as `Binaries`, `Intermediate`, `Saved`, and `DerivedDataCache` are ignored. Binary assets are configured for Git LFS through `.gitattributes`. Large source assets that are not required for source control should be archived separately in the project Google Drive folder and referenced from `Docs/ASSET_STORAGE.md`.
