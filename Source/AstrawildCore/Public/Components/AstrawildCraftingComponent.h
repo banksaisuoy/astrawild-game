@@ -8,6 +8,8 @@
 #include "AstrawildCraftingComponent.generated.h"
 
 class UAstrawildInventoryComponent;
+class UAstrawildTechnologyComponent;
+class UDataTable;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCraftSuccessSignature, const FAstrawildRecipe&, Recipe);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCraftFailedSignature, const FAstrawildRecipe&, Recipe, const FString&, Reason);
@@ -27,6 +29,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
 	TArray<FAstrawildRecipe> KnownRecipes;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Data")
+	TObjectPtr<UDataTable> RecipeTable;
+
 	UPROPERTY(BlueprintAssignable, Category = "Crafting|Events")
 	FOnCraftSuccessSignature OnCraftSuccess;
 
@@ -43,7 +48,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Crafting")
 	void RegisterDefaultRecipes();
 
+	UFUNCTION(BlueprintCallable, Category = "Crafting|Data")
+	int32 RegisterRecipesFromDataTable(UDataTable* InRecipeTable);
+
+	UFUNCTION(BlueprintPure, Category = "Crafting|Data")
+	bool FindKnownRecipe(const FGameplayTag& RecipeTag, FAstrawildRecipe& OutRecipe) const;
+
 private:
 	TWeakObjectPtr<UAstrawildInventoryComponent> CachedInventory;
+	TWeakObjectPtr<UAstrawildTechnologyComponent> CachedTechnology;
 	UAstrawildInventoryComponent* GetInventory();
+	UAstrawildTechnologyComponent* GetTechnology();
 };

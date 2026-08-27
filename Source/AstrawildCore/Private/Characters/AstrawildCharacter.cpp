@@ -17,6 +17,7 @@
 #include "Components/AstrawildMountComponent.h"
 #include "Components/AstrawildBreedingComponent.h"
 #include "Components/AstrawildTechnologyComponent.h"
+#include "Components/AstrawildRangedCombatComponent.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
@@ -82,6 +83,7 @@ AAstrawildCharacter::AAstrawildCharacter()
 	Mount = CreateDefaultSubobject<UAstrawildMountComponent>(TEXT("Mount"));
 	Breeding = CreateDefaultSubobject<UAstrawildBreedingComponent>(TEXT("Breeding"));
 	Technology = CreateDefaultSubobject<UAstrawildTechnologyComponent>(TEXT("Technology"));
+	RangedCombat = CreateDefaultSubobject<UAstrawildRangedCombatComponent>(TEXT("RangedCombat"));
 }
 
 void AAstrawildCharacter::BeginPlay()
@@ -260,10 +262,15 @@ void AAstrawildCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		{
 			EnhancedInputComponent->BindAction(SummonCompanionAction, ETriggerEvent::Started, this, &AAstrawildCharacter::InputToggleSummon);
 		}
-		if (CycleCompanionAction)
-		{
-			EnhancedInputComponent->BindAction(CycleCompanionAction, ETriggerEvent::Triggered, this, &AAstrawildCharacter::InputCycleCompanion);
-		}
+					if (CycleCompanionAction)
+			{
+				EnhancedInputComponent->BindAction(CycleCompanionAction, ETriggerEvent::Triggered, this, &AAstrawildCharacter::InputCycleCompanion);
+			}
+			if (RangedAttackAction)
+			{
+				EnhancedInputComponent->BindAction(RangedAttackAction, ETriggerEvent::Started, this, &AAstrawildCharacter::InputRangedAttack);
+			}
+
 	}
 
 	// 2. Direct Raw Input Fallback (Ensures Play In Editor works out-of-the-box before Blueprint asset mapping)
@@ -281,6 +288,7 @@ void AAstrawildCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AAstrawildCharacter::InputInteract);
 	PlayerInputComponent->BindAction(TEXT("ThrowResonator"), IE_Pressed, this, &AAstrawildCharacter::InputThrowResonator);
 	PlayerInputComponent->BindAction(TEXT("ToggleSummon"), IE_Pressed, this, &AAstrawildCharacter::InputToggleSummon);
+	PlayerInputComponent->BindAction(TEXT("RangedAttack"), IE_Pressed, this, &AAstrawildCharacter::InputRangedAttack);
 }
 
 void AAstrawildCharacter::InputMove(const FInputActionValue& Value)
@@ -420,6 +428,15 @@ void AAstrawildCharacter::InputPrimaryAttack()
 	{
 		Combat->PerformMeleeAttack(1.0f, Attributes ? Attributes->ElementalAffinity : EAstrawildElement::Neutral);
 	}
+}
+
+void AAstrawildCharacter::InputRangedAttack()
+{
+	if (bIsDodging || !RangedCombat)
+	{
+		return;
+	}
+	RangedCombat->Fire();
 }
 
 void AAstrawildCharacter::InputThrowResonator()

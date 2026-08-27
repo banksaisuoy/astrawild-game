@@ -1,0 +1,9 @@
+Name,WeaponTag,DisplayName,WeaponType,DamageElement,AmmoTag,BaseDamage,RangeCentimeters,FireIntervalSeconds,MagazineSize,ReloadDurationSeconds,bUseHitscan,RequiredTechnologyTag
+Weapon_Reedbow,Weapon.Reedbow,Reedbow,Bow,Neutral,Item.Ammo.PracticeArrow,22,2400,0.85,1,1.2,true,Tech.BasicBow
+Weapon_RecurveBow,Weapon.RecurveBow,Recurve Bow,Bow,Neutral,Item.Ammo.PracticeArrow,38,2800,0.7,1,1.1,true,Tech.AstraSteel
+Weapon_SolarBow,Weapon.SolarBow,Solar Bow,Bow,Solar,Item.Ammo.SolarArrow,45,2800,0.85,1,1.2,true,Tech.ElementalAmmo
+Weapon_TorrentRepeater,Weapon.TorrentRepeater,Torrent Repeater,Repeater,Torrent,Item.Ammo.TorrentBolt,30,2200,0.22,6,1.8,true,Tech.ElementalAmmo
+Weapon_VoltRepeater,Weapon.VoltRepeater,Volt Repeater,Repeater,Volt,Item.Ammo.ChargedBolt,34,2300,0.25,6,1.8,true,Tech.ElementalAmmo
+Weapon_GlacialBow,Weapon.GlacialBow,Glacial Bow,Bow,Glacial,Item.Ammo.GlacialShard,52,3000,0.95,1,1.3,true,Tech.ElementalAmmo
+Weapon_AbyssalRepeater,Weapon.AbyssalRepeater,Abyssal Repeater,Repeater,Abyssal,Item.Ammo.AbyssalDart,40,2400,0.3,5,2.0,true,Tech.ElementalAmmo
+Weapon_AstraBeam,Weapon.AstraBeam,Astra Beam,Beam,Astra,Item.Ammo.AstraBeamCell,85,3500,1.2,3,2.5,true,Tech.FirstDawnResearch

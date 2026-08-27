@@ -99,7 +99,9 @@ enum class EAstrawildBuildingType : uint8
 	RestBed         UMETA(DisplayName = "Resting Shelter / Bed"),
 	CraftingBench   UMETA(DisplayName = "Crafting Bench"),
 	StorageChest    UMETA(DisplayName = "Storage Chest"),
-	Structure       UMETA(DisplayName = "Foundation / Wall / Roof")
+	Structure       UMETA(DisplayName = "Foundation / Wall / Roof"),
+	// Append-only station value; existing serialized building values remain stable.
+	HeatForge       UMETA(DisplayName = "Heat Forge")
 };
 
 /**
@@ -287,6 +289,9 @@ struct ASTRAWILDCORE_API FAstrawildRecipe : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe")
 	EAstrawildBuildingType RequiredStation = EAstrawildBuildingType::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe|Technology")
+	FGameplayTag RequiredTechnologyTag;
 };
 
 UENUM(BlueprintType)

@@ -23,6 +23,7 @@ class UAstrawildEnvironmentHazardComponent;
 class UAstrawildMountComponent;
 class UAstrawildBreedingComponent;
 class UAstrawildTechnologyComponent;
+class UAstrawildRangedCombatComponent;
 class UAnimInstance;
 class USkeletalMesh;
 class UInputMappingContext;
@@ -109,6 +110,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Technology")
 	TObjectPtr<UAstrawildTechnologyComponent> Technology;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Ranged")
+	TObjectPtr<UAstrawildRangedCombatComponent> RangedCombat;
+
 	// --- Movement Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float WalkSpeed;
@@ -194,6 +198,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> CycleCompanionAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> RangedAttackAction;
+
 public:
 	// --- Action Handlers (Enhanced Input & Direct Fallback) ---
 	UFUNCTION(BlueprintCallable, Category = "Input")
@@ -225,6 +232,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputCycleCompanion(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void InputRangedAttack();
 
 	// --- Direct Axis & Action Handlers for Fallback Input ---
 	void FallbackMoveForward(float Value);

@@ -19,6 +19,9 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv": {"Name", "BreedingGroupId", "CompatibleSpeciesTags", "IncubationDurationSeconds", "MutationChance", "MaxInheritedTraits"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoTraits.csv": {"Name", "TraitTag", "DisplayName", "Description", "HealthMultiplier", "AttackMultiplier", "DefenseMultiplier", "WorkSpeedMultiplier"},
     ROOT / "Content/Astrawild/Data/Source/DT_TechnologyNodes.csv": {"Name", "TechnologyTag", "DisplayName", "Description", "Tier", "PrerequisiteTechnologyTags", "UnlockRecipeTags", "ResearchCost"},
+    ROOT / "Content/Astrawild/Data/Source/DT_Recipes.csv": {"Name", "RecipeTag", "DisplayName", "Description", "IngredientTags", "IngredientQuantities", "OutputItemTag", "OutputQuantity", "CraftTimeSeconds", "RequiredStation", "RequiredTechnologyTag"},
+    ROOT / "Content/Astrawild/Data/Source/DT_RangedWeapons.csv": {"Name", "WeaponTag", "DisplayName", "WeaponType", "DamageElement", "AmmoTag", "BaseDamage", "RangeCentimeters", "FireIntervalSeconds", "MagazineSize", "ReloadDurationSeconds", "bUseHitscan", "RequiredTechnologyTag"},
+    ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv": {"Name", "DungeonId", "DisplayName", "RegionTag", "RequiredKeyTag", "bConsumeRequiredKey", "BossSpeciesTag", "BossElement", "RecommendedLevel", "TimeLimitSeconds", "bSupportsCoop", "RewardItemTags", "RewardQuantities"},
 }
 REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Animation/AstrawildAnimInstance.h",
@@ -47,6 +50,13 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Data/AstrawildMountData.h",
     "Source/AstrawildCore/Public/Data/AstrawildBreedingData.h",
     "Source/AstrawildCore/Public/Data/AstrawildTechnologyData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildCraftingData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildRangedWeaponData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildDungeonData.h",
+    "Source/AstrawildCore/Public/World/AstrawildDungeonSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildDungeonSubsystem.cpp",
+    "Source/AstrawildCore/Public/Components/AstrawildRangedCombatComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildRangedCombatComponent.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildSanComponent.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
@@ -57,6 +67,7 @@ REQUIRED_PATHS = [
     "Docs/M2_ELEMENT_COMPATIBILITY_TEST_PLAN.md",
     "Docs/M2_ECHODEX_MOUNT_BREEDING_HANDOFF.md",
     "Docs/M3_M5_COLONY_TECHNOLOGY_HANDOFF.md",
+    "Docs/M6_M8_COMBAT_DUNGEON_HANDOFF.md",
     "Config/AstrawildWorldPartition.ini",
 ]
 
@@ -213,6 +224,67 @@ for row in trait_rows:
                 errors.append(f"DT_EchoTraits.csv negative multiplier in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_EchoTraits.csv non-numeric multiplier in row {row.get('Name', '<unknown>')}")
+
+recipe_path = ROOT / "Content/Astrawild/Data/Source/DT_Recipes.csv"
+recipe_rows = loaded_rows.get(recipe_path, [])
+if len(recipe_rows) != 64:
+    errors.append(f"DT_Recipes.csv must contain exactly 64 rows; found {len(recipe_rows)}")
+recipe_tags = [row.get("RecipeTag", "") for row in recipe_rows]
+if len(recipe_tags) != len(set(recipe_tags)):
+    errors.append("DT_Recipes.csv has duplicate RecipeTag values")
+valid_stations = {"None", "Campfire", "RestBed", "CraftingBench", "StorageChest", "Structure", "HeatForge"}
+for row in recipe_rows:
+    if row.get("RequiredStation", "") not in valid_stations:
+        errors.append(f"DT_Recipes.csv invalid station in row {row.get('Name', '<unknown>')}")
+    try:
+        if int(row["OutputQuantity"]) <= 0 or float(row["CraftTimeSeconds"]) <= 0:
+            errors.append(f"DT_Recipes.csv invalid output/time in row {row.get('Name', '<unknown>')}")
+        ingredient_tags = row["IngredientTags"].strip().strip("()")
+        ingredient_quantities = row["IngredientQuantities"].strip().strip("()")
+        if len([value for value in ingredient_tags.split(",") if value.strip()]) != len([value for value in ingredient_quantities.split(",") if value.strip()]):
+            errors.append(f"DT_Recipes.csv ingredient arrays do not align in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_Recipes.csv non-numeric output/time in row {row.get('Name', '<unknown>')}")
+
+dungeon_path = ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv"
+dungeon_rows = loaded_rows.get(dungeon_path, [])
+if len(dungeon_rows) != 5:
+    errors.append(f"DT_Dungeons.csv must contain exactly 5 tower rows; found {len(dungeon_rows)}")
+dungeon_ids = [row.get("DungeonId", "") for row in dungeon_rows]
+if len(dungeon_ids) != len(set(dungeon_ids)):
+    errors.append("DT_Dungeons.csv has duplicate DungeonId values")
+for row in dungeon_rows:
+    if row.get("BossElement", "") not in {"Neutral", "Solar", "Torrent", "Geo", "Aether", "Volt", "Glacial", "Abyssal", "Astra"}:
+        errors.append(f"DT_Dungeons.csv invalid boss element in row {row.get('Name', '<unknown>')}")
+    try:
+        if int(row["RecommendedLevel"]) < 1 or float(row["TimeLimitSeconds"]) < 60.0:
+            errors.append(f"DT_Dungeons.csv invalid level/time in row {row.get('Name', '<unknown>')}")
+        reward_tags = row["RewardItemTags"].strip().strip("()")
+        reward_quantities = row["RewardQuantities"].strip().strip("()")
+        if len([value for value in reward_tags.split(",") if value.strip()]) != len([value for value in reward_quantities.split(",") if value.strip()]):
+            errors.append(f"DT_Dungeons.csv reward arrays do not align in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_Dungeons.csv non-numeric level/time in row {row.get('Name', '<unknown>')}")
+
+ranged_path = ROOT / "Content/Astrawild/Data/Source/DT_RangedWeapons.csv"
+ranged_rows = loaded_rows.get(ranged_path, [])
+if len(ranged_rows) != 8:
+    errors.append(f"DT_RangedWeapons.csv must contain exactly 8 rows; found {len(ranged_rows)}")
+ranged_tags = [row.get("WeaponTag", "") for row in ranged_rows]
+if len(ranged_tags) != len(set(ranged_tags)):
+    errors.append("DT_RangedWeapons.csv has duplicate WeaponTag values")
+valid_weapon_types = {"Bow", "Repeater", "Beam"}
+valid_elements = {"Neutral", "Solar", "Torrent", "Geo", "Aether", "Volt", "Glacial", "Abyssal", "Astra"}
+for row in ranged_rows:
+    if row.get("WeaponType", "") not in valid_weapon_types:
+        errors.append(f"DT_RangedWeapons.csv invalid weapon type in row {row.get('Name', '<unknown>')}")
+    if row.get("DamageElement", "") not in valid_elements:
+        errors.append(f"DT_RangedWeapons.csv invalid damage element in row {row.get('Name', '<unknown>')}")
+    try:
+        if float(row["BaseDamage"]) <= 0 or float(row["RangeCentimeters"]) <= 0 or float(row["FireIntervalSeconds"]) <= 0 or int(row["MagazineSize"]) <= 0 or float(row["ReloadDurationSeconds"]) <= 0:
+            errors.append(f"DT_RangedWeapons.csv invalid combat value in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_RangedWeapons.csv non-numeric combat value in row {row.get('Name', '<unknown>')}")
 
 technology_path = ROOT / "Content/Astrawild/Data/Source/DT_TechnologyNodes.csv"
 technology_rows = loaded_rows.get(technology_path, [])

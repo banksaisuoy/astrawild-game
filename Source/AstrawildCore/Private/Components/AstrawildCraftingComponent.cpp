@@ -2,6 +2,9 @@
 
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
+#include "Components/AstrawildTechnologyComponent.h"
+#include "Data/AstrawildCraftingData.h"
+#include "Engine/DataTable.h"
 #include "AstrawildLogChannels.h"
 
 UAstrawildCraftingComponent::UAstrawildCraftingComponent()
@@ -13,6 +16,10 @@ void UAstrawildCraftingComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	GetInventory();
+	if (RecipeTable)
+	{
+		RegisterRecipesFromDataTable(RecipeTable);
+	}
 	if (KnownRecipes.Num() == 0)
 	{
 		RegisterDefaultRecipes();
@@ -28,12 +35,30 @@ UAstrawildInventoryComponent* UAstrawildCraftingComponent::GetInventory()
 	return CachedInventory.Get();
 }
 
+UAstrawildTechnologyComponent* UAstrawildCraftingComponent::GetTechnology()
+{
+	if (!CachedTechnology.IsValid() && GetOwner())
+	{
+		CachedTechnology = GetOwner()->FindComponentByClass<UAstrawildTechnologyComponent>();
+	}
+	return CachedTechnology.Get();
+}
+
 bool UAstrawildCraftingComponent::CanCraft(const FAstrawildRecipe& Recipe, EAstrawildBuildingType CurrentStation) const
 {
 	// Check station requirement
 	if (Recipe.RequiredStation != EAstrawildBuildingType::None && Recipe.RequiredStation != CurrentStation)
 	{
 		return false;
+	}
+
+	if (Recipe.RequiredTechnologyTag.IsValid())
+	{
+		UAstrawildTechnologyComponent* Tech = const_cast<UAstrawildCraftingComponent*>(this)->GetTechnology();
+		if (!Tech || !Tech->IsTechnologyUnlocked(Recipe.RequiredTechnologyTag))
+		{
+			return false;
+		}
 	}
 
 	UAstrawildInventoryComponent* Inv = const_cast<UAstrawildCraftingComponent*>(this)->GetInventory();
@@ -69,10 +94,23 @@ bool UAstrawildCraftingComponent::CraftRecipe(const FAstrawildRecipe& Recipe, EA
 		return false;
 	}
 
-	// Deduct ingredients
+	// Deduct ingredients, retaining a rollback list if the output cannot be inserted.
+	TArray<FAstrawildRecipeIngredient> RemovedIngredients;
 	for (const FAstrawildRecipeIngredient& Ingredient : Recipe.Ingredients)
 	{
-		Inv->RemoveItem(Ingredient.ItemTag, Ingredient.Quantity);
+		if (Inv->RemoveItem(Ingredient.ItemTag, Ingredient.Quantity))
+		{
+			RemovedIngredients.Add(Ingredient);
+		}
+		else
+		{
+			for (const FAstrawildRecipeIngredient& Removed : RemovedIngredients)
+			{
+				Inv->AddItem(Removed.ItemTag, Removed.Quantity);
+			}
+			OnCraftFailed.Broadcast(Recipe, TEXT("Ingredient state changed before crafting completed."));
+			return false;
+		}
 	}
 
 	// Add output item
@@ -84,7 +122,76 @@ bool UAstrawildCraftingComponent::CraftRecipe(const FAstrawildRecipe& Recipe, EA
 		return true;
 	}
 
-	OnCraftFailed.Broadcast(Recipe, TEXT("Inventory is full!"));
+	for (const FAstrawildRecipeIngredient& Removed : RemovedIngredients)
+	{
+		Inv->AddItem(Removed.ItemTag, Removed.Quantity);
+	}
+	OnCraftFailed.Broadcast(Recipe, TEXT("Inventory is full; ingredients were refunded."));
+	return false;
+}
+
+int32 UAstrawildCraftingComponent::RegisterRecipesFromDataTable(UDataTable* InRecipeTable)
+{
+	if (!InRecipeTable)
+	{
+		return 0;
+	}
+
+	TArray<FAstrawildCraftingRecipeRow*> Rows;
+	InRecipeTable->GetAllRows<FAstrawildCraftingRecipeRow>(TEXT("RecipeImport"), Rows);
+	int32 AddedCount = 0;
+	for (const FAstrawildCraftingRecipeRow* Row : Rows)
+	{
+		if (!Row || !Row->RecipeTag.IsValid() || !Row->OutputItemTag.IsValid() || Row->OutputQuantity <= 0)
+		{
+			continue;
+		}
+		FAstrawildRecipe ExistingRecipe;
+		if (FindKnownRecipe(Row->RecipeTag, ExistingRecipe))
+		{
+			continue;
+		}
+
+		FAstrawildRecipe Recipe;
+		Recipe.RecipeTag = Row->RecipeTag;
+		Recipe.DisplayName = Row->DisplayName;
+		Recipe.Description = Row->Description;
+		Recipe.OutputItemTag = Row->OutputItemTag;
+		Recipe.OutputQuantity = Row->OutputQuantity;
+		Recipe.CraftTimeSeconds = FMath::Max(0.1f, Row->CraftTimeSeconds);
+		Recipe.RequiredStation = Row->RequiredStation;
+		Recipe.RequiredTechnologyTag = Row->RequiredTechnologyTag;
+
+		const int32 IngredientCount = FMath::Min(Row->IngredientTags.Num(), Row->IngredientQuantities.Num());
+		for (int32 Index = 0; Index < IngredientCount; ++Index)
+		{
+			if (Row->IngredientTags[Index].IsValid() && Row->IngredientQuantities[Index] > 0)
+			{
+				FAstrawildRecipeIngredient& Ingredient = Recipe.Ingredients.AddDefaulted_GetRef();
+				Ingredient.ItemTag = Row->IngredientTags[Index];
+				Ingredient.Quantity = Row->IngredientQuantities[Index];
+			}
+		}
+		KnownRecipes.Add(Recipe);
+		++AddedCount;
+	}
+	return AddedCount;
+}
+
+bool UAstrawildCraftingComponent::FindKnownRecipe(const FGameplayTag& RecipeTag, FAstrawildRecipe& OutRecipe) const
+{
+	if (!RecipeTag.IsValid())
+	{
+		return false;
+	}
+	for (const FAstrawildRecipe& KnownRecipe : KnownRecipes)
+	{
+		if (KnownRecipe.RecipeTag == RecipeTag)
+		{
+			OutRecipe = KnownRecipe;
+			return true;
+		}
+	}
 	return false;
 }
 
