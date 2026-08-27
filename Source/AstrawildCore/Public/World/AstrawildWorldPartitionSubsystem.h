@@ -16,6 +16,8 @@ class ASTRAWILDCORE_API UAstrawildWorldPartitionSubsystem : public UWorldSubsyst
     GENERATED_BODY()
 
 public:
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
     static constexpr int32 MapSizeCentimeters = 409600;
     static constexpr int32 CellSizeCentimeters = 51200;
     static constexpr int32 CellsPerAxis = 8;
@@ -47,6 +49,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|World|Fast Travel")
     bool DiscoverSpire(FName SpireId);
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|World|Fast Travel")
+    void RefreshDefaultSpireDiscovery();
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|World|Fast Travel")
     bool DiscoverSpireForCharacter(FName SpireId, ACharacter* Character);

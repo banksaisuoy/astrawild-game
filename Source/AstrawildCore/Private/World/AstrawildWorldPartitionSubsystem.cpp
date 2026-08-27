@@ -4,6 +4,29 @@
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
 #include "Components/AstrawildQuestComponent.h"
+#include "Subsystems/SubsystemCollection.h"
+
+void UAstrawildWorldPartitionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+    RefreshDefaultSpireDiscovery();
+}
+
+void UAstrawildWorldPartitionSubsystem::RefreshDefaultSpireDiscovery()
+{
+    if (!SpireTable)
+    {
+        return;
+    }
+    for (const TPair<FName, uint8*>& Pair : SpireTable->GetRowMap())
+    {
+        const FAstrawildFastTravelSpire* Spire = reinterpret_cast<const FAstrawildFastTravelSpire*>(Pair.Value);
+        if (Spire && Spire->bUnlockedByDefault && !Spire->SpireId.IsNone())
+        {
+            DiscoveredSpireIds.Add(Spire->SpireId);
+        }
+    }
+}
 
 int32 UAstrawildWorldPartitionSubsystem::ClampCellCoordinate(const int32 Coordinate)
 {
