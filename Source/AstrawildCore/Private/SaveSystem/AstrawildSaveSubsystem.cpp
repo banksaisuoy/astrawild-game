@@ -12,6 +12,7 @@
 #include "Environment/AstrawildBuildingPiece.h"
 #include "Environment/AstrawildHarvestableNode.h"
 #include "World/AstrawildWorldPartitionSubsystem.h"
+#include "World/AstrawildWorldClockSubsystem.h"
 #include "AstrawildLogChannels.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
@@ -145,6 +146,10 @@ bool UAstrawildSaveSubsystem::CaptureWorldState(UAstrawildSaveGame* SaveObject)
 			return A.ToString() < B.ToString();
 		});
 	}
+	if (const UAstrawildWorldClockSubsystem* Clock = World->GetSubsystem<UAstrawildWorldClockSubsystem>())
+	{
+		SaveObject->WorldSnapshot.WorldGameTimeSeconds = Clock->WorldTimeSeconds;
+	}
 
 	SaveObject->WorldSnapshot.SnapshotTimestamp = FDateTime::Now();
 	SaveObject->ValidateAndSanitize();
@@ -223,6 +228,10 @@ bool UAstrawildSaveSubsystem::RestoreWorldState(UAstrawildSaveGame* SaveObject)
 					WorldSubsystem->DiscoveredSpireIds.Add(SpireId);
 				}
 			}
+		}
+		if (UAstrawildWorldClockSubsystem* Clock = World->GetSubsystem<UAstrawildWorldClockSubsystem>())
+		{
+			Clock->SetWorldTime(SaveObject->WorldSnapshot.WorldGameTimeSeconds);
 		}
 
 		// 2. Restore Harvest Nodes

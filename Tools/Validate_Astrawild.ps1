@@ -52,6 +52,8 @@ $required = @(
     "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
     "Source/AstrawildCore/Public/Data/AstrawildWeatherData.h",
     "Source/AstrawildCore/Public/World/AstrawildWeatherSubsystem.h",
+    "Source/AstrawildCore/Public/World/AstrawildWorldClockSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildWorldClockSubsystem.cpp",
     "Scripts/validate_runtime_contracts.py",
     "Scripts/validate_generated_headers.py",
     "Docs/M2_EVOLUTION_HANDOFF.md"
