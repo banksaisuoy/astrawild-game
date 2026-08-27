@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `b6e63f4137e02f0668de33d3d0a8dcd3a856cf40`
+**Latest repository commit:** `ec3a2b55adec3060dbe710bbfe428c07972c126c`
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -41,10 +41,11 @@ The release branch now contains the following source/data preparation slices. Th
 | Ranged combat | Eight weapon rows across bow/repeater/beam classes, elemental ammo fields, cooldown/magazine/reload contract, and a hitscan path routed through the existing combat damage pipeline. |
 | Tower dungeons | Five tower rows, required-key consumption, co-op participant tracking, server-side time limit and boss-completion lifecycle contract. |
 | UI and packaging | Native master HUD, EchoDex, technology, dungeon-status widget bases; expanded validation script; opt-in compile/package PowerShell workflow. |
+| Evolution and integration | Twelve data-driven evolution paths, target-asset handoff, generic quest progress bridges for craft/capture/collect/interact/reach/defeat, DataTable row-name fallback, save sanitization, and reusable runtime/generated-header validators. |
 
 ## Source data inventory
 
-The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The main production tables are `DT_Biomes.csv`, `DT_SpawnRules.csv`, `DT_FastTravelSpires.csv`, `DT_EchoDex.csv`, `DT_EchoTraits.csv`, `DT_BreedingGroups.csv`, `DT_MountProfiles.csv`, `DT_TechnologyNodes.csv`, `DT_Recipes.csv`, `DT_RangedWeapons.csv`, and `DT_Dungeons.csv`.
+The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The main production tables are `DT_Biomes.csv`, `DT_SpawnRules.csv`, `DT_FastTravelSpires.csv`, `DT_EchoDex.csv`, `DT_EchoTraits.csv`, `DT_BreedingGroups.csv`, `DT_MountProfiles.csv`, `DT_TechnologyNodes.csv`, `DT_Recipes.csv`, `DT_RangedWeapons.csv`, `DT_Dungeons.csv`, and `DT_Evolutions.csv`.
 
 The repository deliberately does not pretend that CSV files are Unreal DataTable assets. Import them into `Content/Astrawild/Data/Imported/` with the row structs named in the relevant handoff documents. Keep the CSV sources under review and commit derived `.uasset` files with Git LFS when they are authored and tested.
 
@@ -63,6 +64,8 @@ git fetch origin release/vertical-slice-v1
 git checkout release/vertical-slice-v1
 git pull --ff-only origin release/vertical-slice-v1
 python Scripts/validate_content_contracts.py
+python Scripts/validate_runtime_contracts.py
+python Scripts/validate_generated_headers.py
 .\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location)
 .\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location) -TryUnreal
 ```
@@ -89,5 +92,5 @@ ASTRAWILD uses original names and data contracts. Do not copy or import characte
 
 | Date | Operator | Commit | Engine/build | Evidence | Result |
 |---|---|---|---|---|---|
-| 2026-08-27 | Manus | `b6e63f4` | Sandbox static checks | Validator, diff check, generated-header scan, zero tracked UE binary assets | Source package **PASS**; UE compile/PIE/package pending Windows |
+| 2026-08-27 | Manus | `ec3a2b5` | Sandbox static checks | Content validator, runtime cross-table validator, generated-header validator, diff check, zero tracked UE binary assets | Source package **PASS**; UE compile/PIE/package pending Windows |
 |  | Windows owner |  | UE 5.8 / MSVC 2022 | Add compile log, automation result, PIE/network screenshots, and package path here | **PENDING** |
