@@ -4,8 +4,9 @@
 **Target Engine**: Unreal Engine 5.8  
 **Primary C++ Module**: `AstrawildCore`  
 **Target Platform**: Windows PC (DirectX 12 / Vulkan)  
-**Release Branch**: `release/vertical-slice-v1`  
-**License**: 100% Original IP & License-Safe Primitives  
+**Release Branch**: `release/vertical-slice-v1`
+**Manus P0-P4 Preparation Commit**: `feb2cc0f9e745cb1383974f73587f422dabf4a9a`
+**License**: 100% Original IP & License-Safe Primitives
 
 ---
 
