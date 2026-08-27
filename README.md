@@ -62,6 +62,9 @@ ASTRAWILD/
 - [P3 Alpha Echo Design](Docs/P3_Alpha_Echo_Design.md)
 - [P4 Lore and Quest Data Contract](Docs/P4_Lore_Quest_Data_Contract.md)
 - [Remote MCP Guide](Docs/REMOTE_MCP_GUIDE.md)
+- [Feature Benchmark Matrix](Docs/FEATURE_BENCHMARK_MATRIX.md)
+- [Feature Roadmap](Docs/FEATURE_ROADMAP.md)
+- [Progression, Survival and Save Contract](Docs/PROGRESSION_SURVIVAL_SAVE_CONTRACT.md)
 
 ## Validation without Unreal Editor
 

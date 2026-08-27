@@ -656,6 +656,27 @@ struct ASTRAWILDCORE_API FAstrawildPlayerProfile
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
 	TArray<FAstrawildCapturedEchoData> ReserveStorage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Quest")
+	TArray<FName> ActiveQuestIds;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Quest")
+	TArray<FName> CompletedQuestIds;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Quest")
+	TMap<FName, int32> ObjectiveProgress;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival")
+	float Hunger = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival")
+	float Thirst = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival")
+	float BodyTemperature = 21.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival")
+	float CarryWeight = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
 	FTransform ActiveRespawnTransform;
 

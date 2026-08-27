@@ -6,6 +6,8 @@
 #include "Components/AstrawildAttributeComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildCaptureComponent.h"
+#include "Components/AstrawildQuestComponent.h"
+#include "Components/AstrawildSurvivalComponent.h"
 #include "Environment/AstrawildBuildingPiece.h"
 #include "Environment/AstrawildHarvestableNode.h"
 #include "AstrawildLogChannels.h"
@@ -91,12 +93,22 @@ bool UAstrawildSaveSubsystem::CaptureWorldState(UAstrawildSaveGame* SaveObject)
 			SaveObject->PlayerProfile.InventorySlots = PlayerChar->Inventory->GetSlots();
 		}
 
-		if (PlayerChar->Capture)
-		{
-			SaveObject->PlayerProfile.ActiveParty = PlayerChar->Capture->ActiveParty;
-			SaveObject->PlayerProfile.ReserveStorage = PlayerChar->Capture->ReserveStorage;
+			if (PlayerChar->Capture)
+			{
+				SaveObject->PlayerProfile.ActiveParty = PlayerChar->Capture->ActiveParty;
+				SaveObject->PlayerProfile.ReserveStorage = PlayerChar->Capture->ReserveStorage;
+			}
+
+			if (PlayerChar->Quest)
+			{
+				PlayerChar->Quest->ExportToProfile(SaveObject->PlayerProfile);
+			}
+
+			if (PlayerChar->Survival)
+			{
+				PlayerChar->Survival->ExportToProfile(SaveObject->PlayerProfile);
+			}
 		}
-	}
 
 	// 2. Capture Placed Buildings
 	SaveObject->WorldSnapshot.PlacedBuildings.Empty();
@@ -153,11 +165,21 @@ bool UAstrawildSaveSubsystem::RestoreWorldState(UAstrawildSaveGame* SaveObject)
 			PlayerChar->Inventory->LoadInventorySlots(SaveObject->PlayerProfile.InventorySlots);
 		}
 
-		if (PlayerChar->Capture)
-		{
-			PlayerChar->Capture->LoadPartyData(SaveObject->PlayerProfile.ActiveParty, SaveObject->PlayerProfile.ReserveStorage);
+			if (PlayerChar->Capture)
+			{
+				PlayerChar->Capture->LoadPartyData(SaveObject->PlayerProfile.ActiveParty, SaveObject->PlayerProfile.ReserveStorage);
+			}
+
+			if (PlayerChar->Quest)
+			{
+				PlayerChar->Quest->ImportFromProfile(SaveObject->PlayerProfile);
+			}
+
+			if (PlayerChar->Survival)
+			{
+				PlayerChar->Survival->ImportFromProfile(SaveObject->PlayerProfile);
+			}
 		}
-	}
 
 	// 2. Restore Harvest Nodes
 	TMap<FGuid, FAstrawildHarvestNodeSaveData> HarvestDataMap;

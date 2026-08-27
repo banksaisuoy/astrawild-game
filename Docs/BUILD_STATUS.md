@@ -113,7 +113,7 @@ The release branch now contains the following verified preparation work:
 | P3 | `AAstrawildAlphaEcho`, phase/telegraph attack patterns and encounter design | No Alpha Blueprint, boss Data Asset, or final encounter map `.uasset` is committed yet. |
 | P4 | `FAstrawildLoreRow`, `FAstrawildQuestRow`, `FAstrawildQuestObjectiveRow` and CSV source files | CSV sources are present; DataTable `.uasset` import and Gameplay Tag validation remain to be done in Editor. |
 
-These are code and content contracts, not proof of a completed Unreal runtime. The target Windows machine must compile the module, import/create the Unreal binary assets, and run the PIE gates before this report can be marked complete.
+The code-complete pass also adds `UAstrawildQuestComponent`, `UAstrawildSurvivalComponent`, PlayerProfile quest/survival fields, and SaveSubsystem capture/restore integration. These are code and content contracts, not proof of a completed Unreal runtime. The target Windows machine must compile the module, import/create the Unreal binary assets, and run the PIE gates before this report can be marked complete.
 
 ---
 

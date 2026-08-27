@@ -11,6 +11,8 @@
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildBuildingComponent.h"
 #include "Components/AstrawildFeedbackComponent.h"
+#include "Components/AstrawildQuestComponent.h"
+#include "Components/AstrawildSurvivalComponent.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
@@ -70,6 +72,8 @@ AAstrawildCharacter::AAstrawildCharacter()
 	Crafting = CreateDefaultSubobject<UAstrawildCraftingComponent>(TEXT("Crafting"));
 	Building = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
 	Feedback = CreateDefaultSubobject<UAstrawildFeedbackComponent>(TEXT("Feedback"));
+	Quest = CreateDefaultSubobject<UAstrawildQuestComponent>(TEXT("Quest"));
+	Survival = CreateDefaultSubobject<UAstrawildSurvivalComponent>(TEXT("Survival"));
 }
 
 void AAstrawildCharacter::BeginPlay()
