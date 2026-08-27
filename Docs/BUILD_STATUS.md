@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `b7be0eefd3595a9aa35d1e7c1de118fe3975fd31` (remote baseline; local exosuit integration pending)
+**Latest repository commit:** `551b92a8458b1feed37dbf23af0d3297b48d88b9` (pushed exosuit integration source pass)
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -15,7 +15,7 @@
 
 | Layer | Status | Evidence or limitation |
 |---|---|---|
-| Git branch and repository sync | **PASS** | Remote baseline `b7be0ee` was fetched and local branch is based on it. Exosuit integration is local pending work until committed. |
+| Git branch and repository sync | **PASS** | Exosuit integration commit `551b92a` is pushed and local/remote hashes match. |
 | Python content-contract validation | **PASS** | Baseline Windows checks passed; the expanded local suite also passes content, runtime, generated-header, and editor-automation validators. |
 | Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
@@ -98,5 +98,5 @@ ASTRAWILD uses original names and data contracts. Do not copy or import characte
 |---|---|---|---|---|---|
 | 2026-08-27 | Windows owner | `a90a83f` | Windows static validation | Content/runtime/generated-header validators, `Tools/Validate_Astrawild.ps1`, 108-file MCP source audit with zero errors; Unreal binary assets explicitly reported as 0 | Baseline source package **PASS**; UE compile/PIE/package pending |
 | 2026-08-27 | Manus | `c5e3953` | Sandbox static checks | Expanded boss/visual source pass; 19 CSV mappings, content/runtime/generated-header/editor-automation validators, Python compile and diff check passed | Source pass **PASS**; Windows UE evidence pending |
-| 2026-08-27 | Manus | `b7be0ee` + local pending | Sandbox static checks | Originalized exosuit data; 32 CSV mappings; mecha/content/runtime/generated-header/editor-automation/master-asset validators and Python compile passed | Source integration **PASS**; UE compile/AnimBP/Niagara/UI/PIE pending |
+| 2026-08-27 | Manus | `551b92a` | Sandbox static checks | Originalized exosuit data; 32 CSV mappings; mecha/content/runtime/generated-header/editor-automation/master-asset validators and Python compile passed; commit pushed to `release/vertical-slice-v1` | Source integration **PASS**; UE compile/AnimBP/Niagara/UI/PIE pending |
 |  | Windows owner |  | UE 5.8 / MSVC 2022 | Add module compile log, DataTable/scaffold reports, automation result, PIE/network screenshots, and package path here | **PENDING** |
