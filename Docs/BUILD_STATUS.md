@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `e36dc263c20f367146d3472e1a49959361ba7861` (pushed current review and Unreal Editor integration roadmap)
+**Repository head:** verify the current branch commit with `git rev-parse HEAD`; the latest reviewed source/status commit is recorded in the evidence log below.
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -15,7 +15,7 @@
 
 | Layer | Status | Evidence or limitation |
 |---|---|---|
-| Git branch and repository sync | **PASS** | Current review/roadmap commit `e36dc26` is pushed; local `HEAD` and `origin/release/vertical-slice-v1` match. |
+| Git branch and repository sync | **PASS** | The branch was fetched and checked against `origin/release/vertical-slice-v1` before the latest documentation push; run `git rev-parse HEAD` and the remote comparison after pulling to reproduce the check. |
 | Python content-contract validation | **PASS** | Baseline Windows checks passed; the expanded local suite also passes content, runtime, generated-header, and editor-automation validators. |
 | Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
