@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Astrawild UI")
 	void ToggleDebugHUD();
 
+	UFUNCTION(BlueprintCallable, Category = "Astrawild UI")
+	void ToggleInventoryMenu();
+
 	// --- In-Game Debug Console Commands ---
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_GiveItem(const FString& ItemTagName, int32 Quantity = 1);
@@ -43,6 +46,15 @@ public:
 
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_ToggleDebugHUD();
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_ToggleInventory();
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_BuildCampfire();
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_BuildBed();
 
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_SpawnEcho(const FString& SpeciesTagName = TEXT("Echo.Pyrelite"), int32 Level = 1);

@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Components/AstrawildInventoryComponent.h"
 #include "AstrawildLogChannels.h"
@@ -148,6 +148,64 @@ int32 UAstrawildInventoryComponent::GetEmptySlotCount() const
 		}
 	}
 	return Count;
+}
+
+bool UAstrawildInventoryComponent::MoveOrSwapSlot(int32 FromIndex, int32 ToIndex)
+{
+	if (!Slots.IsValidIndex(FromIndex) || !Slots.IsValidIndex(ToIndex) || FromIndex == ToIndex)
+	{
+		return false;
+	}
+
+	// If both slots contain the same item, try to merge stacks
+	if (Slots[FromIndex].IsValid() && Slots[ToIndex].IsValid() && Slots[FromIndex].ItemTag == Slots[ToIndex].ItemTag)
+	{
+		const int32 MaxStack = 99;
+		const int32 AvailableSpace = MaxStack - Slots[ToIndex].Quantity;
+		if (AvailableSpace > 0)
+		{
+			const int32 TransferAmount = FMath::Min(Slots[FromIndex].Quantity, AvailableSpace);
+			Slots[ToIndex].Quantity += TransferAmount;
+			Slots[FromIndex].Quantity -= TransferAmount;
+
+			if (Slots[FromIndex].Quantity <= 0)
+			{
+				Slots[FromIndex].Clear();
+			}
+
+			OnInventoryUpdated.Broadcast();
+			return true;
+		}
+	}
+
+	// Otherwise swap slots directly
+	Slots.Swap(FromIndex, ToIndex);
+	OnInventoryUpdated.Broadcast();
+	return true;
+}
+
+bool UAstrawildInventoryComponent::SplitSlot(int32 FromIndex, int32 ToIndex, int32 Amount)
+{
+	if (!Slots.IsValidIndex(FromIndex) || !Slots.IsValidIndex(ToIndex) || FromIndex == ToIndex || Amount <= 0)
+	{
+		return false;
+	}
+
+	if (!Slots[FromIndex].IsValid() || Slots[FromIndex].Quantity <= Amount)
+	{
+		return false;
+	}
+
+	if (Slots[ToIndex].IsValid())
+	{
+		return false; // Target slot must be empty to split into
+	}
+
+	Slots[ToIndex] = FAstrawildItemSlot(Slots[FromIndex].ItemTag, Amount, Slots[FromIndex].Durability);
+	Slots[FromIndex].Quantity -= Amount;
+
+	OnInventoryUpdated.Broadcast();
+	return true;
 }
 
 void UAstrawildInventoryComponent::ClearInventory()

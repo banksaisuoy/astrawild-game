@@ -6,15 +6,19 @@
 #include "AstrawildLogChannels.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
-#include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
+#include "DrawDebugHelpers.h"
 
 UAstrawildBuildingComponent::UAstrawildBuildingComponent()
 	: bIsBuildModeActive(false)
 	, MaxPlacementDistance(800.0f)
+	, bEnableGridSnap(true)
+	, GridSnapSize(100.0f)
 	, CurrentGhostLocation(FVector::ZeroVector)
 	, CurrentGhostRotation(FRotator::ZeroRotator)
 	, bIsValidPlacementLocation(false)
+	, PreviewRotationYaw(0.0f)
+	, bIsPlacingPiece(false)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
@@ -47,14 +51,24 @@ void UAstrawildBuildingComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	bIsValidPlacementLocation = GetPlacementTransform(PreviewTransform);
 	CurrentGhostLocation = PreviewTransform.GetLocation();
 	CurrentGhostRotation = PreviewTransform.GetRotation().Rotator();
+
+	// Draw ghost preview box
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		const FColor PreviewColor = bIsValidPlacementLocation ? FColor(46, 204, 113, 160) : FColor(231, 76, 60, 160);
+		DrawDebugBox(World, CurrentGhostLocation + FVector(0, 0, 50), FVector(50, 50, 50), CurrentGhostRotation.Quaternion(), PreviewColor, false, -1.0f, 0, 2.0f);
+	}
 }
 
 void UAstrawildBuildingComponent::EnterBuildMode(TSubclassOf<AAstrawildBuildingPiece> InBuildingClass, const FGameplayTag& InBuildingTag, const TArray<FAstrawildRecipeIngredient>& Cost)
 {
-	ActiveBuildingClass = InBuildingClass;
+	ActiveBuildingClass = InBuildingClass ? InBuildingClass : TSubclassOf<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass());
 	ActiveBuildingTag = InBuildingTag;
 	ActiveBuildingCost = Cost;
 	bIsBuildModeActive = true;
+	PreviewRotationYaw = 0.0f;
+	bIsPlacingPiece = false;
 
 	UE_LOG(LogAstrawild, Log, TEXT("Entered Build Mode for: %s"), *InBuildingTag.ToString());
 }
@@ -65,8 +79,14 @@ void UAstrawildBuildingComponent::ExitBuildMode()
 	ActiveBuildingClass = nullptr;
 	ActiveBuildingTag = FGameplayTag::EmptyTag;
 	ActiveBuildingCost.Empty();
+	bIsPlacingPiece = false;
 
 	UE_LOG(LogAstrawild, Log, TEXT("Exited Build Mode."));
+}
+
+void UAstrawildBuildingComponent::RotatePreview(float Degrees)
+{
+	PreviewRotationYaw = FMath::Fmod(PreviewRotationYaw + Degrees, 360.0f);
 }
 
 bool UAstrawildBuildingComponent::CanAffordBuilding() const
@@ -119,34 +139,73 @@ bool UAstrawildBuildingComponent::GetPlacementTransform(FTransform& OutTransform
 	FHitResult HitResult;
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldStatic, QueryParams);
 
-	if (bHit && HitResult.ImpactNormal.Z > 0.6f) // Ensure walkable/flat enough surface
+	if (bHit)
 	{
-		OutTransform.SetLocation(HitResult.ImpactPoint);
-		OutTransform.SetRotation(FRotator(0.0f, CameraRotation.Yaw, 0.0f).Quaternion());
+		// Slope check: normal Z must be > 0.70 (slope < ~45 deg)
+		if (HitResult.ImpactNormal.Z < 0.70f)
+		{
+			const_cast<UAstrawildBuildingComponent*>(this)->LastPlacementErrorMessage = FText::FromString(TEXT("Cannot place on steep slope!"));
+			return false;
+		}
+
+		FVector PlacedLocation = HitResult.ImpactPoint;
+
+		// Grid Snapping
+		if (bEnableGridSnap && GridSnapSize > 0.0f)
+		{
+			PlacedLocation.X = FMath::GridSnap(PlacedLocation.X, GridSnapSize);
+			PlacedLocation.Y = FMath::GridSnap(PlacedLocation.Y, GridSnapSize);
+		}
+
+		FRotator FinalRotation = FRotator(0.0f, CameraRotation.Yaw + PreviewRotationYaw, 0.0f);
+		if (bEnableGridSnap)
+		{
+			FinalRotation.Yaw = FMath::GridSnap(FinalRotation.Yaw, 45.0f);
+		}
+
+		// Collision overlap test for clear space
+		FCollisionQueryParams OverlapParams;
+		OverlapParams.AddIgnoredActor(OwnerActor);
+		const bool bBlocked = GetWorld()->OverlapBlockingTestByChannel(
+			PlacedLocation + FVector(0, 0, 50),
+			FinalRotation.Quaternion(),
+			ECC_WorldDynamic,
+			FCollisionShape::MakeBox(FVector(45, 45, 45)),
+			OverlapParams
+		);
+
+		if (bBlocked)
+		{
+			const_cast<UAstrawildBuildingComponent*>(this)->LastPlacementErrorMessage = FText::FromString(TEXT("Space is blocked by another object!"));
+			return false;
+		}
+
+		OutTransform.SetLocation(PlacedLocation);
+		OutTransform.SetRotation(FinalRotation.Quaternion());
 		OutTransform.SetScale3D(FVector::OneVector);
 		return true;
 	}
 
-	// Fallback to in front of player
-	const FVector FallbackLoc = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 300.0f);
-	OutTransform.SetLocation(FallbackLoc);
-	OutTransform.SetRotation(OwnerActor->GetActorRotation().Quaternion());
-	OutTransform.SetScale3D(FVector::OneVector);
+	const_cast<UAstrawildBuildingComponent*>(this)->LastPlacementErrorMessage = FText::FromString(TEXT("Target is out of range!"));
 	return false;
 }
 
 bool UAstrawildBuildingComponent::PlaceBuilding()
 {
-	if (!bIsBuildModeActive || !ActiveBuildingClass || !bIsValidPlacementLocation)
+	if (!bIsBuildModeActive || !ActiveBuildingClass || !bIsValidPlacementLocation || bIsPlacingPiece)
 	{
 		return false;
 	}
 
 	if (!CanAffordBuilding())
 	{
+		LastPlacementErrorMessage = FText::FromString(TEXT("Cannot place: Insufficient building materials!"));
+		OnBuildingFailed.Broadcast(LastPlacementErrorMessage);
 		UE_LOG(LogAstrawild, Warning, TEXT("Cannot place building: Insufficient resources."));
 		return false;
 	}
+
+	bIsPlacingPiece = true; // Lock against double clicks / double spend
 
 	UAstrawildInventoryComponent* Inv = GetInventory();
 	if (Inv)
@@ -169,10 +228,27 @@ bool UAstrawildBuildingComponent::PlaceBuilding()
 	if (PlacedPiece)
 	{
 		PlacedPiece->BuildingTag = ActiveBuildingTag;
-		UE_LOG(LogAstrawild, Log, TEXT("Successfully placed building piece: %s at %s"), *ActiveBuildingTag.ToString(), *CurrentGhostLocation.ToString());
+		PlacedPiece->DismantleRefund = ActiveBuildingCost;
+
+		if (ActiveBuildingTag.ToString().Contains(TEXT("Campfire")))
+		{
+			PlacedPiece->BuildingType = EAstrawildBuildingType::Campfire;
+		}
+		else if (ActiveBuildingTag.ToString().Contains(TEXT("Bed")))
+		{
+			PlacedPiece->BuildingType = EAstrawildBuildingType::RestBed;
+		}
+		else if (ActiveBuildingTag.ToString().Contains(TEXT("CraftingBench")))
+		{
+			PlacedPiece->BuildingType = EAstrawildBuildingType::CraftingBench;
+		}
+
+		UE_LOG(LogAstrawild, Log, TEXT("Successfully constructed %s at %s"), *ActiveBuildingTag.ToString(), *CurrentGhostLocation.ToString());
 		OnBuildingPlaced.Broadcast(PlacedPiece);
+		bIsPlacingPiece = false;
 		return true;
 	}
 
+	bIsPlacingPiece = false;
 	return false;
 }

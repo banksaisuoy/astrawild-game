@@ -1,10 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/AstrawildHUD.h"
 #include "Characters/AstrawildCharacter.h"
 #include "Components/AstrawildAttributeComponent.h"
 #include "Components/AstrawildCaptureComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
+#include "Components/AstrawildCraftingComponent.h"
+#include "Components/AstrawildBuildingComponent.h"
 #include "Engine/Canvas.h"
 #include "Engine/Font.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -12,6 +14,7 @@
 AAstrawildHUD::AAstrawildHUD()
 	: bShowHUD(true)
 	, bShowDebugOverlay(true) // Enabled by default for vertical slice prototype testing
+	, bShowInventoryMenu(false)
 	, HealthBarColor(FColor(46, 204, 113)) // Emerald green
 	, StaminaBarColor(FColor(241, 196, 15)) // Sun gold
 	, CrosshairColor(FColor(236, 240, 241, 180)) // Soft white
@@ -39,6 +42,11 @@ void AAstrawildHUD::DrawHUD()
 	DrawInteractionPrompt(PlayerChar);
 	DrawActiveCompanionBadge(PlayerChar);
 
+	if (bShowInventoryMenu)
+	{
+		DrawInventoryAndCraftingMenu(PlayerChar);
+	}
+
 	if (bShowDebugOverlay)
 	{
 		DrawDebugOverlay(PlayerChar);
@@ -48,6 +56,11 @@ void AAstrawildHUD::DrawHUD()
 void AAstrawildHUD::ToggleDebugOverlay()
 {
 	bShowDebugOverlay = !bShowDebugOverlay;
+}
+
+void AAstrawildHUD::ToggleInventoryMenu()
+{
+	bShowInventoryMenu = !bShowInventoryMenu;
 }
 
 void AAstrawildHUD::DrawHealthAndStaminaBars(AAstrawildCharacter* PlayerChar)
@@ -64,24 +77,16 @@ void AAstrawildHUD::DrawHealthAndStaminaBars(AAstrawildCharacter* PlayerChar)
 
 	// 1. Health Bar
 	const float HealthPct = FMath::Clamp(PlayerChar->Attributes->GetHealthPercent(), 0.0f, 1.0f);
-	
-	// Background
 	DrawRect(FColor(30, 30, 30, 200), MarginX, MarginY, BarWidth, BarHeight);
-	// Fill
 	DrawRect(HealthBarColor, MarginX + 2.0f, MarginY + 2.0f, (BarWidth - 4.0f) * HealthPct, BarHeight - 4.0f);
-	// Text
 	const FString HealthText = FString::Printf(TEXT("HP: %.0f / %.0f"), PlayerChar->Attributes->CurrentHealth, PlayerChar->Attributes->MaxHealth);
 	DrawText(HealthText, FColor::White, MarginX + 8.0f, MarginY + 2.0f, nullptr, 0.9f);
 
 	// 2. Stamina Bar
 	const float StaminaPct = FMath::Clamp(PlayerChar->Attributes->GetStaminaPercent(), 0.0f, 1.0f);
 	const float StaminaY = MarginY + BarHeight + 8.0f;
-
-	// Background
 	DrawRect(FColor(30, 30, 30, 200), MarginX, StaminaY, BarWidth * 0.85f, BarHeight * 0.75f);
-	// Fill
 	DrawRect(StaminaBarColor, MarginX + 2.0f, StaminaY + 2.0f, (BarWidth * 0.85f - 4.0f) * StaminaPct, (BarHeight * 0.75f) - 4.0f);
-	// Text
 	const FString StaminaText = FString::Printf(TEXT("SP: %.0f / %.0f"), PlayerChar->Attributes->CurrentStamina, PlayerChar->Attributes->MaxStamina);
 	DrawText(StaminaText, FColor::White, MarginX + 8.0f, StaminaY + 1.0f, nullptr, 0.8f);
 }
@@ -90,10 +95,8 @@ void AAstrawildHUD::DrawCenterCrosshair(AAstrawildCharacter* PlayerChar)
 {
 	const FVector2D Center(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.5f);
 	const float CrosshairSize = 4.0f;
-
 	const FColor ColorToUse = (PlayerChar && PlayerChar->bHasFocusedInteractable) ? CrosshairHighlightColor : CrosshairColor;
 
-	// Center dot & subtle reticle
 	DrawRect(ColorToUse, Center.X - CrosshairSize * 0.5f, Center.Y - CrosshairSize * 0.5f, CrosshairSize, CrosshairSize);
 	DrawRect(ColorToUse, Center.X - 12.0f, Center.Y - 1.0f, 6.0f, 2.0f);
 	DrawRect(ColorToUse, Center.X + 6.0f, Center.Y - 1.0f, 6.0f, 2.0f);
@@ -112,15 +115,12 @@ void AAstrawildHUD::DrawInteractionPrompt(AAstrawildCharacter* PlayerChar)
 	const float CenterX = Canvas->ClipX * 0.5f;
 	const float PromptY = Canvas->ClipY * 0.65f;
 
-	// Estimate text width
 	const float BoxWidth = FMath::Max(220.0f, (float)PromptString.Len() * 9.5f);
 	const float BoxHeight = 36.0f;
 	const float BoxX = CenterX - (BoxWidth * 0.5f);
 
-	// Semi-transparent stylish badge background
 	DrawRect(FColor(15, 20, 25, 220), BoxX, PromptY, BoxWidth, BoxHeight);
-	DrawRect(FColor(243, 156, 18), BoxX, PromptY, 4.0f, BoxHeight); // Left accent bar
-
+	DrawRect(FColor(243, 156, 18), BoxX, PromptY, 4.0f, BoxHeight);
 	DrawText(PromptString, FColor::White, BoxX + 16.0f, PromptY + 10.0f, nullptr, 1.1f);
 }
 
@@ -134,7 +134,7 @@ void AAstrawildHUD::DrawActiveCompanionBadge(AAstrawildCharacter* PlayerChar)
 	const float PosX = 30.0f;
 	const float PosY = Canvas->ClipY - 110.0f;
 
-	// 1. Capture Feedback Banner (if active)
+	// 1. Capture Feedback Banner
 	if (!PlayerChar->Capture->LastCaptureFeedback.IsEmpty())
 	{
 		const FString FeedbackStr = PlayerChar->Capture->LastCaptureFeedback.ToString();
@@ -149,7 +149,7 @@ void AAstrawildHUD::DrawActiveCompanionBadge(AAstrawildCharacter* PlayerChar)
 
 	// 2. Active Party Roster
 	DrawRect(FColor(20, 25, 30, 210), PosX, PosY, 280.0f, 85.0f);
-	DrawRect(FColor(52, 152, 219), PosX, PosY, 4.0f, 85.0f); // Blue accent
+	DrawRect(FColor(52, 152, 219), PosX, PosY, 4.0f, 85.0f);
 
 	if (PlayerChar->Capture->ActiveParty.Num() > 0 && PlayerChar->Capture->ActiveParty.IsValidIndex(PlayerChar->Capture->SelectedPartyIndex))
 	{
@@ -173,6 +173,75 @@ void AAstrawildHUD::DrawActiveCompanionBadge(AAstrawildCharacter* PlayerChar)
 	}
 }
 
+void AAstrawildHUD::DrawInventoryAndCraftingMenu(AAstrawildCharacter* PlayerChar)
+{
+	if (!PlayerChar)
+	{
+		return;
+	}
+
+	const float MenuWidth = 720.0f;
+	const float MenuHeight = 420.0f;
+	const float PosX = (Canvas->ClipX - MenuWidth) * 0.5f;
+	const float PosY = (Canvas->ClipY - MenuHeight) * 0.5f;
+
+	// Background & Header
+	DrawRect(FColor(15, 20, 25, 240), PosX, PosY, MenuWidth, MenuHeight);
+	DrawRect(FColor(241, 196, 15), PosX, PosY, MenuWidth, 4.0f);
+	DrawText(TEXT("=== SURVIVAL BAG & CRAFTING WORKSTATION [Press I to Close] ==="), FColor(241, 196, 15), PosX + 16.0f, PosY + 12.0f, nullptr, 0.95f);
+
+	// 1. Left Column: Inventory
+	const float LeftX = PosX + 20.0f;
+	float LeftY = PosY + 45.0f;
+	DrawText(TEXT("--- INVENTORY STORAGE ---"), FColor(52, 152, 219), LeftX, LeftY, nullptr, 0.85f);
+	LeftY += 22.0f;
+
+	if (PlayerChar->Inventory)
+	{
+		int32 Displayed = 0;
+		for (int32 i = 0; i < PlayerChar->Inventory->Slots.Num(); ++i)
+		{
+			const FAstrawildItemSlot& Slot = PlayerChar->Inventory->Slots[i];
+			if (Slot.IsValid())
+			{
+				Displayed++;
+				const FString ItemLine = FString::Printf(TEXT("[%d] %s x%d"), Displayed, *Slot.ItemTag.ToString(), Slot.Quantity);
+				DrawText(ItemLine, FColor::White, LeftX, LeftY, nullptr, 0.8f);
+				LeftY += 18.0f;
+				if (Displayed >= 15) break;
+			}
+		}
+
+		if (Displayed == 0)
+		{
+			DrawText(TEXT("(Bag is empty. Chop trees or mine rocks!)"), FColor(149, 165, 166), LeftX, LeftY, nullptr, 0.8f);
+		}
+	}
+
+	// 2. Right Column: Crafting & Building Station
+	const float RightX = PosX + 370.0f;
+	float RightY = PosY + 45.0f;
+	DrawText(TEXT("--- CRAFTING & REST POINT BUILDING ---"), FColor(46, 204, 113), RightX, RightY, nullptr, 0.85f);
+	RightY += 22.0f;
+
+	const FString RecipesText[] = {
+		TEXT("1. Primal Stone Axe (5 Sunwood, 3 LumenStone)"),
+		TEXT("2. Primal Stone Pick (5 Sunwood, 3 LumenStone)"),
+		TEXT("3. Astra Resonator T1 (1 Shard, 2 Stone, 3 Wood)"),
+		TEXT("4. Astra Resonator T2 (3 Shard, 5 Stone)"),
+		TEXT("5. Campfire / Rest Point (4 Sunwood, 2 LumenStone)"),
+		TEXT("6. Rest Shelter Bed (6 Sunwood)")
+	};
+
+	for (int32 r = 0; r < 6; ++r)
+	{
+		DrawText(RecipesText[r], FColor(230, 230, 230), RightX, RightY, nullptr, 0.8f);
+		RightY += 22.0f;
+	}
+
+	DrawText(TEXT("Use Console commands or Building wheel to construct!"), FColor(243, 156, 18), RightX, RightY + 20.0f, nullptr, 0.78f);
+}
+
 void AAstrawildHUD::DrawDebugOverlay(AAstrawildCharacter* PlayerChar)
 {
 	const float OverlayWidth = 360.0f;
@@ -180,9 +249,8 @@ void AAstrawildHUD::DrawDebugOverlay(AAstrawildCharacter* PlayerChar)
 	const float PosX = Canvas->ClipX - OverlayWidth - 20.0f;
 	const float PosY = 20.0f;
 
-	// Background
 	DrawRect(FColor(10, 15, 20, 220), PosX, PosY, OverlayWidth, OverlayHeight);
-	DrawRect(FColor(46, 204, 113), PosX, PosY, OverlayWidth, 3.0f); // Top accent
+	DrawRect(FColor(46, 204, 113), PosX, PosY, OverlayWidth, 3.0f);
 
 	const FString StateStr = UEnum::GetValueAsString(PlayerChar->GetCurrentMovementState());
 	const FVector Vel = PlayerChar->GetVelocity();
@@ -205,7 +273,7 @@ void AAstrawildHUD::DrawDebugOverlay(AAstrawildCharacter* PlayerChar)
 		PlayerChar->Attributes ? PlayerChar->Attributes->CurrentStamina : 0.0f,
 		PlayerChar->Attributes ? PlayerChar->Attributes->MaxStamina : 0.0f,
 		PlayerChar->bIsDodging);
-	const FString DebugHelp = TEXT("Press [F1] or [Tab] to toggle overlay | Controls: WASD/Shift/Space/Alt/E/LMB/Q/T");
+	const FString DebugHelp = TEXT("Press [F1/Tab] Debug | [I] Inventory/Crafting | WASD/E/LMB/Q/T");
 
 	float LineY = PosY + 10.0f;
 	DrawText(DebugTitle, FColor(46, 204, 113), PosX + 12.0f, LineY, nullptr, 0.9f);

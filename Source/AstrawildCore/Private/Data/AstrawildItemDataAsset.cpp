@@ -3,12 +3,9 @@
 #include "Data/AstrawildItemDataAsset.h"
 
 UAstrawildItemDataAsset::UAstrawildItemDataAsset()
-	: Category(EAstrawildItemCategory::Resource)
+	: ItemType(EAstrawildItemType::Material)
 	, MaxStackSize(99)
-	, Weight(0.5f)
+	, UnitWeight(0.1f)
 	, MaxDurability(100.0f)
-	, PreferredHarvestType(EAstrawildHarvestType::Lumber)
-	, HarvestEfficiencyPower(1.0f)
-	, WeaponDamageBonus(0.0f)
 {
 }

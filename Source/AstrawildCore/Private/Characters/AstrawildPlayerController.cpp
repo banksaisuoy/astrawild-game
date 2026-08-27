@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Characters/AstrawildPlayerController.h"
 #include "Characters/AstrawildCharacter.h"
@@ -31,6 +31,8 @@ void AAstrawildPlayerController::SetupInputComponent()
 	{
 		InputComponent->BindKey(EKeys::F1, IE_Pressed, this, &AAstrawildPlayerController::ToggleDebugHUD);
 		InputComponent->BindKey(EKeys::Tab, IE_Pressed, this, &AAstrawildPlayerController::ToggleDebugHUD);
+		InputComponent->BindKey(EKeys::I, IE_Pressed, this, &AAstrawildPlayerController::ToggleInventoryMenu);
+		InputComponent->BindKey(EKeys::B, IE_Pressed, this, &AAstrawildPlayerController::Astrawild_BuildCampfire);
 	}
 }
 
@@ -59,6 +61,61 @@ void AAstrawildPlayerController::ToggleDebugHUD()
 	{
 		MyHUD->ToggleDebugOverlay();
 		UE_LOG(LogAstrawild, Log, TEXT("Toggled Debug HUD Overlay: %d"), MyHUD->bShowDebugOverlay);
+	}
+}
+
+void AAstrawildPlayerController::ToggleInventoryMenu()
+{
+	AAstrawildHUD* MyHUD = Cast<AAstrawildHUD>(GetHUD());
+	if (MyHUD)
+	{
+		MyHUD->ToggleInventoryMenu();
+		SetUIMode(MyHUD->bShowInventoryMenu);
+		UE_LOG(LogAstrawild, Log, TEXT("Toggled Inventory Menu: %d"), MyHUD->bShowInventoryMenu);
+	}
+}
+
+void AAstrawildPlayerController::Astrawild_ToggleInventory()
+{
+	ToggleInventoryMenu();
+}
+
+void AAstrawildPlayerController::Astrawild_BuildCampfire()
+{
+	AAstrawildCharacter* Char = Cast<AAstrawildCharacter>(GetPawn());
+	if (Char && Char->Building)
+	{
+		if (Char->Building->bIsBuildModeActive)
+		{
+			Char->Building->ExitBuildMode();
+		}
+		else
+		{
+			TArray<FAstrawildRecipeIngredient> Cost;
+			Cost.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false), 4 });
+			Cost.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false), 2 });
+
+			Char->Building->EnterBuildMode(nullptr, FGameplayTag::RequestGameplayTag(FName("Building.Campfire"), false), Cost);
+		}
+	}
+}
+
+void AAstrawildPlayerController::Astrawild_BuildBed()
+{
+	AAstrawildCharacter* Char = Cast<AAstrawildCharacter>(GetPawn());
+	if (Char && Char->Building)
+	{
+		if (Char->Building->bIsBuildModeActive)
+		{
+			Char->Building->ExitBuildMode();
+		}
+		else
+		{
+			TArray<FAstrawildRecipeIngredient> Cost;
+			Cost.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false), 6 });
+
+			Char->Building->EnterBuildMode(nullptr, FGameplayTag::RequestGameplayTag(FName("Building.RestBed"), false), Cost);
+		}
 	}
 }
 

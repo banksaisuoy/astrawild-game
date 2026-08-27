@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -26,6 +26,9 @@ public:
 	bool bShowDebugOverlay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD Display")
+	bool bShowInventoryMenu;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD Display")
 	FColor HealthBarColor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD Display")
@@ -41,10 +44,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void ToggleDebugOverlay();
 
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void ToggleInventoryMenu();
+
 private:
 	void DrawHealthAndStaminaBars(AAstrawildCharacter* PlayerChar);
 	void DrawCenterCrosshair(AAstrawildCharacter* PlayerChar);
 	void DrawInteractionPrompt(AAstrawildCharacter* PlayerChar);
 	void DrawActiveCompanionBadge(AAstrawildCharacter* PlayerChar);
 	void DrawDebugOverlay(AAstrawildCharacter* PlayerChar);
+	void DrawInventoryAndCraftingMenu(AAstrawildCharacter* PlayerChar);
 };

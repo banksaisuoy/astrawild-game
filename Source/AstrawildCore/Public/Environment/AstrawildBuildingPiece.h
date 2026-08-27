@@ -57,9 +57,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Building Events")
 	FOnBuildingDestroyedSignature OnBuildingDestroyed;
 
-public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building Properties")
+	TArray<FAstrawildRecipeIngredient> DismantleRefund;
+
 	UFUNCTION(BlueprintCallable, Category = "Building")
 	void Interact(AActor* InteractorActor);
+
+	UFUNCTION(BlueprintCallable, Category = "Building")
+	bool DismantleBuilding(AActor* Instigator);
 
 	UFUNCTION(BlueprintCallable, Category = "Building")
 	void TakeBuildingDamage(float DamageAmount);

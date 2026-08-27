@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -59,6 +59,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	const TArray<FAstrawildItemSlot>& GetSlots() const { return Slots; }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool MoveOrSwapSlot(int32 FromIndex, int32 ToIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool SplitSlot(int32 FromIndex, int32 ToIndex, int32 Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void ClearInventory();

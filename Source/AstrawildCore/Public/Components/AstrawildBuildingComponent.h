@@ -11,6 +11,7 @@ class AAstrawildBuildingPiece;
 class UAstrawildInventoryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBuildingPlacedSignature, AAstrawildBuildingPiece*, PlacedBuilding);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBuildingFailedSignature, const FText&, FailureReason);
 
 UCLASS(ClassGroup = (Astrawild), meta = (BlueprintSpawnableComponent))
 class ASTRAWILDCORE_API UAstrawildBuildingComponent : public UActorComponent
@@ -38,10 +39,31 @@ public:
 	float MaxPlacementDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
+	bool bEnableGridSnap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
+	float GridSnapSize;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
 	TArray<FAstrawildRecipeIngredient> ActiveBuildingCost;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
+	FVector CurrentGhostLocation;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
+	FRotator CurrentGhostRotation;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
+	bool bIsValidPlacementLocation;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Building")
+	FText LastPlacementErrorMessage;
 
 	UPROPERTY(BlueprintAssignable, Category = "Building|Events")
 	FOnBuildingPlacedSignature OnBuildingPlaced;
+
+	UPROPERTY(BlueprintAssignable, Category = "Building|Events")
+	FOnBuildingFailedSignature OnBuildingFailed;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Building")
@@ -59,10 +81,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Building")
 	bool GetPlacementTransform(FTransform& OutTransform) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Building")
+	void RotatePreview(float Degrees = 45.0f);
+
 private:
-	FVector CurrentGhostLocation;
-	FRotator CurrentGhostRotation;
-	bool bIsValidPlacementLocation;
+	float PreviewRotationYaw;
+	bool bIsPlacingPiece;
 
 	TWeakObjectPtr<UAstrawildInventoryComponent> CachedInventory;
 	UAstrawildInventoryComponent* GetInventory();

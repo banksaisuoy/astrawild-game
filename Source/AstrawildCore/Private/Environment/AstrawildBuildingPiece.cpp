@@ -57,6 +57,47 @@ void AAstrawildBuildingPiece::Interact(AActor* InteractorActor)
 	OnBuildingInteracted.Broadcast(InteractorActor, this);
 }
 
+bool AAstrawildBuildingPiece::DismantleBuilding(AActor* Instigator)
+{
+	if (!Instigator)
+	{
+		return false;
+	}
+
+	UAstrawildInventoryComponent* Inv = Instigator->FindComponentByClass<UAstrawildInventoryComponent>();
+	if (Inv)
+	{
+		// Default refunds if not explicitly assigned
+		if (DismantleRefund.Num() == 0)
+		{
+			if (BuildingType == EAstrawildBuildingType::Campfire)
+			{
+				DismantleRefund.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false), 4 });
+				DismantleRefund.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false), 2 });
+			}
+			else if (BuildingType == EAstrawildBuildingType::RestBed)
+			{
+				DismantleRefund.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false), 6 });
+			}
+			else if (BuildingType == EAstrawildBuildingType::CraftingBench)
+			{
+				DismantleRefund.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false), 5 });
+				DismantleRefund.Add(FAstrawildRecipeIngredient{ FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false), 3 });
+			}
+		}
+
+		for (const FAstrawildRecipeIngredient& Refund : DismantleRefund)
+		{
+			Inv->AddItem(Refund.ItemTag, Refund.Quantity);
+		}
+	}
+
+	UE_LOG(LogAstrawild, Log, TEXT("Dismantled %s. Refunded materials to %s."), *GetName(), *Instigator->GetName());
+	OnBuildingDestroyed.Broadcast(this);
+	Destroy();
+	return true;
+}
+
 void AAstrawildBuildingPiece::TakeBuildingDamage(float DamageAmount)
 {
 	CurrentHealth = FMath::Max(0.0f, CurrentHealth - DamageAmount);
