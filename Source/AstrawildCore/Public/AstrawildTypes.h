@@ -500,3 +500,137 @@ struct ASTRAWILDCORE_API FAstrawildHarvestNodeSaveData
 	{
 	}
 };
+
+/**
+ * Isolated Player Profile State.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildPlayerProfile
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	int32 SchemaVersion = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	FGuid PlayerGuid;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	FTransform PlayerTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	float CurrentHealth = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	float CurrentStamina = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	float MaxStamina = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	int32 PlayerLevel = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	float CurrentEXP = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	TArray<FAstrawildItemSlot> InventorySlots;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	TArray<FAstrawildCapturedEchoData> ActiveParty;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	TArray<FAstrawildCapturedEchoData> ReserveStorage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	FTransform ActiveRespawnTransform;
+
+	FAstrawildPlayerProfile()
+		: SchemaVersion(1)
+		, PlayerGuid(FGuid::NewGuid())
+		, PlayerTransform(FTransform::Identity)
+		, CurrentHealth(100.0f)
+		, MaxHealth(100.0f)
+		, CurrentStamina(100.0f)
+		, MaxStamina(100.0f)
+		, PlayerLevel(1)
+		, CurrentEXP(0.0f)
+		, ActiveRespawnTransform(FTransform::Identity)
+	{
+	}
+};
+
+/**
+ * Isolated World Snapshot State.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildWorldSnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
+	int32 SchemaVersion = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
+	FDateTime SnapshotTimestamp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
+	TArray<FAstrawildBuildingSaveData> PlacedBuildings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
+	TArray<FAstrawildHarvestNodeSaveData> HarvestNodes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
+	float WorldGameTimeSeconds = 0.0f;
+
+	FAstrawildWorldSnapshot()
+		: SchemaVersion(1)
+		, SnapshotTimestamp(FDateTime::Now())
+		, WorldGameTimeSeconds(0.0f)
+	{
+	}
+};
+
+/**
+ * Isolated Settings & User Preferences Profile.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildSettingsProfile
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	int32 SchemaVersion = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	int32 ScalabilityTier = 2; // 0: Low, 1: Medium, 2: High, 3: Epic
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float MasterVolume = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float MusicVolume = 0.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float SFXVolume = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float MouseSensitivity = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	bool bInvertY = false;
+
+	FAstrawildSettingsProfile()
+		: SchemaVersion(1)
+		, ScalabilityTier(2)
+		, MasterVolume(1.0f)
+		, MusicVolume(0.8f)
+		, SFXVolume(1.0f)
+		, MouseSensitivity(1.0f)
+		, bInvertY(false)
+	{
+	}
+};

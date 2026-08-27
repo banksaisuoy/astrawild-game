@@ -1,17 +1,80 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SaveSystem/AstrawildSaveGame.h"
+#include "AstrawildLogChannels.h"
 
 UAstrawildSaveGame::UAstrawildSaveGame()
-	: SaveSlotName(TEXT("Slot_01"))
+	: SchemaVersion(1)
+	, SaveSlotName(TEXT("Slot_01"))
 	, SaveTimestamp(FDateTime::Now())
-	, PlayerTransform(FTransform::Identity)
-	, PlayerHealth(100.0f)
-	, PlayerMaxHealth(100.0f)
-	, PlayerStamina(100.0f)
-	, PlayerMaxStamina(100.0f)
-	, PlayerLevel(1)
-	, PlayerCurrentEXP(0.0f)
-	, WorldTimeOfDay(8.0f)
 {
+}
+
+bool UAstrawildSaveGame::ValidateAndSanitize()
+{
+	// 1. Sanitize Player Profile
+	PlayerProfile.CurrentHealth = FMath::Clamp(PlayerProfile.CurrentHealth, 1.0f, PlayerProfile.MaxHealth);
+	PlayerProfile.CurrentStamina = FMath::Clamp(PlayerProfile.CurrentStamina, 0.0f, PlayerProfile.MaxStamina);
+	PlayerProfile.PlayerLevel = FMath::Max(1, PlayerProfile.PlayerLevel);
+
+	// Sanitize inventory slot counts and negative values
+	for (FAstrawildItemSlot& Slot : PlayerProfile.InventorySlots)
+	{
+		if (Slot.Quantity < 0)
+		{
+			Slot.Clear();
+		}
+		else if (Slot.Quantity > 999)
+		{
+			Slot.Quantity = 999;
+		}
+	}
+
+	// 2. Sanitize Echoes
+	for (FAstrawildCapturedEchoData& Echo : PlayerProfile.ActiveParty)
+	{
+		Echo.CurrentHealth = FMath::Clamp(Echo.CurrentHealth, 1.0f, Echo.MaxHealth);
+		Echo.TrustScore = FMath::Clamp(Echo.TrustScore, 0.0f, 100.0f);
+		Echo.Level = FMath::Max(1, Echo.Level);
+	}
+
+	for (FAstrawildCapturedEchoData& Echo : PlayerProfile.ReserveStorage)
+	{
+		Echo.CurrentHealth = FMath::Clamp(Echo.CurrentHealth, 1.0f, Echo.MaxHealth);
+		Echo.TrustScore = FMath::Clamp(Echo.TrustScore, 0.0f, 100.0f);
+		Echo.Level = FMath::Max(1, Echo.Level);
+	}
+
+	// 3. Sanitize World Buildings
+	for (int32 i = WorldSnapshot.PlacedBuildings.Num() - 1; i >= 0; --i)
+	{
+		if (WorldSnapshot.PlacedBuildings[i].CurrentHealth <= 0.0f)
+		{
+			WorldSnapshot.PlacedBuildings.RemoveAt(i);
+		}
+	}
+
+	UE_LOG(LogAstrawildSave, Log, TEXT("Save data validated and sanitized successfully."));
+	return true;
+}
+
+bool UAstrawildSaveGame::MigrateSchema(int32 TargetVersion)
+{
+	if (SchemaVersion >= TargetVersion)
+	{
+		return true;
+	}
+
+	UE_LOG(LogAstrawildSave, Log, TEXT("Migrating Save Data from Schema v%d to v%d..."), SchemaVersion, TargetVersion);
+
+	// Schema v0 -> v1 Migration example
+	if (SchemaVersion == 0)
+	{
+		PlayerProfile.SchemaVersion = 1;
+		WorldSnapshot.SchemaVersion = 1;
+		SettingsProfile.SchemaVersion = 1;
+		SchemaVersion = 1;
+	}
+
+	return true;
 }

@@ -15,51 +15,29 @@ class ASTRAWILDCORE_API UAstrawildSaveGame : public USaveGame
 public:
 	UAstrawildSaveGame();
 
-	UPROPERTY(VisibleAnywhere, Category = "Save Metadata")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save Metadata")
+	int32 SchemaVersion;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save Metadata")
 	FString SaveSlotName;
 
-	UPROPERTY(VisibleAnywhere, Category = "Save Metadata")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save Metadata")
 	FDateTime SaveTimestamp;
 
-	// --- Player State ---
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	FTransform PlayerTransform;
+	// --- Modular Profiles ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save Player")
+	FAstrawildPlayerProfile PlayerProfile;
 
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	float PlayerHealth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save World")
+	FAstrawildWorldSnapshot WorldSnapshot;
 
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	float PlayerMaxHealth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save Settings")
+	FAstrawildSettingsProfile SettingsProfile;
 
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	float PlayerStamina;
+	// Migration & Integrity Methods
+	UFUNCTION(BlueprintCallable, Category = "Save System")
+	bool ValidateAndSanitize();
 
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	float PlayerMaxStamina;
-
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	int32 PlayerLevel;
-
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	float PlayerCurrentEXP;
-
-	UPROPERTY(VisibleAnywhere, Category = "Save Player")
-	TArray<FAstrawildItemSlot> PlayerInventory;
-
-	// --- Echoes ---
-	UPROPERTY(VisibleAnywhere, Category = "Save Echoes")
-	TArray<FAstrawildCapturedEchoData> ActivePartyEchoes;
-
-	UPROPERTY(VisibleAnywhere, Category = "Save Echoes")
-	TArray<FAstrawildCapturedEchoData> ReserveStorageEchoes;
-
-	// --- World Structures & Nodes ---
-	UPROPERTY(VisibleAnywhere, Category = "Save World")
-	TArray<FAstrawildBuildingSaveData> PlacedWorldBuildings;
-
-	UPROPERTY(VisibleAnywhere, Category = "Save World")
-	TArray<FAstrawildHarvestNodeSaveData> HarvestNodes;
-
-	UPROPERTY(VisibleAnywhere, Category = "Save World")
-	float WorldTimeOfDay;
+	UFUNCTION(BlueprintCallable, Category = "Save System")
+	bool MigrateSchema(int32 TargetVersion);
 };

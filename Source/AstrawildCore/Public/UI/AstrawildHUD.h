@@ -54,4 +54,5 @@ private:
 	void DrawActiveCompanionBadge(AAstrawildCharacter* PlayerChar);
 	void DrawDebugOverlay(AAstrawildCharacter* PlayerChar);
 	void DrawInventoryAndCraftingMenu(AAstrawildCharacter* PlayerChar);
+	void DrawSaveStatusBanner();
 };

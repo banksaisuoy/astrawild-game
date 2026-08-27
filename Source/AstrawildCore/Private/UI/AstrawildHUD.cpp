@@ -1,5 +1,3 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "UI/AstrawildHUD.h"
 #include "Characters/AstrawildCharacter.h"
 #include "Components/AstrawildAttributeComponent.h"
@@ -7,6 +5,7 @@
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildBuildingComponent.h"
+#include "SaveSystem/AstrawildSaveSubsystem.h"
 #include "Engine/Canvas.h"
 #include "Engine/Font.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -46,6 +45,8 @@ void AAstrawildHUD::DrawHUD()
 	{
 		DrawInventoryAndCraftingMenu(PlayerChar);
 	}
+
+	DrawSaveStatusBanner();
 
 	if (bShowDebugOverlay)
 	{
@@ -287,4 +288,39 @@ void AAstrawildHUD::DrawDebugOverlay(AAstrawildCharacter* PlayerChar)
 	DrawText(DebugStamina, FColor::Cyan, PosX + 12.0f, LineY, nullptr, 0.85f);
 	LineY += 24.0f;
 	DrawText(DebugHelp, FColor(149, 165, 166), PosX + 12.0f, LineY, nullptr, 0.72f);
+}
+
+void AAstrawildHUD::DrawSaveStatusBanner()
+{
+	UGameInstance* GI = GetGameInstance();
+	if (!GI)
+	{
+		return;
+	}
+
+	UAstrawildSaveSubsystem* SaveSys = GI->GetSubsystem<UAstrawildSaveSubsystem>();
+	if (!SaveSys || SaveSys->LastSaveStatusBanner.IsEmpty())
+	{
+		return;
+	}
+
+	const FString StatusStr = SaveSys->LastSaveStatusBanner.ToString();
+	const float BannerWidth = FMath::Max(320.0f, StatusStr.Len() * 9.5f);
+	const float BannerHeight = 32.0f;
+	const float PosX = (Canvas->ClipX - BannerWidth) * 0.5f;
+	const float PosY = 40.0f;
+
+	FColor AccentColor = FColor(46, 204, 113); // Green for success
+	if (SaveSys->bIsCurrentlySaving || StatusStr.Contains(TEXT("Saving")))
+	{
+		AccentColor = FColor(241, 196, 15); // Yellow for saving
+	}
+	else if (StatusStr.Contains(TEXT("Failed")) || StatusStr.Contains(TEXT("Corrupt")) || StatusStr.Contains(TEXT("Error")))
+	{
+		AccentColor = FColor(231, 76, 60); // Red for failure
+	}
+
+	DrawRect(FColor(15, 20, 25, 230), PosX, PosY, BannerWidth, BannerHeight);
+	DrawRect(AccentColor, PosX, PosY, BannerWidth, 3.0f);
+	DrawText(StatusStr, FColor::White, PosX + 14.0f, PosY + 8.0f, nullptr, 0.9f);
 }
