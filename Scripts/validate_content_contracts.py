@@ -14,6 +14,10 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_Biomes.csv": {"Name", "BiomeId", "Biome", "DisplayName", "MinLevel", "MaxLevel", "TemperatureLevel", "DominantElements", "ResourceTags"},
     ROOT / "Content/Astrawild/Data/Source/DT_SpawnRules.csv": {"Name", "SpawnRuleId", "SpeciesTag", "BiomeId", "MinLevel", "MaxLevel", "Weight", "MaxActive"},
     ROOT / "Content/Astrawild/Data/Source/DT_FastTravelSpires.csv": {"Name", "SpireId", "DisplayName", "BiomeId", "WorldTransform", "bUnlockedByDefault"},
+    ROOT / "Content/Astrawild/Data/Source/DT_EchoDex.csv": {"Name", "SpeciesTag", "SpeciesName", "SpeciesTitle", "LoreDescription", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "PassiveTraitTags", "WorkSuitabilityTags", "PartnerSkillTag", "MountProfileId", "bCanBeMounted", "BreedingGroupId", "EvolutionTargetId", "EvolutionLevel", "DexOrder"},
+    ROOT / "Content/Astrawild/Data/Source/DT_MountProfiles.csv": {"Name", "MountProfileId", "SaddleSocketName", "SpeedMultiplier", "StaminaCostPerSecond", "JumpMultiplier", "bAllowsCombatFromMount", "MountFamilyTag"},
+    ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv": {"Name", "BreedingGroupId", "CompatibleSpeciesTags", "IncubationDurationSeconds", "MutationChance", "MaxInheritedTraits"},
+    ROOT / "Content/Astrawild/Data/Source/DT_EchoTraits.csv": {"Name", "TraitTag", "DisplayName", "Description", "HealthMultiplier", "AttackMultiplier", "DefenseMultiplier", "WorkSpeedMultiplier"},
 }
 REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Animation/AstrawildAnimInstance.h",
@@ -33,7 +37,17 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Private/World/AstrawildWorldPartitionSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildEnvironmentHazardComponent.h",
     "Source/AstrawildCore/Private/World/AstrawildEnvironmentHazardComponent.cpp",
+    "Source/AstrawildCore/Public/Data/AstrawildEchoDexRow.h",
+    "Source/AstrawildCore/Private/Tests/AstrawildElementalMatrixTests.cpp",
+    "Source/AstrawildCore/Public/Components/AstrawildBreedingComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildBreedingComponent.cpp",
+    "Source/AstrawildCore/Public/Components/AstrawildMountComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildMountComponent.cpp",
+    "Source/AstrawildCore/Public/Data/AstrawildMountData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildBreedingData.h",
     "Docs/M1_WORLD_PARTITION_HANDOFF.md",
+    "Docs/M2_ELEMENT_COMPATIBILITY_TEST_PLAN.md",
+    "Docs/M2_ECHODEX_MOUNT_BREEDING_HANDOFF.md",
     "Config/AstrawildWorldPartition.ini",
 ]
 
@@ -123,6 +137,73 @@ if sum(row.get("bUnlockedByDefault", "").lower() == "true" for row in spire_rows
 for row in spire_rows:
     if row.get("BiomeId", "") not in expected_biomes:
         errors.append(f"DT_FastTravelSpires.csv references unknown biome {row.get('BiomeId', '')}")
+
+echo_dex_path = ROOT / "Content/Astrawild/Data/Source/DT_EchoDex.csv"
+echo_dex_rows = loaded_rows.get(echo_dex_path, [])
+if len(echo_dex_rows) != 30:
+    errors.append(f"DT_EchoDex.csv must contain exactly 30 rows; found {len(echo_dex_rows)}")
+else:
+    dex_orders = sorted(int(row["DexOrder"]) for row in echo_dex_rows)
+    if dex_orders != list(range(1, 31)):
+        errors.append("DT_EchoDex.csv DexOrder values must be exactly 1 through 30")
+echo_tags = [row.get("SpeciesTag", "") for row in echo_dex_rows]
+if len(echo_tags) != len(set(echo_tags)):
+    errors.append("DT_EchoDex.csv has duplicate SpeciesTag values")
+valid_elements = {"Neutral", "Solar", "Torrent", "Geo", "Aether", "Volt", "Glacial", "Abyssal", "Astra"}
+valid_roles = {"Exploration", "Combat", "BaseUtility"}
+for row in echo_dex_rows:
+    if row.get("PrimaryElement", "") not in valid_elements:
+        errors.append(f"DT_EchoDex.csv invalid PrimaryElement in row {row.get('Name', '<unknown>')}")
+    if row.get("Role", "") not in valid_roles:
+        errors.append(f"DT_EchoDex.csv invalid Role in row {row.get('Name', '<unknown>')}")
+    try:
+        if float(row["BaseMaxHealth"]) <= 0 or float(row["BaseAttackPower"]) <= 0 or float(row["CaptureDifficultyModifier"]) <= 0:
+            errors.append(f"DT_EchoDex.csv invalid base stat in row {row.get('Name', '<unknown>')}")
+        if int(row["EvolutionLevel"]) < 0 or int(row["DexOrder"]) < 1:
+            errors.append(f"DT_EchoDex.csv invalid evolution/order value in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_EchoDex.csv non-numeric stat in row {row.get('Name', '<unknown>')}")
+
+mount_path = ROOT / "Content/Astrawild/Data/Source/DT_MountProfiles.csv"
+mount_rows = loaded_rows.get(mount_path, [])
+if len(mount_rows) < 1:
+    errors.append("DT_MountProfiles.csv must contain at least one mount profile")
+mount_ids = {row.get("MountProfileId", "") for row in mount_rows}
+for row in mount_rows:
+    try:
+        if float(row["SpeedMultiplier"]) <= 0 or float(row["StaminaCostPerSecond"]) < 0 or float(row["JumpMultiplier"]) <= 0:
+            errors.append(f"DT_MountProfiles.csv invalid numeric value in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_MountProfiles.csv non-numeric value in row {row.get('Name', '<unknown>')}")
+for row in echo_dex_rows:
+    if row.get("bCanBeMounted", "").lower() == "true" and row.get("MountProfileId", "") not in mount_ids:
+        errors.append(f"DT_EchoDex.csv mounted species references missing profile {row.get('MountProfileId', '')}")
+
+breeding_path = ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv"
+breeding_rows = loaded_rows.get(breeding_path, [])
+breeding_ids = {row.get("BreedingGroupId", "") for row in breeding_rows}
+for row in breeding_rows:
+    try:
+        if float(row["IncubationDurationSeconds"]) < 1.0 or not 0.0 <= float(row["MutationChance"]) <= 1.0 or int(row["MaxInheritedTraits"]) < 0:
+            errors.append(f"DT_BreedingGroups.csv invalid numeric value in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_BreedingGroups.csv non-numeric value in row {row.get('Name', '<unknown>')}")
+for row in echo_dex_rows:
+    if row.get("BreedingGroupId", "") and row.get("BreedingGroupId", "") not in breeding_ids:
+        errors.append(f"DT_EchoDex.csv references missing breeding group {row.get('BreedingGroupId', '')}")
+
+trait_path = ROOT / "Content/Astrawild/Data/Source/DT_EchoTraits.csv"
+trait_rows = loaded_rows.get(trait_path, [])
+trait_tags = [row.get("TraitTag", "") for row in trait_rows]
+if len(trait_tags) != len(set(trait_tags)):
+    errors.append("DT_EchoTraits.csv has duplicate TraitTag values")
+for row in trait_rows:
+    try:
+        for key in ("HealthMultiplier", "AttackMultiplier", "DefenseMultiplier", "WorkSpeedMultiplier"):
+            if float(row[key]) < 0.0:
+                errors.append(f"DT_EchoTraits.csv negative multiplier in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_EchoTraits.csv non-numeric multiplier in row {row.get('Name', '<unknown>')}")
 
 for header in (ROOT / "Source").rglob("*.h"):
     text = header.read_text(encoding="utf-8", errors="replace")

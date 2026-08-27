@@ -24,10 +24,20 @@ FAstrawildEchoInstance UAstrawildEchoDataAsset::CreateInstance(int32 InLevel, co
 	Instance.SpeciesTag = SpeciesTag;
 	Instance.CustomNickname = CustomName.IsEmpty() ? SpeciesName : CustomName;
 	Instance.Level = FMath::Max(1, InLevel);
-	Instance.Element = ElementalAffinity;
+	Instance.ElementalAffinities = ElementalAffinities;
+	if (Instance.ElementalAffinities.Num() == 0)
+	{
+		Instance.ElementalAffinities.Add(ElementalAffinity);
+	}
+	Instance.Element = Instance.ElementalAffinities[0];
 	Instance.Role = Role;
 	Instance.OwnershipState = EAstrawildEchoOwnership::Wild;
 	Instance.TrustScore = 50.0f;
+	Instance.PassiveTraitTags = PassiveTraitTags;
+	Instance.WorkSuitabilityTags = WorkSuitabilityTags;
+	Instance.PartnerSkillTag = PartnerSkillTag;
+	Instance.MountProfileId = MountProfileId;
+	Instance.BreedingGroupId = BreedingGroupId;
 
 	// Stat scaling per level (+8% HP, +5% Atk, +4% Def per level)
 	const float LevelMultiplier = 1.0f + ((Instance.Level - 1) * 0.08f);

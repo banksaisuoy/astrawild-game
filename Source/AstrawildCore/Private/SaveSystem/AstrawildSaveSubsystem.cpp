@@ -8,6 +8,7 @@
 #include "Components/AstrawildCaptureComponent.h"
 #include "Components/AstrawildQuestComponent.h"
 #include "Components/AstrawildSurvivalComponent.h"
+#include "Components/AstrawildBreedingComponent.h"
 #include "Environment/AstrawildBuildingPiece.h"
 #include "Environment/AstrawildHarvestableNode.h"
 #include "World/AstrawildWorldPartitionSubsystem.h"
@@ -109,6 +110,11 @@ bool UAstrawildSaveSubsystem::CaptureWorldState(UAstrawildSaveGame* SaveObject)
 			{
 				PlayerChar->Survival->ExportToProfile(SaveObject->PlayerProfile);
 			}
+
+			if (PlayerChar->Breeding)
+			{
+				SaveObject->WorldSnapshot.IncubatingEggs = PlayerChar->Breeding->IncubatingEggs;
+			}
 		}
 
 	// 2. Capture Placed Buildings
@@ -188,6 +194,11 @@ bool UAstrawildSaveSubsystem::RestoreWorldState(UAstrawildSaveGame* SaveObject)
 			if (PlayerChar->Survival)
 			{
 				PlayerChar->Survival->ImportFromProfile(SaveObject->PlayerProfile);
+			}
+
+			if (PlayerChar->Breeding)
+			{
+				PlayerChar->Breeding->LoadIncubatingEggs(SaveObject->WorldSnapshot.IncubatingEggs);
 			}
 		}
 

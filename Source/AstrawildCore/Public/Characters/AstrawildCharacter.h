@@ -20,6 +20,8 @@ class UAstrawildFeedbackComponent;
 class UAstrawildQuestComponent;
 class UAstrawildSurvivalComponent;
 class UAstrawildEnvironmentHazardComponent;
+class UAstrawildMountComponent;
+class UAstrawildBreedingComponent;
 class UAnimInstance;
 class USkeletalMesh;
 class UInputMappingContext;
@@ -96,6 +98,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Survival")
 	TObjectPtr<UAstrawildEnvironmentHazardComponent> EnvironmentHazard;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Mount")
+	TObjectPtr<UAstrawildMountComponent> Mount;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Breeding")
+	TObjectPtr<UAstrawildBreedingComponent> Breeding;
 
 	// --- Movement Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")

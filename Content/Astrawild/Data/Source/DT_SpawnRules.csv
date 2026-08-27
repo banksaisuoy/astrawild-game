@@ -1,6 +1,6 @@
 Name,SpawnRuleId,SpeciesTag,BiomeId,MinLevel,MaxLevel,Weight,MaxActive
 Spawn_Lambit_Meadows,Spawn.Lambit.Meadows,Echo.Lambit,Biome.DawnMeadows,1,8,1.0,8
-Spawn_Cattiva_Meadows,Spawn.Cattiva.Meadows,Echo.Cattiva,Biome.DawnMeadows,2,10,0.8,6
+Spawn_Dawnling_Meadows,Spawn.Dawnling.Meadows,Echo.Dawnling,Biome.DawnMeadows,2,10,0.8,6
 Spawn_Pyrelite_Meadows,Spawn.Pyrelite.Meadows,Echo.Pyrelite,Biome.DawnMeadows,4,15,0.7,6
 Spawn_Thornback_Meadows,Spawn.Thornback.Meadows,Echo.Thornback,Biome.DawnMeadows,5,15,0.6,5
 Spawn_Aquavine_Rainforest,Spawn.Aquavine.Rainforest,Echo.Aquavine,Biome.SylvanRainforest,15,25,0.8,8

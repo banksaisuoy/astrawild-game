@@ -13,11 +13,17 @@
 UENUM(BlueprintType)
 enum class EAstrawildElement : uint8
 {
+	// Keep the first five serialized values stable for legacy assets and save data.
 	Neutral     UMETA(DisplayName = "Neutral / Primal"),
 	Solar       UMETA(DisplayName = "Solar / Flare"),
 	Torrent     UMETA(DisplayName = "Torrent / Hydration"),
 	Geo         UMETA(DisplayName = "Geo / Verdurous"),
-	Aether      UMETA(DisplayName = "Aether / Cosmic")
+	Aether      UMETA(DisplayName = "Aether / Legacy Cosmic"),
+	// Production elements are append-only. Never reorder the values above.
+	Volt        UMETA(DisplayName = "Volt / Storm"),
+	Glacial     UMETA(DisplayName = "Glacial / Frost"),
+	Abyssal     UMETA(DisplayName = "Abyssal / Void"),
+	Astra       UMETA(DisplayName = "Astra / Dawn")
 };
 
 /**
@@ -125,41 +131,63 @@ struct ASTRAWILDCORE_API FAstrawildElementalMatrix
 			return 1.0f;
 		}
 
-		// Solar > Geo (Earth/Flora) > Torrent (Water) > Solar
-		if (Attacker == EAstrawildElement::Solar && Defender == EAstrawildElement::Geo)
-		{
-			return 1.75f; // Super effective
-		}
-		if (Attacker == EAstrawildElement::Geo && Defender == EAstrawildElement::Torrent)
-		{
-			return 1.75f;
-		}
-		if (Attacker == EAstrawildElement::Torrent && Defender == EAstrawildElement::Solar)
-		{
-			return 1.75f;
-		}
-
-		// Disadvantaged reverse
-		if (Attacker == EAstrawildElement::Solar && Defender == EAstrawildElement::Torrent)
-		{
-			return 0.5f;
-		}
-		if (Attacker == EAstrawildElement::Torrent && Defender == EAstrawildElement::Geo)
-		{
-			return 0.5f;
-		}
-		if (Attacker == EAstrawildElement::Geo && Defender == EAstrawildElement::Solar)
-		{
-			return 0.5f;
-		}
-
-		// Same element resistance
 		if (Attacker == Defender)
 		{
 			return 0.75f;
 		}
 
+		// Production six-way loop: Abyssal > Solar > Glacial > Geo > Volt > Torrent > Abyssal.
+		if ((Attacker == EAstrawildElement::Abyssal && Defender == EAstrawildElement::Solar) ||
+			(Attacker == EAstrawildElement::Solar && Defender == EAstrawildElement::Glacial) ||
+			(Attacker == EAstrawildElement::Glacial && Defender == EAstrawildElement::Geo) ||
+			(Attacker == EAstrawildElement::Geo && Defender == EAstrawildElement::Volt) ||
+			(Attacker == EAstrawildElement::Volt && Defender == EAstrawildElement::Torrent) ||
+			(Attacker == EAstrawildElement::Torrent && Defender == EAstrawildElement::Abyssal))
+		{
+			return 1.75f;
+		}
+
+		if ((Attacker == EAstrawildElement::Solar && Defender == EAstrawildElement::Abyssal) ||
+			(Attacker == EAstrawildElement::Glacial && Defender == EAstrawildElement::Solar) ||
+			(Attacker == EAstrawildElement::Geo && Defender == EAstrawildElement::Glacial) ||
+			(Attacker == EAstrawildElement::Volt && Defender == EAstrawildElement::Geo) ||
+			(Attacker == EAstrawildElement::Torrent && Defender == EAstrawildElement::Volt) ||
+			(Attacker == EAstrawildElement::Abyssal && Defender == EAstrawildElement::Torrent))
+		{
+			return 0.50f;
+		}
+
+		// Legacy compatibility edges from the vertical slice remain valid.
+		if ((Attacker == EAstrawildElement::Solar && Defender == EAstrawildElement::Geo) ||
+			(Attacker == EAstrawildElement::Geo && Defender == EAstrawildElement::Torrent) ||
+			(Attacker == EAstrawildElement::Torrent && Defender == EAstrawildElement::Solar))
+		{
+			return 1.75f;
+		}
+
+		if ((Attacker == EAstrawildElement::Geo && Defender == EAstrawildElement::Solar) ||
+			(Attacker == EAstrawildElement::Torrent && Defender == EAstrawildElement::Geo) ||
+			(Attacker == EAstrawildElement::Solar && Defender == EAstrawildElement::Torrent))
+		{
+			return 0.50f;
+		}
+
 		return 1.0f;
+	}
+
+	static float GetMultiplier(EAstrawildElement Attacker, const TArray<EAstrawildElement>& Defenders)
+	{
+		if (Defenders.Num() == 0)
+		{
+			return 1.0f;
+		}
+
+		float Multiplier = 1.0f;
+		for (const EAstrawildElement Defender : Defenders)
+		{
+			Multiplier *= GetMultiplier(Attacker, Defender);
+		}
+		return FMath::Clamp(Multiplier, 0.25f, 2.50f);
 	}
 };
 
@@ -475,6 +503,53 @@ struct ASTRAWILDCORE_API FAstrawildDamageEvent
 };
 
 /**
+ * Serialized egg state. This is intentionally data-only; incubation actors can consume it later.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildEchoEggData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	FGuid EggId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	FName BreedingGroupId = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	FGameplayTag OffspringSpeciesTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	FGuid ParentAId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	FGuid ParentBId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float IncubationProgress = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg", meta = (ClampMin = "1.0"))
+	float IncubationDurationSeconds = 900.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	int32 Generation = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	TArray<EAstrawildElement> InheritedElementalAffinities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	FGameplayTagContainer InheritedPassiveTraits;
+
+	FAstrawildEchoEggData()
+		: EggId(FGuid::NewGuid())
+		, IncubationProgress(0.0f)
+		, IncubationDurationSeconds(900.0f)
+		, Generation(1)
+	{
+	}
+};
+
+/**
  * Complete Instance and Serialized Data for an Echo (Wild, Companion, Worker, or Stored).
  */
 USTRUCT(BlueprintType)
@@ -512,8 +587,12 @@ struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	float TrustScore = 50.0f;
 
+	// Legacy primary element remains serialized for existing saves.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	EAstrawildElement Element = EAstrawildElement::Neutral;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
+	TArray<EAstrawildElement> ElementalAffinities;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	EAstrawildEchoRole Role = EAstrawildEchoRole::Combat;
@@ -523,6 +602,33 @@ struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	FGameplayTagContainer PersonalityTraits;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Traits")
+	FGameplayTagContainer PassiveTraitTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Work")
+	FGameplayTagContainer WorkSuitabilityTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Partner")
+	FGameplayTag PartnerSkillTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Mount")
+	FName MountProfileId = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Breeding")
+	FName BreedingGroupId = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Breeding")
+	FGuid ParentAId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Breeding")
+	FGuid ParentBId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Breeding")
+	int32 Generation = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Breeding")
+	int32 MutationCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	TArray<FGameplayTag> EquippedAbilities;
@@ -718,6 +824,9 @@ struct ASTRAWILDCORE_API FAstrawildWorldSnapshot
 	// Additive field: legacy schema v1 saves deserialize with an empty array and remain valid.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot|Fast Travel")
 	TArray<FName> DiscoveredSpireIds;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot|Breeding")
+	TArray<FAstrawildEchoEggData> IncubatingEggs;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
 	float WorldGameTimeSeconds = 0.0f;

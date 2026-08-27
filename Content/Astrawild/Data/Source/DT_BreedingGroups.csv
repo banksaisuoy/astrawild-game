@@ -1,0 +1,8 @@
+Name,BreedingGroupId,CompatibleSpeciesTags,IncubationDurationSeconds,MutationChance,MaxInheritedTraits
+Group_Beast,Beast,"(Echo.Lambit,Echo.Dawnling,Echo.Pyrelite,Echo.Thornback,Echo.Cinderclaw,Echo.Terradon,Echo.Ignisaur,Echo.Brambletusk,Echo.Craggle,Echo.Auroroceros)",900,0.02,3
+Group_Amphibian,Amphibian,"(Echo.Aquavine,Echo.Sparkfin,Echo.Torrentail,Echo.Miremaw,Echo.Tidehorn,Echo.Stormshell,Echo.Flareelk)",720,0.025,3
+Group_Flora,Flora,"(Echo.Verdantor,Echo.Mossprout,Echo.Nightbloom)",840,0.02,3
+Group_Avian,Avian,"(Echo.Cryovex,Echo.Emberwing,Echo.Skyrill,Echo.Moonmote,Echo.Lumifly)",660,0.03,3
+Group_Insect,Insect,"(Echo.Voidmantis)",600,0.04,2
+Group_Mythic,Mythic,"(Echo.FirstDawnDragon)",1800,0.0,1
+Group_Alpha,Alpha,"(Echo.SolarixAlpha)",1800,0.0,1

@@ -14,6 +14,8 @@
 #include "Components/AstrawildQuestComponent.h"
 #include "Components/AstrawildSurvivalComponent.h"
 #include "World/AstrawildEnvironmentHazardComponent.h"
+#include "Components/AstrawildMountComponent.h"
+#include "Components/AstrawildBreedingComponent.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
@@ -76,6 +78,8 @@ AAstrawildCharacter::AAstrawildCharacter()
 	Quest = CreateDefaultSubobject<UAstrawildQuestComponent>(TEXT("Quest"));
 	Survival = CreateDefaultSubobject<UAstrawildSurvivalComponent>(TEXT("Survival"));
 	EnvironmentHazard = CreateDefaultSubobject<UAstrawildEnvironmentHazardComponent>(TEXT("EnvironmentHazard"));
+	Mount = CreateDefaultSubobject<UAstrawildMountComponent>(TEXT("Mount"));
+	Breeding = CreateDefaultSubobject<UAstrawildBreedingComponent>(TEXT("Breeding"));
 }
 
 void AAstrawildCharacter::BeginPlay()
@@ -153,6 +157,12 @@ void AAstrawildCharacter::Tick(float DeltaTime)
 		{
 			InputStopSprint();
 		}
+	}
+
+	if (!bIsDodging)
+	{
+		const float MountMultiplier = Mount && Mount->IsMounted() ? Mount->GetActiveSpeedMultiplier() : 1.0f;
+		GetCharacterMovement()->MaxWalkSpeed = (bIsSprinting ? SprintSpeed : WalkSpeed) * MountMultiplier;
 	}
 
 	UpdateMovementState();

@@ -33,8 +33,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Identification")
 	FText LoreDescription;
 
+	// Legacy primary element field is intentionally retained for old assets.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Classification")
 	EAstrawildElement ElementalAffinity;
+
+	// New assets should put primary affinity first; an empty array falls back to ElementalAffinity.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Classification")
+	TArray<EAstrawildElement> ElementalAffinities;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Classification")
 	EAstrawildEchoRole Role;
@@ -67,6 +72,24 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Personality")
 	TArray<FGameplayTag> DefaultPersonalityPool;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Traits")
+	FGameplayTagContainer PassiveTraitTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Traits")
+	FGameplayTagContainer WorkSuitabilityTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Partner")
+	FGameplayTag PartnerSkillTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Mount")
+	FName MountProfileId = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Breeding")
+	FName BreedingGroupId = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Mount")
+	bool bCanBeMounted = false;
 
 	// --- Visuals & Audio ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")

@@ -1,0 +1,25 @@
+Name,TraitTag,DisplayName,Description,HealthMultiplier,AttackMultiplier,DefenseMultiplier,WorkSpeedMultiplier
+Trait_Calm,Trait.Calm,Calm,A calm Echo loses less trust during difficult tasks.,1.0,1.0,1.05,1.05
+Trait_Scout,Trait.Scout,Scout,Improves route finding and resource landmark discovery.,1.0,1.0,1.0,1.0
+Trait_Cheerful,Trait.Cheerful,Cheerful,Recovers morale faster after combat or failed work.,1.0,1.0,1.0,1.1
+Trait_HeatResistant,Trait.HeatResistant,Heat Resistant,Reduces the impact of hot biome hazard stress.,1.05,1.0,1.0,1.0
+Trait_Brave,Trait.Brave,Brave,Deals more damage while below half health.,1.0,1.1,1.0,1.0
+Trait_Sturdy,Trait.Sturdy,Sturdy,Increases maximum health and resistance to stagger.,1.15,1.0,1.1,0.95
+Trait_Guardian,Trait.Guardian,Guardian,Improves defensive partner actions around allies.,1.0,1.0,1.15,1.0
+Trait_Gentle,Trait.Gentle,Gentle,Improves capture trust gain and care interactions.,1.05,0.95,1.0,1.05
+Trait_Alert,Trait.Alert,Alert,Shortens reaction time for exploration and combat telegraphs.,1.0,1.05,1.0,1.0
+Trait_Overclock,Trait.Overclock,Overclock,Improves generating work but increases stamina use.,1.0,1.1,0.95,1.15
+Trait_Patient,Trait.Patient,Patient,Reduces work interruption from minor hazards.,1.0,1.0,1.05,1.1
+Trait_Ambusher,Trait.Ambusher,Ambusher,Deals bonus opening damage from stealth or concealment.,1.0,1.15,0.95,1.0
+Trait_Nurturing,Trait.Nurturing,Nurturing,Improves farming and healing task output.,1.0,1.0,1.0,1.2
+Trait_Rooted,Trait.Rooted,Rooted,Resists displacement while working or defending a base.,1.05,1.0,1.1,1.0
+Trait_Fierce,Trait.Fierce,Fierce,Favors direct combat and increases attack output.,1.0,1.15,0.95,0.95
+Trait_Hunter,Trait.Hunter,Hunter,Improves target acquisition against wild Echoes.,1.0,1.1,1.0,1.0
+Trait_Silent,Trait.Silent,Silent,Reduces detection range while exploring.,1.0,1.05,1.0,1.0
+Trait_ColdResistant,Trait.ColdResistant,Cold Resistant,Reduces the impact of glacial biome hazard stress.,1.05,1.0,1.0,1.0
+Trait_Curious,Trait.Curious,Curious,Improves discovery output from unexplored landmarks.,1.0,1.0,1.0,1.05
+Trait_Harvester,Trait.Harvester,Harvester,Improves gathering yield from natural nodes.,1.0,1.0,1.0,1.15
+Trait_PoisonWard,Trait.PoisonWard,Poison Ward,Reduces duration of toxin and corruption statuses.,1.05,1.0,1.05,1.0
+Trait_Hydrated,Trait.Hydrated,Hydrated,Recovers stamina more efficiently near water.,1.0,1.0,1.0,1.05
+Trait_Mythic,Trait.Mythic,Mythic,A rare trait reserved for world-story Echoes.,1.1,1.1,1.1,1.0
+Trait_Commander,Trait.Commander,Commander,Improves nearby companion coordination and partner skills.,1.0,1.05,1.05,1.05
