@@ -46,6 +46,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo State")
 	EAstrawildEchoState CurrentState;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo State")
+	bool bIsUndergoingCapture;
+
 	UPROPERTY(BlueprintAssignable, Category = "Echo Events")
 	FOnEchoStateChangedSignature OnEchoStateChanged;
 

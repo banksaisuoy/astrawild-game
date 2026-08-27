@@ -11,7 +11,8 @@ class AAstrawildEchoBase;
 class AAstrawildCaptureProjectile;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCaptureSuccessSignature, AActor*, TargetEcho, const FAstrawildCapturedEchoData&, EchoData, int32, PartySlot);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCaptureFailedSignature, AActor*, TargetEcho, int32, ShakesCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCaptureFailedSignature, AActor*, TargetEcho, int32, ShakesCompleted, const FText&, FailureReason);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCaptureFeedbackSignature, const FText&, FeedbackMessage, bool, bIsSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEchoSummonedSignature, AAstrawildEchoBase*, SummonedEcho);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEchoRecalledSignature);
 
@@ -30,6 +31,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Capture")
 	TSubclassOf<AAstrawildCaptureProjectile> ProjectileClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Capture")
+	float MaxCaptureRange;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Party", meta = (ClampMax = "5"))
 	TArray<FAstrawildCapturedEchoData> ActiveParty;
 
@@ -42,11 +46,21 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Companion")
 	TWeakObjectPtr<AAstrawildEchoBase> ActiveSummonedEcho;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Capture")
+	EAstrawildCaptureState CurrentCaptureState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Capture")
+	FText LastCaptureFeedback;
+
+	// --- Delegates ---
 	UPROPERTY(BlueprintAssignable, Category = "Capture|Events")
 	FOnCaptureSuccessSignature OnCaptureSuccess;
 
 	UPROPERTY(BlueprintAssignable, Category = "Capture|Events")
 	FOnCaptureFailedSignature OnCaptureFailed;
+
+	UPROPERTY(BlueprintAssignable, Category = "Capture|Events")
+	FOnCaptureFeedbackSignature OnCaptureFeedback;
 
 	UPROPERTY(BlueprintAssignable, Category = "Capture|Events")
 	FOnEchoSummonedSignature OnEchoSummoned;
@@ -56,10 +70,19 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Capture")
-	bool ThrowResonator(float Power = 1.0f);
+	bool ThrowResonator(float Power = 1.0f, FGameplayTag ResonatorItemTag = FGameplayTag());
+
+	UFUNCTION(BlueprintPure, Category = "Capture")
+	bool ValidateCapturePrerequisites(AAstrawildEchoBase* TargetEcho, FText& OutFailureReason) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Capture")
-	bool AttemptCapture(AAstrawildEchoBase* TargetEcho, float ResonatorPower, int32& OutShakesCompleted);
+	bool AttemptCapture(AAstrawildEchoBase* TargetEcho, float ResonatorPower, int32& OutShakesCompleted, FText& OutStatusReason);
+
+	UFUNCTION(BlueprintPure, Category = "Capture")
+	float CalculateCaptureProbability(AAstrawildEchoBase* TargetEcho, float ResonatorPower) const;
+
+	UFUNCTION(BlueprintPure, Category = "Capture")
+	float CalculateInitialTrust(AAstrawildEchoBase* TargetEcho) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Companion")
 	bool SummonSelectedCompanion();

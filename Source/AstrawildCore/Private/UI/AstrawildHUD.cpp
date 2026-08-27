@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/AstrawildHUD.h"
 #include "Characters/AstrawildCharacter.h"
@@ -132,24 +132,44 @@ void AAstrawildHUD::DrawActiveCompanionBadge(AAstrawildCharacter* PlayerChar)
 	}
 
 	const float PosX = 30.0f;
-	const float PosY = Canvas->ClipY - 70.0f;
+	const float PosY = Canvas->ClipY - 110.0f;
 
-	DrawRect(FColor(20, 25, 30, 200), PosX, PosY, 220.0f, 45.0f);
-	DrawRect(FColor(52, 152, 219), PosX, PosY, 4.0f, 45.0f); // Blue accent
+	// 1. Capture Feedback Banner (if active)
+	if (!PlayerChar->Capture->LastCaptureFeedback.IsEmpty())
+	{
+		const FString FeedbackStr = PlayerChar->Capture->LastCaptureFeedback.ToString();
+		const float BannerWidth = FMath::Max(320.0f, FeedbackStr.Len() * 9.0f);
+		const float BannerX = (Canvas->ClipX - BannerWidth) * 0.5f;
+		const float BannerY = 120.0f;
+
+		DrawRect(FColor(15, 20, 25, 230), BannerX, BannerY, BannerWidth, 36.0f);
+		DrawRect(FColor(241, 196, 15), BannerX, BannerY, BannerWidth, 3.0f);
+		DrawText(FeedbackStr, FColor::White, BannerX + 16.0f, BannerY + 10.0f, nullptr, 0.95f);
+	}
+
+	// 2. Active Party Roster
+	DrawRect(FColor(20, 25, 30, 210), PosX, PosY, 280.0f, 85.0f);
+	DrawRect(FColor(52, 152, 219), PosX, PosY, 4.0f, 85.0f); // Blue accent
 
 	if (PlayerChar->Capture->ActiveParty.Num() > 0 && PlayerChar->Capture->ActiveParty.IsValidIndex(PlayerChar->Capture->SelectedPartyIndex))
 	{
 		const FAstrawildCapturedEchoData& Echo = PlayerChar->Capture->ActiveParty[PlayerChar->Capture->SelectedPartyIndex];
-		const FString EchoStatus = PlayerChar->Capture->ActiveSummonedEcho.IsValid() ? TEXT("[SUMMONED]") : TEXT("[RECALLED]");
-		const FString Line1 = FString::Printf(TEXT("%s (Lv. %d) %s"), *Echo.SpeciesTag.ToString(), Echo.Level, *EchoStatus);
-		const FString Line2 = TEXT("Press [T] Summon/Recall  [MWheel] Cycle");
+		const FString EchoStatus = PlayerChar->Capture->ActiveSummonedEcho.IsValid() ? TEXT("[SUMMONED]") : TEXT("[READY]");
+		const FString SpeciesName = Echo.SpeciesTag.ToString();
+		const FString Line1 = FString::Printf(TEXT("Slot %d/%d: %s (Lv.%d) %s"),
+			PlayerChar->Capture->SelectedPartyIndex + 1, PlayerChar->Capture->ActiveParty.Num(), *SpeciesName, Echo.Level, *EchoStatus);
+		const FString Line2 = FString::Printf(TEXT("Trust: %.0f%% | HP: %.0f/%.0f | Element: %s"),
+			Echo.TrustScore, Echo.CurrentHealth, Echo.MaxHealth, *UEnum::GetValueAsString(Echo.Element));
+		const FString Line3 = TEXT("Press [T] Summon/Recall  [MWheel] Cycle Party");
 
-		DrawText(Line1, FColor(241, 196, 15), PosX + 10.0f, PosY + 6.0f, nullptr, 0.9f);
-		DrawText(Line2, FColor(189, 195, 199), PosX + 10.0f, PosY + 24.0f, nullptr, 0.75f);
+		DrawText(Line1, FColor(241, 196, 15), PosX + 10.0f, PosY + 8.0f, nullptr, 0.9f);
+		DrawText(Line2, FColor(46, 204, 113), PosX + 10.0f, PosY + 28.0f, nullptr, 0.85f);
+		DrawText(Line3, FColor(189, 195, 199), PosX + 10.0f, PosY + 48.0f, nullptr, 0.75f);
 	}
 	else
 	{
-		DrawText(TEXT("No Echo Companion in Party"), FColor(149, 165, 166), PosX + 10.0f, PosY + 14.0f, nullptr, 0.85f);
+		DrawText(TEXT("No Echo in Party (Throw [Q] Resonator to capture)"), FColor(149, 165, 166), PosX + 10.0f, PosY + 20.0f, nullptr, 0.85f);
+		DrawText(TEXT("Loot Monolith to obtain Astra Resonators!"), FColor(243, 156, 18), PosX + 10.0f, PosY + 45.0f, nullptr, 0.75f);
 	}
 }
 

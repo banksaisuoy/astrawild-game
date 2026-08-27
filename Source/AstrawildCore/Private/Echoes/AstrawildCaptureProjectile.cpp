@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Echoes/AstrawildCaptureProjectile.h"
 #include "Echoes/AstrawildEchoBase.h"
@@ -50,7 +50,8 @@ void AAstrawildCaptureProjectile::HandleHit(UPrimitiveComponent* HitComp, AActor
 		if (CaptureComp)
 		{
 			int32 OutShakes = 0;
-			CaptureComp->AttemptCapture(HitEcho, ResonatorPower, OutShakes);
+			FText OutReason;
+			CaptureComp->AttemptCapture(HitEcho, ResonatorPower, OutShakes, OutReason);
 		}
 	}
 	else

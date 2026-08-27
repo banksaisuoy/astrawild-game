@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
@@ -162,5 +162,28 @@ void UAstrawildCraftingComponent::RegisterDefaultRecipes()
 		ResonatorRecipe.Ingredients.Add(IngWood);
 
 		KnownRecipes.Add(ResonatorRecipe);
+	}
+
+	// Recipe 4: Astra Resonator T2 (Enhanced Resonance)
+	{
+		FAstrawildRecipe ResonatorT2Recipe;
+		ResonatorT2Recipe.RecipeTag = FGameplayTag::RequestGameplayTag(FName("Recipe.Tool.ResonatorT2"), false);
+		ResonatorT2Recipe.DisplayName = FText::FromString(TEXT("Astra Resonator T2 (Enhanced)"));
+		ResonatorT2Recipe.OutputItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Tool.AstraResonatorEnhanced"), false);
+		ResonatorT2Recipe.OutputQuantity = 1;
+		ResonatorT2Recipe.CraftTimeSeconds = 4.0f;
+		ResonatorT2Recipe.RequiredStation = EAstrawildBuildingType::CraftingBench;
+
+		FAstrawildRecipeIngredient IngShard;
+		IngShard.ItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.AstraShard"), false);
+		IngShard.Quantity = 3;
+		ResonatorT2Recipe.Ingredients.Add(IngShard);
+
+		FAstrawildRecipeIngredient IngStone;
+		IngStone.ItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false);
+		IngStone.Quantity = 5;
+		ResonatorT2Recipe.Ingredients.Add(IngStone);
+
+		KnownRecipes.Add(ResonatorT2Recipe);
 	}
 }
