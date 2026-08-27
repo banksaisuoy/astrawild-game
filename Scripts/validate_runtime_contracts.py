@@ -63,11 +63,40 @@ for row in rows("DT_Recipes.csv"):
     if required_tech and required_tech not in technology_tags:
         errors.append(f"recipe {row['RecipeTag']} references missing technology {required_tech}")
 
-for row in rows("DT_Dungeons.csv"):
+dungeon_rows = rows("DT_Dungeons.csv")
+dungeon_ids = {row["DungeonId"] for row in dungeon_rows}
+for row in dungeon_rows:
     if row["BossSpeciesTag"] not in echo_species:
         errors.append(f"dungeon {row['DungeonId']} references missing boss Echo {row['BossSpeciesTag']}")
     if len(list_field(row["RewardItemTags"])) != len(list_field(row["RewardQuantities"])):
         errors.append(f"dungeon {row['DungeonId']} reward arrays are not aligned")
+
+boss_encounter_rows = rows("DT_BossEncounters.csv")
+boss_encounter_ids = {row["EncounterId"] for row in boss_encounter_rows}
+for row in boss_encounter_rows:
+    if row["DungeonId"] not in dungeon_ids:
+        errors.append(f"boss encounter {row['EncounterId']} references missing dungeon {row['DungeonId']}")
+    if row["BossSpeciesTag"] not in echo_species:
+        errors.append(f"boss encounter {row['EncounterId']} references missing Echo {row['BossSpeciesTag']}")
+    try:
+        phase_count = int(row["PhaseCount"])
+        phase_two = float(row["PhaseTwoHealthThreshold"])
+        phase_three = float(row["PhaseThreeHealthThreshold"])
+        if phase_count < 1 or not 0.0 <= phase_three < phase_two < 1.0:
+            errors.append(f"boss encounter {row['EncounterId']} has invalid phase thresholds")
+    except (KeyError, ValueError):
+        errors.append(f"boss encounter {row['EncounterId']} has invalid numeric phase data")
+
+for row in rows("DT_BossAttacks.csv"):
+    if row["EncounterId"] not in boss_encounter_ids:
+        errors.append(f"boss attack {row['AttackId']} references missing encounter {row['EncounterId']}")
+    try:
+        phase_index = int(row["PhaseIndex"])
+        encounter = next((item for item in boss_encounter_rows if item["EncounterId"] == row["EncounterId"]), None)
+        if encounter and phase_index > int(encounter["PhaseCount"]):
+            errors.append(f"boss attack {row['AttackId']} exceeds phase count for {row['EncounterId']}")
+    except (KeyError, ValueError):
+        errors.append(f"boss attack {row['AttackId']} has invalid phase index")
 
 spire_rows = rows("DT_FastTravelSpires.csv")
 spire_targets = [row.get("QuestTargetTag", "").strip() for row in spire_rows]

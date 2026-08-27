@@ -1,0 +1,6 @@
+Name,EncounterId,DungeonId,BossSpeciesTag,PrimaryElement,RecommendedLevel,MaxHealth,PhaseTwoHealthThreshold,PhaseThreeHealthThreshold,PhaseCount,IntroDurationSeconds,EncounterTimeLimitSeconds,bLockArena,MaxParticipants
+Encounter_SolarSpire,Tower.SolarSpire,Tower.SolarSpire,Echo.SolarixAlpha,Solar,12,48000,0.55,0.0,2,3.0,900,true,4
+Encounter_TorrentSpire,Tower.TorrentSpire,Tower.TorrentSpire,Echo.Miremaw,Torrent,20,60000,0.55,0.0,2,3.0,960,true,4
+Encounter_GeoSpire,Tower.GeoSpire,Tower.GeoSpire,Echo.Terradon,Geo,28,76000,0.50,0.0,2,4.0,1020,true,4
+Encounter_VoltSpire,Tower.VoltSpire,Tower.VoltSpire,Echo.Stormshell,Volt,36,98000,0.50,0.0,2,4.0,1080,true,4
+Encounter_AbyssalSpire,Tower.AbyssalSpire,Tower.AbyssalSpire,Echo.FirstDawnDragon,Abyssal,45,150000,0.60,0.25,3,6.0,1200,true,4

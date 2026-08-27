@@ -29,7 +29,10 @@ $required = @(
     "Source/AstrawildCore/Public/Characters/AstrawildCharacter.h",
     "Source/AstrawildCore/Public/Components/AstrawildQuestComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildSurvivalComponent.h",
-    "Content/Astrawild/Data/Source/DT_Lore.csv",
+    "Content/Astrawild/Data/Source/DT_Biomes.csv",
+    "Content/Astrawild/Data/Source/DT_BossEncounters.csv",
+    "Content/Astrawild/Data/Source/DT_BossAttacks.csv",
+    "Content/Astrawild/Data/Source/DT_FoliageRules.csv",
     "Content/Astrawild/Data/Source/DT_Quests.csv",
     "Content/Astrawild/Data/Source/DT_QuestObjectives.csv",
     "Content/Astrawild/Data/Source/DT_EchoDex.csv",
@@ -52,20 +55,42 @@ $required = @(
     "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
     "Source/AstrawildCore/Public/Data/AstrawildWeatherData.h",
     "Source/AstrawildCore/Public/World/AstrawildWeatherSubsystem.h",
+    "Source/AstrawildCore/Public/World/AstrawildBossAIController.h",
+    "Source/AstrawildCore/Public/World/AstrawildLandscapeMaterialComponent.h",
+    "Source/AstrawildCore/Public/World/AstrawildAudioSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildBossAIController.cpp",
+    "Source/AstrawildCore/Private/World/AstrawildLandscapeMaterialComponent.cpp",
+    "Source/AstrawildCore/Private/World/AstrawildAudioSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldClockSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildWorldClockSubsystem.cpp",
+    "Config/DefaultEngine.ini",
+    "Config/DefaultScalability.ini",
+    "Scripts/import_all_datatables.py",
+    "Scripts/setup_project_assets.py",
+    "Scripts/validate_content_contracts.py",
     "Scripts/validate_runtime_contracts.py",
+    "Scripts/validate_editor_automation.py",
     "Scripts/validate_generated_headers.py",
-    "Docs/M2_EVOLUTION_HANDOFF.md"
+    "Docs/M2_EVOLUTION_HANDOFF.md",
+    "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md"
 )
 foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }
 }
 
-$runtimeValidator = Join-Path $ProjectRoot "Scripts\validate_runtime_contracts.py"
+$pythonValidators = @(
+    "Scripts\validate_content_contracts.py",
+    "Scripts\validate_runtime_contracts.py",
+    "Scripts\validate_generated_headers.py",
+    "Scripts\validate_editor_automation.py"
+)
 if (Get-Command python -ErrorAction SilentlyContinue) {
-    & python $runtimeValidator
-    if ($LASTEXITCODE -ne 0) { throw "Runtime contract validation failed with exit code $LASTEXITCODE" }
+    foreach ($validator in $pythonValidators) {
+        & python (Join-Path $ProjectRoot $validator)
+        if ($LASTEXITCODE -ne 0) { throw "Python validation failed: $validator (exit code $LASTEXITCODE)" }
+    }
+    & python -m py_compile (Join-Path $ProjectRoot "Scripts\import_all_datatables.py") (Join-Path $ProjectRoot "Scripts\setup_project_assets.py")
+    if ($LASTEXITCODE -ne 0) { throw "Unreal Python script syntax validation failed" }
 }
 else {
     Write-Warning "Python was not found; runtime cross-table validator was not executed."

@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `3483ada717345566996deb391d66be913489172d`
+**Latest repository commit:** `c5e3953` (local source pass; push pending remote recheck)
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -15,9 +15,9 @@
 
 | Layer | Status | Evidence or limitation |
 |---|---|---|
-| Git branch and repository sync | **PASS** | Latest active branch was pushed to GitHub at commit `3483ada` with the current spire-default fix at `3483ada`. |
-| Python content-contract validation | **PASS** | `python3 Scripts/validate_content_contracts.py`, `python3 Scripts/validate_runtime_contracts.py`, and `python3 Scripts/validate_generated_headers.py` passed after the latest source/data package. |
-| Git whitespace/diff gate | **PASS** | `git diff --check` passed before the latest milestone commits. |
+| Git branch and repository sync | **PENDING PUSH** | The source pass is committed locally at `c5e3953`; remote recheck and push are the next gate. Windows baseline `a90a83f` was clean/up to date. |
+| Python content-contract validation | **PASS** | Baseline Windows checks passed; the expanded local suite also passes content, runtime, generated-header, and editor-automation validators. |
+| Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
 | Unreal 5.8 C++ compile | **NOT RUN HERE** | Requires the user’s Windows machine with UE 5.8 and MSVC 2022. |
 | DataTable import in Unreal Editor | **NOT RUN HERE** | CSV sources exist; derived `.uasset` DataTables must be imported in Editor. |
@@ -42,10 +42,11 @@ The release branch now contains the following source/data preparation slices. Th
 | Tower dungeons | Five tower rows, required-key consumption, co-op participant tracking, server-side time limit and boss-completion lifecycle contract. |
 | UI and packaging | Native master HUD, EchoDex, technology, dungeon-status widget bases; expanded validation script; opt-in compile/package PowerShell workflow. |
 | Evolution and integration | Twelve data-driven evolution paths, target-asset handoff, generic quest progress bridges for craft/capture/collect/interact/reach/defeat, DataTable row-name fallback, save sanitization, and reusable runtime/generated-header validators. |
+| Visual/world polish contracts | Lumen/scalability presets, landscape MPC parameter contract, weather-driven wetness bridge, 15 foliage distribution rows, editor scaffold expansion, and original audio registry; final material graphs, foliage meshes, Niagara graphs, Sound Cues, map actors, and binary assets remain Windows Editor work. |
 
 ## Source data inventory
 
-The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The main production tables are `DT_Biomes.csv`, `DT_SpawnRules.csv`, `DT_FastTravelSpires.csv`, `DT_EchoDex.csv`, `DT_EchoTraits.csv`, `DT_BreedingGroups.csv`, `DT_MountProfiles.csv`, `DT_TechnologyNodes.csv`, `DT_Recipes.csv`, `DT_RangedWeapons.csv`, `DT_Dungeons.csv`, `DT_Evolutions.csv`, and `DT_Weather.csv`.
+The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The current inventory is 19 tables, including `DT_BossEncounters.csv`, `DT_BossAttacks.csv`, and `DT_FoliageRules.csv` in addition to the earlier production tables.
 
 The repository deliberately does not pretend that CSV files are Unreal DataTable assets. Import them into `Content/Astrawild/Data/Imported/` with the row structs named in the relevant handoff documents. Keep the CSV sources under review and commit derived `.uasset` files with Git LFS when they are authored and tested.
 
@@ -66,6 +67,8 @@ git pull --ff-only origin release/vertical-slice-v1
 python Scripts/validate_content_contracts.py
 python Scripts/validate_runtime_contracts.py
 python Scripts/validate_generated_headers.py
+python Scripts/validate_editor_automation.py
+python -m py_compile Scripts/import_all_datatables.py Scripts/setup_project_assets.py
 .\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location)
 .\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location) -TryUnreal
 ```
@@ -92,5 +95,6 @@ ASTRAWILD uses original names and data contracts. Do not copy or import characte
 
 | Date | Operator | Commit | Engine/build | Evidence | Result |
 |---|---|---|---|---|---|
-| 2026-08-27 | Manus | `3483ada` | Sandbox static checks | Content validator, runtime cross-table validator, generated-header validator, diff check, zero tracked UE binary assets; weather/day-night and default-spire contracts included | Source package **PASS**; UE compile/PIE/package pending Windows |
-|  | Windows owner |  | UE 5.8 / MSVC 2022 | Add compile log, automation result, PIE/network screenshots, and package path here | **PENDING** |
+| 2026-08-27 | Windows owner | `a90a83f` | Windows static validation | Content/runtime/generated-header validators, `Tools/Validate_Astrawild.ps1`, 108-file MCP source audit with zero errors; Unreal binary assets explicitly reported as 0 | Baseline source package **PASS**; UE compile/PIE/package pending |
+| 2026-08-27 | Manus | `c5e3953` | Sandbox static checks | Expanded boss/visual source pass; 19 CSV mappings, content/runtime/generated-header/editor-automation validators, Python compile and diff check passed | Source pass **PASS**; Windows UE evidence pending |
+|  | Windows owner |  | UE 5.8 / MSVC 2022 | Add module compile log, DataTable/scaffold reports, automation result, PIE/network screenshots, and package path here | **PENDING** |

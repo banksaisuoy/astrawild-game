@@ -12,6 +12,9 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_Quests.csv": {"Name", "QuestId", "Title", "Description", "RegionTag", "PrerequisiteQuestTag", "bMainQuest"},
     ROOT / "Content/Astrawild/Data/Source/DT_QuestObjectives.csv": {"Name", "QuestId", "ObjectiveId", "Type", "TargetTag", "RequiredQuantity", "Description"},
     ROOT / "Content/Astrawild/Data/Source/DT_Biomes.csv": {"Name", "BiomeId", "Biome", "DisplayName", "MinLevel", "MaxLevel", "TemperatureLevel", "DominantElements", "ResourceTags"},
+    ROOT / "Content/Astrawild/Data/Source/DT_FoliageRules.csv": {"Name", "FoliageRuleId", "BiomeId", "RuleKind", "FoliageAssetId", "ResourceTag", "DensityScale", "MinSlopeDegrees", "MaxSlopeDegrees", "MinHeightMeters", "MaxHeightMeters", "WindResponse", "bRespondsToCharacters", "bUseNanite"},
+    ROOT / "Content/Astrawild/Data/Source/DT_BossAttacks.csv": {"Name", "AttackId", "EncounterId", "DisplayName", "PhaseIndex", "SpeciesAbilityIndex", "Element", "TelegraphDurationSeconds", "TelegraphRadius", "CooldownSeconds", "DamageMultiplier", "bIsUltimate"},
+    ROOT / "Content/Astrawild/Data/Source/DT_BossEncounters.csv": {"Name", "EncounterId", "DungeonId", "BossSpeciesTag", "PrimaryElement", "RecommendedLevel", "MaxHealth", "PhaseTwoHealthThreshold", "PhaseThreeHealthThreshold", "PhaseCount", "IntroDurationSeconds", "EncounterTimeLimitSeconds", "bLockArena", "MaxParticipants"},
     ROOT / "Content/Astrawild/Data/Source/DT_SpawnRules.csv": {"Name", "SpawnRuleId", "SpeciesTag", "BiomeId", "MinLevel", "MaxLevel", "Weight", "MaxActive"},
     ROOT / "Content/Astrawild/Data/Source/DT_FastTravelSpires.csv": {"Name", "SpireId", "DisplayName", "BiomeId", "QuestTargetTag", "WorldTransform", "bUnlockedByDefault"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoDex.csv": {"Name", "SpeciesTag", "SpeciesName", "SpeciesTitle", "LoreDescription", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "PassiveTraitTags", "WorkSuitabilityTags", "PartnerSkillTag", "MountProfileId", "bCanBeMounted", "BreedingGroupId", "EvolutionTargetId", "EvolutionLevel", "DexOrder"},
@@ -37,6 +40,13 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/UI/AstrawildGameplayWidgets.h",
     "Source/AstrawildCore/Private/UI/AstrawildGameplayWidgets.cpp",
     "Source/AstrawildCore/Public/Echoes/AstrawildAlphaEcho.h",
+    "Source/AstrawildCore/Public/Data/AstrawildBossData.h",
+    "Source/AstrawildCore/Public/World/AstrawildBossAIController.h",
+    "Source/AstrawildCore/Public/World/AstrawildLandscapeMaterialComponent.h",
+    "Source/AstrawildCore/Private/World/AstrawildLandscapeMaterialComponent.cpp",
+    "Source/AstrawildCore/Public/World/AstrawildAudioSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildAudioSubsystem.cpp",
+    "Source/AstrawildCore/Private/World/AstrawildBossAIController.cpp",
     "Source/AstrawildCore/Private/Echoes/AstrawildAlphaEcho.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldData.h",
     "Source/AstrawildCore/Public/World/AstrawildWorldPartitionSubsystem.h",
@@ -79,9 +89,14 @@ REQUIRED_PATHS = [
     "Docs/M3_M5_COLONY_TECHNOLOGY_HANDOFF.md",
     "Docs/M6_M8_COMBAT_DUNGEON_HANDOFF.md",
     "Docs/M9_M10_UI_PACKAGING_HANDOFF.md",
+    "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
+    "Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md",
     "Docs/BUILD_STATUS.md",
     "Tools/Package_Astrawild.ps1",
+    "Scripts/import_all_datatables.py",
+    "Scripts/setup_project_assets.py",
     "Scripts/validate_runtime_contracts.py",
+    "Scripts/validate_editor_automation.py",
     "Scripts/validate_generated_headers.py",
     "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
     "Config/AstrawildWorldPartition.ini",
@@ -92,6 +107,19 @@ loaded_rows: dict[pathlib.Path, list[dict[str, str]]] = {}
 for relative in REQUIRED_PATHS:
     if not (ROOT / relative).is_file():
         errors.append(f"missing required source/contract: {relative}")
+
+for config_relative, required_lines in {
+    "Config/DefaultEngine.ini": ["r.DynamicGlobalIlluminationMethod=1", "r.ReflectionMethod=1", "r.Lumen.HardwareRayTracing=1", "r.VolumetricFog=1", "r.VolumetricCloud=1"],
+    "Config/DefaultScalability.ini": ["[GlobalIlluminationQuality@3]", "[ReflectionQuality@3]", "[VolumetricFogQuality@3]", "[FoliageQuality@3]"],
+}.items():
+    config_path = ROOT / config_relative
+    if config_path.is_file():
+        config_text = config_path.read_text(encoding="utf-8", errors="replace")
+        for required_line in required_lines:
+            if required_line not in config_text:
+                errors.append(f"{config_relative} missing visual polish setting {required_line}")
+    else:
+        errors.append(f"missing visual polish config: {config_relative}")
 
 world_config_path = ROOT / "Config/AstrawildWorldPartition.ini"
 if world_config_path.is_file():
@@ -147,6 +175,29 @@ for row in biome_rows:
             errors.append(f"DT_Biomes.csv invalid range in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_Biomes.csv non-numeric level/temperature in row {row.get('Name', '<unknown>')}")
+
+foliage_path = ROOT / "Content/Astrawild/Data/Source/DT_FoliageRules.csv"
+foliage_rows = loaded_rows.get(foliage_path, [])
+valid_foliage_kinds = {"GroundCover", "Tree", "Shrub", "ResourceNode", "RockFormation"}
+if len(foliage_rows) < 12:
+    errors.append(f"DT_FoliageRules.csv must contain at least 12 authored foliage rows; found {len(foliage_rows)}")
+foliage_ids = [row.get("FoliageRuleId", "") for row in foliage_rows]
+if len(foliage_ids) != len(set(foliage_ids)):
+    errors.append("DT_FoliageRules.csv has duplicate FoliageRuleId values")
+for row in foliage_rows:
+    if row.get("BiomeId", "") not in expected_biomes:
+        errors.append(f"DT_FoliageRules.csv references unknown biome {row.get('BiomeId', '')}")
+    if row.get("RuleKind", "") not in valid_foliage_kinds:
+        errors.append(f"DT_FoliageRules.csv invalid RuleKind in row {row.get('Name', '<unknown>')}")
+    if not row.get("FoliageAssetId", "").strip():
+        errors.append(f"DT_FoliageRules.csv missing FoliageAssetId in row {row.get('Name', '<unknown>')}")
+    try:
+        min_slope, max_slope = float(row["MinSlopeDegrees"]), float(row["MaxSlopeDegrees"])
+        min_height, max_height = float(row["MinHeightMeters"]), float(row["MaxHeightMeters"])
+        if float(row["DensityScale"]) < 0 or not 0.0 <= min_slope <= max_slope <= 90.0 or min_height < 0 or max_height < min_height or not 0.0 <= float(row["WindResponse"]) <= 1.0:
+            errors.append(f"DT_FoliageRules.csv invalid placement range in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_FoliageRules.csv non-numeric placement value in row {row.get('Name', '<unknown>')}")
 
 spawn_path = ROOT / "Content/Astrawild/Data/Source/DT_SpawnRules.csv"
 spawn_rows = loaded_rows.get(spawn_path, [])
@@ -316,6 +367,50 @@ for row in dungeon_rows:
             errors.append(f"DT_Dungeons.csv reward arrays do not align in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_Dungeons.csv non-numeric level/time in row {row.get('Name', '<unknown>')}")
+
+boss_encounter_path = ROOT / "Content/Astrawild/Data/Source/DT_BossEncounters.csv"
+boss_attack_path = ROOT / "Content/Astrawild/Data/Source/DT_BossAttacks.csv"
+boss_encounter_rows = loaded_rows.get(boss_encounter_path, [])
+boss_attack_rows = loaded_rows.get(boss_attack_path, [])
+valid_boss_elements = {"Neutral", "Solar", "Torrent", "Geo", "Aether", "Volt", "Glacial", "Abyssal", "Astra"}
+if len(boss_encounter_rows) != 5:
+    errors.append(f"DT_BossEncounters.csv must contain exactly 5 tower encounter rows; found {len(boss_encounter_rows)}")
+encounter_ids = [row.get("EncounterId", "") for row in boss_encounter_rows]
+if len(encounter_ids) != len(set(encounter_ids)):
+    errors.append("DT_BossEncounters.csv has duplicate EncounterId values")
+if len(boss_attack_rows) < 15:
+    errors.append(f"DT_BossAttacks.csv must contain at least 15 attack rows; found {len(boss_attack_rows)}")
+attack_ids = [row.get("AttackId", "") for row in boss_attack_rows]
+if len(attack_ids) != len(set(attack_ids)):
+    errors.append("DT_BossAttacks.csv has duplicate AttackId values")
+encounter_id_set = set(encounter_ids)
+for row in boss_encounter_rows:
+    if row.get("DungeonId", "") not in dungeon_ids:
+        errors.append(f"boss encounter {row.get('EncounterId', '<unknown>')} references missing dungeon {row.get('DungeonId', '')}")
+    if row.get("BossSpeciesTag", "") not in set(echo_tags):
+        errors.append(f"boss encounter {row.get('EncounterId', '<unknown>')} references missing Echo {row.get('BossSpeciesTag', '')}")
+    if row.get("PrimaryElement", "") not in valid_boss_elements:
+        errors.append(f"DT_BossEncounters.csv invalid primary element in row {row.get('Name', '<unknown>')}")
+    try:
+        phase_count = int(row["PhaseCount"])
+        phase_two = float(row["PhaseTwoHealthThreshold"])
+        phase_three = float(row["PhaseThreeHealthThreshold"])
+        if int(row["RecommendedLevel"]) < 1 or float(row["MaxHealth"]) <= 0 or phase_count < 1 or not 0.0 <= phase_three < phase_two < 1.0:
+            errors.append(f"DT_BossEncounters.csv invalid phase/stat values in row {row.get('Name', '<unknown>')}")
+        if float(row["IntroDurationSeconds"]) < 0 or float(row["EncounterTimeLimitSeconds"]) < 60 or int(row["MaxParticipants"]) < 1:
+            errors.append(f"DT_BossEncounters.csv invalid timing/participant values in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_BossEncounters.csv non-numeric phase/stat value in row {row.get('Name', '<unknown>')}")
+for row in boss_attack_rows:
+    if row.get("EncounterId", "") not in encounter_id_set:
+        errors.append(f"boss attack {row.get('AttackId', '<unknown>')} references missing encounter {row.get('EncounterId', '')}")
+    if row.get("Element", "") not in valid_boss_elements:
+        errors.append(f"DT_BossAttacks.csv invalid element in row {row.get('Name', '<unknown>')}")
+    try:
+        if int(row["PhaseIndex"]) < 1 or float(row["TelegraphDurationSeconds"]) < 0 or float(row["TelegraphRadius"]) < 50 or float(row["CooldownSeconds"]) <= 0 or float(row["DamageMultiplier"]) <= 0:
+            errors.append(f"DT_BossAttacks.csv invalid combat value in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_BossAttacks.csv non-numeric combat value in row {row.get('Name', '<unknown>')}")
 
 ranged_path = ROOT / "Content/Astrawild/Data/Source/DT_RangedWeapons.csv"
 ranged_rows = loaded_rows.get(ranged_path, [])

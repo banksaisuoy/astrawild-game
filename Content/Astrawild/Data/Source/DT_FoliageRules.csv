@@ -1,0 +1,15 @@
+Name,FoliageRuleId,BiomeId,RuleKind,FoliageAssetId,ResourceTag,DensityScale,MinSlopeDegrees,MaxSlopeDegrees,MinHeightMeters,MaxHeightMeters,WindResponse,bRespondsToCharacters,bUseNanite
+Foliage_Dawn_Grass,Dawn.Grass,Biome.DawnMeadows,GroundCover,Foliage.Grass.Sunstep,,1.25,0.0,22.0,0.0,100.0,0.85,true,false
+Foliage_Dawn_Sunwood,Dawn.Sunwood,Biome.DawnMeadows,Tree,Foliage.Tree.Sunwood,,0.35,0.0,28.0,8.0,110.0,0.55,true,false
+Foliage_Dawn_Berry,Dawn.Berry,Biome.DawnMeadows,Shrub,Foliage.Shrub.Dawnberry,Item.Resource.Dawnberry,0.22,0.0,30.0,0.0,95.0,0.30,false,false
+Foliage_Dawn_LumenStone,Dawn.LumenStone,Biome.DawnMeadows,ResourceNode,Foliage.Node.LumenStone,Item.Resource.LumenStone,0.08,0.0,42.0,10.0,140.0,0.0,false,true
+Foliage_Sylvan_Grass,Sylvan.Grass,Biome.SylvanRainforest,GroundCover,Foliage.Grass.Rainforest,,1.40,0.0,30.0,0.0,150.0,0.90,true,false
+Foliage_Sylvan_Pine,Sylvan.Pine,Biome.SylvanRainforest,Tree,Foliage.Tree.SylvanPine,,0.62,0.0,36.0,20.0,220.0,0.70,true,false
+Foliage_Sylvan_Berry,Sylvan.Berry,Biome.SylvanRainforest,Shrub,Foliage.Shrub.Rainberry,Item.Resource.Rainberry,0.32,0.0,38.0,0.0,180.0,0.35,false,false
+Foliage_Sylvan_LumenStone,Sylvan.LumenStone,Biome.SylvanRainforest,ResourceNode,Foliage.Node.LumenStone,Item.Resource.LumenStone,0.06,0.0,45.0,30.0,240.0,0.0,false,true
+Foliage_Caldera_Grass,Caldera.Grass,Biome.ScorchedObsidianCaldera,GroundCover,Foliage.Grass.Ash,,0.55,0.0,26.0,0.0,120.0,0.18,true,false
+Foliage_Caldera_Obsidian,Caldera.Obsidian,Biome.ScorchedObsidianCaldera,RockFormation,Foliage.Rock.ObsidianSpine,Item.Resource.ObsidianShard,0.24,16.0,75.0,30.0,320.0,0.0,false,true
+Foliage_Caldera_Sunwood,Caldera.Sunwood,Biome.ScorchedObsidianCaldera,Tree,Foliage.Tree.EmberSunwood,,0.12,0.0,32.0,15.0,180.0,0.30,true,false
+Foliage_Glacial_Snowgrass,Glacial.Snowgrass,Biome.GlacialZenith,GroundCover,Foliage.Grass.Frost,,0.92,0.0,26.0,180.0,360.0,0.45,true,false
+Foliage_Glacial_Pine,Glacial.Pine,Biome.GlacialZenith,Tree,Foliage.Tree.Frostpine,,0.40,0.0,40.0,220.0,700.0,0.62,true,false
+Foliage_Glacial_LumenStone,Glacial.LumenStone,Biome.GlacialZenith,ResourceNode,Foliage.Node.LumenStone,Item.Resource.LumenStone,0.10,0.0,55.0,300.0,900.0,0.0,false,true
