@@ -1,4 +1,4 @@
-﻿# Visual Studio / VS Code
+# Visual Studio / VS Code
 .vs/
 .vscode/
 *.sln
@@ -20,6 +20,8 @@ Build/
 *.csproj
 *.unityproj
 *.sln.docstates
+__pycache__/
+*.pyc
 
 # Packages
 *.pkg
