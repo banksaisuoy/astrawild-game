@@ -292,6 +292,78 @@ struct ASTRAWILDCORE_API FAstrawildEchoAbility
 };
 
 /**
+ * Active temporary status condition instance (e.g. Ignite, Drenched, Stun, Shield).
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildActiveStatusEffect
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	FGameplayTag StatusTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	float RemainingDuration = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	float TotalDuration = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	float Magnitude = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	float TickInterval = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	float TimeUntilNextTick = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	TWeakObjectPtr<AActor> InstigatorActor;
+};
+
+/**
+ * Universal Damage Event Data Struct.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildDamageEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float BaseDamage = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	EAstrawildElement DamageElement = EAstrawildElement::Neutral;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	FGameplayTag DamageTypeTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	TWeakObjectPtr<AActor> DamageCauser;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	TWeakObjectPtr<AActor> InstigatorActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	FVector HitLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	FVector HitDirection = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float KnockbackImpulse = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	FGameplayTag AppliedStatusTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float StatusDuration = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	int32 AttackInstanceId = 0;
+};
+
+/**
  * Complete Instance and Serialized Data for an Echo (Wild, Companion, Worker, or Stored).
  */
 USTRUCT(BlueprintType)

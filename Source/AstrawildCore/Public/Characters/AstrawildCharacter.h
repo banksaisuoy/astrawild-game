@@ -1,10 +1,11 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Interfaces/AstrawildDamageableInterface.h"
 #include "AstrawildCharacter.generated.h"
 
 class USpringArmComponent;
@@ -29,7 +30,7 @@ enum class EAstrawildMovementState : uint8
 };
 
 UCLASS()
-class ASTRAWILDCORE_API AAstrawildCharacter : public ACharacter
+class ASTRAWILDCORE_API AAstrawildCharacter : public ACharacter, public IAstrawildDamageableInterface
 {
 	GENERATED_BODY()
 
@@ -196,6 +197,11 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	EAstrawildMovementState GetCurrentMovementState() const { return CurrentMovementState; }
+
+	// --- IAstrawildDamageableInterface Implementation ---
+	virtual float TakeAstrawildDamage_Implementation(const FAstrawildDamageEvent& DamageEvent) override;
+	virtual bool CanTakeDamage_Implementation(AActor* Attacker) override;
+	virtual EAstrawildElement GetElementalAffinity_Implementation() const override;
 
 private:
 	float DodgeTimer;

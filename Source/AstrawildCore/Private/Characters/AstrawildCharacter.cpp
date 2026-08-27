@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Characters/AstrawildCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -461,4 +461,59 @@ bool AAstrawildCharacter::PerformInteractionTrace(FHitResult& OutHitResult)
 
 	const FCollisionShape SphereShape = FCollisionShape::MakeSphere(25.0f); // Generous sweep for smooth interaction feel
 	return GetWorld()->SweepSingleByChannel(OutHitResult, Start, End, FQuat::Identity, ECC_WorldDynamic, SphereShape, QueryParams);
+}
+
+float AAstrawildCharacter::TakeAstrawildDamage_Implementation(const FAstrawildDamageEvent& DamageEvent)
+{
+	// 1. Invulnerability during dodge roll
+	if (bIsDodging)
+	{
+		UE_LOG(LogAstrawildCombat, Log, TEXT("Player dodged incoming attack (i-frame active)!"));
+		return 0.0f;
+	}
+
+	if (!CanTakeDamage_Implementation(DamageEvent.InstigatorActor.Get()) || !Attributes)
+	{
+		return 0.0f;
+	}
+
+	// 2. Armor mitigation
+	const float Defense = FMath::Max(0.0f, Attributes->DefensePower);
+	const float DefenseFactor = 100.0f / (100.0f + Defense);
+
+	// 3. Elemental Matrix calculation
+	const float ElementMult = FAstrawildElementalMatrix::GetMultiplier(DamageEvent.DamageElement, Attributes->ElementalAffinity);
+
+	// 4. Final damage
+	const float FinalDamage = FMath::Max(1.0f, DamageEvent.BaseDamage * DefenseFactor * ElementMult);
+	Attributes->ModifyHealth(-FinalDamage, DamageEvent.InstigatorActor.Get());
+
+	// 5. Knockback
+	if (DamageEvent.KnockbackImpulse > 0.0f)
+	{
+		LaunchCharacter(DamageEvent.HitDirection * DamageEvent.KnockbackImpulse, true, true);
+	}
+
+	// 6. Apply status effect
+	if (DamageEvent.AppliedStatusTag.IsValid() && DamageEvent.StatusDuration > 0.0f)
+	{
+		Attributes->ApplyStatusEffect(DamageEvent.AppliedStatusTag, DamageEvent.StatusDuration, 1.0f, DamageEvent.InstigatorActor.Get());
+	}
+
+	UE_LOG(LogAstrawildCombat, Log, TEXT("[DAMAGEABLE] Player took %.1f [%s] damage from %s (HP: %.0f/%.0f)"),
+		FinalDamage, *UEnum::GetValueAsString(DamageEvent.DamageElement),
+		DamageEvent.InstigatorActor.IsValid() ? *DamageEvent.InstigatorActor->GetName() : TEXT("Unknown"),
+		Attributes->CurrentHealth, Attributes->MaxHealth);
+
+	return FinalDamage;
+}
+
+bool AAstrawildCharacter::CanTakeDamage_Implementation(AActor* Attacker)
+{
+	return Attributes && Attributes->IsAlive() && !bIsDodging;
+}
+
+EAstrawildElement AAstrawildCharacter::GetElementalAffinity_Implementation() const
+{
+	return Attributes ? Attributes->ElementalAffinity : EAstrawildElement::Neutral;
 }

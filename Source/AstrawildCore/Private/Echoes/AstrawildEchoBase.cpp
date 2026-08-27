@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Echoes/AstrawildEchoBase.h"
 #include "Components/AstrawildAttributeComponent.h"
@@ -274,4 +274,58 @@ bool AAstrawildEchoBase::PerformInteraction_Implementation(AActor* Interactor)
 
 	UE_LOG(LogAstrawildEcho, Log, TEXT("Inspected wild Echo: %s"), *GetName());
 	return true;
+}
+
+float AAstrawildEchoBase::TakeAstrawildDamage_Implementation(const FAstrawildDamageEvent& DamageEvent)
+{
+	if (!CanTakeDamage_Implementation(DamageEvent.InstigatorActor.Get()) || !Attributes)
+	{
+		return 0.0f;
+	}
+
+	// 1. Armor mitigation: 100 / (100 + Defense)
+	const float Defense = FMath::Max(0.0f, Attributes->DefensePower);
+	const float DefenseFactor = 100.0f / (100.0f + Defense);
+
+	// 2. Elemental Matrix calculation
+	const float ElementMult = FAstrawildElementalMatrix::GetMultiplier(DamageEvent.DamageElement, Attributes->ElementalAffinity);
+
+	// 3. Final damage
+	const float FinalDamage = FMath::Max(1.0f, DamageEvent.BaseDamage * DefenseFactor * ElementMult);
+	Attributes->ModifyHealth(-FinalDamage, DamageEvent.InstigatorActor.Get());
+
+	// 4. Knockback
+	if (DamageEvent.KnockbackImpulse > 0.0f)
+	{
+		LaunchCharacter(DamageEvent.HitDirection * DamageEvent.KnockbackImpulse, true, true);
+	}
+
+	// 5. Apply status effect if attached
+	if (DamageEvent.AppliedStatusTag.IsValid() && DamageEvent.StatusDuration > 0.0f)
+	{
+		Attributes->ApplyStatusEffect(DamageEvent.AppliedStatusTag, DamageEvent.StatusDuration, 1.0f, DamageEvent.InstigatorActor.Get());
+	}
+
+	// 6. Agro response if wild
+	if (CurrentState == EAstrawildEchoState::WildPassive && DamageEvent.InstigatorActor.IsValid())
+	{
+		SetEchoState(EAstrawildEchoState::WildHostile);
+	}
+
+	UE_LOG(LogAstrawildCombat, Log, TEXT("[DAMAGEABLE] Echo %s took %.1f [%s] damage from %s (HP: %.0f/%.0f)"),
+		*GetName(), FinalDamage, *UEnum::GetValueAsString(DamageEvent.DamageElement),
+		DamageEvent.InstigatorActor.IsValid() ? *DamageEvent.InstigatorActor->GetName() : TEXT("Unknown"),
+		Attributes->CurrentHealth, Attributes->MaxHealth);
+
+	return FinalDamage;
+}
+
+bool AAstrawildEchoBase::CanTakeDamage_Implementation(AActor* Attacker)
+{
+	return Attributes && Attributes->IsAlive();
+}
+
+EAstrawildElement AAstrawildEchoBase::GetElementalAffinity_Implementation() const
+{
+	return Attributes ? Attributes->ElementalAffinity : EAstrawildElement::Neutral;
 }

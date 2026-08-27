@@ -4,6 +4,7 @@
 #include "Environment/AstrawildHarvestableNode.h"
 #include "Environment/AstrawildBuildingPiece.h"
 #include "Environment/AstrawildInteractableActor.h"
+#include "Environment/AstrawildTrainingDummy.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -206,4 +207,7 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 
 		Echo3->InitializeFromSpeciesData(DA3, 2);
 	}
+
+	// 9. Spawn Training Dummy Target
+	World->SpawnActor<AAstrawildTrainingDummy>(AAstrawildTrainingDummy::StaticClass(), Origin + FVector(0, -600, 50), FRotator::ZeroRotator, SpawnParams);
 }

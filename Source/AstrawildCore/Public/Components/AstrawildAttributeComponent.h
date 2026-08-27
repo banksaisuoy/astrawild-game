@@ -10,6 +10,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAttributeChangedSignature, float, CurrentValue, float, MaxValue, float, Delta, AActor*, Instigator);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActorDeathSignature, AActor*, DeadActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLevelUpSignature, int32, NewLevel, float, RemainingEXP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStatusEffectAppliedSignature, const FGameplayTag&, StatusTag, float, Duration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStatusEffectRemovedSignature, const FGameplayTag&, StatusTag);
 
 UCLASS(ClassGroup = (Astrawild), meta = (BlueprintSpawnableComponent))
 class ASTRAWILDCORE_API UAstrawildAttributeComponent : public UActorComponent
@@ -21,6 +23,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
@@ -60,6 +63,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes|Combat")
 	EAstrawildElement ElementalAffinity;
 
+	// --- Temporary Status Effects ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes|Status")
+	TArray<FAstrawildActiveStatusEffect> ActiveStatusEffects;
+
 	// --- Progression ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes|Progression")
 	int32 Level;
@@ -83,6 +90,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Attributes|Events")
 	FOnLevelUpSignature OnLevelUp;
 
+	UPROPERTY(BlueprintAssignable, Category = "Attributes|Events")
+	FOnStatusEffectAppliedSignature OnStatusEffectApplied;
+
+	UPROPERTY(BlueprintAssignable, Category = "Attributes|Events")
+	FOnStatusEffectRemovedSignature OnStatusEffectRemoved;
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float ModifyHealth(float Delta, AActor* Instigator = nullptr);
@@ -105,7 +118,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	void ResetToMax();
 
+	// --- Status Effects ---
+	UFUNCTION(BlueprintCallable, Category = "Attributes|Status")
+	void ApplyStatusEffect(const FGameplayTag& StatusTag, float Duration, float Magnitude = 1.0f, AActor* Instigator = nullptr);
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes|Status")
+	void RemoveStatusEffect(const FGameplayTag& StatusTag);
+
+	UFUNCTION(BlueprintPure, Category = "Attributes|Status")
+	bool HasStatusEffect(const FGameplayTag& StatusTag) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes|Status")
+	void ClearAllStatusEffects();
+
 private:
 	float TimeSinceLastStaminaDrain;
 	bool bIsDead;
+
+	void UpdateStatusEffects(float DeltaTime);
 };

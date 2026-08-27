@@ -1,11 +1,11 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "AstrawildTypes.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
+#include "Interfaces/AstrawildDamageableInterface.h"
 #include "AstrawildEchoBase.generated.h"
 
 class UAstrawildAttributeComponent;
@@ -17,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEchoStateChangedSignature, AActo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEchoRoleAbilityUsedSignature, AActor*, Echo, EAstrawildEchoRole, Role);
 
 UCLASS()
-class ASTRAWILDCORE_API AAstrawildEchoBase : public ACharacter, public IAstrawildInteractableInterface
+class ASTRAWILDCORE_API AAstrawildEchoBase : public ACharacter, public IAstrawildInteractableInterface, public IAstrawildDamageableInterface
 {
 	GENERATED_BODY()
 
@@ -81,6 +81,11 @@ public:
 	virtual FText GetInteractionPrompt_Implementation(AActor* Interactor) override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) override;
 	virtual bool PerformInteraction_Implementation(AActor* Interactor) override;
+
+	// --- IAstrawildDamageableInterface Implementation ---
+	virtual float TakeAstrawildDamage_Implementation(const FAstrawildDamageEvent& DamageEvent) override;
+	virtual bool CanTakeDamage_Implementation(AActor* Attacker) override;
+	virtual EAstrawildElement GetElementalAffinity_Implementation() const override;
 
 private:
 	void ApplyVisualRepresentation();
