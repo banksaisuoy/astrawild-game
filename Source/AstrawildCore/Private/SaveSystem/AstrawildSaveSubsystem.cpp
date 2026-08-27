@@ -10,6 +10,7 @@
 #include "Components/AstrawildSurvivalComponent.h"
 #include "Environment/AstrawildBuildingPiece.h"
 #include "Environment/AstrawildHarvestableNode.h"
+#include "World/AstrawildWorldPartitionSubsystem.h"
 #include "AstrawildLogChannels.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
@@ -124,6 +125,15 @@ bool UAstrawildSaveSubsystem::CaptureWorldState(UAstrawildSaveGame* SaveObject)
 		SaveObject->WorldSnapshot.HarvestNodes.Add(It->GetSaveData());
 	}
 
+	if (UAstrawildWorldPartitionSubsystem* WorldSubsystem = World->GetSubsystem<UAstrawildWorldPartitionSubsystem>())
+	{
+		SaveObject->WorldSnapshot.DiscoveredSpireIds = WorldSubsystem->DiscoveredSpireIds.Array();
+		SaveObject->WorldSnapshot.DiscoveredSpireIds.Sort([](const FName& A, const FName& B)
+		{
+			return A.ToString() < B.ToString();
+		});
+	}
+
 	SaveObject->WorldSnapshot.SnapshotTimestamp = FDateTime::Now();
 	SaveObject->ValidateAndSanitize();
 	return true;
@@ -181,8 +191,21 @@ bool UAstrawildSaveSubsystem::RestoreWorldState(UAstrawildSaveGame* SaveObject)
 			}
 		}
 
-	// 2. Restore Harvest Nodes
-	TMap<FGuid, FAstrawildHarvestNodeSaveData> HarvestDataMap;
+			if (UAstrawildWorldPartitionSubsystem* WorldSubsystem = World->GetSubsystem<UAstrawildWorldPartitionSubsystem>())
+		{
+			WorldSubsystem->DiscoveredSpireIds.Reset();
+			for (const FName SpireId : SaveObject->WorldSnapshot.DiscoveredSpireIds)
+			{
+				if (!SpireId.IsNone())
+				{
+					WorldSubsystem->DiscoveredSpireIds.Add(SpireId);
+				}
+			}
+		}
+
+		// 2. Restore Harvest Nodes
+		TMap<FGuid, FAstrawildHarvestNodeSaveData> HarvestDataMap;
+
 	for (const FAstrawildHarvestNodeSaveData& NodeData : SaveObject->WorldSnapshot.HarvestNodes)
 	{
 		HarvestDataMap.Add(NodeData.NodeGuid, NodeData);

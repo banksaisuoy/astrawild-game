@@ -1,0 +1,5 @@
+Name,BiomeId,Biome,DisplayName,MinLevel,MaxLevel,TemperatureLevel,DominantElements,ResourceTags
+Biome_DawnMeadows,Biome.DawnMeadows,DawnMeadows,Dawn Meadows,1,15,0,"(Neutral,Solar)","(Item.Resource.Sunwood,Item.Resource.Stone)"
+Biome_SylvanRainforest,Biome.SylvanRainforest,SylvanRainforest,Sylvan Rainforest,15,30,1,"(Torrent,Volt)","(Item.Resource.AstraCrystal,Item.Resource.Fiber)"
+Biome_ScorchedCaldera,Biome.ScorchedObsidianCaldera,ScorchedObsidianCaldera,Scorched Obsidian Caldera,30,42,4,"(Solar,Geo)","(Item.Resource.Sulfur,Item.Resource.Coal)"
+Biome_GlacialZenith,Biome.GlacialZenith,GlacialZenith,Glacial Zenith,42,50,-4,"(Glacial,Abyssal)","(Item.Resource.PureQuartz,Item.Resource.IceOrgan)"

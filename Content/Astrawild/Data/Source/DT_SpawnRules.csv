@@ -1,0 +1,17 @@
+Name,SpawnRuleId,SpeciesTag,BiomeId,MinLevel,MaxLevel,Weight,MaxActive
+Spawn_Lambit_Meadows,Spawn.Lambit.Meadows,Echo.Lambit,Biome.DawnMeadows,1,8,1.0,8
+Spawn_Cattiva_Meadows,Spawn.Cattiva.Meadows,Echo.Cattiva,Biome.DawnMeadows,2,10,0.8,6
+Spawn_Pyrelite_Meadows,Spawn.Pyrelite.Meadows,Echo.Pyrelite,Biome.DawnMeadows,4,15,0.7,6
+Spawn_Thornback_Meadows,Spawn.Thornback.Meadows,Echo.Thornback,Biome.DawnMeadows,5,15,0.6,5
+Spawn_Aquavine_Rainforest,Spawn.Aquavine.Rainforest,Echo.Aquavine,Biome.SylvanRainforest,15,25,0.8,8
+Spawn_Sparkfin_Rainforest,Spawn.Sparkfin.Rainforest,Echo.Sparkfin,Biome.SylvanRainforest,17,28,0.7,6
+Spawn_Torrentail_Rainforest,Spawn.Torrentail.Rainforest,Echo.Torrentail,Biome.SylvanRainforest,18,30,0.6,5
+Spawn_Verdantor_Rainforest,Spawn.Verdantor.Rainforest,Echo.Verdantor,Biome.SylvanRainforest,24,30,0.3,2
+Spawn_Cinderclaw_Caldera,Spawn.Cinderclaw.Caldera,Echo.Cinderclaw,Biome.ScorchedObsidianCaldera,30,38,0.8,7
+Spawn_Terradon_Caldera,Spawn.Terradon.Caldera,Echo.Terradon,Biome.ScorchedObsidianCaldera,32,40,0.6,4
+Spawn_Ignisaur_Caldera,Spawn.Ignisaur.Caldera,Echo.Ignisaur,Biome.ScorchedObsidianCaldera,35,42,0.4,3
+Spawn_SolarixAlpha_Caldera,Spawn.SolarixAlpha.Caldera,Echo.SolarixAlpha,Biome.ScorchedObsidianCaldera,35,35,0.05,1
+Spawn_Frostfox_Glacial,Spawn.Frostfox.Glacial,Echo.Frostfox,Biome.GlacialZenith,42,47,0.8,7
+Spawn_Glacisaur_Glacial,Spawn.Glacisaur.Glacial,Echo.Glacisaur,Biome.GlacialZenith,44,50,0.5,3
+Spawn_Cryovex_Glacial,Spawn.Cryovex.Glacial,Echo.Cryovex,Biome.GlacialZenith,46,50,0.35,2
+Spawn_FirstDawnDragon_Glacial,Spawn.FirstDawnDragon.Glacial,Echo.FirstDawnDragon,Biome.GlacialZenith,50,50,0.02,1

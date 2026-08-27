@@ -13,6 +13,7 @@
 #include "Components/AstrawildFeedbackComponent.h"
 #include "Components/AstrawildQuestComponent.h"
 #include "Components/AstrawildSurvivalComponent.h"
+#include "World/AstrawildEnvironmentHazardComponent.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
@@ -74,6 +75,7 @@ AAstrawildCharacter::AAstrawildCharacter()
 	Feedback = CreateDefaultSubobject<UAstrawildFeedbackComponent>(TEXT("Feedback"));
 	Quest = CreateDefaultSubobject<UAstrawildQuestComponent>(TEXT("Quest"));
 	Survival = CreateDefaultSubobject<UAstrawildSurvivalComponent>(TEXT("Survival"));
+	EnvironmentHazard = CreateDefaultSubobject<UAstrawildEnvironmentHazardComponent>(TEXT("EnvironmentHazard"));
 }
 
 void AAstrawildCharacter::BeginPlay()

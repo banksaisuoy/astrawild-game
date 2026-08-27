@@ -715,6 +715,10 @@ struct ASTRAWILDCORE_API FAstrawildWorldSnapshot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
 	TArray<FAstrawildHarvestNodeSaveData> HarvestNodes;
 
+	// Additive field: legacy schema v1 saves deserialize with an empty array and remain valid.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot|Fast Travel")
+	TArray<FName> DiscoveredSpireIds;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World Snapshot")
 	float WorldGameTimeSeconds = 0.0f;
 
