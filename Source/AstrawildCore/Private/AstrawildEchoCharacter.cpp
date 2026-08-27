@@ -2,11 +2,26 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
 
 AAstrawildEchoCharacter::AAstrawildEchoCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
     InstanceId = FGuid::NewGuid();
+
+    PlaceholderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderMesh"));
+    PlaceholderMesh->SetupAttachment(GetCapsuleComponent());
+    PlaceholderMesh->SetCollisionProfileName(TEXT("NoCollision"));
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    if (SphereMesh.Succeeded())
+    {
+        PlaceholderMesh->SetStaticMesh(SphereMesh.Object);
+        PlaceholderMesh->SetWorldScale3D(FVector(0.8f));
+    }
 }
 
 void AAstrawildEchoCharacter::BeginPlay()

@@ -3,11 +3,25 @@
 #include "AstrawildCore.h"
 #include "AstrawildInventoryComponent.h"
 #include "TimerManager.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
 
 AAstrawildResourceNode::AAstrawildResourceNode()
 {
     PrimaryActorTick.bCanEverTick = false;
     SetReplicates(false);
+
+    VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
+    RootComponent = VisualMesh;
+    VisualMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+    if (CubeMesh.Succeeded())
+    {
+        VisualMesh->SetStaticMesh(CubeMesh.Object);
+        VisualMesh->SetWorldScale3D(FVector(0.65f, 0.65f, 0.8f));
+    }
 }
 
 void AAstrawildResourceNode::BeginPlay()

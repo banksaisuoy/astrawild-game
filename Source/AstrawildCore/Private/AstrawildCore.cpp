@@ -14,4 +14,4 @@ void FAstrawildCoreModule::ShutdownModule()
     UE_LOG(LogAstrawild, Log, TEXT("ASTRAWILD Core module stopped."));
 }
 
-IMPLEMENT_MODULE(FAstrawildCoreModule, AstrawildCore);
+IMPLEMENT_PRIMARY_GAME_MODULE(FAstrawildCoreModule, AstrawildCore, "AstrawildCore");

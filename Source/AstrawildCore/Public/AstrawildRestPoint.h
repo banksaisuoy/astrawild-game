@@ -7,6 +7,7 @@
 #include "AstrawildRestPoint.generated.h"
 
 class AAstrawildRestPoint;
+class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildRestPointActivated, AAstrawildRestPoint*, RestPoint);
 
@@ -17,6 +18,9 @@ class ASTRAWILDCORE_API AAstrawildRestPoint : public AActor, public IAstrawildIn
 
 public:
     AAstrawildRestPoint();
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|RestPoint")
+    TObjectPtr<UStaticMeshComponent> VisualMesh;
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|RestPoint")
     FAstrawildRestPointActivated OnActivated;

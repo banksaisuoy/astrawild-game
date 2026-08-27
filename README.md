@@ -12,7 +12,7 @@ Use the Unreal Engine version specified in `ASTRAWILD.uproject` and a Windows de
 
 ## First launch
 
-Read `ANTIGRAVITY_START_HERE.md` before making changes. The C++ source is ready for the target machine to compile, but Unreal binary assets still need to be created in the Editor.
+Read `ANTIGRAVITY_START_HERE.md` before making changes, then read `PLAN.md`, `STRUCTURE.md`, `ASSETS.md`, `MEMORY.md`, and `Docs/GAME_DEV_WORKFLOW_UNREAL.md`. The C++ source is ready for the target machine to compile, but Unreal binary assets still need to be created in the Editor.
 
 1. Clone this private repository with Git LFS enabled.
 2. Open `ASTRAWILD.uproject` with the matching Unreal Engine version.

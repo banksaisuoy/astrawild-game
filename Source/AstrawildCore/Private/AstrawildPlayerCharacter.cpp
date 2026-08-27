@@ -2,6 +2,8 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildCaptureComponent.h"
+#include "AstrawildDamageTarget.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildInteractable.h"
 #include "AstrawildInventoryComponent.h"
@@ -13,6 +15,9 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "DrawDebugHelpers.h"
@@ -39,15 +44,53 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     FollowCamera->bUsePawnControlRotation = false;
 
+    PlaceholderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderMesh"));
+    PlaceholderMesh->SetupAttachment(RootComponent);
+    PlaceholderMesh->SetCollisionProfileName(TEXT("NoCollision"));
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    if (CylinderMesh.Succeeded())
+    {
+        PlaceholderMesh->SetStaticMesh(CylinderMesh.Object);
+        PlaceholderMesh->SetWorldScale3D(FVector(0.45f, 0.45f, 0.95f));
+        PlaceholderMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 96.0f));
+    }
+
     InventoryComponent = CreateDefaultSubobject<UAstrawildInventoryComponent>(TEXT("Inventory"));
     CraftingComponent = CreateDefaultSubobject<UAstrawildCraftingComponent>(TEXT("Crafting"));
     CaptureComponent = CreateDefaultSubobject<UAstrawildCaptureComponent>(TEXT("Capture"));
+
+    FAstrawildItemStack Wood;
+    Wood.ItemId = TEXT("Item_Wood");
+    Wood.Quantity = 20;
+    StarterItems.Add(Wood);
+
+    FAstrawildItemStack Stone;
+    Stone.ItemId = TEXT("Item_Stone");
+    Stone.Quantity = 20;
+    StarterItems.Add(Stone);
+
+    FAstrawildItemStack Resonator;
+    Resonator.ItemId = TEXT("Item_Resonator");
+    Resonator.Quantity = 3;
+    StarterItems.Add(Resonator);
 }
 
 void AAstrawildPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     SetMovementSpeed(WalkSpeed);
+
+    if (bGivePrototypeStarterItems && HasAuthority() && InventoryComponent && InventoryComponent->GetItemStacks().IsEmpty())
+    {
+        for (const FAstrawildItemStack& StarterItem : StarterItems)
+        {
+            if (StarterItem.IsValid())
+            {
+                InventoryComponent->AddItem(StarterItem.ItemId, StarterItem.Quantity);
+            }
+        }
+    }
 
     APlayerController* PlayerController = Cast<APlayerController>(GetController());
     if (!IsValid(PlayerController))
@@ -99,6 +142,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::Interact);
     }
+    if (AttackAction)
+    {
+        EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::Attack);
+    }
 }
 
 void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
@@ -144,6 +191,34 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
     }
 
     IAstrawildInteractable::Execute_Interact(InteractableActor, this);
+}
+
+void AAstrawildPlayerCharacter::Attack(const FInputActionValue& Value)
+{
+    const UWorld* World = GetWorld();
+    if (!World || (World->GetTimeSeconds() - LastAttackTimeSeconds) < AttackCooldownSeconds || !FollowCamera)
+    {
+        return;
+    }
+
+    LastAttackTimeSeconds = World->GetTimeSeconds();
+    const FVector Start = FollowCamera->GetComponentLocation();
+    const FVector End = Start + FollowCamera->GetForwardVector() * AttackDistance;
+    FHitResult HitResult;
+    FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDPlayerAttack), false, this);
+    if (!World->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams))
+    {
+        return;
+    }
+
+    if (AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(HitResult.GetActor()))
+    {
+        DamageTarget->ApplyDamage(AttackDamage);
+    }
+    else if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(HitResult.GetActor()))
+    {
+        Echo->ApplyDamage(AttackDamage);
+    }
 }
 
 void AAstrawildPlayerCharacter::SetMovementSpeed(const float NewSpeed)

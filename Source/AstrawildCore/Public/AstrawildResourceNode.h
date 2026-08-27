@@ -5,6 +5,8 @@
 #include "AstrawildInteractable.h"
 #include "AstrawildResourceNode.generated.h"
 
+class UStaticMeshComponent;
+
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildResourceNode : public AActor, public IAstrawildInteractable
 {
@@ -12,6 +14,9 @@ class ASTRAWILDCORE_API AAstrawildResourceNode : public AActor, public IAstrawil
 
 public:
     AAstrawildResourceNode();
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Resource")
+    TObjectPtr<UStaticMeshComponent> VisualMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Resource")
     FName ResourceItemId = NAME_None;

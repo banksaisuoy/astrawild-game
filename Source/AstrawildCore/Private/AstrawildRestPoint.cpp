@@ -1,11 +1,25 @@
 #include "AstrawildRestPoint.h"
 
 #include "AstrawildCore.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
 
 AAstrawildRestPoint::AAstrawildRestPoint()
 {
     PrimaryActorTick.bCanEverTick = false;
     WorldObjectId = FGuid::NewGuid();
+
+    VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
+    RootComponent = VisualMesh;
+    VisualMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    if (CylinderMesh.Succeeded())
+    {
+        VisualMesh->SetStaticMesh(CylinderMesh.Object);
+        VisualMesh->SetWorldScale3D(FVector(0.75f, 0.75f, 1.4f));
+    }
 }
 
 void AAstrawildRestPoint::BeginPlay()

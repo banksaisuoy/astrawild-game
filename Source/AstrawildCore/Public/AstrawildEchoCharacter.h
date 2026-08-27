@@ -7,6 +7,7 @@
 
 class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
+class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 
@@ -17,6 +18,9 @@ class ASTRAWILDCORE_API AAstrawildEchoCharacter : public ACharacter
 
 public:
     AAstrawildEchoCharacter();
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
+    TObjectPtr<UStaticMeshComponent> PlaceholderMesh;
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoCaptured OnCaptured;
