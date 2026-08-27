@@ -51,6 +51,12 @@ bool UAstrawildBreedingComponent::CanBreed(const FAstrawildCapturedEchoData& Par
 bool UAstrawildBreedingComponent::TryBreed(const FAstrawildCapturedEchoData& ParentA, const FAstrawildCapturedEchoData& ParentB, const FGameplayTag& OffspringSpeciesTag, FAstrawildEchoEggData& OutEgg)
 {
     FText FailureReason;
+    if (!GetOwner() || !GetOwner()->HasAuthority())
+    {
+        FailureReason = FText::FromString(TEXT("Breeding must be performed by the server."));
+        OnBreedingFailed.Broadcast(FailureReason);
+        return false;
+    }
     if (!OffspringSpeciesTag.IsValid() || !CanBreed(ParentA, ParentB, FailureReason))
     {
         if (FailureReason.IsEmpty())
@@ -91,6 +97,56 @@ bool UAstrawildBreedingComponent::TryBreed(const FAstrawildCapturedEchoData& Par
     return true;
 }
 
+bool UAstrawildBreedingComponent::TryBreedFusion(const FAstrawildCapturedEchoData& ParentA, const FAstrawildCapturedEchoData& ParentB, FAstrawildEchoEggData& OutEgg)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority())
+    {
+        const FText FailureReason = FText::FromString(TEXT("Fusion breeding must be performed by the server."));
+        OnBreedingFailed.Broadcast(FailureReason);
+        return false;
+    }
+    if (!FusionTable)
+    {
+        const FText FailureReason = FText::FromString(TEXT("No fusion DataTable is assigned."));
+        OnBreedingFailed.Broadcast(FailureReason);
+        return false;
+    }
+
+    const FAstrawildBreedingFusionRow* Fusion = FindFusionRow(ParentA.SpeciesTag, ParentB.SpeciesTag);
+    if (!Fusion)
+    {
+        const FText FailureReason = FText::FromString(TEXT("These parent species do not have a registered fusion result."));
+        OnBreedingFailed.Broadcast(FailureReason);
+        return false;
+    }
+    if (!TryBreed(ParentA, ParentB, Fusion->OffspringSpeciesTag, OutEgg))
+    {
+        return false;
+    }
+
+    OutEgg.InheritedElementalAffinities.Reset();
+    for (const EAstrawildElement Element : Fusion->OffspringElementalAffinities)
+    {
+        AddUniqueAffinity(OutEgg.InheritedElementalAffinities, Element);
+    }
+    for (const FGameplayTag& Trait : Fusion->GuaranteedInheritedTraitTags)
+    {
+        if (Trait.IsValid())
+        {
+            OutEgg.InheritedPassiveTraits.AddTag(Trait);
+        }
+    }
+    NormalizeEgg(OutEgg);
+    if (FAstrawildEchoEggData* StoredEgg = IncubatingEggs.FindByPredicate([&OutEgg](const FAstrawildEchoEggData& Egg)
+    {
+        return Egg.EggId == OutEgg.EggId;
+    }))
+    {
+        *StoredEgg = OutEgg;
+    }
+    return true;
+}
+
 void UAstrawildBreedingComponent::AdvanceIncubation(const float DeltaSeconds)
 {
     if (DeltaSeconds <= 0.0f)
@@ -119,6 +175,30 @@ void UAstrawildBreedingComponent::LoadIncubatingEggs(const TArray<FAstrawildEcho
     {
         NormalizeEgg(Egg);
     }
+}
+
+const FAstrawildBreedingFusionRow* UAstrawildBreedingComponent::FindFusionRow(const FGameplayTag& ParentSpeciesA, const FGameplayTag& ParentSpeciesB) const
+{
+    if (!FusionTable || !ParentSpeciesA.IsValid() || !ParentSpeciesB.IsValid())
+    {
+        return nullptr;
+    }
+    TArray<FAstrawildBreedingFusionRow*> Rows;
+    FusionTable->GetAllRows<FAstrawildBreedingFusionRow>(TEXT("AstrawildFusionLookup"), Rows);
+    for (const FAstrawildBreedingFusionRow* Row : Rows)
+    {
+        if (!Row)
+        {
+            continue;
+        }
+        const bool bDirectMatch = Row->ParentSpeciesA == ParentSpeciesA && Row->ParentSpeciesB == ParentSpeciesB;
+        const bool bReverseMatch = Row->ParentSpeciesA == ParentSpeciesB && Row->ParentSpeciesB == ParentSpeciesA;
+        if (bDirectMatch || bReverseMatch)
+        {
+            return Row;
+        }
+    }
+    return nullptr;
 }
 
 void UAstrawildBreedingComponent::AddUniqueAffinity(TArray<EAstrawildElement>& Affinities, const EAstrawildElement Element)

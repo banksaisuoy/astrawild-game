@@ -1,0 +1,64 @@
+{
+  "generator": "Scripts/generate_3d_props.py",
+  "generator_version": 1,
+  "seed": 28427,
+  "format": "OBJ + shared MTL",
+  "coordinate_units": "centimeters",
+  "originality": "ASTRAWILD procedural primitives; no external game assets",
+  "assets": [
+    {
+      "name": "SM_SunwoodLog",
+      "vertices": 96,
+      "faces": 50,
+      "file": "Content/Astrawild/Meshes/Props/SM_SunwoodLog.obj"
+    },
+    {
+      "name": "SM_LumenRock",
+      "vertices": 47,
+      "faces": 54,
+      "file": "Content/Astrawild/Meshes/Props/SM_LumenRock.obj"
+    },
+    {
+      "name": "SM_AstraCrystal",
+      "vertices": 48,
+      "faces": 36,
+      "file": "Content/Astrawild/Meshes/Props/SM_AstraCrystal.obj"
+    },
+    {
+      "name": "SM_CampfireBase",
+      "vertices": 112,
+      "faces": 72,
+      "file": "Content/Astrawild/Meshes/Props/SM_CampfireBase.obj"
+    },
+    {
+      "name": "SM_PrimalAxe",
+      "vertices": 32,
+      "faces": 22,
+      "file": "Content/Astrawild/Meshes/Props/SM_PrimalAxe.obj"
+    },
+    {
+      "name": "SM_PrimalPick",
+      "vertices": 80,
+      "faces": 56,
+      "file": "Content/Astrawild/Meshes/Props/SM_PrimalPick.obj"
+    },
+    {
+      "name": "SM_AstraResonator",
+      "vertices": 134,
+      "faces": 124,
+      "file": "Content/Astrawild/Meshes/Props/SM_AstraResonator.obj"
+    },
+    {
+      "name": "SM_Wall_Wood",
+      "vertices": 48,
+      "faces": 36,
+      "file": "Content/Astrawild/Meshes/Props/SM_Wall_Wood.obj"
+    },
+    {
+      "name": "SM_Door_Wood",
+      "vertices": 48,
+      "faces": 36,
+      "file": "Content/Astrawild/Meshes/Props/SM_Door_Wood.obj"
+    }
+  ]
+}

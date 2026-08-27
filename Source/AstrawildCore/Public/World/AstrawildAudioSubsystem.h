@@ -80,6 +80,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Audio|Boss")
     TArray<FAstrawildBossAudioTheme> BossThemes;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Audio|SFX")
+    TArray<FAstrawildAudioCueBinding> GameplaySFXCues;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Audio")
     EAstrawildAudioMode CurrentMode = EAstrawildAudioMode::Ambient;
 
@@ -104,6 +107,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Audio")
     void ExitCombat(float FadeOutSeconds = 1.0f);
 
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Audio|SFX")
+    bool PlaySFX(FName CueId, float VolumeMultiplier = 1.0f);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Audio")
     bool HasPlayableCue(FName CueId) const;
 
@@ -115,6 +121,7 @@ protected:
     bool PlayCue(const FAstrawildAudioCueBinding& Binding, EAstrawildAudioMode Mode, float FadeInSeconds, bool bLoop);
     void StopComponent(TObjectPtr<UAudioComponent>& Component, float FadeOutSeconds);
     const FAstrawildAudioCueBinding* FindAmbientCue(FName BiomeId, bool bIsNight) const;
+    const FAstrawildAudioCueBinding* FindSFXCue(FName CueId) const;
     const FAstrawildBossAudioTheme* FindBossTheme(FName EncounterId) const;
 
 private:

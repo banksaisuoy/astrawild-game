@@ -1,181 +1,228 @@
 // Copyright Epic Games, Inc. / ASTRAWILD Team. All Rights Reserved.
 
 #include "Components/AstrawildMechaComponent.h"
+#include "Engine/DataTable.h"
+#include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 
 UAstrawildMechaComponent::UAstrawildMechaComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UAstrawildMechaComponent::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
-void UAstrawildMechaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UAstrawildMechaComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (!bIsMechaActive || !HasAuthorityForMecha())
+    {
+        return;
+    }
 
-	if (!bIsMechaActive)
-	{
-		return;
-	}
-
-	// Heat dissipation
-	if (CurrentHeat > 0.0f)
-	{
-		CurrentHeat = FMath::Max(0.0f, CurrentHeat - (HeatCoolingRate * DeltaTime));
-		if (bIsOverheated && CurrentHeat < 20.0f)
-		{
-			bIsOverheated = false;
-		}
-	}
-
-	// Energy recharge
-	if (!bIsOverboosting && CurrentEnergy < MaxEnergy && !bIsOverheated)
-	{
-		CurrentEnergy = FMath::Min(MaxEnergy, CurrentEnergy + (EnergyRechargeRate * DeltaTime));
-		OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
-	}
-
-	// Energy drain during flight / overboost
-	if (bIsFlying || bIsOverboosting)
-	{
-		const float DrainMultiplier = bIsOverboosting ? 180.0f : 40.0f;
-		CurrentEnergy = FMath::Max(0.0f, CurrentEnergy - (DrainMultiplier * DeltaTime));
-		OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
-
-		if (CurrentEnergy <= 0.0f)
-		{
-			SetFlightActive(false);
-			TriggerOverboost(false);
-			bIsOverheated = true;
-			CurrentHeat = 100.0f;
-		}
-	}
-
-	// Shield passive regeneration
-	if (CurrentShield < MaxShield && !bIsOverheated)
-	{
-		CurrentShield = FMath::Min(MaxShield, CurrentShield + (50.0f * DeltaTime));
-		OnShieldChanged.Broadcast(CurrentShield, MaxShield);
-	}
+    HardpointCooldownRemaining = FMath::Max(0.0f, HardpointCooldownRemaining - DeltaTime);
+    if (CurrentHeat > 0.0f)
+    {
+        CurrentHeat = FMath::Max(0.0f, CurrentHeat - (FMath::Max(0.0f, HeatCoolingRate) * DeltaTime));
+        if (bIsOverheated && CurrentHeat < 20.0f)
+        {
+            bIsOverheated = false;
+        }
+    }
+    if (!bIsOverboosting && CurrentEnergy < MaxEnergy && !bIsOverheated)
+    {
+        CurrentEnergy = FMath::Min(MaxEnergy, CurrentEnergy + (FMath::Max(0.0f, EnergyRechargeRate) * DeltaTime));
+    }
+    if (bIsFlying || bIsOverboosting)
+    {
+        const float DrainPerSecond = bIsOverboosting ? 180.0f : 40.0f;
+        CurrentEnergy = FMath::Max(0.0f, CurrentEnergy - (DrainPerSecond * DeltaTime));
+        if (CurrentEnergy <= 0.0f)
+        {
+            TriggerOverboost(false);
+            SetFlightActive(false);
+            bIsOverheated = true;
+            CurrentHeat = 100.0f;
+        }
+    }
+    if (CurrentShield < MaxShield && !bIsOverheated)
+    {
+        CurrentShield = FMath::Min(MaxShield, CurrentShield + (50.0f * DeltaTime));
+    }
+    OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+    OnShieldChanged.Broadcast(CurrentShield, MaxShield);
 }
 
 bool UAstrawildMechaComponent::EquipMechaFrame(const FAstrawildMechaFrameRow& FrameData)
 {
-	ActiveFrameData = FrameData;
-	MaxEnergy = FrameData.MaxEnergy;
-	CurrentEnergy = MaxEnergy;
-	EnergyRechargeRate = FrameData.EnergyRechargeRate;
-	MaxShield = FrameData.MaxShieldHP;
-	CurrentShield = MaxShield;
-	CurrentHeat = 0.0f;
-	bIsOverheated = false;
-	bIsMechaActive = true;
+    if (!HasAuthorityForMecha() || !FrameData.FrameTag.IsValid())
+    {
+        return false;
+    }
+    ActiveFrameData = FrameData;
+    MaxEnergy = FMath::Max(1.0f, FrameData.MaxEnergy);
+    CurrentEnergy = MaxEnergy;
+    EnergyRechargeRate = FMath::Max(0.0f, FrameData.EnergyRechargeRate);
+    MaxShield = FMath::Max(0.0f, FrameData.MaxShieldHP);
+    CurrentShield = MaxShield;
+    CurrentHeat = 0.0f;
+    HardpointCooldownRemaining = 0.0f;
+    bIsOverheated = false;
+    bIsOverboosting = false;
+    bIsMechaActive = true;
 
-	ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
-	if (OwnerChar && OwnerChar->GetCharacterMovement())
-	{
-		OwnerChar->GetCharacterMovement()->MaxWalkSpeed = FrameData.GroundRunSpeed;
-	}
-
-	OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
-	OnShieldChanged.Broadcast(CurrentShield, MaxShield);
-	return true;
+    if (ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCharacterMovementComponent* Movement = OwnerChar->GetCharacterMovement())
+        {
+            Movement->MaxWalkSpeed = FMath::Max(0.0f, FrameData.GroundRunSpeed);
+        }
+    }
+    OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+    OnShieldChanged.Broadcast(CurrentShield, MaxShield);
+    return true;
 }
 
 void UAstrawildMechaComponent::EjectMechaFrame()
 {
-	bIsMechaActive = false;
-	SetFlightActive(false);
-	TriggerOverboost(false);
-
-	ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
-	if (OwnerChar && OwnerChar->GetCharacterMovement())
-	{
-		OwnerChar->GetCharacterMovement()->MaxWalkSpeed = 500.0f; // Return to standard sprint
-	}
+    if (!HasAuthorityForMecha())
+    {
+        return;
+    }
+    TriggerOverboost(false);
+    SetFlightActive(false);
+    bIsMechaActive = false;
+    EquippedWeaponTag = FGameplayTag::EmptyTag;
+    CurrentHeat = 0.0f;
+    if (ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCharacterMovementComponent* Movement = OwnerChar->GetCharacterMovement())
+        {
+            Movement->MaxWalkSpeed = 500.0f;
+        }
+    }
 }
 
-void UAstrawildMechaComponent::SetFlightActive(bool bActive)
+void UAstrawildMechaComponent::SetFlightActive(const bool bActive)
 {
-	if (bActive && (CurrentEnergy <= 50.0f || bIsOverheated))
-	{
-		return;
-	}
-
-	bIsFlying = bActive;
-	ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
-	if (OwnerChar && OwnerChar->GetCharacterMovement())
-	{
-		if (bIsFlying)
-		{
-			OwnerChar->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-			OwnerChar->GetCharacterMovement()->MaxFlySpeed = ActiveFrameData.FlightCruiseSpeed;
-		}
-		else
-		{
-			OwnerChar->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		}
-	}
-
-	OnFlightStateChanged.Broadcast(bIsFlying);
+    if (!HasAuthorityForMecha() || (bActive && (!bIsMechaActive || CurrentEnergy <= 50.0f || bIsOverheated)))
+    {
+        return;
+    }
+    bIsFlying = bActive;
+    if (ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCharacterMovementComponent* Movement = OwnerChar->GetCharacterMovement())
+        {
+            if (bIsFlying)
+            {
+                Movement->SetMovementMode(MOVE_Flying);
+                Movement->MaxFlySpeed = FMath::Max(0.0f, ActiveFrameData.FlightCruiseSpeed);
+            }
+            else
+            {
+                Movement->SetMovementMode(MOVE_Walking);
+            }
+        }
+    }
+    OnFlightStateChanged.Broadcast(bIsFlying);
 }
 
-void UAstrawildMechaComponent::TriggerOverboost(bool bEnable)
+void UAstrawildMechaComponent::TriggerOverboost(const bool bEnable)
 {
-	if (bEnable && (CurrentEnergy <= 100.0f || bIsOverheated))
-	{
-		return;
-	}
-
-	bIsOverboosting = bEnable;
-	ACharacter* OwnerChar = Cast<ACharacter>(GetOwner());
-	if (OwnerChar && OwnerChar->GetCharacterMovement())
-	{
-		if (bIsOverboosting)
-		{
-			OwnerChar->GetCharacterMovement()->MaxFlySpeed = ActiveFrameData.OverboostSpeed;
-			OwnerChar->GetCharacterMovement()->MaxWalkSpeed = ActiveFrameData.OverboostSpeed;
-		}
-		else
-		{
-			OwnerChar->GetCharacterMovement()->MaxFlySpeed = ActiveFrameData.FlightCruiseSpeed;
-			OwnerChar->GetCharacterMovement()->MaxWalkSpeed = ActiveFrameData.GroundRunSpeed;
-		}
-	}
+    if (!HasAuthorityForMecha() || (bEnable && (!bIsMechaActive || CurrentEnergy <= 100.0f || bIsOverheated)))
+    {
+        return;
+    }
+    bIsOverboosting = bEnable;
+    if (ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCharacterMovementComponent* Movement = OwnerChar->GetCharacterMovement())
+        {
+            Movement->MaxFlySpeed = bIsOverboosting ? ActiveFrameData.OverboostSpeed : ActiveFrameData.FlightCruiseSpeed;
+            Movement->MaxWalkSpeed = bIsOverboosting ? ActiveFrameData.OverboostSpeed : ActiveFrameData.GroundRunSpeed;
+        }
+    }
 }
 
-bool UAstrawildMechaComponent::FireHardpointWeapon(EAstrawildMechaHardpoint Slot, FVector TargetLocation)
+bool UAstrawildMechaComponent::FireHardpointWeapon(const EAstrawildMechaHardpoint Slot, const FVector TargetLocation)
 {
-	if (!bIsMechaActive || bIsOverheated || CurrentEnergy < 15.0f)
-	{
-		return false;
-	}
-
-	// Consume energy & generate heat
-	CurrentEnergy = FMath::Max(0.0f, CurrentEnergy - 20.0f);
-	CurrentHeat = FMath::Min(100.0f, CurrentHeat + 12.0f);
-	if (CurrentHeat >= 100.0f)
-	{
-		bIsOverheated = true;
-	}
-
-	OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
-	return true;
+    (void)TargetLocation;
+    if (!HasAuthorityForMecha() || !bIsMechaActive || bIsOverheated || HardpointCooldownRemaining > 0.0f)
+    {
+        return false;
+    }
+    const FAstrawildMechaWeaponRow* Weapon = FindWeaponForSlot(Slot);
+    if (!Weapon || !Weapon->WeaponTag.IsValid() || CurrentEnergy < FMath::Max(0.0f, Weapon->EnergyCostPerShot))
+    {
+        return false;
+    }
+    EquippedWeaponTag = Weapon->WeaponTag;
+    CurrentEnergy = FMath::Max(0.0f, CurrentEnergy - FMath::Max(0.0f, Weapon->EnergyCostPerShot));
+    CurrentHeat = FMath::Clamp(CurrentHeat + FMath::Max(0.0f, Weapon->HeatGeneratedPerShot), 0.0f, 100.0f);
+    HardpointCooldownRemaining = Weapon->FireRate > 0.0f ? 1.0f / Weapon->FireRate : 0.1f;
+    if (CurrentHeat >= 100.0f)
+    {
+        bIsOverheated = true;
+    }
+    OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+    return true;
 }
 
 void UAstrawildMechaComponent::ActivateBeamSaberMelee()
 {
-	if (!bIsMechaActive || bIsOverheated)
-	{
-		return;
-	}
+    if (!HasAuthorityForMecha() || !bIsMechaActive || bIsOverheated)
+    {
+        return;
+    }
+    const FAstrawildMechaWeaponRow* Weapon = FindWeaponForSlot(EAstrawildMechaHardpoint::SecondaryLeftHand);
+    if (Weapon && CurrentEnergy >= FMath::Max(0.0f, Weapon->EnergyCostPerShot))
+    {
+        EquippedWeaponTag = Weapon->WeaponTag;
+        CurrentEnergy = FMath::Max(0.0f, CurrentEnergy - FMath::Max(0.0f, Weapon->EnergyCostPerShot));
+        CurrentHeat = FMath::Clamp(CurrentHeat + FMath::Max(0.0f, Weapon->HeatGeneratedPerShot), 0.0f, 100.0f);
+        HardpointCooldownRemaining = Weapon->FireRate > 0.0f ? 1.0f / Weapon->FireRate : 0.1f;
+    }
+    else
+    {
+        CurrentHeat = FMath::Clamp(CurrentHeat + 8.0f, 0.0f, 100.0f);
+    }
+    if (CurrentHeat >= 100.0f)
+    {
+        bIsOverheated = true;
+    }
+    OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+}
 
-	CurrentHeat = FMath::Min(100.0f, CurrentHeat + 8.0f);
-	OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+const FAstrawildMechaWeaponRow* UAstrawildMechaComponent::FindWeaponForSlot(const EAstrawildMechaHardpoint Slot) const
+{
+    if (!WeaponTable)
+    {
+        return nullptr;
+    }
+    TArray<FAstrawildMechaWeaponRow*> Rows;
+    WeaponTable->GetAllRows<FAstrawildMechaWeaponRow>(TEXT("AstrawildMechaWeaponLookup"), Rows);
+    for (const FGameplayTag& DefaultTag : ActiveFrameData.DefaultWeaponTags)
+    {
+        if (const FAstrawildMechaWeaponRow* Preferred = Rows.FindByPredicate([Slot, DefaultTag](const FAstrawildMechaWeaponRow* Row)
+        {
+            return Row && Row->HardpointSlot == Slot && Row->WeaponTag == DefaultTag;
+        }))
+        {
+            return Preferred;
+        }
+    }
+    return Rows.FindByPredicate([Slot](const FAstrawildMechaWeaponRow* Row)
+    {
+        return Row && Row->HardpointSlot == Slot;
+    });
+}
+
+bool UAstrawildMechaComponent::HasAuthorityForMecha() const
+{
+    return !GetOwner() || GetOwner()->HasAuthority();
 }

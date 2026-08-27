@@ -55,6 +55,28 @@ void UAstrawildAudioSubsystem::PopulateDefaultRegistry()
         };
     }
 
+    if (GameplaySFXCues.IsEmpty())
+    {
+        const auto MakeSFX = [](const TCHAR* CueId, const TCHAR* AssetName) -> FAstrawildAudioCueBinding
+        {
+            FAstrawildAudioCueBinding Binding;
+            Binding.CueId = FName(CueId);
+            Binding.CueTag = FGameplayTag::RequestGameplayTag(FName(CueId), false);
+            const FString ObjectPath = FString::Printf(TEXT("/Game/Astrawild/Audio/SFX/%s.%s"), AssetName, AssetName);
+            Binding.Sound = AstrawildAudioDefaults::SoftSound(*ObjectPath);
+            return Binding;
+        };
+        GameplaySFXCues = {
+            MakeSFX(TEXT("SFX.Melee.Swing"), TEXT("SFX_Melee_Swing")),
+            MakeSFX(TEXT("SFX.Melee.Hit"), TEXT("SFX_Melee_Hit")),
+            MakeSFX(TEXT("SFX.Capture.Throw"), TEXT("SFX_Capture_Throw")),
+            MakeSFX(TEXT("SFX.Capture.Success"), TEXT("SFX_Capture_Success")),
+            MakeSFX(TEXT("SFX.Dodge.Roll"), TEXT("SFX_Dodge_Roll")),
+            MakeSFX(TEXT("SFX.Building.Place"), TEXT("SFX_Building_Place")),
+            MakeSFX(TEXT("SFX.LevelUp"), TEXT("SFX_LevelUp"))
+        };
+    }
+
     if (BossThemes.IsEmpty())
     {
         const auto MakeTheme = [](const TCHAR* EncounterId, const TCHAR* Prefix, const TCHAR* TagPrefix) -> FAstrawildBossAudioTheme
@@ -130,6 +152,13 @@ bool UAstrawildAudioSubsystem::HasPlayableCue(const FName CueId) const
             return !Binding.Sound.IsNull();
         }
     }
+    for (const FAstrawildAudioCueBinding& Binding : GameplaySFXCues)
+    {
+        if (Binding.CueId == CueId)
+        {
+            return !Binding.Sound.IsNull();
+        }
+    }
     for (const FAstrawildBossAudioTheme& Theme : BossThemes)
     {
         for (const FAstrawildAudioCueBinding* Binding : {&Theme.PhaseOne, &Theme.PhaseTwo, &Theme.Ultimate})
@@ -146,6 +175,25 @@ bool UAstrawildAudioSubsystem::HasPlayableCue(const FName CueId) const
 bool UAstrawildAudioSubsystem::IsInCombat() const
 {
     return CurrentMode != EAstrawildAudioMode::Ambient;
+}
+
+bool UAstrawildAudioSubsystem::PlaySFX(const FName CueId, const float VolumeMultiplier)
+{
+    const FAstrawildAudioCueBinding* Binding = FindSFXCue(CueId);
+    if (!Binding || !GetWorld())
+    {
+        OnAudioFallback.Broadcast(CueId);
+        return false;
+    }
+    USoundBase* Sound = Binding->Sound.LoadSynchronous();
+    if (!Sound)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[ASTRAWILD][Audio] Missing gameplay SFX for cue %s; imported SoundWave is not available."), *CueId.ToString());
+        OnAudioFallback.Broadcast(CueId);
+        return false;
+    }
+    UGameplayStatics::PlaySound2D(GetWorld(), Sound, FMath::Max(0.0f, Binding->VolumeMultiplier * VolumeMultiplier), FMath::Max(0.1f, Binding->PitchMultiplier));
+    return true;
 }
 
 bool UAstrawildAudioSubsystem::PlayCue(const FAstrawildAudioCueBinding& Binding, const EAstrawildAudioMode Mode, const float FadeInSeconds, const bool bLoop)
@@ -195,6 +243,14 @@ void UAstrawildAudioSubsystem::StopComponent(TObjectPtr<UAudioComponent>& Compon
     }
     Component->DestroyComponent();
     Component = nullptr;
+}
+
+const FAstrawildAudioCueBinding* UAstrawildAudioSubsystem::FindSFXCue(const FName CueId) const
+{
+    return GameplaySFXCues.FindByPredicate([CueId](const FAstrawildAudioCueBinding& Binding)
+    {
+        return Binding.CueId == CueId;
+    });
 }
 
 const FAstrawildAudioCueBinding* UAstrawildAudioSubsystem::FindAmbientCue(const FName BiomeId, const bool bIsNight) const

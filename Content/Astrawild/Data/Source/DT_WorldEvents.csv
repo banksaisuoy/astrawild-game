@@ -1,0 +1,9 @@
+Name,EventTag,DisplayName,EventType,BiomeTag,WeatherTag,SpawnRuleTags,RewardItemTags,DurationSeconds,CooldownSeconds,MaxActiveSpecialSpawns,bRequiresNight,bRequiresStorm
+Event_DawnMigration,Event.Migration.Dawn,Dawn Meadow Migration,Migration,Biome.DawnMeadows,Weather.Clear,"(Spawn.Event.Migration)","(Item.Fiber,Item.Berry)",900,2400,8,false,false
+Event_RainforestBloom,Event.ResourceBloom.Rainforest,Rainforest Resource Bloom,ResourceBloom,Biome.SylvanRainforest,Weather.Rain,"(Spawn.Event.ResourceBloom)","(Item.Mushroom,Item.Herb)",600,1800,6,false,false
+Event_CalderaStorm,Event.Storm.Caldera,Crystal Storm,Storm,Biome.ScorchedObsidianCaldera,Weather.Storm,"(Spawn.Event.Storm)","(Item.VoltOrgan,Item.GeoOrgan)",300,1200,4,false,true
+Event_ZenithWhiteout,Event.Storm.Zenith,Zenith Whiteout,Storm,Biome.GlacialZenith,Weather.Whiteout,"(Spawn.Event.Whiteout)","(Item.GlacialOrgan,Item.Ice)",360,1500,4,false,false
+Event_NightEclipse,Event.Eclipse.Night,Night of the Black Echo,Eclipse,Biome.DawnMeadows,Weather.Aurora,"(Spawn.Event.Eclipse)","(Item.AbyssalOrgan,Item.AstraOrgan)",480,2400,5,true,false
+Event_AstraTitan,Event.Titan.Astra,Astra Titan Arrival,TitanArrival,Biome.DawnMeadows,Weather.Aurora,"(Spawn.Event.Titan)","(Item.AncientAstraSchematic)",900,7200,1,false,false
+Event_BaseSiege,Event.Raid.BaseSiege,Colony Breach,BaseRaid,Biome.DawnMeadows,Weather.Storm,"(Spawn.Event.Raid)","(Item.AstraShard,Item.AncientAstraSchematic)",600,3600,12,false,false
+Event_SunwoodSurge,Event.ResourceBloom.Sunwood,Sunwood Sap Surge,ResourceBloom,Biome.ScorchedObsidianCaldera,Weather.Heatwave,"(Spawn.Event.Sunwood)","(Item.SunwoodResin,Item.LumenShard)",420,2100,7,false,false

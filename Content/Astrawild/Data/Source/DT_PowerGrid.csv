@@ -1,0 +1,13 @@
+Name,NodeTag,DisplayName,NodeType,GenerationWatts,StorageCapacityWattHours,ConsumptionWatts,Priority,RequiredTechnologyTag,RequiredBiomeTag,bGeneratesOnlyDuringDay,bRequiresVolcanicVent,bStopsFoodSpoilage,CraftSpeedMultiplier
+Power_ManualTreadmill,Power.ManualTreadmill,Manual Treadmill,Generator,60,0,0,1,,,false,false,false,1.0
+Power_SolarArray,Power.SolarArray,Solar Array,Generator,250,0,0,1,Technology.SolarEngineering,,true,false,false,1.0
+Power_GeothermalPlant,Power.GeothermalPlant,Geothermal Plant,Generator,500,0,0,1,Technology.GeothermalEngineering,Biome.ScorchedObsidianCaldera,false,true,false,1.0
+Power_AstraNuclearReactor,Power.AstraNuclearReactor,Astra Nuclear Reactor,Generator,2000,0,0,1,Technology.AstraCore,,false,false,false,1.0
+Power_BatteryBank,Power.BatteryBank,Battery Storage Bank,Battery,0,10000,0,1,,,false,false,false,1.0
+Power_ElectricFurnace,Power.ElectricFurnace,Electric Furnace,Consumer,0,0,350,4,Technology.ElectricFoundry,,false,false,false,3.0
+Power_AssemblyLineI,Power.AssemblyLineI,Automated Assembly Line I,Consumer,0,0,280,5,Technology.AutomationI,,false,false,false,1.5
+Power_AssemblyLineII,Power.AssemblyLineII,Automated Assembly Line II,Consumer,0,0,550,6,Technology.AutomationII,,false,false,false,2.2
+Power_Refrigerator,Power.Refrigerator,Refrigerator,Consumer,0,0,90,8,Technology.Preservation,,false,false,true,1.0
+Power_Cooler,Power.Cooler,Cooler,Consumer,0,0,140,7,Technology.Preservation,,false,false,true,1.0
+Power_DefenseTurret,Power.DefenseTurret,Electric Defense Turret,Consumer,0,0,180,10,Technology.AutomatedDefense,,false,false,false,1.0
+Power_HealingBeacon,Power.HealingBeacon,Healing Beacon,Consumer,0,0,220,9,Technology.AstraMedicine,,false,false,false,1.0

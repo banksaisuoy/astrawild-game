@@ -1,0 +1,6 @@
+Name,EffectTag,DisplayName,NiagaraSystemPath,AttachSocket,StartParameter,EndParameter,IntensityParameter,bLooping,bFallbackToEmitter
+VFX_AstraBeamLine,VFX.Exosuit.AstraBeamLine,Astra Beam Line,/Game/Astrawild/VFX/Exosuit/NS_AstraBeamLine,ChestCoreSocket,BeamStart,BeamEnd,BeamIntensity,false,true
+VFX_OverboostTrail,VFX.Exosuit.OverboostTrail,Overboost Thruster Trail,/Game/Astrawild/VFX/Exosuit/NS_OverboostThrusterTrail,RearThrusterSocket,,,ThrustAlpha,true,true
+VFX_PlasmaEdgeSparks,VFX.Exosuit.PlasmaEdgeSparks,Plasma Edge Sparks,/Game/Astrawild/VFX/Exosuit/NS_PlasmaEdgeSparks,PlasmaEdgeSocket,,,SparkIntensity,false,true
+VFX_AstraMuzzleFlash,VFX.Exosuit.MuzzleFlash,Astra Muzzle Flash,/Game/Astrawild/VFX/Exosuit/NS_AstraMuzzleFlash,MuzzleSocket,,,EnergyAlpha,false,true
+VFX_ExosuitShutdown,VFX.Exosuit.Shutdown,Exosuit Shutdown Fallback,/Game/Astrawild/VFX/Exosuit/NS_ExosuitShutdown,ChestCoreSocket,,,HeatAlpha,false,true

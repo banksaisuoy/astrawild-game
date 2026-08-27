@@ -1,0 +1,44 @@
+# ASTRAWILD original generated prop materials
+newmtl M_Bark_Sunwood
+Kd 0.2000 0.0700 0.0250
+Ns 24.0
+
+newmtl M_Wood_End
+Kd 0.3800 0.1800 0.0600
+Ns 24.0
+
+newmtl M_LumenStone
+Kd 0.1800 0.5000 0.6500
+Ns 24.0
+
+newmtl M_AstraCrystal
+Kd 0.3500 0.8500 1.0000
+Ns 24.0
+
+newmtl M_AstraCore
+Kd 0.9500 0.9500 0.4000
+Ns 24.0
+
+newmtl M_Charcoal
+Kd 0.0350 0.0300 0.0250
+Ns 24.0
+
+newmtl M_Ember
+Kd 1.0000 0.2200 0.0250
+Ns 24.0
+
+newmtl M_PrimalStone
+Kd 0.2400 0.2700 0.2900
+Ns 24.0
+
+newmtl M_PrimalWood
+Kd 0.3000 0.1200 0.0400
+Ns 24.0
+
+newmtl M_Iron
+Kd 0.0800 0.1000 0.1200
+Ns 24.0
+
+newmtl M_WallWood
+Kd 0.2900 0.1300 0.0450
+Ns 24.0

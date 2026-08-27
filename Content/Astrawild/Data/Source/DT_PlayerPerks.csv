@@ -1,0 +1,51 @@
+Name,PerkTag,DisplayName,Description,Tier,PrerequisitePerkTags,StatType,StatBonus,SprintStaminaMultiplier,FoodNutritionMultiplier,RepairRefundMultiplier,CaptureOddsBonus,ReloadSpeedMultiplier,CriticalDamageMultiplier
+Perk_01_MarathonRunner,Perk.MarathonRunner,Marathon Runner,Reduces sprint stamina drain.,1,(),MaxHealth,0,0.70,1,0,0,1,1
+Perk_02_IronStomach,Perk.IronStomach,Iron Stomach,Improves nutrition from every meal.,1,(),MaxHealth,0,1,1.50,0,0,1,1
+Perk_03_MasterBlacksmith,Perk.MasterBlacksmith,Master Blacksmith,Returns more resources when repairing gear.,1,(),MaxHealth,0,1,1,1,0,1,1
+Perk_04_BeastWhisperer,Perk.BeastWhisperer,Beast Whisperer,Improves base capture odds.,1,(),MaxHealth,0,1,1,0,0.25,1,1
+Perk_05_Gunslinger,Perk.Gunslinger,Gunslinger,Improves ranged reloads and critical damage.,1,(),MaxHealth,0,1,1,0,0,1.20,1.20
+Perk_06_VitalCore,Perk.VitalCore,Vital Core,Adds maximum health.,1,(),MaxHealth,100,1,1,0,0,1,1
+Perk_07_IronLungs,Perk.IronLungs,Iron Lungs,Adds maximum stamina.,1,(),MaxStamina,50,1,1,0,0,1,1
+Perk_08_PowerGrip,Perk.PowerGrip,Power Grip,Adds attack power.,1,(),AttackPower,2,1,1,0,0,1,1
+Perk_09_ColonyForeman,Perk.ColonyForeman,Colony Foreman,Adds work speed.,1,(),WorkSpeed,50,1,1,0,0,1,1
+Perk_10_PackMule,Perk.PackMule,Pack Mule,Adds weight capacity.,1,(),WeightCapacity,50,1,1,0,0,1,1
+Perk_11_VitalCoreII,Perk.VitalCoreII,Vital Core II,Adds more maximum health.,2,(Perk.VitalCore),MaxHealth,150,1,1,0,0,1,1
+Perk_12_IronLungsII,Perk.IronLungsII,Iron Lungs II,Adds more maximum stamina.,2,(Perk.IronLungs),MaxStamina,75,1,1,0,0,1,1
+Perk_13_PowerGripII,Perk.PowerGripII,Power Grip II,Adds more attack power.,2,(Perk.PowerGrip),AttackPower,3,1,1,0,0,1,1
+Perk_14_ColonyForemanII,Perk.ColonyForemanII,Colony Foreman II,Adds more work speed.,2,(Perk.ColonyForeman),WorkSpeed,75,1,1,0,0,1,1
+Perk_15_PackMuleII,Perk.PackMuleII,Pack Mule II,Adds more weight capacity.,2,(Perk.PackMule),WeightCapacity,75,1,1,0,0,1,1
+Perk_16_VitalCoreIII,Perk.VitalCoreIII,Vital Core III,Adds substantial maximum health.,2,(Perk.VitalCoreI),MaxHealth,250,1,1,0,0,1,1
+Perk_17_IronLungsIII,Perk.IronLungsIII,Iron Lungs III,Adds substantial maximum stamina.,2,(Perk.IronLungsI),MaxStamina,100,1,1,0,0,1,1
+Perk_18_PowerGripIII,Perk.PowerGripIII,Power Grip III,Adds substantial attack power.,2,(Perk.PowerGripI),AttackPower,5,1,1,0,0,1,1
+Perk_19_ColonyForemanIII,Perk.ColonyForemanIII,Colony Foreman III,Adds substantial work speed.,2,(Perk.ColonyForemanI),WorkSpeed,100,1,1,0,0,1,1
+Perk_20_PackMuleIII,Perk.PackMuleIII,Pack Mule III,Adds substantial weight capacity.,2,(Perk.PackMuleI),WeightCapacity,100,1,1,0,0,1,1
+Perk_21_TrailSense,Perk.TrailSense,Trail Sense,Improves exploration movement efficiency.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_22_ColdBlooded,Perk.ColdBlooded,Cold Blooded,Improves resistance to heat exposure.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_23_WarmHeart,Perk.WarmHeart,Warm Heart,Improves resistance to cold exposure.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_24_FieldMedic,Perk.FieldMedic,Field Medic,Improves health recovery from food.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_25_NightScout,Perk.NightScout,Night Scout,Improves nighttime awareness.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_26_EfficientCook,Perk.EfficientCook,Efficient Cook,Improves nutrition output from cooked meals.,2,(),MaxHealth,0,1,1.15,0,0,1,1
+Perk_27_QuickHands,Perk.QuickHands,Quick Hands,Improves reload speed.,2,(),MaxHealth,0,1,1,0,0,1.15,1
+Perk_28_CriticalEye,Perk.CriticalEye,Critical Eye,Improves critical damage.,2,(),MaxHealth,0,1,1,0,0,1,1.15
+Perk_29_ResonanceStudent,Perk.ResonanceStudent,Resonance Student,Improves capture odds against weakened Echoes.,2,(),MaxHealth,0,1,1,0,0.08,1,1
+Perk_30_ResonanceMaster,Perk.ResonanceMaster,Resonance Master,Further improves capture odds.,2,(),MaxHealth,0,1,1,0,0.12,1,1
+Perk_31_BuilderMind,Perk.BuilderMind,Builder Mind,Reduces building material waste.,2,(),MaxHealth,0,1,1,0.20,0,1,1
+Perk_32_StormRunner,Perk.StormRunner,Storm Runner,Improves movement in weather hazards.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_33_MinerFocus,Perk.MinerFocus,Miner Focus,Improves mining output.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_34_GreenThumb,Perk.GreenThumb,Green Thumb,Improves crop yield.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_35_EchoEmpathy,Perk.EchoEmpathy,Echo Empathy,Improves companion trust gain.,2,(),MaxHealth,0,1,1,0,0,1,1
+Perk_36_PackTactics,Perk.PackTactics,Pack Tactics,Improves damage while a companion is active.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_37_ShieldBearer,Perk.ShieldBearer,Shield Bearer,Improves damage mitigation while mounted.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_38_AstraScholar,Perk.AstraScholar,Astra Scholar,Improves experience gained from discoveries.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_39_BreederPatience,Perk.BreederPatience,Breeder Patience,Improves breeding trait inheritance.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_40_SanctuaryKeeper,Perk.SanctuaryKeeper,Sanctuary Keeper,Improves Echo SAN recovery at camp.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_41_LastStand,Perk.LastStand,Last Stand,Improves defense at low health.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_42_DodgeRhythm,Perk.DodgeRhythm,Dodge Rhythm,Reduces dodge stamina cost.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_43_HarvestSurge,Perk.HarvestSurge,Harvest Surge,Improves resource gathering speed.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_44_Logistics,Perk.Logistics,Logistics,Improves transport capacity for colony tasks.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_45_PowerTechnician,Perk.PowerTechnician,Power Technician,Improves powered machine efficiency.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_46_AstraArmorer,Perk.AstraArmorer,Astra Armorer,Improves equipment durability.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_47_TowerVeteran,Perk.TowerVeteran,Tower Veteran,Improves damage against tower bosses.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_48_DawnChampion,Perk.DawnChampion,Dawn Champion,Improves all core combat output.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_49_VoidWalker,Perk.VoidWalker,Void Walker,Improves Abyssal hazard resistance.,3,(),MaxHealth,0,1,1,0,0,1,1
+Perk_50_ElementalScholar,Perk.ElementalScholar,Elemental Scholar,Improves elemental effect duration.,3,(),MaxHealth,0,1,1,0,0,1,1

@@ -2,6 +2,7 @@
 
 #include "Echoes/AstrawildEchoBase.h"
 #include "Components/AstrawildAttributeComponent.h"
+#include "Components/AstrawildMechaComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void UAstrawildAnimInstance::NativeInitializeAnimation()
@@ -54,6 +55,29 @@ void UAstrawildAnimInstance::NativeUpdateAnimation(const float DeltaSeconds)
             HealthNormalized = FMath::Clamp(Player->Attributes->CurrentHealth / Player->Attributes->MaxHealth, 0.0f, 1.0f);
             ElementalAffinity = Player->Attributes->ElementalAffinity;
         }
+    }
+
+    if (const UAstrawildMechaComponent* Mecha = Pawn->FindComponentByClass<UAstrawildMechaComponent>())
+    {
+        bIsMechaActive = Mecha->IsInMechaMode();
+        bIsMechaFlying = Mecha->IsFlightActive();
+        bIsMechaOverboosting = Mecha->IsOverboosting();
+        bIsMechaOverheated = Mecha->IsOverheated();
+        MechaEnergyNormalized = Mecha->GetEnergyPercent();
+        MechaHeatNormalized = Mecha->GetHeatPercent();
+        MechaShieldNormalized = Mecha->GetShieldPercent();
+        MechaEquippedWeaponTag = Mecha->EquippedWeaponTag;
+    }
+    else
+    {
+        bIsMechaActive = false;
+        bIsMechaFlying = false;
+        bIsMechaOverboosting = false;
+        bIsMechaOverheated = false;
+        MechaEnergyNormalized = 0.0f;
+        MechaHeatNormalized = 0.0f;
+        MechaShieldNormalized = 0.0f;
+        MechaEquippedWeaponTag = FGameplayTag::EmptyTag;
     }
 
     if (CachedEcho.IsValid())

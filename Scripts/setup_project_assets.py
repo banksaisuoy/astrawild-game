@@ -71,6 +71,21 @@ BOSS_AUDIO_SCAFFOLDS = tuple(
     for stage in ("PhaseOne", "PhaseTwo", "Ultimate")
 )
 
+MECHA_VFX_SCAFFOLDS = (
+    ("FX/Exosuit", "NS_AstraBeamLine"),
+    ("FX/Exosuit", "NS_OverboostThrusterTrail"),
+    ("FX/Exosuit", "NS_PlasmaEdgeSparks"),
+    ("FX/Exosuit", "NS_AstraMuzzleFlash"),
+    ("FX/Exosuit", "NS_ExosuitShutdown"),
+)
+
+MECHA_ANIMATION_CONTRACT_PATHS = (
+    "/Game/Astrawild/Animation/Mecha/ABP_AstraExosuit",
+    "/Game/Astrawild/Animation/Mecha/AM_AstraOverboost",
+    "/Game/Astrawild/Animation/Mecha/AM_AstraPlasmaEdge",
+    "/Game/Astrawild/Animation/Mecha/AM_AstraHeavyCannon",
+)
+
 
 # The script is intentionally small and explicit: an asset is either created,
 # already exists, skipped with a reason, or failed with the original exception.
@@ -171,6 +186,7 @@ def setup_project_assets() -> dict:
         "configured": [],
         "skipped": [],
         "failed": [],
+        "required_editor_contract_paths": list(MECHA_ANIMATION_CONTRACT_PATHS),
         "notes": [
             "Scaffold assets are placeholders only; assign original production art/audio before PIE.",
             "Landscape MPC names and scalar parameters are an authored material-graph contract, not a finished shader.",
@@ -193,6 +209,8 @@ def setup_project_assets() -> dict:
 
     for name in ("NS_AstrawildPlaceholder", "NS_LandscapeEmissive", "NS_SolarSparks", "NS_GeoDust", "NS_TorrentSplash"):
         _create_asset(asset_tools, "NiagaraSystemFactoryNew", "FX/Emissive" if name != "NS_AstrawildPlaceholder" else "FX", name, report)
+    for folder, name in MECHA_VFX_SCAFFOLDS:
+        _create_asset(asset_tools, "NiagaraSystemFactoryNew", folder, name, report)
 
     _create_asset(asset_tools, "SoundCueFactoryNew", "Audio/SFX", "SC_AstrawildPlaceholder", report)
     for folder, name in AMBIENT_SCAFFOLDS + BOSS_AUDIO_SCAFFOLDS:

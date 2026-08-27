@@ -45,6 +45,11 @@ $required = @(
     "Content/Astrawild/Data/Source/DT_Dungeons.csv",
     "Content/Astrawild/Data/Source/DT_Evolutions.csv",
     "Content/Astrawild/Data/Source/DT_Weather.csv",
+    "Content/Astrawild/Data/Source/DT_MechaFrames.csv",
+    "Content/Astrawild/Data/Source/DT_MechaWeapons.csv",
+    "Content/Astrawild/Data/Source/DT_CyberneticEvolutions.csv",
+    "Content/Astrawild/Data/Source/DT_MechaAnimationProfiles.csv",
+    "Content/Astrawild/Data/Source/DT_MechaVFX.csv",
     "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildTechnologyComponent.h",
@@ -58,6 +63,15 @@ $required = @(
     "Source/AstrawildCore/Public/World/AstrawildBossAIController.h",
     "Source/AstrawildCore/Public/World/AstrawildLandscapeMaterialComponent.h",
     "Source/AstrawildCore/Public/World/AstrawildAudioSubsystem.h",
+    "Source/AstrawildCore/Public/Components/AstrawildMechaComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildMechaComponent.cpp",
+    "Source/AstrawildCore/Public/Data/AstrawildMechaData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildMechaAnimationData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildMechaVFXData.h",
+    "Source/AstrawildCore/Public/Components/AstrawildMechaVFXComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildMechaVFXComponent.cpp",
+    "Source/AstrawildCore/Public/UI/AstrawildCockpitWidget.h",
+    "Source/AstrawildCore/Private/UI/AstrawildCockpitWidget.cpp",
     "Source/AstrawildCore/Private/World/AstrawildBossAIController.cpp",
     "Source/AstrawildCore/Private/World/AstrawildLandscapeMaterialComponent.cpp",
     "Source/AstrawildCore/Private/World/AstrawildAudioSubsystem.cpp",
@@ -70,9 +84,13 @@ $required = @(
     "Scripts/validate_content_contracts.py",
     "Scripts/validate_runtime_contracts.py",
     "Scripts/validate_editor_automation.py",
+    "Scripts/validate_master_echodex.py",
+    "Scripts/validate_generated_assets.py",
+    "Scripts/validate_mecha_contracts.py",
     "Scripts/validate_generated_headers.py",
     "Docs/M2_EVOLUTION_HANDOFF.md",
-    "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md"
+    "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
+    "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md"
 )
 foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }
@@ -82,14 +100,15 @@ $pythonValidators = @(
     "Scripts\validate_content_contracts.py",
     "Scripts\validate_runtime_contracts.py",
     "Scripts\validate_generated_headers.py",
-    "Scripts\validate_editor_automation.py"
+    "Scripts\validate_editor_automation.py",
+    "Scripts\validate_mecha_contracts.py"
 )
 if (Get-Command python -ErrorAction SilentlyContinue) {
     foreach ($validator in $pythonValidators) {
         & python (Join-Path $ProjectRoot $validator)
         if ($LASTEXITCODE -ne 0) { throw "Python validation failed: $validator (exit code $LASTEXITCODE)" }
     }
-    & python -m py_compile (Join-Path $ProjectRoot "Scripts\import_all_datatables.py") (Join-Path $ProjectRoot "Scripts\setup_project_assets.py")
+    & python -m py_compile (Join-Path $ProjectRoot "Scripts\import_all_datatables.py") (Join-Path $ProjectRoot "Scripts\setup_project_assets.py") (Join-Path $ProjectRoot "Scripts\generate_master_echodex_200.py") (Join-Path $ProjectRoot "Scripts\generate_game_audio.py") (Join-Path $ProjectRoot "Scripts\generate_3d_props.py") (Join-Path $ProjectRoot "Scripts\generate_ecosystem_behavior.py")
     if ($LASTEXITCODE -ne 0) { throw "Unreal Python script syntax validation failed" }
 }
 else {

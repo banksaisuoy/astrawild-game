@@ -11,13 +11,35 @@ IMPORTER = ROOT / "Scripts/import_all_datatables.py"
 SCAFFOLD = ROOT / "Scripts/setup_project_assets.py"
 
 EXPECTED_STRUCTS = {
+    "DT_BreedingFusions.csv": "FAstrawildBreedingFusionRow",
+    "DT_CampaignChapters.csv": "FAstrawildCampaignChapterRow",
+    "DT_CookingRecipes.csv": "FAstrawildCookingRecipeRow",
+    "DT_EcosystemBehavior.csv": "FAstrawildEcosystemBehaviorRow",
     "DT_BossAttacks.csv": "FAstrawildBossAttackRow",
+    "DT_EchoDex_200.csv": "FAstrawildMasterEchoRow",
     "DT_BossEncounters.csv": "FAstrawildBossEncounterRow",
     "DT_CyberneticEvolutions.csv": "FAstrawildCyberneticEvolutionRow",
     "DT_FoliageRules.csv": "FAstrawildFoliageRuleRow",
+    "DT_MechaAnimationProfiles.csv": "FAstrawildMechaAnimationProfileRow",
+    "DT_MechaVFX.csv": "FAstrawildMechaVFXBindingRow",
     "DT_MechaFrames.csv": "FAstrawildMechaFrameRow",
     "DT_MechaWeapons.csv": "FAstrawildMechaWeaponRow",
+    "DT_PlayerPerks.csv": "FAstrawildPlayerPerkRow",
+    "DT_PowerGrid.csv": "FAstrawildPowerGridNodeRow",
+    "DT_WorldEvents.csv": "FAstrawildWorldEventRow",
 }
+EXPECTED_IMPORTER_MARKERS = (
+    "MESH_FILES",
+    "AUDIO_FILES",
+    "MESH_DESTINATION_PATH",
+    "AUDIO_DESTINATION_PATH",
+    "GeneratedAssetImportReport.json",
+    "GeneratedAssetRegistry.json",
+    "UAstrawildAudioSubsystem::PlaySFX",
+    "DA_GeneratedAssetRegistry",
+    "AstrawildGeneratedMeshBinding",
+    "AstrawildGeneratedAudioBinding",
+)
 EXPECTED_SCAFFOLD_MARKERS = (
     "MPC_AstrawildLandscape",
     "PhysicsAssetFactory",
@@ -27,6 +49,13 @@ EXPECTED_SCAFFOLD_MARKERS = (
     "AW_RainIntensity",
     "AW_WindStrength",
     "AssetScaffoldReport.json",
+    "MECHA_VFX_SCAFFOLDS",
+    "MECHA_ANIMATION_CONTRACT_PATHS",
+    "NS_AstraBeamLine",
+    "NS_OverboostThrusterTrail",
+    "NS_PlasmaEdgeSparks",
+    "NS_AstraMuzzleFlash",
+    "NS_ExosuitShutdown",
 )
 EXPECTED_CONFIG_MARKERS = {
     ROOT / "Config/DefaultEngine.ini": (
@@ -77,6 +106,12 @@ def main() -> int:
         for csv_name, expected_struct in EXPECTED_STRUCTS.items():
             if mapping.get(csv_name) != expected_struct:
                 errors.append(f"{csv_name} must map to {expected_struct}; found {mapping.get(csv_name)}")
+
+    if IMPORTER.is_file():
+        importer_text = IMPORTER.read_text(encoding="utf-8")
+        for marker in EXPECTED_IMPORTER_MARKERS:
+            if marker not in importer_text:
+                errors.append(f"import_all_datatables.py missing marker {marker}")
 
     if SCAFFOLD.is_file():
         scaffold_text = SCAFFOLD.read_text(encoding="utf-8")

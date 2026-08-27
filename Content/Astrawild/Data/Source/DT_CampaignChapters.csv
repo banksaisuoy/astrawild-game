@@ -1,0 +1,9 @@
+Name,ChapterId,DisplayName,Summary,RequiredQuestIds,OptionalQuestIds,RequiredBossEncounterTag,UnlockRegionTag,UnlockSpireTag,EndingChoiceTags,bIsFinalChapter
+Campaign_01_Awakening,Campaign.Awakening,The First Signal,Follow the first dawn signal and establish a safe camp.,(Quest.Awakening),(Quest.Campwater),,Region.DawnSpire,Spire.DawnMeadows,(Ending.Preserve),false
+Campaign_02_Resonance,Campaign.Resonance,Resonance Accord,Build a resonator and earn the trust of an Echo.,(Quest.FirstResonator),(Quest.Campwater),,Region.ResourceGrove,Spire.SylvanRainforest,(Ending.Preserve),false
+Campaign_03_DangerPit,Campaign.DangerPit,Pressure Below,Survive the first Alpha tower encounter.,(Quest.DangerPit),(),Encounter.TowerSolarixAlpha,Region.DangerPit,Spire.ScorchedCaldera,(Ending.Preserve),false
+Campaign_04_Colony,Campaign.Colony,The Living Colony,Stabilize food, power and Echo work at the colony.,(),(Quest.Campwater),,Region.RestSanctuary,Spire.RestSanctuary,(Ending.Preserve),false
+Campaign_05_Tide,Campaign.Tide,The Returning Tide,Investigate the Torrent resonance under the rainforest.,(),(),Encounter.TowerMiremaw,Region.SylvanRainforest,Spire.SylvanRainforest,(Ending.Preserve),false
+Campaign_06_Caldera,Campaign.Caldera,Heart of the Caldera,Reach the geothermal heart and defeat the Geo guardian.,(),(),Encounter.TowerTerradon,Region.ScorchedObsidianCaldera,Spire.ScorchedCaldera,(Ending.Preserve),false
+Campaign_07_Zenith,Campaign.Zenith,White Silence,Cross the glacial storm and defeat the Volt/Glacial guardian.,(),(),Encounter.TowerStormshell,Region.GlacialZenith,Spire.GlacialZenith,(Ending.Preserve),false
+Campaign_08_FirstDawn,Campaign.FirstDawn,The First Dawn,Choose how the ancient signal will shape the future.,(),(),Encounter.TowerFirstDawnDragon,Region.FirstDawnSanctuary,Spire.FirstDawn,(Ending.Preserve,Ending.Rekindle,Ending.Release),true

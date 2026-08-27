@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AstrawildTypes.h"
+#include "Data/AstrawildBreedingFusionData.h"
 #include "AstrawildBreedingComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEchoEggCreatedSignature, const FAstrawildEchoEggData&, EggData);
@@ -24,6 +25,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Breeding")
     TArray<FAstrawildEchoEggData> IncubatingEggs;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Breeding|Fusion")
+    TObjectPtr<UDataTable> FusionTable;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Breeding", meta=(ClampMin="1.0"))
     float DefaultIncubationDurationSeconds = 900.0f;
 
@@ -42,6 +46,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Breeding")
     bool TryBreed(const FAstrawildCapturedEchoData& ParentA, const FAstrawildCapturedEchoData& ParentB, const FGameplayTag& OffspringSpeciesTag, FAstrawildEchoEggData& OutEgg);
 
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Breeding|Fusion")
+    bool TryBreedFusion(const FAstrawildCapturedEchoData& ParentA, const FAstrawildCapturedEchoData& ParentB, FAstrawildEchoEggData& OutEgg);
+
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Breeding")
     void AdvanceIncubation(float DeltaSeconds);
 
@@ -49,6 +56,7 @@ public:
     void LoadIncubatingEggs(const TArray<FAstrawildEchoEggData>& InEggs);
 
 private:
+    const FAstrawildBreedingFusionRow* FindFusionRow(const FGameplayTag& ParentSpeciesA, const FGameplayTag& ParentSpeciesB) const;
     static void AddUniqueAffinity(TArray<EAstrawildElement>& Affinities, EAstrawildElement Element);
     static void AddUniqueTraits(FGameplayTagContainer& Traits, const FGameplayTagContainer& Source);
     static void NormalizeEgg(FAstrawildEchoEggData& Egg);

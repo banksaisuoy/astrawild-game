@@ -1,0 +1,73 @@
+{
+  "generator": "Scripts/generate_game_audio.py",
+  "generator_version": 1,
+  "seed": 712991,
+  "format": "mono PCM WAV",
+  "sample_rate_hz": 44100,
+  "bits_per_sample": 16,
+  "assets": [
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_Melee_Swing.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 24255,
+      "duration_seconds": 0.55,
+      "sha256": "5aa98194ef291d882ae6beaf76494ba12595e0ca2204ce9e8357257eee351c37"
+    },
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_Melee_Hit.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 21168,
+      "duration_seconds": 0.48,
+      "sha256": "cb684569968c557d403ec08d7786f8d1f26725c162cd5432794b01ba6334952d"
+    },
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_Capture_Throw.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 27342,
+      "duration_seconds": 0.62,
+      "sha256": "c23587aa80abb6e21982736f18dd611896c1540bd2111ea3b4560eaf56f126cc"
+    },
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_Capture_Success.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 56448,
+      "duration_seconds": 1.28,
+      "sha256": "3345e3a6f37552bad527f9738054ddc5f2ca512bef46c6e317f65f0322a5ea20"
+    },
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_Dodge_Roll.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 33516,
+      "duration_seconds": 0.76,
+      "sha256": "ae097dc4c249655039c6fd4735d9444930b2ca3b351e9e3bbd75a75c89665c9f"
+    },
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_Building_Place.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 29106,
+      "duration_seconds": 0.66,
+      "sha256": "9914fa6411278f5606db535d17d5a3d018b3076059323b696151b556690be999"
+    },
+    {
+      "file": "Content/Astrawild/Audio/SFX/SFX_LevelUp.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bits_per_sample": 16,
+      "sample_count": 68355,
+      "duration_seconds": 1.55,
+      "sha256": "39d5ddb377d8bd4572937351e661e2ce6ea3bc1eb7efeec75cdd80ab1416c1f9"
+    }
+  ]
+}

@@ -7,6 +7,7 @@
 #include "AstrawildAnimInstance.generated.h"
 
 class AAstrawildEchoBase;
+class UAstrawildMechaComponent;
 
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API UAstrawildAnimInstance : public UAnimInstance
@@ -43,6 +44,30 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation")
     float HealthNormalized = 1.0f;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    bool bIsMechaActive = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    bool bIsMechaFlying = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    bool bIsMechaOverboosting = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    bool bIsMechaOverheated = false;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    float MechaEnergyNormalized = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    float MechaHeatNormalized = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    float MechaShieldNormalized = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Animation|Mecha")
+    FGameplayTag MechaEquippedWeaponTag;
 
 private:
     TWeakObjectPtr<APawn> CachedPawn;

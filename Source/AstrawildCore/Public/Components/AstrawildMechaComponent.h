@@ -15,96 +15,110 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMechaFlightStateChanged, bool, bI
 UCLASS(ClassGroup = (Astrawild), meta = (BlueprintSpawnableComponent))
 class ASTRAWILDCORE_API UAstrawildMechaComponent : public UActorComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UAstrawildMechaComponent();
+    UAstrawildMechaComponent();
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Suit Up / Fusion Control
-	UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
-	bool EquipMechaFrame(const FAstrawildMechaFrameRow& FrameData);
+    UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
+    bool EquipMechaFrame(const FAstrawildMechaFrameRow& FrameData);
 
-	UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
-	void EjectMechaFrame();
+    UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
+    void EjectMechaFrame();
 
-	UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
-	bool IsInMechaMode() const { return bIsMechaActive; }
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    bool IsInMechaMode() const { return bIsMechaActive; }
 
-	// Flight & Thruster Controls
-	UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
-	void SetFlightActive(bool bActive);
+    UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
+    void SetFlightActive(bool bActive);
 
-	UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
-	void TriggerOverboost(bool bEnable);
+    UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
+    void TriggerOverboost(bool bEnable);
 
-	// Weapon Firing
-	UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
-	bool FireHardpointWeapon(EAstrawildMechaHardpoint Slot, FVector TargetLocation);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Weapons")
+    TObjectPtr<UDataTable> WeaponTable;
 
-	UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
-	void ActivateBeamSaberMelee();
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Weapons")
+    FGameplayTag EquippedWeaponTag;
 
-	// State Queries
-	UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
-	float GetEnergyPercent() const { return MaxEnergy > 0.0f ? CurrentEnergy / MaxEnergy : 0.0f; }
+    UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
+    bool FireHardpointWeapon(EAstrawildMechaHardpoint Slot, FVector TargetLocation);
 
-	UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
-	float GetHeatPercent() const { return CurrentHeat / 100.0f; }
+    UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
+    void ActivateBeamSaberMelee();
 
-	UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
-	float GetShieldPercent() const { return MaxShield > 0.0f ? CurrentShield / MaxShield : 0.0f; }
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    float GetEnergyPercent() const { return MaxEnergy > 0.0f ? FMath::Clamp(CurrentEnergy / MaxEnergy, 0.0f, 1.0f) : 0.0f; }
 
-	UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
-	bool IsOverheated() const { return bIsOverheated; }
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    float GetHeatPercent() const { return FMath::Clamp(CurrentHeat / 100.0f, 0.0f, 1.0f); }
 
-	// Events
-	UPROPERTY(BlueprintAssignable, Category = "Astrawild|Mecha|Events")
-	FOnMechaEnergyChanged OnEnergyChanged;
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    float GetShieldPercent() const { return MaxShield > 0.0f ? FMath::Clamp(CurrentShield / MaxShield, 0.0f, 1.0f) : 0.0f; }
 
-	UPROPERTY(BlueprintAssignable, Category = "Astrawild|Mecha|Events")
-	FOnMechaShieldChanged OnShieldChanged;
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    bool IsOverheated() const { return bIsOverheated; }
 
-	UPROPERTY(BlueprintAssignable, Category = "Astrawild|Mecha|Events")
-	FOnMechaFlightStateChanged OnFlightStateChanged;
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    bool IsFlightActive() const { return bIsFlying; }
+
+    UFUNCTION(BlueprintPure, Category = "Astrawild|Mecha")
+    bool IsOverboosting() const { return bIsOverboosting; }
+
+    UPROPERTY(BlueprintAssignable, Category = "Astrawild|Mecha|Events")
+    FOnMechaEnergyChanged OnEnergyChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Astrawild|Mecha|Events")
+    FOnMechaShieldChanged OnShieldChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Astrawild|Mecha|Events")
+    FOnMechaFlightStateChanged OnFlightStateChanged;
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
-	bool bIsMechaActive = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    bool bIsMechaActive = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
-	bool bIsFlying = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    bool bIsFlying = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
-	bool bIsOverboosting = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    bool bIsOverboosting = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
-	bool bIsOverheated = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    bool bIsOverheated = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float CurrentEnergy = 1000.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float CurrentEnergy = 1000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float MaxEnergy = 1000.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float MaxEnergy = 1000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float EnergyRechargeRate = 120.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float EnergyRechargeRate = 120.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float CurrentHeat = 0.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float CurrentHeat = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float HeatCoolingRate = 25.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float HeatCoolingRate = 25.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float CurrentShield = 2500.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float CurrentShield = 2500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
-	float MaxShield = 2500.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    float MaxShield = 2500.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Config")
-	FAstrawildMechaFrameRow ActiveFrameData;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Config")
+    FAstrawildMechaFrameRow ActiveFrameData;
+
+private:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Weapons", meta=(AllowPrivateAccess="true"))
+    float HardpointCooldownRemaining = 0.0f;
+
+    const FAstrawildMechaWeaponRow* FindWeaponForSlot(EAstrawildMechaHardpoint Slot) const;
+    bool HasAuthorityForMecha() const;
 };

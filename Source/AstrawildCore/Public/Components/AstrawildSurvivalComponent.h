@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AstrawildTypes.h"
+#include "Data/AstrawildCookingData.h"
 #include "AstrawildSurvivalComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSurvivalValueChangedSignature, float, CurrentValue, float, MaxValue, float, Delta);
@@ -51,6 +52,18 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Survival")
     float CarryWeight = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Food")
+    TObjectPtr<UDataTable> CookingRecipeTable;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Survival|Food")
+    TArray<FAstrawildTrackedFoodState> TrackedFood;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Survival|Food")
+    TArray<FAstrawildActiveFoodBuff> ActiveFoodBuffs;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Survival|Food")
+    bool bFoodStorageRefrigerated = false;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival")
     float CarryWeightCapacity = 100.0f;
 
@@ -78,6 +91,21 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
     void SetCarryWeight(float NewWeight);
 
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival|Food")
+    bool RegisterFoodItem(const FAstrawildItemSlot& FoodSlot, bool bRefrigerated = false);
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival|Food")
+    void SetFoodStorageRefrigerated(bool bEnabled);
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival|Food")
+    bool ConsumeRegisteredFood(const FGuid& ItemInstanceId);
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival|Food")
+    float GetFoodFreshnessNormalized(const FGuid& ItemInstanceId) const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival|Food")
+    float GetActiveFoodBuffMagnitude(FGameplayTag BuffTag) const;
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
     float GetHungerPercent() const;
 
@@ -99,4 +127,8 @@ public:
 private:
     float WarningCooldownRemaining = 0.0f;
     void BroadcastWarnings();
+    void AdvanceFoodSystems(float DeltaSeconds);
+    const FAstrawildCookingRecipeRow* FindCookingRecipe(const FGameplayTag& RecipeTag) const;
+    const FAstrawildCookingRecipeRow* FindFoodDefinition(const FGameplayTag& FoodItemTag) const;
+    bool HasAuthorityForSurvival() const;
 };
