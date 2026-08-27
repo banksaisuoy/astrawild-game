@@ -18,6 +18,7 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_MountProfiles.csv": {"Name", "MountProfileId", "SaddleSocketName", "SpeedMultiplier", "StaminaCostPerSecond", "JumpMultiplier", "bAllowsCombatFromMount", "MountFamilyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv": {"Name", "BreedingGroupId", "CompatibleSpeciesTags", "IncubationDurationSeconds", "MutationChance", "MaxInheritedTraits"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoTraits.csv": {"Name", "TraitTag", "DisplayName", "Description", "HealthMultiplier", "AttackMultiplier", "DefenseMultiplier", "WorkSpeedMultiplier"},
+    ROOT / "Content/Astrawild/Data/Source/DT_TechnologyNodes.csv": {"Name", "TechnologyTag", "DisplayName", "Description", "Tier", "PrerequisiteTechnologyTags", "UnlockRecipeTags", "ResearchCost"},
 }
 REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Animation/AstrawildAnimInstance.h",
@@ -45,9 +46,17 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Private/Components/AstrawildMountComponent.cpp",
     "Source/AstrawildCore/Public/Data/AstrawildMountData.h",
     "Source/AstrawildCore/Public/Data/AstrawildBreedingData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildTechnologyData.h",
+    "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildSanComponent.cpp",
+    "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildColonyWorkComponent.cpp",
+    "Source/AstrawildCore/Public/Components/AstrawildTechnologyComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildTechnologyComponent.cpp",
     "Docs/M1_WORLD_PARTITION_HANDOFF.md",
     "Docs/M2_ELEMENT_COMPATIBILITY_TEST_PLAN.md",
     "Docs/M2_ECHODEX_MOUNT_BREEDING_HANDOFF.md",
+    "Docs/M3_M5_COLONY_TECHNOLOGY_HANDOFF.md",
     "Config/AstrawildWorldPartition.ini",
 ]
 
@@ -204,6 +213,18 @@ for row in trait_rows:
                 errors.append(f"DT_EchoTraits.csv negative multiplier in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_EchoTraits.csv non-numeric multiplier in row {row.get('Name', '<unknown>')}")
+
+technology_path = ROOT / "Content/Astrawild/Data/Source/DT_TechnologyNodes.csv"
+technology_rows = loaded_rows.get(technology_path, [])
+technology_tags = [row.get("TechnologyTag", "") for row in technology_rows]
+if len(technology_tags) != len(set(technology_tags)):
+    errors.append("DT_TechnologyNodes.csv has duplicate TechnologyTag values")
+for row in technology_rows:
+    try:
+        if int(row["Tier"]) < 0 or int(row["ResearchCost"]) < 0:
+            errors.append(f"DT_TechnologyNodes.csv invalid tier/cost in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_TechnologyNodes.csv non-numeric tier/cost in row {row.get('Name', '<unknown>')}")
 
 for header in (ROOT / "Source").rglob("*.h"):
     text = header.read_text(encoding="utf-8", errors="replace")

@@ -630,6 +630,18 @@ struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Breeding")
 	int32 MutationCount = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|SAN", meta = (ClampMin = "0.0"))
+	float CurrentSAN = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|SAN", meta = (ClampMin = "1.0"))
+	float MaxSAN = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|SAN", meta = (ClampMin = "0.0"))
+	float SANRecoveryRate = 3.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo|Work", meta = (ClampMin = "0.1"))
+	float WorkEfficiencyMultiplier = 1.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	TArray<FGameplayTag> EquippedAbilities;
 
@@ -770,6 +782,12 @@ struct ASTRAWILDCORE_API FAstrawildPlayerProfile
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Quest")
 	TMap<FName, int32> ObjectiveProgress;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Technology")
+	TArray<FGameplayTag> UnlockedTechnologyTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Technology", meta = (ClampMin = "0"))
+	int32 ResearchPoints = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival")
 	float Hunger = 100.0f;

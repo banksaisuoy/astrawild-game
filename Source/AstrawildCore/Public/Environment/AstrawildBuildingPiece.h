@@ -11,6 +11,7 @@
 class UStaticMeshComponent;
 class USphereComponent;
 class UAstrawildInventoryComponent;
+class UAstrawildColonyWorkComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBuildingInteractedSignature, AActor*, Interactor, AActor*, Building);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBuildingDestroyedSignature, AActor*, Building);
@@ -35,6 +36,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UAstrawildInventoryComponent> ContainerInventory;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Colony")
+	TObjectPtr<UAstrawildColonyWorkComponent> ColonyWork;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building Properties")
 	FGuid BuildingUniqueId;

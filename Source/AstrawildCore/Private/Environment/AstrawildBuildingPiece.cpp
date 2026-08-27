@@ -4,6 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
+#include "Components/AstrawildColonyWorkComponent.h"
 #include "Components/AstrawildAttributeComponent.h"
 #include "AstrawildLogChannels.h"
 
@@ -26,6 +27,7 @@ AAstrawildBuildingPiece::AAstrawildBuildingPiece()
 
 	ContainerInventory = CreateDefaultSubobject<UAstrawildInventoryComponent>(TEXT("ContainerInventory"));
 	ContainerInventory->MaxSlots = 24;
+	ColonyWork = CreateDefaultSubobject<UAstrawildColonyWorkComponent>(TEXT("ColonyWork"));
 }
 
 void AAstrawildBuildingPiece::BeginPlay()

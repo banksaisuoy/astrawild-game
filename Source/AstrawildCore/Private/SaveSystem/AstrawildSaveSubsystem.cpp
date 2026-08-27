@@ -115,6 +115,12 @@ bool UAstrawildSaveSubsystem::CaptureWorldState(UAstrawildSaveGame* SaveObject)
 			{
 				SaveObject->WorldSnapshot.IncubatingEggs = PlayerChar->Breeding->IncubatingEggs;
 			}
+
+			if (PlayerChar->Technology)
+			{
+				SaveObject->PlayerProfile.UnlockedTechnologyTags = PlayerChar->Technology->UnlockedTechnologyTags;
+				SaveObject->PlayerProfile.ResearchPoints = PlayerChar->Technology->ResearchPoints;
+			}
 		}
 
 	// 2. Capture Placed Buildings
@@ -199,6 +205,11 @@ bool UAstrawildSaveSubsystem::RestoreWorldState(UAstrawildSaveGame* SaveObject)
 			if (PlayerChar->Breeding)
 			{
 				PlayerChar->Breeding->LoadIncubatingEggs(SaveObject->WorldSnapshot.IncubatingEggs);
+			}
+
+			if (PlayerChar->Technology)
+			{
+				PlayerChar->Technology->LoadTechnologyState(SaveObject->PlayerProfile.UnlockedTechnologyTags, SaveObject->PlayerProfile.ResearchPoints);
 			}
 		}
 

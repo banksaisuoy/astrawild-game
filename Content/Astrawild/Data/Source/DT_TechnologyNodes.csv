@@ -1,0 +1,21 @@
+Name,TechnologyTag,DisplayName,Description,Tier,PrerequisiteTechnologyTags,UnlockRecipeTags,ResearchCost
+Tech_BasicShelter,Tech.BasicShelter,Basic Shelter,Unlocks safe camp foundations and a basic sleeping roll.,0,"()","(Recipe.Foundation,Recipe.SleepingRoll)",1
+Tech_StoneTools,Tech.StoneTools,Stone Tools,Unlocks reliable harvesting tools for wood and stone.,0,"()","(Recipe.StonePick,Recipe.StoneHatchet)",1
+Tech_Campfire,Tech.Campfire,Controlled Flame,Unlocks a campfire for cooking and cold protection.,0,"()","(Recipe.Campfire,Recipe.CookedRation)",2
+Tech_ClothGear,Tech.ClothGear,Cloth Gear,Unlocks light insulation clothing and simple bandages.,1,"(Tech.BasicShelter)","(Recipe.ClothTunic,Recipe.FieldBandage)",2
+Tech_CopperWorking,Tech.CopperWorking,Copper Working,Unlocks copper tools and low-voltage components.,1,"(Tech.StoneTools)","(Recipe.CopperPick,Recipe.CopperWire)",3
+Tech_ResonatorUpgrade,Tech.ResonatorUpgrade,Resonator Calibration,Improves capture equipment reliability for higher-level Echoes.,1,"(Tech.CopperWorking)","(Recipe.ResonatorMk2)",4
+Tech_CraftingBench,Tech.CraftingBench,Crafting Bench,Unlocks a modular workbench for intermediate recipes.,1,"(Tech.BasicShelter,Tech.StoneTools)","(Recipe.CraftingBench)",3
+Tech_WaterPurification,Tech.WaterPurification,Water Purification,Unlocks clean water production and hydration storage.,1,"(Tech.Campfire)","(Recipe.WaterFilter,Recipe.WaterCanteen)",3
+Tech_FarmPlot,Tech.FarmPlot,Seeded Agriculture,Unlocks crop plots and basic cultivation recipes.,2,"(Tech.WaterPurification)","(Recipe.FarmPlot,Recipe.SeedPack)",5
+Tech_SaddleCraft,Tech.SaddleCraft,Saddle Craft,Unlocks saddles for compatible mount profiles.,2,"(Tech.ClothGear,Tech.CraftingBench)","(Recipe.SaddleKit)",5
+Tech_BreedingPen,Tech.BreedingPen,Breeding Pen,Unlocks controlled breeding and egg incubation stations.,2,"(Tech.FarmPlot,Tech.CraftingBench)","(Recipe.BreedingPen,Recipe.Incubator)",6
+Tech_AstraSteel,Tech.AstraSteel,Astra Steel,Unlocks durable alloy parts for advanced structures and weapons.,2,"(Tech.CopperWorking,Tech.ResonatorUpgrade)","(Recipe.AstraSteelIngot,Recipe.AstraSteelPlate)",7
+Tech_SanctuaryCore,Tech.SanctuaryCore,Sanctuary Core,Unlocks a storage core that stabilizes workers and protects colony inventory.,2,"(Tech.BreedingPen,Tech.FarmPlot)","(Recipe.SanctuaryCore)",7
+Tech_BasicBow,Tech.BasicBow,Reedbow,Unlocks a quiet ranged weapon and practice arrows.,2,"(Tech.StoneTools)","(Recipe.Reedbow,Recipe.PracticeArrow)",4
+Tech_ElementalAmmo,Tech.ElementalAmmo,Elemental Ammunition,Unlocks elemental arrowheads and charged bolts.,3,"(Tech.BasicBow,Tech.AstraSteel)","(Recipe.SolarArrow,Recipe.TorrentBolt,Recipe.GeoShard)",8
+Tech_Forge,Tech.Forge,Heat Forge,Unlocks a forge for refined materials and weapon parts.,3,"(Tech.AstraSteel,Tech.Campfire)","(Recipe.HeatForge,Recipe.RefinedIngot)",8
+Tech_Automation,Tech.Automation,Colony Automation,Unlocks repeatable work orders and material routing.,3,"(Tech.SanctuaryCore,Tech.BreedingPen)","(Recipe.SortingChest,Recipe.WorkRelay)",9
+Tech_SpireAttunement,Tech.SpireAttunement,Spire Attunement,Unlocks fast travel discovery and destination calibration.,3,"(Tech.SanctuaryCore,Tech.ResonatorUpgrade)","(Recipe.SpiteAttunementKit)",8
+Tech_TowerKeys,Tech.TowerKeys,Tower Keys,Unlocks access keys for the five tower dungeon gates.,4,"(Tech.ElementalAmmo,Tech.Forge)","(Recipe.TowerKeySet)",12
+Tech_FirstDawnResearch,Tech.FirstDawnResearch,First Dawn Research,Unlocks the final research tier and mythic Echo studies.,5,"(Tech.TowerKeys,Tech.SpireAttunement)","(Recipe.DawnArchive,Recipe.MythicResonator)",20

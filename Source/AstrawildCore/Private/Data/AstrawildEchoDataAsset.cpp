@@ -38,6 +38,7 @@ FAstrawildEchoInstance UAstrawildEchoDataAsset::CreateInstance(int32 InLevel, co
 	Instance.PartnerSkillTag = PartnerSkillTag;
 	Instance.MountProfileId = MountProfileId;
 	Instance.BreedingGroupId = BreedingGroupId;
+	Instance.WorkEfficiencyMultiplier = FMath::Max(0.1f, WorkEfficiencyMultiplier);
 
 	// Stat scaling per level (+8% HP, +5% Atk, +4% Def per level)
 	const float LevelMultiplier = 1.0f + ((Instance.Level - 1) * 0.08f);

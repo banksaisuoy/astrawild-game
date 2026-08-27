@@ -16,6 +16,7 @@
 #include "World/AstrawildEnvironmentHazardComponent.h"
 #include "Components/AstrawildMountComponent.h"
 #include "Components/AstrawildBreedingComponent.h"
+#include "Components/AstrawildTechnologyComponent.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
@@ -80,6 +81,7 @@ AAstrawildCharacter::AAstrawildCharacter()
 	EnvironmentHazard = CreateDefaultSubobject<UAstrawildEnvironmentHazardComponent>(TEXT("EnvironmentHazard"));
 	Mount = CreateDefaultSubobject<UAstrawildMountComponent>(TEXT("Mount"));
 	Breeding = CreateDefaultSubobject<UAstrawildBreedingComponent>(TEXT("Breeding"));
+	Technology = CreateDefaultSubobject<UAstrawildTechnologyComponent>(TEXT("Technology"));
 }
 
 void AAstrawildCharacter::BeginPlay()

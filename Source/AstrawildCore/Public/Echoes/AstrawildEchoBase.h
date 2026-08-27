@@ -11,6 +11,7 @@
 class UAstrawildAttributeComponent;
 class UAstrawildCombatComponent;
 class UAstrawildFeedbackComponent;
+class UAstrawildSanComponent;
 class UAstrawildEchoDataAsset;
 class UStaticMeshComponent;
 
@@ -40,6 +41,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Feedback")
 	TObjectPtr<UAstrawildFeedbackComponent> Feedback;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|SAN")
+	TObjectPtr<UAstrawildSanComponent> San;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Data")
 	TObjectPtr<UAstrawildEchoDataAsset> SpeciesData;

@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/AstrawildFeedbackComponent.h"
+#include "Components/AstrawildSanComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AstrawildLogChannels.h"
 #include "Engine/World.h"
@@ -22,6 +23,7 @@ AAstrawildEchoBase::AAstrawildEchoBase()
 	Attributes = CreateDefaultSubobject<UAstrawildAttributeComponent>(TEXT("Attributes"));
 	Combat = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
 	Feedback = CreateDefaultSubobject<UAstrawildFeedbackComponent>(TEXT("Feedback"));
+	San = CreateDefaultSubobject<UAstrawildSanComponent>(TEXT("San"));
 
 	FallbackMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FallbackMeshComponent"));
 	FallbackMeshComponent->SetupAttachment(RootComponent);
@@ -64,6 +66,7 @@ void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InDa
 
 	SpeciesData = InData;
 	InstanceData = InData->CreateInstance(InLevel, InstanceData.CustomNickname);
+	const EAstrawildElement PrimaryElement = InData->ElementalAffinities.Num() > 0 ? InData->ElementalAffinities[0] : InData->ElementalAffinity;
 
 	if (Attributes)
 	{
@@ -71,8 +74,16 @@ void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InDa
 		Attributes->CurrentHealth = InstanceData.CurrentHealth;
 		Attributes->AttackPower = InstanceData.AttackPower;
 		Attributes->DefensePower = InstanceData.DefensePower;
-		Attributes->ElementalAffinity = InstanceData.Element;
+		Attributes->ElementalAffinity = PrimaryElement;
+		InstanceData.Element = PrimaryElement;
 		Attributes->Level = InstanceData.Level;
+	}
+
+	if (San)
+	{
+		San->MaxSAN = InstanceData.MaxSAN;
+		San->CurrentSAN = InstanceData.CurrentSAN;
+		San->RecoveryPerSecond = InstanceData.SANRecoveryRate;
 	}
 
 	if (GetCharacterMovement())
@@ -82,9 +93,10 @@ void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InDa
 
 	ApplyVisualRepresentation();
 
-	UE_LOG(LogAstrawildEcho, Log, TEXT("Initialized Echo %s: %s (Role: %s, Element: %s, Lv: %d, MaxHP: %.0f)"),
-		*GetName(), *InData->SpeciesName.ToString(), *UEnum::GetValueAsString(InData->Role),
-		*UEnum::GetValueAsString(InData->ElementalAffinity), InstanceData.Level, InstanceData.MaxHealth);
+			UE_LOG(LogAstrawildEcho, Log, TEXT("Initialized Echo %s: %s (Role: %s, Element: %s, Lv: %d, MaxHP: %.0f)"),
+			*GetName(), *InData->SpeciesName.ToString(), *UEnum::GetValueAsString(InData->Role),
+			*UEnum::GetValueAsString(PrimaryElement), InstanceData.Level, InstanceData.MaxHealth);
+
 }
 
 void AAstrawildEchoBase::ApplyVisualRepresentation()
@@ -229,6 +241,12 @@ FAstrawildEchoInstance AAstrawildEchoBase::ExportCapturedData() const
 		Data.DefensePower = Attributes->DefensePower;
 		Data.Element = Attributes->ElementalAffinity;
 	}
+	if (San)
+	{
+		Data.MaxSAN = San->MaxSAN;
+		Data.CurrentSAN = San->CurrentSAN;
+		Data.SANRecoveryRate = San->RecoveryPerSecond;
+	}
 	return Data;
 }
 
@@ -244,6 +262,12 @@ void AAstrawildEchoBase::ImportCapturedData(const FAstrawildEchoInstance& Data)
 		Attributes->AttackPower = Data.AttackPower;
 		Attributes->DefensePower = Data.DefensePower;
 		Attributes->ElementalAffinity = Data.Element;
+	}
+	if (San)
+	{
+		San->MaxSAN = FMath::Max(1.0f, Data.MaxSAN);
+		San->CurrentSAN = FMath::Clamp(Data.CurrentSAN, 0.0f, San->MaxSAN);
+		San->RecoveryPerSecond = FMath::Max(0.0f, Data.SANRecoveryRate);
 	}
 }
 

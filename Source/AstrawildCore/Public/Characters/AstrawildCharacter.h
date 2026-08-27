@@ -22,6 +22,7 @@ class UAstrawildSurvivalComponent;
 class UAstrawildEnvironmentHazardComponent;
 class UAstrawildMountComponent;
 class UAstrawildBreedingComponent;
+class UAstrawildTechnologyComponent;
 class UAnimInstance;
 class USkeletalMesh;
 class UInputMappingContext;
@@ -104,6 +105,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Breeding")
 	TObjectPtr<UAstrawildBreedingComponent> Breeding;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Technology")
+	TObjectPtr<UAstrawildTechnologyComponent> Technology;
 
 	// --- Movement Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
