@@ -90,7 +90,8 @@ $required = @(
     "Scripts/validate_generated_headers.py",
     "Docs/M2_EVOLUTION_HANDOFF.md",
     "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
-    "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md"
+    "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md",
+    "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md"
 )
 foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }

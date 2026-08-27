@@ -143,6 +143,7 @@ REQUIRED_PATHS = [
     "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
     "Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md",
     "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md",
+    "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md",
     "Docs/BUILD_STATUS.md",
     "Tools/Package_Astrawild.ps1",
     "Scripts/generate_3d_props.py",
