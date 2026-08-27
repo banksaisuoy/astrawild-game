@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -91,7 +91,7 @@ enum class EAstrawildCaptureState : uint8
  * Elemental Advantage Calculation Matrix
  */
 USTRUCT(BlueprintType)
-struct FAstrawildElementalMatrix
+struct ASTRAWILDCORE_API FAstrawildElementalMatrix
 {
 	GENERATED_BODY()
 
@@ -144,7 +144,7 @@ struct FAstrawildElementalMatrix
  * Inventory slot data container.
  */
 USTRUCT(BlueprintType)
-struct FAstrawildItemSlot
+struct ASTRAWILDCORE_API FAstrawildItemSlot
 {
 	GENERATED_BODY()
 
@@ -194,7 +194,7 @@ struct FAstrawildItemSlot
  * Recipe Ingredient Specification.
  */
 USTRUCT(BlueprintType)
-struct FAstrawildRecipeIngredient
+struct ASTRAWILDCORE_API FAstrawildRecipeIngredient
 {
 	GENERATED_BODY()
 
@@ -209,7 +209,7 @@ struct FAstrawildRecipeIngredient
  * Complete Recipe Definition Struct.
  */
 USTRUCT(BlueprintType)
-struct FAstrawildRecipe : public FTableRowBase
+struct ASTRAWILDCORE_API FAstrawildRecipe : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -242,7 +242,7 @@ struct FAstrawildRecipe : public FTableRowBase
  * Combat Ability Struct for Echoes and Players.
  */
 USTRUCT(BlueprintType)
-struct FAstrawildEchoAbility
+struct ASTRAWILDCORE_API FAstrawildEchoAbility
 {
 	GENERATED_BODY()
 
@@ -272,7 +272,7 @@ struct FAstrawildEchoAbility
  * Serialized Data for a Captured Echo (in Party or Storage Sanctuary).
  */
 USTRUCT(BlueprintType)
-struct FAstrawildCapturedEchoData
+struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 {
 	GENERATED_BODY()
 
@@ -328,7 +328,7 @@ struct FAstrawildCapturedEchoData
  * Serialized Building Structure Data.
  */
 USTRUCT(BlueprintType)
-struct FAstrawildBuildingSaveData
+struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
 {
 	GENERATED_BODY()
 
@@ -364,7 +364,7 @@ struct FAstrawildBuildingSaveData
  * Serialized Harvest Node Status.
  */
 USTRUCT(BlueprintType)
-struct FAstrawildHarvestNodeSaveData
+struct ASTRAWILDCORE_API FAstrawildHarvestNodeSaveData
 {
 	GENERATED_BODY()
 
