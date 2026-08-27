@@ -57,6 +57,8 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Private/World/AstrawildDungeonSubsystem.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildRangedCombatComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildRangedCombatComponent.cpp",
+    "Source/AstrawildCore/Public/UI/AstrawildMasterWidgets.h",
+    "Source/AstrawildCore/Private/UI/AstrawildMasterWidgets.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildSanComponent.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
@@ -68,6 +70,8 @@ REQUIRED_PATHS = [
     "Docs/M2_ECHODEX_MOUNT_BREEDING_HANDOFF.md",
     "Docs/M3_M5_COLONY_TECHNOLOGY_HANDOFF.md",
     "Docs/M6_M8_COMBAT_DUNGEON_HANDOFF.md",
+    "Docs/M9_M10_UI_PACKAGING_HANDOFF.md",
+    "Tools/Package_Astrawild.ps1",
     "Config/AstrawildWorldPartition.ini",
 ]
 

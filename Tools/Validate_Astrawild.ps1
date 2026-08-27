@@ -1,7 +1,10 @@
 [CmdletBinding()]
 param(
     [string]$ProjectRoot = "",
-    [switch]$TryUnreal
+    [switch]$TryUnreal,
+    [switch]$Package,
+    [string]$PackageDirectory = "",
+    [string]$UnrealExecutable = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +31,21 @@ $required = @(
     "Source/AstrawildCore/Public/Components/AstrawildSurvivalComponent.h",
     "Content/Astrawild/Data/Source/DT_Lore.csv",
     "Content/Astrawild/Data/Source/DT_Quests.csv",
-    "Content/Astrawild/Data/Source/DT_QuestObjectives.csv"
+    "Content/Astrawild/Data/Source/DT_QuestObjectives.csv",
+    "Content/Astrawild/Data/Source/DT_EchoDex.csv",
+    "Content/Astrawild/Data/Source/DT_EchoTraits.csv",
+    "Content/Astrawild/Data/Source/DT_BreedingGroups.csv",
+    "Content/Astrawild/Data/Source/DT_MountProfiles.csv",
+    "Content/Astrawild/Data/Source/DT_TechnologyNodes.csv",
+    "Content/Astrawild/Data/Source/DT_Recipes.csv",
+    "Content/Astrawild/Data/Source/DT_RangedWeapons.csv",
+    "Content/Astrawild/Data/Source/DT_Dungeons.csv",
+    "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
+    "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
+    "Source/AstrawildCore/Public/Components/AstrawildTechnologyComponent.h",
+    "Source/AstrawildCore/Public/Components/AstrawildRangedCombatComponent.h",
+    "Source/AstrawildCore/Public/World/AstrawildDungeonSubsystem.h",
+    "Source/AstrawildCore/Public/UI/AstrawildMasterWidgets.h"
 )
 foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }
@@ -49,12 +66,15 @@ else {
     Write-Host "Working tree: clean" -ForegroundColor Green
 }
 
-if ($TryUnreal) {
-    $editorCandidates = @(
+if ($TryUnreal -or $Package) {
+    $editorCandidates = @()
+    if ($UnrealExecutable) { $editorCandidates += $UnrealExecutable }
+    $editorCandidates += @(
         (Get-Command UnrealEditor-Cmd.exe -ErrorAction SilentlyContinue).Source,
         (Get-Command UnrealEditor.exe -ErrorAction SilentlyContinue).Source,
         "$env:ProgramFiles\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
-    ) | Where-Object { $_ -and (Test-Path $_) }
+    )
+    $editorCandidates = $editorCandidates | Where-Object { $_ -and (Test-Path $_) }
 
     if (-not $editorCandidates) {
         Write-Warning "UnrealEditor-Cmd.exe was not found; skipping command-line project check."
@@ -63,8 +83,31 @@ if ($TryUnreal) {
 
     $editor = $editorCandidates[0]
     Write-Host "Unreal command-line executable: $editor"
-    & $editor $uproject -nullrhi -unattended -nop4 -nosplash -NoSound -run=CompileAllBlueprints -Quit
-    if ($LASTEXITCODE -ne 0) { throw "Unreal command-line verification failed with exit code $LASTEXITCODE" }
+    if ($TryUnreal) {
+        & $editor $uproject -nullrhi -unattended -nop4 -nosplash -NoSound -run=CompileAllBlueprints -Quit
+        if ($LASTEXITCODE -ne 0) { throw "Unreal command-line verification failed with exit code $LASTEXITCODE" }
+        Write-Host "Blueprint compile command completed." -ForegroundColor Green
+    }
+
+    if ($Package) {
+        $uatCandidates = @(
+            "$env:ProgramFiles\Epic Games\UE_5.8\Engine\Build\BatchFiles\RunUAT.bat",
+            "$env:ProgramFiles\Epic Games\UE_5.8\Engine\Build\BatchFiles\RunUAT.ps1"
+        ) | Where-Object { Test-Path $_ }
+        if (-not $uatCandidates) {
+            Write-Warning "RunUAT was not found; package step was not executed."
+            exit 2
+        }
+        if ([string]::IsNullOrWhiteSpace($PackageDirectory)) {
+            $PackageDirectory = Join-Path $ProjectRoot "Builds\WindowsDevelopment"
+        }
+        New-Item -ItemType Directory -Force -Path $PackageDirectory | Out-Null
+        $uat = $uatCandidates[0]
+        Write-Host "Packaging to: $PackageDirectory"
+        & cmd.exe /c $uat BuildCookRun "-project=$uproject" -noP4 -platform=Win64 -clientconfig=Development -serverconfig=Development -build -cook -stage -pak -archive "-archivedirectory=$PackageDirectory"
+        if ($LASTEXITCODE -ne 0) { throw "Unreal packaging failed with exit code $LASTEXITCODE" }
+        Write-Host "Packaging command completed. Inspect the archive and BUILD_STATUS evidence before claiming a shippable build." -ForegroundColor Green
+    }
 }
 
 Write-Host "ASTRAWILD verification completed." -ForegroundColor Green
