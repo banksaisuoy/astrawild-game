@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Echoes/AstrawildEchoAIController.h"
 #include "Echoes/AstrawildEchoBase.h"
@@ -245,14 +245,22 @@ void AAstrawildEchoAIController::DrawAIDebugVisuals()
 	}
 
 	const FVector EchoLoc = ControlledEcho->GetActorLocation();
+	const FString StateStr = UEnum::GetValueAsString(ControlledEcho->CurrentState);
+	const float HP = ControlledEcho->Attributes ? ControlledEcho->Attributes->CurrentHealth : 0.0f;
+	const float MaxHP = ControlledEcho->Attributes ? ControlledEcho->Attributes->MaxHealth : 1.0f;
 
-	// Draw Aggro Radius
+	// 1. Draw 3D Floating State & Target Text above Echo head
+	const FString StatusText = FString::Printf(TEXT("[%s] HP: %.0f/%.0f | Target: %s"),
+		*StateStr, HP, MaxHP, TargetActor.IsValid() ? *TargetActor->GetName() : TEXT("None"));
+	DrawDebugString(World, EchoLoc + FVector(0, 0, 90.0f), StatusText, nullptr, FColor::Yellow, 0.0f, true, 1.0f);
+
+	// 2. Draw Aggro Sight Perception Sphere
 	DrawDebugSphere(World, EchoLoc, AggroDetectionRadius, 16, FColor::Orange, false, -1.0f, 0, 1.5f);
 
-	// Draw Leash territory boundary
+	// 3. Draw Leash Territory Boundary Circle
 	DrawDebugCircle(World, HomeLocation + FVector(0, 0, 10), LeashDistance, 32, FColor::Purple, false, -1.0f, 0, 2.0f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
-	// Draw line to target if active
+	// 4. Draw Line to Target if in combat
 	if (TargetActor.IsValid())
 	{
 		DrawDebugLine(World, EchoLoc, TargetActor->GetActorLocation(), FColor::Red, false, -1.0f, 0, 2.5f);
