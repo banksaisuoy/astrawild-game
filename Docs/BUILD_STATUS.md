@@ -2,28 +2,30 @@
 
 ## Status
 
-- Overall: `NOT_RUN` / `PARTIAL` / `COMPLETE` / `BLOCKED`
-- Last updated: YYYY-MM-DD
-- Branch:
-- Commit:
+- Overall: `PARTIAL`
+- Last updated: 2026-08-27
+- Branch: `main`
+- Commit: `d370549` — `feat: add vertical slice gameplay core and save contracts`
 
 ## Environment
 
-- Unreal Engine:
-- Compiler:
-- OS:
-- CPU:
-- GPU:
-- RAM:
-- Storage:
+- Unreal Engine: Not run in Manus environment; target is 5.8
+- Compiler: Not run in Manus environment
+- OS: Repository validation run in Ubuntu sandbox; target build is Windows
+- CPU: Not measured
+- GPU: Not measured
+- RAM: Not measured
+- Storage: Not measured
 
 ## Compile
 
-- Target:
-- Result:
-- Errors:
-- Warnings:
-- Build duration:
+- Target: `ASTRAWILDEditor Win64 Development` — pending Antigravity
+- Result: `NOT_RUN`
+- Errors: Not measured; Unreal Editor unavailable in Manus environment
+- Warnings: Not measured
+- Build duration: Not measured
+
+Static repository validation passed with `Scripts/validate_repository.sh`.
 
 ## Unreal assets created by Antigravity
 
@@ -58,4 +60,4 @@
 
 ## Handoff to Manus AI
 
-Write the exact next action here. Do not mark `COMPLETE` until Compile, map/Blueprint creation, core-loop Playtest, and Save/Load have all passed.
+The C++ core, data contracts, save schema, validation script, and Antigravity instructions are committed in `d370549`. Antigravity must now pull the commit, compile `AstrawildCore`, create the required Blueprint/Data Asset/Map binaries, and fill this report with real test results. Do not mark `COMPLETE` until Compile, map/Blueprint creation, core-loop Playtest, and Save/Load have all passed.
