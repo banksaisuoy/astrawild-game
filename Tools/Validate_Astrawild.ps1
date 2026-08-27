@@ -1,11 +1,18 @@
 [CmdletBinding()]
 param(
-    [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")),
+    [string]$ProjectRoot = "",
     [switch]$TryUnreal
 )
 
 $ErrorActionPreference = "Stop"
-Set-Location $ProjectRoot
+
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    if ($PSScriptRoot) {
+        $ProjectRoot = (Get-Item (Join-Path $PSScriptRoot "..")).FullName
+    } else {
+        $ProjectRoot = (Get-Location).Path
+    }
+}
 
 Write-Host "=== ASTRAWILD verification ===" -ForegroundColor Cyan
 Write-Host "Root: $ProjectRoot"
