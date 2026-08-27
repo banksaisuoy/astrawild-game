@@ -32,6 +32,17 @@ def main() -> int:
     legacy_echoes = {row.get("SpeciesTag", "") for row in rows("DT_EchoDex.csv")}
     master_echoes = {row.get("SpeciesTag", "") for row in rows("DT_EchoDex_200.csv")}
     all_echoes = legacy_echoes | master_echoes
+    mecha_data_header = (ROOT / "Source/AstrawildCore/Public/Data/AstrawildMechaData.h").read_text(encoding="utf-8", errors="replace")
+    mecha_cpp = (ROOT / "Source/AstrawildCore/Private/Components/AstrawildMechaComponent.cpp").read_text(encoding="utf-8", errors="replace")
+    cockpit_cpp = (ROOT / "Source/AstrawildCore/Private/UI/AstrawildCockpitWidget.cpp").read_text(encoding="utf-8", errors="replace")
+    for struct_name in ("FAstrawildMechaWeaponRow", "FAstrawildMechaFrameRow", "FAstrawildCyberneticEvolutionRow"):
+        if f"struct ASTRAWILDCORE_API {struct_name}" not in mecha_data_header:
+            errors.append(f"{struct_name} is missing ASTRAWILDCORE_API export")
+    for required_token in ("TargetLocation.ContainsNaN()", "LineTraceSingleByChannel", "ApplyPointDamage"):
+        if required_token not in mecha_cpp:
+            errors.append(f"mecha firing contract is missing {required_token}")
+    if "IsTargetLockAllowed" not in cockpit_cpp or "LineTraceSingleByChannel" not in cockpit_cpp:
+        errors.append("cockpit target lock contract is missing actor/LOS validation")
 
     if len(frames) != 5:
         errors.append(f"expected 5 mecha frame rows, found {len(frames)}")

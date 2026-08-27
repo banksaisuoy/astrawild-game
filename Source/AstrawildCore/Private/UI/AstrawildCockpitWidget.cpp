@@ -3,6 +3,7 @@
 #include "Components/AstrawildMechaComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
+#include "Engine/World.h"
 
 void UAstrawildCockpitWidget::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime)
 {
@@ -40,14 +41,15 @@ void UAstrawildCockpitWidget::RefreshCockpitState()
         CockpitState.EquippedWeaponTag = FGameplayTag::EmptyTag;
     }
 
-    if (LockedTarget.IsValid() && GetOwningPlayerPawn())
+    if (const APawn* OwnerPawn = GetOwningPlayerPawn(); LockedTarget.IsValid() && IsTargetLockAllowed(OwnerPawn, LockedTarget.Get()))
     {
-        const APawn* OwnerPawn = GetOwningPlayerPawn();
+        CockpitState.bHasTargetLock = true;
         CockpitState.TargetDistance = FVector::Distance(OwnerPawn->GetActorLocation(), LockedTarget->GetActorLocation());
         CockpitState.TargetName = FText::FromString(LockedTarget->GetName());
     }
     else
     {
+        LockedTarget.Reset();
         CockpitState.bHasTargetLock = false;
         CockpitState.TargetDistance = 0.0f;
         CockpitState.TargetName = FText::GetEmpty();
@@ -57,8 +59,15 @@ void UAstrawildCockpitWidget::RefreshCockpitState()
 
 void UAstrawildCockpitWidget::SetTargetLock(AActor* TargetActor, const bool bLocked)
 {
-    LockedTarget = bLocked ? TargetActor : nullptr;
-    CockpitState.bHasTargetLock = bLocked && IsValid(TargetActor);
+    const APawn* OwnerPawn = GetOwningPlayerPawn();
+    if (bLocked && IsTargetLockAllowed(OwnerPawn, TargetActor))
+    {
+        LockedTarget = TargetActor;
+    }
+    else
+    {
+        LockedTarget.Reset();
+    }
     RefreshCockpitState();
 }
 
@@ -72,4 +81,33 @@ void UAstrawildCockpitWidget::BindMechaIfNeeded()
     {
         BoundMecha = OwnerPawn->FindComponentByClass<UAstrawildMechaComponent>();
     }
+}
+
+bool UAstrawildCockpitWidget::IsTargetLockAllowed(const APawn* OwnerPawn, const AActor* TargetActor) const
+{
+    if (!OwnerPawn || !IsValid(TargetActor) || TargetActor == OwnerPawn)
+    {
+        return false;
+    }
+
+    const UWorld* World = GetWorld();
+    if (!World)
+    {
+        return false;
+    }
+
+    const FVector TraceStart = OwnerPawn->GetActorLocation();
+    const FVector TraceEnd = TargetActor->GetActorLocation();
+    if (TraceStart.ContainsNaN() || TraceEnd.ContainsNaN())
+    {
+        return false;
+    }
+
+    FHitResult Hit;
+    FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AstrawildCockpitTargetLock), true, OwnerPawn);
+    if (!World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
+    {
+        return true;
+    }
+    return Hit.GetActor() == TargetActor;
 }

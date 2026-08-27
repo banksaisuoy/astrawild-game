@@ -30,7 +30,7 @@ enum class EAstrawildMechaHardpoint : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FAstrawildMechaWeaponRow : public FTableRowBase
+struct ASTRAWILDCORE_API FAstrawildMechaWeaponRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -66,7 +66,7 @@ struct FAstrawildMechaWeaponRow : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FAstrawildMechaFrameRow : public FTableRowBase
+struct ASTRAWILDCORE_API FAstrawildMechaFrameRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -105,7 +105,7 @@ struct FAstrawildMechaFrameRow : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FAstrawildCyberneticEvolutionRow : public FTableRowBase
+struct ASTRAWILDCORE_API FAstrawildCyberneticEvolutionRow : public FTableRowBase
 {
 	GENERATED_BODY()
 

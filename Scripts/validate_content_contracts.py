@@ -148,7 +148,6 @@ REQUIRED_PATHS = [
     "Scripts/generate_3d_props.py",
     "Scripts/generate_master_echodex_200.py",
     "Scripts/generate_breeding_fusions.py",
-    "Scripts/generate_master_echodex_200.py",
     "Scripts/validate_master_echodex.py",
     "Scripts/generate_cooking_recipes.py",
     "Scripts/generate_player_perks.py",
@@ -176,9 +175,6 @@ REQUIRED_PATHS = [
     "Content/Astrawild/Data/Source/DT_MechaFrames.csv",
     "Content/Astrawild/Data/Source/DT_MechaWeapons.csv",
     "Content/Astrawild/Data/Source/DT_CyberneticEvolutions.csv",
-    "Content/Astrawild/Data/Source/DT_MechaAnimationProfiles.csv",
-    "Content/Astrawild/Data/Source/DT_MechaFrames.csv",
-    "Content/Astrawild/Data/Source/DT_MechaWeapons.csv",
     "Content/Astrawild/Data/Source/DT_MechaVFX.csv",
 ]
 

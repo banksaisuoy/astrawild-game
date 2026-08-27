@@ -101,6 +101,8 @@ $pythonValidators = @(
     "Scripts\validate_runtime_contracts.py",
     "Scripts\validate_generated_headers.py",
     "Scripts\validate_editor_automation.py",
+    "Scripts\validate_master_echodex.py",
+    "Scripts\validate_generated_assets.py",
     "Scripts\validate_mecha_contracts.py"
 )
 if (Get-Command python -ErrorAction SilentlyContinue) {

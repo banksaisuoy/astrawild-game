@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 UAstrawildMechaComponent::UAstrawildMechaComponent()
 {
@@ -151,8 +153,7 @@ void UAstrawildMechaComponent::TriggerOverboost(const bool bEnable)
 
 bool UAstrawildMechaComponent::FireHardpointWeapon(const EAstrawildMechaHardpoint Slot, const FVector TargetLocation)
 {
-    (void)TargetLocation;
-    if (!HasAuthorityForMecha() || !bIsMechaActive || bIsOverheated || HardpointCooldownRemaining > 0.0f)
+    if (!HasAuthorityForMecha() || !bIsMechaActive || bIsOverheated || HardpointCooldownRemaining > 0.0f || TargetLocation.ContainsNaN())
     {
         return false;
     }
@@ -169,6 +170,25 @@ bool UAstrawildMechaComponent::FireHardpointWeapon(const EAstrawildMechaHardpoin
     {
         bIsOverheated = true;
     }
+
+    // The native component owns the authoritative hit validation. Blueprint can still
+    // provide projectile/Niagara presentation, but a weapon request must not ignore
+    // the target position or apply client-only damage.
+    if (AActor* OwnerActor = GetOwner())
+    {
+        const FVector TraceStart = OwnerActor->GetActorLocation();
+        FHitResult Hit;
+        FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AstrawildMechaWeaponTrace), true, OwnerActor);
+        if (GetWorld() && GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TargetLocation, ECC_Visibility, QueryParams))
+        {
+            if (AActor* HitActor = Hit.GetActor())
+            {
+                const FVector ShotDirection = (TargetLocation - TraceStart).GetSafeNormal();
+                UGameplayStatics::ApplyPointDamage(HitActor, FMath::Max(0.0f, Weapon->BaseDamage), ShotDirection, Hit, OwnerActor->GetInstigatorController(), OwnerActor, nullptr);
+            }
+        }
+    }
+
     OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
     return true;
 }

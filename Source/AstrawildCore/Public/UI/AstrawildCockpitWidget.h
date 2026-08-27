@@ -6,6 +6,7 @@
 #include "AstrawildCockpitWidget.generated.h"
 
 class AActor;
+class APawn;
 class UAstrawildMechaComponent;
 
 USTRUCT(BlueprintType)
@@ -83,4 +84,5 @@ private:
     TWeakObjectPtr<UAstrawildMechaComponent> BoundMecha;
     float RefreshAccumulator = 0.0f;
     void BindMechaIfNeeded();
+    bool IsTargetLockAllowed(const APawn* OwnerPawn, const AActor* TargetActor) const;
 };
