@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Environment/AstrawildBuildingPiece.h"
 #include "Components/StaticMeshComponent.h"
@@ -95,4 +95,37 @@ void AAstrawildBuildingPiece::LoadSaveData(const FAstrawildBuildingSaveData& Sav
 	{
 		ContainerInventory->LoadInventorySlots(SaveData.ContainerInventory);
 	}
+}
+
+FText AAstrawildBuildingPiece::GetInteractionPrompt_Implementation(AActor* Interactor)
+{
+	switch (BuildingType)
+	{
+	case EAstrawildBuildingType::Campfire:
+		return FText::FromString(TEXT("[E] Warm Up & Rest at Campfire"));
+	case EAstrawildBuildingType::RestBed:
+		return FText::FromString(TEXT("[E] Sleep & Restore Energy"));
+	case EAstrawildBuildingType::CraftingBench:
+		return FText::FromString(TEXT("[E] Open Crafting Bench"));
+	case EAstrawildBuildingType::StorageChest:
+		return FText::FromString(TEXT("[E] Open Storage Chest"));
+	default:
+		return FText::FromString(TEXT("[E] Interact"));
+	}
+}
+
+bool AAstrawildBuildingPiece::CanInteract_Implementation(AActor* Interactor)
+{
+	return CurrentHealth > 0.0f && Interactor != nullptr;
+}
+
+bool AAstrawildBuildingPiece::PerformInteraction_Implementation(AActor* Interactor)
+{
+	if (!CanInteract_Implementation(Interactor))
+	{
+		return false;
+	}
+
+	Interact(Interactor);
+	return true;
 }

@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "AstrawildPlayerController.generated.h"
 
+class AAstrawildHUD;
+
 UCLASS()
 class ASTRAWILDCORE_API AAstrawildPlayerController : public APlayerController
 {
@@ -16,8 +18,16 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
 
 public:
+	// --- UI & Input Mode Management ---
+	UFUNCTION(BlueprintCallable, Category = "Astrawild UI")
+	void SetUIMode(bool bEnableUI);
+
+	UFUNCTION(BlueprintCallable, Category = "Astrawild UI")
+	void ToggleDebugHUD();
+
 	// --- In-Game Debug Console Commands ---
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_GiveItem(const FString& ItemTagName, int32 Quantity = 1);
@@ -30,4 +40,7 @@ public:
 
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_LoadGame(const FString& SlotName = TEXT("Slot_01"));
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_ToggleDebugHUD();
 };

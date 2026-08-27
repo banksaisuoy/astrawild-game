@@ -1,10 +1,11 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AstrawildTypes.h"
+#include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildHarvestableNode.generated.h"
 
 class UStaticMeshComponent;
@@ -14,7 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeDepletedSignature, AActor*, N
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNodeRespawnedSignature, AActor*, NodeActor);
 
 UCLASS()
-class ASTRAWILDCORE_API AAstrawildHarvestableNode : public AActor
+class ASTRAWILDCORE_API AAstrawildHarvestableNode : public AActor, public IAstrawildInteractableInterface
 {
 	GENERATED_BODY()
 
@@ -89,4 +90,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Harvesting")
 	void LoadSaveData(const FAstrawildHarvestNodeSaveData& SaveData);
+
+	// --- IAstrawildInteractableInterface Implementation ---
+	virtual FText GetInteractionPrompt_Implementation(AActor* Interactor) override;
+	virtual bool CanInteract_Implementation(AActor* Interactor) override;
+	virtual bool PerformInteraction_Implementation(AActor* Interactor) override;
 };

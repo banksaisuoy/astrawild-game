@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Environment/AstrawildHarvestableNode.h"
 #include "Components/StaticMeshComponent.h"
@@ -146,4 +146,40 @@ void AAstrawildHarvestableNode::LoadSaveData(const FAstrawildHarvestNodeSaveData
 		SetActorEnableCollision(true);
 		CurrentNodeHealth = MaxNodeHealth;
 	}
+}
+
+FText AAstrawildHarvestableNode::GetInteractionPrompt_Implementation(AActor* Interactor)
+{
+	if (bIsDepleted)
+	{
+		return FText::FromString(TEXT("Depleted"));
+	}
+
+	FString ActionName = TEXT("Gather");
+	if (HarvestType == EAstrawildHarvestType::Lumber)
+	{
+		ActionName = TEXT("Chop");
+	}
+	else if (HarvestType == EAstrawildHarvestType::Mining)
+	{
+		ActionName = TEXT("Mine");
+	}
+
+	return FText::FromString(FString::Printf(TEXT("[E] %s %s"), *ActionName, *PrimaryResourceTag.ToString()));
+}
+
+bool AAstrawildHarvestableNode::CanInteract_Implementation(AActor* Interactor)
+{
+	return !bIsDepleted && Interactor != nullptr;
+}
+
+bool AAstrawildHarvestableNode::PerformInteraction_Implementation(AActor* Interactor)
+{
+	if (!CanInteract_Implementation(Interactor))
+	{
+		return false;
+	}
+
+	int32 OutYield = 0;
+	return Harvest(1.0f, HarvestType, Interactor, OutYield);
 }

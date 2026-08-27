@@ -18,6 +18,16 @@ class UAstrawildBuildingComponent;
 class UInputMappingContext;
 class UInputAction;
 
+UENUM(BlueprintType)
+enum class EAstrawildMovementState : uint8
+{
+	Idle        UMETA(DisplayName = "Idle"),
+	Walking     UMETA(DisplayName = "Walking"),
+	Sprinting   UMETA(DisplayName = "Sprinting"),
+	Dodging     UMETA(DisplayName = "Dodging / Rolling"),
+	Falling     UMETA(DisplayName = "Falling / In Air")
+};
+
 UCLASS()
 class ASTRAWILDCORE_API AAstrawildCharacter : public ACharacter
 {
@@ -68,12 +78,46 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float SprintStaminaCostPerSecond;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Dodge")
+	float DodgeImpulse;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Dodge")
+	float DodgeDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Dodge")
+	float DodgeStaminaCost;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsSprinting;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bIsDodging;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	EAstrawildMovementState CurrentMovementState;
+
+	// --- Camera Sensitivity Settings ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Sensitivity")
+	float LookSensitivityYaw;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Sensitivity")
+	float LookSensitivityPitch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Sensitivity")
+	bool bInvertPitch;
 
 	// --- Interaction Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
 	float InteractionRange;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TWeakObjectPtr<AActor> FocusedInteractableActor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	FText CachedInteractionPrompt;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	bool bHasFocusedInteractable;
 
 	// --- Input Actions (Enhanced Input) ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -92,6 +136,9 @@ public:
 	TObjectPtr<UInputAction> SprintAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> DodgeAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -107,17 +154,53 @@ public:
 	TObjectPtr<UInputAction> CycleCompanionAction;
 
 public:
-	// --- Action Handlers ---
+	// --- Action Handlers (Enhanced Input & Direct Fallback) ---
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputMove(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputLook(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputStartSprint();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputStopSprint();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void InputPerformDodge();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputPrimaryAttack();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputThrowResonator();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputInteract();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputToggleSummon();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void InputCycleCompanion(const FInputActionValue& Value);
+
+	// --- Direct Axis & Action Handlers for Fallback Input ---
+	void FallbackMoveForward(float Value);
+	void FallbackMoveRight(float Value);
+	void FallbackTurn(float Value);
+	void FallbackLookUp(float Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	bool PerformInteractionTrace(FHitResult& OutHitResult);
+
+	UFUNCTION(BlueprintPure, Category = "Movement")
+	EAstrawildMovementState GetCurrentMovementState() const { return CurrentMovementState; }
+
+private:
+	float DodgeTimer;
+	FVector DodgeDirection;
+
+	void UpdateMovementState();
+	void UpdateInteractionFocus();
 };

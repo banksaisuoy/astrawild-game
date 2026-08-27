@@ -10,8 +10,7 @@
 #include "Components/AstrawildCaptureComponent.h"
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildBuildingComponent.h"
-#include "Environment/AstrawildHarvestableNode.h"
-#include "Environment/AstrawildBuildingPiece.h"
+#include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -21,8 +20,19 @@ AAstrawildCharacter::AAstrawildCharacter()
 	: WalkSpeed(500.0f)
 	, SprintSpeed(850.0f)
 	, SprintStaminaCostPerSecond(15.0f)
+	, DodgeImpulse(1300.0f)
+	, DodgeDuration(0.40f)
+	, DodgeStaminaCost(20.0f)
 	, bIsSprinting(false)
+	, bIsDodging(false)
+	, CurrentMovementState(EAstrawildMovementState::Idle)
+	, LookSensitivityYaw(1.0f)
+	, LookSensitivityPitch(1.0f)
+	, bInvertPitch(false)
 	, InteractionRange(350.0f)
+	, bHasFocusedInteractable(false)
+	, DodgeTimer(0.0f)
+	, DodgeDirection(FVector::ZeroVector)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -31,16 +41,20 @@ AAstrawildCharacter::AAstrawildCharacter()
 	bUseControllerRotationRoll = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->JumpZVelocity = 550.0f;
 	GetCharacterMovement()->AirControl = 0.35f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 2000.0f;
+	GetCharacterMovement()->GroundFriction = 8.0f;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f;
+	CameraBoom->TargetArmLength = 380.0f;
 	CameraBoom->bUsePawnControlRotation = true;
-	CameraBoom->SocketOffset = FVector(0.0f, 50.0f, 60.0f);
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 12.0f;
+	CameraBoom->SocketOffset = FVector(0.0f, 45.0f, 55.0f);
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -84,8 +98,19 @@ void AAstrawildCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Handle Dodge Timer
+	if (bIsDodging)
+	{
+		DodgeTimer -= DeltaTime;
+		if (DodgeTimer <= 0.0f)
+		{
+			bIsDodging = false;
+			GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? SprintSpeed : WalkSpeed;
+		}
+	}
+
 	// Sprint stamina consumption
-	if (bIsSprinting && Attributes)
+	if (bIsSprinting && Attributes && !bIsDodging)
 	{
 		const bool bHasStamina = Attributes->ModifyStamina(-SprintStaminaCostPerSecond * DeltaTime);
 		if (!bHasStamina || GetCharacterMovement()->Velocity.SizeSquared() < 100.0f)
@@ -93,12 +118,60 @@ void AAstrawildCharacter::Tick(float DeltaTime)
 			InputStopSprint();
 		}
 	}
+
+	UpdateMovementState();
+	UpdateInteractionFocus();
+}
+
+void AAstrawildCharacter::UpdateMovementState()
+{
+	if (GetCharacterMovement()->IsFalling())
+	{
+		CurrentMovementState = EAstrawildMovementState::Falling;
+	}
+	else if (bIsDodging)
+	{
+		CurrentMovementState = EAstrawildMovementState::Dodging;
+	}
+	else if (bIsSprinting && GetCharacterMovement()->Velocity.SizeSquared() > 100.0f)
+	{
+		CurrentMovementState = EAstrawildMovementState::Sprinting;
+	}
+	else if (GetCharacterMovement()->Velocity.SizeSquared() > 100.0f)
+	{
+		CurrentMovementState = EAstrawildMovementState::Walking;
+	}
+	else
+	{
+		CurrentMovementState = EAstrawildMovementState::Idle;
+	}
+}
+
+void AAstrawildCharacter::UpdateInteractionFocus()
+{
+	FHitResult Hit;
+	if (PerformInteractionTrace(Hit))
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (HitActor && HitActor->Implements<UAstrawildInteractableInterface>())
+		{
+			FocusedInteractableActor = HitActor;
+			bHasFocusedInteractable = IAstrawildInteractableInterface::Execute_CanInteract(HitActor, this);
+			CachedInteractionPrompt = IAstrawildInteractableInterface::Execute_GetInteractionPrompt(HitActor, this);
+			return;
+		}
+	}
+
+	FocusedInteractableActor = nullptr;
+	bHasFocusedInteractable = false;
+	CachedInteractionPrompt = FText::GetEmpty();
 }
 
 void AAstrawildCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	// 1. Try Enhanced Input Binding
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		if (MoveAction)
@@ -118,6 +191,10 @@ void AAstrawildCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		{
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AAstrawildCharacter::InputStartSprint);
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AAstrawildCharacter::InputStopSprint);
+		}
+		if (DodgeAction)
+		{
+			EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &AAstrawildCharacter::InputPerformDodge);
 		}
 		if (AttackAction)
 		{
@@ -140,12 +217,32 @@ void AAstrawildCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			EnhancedInputComponent->BindAction(CycleCompanionAction, ETriggerEvent::Triggered, this, &AAstrawildCharacter::InputCycleCompanion);
 		}
 	}
+
+	// 2. Direct Raw Input Fallback (Ensures Play In Editor works out-of-the-box before Blueprint asset mapping)
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AAstrawildCharacter::FallbackMoveForward);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AAstrawildCharacter::FallbackMoveRight);
+	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AAstrawildCharacter::FallbackTurn);
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AAstrawildCharacter::FallbackLookUp);
+
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAstrawildCharacter::InputStartSprint);
+	PlayerInputComponent->BindAction(TEXT("Sprint"), IE_Released, this, &AAstrawildCharacter::InputStopSprint);
+	PlayerInputComponent->BindAction(TEXT("Dodge"), IE_Pressed, this, &AAstrawildCharacter::InputPerformDodge);
+	PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AAstrawildCharacter::InputPrimaryAttack);
+	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AAstrawildCharacter::InputInteract);
+	PlayerInputComponent->BindAction(TEXT("ThrowResonator"), IE_Pressed, this, &AAstrawildCharacter::InputThrowResonator);
+	PlayerInputComponent->BindAction(TEXT("ToggleSummon"), IE_Pressed, this, &AAstrawildCharacter::InputToggleSummon);
 }
 
 void AAstrawildCharacter::InputMove(const FInputActionValue& Value)
 {
-	const FVector2D MovementVector = Value.Get<FVector2D>();
+	if (bIsDodging)
+	{
+		return;
+	}
 
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -162,17 +259,56 @@ void AAstrawildCharacter::InputMove(const FInputActionValue& Value)
 void AAstrawildCharacter::InputLook(const FInputActionValue& Value)
 {
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
-
 	if (Controller != nullptr)
 	{
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		const float PitchSign = bInvertPitch ? -1.0f : 1.0f;
+		AddControllerYawInput(LookAxisVector.X * LookSensitivityYaw);
+		AddControllerPitchInput(LookAxisVector.Y * LookSensitivityPitch * PitchSign);
+	}
+}
+
+void AAstrawildCharacter::FallbackMoveForward(float Value)
+{
+	if (!FMath::IsNearlyZero(Value) && !bIsDodging && Controller != nullptr)
+	{
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(ForwardDirection, Value);
+	}
+}
+
+void AAstrawildCharacter::FallbackMoveRight(float Value)
+{
+	if (!FMath::IsNearlyZero(Value) && !bIsDodging && Controller != nullptr)
+	{
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(RightDirection, Value);
+	}
+}
+
+void AAstrawildCharacter::FallbackTurn(float Value)
+{
+	if (!FMath::IsNearlyZero(Value))
+	{
+		AddControllerYawInput(Value * LookSensitivityYaw);
+	}
+}
+
+void AAstrawildCharacter::FallbackLookUp(float Value)
+{
+	if (!FMath::IsNearlyZero(Value))
+	{
+		const float PitchSign = bInvertPitch ? -1.0f : 1.0f;
+		AddControllerPitchInput(Value * LookSensitivityPitch * PitchSign);
 	}
 }
 
 void AAstrawildCharacter::InputStartSprint()
 {
-	if (Attributes && Attributes->CurrentStamina > 10.0f)
+	if (Attributes && Attributes->CurrentStamina > 10.0f && !bIsDodging)
 	{
 		bIsSprinting = true;
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
@@ -182,11 +318,50 @@ void AAstrawildCharacter::InputStartSprint()
 void AAstrawildCharacter::InputStopSprint()
 {
 	bIsSprinting = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	if (!bIsDodging)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	}
+}
+
+void AAstrawildCharacter::InputPerformDodge()
+{
+	if (bIsDodging || GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
+	if (!Attributes || !Attributes->ModifyStamina(-DodgeStaminaCost))
+	{
+		UE_LOG(LogAstrawild, Log, TEXT("Dodge failed: Insufficient stamina."));
+		return;
+	}
+
+	bIsDodging = true;
+	DodgeTimer = DodgeDuration;
+
+	FVector MoveInput = GetLastMovementInputVector();
+	if (MoveInput.IsNearlyZero())
+	{
+		MoveInput = GetActorForwardVector();
+	}
+	else
+	{
+		MoveInput.Normalize();
+	}
+
+	DodgeDirection = MoveInput;
+	LaunchCharacter(DodgeDirection * DodgeImpulse, true, true);
+	UE_LOG(LogAstrawild, Log, TEXT("Player performed Dodge roll in direction %s"), *DodgeDirection.ToString());
 }
 
 void AAstrawildCharacter::InputPrimaryAttack()
 {
+	if (bIsDodging)
+	{
+		return;
+	}
+
 	if (Building && Building->bIsBuildModeActive)
 	{
 		Building->PlaceBuilding();
@@ -201,6 +376,11 @@ void AAstrawildCharacter::InputPrimaryAttack()
 
 void AAstrawildCharacter::InputThrowResonator()
 {
+	if (bIsDodging)
+	{
+		return;
+	}
+
 	if (Capture)
 	{
 		Capture->ThrowResonator(1.0f);
@@ -209,18 +389,24 @@ void AAstrawildCharacter::InputThrowResonator()
 
 void AAstrawildCharacter::InputInteract()
 {
-	FHitResult Hit;
-	if (PerformInteractionTrace(Hit))
+	if (FocusedInteractableActor.IsValid())
 	{
-		AActor* HitActor = Hit.GetActor();
-		if (AAstrawildHarvestableNode* Node = Cast<AAstrawildHarvestableNode>(HitActor))
+		AActor* Target = FocusedInteractableActor.Get();
+		if (Target->Implements<UAstrawildInteractableInterface>())
 		{
-			int32 OutQty = 0;
-			Node->Harvest(1.0f, EAstrawildHarvestType::Foraging, this, OutQty);
+			IAstrawildInteractableInterface::Execute_PerformInteraction(Target, this);
 		}
-		else if (AAstrawildBuildingPiece* Piece = Cast<AAstrawildBuildingPiece>(HitActor))
+	}
+	else
+	{
+		FHitResult Hit;
+		if (PerformInteractionTrace(Hit))
 		{
-			Piece->Interact(this);
+			AActor* HitActor = Hit.GetActor();
+			if (HitActor && HitActor->Implements<UAstrawildInteractableInterface>())
+			{
+				IAstrawildInteractableInterface::Execute_PerformInteraction(HitActor, this);
+			}
 		}
 	}
 }
@@ -273,5 +459,6 @@ bool AAstrawildCharacter::PerformInteractionTrace(FHitResult& OutHitResult)
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 
-	return GetWorld()->LineTraceSingleByChannel(OutHitResult, Start, End, ECC_WorldDynamic, QueryParams);
+	const FCollisionShape SphereShape = FCollisionShape::MakeSphere(25.0f); // Generous sweep for smooth interaction feel
+	return GetWorld()->SweepSingleByChannel(OutHitResult, Start, End, FQuat::Identity, ECC_WorldDynamic, SphereShape, QueryParams);
 }

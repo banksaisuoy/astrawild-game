@@ -5,6 +5,7 @@
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildAttributeComponent.h"
 #include "SaveSystem/AstrawildSaveSubsystem.h"
+#include "UI/AstrawildHUD.h"
 #include "AstrawildLogChannels.h"
 
 AAstrawildPlayerController::AAstrawildPlayerController()
@@ -15,7 +16,46 @@ AAstrawildPlayerController::AAstrawildPlayerController()
 void AAstrawildPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	SetInputMode(FInputModeGameOnly());
+	SetUIMode(false);
+}
+
+void AAstrawildPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (InputComponent)
+	{
+		InputComponent->BindKey(EKeys::F1, IE_Pressed, this, &AAstrawildPlayerController::ToggleDebugHUD);
+		InputComponent->BindKey(EKeys::Tab, IE_Pressed, this, &AAstrawildPlayerController::ToggleDebugHUD);
+	}
+}
+
+void AAstrawildPlayerController::SetUIMode(bool bEnableUI)
+{
+	if (bEnableUI)
+	{
+		bShowMouseCursor = true;
+		FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		InputMode.SetHideCursorDuringCapture(false);
+		SetInputMode(InputMode);
+	}
+	else
+	{
+		bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		SetInputMode(InputMode);
+	}
+}
+
+void AAstrawildPlayerController::ToggleDebugHUD()
+{
+	AAstrawildHUD* MyHUD = Cast<AAstrawildHUD>(GetHUD());
+	if (MyHUD)
+	{
+		MyHUD->ToggleDebugOverlay();
+		UE_LOG(LogAstrawild, Log, TEXT("Toggled Debug HUD Overlay: %d"), MyHUD->bShowDebugOverlay);
+	}
 }
 
 void AAstrawildPlayerController::Astrawild_GiveItem(const FString& ItemTagName, int32 Quantity)
@@ -72,4 +112,9 @@ void AAstrawildPlayerController::Astrawild_LoadGame(const FString& SlotName)
 			SaveSys->LoadGameFromSlot(SlotName);
 		}
 	}
+}
+
+void AAstrawildPlayerController::Astrawild_ToggleDebugHUD()
+{
+	ToggleDebugHUD();
 }
