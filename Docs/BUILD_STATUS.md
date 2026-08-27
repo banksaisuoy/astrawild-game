@@ -5,7 +5,7 @@
 - Overall: `PARTIAL`
 - Last updated: 2026-08-27
 - Branch: `main`
-- Commit: `d370549` — `feat: add vertical slice gameplay core and save contracts`
+- Commit: `cc55763` — `feat: strengthen vertical slice handoff and prototype combat`
 
 ## Environment
 
@@ -60,4 +60,4 @@ Static repository validation passed with `Scripts/validate_repository.sh`.
 
 ## Handoff to Manus AI
 
-The C++ core, data contracts, save schema, validation script, and Antigravity instructions are committed in `d370549`. Antigravity must now pull the commit, compile `AstrawildCore`, create the required Blueprint/Data Asset/Map binaries, and fill this report with real test results. Do not mark `COMPLETE` until Compile, map/Blueprint creation, core-loop Playtest, and Save/Load have all passed.
+The C++ core, placeholder combat visuals, data contracts, save schema, validation script, visual target, game-dev workflow, and Antigravity instructions are committed in `cc55763`. Antigravity must now pull the commit, compile `AstrawildCore`, create the required Blueprint/Data Asset/Map binaries, and fill this report with real test results. Do not mark `COMPLETE` until Compile, map/Blueprint creation, core-loop Playtest, and Save/Load have all passed.

@@ -1,7 +1,7 @@
 # ASTRAWILD — Detailed Repository Audit
 
 **Audit date:** 2026-08-27  
-**Audited revision:** `227c8a1` plus local uncommitted placeholder-visual changes pending commit  
+**Audited revision:** `cc55763` on GitHub `main`  
 **Repository:** `https://github.com/banksaisuoy/astrawild-game`  
 **Audit scope:** source tree, Unreal project descriptor, Config, Content, documentation, validation script, and asset plan
 
@@ -9,7 +9,7 @@
 
 ### Verification of the attached Antigravity report
 
-ไฟล์แนบ `pasted_content.txt` ระบุว่า Antigravity มี Vertical Slice ที่ Compile/Play ผ่านและอยู่บน branch `release/vertical-slice-v1` commit `f8cf5f1` แต่จากการตรวจ GitHub จริงพบว่ามีเพียง branch `main` และไม่พบ branch `release/vertical-slice-v1` หรือ commit ดังกล่าวบน repository ที่ส่งมอบ ดังนั้นรายงานนั้นถือเป็น **ผลจากเครื่องหรือ workspace อื่นที่ยังไม่ได้ส่งขึ้น GitHub** ไม่ควรนับเป็นสถานะของ repository จนกว่าจะมีการ push branch/commit และตรวจไฟล์ได้จริง
+ไฟล์แนบ `pasted_content.txt` ระบุว่า Antigravity มี Vertical Slice ที่ Compile/Play ผ่านและอยู่บน branch `release/vertical-slice-v1` commit `f8cf5f1` แต่จากการตรวจ GitHub จริง ณ audit commit `cc55763` พบว่ามีเพียง branch `main` และไม่พบ branch `release/vertical-slice-v1` หรือ commit ดังกล่าวบน repository ที่ส่งมอบ ดังนั้นรายงานนั้นถือเป็น **ผลจากเครื่องหรือ workspace อื่นที่ยังไม่ได้ส่งขึ้น GitHub** ไม่ควรนับเป็นสถานะของ repository จนกว่าจะมีการ push branch/commit และตรวจไฟล์ได้จริง
 
 รายงานที่แนบยังอ้างถึง source paths จำนวนมาก เช่น `Characters/`, `Echoes/`, `Components/`, `Environment/`, `SaveSystem/` และ `UI/` ซึ่งไม่มีอยู่ใน GitHub `main` ที่ตรวจสอบ ส่วน `Content` บน GitHub ยังมีเพียง `.gitkeep` ดังนั้นต้องให้ Antigravity push ผลงานจากเครื่องจริง หรือส่ง patch/archive ที่ตรวจสอบได้ก่อนจึงจะรวมเป็นสถานะโครงการ
 
