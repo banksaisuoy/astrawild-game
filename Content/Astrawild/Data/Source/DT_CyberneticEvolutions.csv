@@ -1,0 +1,6 @@
+---,BaseEchoTag,ResultingMechaEchoTag,CyberVariantName,RequiredPlayerLevel,RequiredAstraCoreItemTag,RequiredIngotsCount
+Evo_01,"Echo.Pyrelite","Echo.MechaPyrelite","TEK Mecha-Pyrelite Unit",35,"Item.Material.AstraCoreSolar",30
+Evo_02,"Echo.Volthound","Echo.CyberVolthound","Cyber-Volthound Plasma Striker",38,"Item.Material.AstraCoreVolt",35
+Evo_03,"Echo.Terradon","Echo.SiegeTerradon","TEK Siege Fortress Terradon",42,"Item.Material.AstraCoreGeo",50
+Evo_04,"Echo.Voltrix","Echo.WingVoltrix","Wing Zero Cyber-Voltrix",45,"Item.Material.AstraCoreVolt",60
+Evo_05,"Echo.Leviathan","Echo.MechaLeviathan","Submersible Mecha-Leviathan",48,"Item.Material.AstraCoreTorrent",75

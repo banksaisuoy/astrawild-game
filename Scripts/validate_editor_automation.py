@@ -13,7 +13,10 @@ SCAFFOLD = ROOT / "Scripts/setup_project_assets.py"
 EXPECTED_STRUCTS = {
     "DT_BossAttacks.csv": "FAstrawildBossAttackRow",
     "DT_BossEncounters.csv": "FAstrawildBossEncounterRow",
+    "DT_CyberneticEvolutions.csv": "FAstrawildCyberneticEvolutionRow",
     "DT_FoliageRules.csv": "FAstrawildFoliageRuleRow",
+    "DT_MechaFrames.csv": "FAstrawildMechaFrameRow",
+    "DT_MechaWeapons.csv": "FAstrawildMechaWeaponRow",
 }
 EXPECTED_SCAFFOLD_MARKERS = (
     "MPC_AstrawildLandscape",
