@@ -84,6 +84,9 @@ struct ASTRAWILDCORE_API FAstrawildFastTravelSpire : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fast Travel")
     FName BiomeId = NAME_None;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fast Travel|Quest")
+    FGameplayTag QuestTargetTag;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Fast Travel")
     FTransform WorldTransform = FTransform::Identity;
 

@@ -4,6 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
+#include "Components/AstrawildQuestComponent.h"
 #include "AstrawildLogChannels.h"
 
 AAstrawildInteractableActor::AAstrawildInteractableActor()
@@ -70,6 +71,14 @@ bool AAstrawildInteractableActor::PerformInteraction_Implementation(AActor* Inte
 		{
 			Inv->AddItem(RewardItemTag, RewardItemQuantity);
 			UE_LOG(LogAstrawildInventory, Log, TEXT("Granted %s x%d from %s"), *RewardItemTag.ToString(), RewardItemQuantity, *GetName());
+		}
+	}
+
+	if (QuestTargetTag.IsValid())
+	{
+		if (UAstrawildQuestComponent* Quest = Interactor->FindComponentByClass<UAstrawildQuestComponent>())
+		{
+			Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Interact, QuestTargetTag, 1);
 		}
 	}
 

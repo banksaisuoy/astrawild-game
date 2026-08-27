@@ -23,3 +23,4 @@ Trait_PoisonWard,Trait.PoisonWard,Poison Ward,Reduces duration of toxin and corr
 Trait_Hydrated,Trait.Hydrated,Hydrated,Recovers stamina more efficiently near water.,1.0,1.0,1.0,1.05
 Trait_Mythic,Trait.Mythic,Mythic,A rare trait reserved for world-story Echoes.,1.1,1.1,1.1,1.0
 Trait_Commander,Trait.Commander,Commander,Improves nearby companion coordination and partner skills.,1.0,1.05,1.05,1.05
+Trait_Alpha,Trait.Alpha,Alpha,An encounter-grade trait that amplifies boss presence and resilience.,1.25,1.15,1.15,0.9

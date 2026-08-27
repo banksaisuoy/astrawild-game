@@ -51,6 +51,15 @@ foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }
 }
 
+$runtimeValidator = Join-Path $ProjectRoot "Scripts\validate_runtime_contracts.py"
+if (Get-Command python -ErrorAction SilentlyContinue) {
+    & python $runtimeValidator
+    if ($LASTEXITCODE -ne 0) { throw "Runtime contract validation failed with exit code $LASTEXITCODE" }
+}
+else {
+    Write-Warning "Python was not found; runtime cross-table validator was not executed."
+}
+
 $binaryAssets = Get-ChildItem -Path (Join-Path $ProjectRoot "Content") -Recurse -File -Include *.uasset,*.umap -ErrorAction SilentlyContinue
 Write-Host "Unreal binary assets: $($binaryAssets.Count)"
 if ($binaryAssets.Count -eq 0) {

@@ -3,6 +3,7 @@
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildTechnologyComponent.h"
+#include "Components/AstrawildQuestComponent.h"
 #include "Data/AstrawildCraftingData.h"
 #include "Engine/DataTable.h"
 #include "AstrawildLogChannels.h"
@@ -117,8 +118,13 @@ bool UAstrawildCraftingComponent::CraftRecipe(const FAstrawildRecipe& Recipe, EA
 	const bool bAdded = Inv->AddItem(Recipe.OutputItemTag, Recipe.OutputQuantity);
 	if (bAdded)
 	{
-		UE_LOG(LogAstrawild, Log, TEXT("Successfully crafted %s (Qty: %d)"), *Recipe.OutputItemTag.ToString(), Recipe.OutputQuantity);
-		OnCraftSuccess.Broadcast(Recipe);
+					UE_LOG(LogAstrawild, Log, TEXT("Successfully crafted %s (Qty: %d)"), *Recipe.OutputItemTag.ToString(), Recipe.OutputQuantity);
+			if (UAstrawildQuestComponent* Quest = GetOwner() ? GetOwner()->FindComponentByClass<UAstrawildQuestComponent>() : nullptr)
+			{
+				Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Craft, Recipe.OutputItemTag, Recipe.OutputQuantity);
+			}
+			OnCraftSuccess.Broadcast(Recipe);
+
 		return true;
 	}
 

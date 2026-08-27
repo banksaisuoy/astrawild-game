@@ -48,6 +48,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|World|Fast Travel")
     bool DiscoverSpire(FName SpireId);
 
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|World|Fast Travel")
+    bool DiscoverSpireForCharacter(FName SpireId, ACharacter* Character);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Fast Travel")
     bool IsSpireDiscovered(FName SpireId) const;
 

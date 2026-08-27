@@ -3,6 +3,7 @@
 #include "Engine/DataTable.h"
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
+#include "Components/AstrawildQuestComponent.h"
 
 int32 UAstrawildWorldPartitionSubsystem::ClampCellCoordinate(const int32 Coordinate)
 {
@@ -42,6 +43,18 @@ bool UAstrawildWorldPartitionSubsystem::GetBiome(const FName BiomeId, FAstrawild
     const FAstrawildBiomeDefinition* Row = BiomeTable->FindRow<FAstrawildBiomeDefinition>(BiomeId, TEXT("BiomeLookup"));
     if (!Row)
     {
+        for (const TPair<FName, uint8*>& Pair : BiomeTable->GetRowMap())
+        {
+            const FAstrawildBiomeDefinition* Candidate = reinterpret_cast<const FAstrawildBiomeDefinition*>(Pair.Value);
+            if (Candidate && Candidate->BiomeId == BiomeId)
+            {
+                Row = Candidate;
+                break;
+            }
+        }
+    }
+    if (!Row)
+    {
         return false;
     }
 
@@ -72,6 +85,11 @@ bool UAstrawildWorldPartitionSubsystem::GetBiomeAtLocation(const FVector WorldLo
 
 bool UAstrawildWorldPartitionSubsystem::DiscoverSpire(const FName SpireId)
 {
+    if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+    {
+        return false;
+    }
+
     FAstrawildFastTravelSpire Spire;
     if (!GetSpireData(SpireId, Spire) || DiscoveredSpireIds.Contains(SpireId))
     {
@@ -80,6 +98,29 @@ bool UAstrawildWorldPartitionSubsystem::DiscoverSpire(const FName SpireId)
 
     DiscoveredSpireIds.Add(SpireId);
     OnSpireDiscovered.Broadcast(SpireId);
+    return true;
+}
+
+bool UAstrawildWorldPartitionSubsystem::DiscoverSpireForCharacter(const FName SpireId, ACharacter* Character)
+{
+    if (!Character || (GetWorld() && GetWorld()->GetNetMode() != NM_Standalone && !Character->HasAuthority()))
+    {
+        return false;
+    }
+
+    FAstrawildFastTravelSpire Spire;
+    if (!GetSpireData(SpireId, Spire) || !DiscoverSpire(SpireId))
+    {
+        return false;
+    }
+
+    if (Spire.QuestTargetTag.IsValid())
+    {
+        if (UAstrawildQuestComponent* Quest = Character->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Reach, Spire.QuestTargetTag, 1);
+        }
+    }
     return true;
 }
 
@@ -96,6 +137,18 @@ bool UAstrawildWorldPartitionSubsystem::GetSpireData(const FName SpireId, FAstra
     }
 
     const FAstrawildFastTravelSpire* Row = SpireTable->FindRow<FAstrawildFastTravelSpire>(SpireId, TEXT("SpireLookup"));
+    if (!Row)
+    {
+        for (const TPair<FName, uint8*>& Pair : SpireTable->GetRowMap())
+        {
+            const FAstrawildFastTravelSpire* Candidate = reinterpret_cast<const FAstrawildFastTravelSpire*>(Pair.Value);
+            if (Candidate && Candidate->SpireId == SpireId)
+            {
+                Row = Candidate;
+                break;
+            }
+        }
+    }
     if (!Row)
     {
         return false;

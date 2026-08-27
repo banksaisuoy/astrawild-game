@@ -48,6 +48,9 @@ public:
     bool AddObjectiveProgress(FName QuestId, FName ObjectiveId, int32 Amount = 1);
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Quest")
+    int32 AddProgressForTarget(EAstrawildQuestObjectiveType ObjectiveType, const FGameplayTag& TargetTag, int32 Amount = 1);
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Quest")
     bool CompleteQuest(FName QuestId);
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Quest")
@@ -75,4 +78,5 @@ private:
     static FName MakeObjectiveKey(FName QuestId, FName ObjectiveId);
     const FAstrawildQuestRow* FindQuest(FName QuestId) const;
     const FAstrawildQuestObjectiveRow* FindObjective(FName QuestId, FName ObjectiveId) const;
+    void GetObjectiveDefinitions(FName QuestId, TArray<FAstrawildQuestObjective>& OutObjectives) const;
 };

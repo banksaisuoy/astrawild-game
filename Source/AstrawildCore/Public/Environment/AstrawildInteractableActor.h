@@ -40,6 +40,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	bool bIsOneTimeOnly;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Quest")
+	FGameplayTag QuestTargetTag;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	bool bHasBeenInteracted;
 

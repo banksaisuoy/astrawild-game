@@ -1,17 +1,14 @@
 #include "World/AstrawildDungeonSubsystem.h"
 
 #include "Components/AstrawildInventoryComponent.h"
+#include "Echoes/AstrawildEchoBase.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
 bool UAstrawildDungeonSubsystem::StartDungeon(const FName DungeonId, AActor* Starter)
 {
-    if (GetWorld() && !GetWorld()->GetAuthGameMode())
-    {
-        // Standalone and listen-server worlds have authority through the world; this branch is only informational.
-    }
-    if (GetWorld() && !GetWorld()->IsServer())
+    if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
     {
         OnDungeonFailed.Broadcast(DungeonId, FText::FromString(TEXT("Dungeon start requires server authority.")));
         return false;
@@ -69,6 +66,12 @@ bool UAstrawildDungeonSubsystem::JoinActiveDungeon(AActor* Participant)
 bool UAstrawildDungeonSubsystem::RegisterBossDefeated(const FName DungeonId, AActor* DefeatedBoss)
 {
     if (!IsDungeonActive() || DungeonId != ActiveDungeonId || !DefeatedBoss)
+    {
+        return false;
+    }
+    const FAstrawildDungeonRow* Row = FindDungeonRow(ActiveDungeonId);
+    const AAstrawildEchoBase* DefeatedEcho = Cast<AAstrawildEchoBase>(DefeatedBoss);
+    if (!Row || !DefeatedEcho || (Row->BossSpeciesTag.IsValid() && DefeatedEcho->InstanceData.SpeciesTag != Row->BossSpeciesTag))
     {
         return false;
     }

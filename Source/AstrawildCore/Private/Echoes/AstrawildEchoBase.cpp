@@ -2,6 +2,7 @@
 
 #include "Echoes/AstrawildEchoBase.h"
 #include "Components/AstrawildAttributeComponent.h"
+#include "Components/AstrawildQuestComponent.h"
 #include "Components/AstrawildCombatComponent.h"
 #include "Data/AstrawildEchoDataAsset.h"
 #include "Components/StaticMeshComponent.h"
@@ -347,6 +348,13 @@ float AAstrawildEchoBase::TakeAstrawildDamage_Implementation(const FAstrawildDam
 	// 3. Final damage
 	const float FinalDamage = FMath::Max(1.0f, DamageEvent.BaseDamage * DefenseFactor * ElementMult);
 	Attributes->ModifyHealth(-FinalDamage, DamageEvent.InstigatorActor.Get());
+	if (Attributes->CurrentHealth <= 0.0f && DamageEvent.InstigatorActor.IsValid())
+	{
+		if (UAstrawildQuestComponent* Quest = DamageEvent.InstigatorActor->FindComponentByClass<UAstrawildQuestComponent>())
+		{
+			Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Defeat, InstanceData.SpeciesTag, 1);
+		}
+	}
 
 	// 4. Knockback
 	if (DamageEvent.KnockbackImpulse > 0.0f)

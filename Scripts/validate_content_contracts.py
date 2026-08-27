@@ -13,7 +13,7 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_QuestObjectives.csv": {"Name", "QuestId", "ObjectiveId", "Type", "TargetTag", "RequiredQuantity", "Description"},
     ROOT / "Content/Astrawild/Data/Source/DT_Biomes.csv": {"Name", "BiomeId", "Biome", "DisplayName", "MinLevel", "MaxLevel", "TemperatureLevel", "DominantElements", "ResourceTags"},
     ROOT / "Content/Astrawild/Data/Source/DT_SpawnRules.csv": {"Name", "SpawnRuleId", "SpeciesTag", "BiomeId", "MinLevel", "MaxLevel", "Weight", "MaxActive"},
-    ROOT / "Content/Astrawild/Data/Source/DT_FastTravelSpires.csv": {"Name", "SpireId", "DisplayName", "BiomeId", "WorldTransform", "bUnlockedByDefault"},
+    ROOT / "Content/Astrawild/Data/Source/DT_FastTravelSpires.csv": {"Name", "SpireId", "DisplayName", "BiomeId", "QuestTargetTag", "WorldTransform", "bUnlockedByDefault"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoDex.csv": {"Name", "SpeciesTag", "SpeciesName", "SpeciesTitle", "LoreDescription", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "PassiveTraitTags", "WorkSuitabilityTags", "PartnerSkillTag", "MountProfileId", "bCanBeMounted", "BreedingGroupId", "EvolutionTargetId", "EvolutionLevel", "DexOrder"},
     ROOT / "Content/Astrawild/Data/Source/DT_MountProfiles.csv": {"Name", "MountProfileId", "SaddleSocketName", "SpeedMultiplier", "StaminaCostPerSecond", "JumpMultiplier", "bAllowsCombatFromMount", "MountFamilyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv": {"Name", "BreedingGroupId", "CompatibleSpeciesTags", "IncubationDurationSeconds", "MutationChance", "MaxInheritedTraits"},
@@ -73,6 +73,7 @@ REQUIRED_PATHS = [
     "Docs/M9_M10_UI_PACKAGING_HANDOFF.md",
     "Docs/BUILD_STATUS.md",
     "Tools/Package_Astrawild.ps1",
+    "Scripts/validate_runtime_contracts.py",
     "Config/AstrawildWorldPartition.ini",
 ]
 

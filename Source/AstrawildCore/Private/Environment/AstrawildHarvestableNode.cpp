@@ -3,6 +3,7 @@
 #include "Environment/AstrawildHarvestableNode.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
+#include "Components/AstrawildQuestComponent.h"
 #include "AstrawildLogChannels.h"
 
 AAstrawildHarvestableNode::AAstrawildHarvestableNode()
@@ -72,9 +73,10 @@ bool AAstrawildHarvestableNode::Harvest(float ToolPower, EAstrawildHarvestType T
 
 	// Give directly to harvester inventory if present
 	UAstrawildInventoryComponent* Inv = HarvesterActor->FindComponentByClass<UAstrawildInventoryComponent>();
+	bool bPrimaryAdded = false;
 	if (Inv)
 	{
-		Inv->AddItem(PrimaryResourceTag, OutQuantityHarvested);
+		bPrimaryAdded = Inv->AddItem(PrimaryResourceTag, OutQuantityHarvested);
 
 		// Rare secondary drop roll (e.g. Astra Shards from minerals)
 		if (RareSecondaryResourceTag.IsValid() && FMath::RandRange(1, 100) <= RareDropChancePercent)
@@ -82,6 +84,13 @@ bool AAstrawildHarvestableNode::Harvest(float ToolPower, EAstrawildHarvestType T
 			const int32 RareQty = 1;
 			Inv->AddItem(RareSecondaryResourceTag, RareQty);
 			UE_LOG(LogAstrawild, Log, TEXT("Rare Drop harvested: %s x%d"), *RareSecondaryResourceTag.ToString(), RareQty);
+		}
+	}
+	if (bPrimaryAdded)
+	{
+		if (UAstrawildQuestComponent* Quest = HarvesterActor->FindComponentByClass<UAstrawildQuestComponent>())
+		{
+			Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Collect, PrimaryResourceTag, OutQuantityHarvested);
 		}
 	}
 

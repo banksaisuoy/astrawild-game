@@ -1,6 +1,6 @@
 Name,DungeonId,DisplayName,RegionTag,RequiredKeyTag,bConsumeRequiredKey,BossSpeciesTag,BossElement,RecommendedLevel,TimeLimitSeconds,bSupportsCoop,RewardItemTags,RewardQuantities
 Dungeon_SolarSpire,Tower.SolarSpire,Solar Spire,DawnReach,Item.Quest.TowerKeySet,true,Echo.SolarixAlpha,Solar,12,900,true,"(Item.Resource.SolarCore,Item.Quest.SpireSigil)","(4,1)"
-Dungeon_TorrentSpire,Tower.TorrentSpire,Torrent Spire,GreenwaterBasin,Item.Quest.TowerKeySet,true,Echo.MiremawAlpha,Torrent,20,960,true,"(Item.Resource.TorrentCore,Item.Quest.SpireSigil)","(4,1)"
-Dungeon_GeoSpire,Tower.GeoSpire,Geo Spire,StoneveilExpanse,Item.Quest.TowerKeySet,true,Echo.TerradonAlpha,Geo,28,1020,true,"(Item.Resource.GeoCore,Item.Quest.SpireSigil)","(4,1)"
-Dungeon_VoltSpire,Tower.VoltSpire,Volt Spire,StormScar,Item.Quest.TowerKeySet,true,Echo.StormshellAlpha,Volt,36,1080,true,"(Item.Resource.VoltCore,Item.Quest.SpireSigil)","(4,1)"
+Dungeon_TorrentSpire,Tower.TorrentSpire,Torrent Spire,GreenwaterBasin,Item.Quest.TowerKeySet,true,Echo.Miremaw,Torrent,20,960,true,"(Item.Resource.TorrentCore,Item.Quest.SpireSigil)","(4,1)"
+Dungeon_GeoSpire,Tower.GeoSpire,Geo Spire,StoneveilExpanse,Item.Quest.TowerKeySet,true,Echo.Terradon,Geo,28,1020,true,"(Item.Resource.GeoCore,Item.Quest.SpireSigil)","(4,1)"
+Dungeon_VoltSpire,Tower.VoltSpire,Volt Spire,StormScar,Item.Quest.TowerKeySet,true,Echo.Stormshell,Volt,36,1080,true,"(Item.Resource.VoltCore,Item.Quest.SpireSigil)","(4,1)"
 Dungeon_AbyssalSpire,Tower.AbyssalSpire,Abyssal Spire,UmbralHollow,Item.Quest.TowerKeySet,true,Echo.FirstDawnDragon,Abyssal,45,1200,true,"(Item.Resource.AbyssalCore,Item.Quest.DawnCrown)","(6,1)"

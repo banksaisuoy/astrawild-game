@@ -29,6 +29,11 @@ bool UAstrawildSaveGame::ValidateAndSanitize()
 			Slot.Quantity = 999;
 		}
 	}
+	PlayerProfile.ResearchPoints = FMath::Max(0, PlayerProfile.ResearchPoints);
+	PlayerProfile.UnlockedTechnologyTags.RemoveAll([](const FGameplayTag& Tag)
+	{
+		return !Tag.IsValid();
+	});
 
 	// 2. Sanitize Echoes
 	for (FAstrawildCapturedEchoData& Echo : PlayerProfile.ActiveParty)
@@ -44,6 +49,21 @@ bool UAstrawildSaveGame::ValidateAndSanitize()
 		Echo.TrustScore = FMath::Clamp(Echo.TrustScore, 0.0f, 100.0f);
 		Echo.Level = FMath::Max(1, Echo.Level);
 	}
+
+	for (FAstrawildEchoEggData& Egg : WorldSnapshot.IncubatingEggs)
+	{
+		if (!Egg.EggId.IsValid())
+		{
+			Egg.EggId = FGuid::NewGuid();
+		}
+		Egg.IncubationProgress = FMath::Clamp(Egg.IncubationProgress, 0.0f, 1.0f);
+		Egg.IncubationDurationSeconds = FMath::Max(1.0f, Egg.IncubationDurationSeconds);
+		Egg.Generation = FMath::Max(1, Egg.Generation);
+	}
+	WorldSnapshot.DiscoveredSpireIds.RemoveAll([](const FName& SpireId)
+	{
+		return SpireId.IsNone();
+	});
 
 	// 3. Sanitize World Buildings
 	for (int32 i = WorldSnapshot.PlacedBuildings.Num() - 1; i >= 0; --i)

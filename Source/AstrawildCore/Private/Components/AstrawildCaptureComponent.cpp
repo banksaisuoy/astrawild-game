@@ -6,6 +6,7 @@
 #include "Echoes/AstrawildEchoAIController.h"
 #include "Components/AstrawildAttributeComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
+#include "Components/AstrawildQuestComponent.h"
 #include "Data/AstrawildEchoDataAsset.h"
 #include "AstrawildLogChannels.h"
 #include "Engine/World.h"
@@ -213,9 +214,13 @@ bool UAstrawildCaptureComponent::AttemptCapture(AAstrawildEchoBase* TargetEcho, 
 		CapturedData.OwnershipState = EAstrawildEchoOwnership::TamedCompanion;
 		CapturedData.TrustScore = CalculateInitialTrust(TargetEcho);
 
-		AddCapturedEcho(CapturedData);
+					AddCapturedEcho(CapturedData);
+			if (UAstrawildQuestComponent* Quest = GetOwner() ? GetOwner()->FindComponentByClass<UAstrawildQuestComponent>() : nullptr)
+			{
+				Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Capture, CapturedData.SpeciesTag, 1);
+			}
 
-		const FString SpeciesName = TargetEcho->SpeciesData ? TargetEcho->SpeciesData->SpeciesName.ToString() : TEXT("Echo");
+			const FString SpeciesName = TargetEcho->SpeciesData ? TargetEcho->SpeciesData->SpeciesName.ToString() : TEXT("Echo");
 		LastCaptureFeedback = FText::FromString(FString::Printf(TEXT("Resonance Capture Success! %s joined your party (Trust: %.0f%%)."),
 			*SpeciesName, CapturedData.TrustScore));
 

@@ -1,17 +1,17 @@
-Name,SpireId,DisplayName,BiomeId,WorldTransform,bUnlockedByDefault
-Spire_01_DawnGate,Spire.DawnGate,Dawn Gate Spire,Biome.DawnMeadows,"((1,0,0),(0,0,0),(1,1,1))",true
-Spire_02_Sunrise,Spire.Sunrise,Sunrise Spire,Biome.DawnMeadows,"((1,0,0),(10000,8000,0),(1,1,1))",false
-Spire_03_MeadowEast,Spire.MeadowEast,Meadow East Spire,Biome.DawnMeadows,"((1,0,0),(70000,-20000,0),(1,1,1))",false
-Spire_04_MeadowWest,Spire.MeadowWest,Meadow West Spire,Biome.DawnMeadows,"((1,0,0),(-70000,-20000,0),(1,1,1))",false
-Spire_05_Rainfall,Spire.Rainfall,Rainfall Spire,Biome.SylvanRainforest,"((1,0,0),(70000,-90000,0),(1,1,1))",false
-Spire_06_Canopy,Spire.Canopy,Canopy Spire,Biome.SylvanRainforest,"((1,0,0),(120000,-70000,0),(1,1,1))",false
-Spire_07_RiverMouth,Spire.RiverMouth,River Mouth Spire,Biome.SylvanRainforest,"((1,0,0),(120000,-140000,0),(1,1,1))",false
-Spire_08_CrystalWetlands,Spire.CrystalWetlands,Crystal Wetlands Spire,Biome.SylvanRainforest,"((1,0,0),(60000,-140000,0),(1,1,1))",false
-Spire_09_ObsidianGate,Spire.ObsidianGate,Obsidian Gate Spire,Biome.ScorchedObsidianCaldera,"((1,0,0),(-70000,70000,0),(1,1,1))",false
-Spire_10_SulfurRidge,Spire.SulfurRidge,Sulfur Ridge Spire,Biome.ScorchedObsidianCaldera,"((1,0,0),(-130000,60000,0),(1,1,1))",false
-Spire_11_CalderaHeart,Spire.CalderaHeart,Caldera Heart Spire,Biome.ScorchedObsidianCaldera,"((1,0,0),(-110000,130000,0),(1,1,1))",false
-Spire_12_Ashfall,Spire.Ashfall,Ashfall Spire,Biome.ScorchedObsidianCaldera,"((1,0,0),(-50000,140000,0),(1,1,1))",false
-Spire_13_Frostline,Spire.Frostline,Frostline Spire,Biome.GlacialZenith,"((1,0,0),(70000,70000,0),(1,1,1))",false
-Spire_14_ZenithPath,Spire.ZenithPath,Zenith Path Spire,Biome.GlacialZenith,"((1,0,0),(130000,70000,0),(1,1,1))",false
-Spire_15_QuartzCrown,Spire.QuartzCrown,Quartz Crown Spire,Biome.GlacialZenith,"((1,0,0),(130000,140000,0),(1,1,1))",false
-Spire_16_FirstDawn,Spire.FirstDawn,First Dawn Spire,Biome.GlacialZenith,"((1,0,0),(60000,140000,0),(1,1,1))",false
+Name,SpireId,DisplayName,BiomeId,QuestTargetTag,WorldTransform,bUnlockedByDefault
+Spire_01_DawnGate,Spire.DawnGate,Dawn Gate Spire,Biome.DawnMeadows,Location.DawnSpire,"((1,0,0),(0,0,0),(1,1,1))",true
+Spire_02_Sunrise,Spire.Sunrise,Sunrise Spire,Biome.DawnMeadows,Location.SunriseSpire,"((1,0,0),(10000,8000,0),(1,1,1))",false
+Spire_03_MeadowEast,Spire.MeadowEast,Meadow East Spire,Biome.DawnMeadows,Location.MeadowEastSpire,"((1,0,0),(70000,-20000,0),(1,1,1))",false
+Spire_04_MeadowWest,Spire.MeadowWest,Meadow West Spire,Biome.DawnMeadows,Location.MeadowWestSpire,"((1,0,0),(-70000,-20000,0),(1,1,1))",false
+Spire_05_Rainfall,Spire.Rainfall,Rainfall Spire,Biome.SylvanRainforest,Location.RainfallSpire,"((1,0,0),(70000,-90000,0),(1,1,1))",false
+Spire_06_Canopy,Spire.Canopy,Canopy Spire,Biome.SylvanRainforest,Location.CanopySpire,"((1,0,0),(120000,-70000,0),(1,1,1))",false
+Spire_07_RiverMouth,Spire.RiverMouth,River Mouth Spire,Biome.SylvanRainforest,Location.RiverMouthSpire,"((1,0,0),(120000,-140000,0),(1,1,1))",false
+Spire_08_CrystalWetlands,Spire.CrystalWetlands,Crystal Wetlands Spire,Biome.SylvanRainforest,Location.CrystalWetlandsSpire,"((1,0,0),(60000,-140000,0),(1,1,1))",false
+Spire_09_ObsidianGate,Spire.ObsidianGate,Obsidian Gate Spire,Biome.ScorchedObsidianCaldera,Location.ObsidianGateSpire,"((1,0,0),(-70000,70000,0),(1,1,1))",false
+Spire_10_SulfurRidge,Spire.SulfurRidge,Sulfur Ridge Spire,Biome.ScorchedObsidianCaldera,Location.SulfurRidgeSpire,"((1,0,0),(-130000,60000,0),(1,1,1))",false
+Spire_11_CalderaHeart,Spire.CalderaHeart,Caldera Heart Spire,Biome.ScorchedObsidianCaldera,Location.CalderaHeartSpire,"((1,0,0),(-110000,130000,0),(1,1,1))",false
+Spire_12_Ashfall,Spire.Ashfall,Ashfall Spire,Biome.ScorchedObsidianCaldera,Location.AshfallSpire,"((1,0,0),(-50000,140000,0),(1,1,1))",false
+Spire_13_Frostline,Spire.Frostline,Frostline Spire,Biome.GlacialZenith,Location.FrostlineSpire,"((1,0,0),(70000,70000,0),(1,1,1))",false
+Spire_14_ZenithPath,Spire.ZenithPath,Zenith Path Spire,Biome.GlacialZenith,Location.ZenithPathSpire,"((1,0,0),(130000,70000,0),(1,1,1))",false
+Spire_15_QuartzCrown,Spire.QuartzCrown,Quartz Crown Spire,Biome.GlacialZenith,Location.QuartzCrownSpire,"((1,0,0),(130000,140000,0),(1,1,1))",false
+Spire_16_FirstDawn,Spire.FirstDawn,First Dawn Spire,Biome.GlacialZenith,Location.FirstDawnSpire,"((1,0,0),(60000,140000,0),(1,1,1))",false
