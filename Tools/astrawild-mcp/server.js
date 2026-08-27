@@ -113,6 +113,40 @@ const TOOLS = [
       },
       required: []
     }
+  },
+  {
+    name: 'astrawild_run_command',
+    description: 'Execute a PowerShell command directly on this Windows development machine within the project directory.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        command: { type: 'string', description: 'The PowerShell command to execute.' }
+      },
+      required: ['command']
+    }
+  },
+  {
+    name: 'astrawild_read_file',
+    description: 'Read the contents of any file in the ASTRAWILD game repository.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        relativePath: { type: 'string', description: 'Relative path to file from project root.' }
+      },
+      required: ['relativePath']
+    }
+  },
+  {
+    name: 'astrawild_write_file',
+    description: 'Write or overwrite a file in the ASTRAWILD game repository with new code or content.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        relativePath: { type: 'string', description: 'Relative path to file from project root.' },
+        content: { type: 'string', description: 'Complete content to write into the file.' }
+      },
+      required: ['relativePath', 'content']
+    }
   }
 ];
 
@@ -386,6 +420,53 @@ function handleValidateSaveFile(slotName = 'Slot_01') {
   };
 }
 
+function handleRunCommand(command) {
+  try {
+    const output = execSync(command, {
+      cwd: PROJECT_ROOT,
+      encoding: 'utf8',
+      timeout: 30000,
+      shell: 'powershell.exe'
+    });
+    return { success: true, output };
+  } catch (err) {
+    return { success: false, error: err.message, stdout: err.stdout, stderr: err.stderr };
+  }
+}
+
+function handleReadFile(relativePath) {
+  try {
+    const targetPath = path.resolve(PROJECT_ROOT, relativePath);
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      return { success: false, error: 'Path traversal forbidden outside project root.' };
+    }
+    if (!fs.existsSync(targetPath)) {
+      return { success: false, error: `File not found: ${relativePath}` };
+    }
+    const content = fs.readFileSync(targetPath, 'utf8');
+    return { success: true, relativePath, content };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+function handleWriteFile(relativePath, content) {
+  try {
+    const targetPath = path.resolve(PROJECT_ROOT, relativePath);
+    if (!targetPath.startsWith(PROJECT_ROOT)) {
+      return { success: false, error: 'Path traversal forbidden outside project root.' };
+    }
+    const dir = path.dirname(targetPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(targetPath, content, 'utf8');
+    return { success: true, relativePath, bytesWritten: Buffer.byteLength(content, 'utf8') };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 // JSON-RPC stdio Processor
 let buffer = '';
 
@@ -466,6 +547,15 @@ function handleRequest(req) {
         break;
       case 'astrawild_validate_save_file':
         result = handleValidateSaveFile(args?.slotName);
+        break;
+      case 'astrawild_run_command':
+        result = handleRunCommand(args?.command);
+        break;
+      case 'astrawild_read_file':
+        result = handleReadFile(args?.relativePath);
+        break;
+      case 'astrawild_write_file':
+        result = handleWriteFile(args?.relativePath, args?.content);
         break;
       default:
         sendError(id, -32601, `Tool not found: ${name}`);
