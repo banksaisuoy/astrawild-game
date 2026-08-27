@@ -1,0 +1,13 @@
+Name,EvolutionId,SourceSpeciesTag,TargetSpeciesTag,TargetSpeciesData,RequiredLevel,RequiredItemTag,RequiredItemQuantity
+Evolution_Lambit_Dawnling,Evolution.LambitDawnling,Echo.Lambit,Echo.Dawnling,/Game/Astrawild/Data/Echoes/DA_Dawnling.DA_Dawnling,18,,0
+Evolution_Dawnling_Pyrelite,Evolution.DawnlingPyrelite,Echo.Dawnling,Echo.Pyrelite,/Game/Astrawild/Data/Echoes/DA_Pyrelite.DA_Pyrelite,20,,0
+Evolution_Pyrelite_Cinderclaw,Evolution.PyreliteCinderclaw,Echo.Pyrelite,Echo.Cinderclaw,/Game/Astrawild/Data/Echoes/DA_Cinderclaw.DA_Cinderclaw,24,Item.Evolution.SolarSeed,1
+Evolution_Thornback_Brambletusk,Evolution.ThornbackBrambletusk,Echo.Thornback,Echo.Brambletusk,/Game/Astrawild/Data/Echoes/DA_Brambletusk.DA_Brambletusk,28,,0
+Evolution_Aquavine_Tidehorn,Evolution.AquavineTidehorn,Echo.Aquavine,Echo.Tidehorn,/Game/Astrawild/Data/Echoes/DA_Tidehorn.DA_Tidehorn,26,,0
+Evolution_Sparkfin_Stormshell,Evolution.SparkfinStormshell,Echo.Sparkfin,Echo.Stormshell,/Game/Astrawild/Data/Echoes/DA_Stormshell.DA_Stormshell,30,Item.Evolution.VoltSeed,1
+Evolution_Torrentail_Miremaw,Evolution.TorrentailMiremaw,Echo.Torrentail,Echo.Miremaw,/Game/Astrawild/Data/Echoes/DA_Miremaw.DA_Miremaw,32,,0
+Evolution_Verdantor_Nightbloom,Evolution.VerdantorNightbloom,Echo.Verdantor,Echo.Nightbloom,/Game/Astrawild/Data/Echoes/DA_Nightbloom.DA_Nightbloom,34,Item.Evolution.VoidPetal,1
+Evolution_Cinderclaw_Ignisaur,Evolution.CinderclawIgnisaur,Echo.Cinderclaw,Echo.Ignisaur,/Game/Astrawild/Data/Echoes/DA_Ignisaur.DA_Ignisaur,36,,0
+Evolution_Frostfox_Glacisaur,Evolution.FrostfoxGlacisaur,Echo.Frostfox,Echo.Glacisaur,/Game/Astrawild/Data/Echoes/DA_Glacisaur.DA_Glacisaur,44,,0
+Evolution_Glacisaur_Auroroceros,Evolution.GlacisaurAuroroceros,Echo.Glacisaur,Echo.Auroroceros,/Game/Astrawild/Data/Echoes/DA_Auroroceros.DA_Auroroceros,46,Item.Evolution.GlacialHorn,1
+Evolution_Cryovex_Skyrill,Evolution.CryovexSkyrill,Echo.Cryovex,Echo.Skyrill,/Game/Astrawild/Data/Echoes/DA_Skyrill.DA_Skyrill,48,,0

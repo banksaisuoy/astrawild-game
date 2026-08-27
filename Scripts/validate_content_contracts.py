@@ -22,6 +22,7 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_Recipes.csv": {"Name", "RecipeTag", "DisplayName", "Description", "IngredientTags", "IngredientQuantities", "OutputItemTag", "OutputQuantity", "CraftTimeSeconds", "RequiredStation", "RequiredTechnologyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_RangedWeapons.csv": {"Name", "WeaponTag", "DisplayName", "WeaponType", "DamageElement", "AmmoTag", "BaseDamage", "RangeCentimeters", "FireIntervalSeconds", "MagazineSize", "ReloadDurationSeconds", "bUseHitscan", "RequiredTechnologyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv": {"Name", "DungeonId", "DisplayName", "RegionTag", "RequiredKeyTag", "bConsumeRequiredKey", "BossSpeciesTag", "BossElement", "RecommendedLevel", "TimeLimitSeconds", "bSupportsCoop", "RewardItemTags", "RewardQuantities"},
+    ROOT / "Content/Astrawild/Data/Source/DT_Evolutions.csv": {"Name", "EvolutionId", "SourceSpeciesTag", "TargetSpeciesTag", "TargetSpeciesData", "RequiredLevel", "RequiredItemTag", "RequiredItemQuantity"},
 }
 REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Animation/AstrawildAnimInstance.h",
@@ -54,6 +55,9 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Data/AstrawildRangedWeaponData.h",
     "Source/AstrawildCore/Public/Data/AstrawildDungeonData.h",
     "Source/AstrawildCore/Public/World/AstrawildDungeonSubsystem.h",
+    "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
+    "Source/AstrawildCore/Public/Components/AstrawildEvolutionComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildEvolutionComponent.cpp",
     "Source/AstrawildCore/Private/World/AstrawildDungeonSubsystem.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildRangedCombatComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildRangedCombatComponent.cpp",
@@ -68,12 +72,15 @@ REQUIRED_PATHS = [
     "Docs/M1_WORLD_PARTITION_HANDOFF.md",
     "Docs/M2_ELEMENT_COMPATIBILITY_TEST_PLAN.md",
     "Docs/M2_ECHODEX_MOUNT_BREEDING_HANDOFF.md",
+    "Docs/M2_EVOLUTION_HANDOFF.md",
     "Docs/M3_M5_COLONY_TECHNOLOGY_HANDOFF.md",
     "Docs/M6_M8_COMBAT_DUNGEON_HANDOFF.md",
     "Docs/M9_M10_UI_PACKAGING_HANDOFF.md",
     "Docs/BUILD_STATUS.md",
     "Tools/Package_Astrawild.ps1",
     "Scripts/validate_runtime_contracts.py",
+    "Scripts/validate_generated_headers.py",
+    "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
     "Config/AstrawildWorldPartition.ini",
 ]
 
@@ -251,6 +258,22 @@ for row in recipe_rows:
             errors.append(f"DT_Recipes.csv ingredient arrays do not align in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_Recipes.csv non-numeric output/time in row {row.get('Name', '<unknown>')}")
+
+evolution_path = ROOT / "Content/Astrawild/Data/Source/DT_Evolutions.csv"
+evolution_rows = loaded_rows.get(evolution_path, [])
+if len(evolution_rows) != 12:
+    errors.append(f"DT_Evolutions.csv must contain exactly 12 rows; found {len(evolution_rows)}")
+evolution_ids = [row.get("EvolutionId", "") for row in evolution_rows]
+if len(evolution_ids) != len(set(evolution_ids)):
+    errors.append("DT_Evolutions.csv has duplicate EvolutionId values")
+for row in evolution_rows:
+    if not row.get("SourceSpeciesTag", "") or not row.get("TargetSpeciesTag", "") or not row.get("TargetSpeciesData", ""):
+        errors.append(f"DT_Evolutions.csv missing source/target/asset in row {row.get('Name', '<unknown>')}")
+    try:
+        if int(row["RequiredLevel"]) < 1 or int(row["RequiredItemQuantity"]) < 0:
+            errors.append(f"DT_Evolutions.csv invalid gate in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_Evolutions.csv non-numeric gate in row {row.get('Name', '<unknown>')}")
 
 dungeon_path = ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv"
 dungeon_rows = loaded_rows.get(dungeon_path, [])

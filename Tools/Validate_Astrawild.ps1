@@ -40,12 +40,18 @@ $required = @(
     "Content/Astrawild/Data/Source/DT_Recipes.csv",
     "Content/Astrawild/Data/Source/DT_RangedWeapons.csv",
     "Content/Astrawild/Data/Source/DT_Dungeons.csv",
+    "Content/Astrawild/Data/Source/DT_Evolutions.csv",
     "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildTechnologyComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildRangedCombatComponent.h",
     "Source/AstrawildCore/Public/World/AstrawildDungeonSubsystem.h",
-    "Source/AstrawildCore/Public/UI/AstrawildMasterWidgets.h"
+    "Source/AstrawildCore/Public/UI/AstrawildMasterWidgets.h",
+    "Source/AstrawildCore/Public/Components/AstrawildEvolutionComponent.h",
+    "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
+    "Scripts/validate_runtime_contracts.py",
+    "Scripts/validate_generated_headers.py",
+    "Docs/M2_EVOLUTION_HANDOFF.md"
 )
 foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }

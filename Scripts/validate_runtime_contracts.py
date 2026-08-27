@@ -48,6 +48,15 @@ for row in rows("DT_SpawnRules.csv"):
     if row["SpeciesTag"] not in echo_species:
         errors.append(f"spawn rule {row['SpawnRuleId']} references missing Echo {row['SpeciesTag']}")
 
+evolution_rows = rows("DT_Evolutions.csv")
+for row in evolution_rows:
+    if row["SourceSpeciesTag"] not in echo_species:
+        errors.append(f"evolution {row['EvolutionId']} references missing source Echo {row['SourceSpeciesTag']}")
+    if row["TargetSpeciesTag"] not in echo_species:
+        errors.append(f"evolution {row['EvolutionId']} references missing target Echo {row['TargetSpeciesTag']}")
+    if not row.get("TargetSpeciesData", "").startswith("/Game/"):
+        errors.append(f"evolution {row['EvolutionId']} has invalid target DataAsset path")
+
 technology_tags = {row["TechnologyTag"] for row in rows("DT_TechnologyNodes.csv")}
 for row in rows("DT_Recipes.csv"):
     required_tech = row.get("RequiredTechnologyTag", "").strip()

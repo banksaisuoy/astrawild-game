@@ -3,6 +3,7 @@
 #include "Echoes/AstrawildEchoBase.h"
 #include "Components/AstrawildAttributeComponent.h"
 #include "Components/AstrawildQuestComponent.h"
+#include "Components/AstrawildEvolutionComponent.h"
 #include "Components/AstrawildCombatComponent.h"
 #include "Data/AstrawildEchoDataAsset.h"
 #include "Components/StaticMeshComponent.h"
@@ -25,6 +26,7 @@ AAstrawildEchoBase::AAstrawildEchoBase()
 	Combat = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
 	Feedback = CreateDefaultSubobject<UAstrawildFeedbackComponent>(TEXT("Feedback"));
 	San = CreateDefaultSubobject<UAstrawildSanComponent>(TEXT("San"));
+	Evolution = CreateDefaultSubobject<UAstrawildEvolutionComponent>(TEXT("Evolution"));
 
 	FallbackMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FallbackMeshComponent"));
 	FallbackMeshComponent->SetupAttachment(RootComponent);
