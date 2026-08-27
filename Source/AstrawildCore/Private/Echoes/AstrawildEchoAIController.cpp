@@ -7,14 +7,20 @@
 #include "NavigationSystem.h"
 #include "AstrawildLogChannels.h"
 #include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 AAstrawildEchoAIController::AAstrawildEchoAIController()
 	: WanderRadius(1200.0f)
-	, AggroDetectionRadius(800.0f)
+	, AggroDetectionRadius(850.0f)
 	, CombatAttackRange(220.0f)
+	, LeashDistance(2600.0f)
+	, SimulationLODCloseDistance(3000.0f) // 30 meters
+	, SimulationLODDormantDistance(6500.0f) // 65 meters
+	, bShowAIDebug(false)
 	, HomeLocation(FVector::ZeroVector)
 	, TimeUntilNextWander(0.0f)
 	, CombatCooldownTimer(0.0f)
+	, ThrottledTickTimer(0.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -29,6 +35,11 @@ void AAstrawildEchoAIController::OnPossess(APawn* InPawn)
 	}
 }
 
+void AAstrawildEchoAIController::ToggleAIDebug()
+{
+	bShowAIDebug = !bShowAIDebug;
+}
+
 void AAstrawildEchoAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -36,6 +47,32 @@ void AAstrawildEchoAIController::Tick(float DeltaTime)
 	if (!ControlledEcho.IsValid() || !ControlledEcho->Attributes || !ControlledEcho->Attributes->IsAlive())
 	{
 		return;
+	}
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!PlayerPawn)
+	{
+		return;
+	}
+
+	const float DistanceToPlayer = FVector::Dist(ControlledEcho->GetActorLocation(), PlayerPawn->GetActorLocation());
+
+	// 1. SIMULATION LOD OPTIMIZATION: Dormant range (> 65m)
+	if (DistanceToPlayer > SimulationLODDormantDistance && ControlledEcho->CurrentState != EAstrawildEchoState::SummonedCompanion)
+	{
+		return; // Sleep execution completely to preserve CPU budget
+	}
+
+	// 2. SIMULATION LOD OPTIMIZATION: Mid-range throttle (30m - 65m)
+	if (DistanceToPlayer > SimulationLODCloseDistance && ControlledEcho->CurrentState != EAstrawildEchoState::SummonedCompanion)
+	{
+		ThrottledTickTimer += DeltaTime;
+		if (ThrottledTickTimer < 0.25f)
+		{
+			return; // Tick only 4 times per second
+		}
+		DeltaTime = ThrottledTickTimer;
+		ThrottledTickTimer = 0.0f;
 	}
 
 	if (CombatCooldownTimer > 0.0f)
@@ -60,6 +97,11 @@ void AAstrawildEchoAIController::Tick(float DeltaTime)
 	default:
 		break;
 	}
+
+	if (bShowAIDebug)
+	{
+		DrawAIDebugVisuals();
+	}
 }
 
 void AAstrawildEchoAIController::SetFollowLeader(AActor* Leader)
@@ -74,24 +116,25 @@ void AAstrawildEchoAIController::SetCombatTarget(AActor* InTarget)
 
 void AAstrawildEchoAIController::UpdateWildPassive(float DeltaTime)
 {
-	// 1. Check for nearby player if aggressive species
+	// 1. Perception scan for nearby player
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (PlayerPawn)
 	{
 		const float Dist = FVector::Dist(ControlledEcho->GetActorLocation(), PlayerPawn->GetActorLocation());
-		if (Dist <= AggroDetectionRadius * 0.5f) // Close proximity trigger
+		if (Dist <= AggroDetectionRadius * 0.55f)
 		{
 			TargetActor = PlayerPawn;
 			ControlledEcho->SetEchoState(EAstrawildEchoState::WildHostile);
+			UE_LOG(LogAstrawildEcho, Log, TEXT("Wild Echo %s detected player at distance %.0f cm! Entering combat state."), *ControlledEcho->GetName(), Dist);
 			return;
 		}
 	}
 
-	// 2. Periodic wandering around HomeLocation
+	// 2. Periodic wandering around territory
 	TimeUntilNextWander -= DeltaTime;
 	if (TimeUntilNextWander <= 0.0f)
 	{
-		TimeUntilNextWander = FMath::RandRange(4.0f, 8.0f);
+		TimeUntilNextWander = FMath::RandRange(4.0f, 9.0f);
 		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 		if (NavSys)
 		{
@@ -112,11 +155,22 @@ void AAstrawildEchoAIController::UpdateWildHostile(float DeltaTime)
 		return;
 	}
 
+	const float DistanceFromHome = FVector::Dist(ControlledEcho->GetActorLocation(), HomeLocation);
+
+	// Leash check: if creature is pulled too far from territory, break combat and return
+	if (DistanceFromHome > LeashDistance)
+	{
+		UE_LOG(LogAstrawildEcho, Log, TEXT("Echo %s exceeded leash distance (%.0f cm). Returning home."), *ControlledEcho->GetName(), DistanceFromHome);
+		TargetActor = nullptr;
+		ControlledEcho->SetEchoState(EAstrawildEchoState::WildPassive);
+		MoveToLocation(HomeLocation, 50.0f);
+		return;
+	}
+
 	const float DistanceToTarget = FVector::Dist(ControlledEcho->GetActorLocation(), TargetActor->GetActorLocation());
 
-	if (DistanceToTarget > AggroDetectionRadius * 2.0f)
+	if (DistanceToTarget > AggroDetectionRadius * 2.2f)
 	{
-		// Target escaped too far
 		TargetActor = nullptr;
 		ControlledEcho->SetEchoState(EAstrawildEchoState::WildPassive);
 		MoveToLocation(HomeLocation, 50.0f);
@@ -129,12 +183,12 @@ void AAstrawildEchoAIController::UpdateWildHostile(float DeltaTime)
 		if (CombatCooldownTimer <= 0.0f && ControlledEcho->Combat)
 		{
 			ControlledEcho->Combat->PerformMeleeAttack(1.0f, ControlledEcho->Attributes->ElementalAffinity);
-			CombatCooldownTimer = 1.8f;
+			CombatCooldownTimer = 1.6f;
 		}
 	}
 	else
 	{
-		MoveToActor(TargetActor.Get(), CombatAttackRange * 0.8f);
+		MoveToActor(TargetActor.Get(), CombatAttackRange * 0.75f);
 	}
 }
 
@@ -148,7 +202,7 @@ void AAstrawildEchoAIController::UpdateFleeing(float DeltaTime)
 	if (TargetActor.IsValid())
 	{
 		const FVector DangerDir = (ControlledEcho->GetActorLocation() - TargetActor->GetActorLocation()).GetSafeNormal();
-		const FVector FleeDestination = ControlledEcho->GetActorLocation() + (DangerDir * 800.0f);
+		const FVector FleeDestination = ControlledEcho->GetActorLocation() + (DangerDir * 900.0f);
 		MoveToLocation(FleeDestination, 50.0f);
 	}
 }
@@ -165,21 +219,42 @@ void AAstrawildEchoAIController::UpdateSummonedCompanion(float DeltaTime)
 		return;
 	}
 
-	// If companion has a combat target, attack it
 	if (TargetActor.IsValid())
 	{
 		UpdateWildHostile(DeltaTime);
 		return;
 	}
 
-	// Otherwise, follow player smoothly
 	const float DistToLeader = FVector::Dist(ControlledEcho->GetActorLocation(), FollowLeaderActor->GetActorLocation());
-	if (DistToLeader > 400.0f)
+	if (DistToLeader > 380.0f)
 	{
-		MoveToActor(FollowLeaderActor.Get(), 250.0f);
+		MoveToActor(FollowLeaderActor.Get(), 220.0f);
 	}
-	else if (DistToLeader < 200.0f)
+	else if (DistToLeader < 180.0f)
 	{
 		StopMovement();
+	}
+}
+
+void AAstrawildEchoAIController::DrawAIDebugVisuals()
+{
+	UWorld* World = GetWorld();
+	if (!World || !ControlledEcho.IsValid())
+	{
+		return;
+	}
+
+	const FVector EchoLoc = ControlledEcho->GetActorLocation();
+
+	// Draw Aggro Radius
+	DrawDebugSphere(World, EchoLoc, AggroDetectionRadius, 16, FColor::Orange, false, -1.0f, 0, 1.5f);
+
+	// Draw Leash territory boundary
+	DrawDebugCircle(World, HomeLocation + FVector(0, 0, 10), LeashDistance, 32, FColor::Purple, false, -1.0f, 0, 2.0f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+
+	// Draw line to target if active
+	if (TargetActor.IsValid())
+	{
+		DrawDebugLine(World, EchoLoc, TargetActor->GetActorLocation(), FColor::Red, false, -1.0f, 0, 2.5f);
 	}
 }

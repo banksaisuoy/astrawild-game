@@ -64,4 +64,7 @@ public:
 
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_KillAllWildEchoes();
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_ToggleAIDebug();
 };

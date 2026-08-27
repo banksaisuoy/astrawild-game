@@ -3,6 +3,7 @@
 #include "Characters/AstrawildPlayerController.h"
 #include "Characters/AstrawildCharacter.h"
 #include "Echoes/AstrawildEchoBase.h"
+#include "Echoes/AstrawildEchoAIController.h"
 #include "Data/AstrawildEchoDataAsset.h"
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildAttributeComponent.h"
@@ -282,4 +283,19 @@ void AAstrawildPlayerController::Astrawild_KillAllWildEchoes()
 		}
 	}
 	UE_LOG(LogAstrawildEcho, Log, TEXT("Destroyed %d wild Echoes."), Destroyed);
+}
+
+void AAstrawildPlayerController::Astrawild_ToggleAIDebug()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	for (TActorIterator<AAstrawildEchoAIController> It(World); It; ++It)
+	{
+		It->ToggleAIDebug();
+	}
+	UE_LOG(LogAstrawildEcho, Log, TEXT("Toggled AI Perception & Territory Debug Visuals."));
 }

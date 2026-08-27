@@ -31,6 +31,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Properties")
 	float CombatAttackRange;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Properties")
+	float LeashDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Properties|Optimization")
+	float SimulationLODCloseDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Properties|Optimization")
+	float SimulationLODDormantDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Debug")
+	bool bShowAIDebug;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI State")
 	TWeakObjectPtr<AActor> TargetActor;
 
@@ -44,14 +56,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void SetCombatTarget(AActor* InTarget);
 
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void ToggleAIDebug();
+
 private:
 	FVector HomeLocation;
 	float TimeUntilNextWander;
 	float CombatCooldownTimer;
+	float ThrottledTickTimer;
 	TWeakObjectPtr<AAstrawildEchoBase> ControlledEcho;
 
 	void UpdateWildPassive(float DeltaTime);
 	void UpdateWildHostile(float DeltaTime);
 	void UpdateFleeing(float DeltaTime);
 	void UpdateSummonedCompanion(float DeltaTime);
+	void UpdateReturnToTerritory(float DeltaTime);
+	void DrawAIDebugVisuals();
 };
