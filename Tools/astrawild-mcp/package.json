@@ -1,0 +1,12 @@
+﻿{
+  "name": "astrawild-unreal-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) Server for ASTRAWILD: Echoes of the First Dawn (Unreal Engine 5.8)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["mcp", "unreal-engine", "astrawild", "manus-ai", "game-development"],
+  "author": "ASTRAWILD Engineering Team",
+  "license": "MIT"
+}
