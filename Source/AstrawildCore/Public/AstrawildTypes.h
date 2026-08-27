@@ -261,6 +261,117 @@ struct ASTRAWILDCORE_API FAstrawildRecipe : public FTableRowBase
 	EAstrawildBuildingType RequiredStation = EAstrawildBuildingType::None;
 };
 
+UENUM(BlueprintType)
+enum class EAstrawildQuestObjectiveType : uint8
+{
+    Discover UMETA(DisplayName="Discover"),
+    Collect UMETA(DisplayName="Collect"),
+    Defeat UMETA(DisplayName="Defeat"),
+    Capture UMETA(DisplayName="Capture"),
+    Craft UMETA(DisplayName="Craft"),
+    Reach UMETA(DisplayName="Reach"),
+    Interact UMETA(DisplayName="Interact")
+};
+
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildLoreRow : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lore")
+    FName LoreId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lore")
+    FText Title;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lore", meta=(MultiLine="true"))
+    FText Body;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lore")
+    FGameplayTag RegionTag;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lore")
+    int32 SortOrder = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lore")
+    bool bUnlockedByDefault = false;
+};
+
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildQuestObjective
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FName ObjectiveId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    EAstrawildQuestObjectiveType Type = EAstrawildQuestObjectiveType::Discover;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FGameplayTag TargetTag;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    int32 RequiredQuantity = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FText Description;
+};
+
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildQuestObjectiveRow : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FName QuestId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FName ObjectiveId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    EAstrawildQuestObjectiveType Type = EAstrawildQuestObjectiveType::Discover;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FGameplayTag TargetTag;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    int32 RequiredQuantity = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FText Description;
+};
+
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildQuestRow : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FName QuestId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FText Title;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest", meta=(MultiLine="true"))
+    FText Description;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FGameplayTag RegionTag;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    FGameplayTag PrerequisiteQuestTag;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    TArray<FAstrawildQuestObjective> Objectives;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    TArray<FAstrawildItemSlot> Rewards;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest")
+    bool bMainQuest = false;
+};
+
 /**
  * Combat Ability Struct for Echoes and Players.
  */

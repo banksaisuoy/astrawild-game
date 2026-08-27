@@ -1,0 +1,5 @@
+Name,QuestId,Title,Description,RegionTag,PrerequisiteQuestTag,bMainQuest
+Quest_Awakening,Quest.Awakening,Signal in the Grass,"Reach the Dawn Spire and learn why the Echoes are gathering around the first signal.",Region.DawnSpire,,true
+Quest_FirstResonator,Quest.FirstResonator,An Agreement of Light,"Craft an Astra Resonator and use it to capture an Echo without breaking the creature's trust.",Region.ResourceGrove,Quest.Awakening,true
+Quest_DangerPit,Quest.DangerPit,Pressure Below,"Enter the South-East Danger Pit, survive the Alpha encounter, and bring back proof of the unstable signal.",Region.DangerPit,Quest.FirstResonator,true
+Quest_Campwater,Quest.Campwater,Water for the Camp,"Find Aquavine's spring and establish a reliable Torrent source near the Rest Sanctuary.",Region.RestSanctuary,Quest.Awakening,false

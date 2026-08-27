@@ -10,11 +10,14 @@
 #include "Components/AstrawildCaptureComponent.h"
 #include "Components/AstrawildCraftingComponent.h"
 #include "Components/AstrawildBuildingComponent.h"
+#include "Components/AstrawildFeedbackComponent.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "AstrawildLogChannels.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/World.h"
+#include "Animation/AnimInstance.h"
+#include "Engine/SkeletalMesh.h"
 
 AAstrawildCharacter::AAstrawildCharacter()
 	: WalkSpeed(500.0f)
@@ -66,6 +69,7 @@ AAstrawildCharacter::AAstrawildCharacter()
 	Capture = CreateDefaultSubobject<UAstrawildCaptureComponent>(TEXT("Capture"));
 	Crafting = CreateDefaultSubobject<UAstrawildCraftingComponent>(TEXT("Crafting"));
 	Building = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
+	Feedback = CreateDefaultSubobject<UAstrawildFeedbackComponent>(TEXT("Feedback"));
 }
 
 void AAstrawildCharacter::BeginPlay()
@@ -84,6 +88,8 @@ void AAstrawildCharacter::BeginPlay()
 		}
 	}
 
+	ApplyVisualRepresentation();
+
 	// Starter inventory items for vertical slice
 	if (Inventory)
 	{
@@ -91,6 +97,30 @@ void AAstrawildCharacter::BeginPlay()
 		const FGameplayTag ResonatorTag = FGameplayTag::RequestGameplayTag(FName("Item.Tool.AstraResonatorBasic"), false);
 		Inventory->AddItem(SunwoodTag, 10);
 		Inventory->AddItem(ResonatorTag, 5);
+	}
+}
+
+void AAstrawildCharacter::ApplyVisualRepresentation()
+{
+	if (!GetMesh())
+	{
+		return;
+	}
+
+	if (!PlayerSkeletalMesh.IsNull())
+	{
+		if (USkeletalMesh* LoadedMesh = PlayerSkeletalMesh.LoadSynchronous())
+		{
+			GetMesh()->SetSkeletalMesh(LoadedMesh);
+		}
+	}
+
+	if (!PlayerAnimationBlueprintClass.IsNull())
+	{
+		if (UClass* LoadedAnimClass = PlayerAnimationBlueprintClass.LoadSynchronous())
+		{
+			GetMesh()->SetAnimInstanceClass(LoadedAnimClass);
+		}
 	}
 }
 

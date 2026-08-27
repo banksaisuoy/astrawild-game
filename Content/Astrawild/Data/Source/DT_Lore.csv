@@ -1,0 +1,5 @@
+Name,LoreId,Title,Body,RegionTag,SortOrder,bUnlockedByDefault
+Lore_FirstDawn,Lore.FirstDawn,The First Dawn,"Before the four regions had names, the First Dawn left a living signal inside the earth. The Echoes are responses to that signal, not servants of it.",Region.DawnSpire,0,true
+Lore_AstraResonator,Lore.AstraResonator,The Resonator,"An Astra Resonator does not dominate an Echo. It creates a brief agreement between two living patterns, and the trust that follows depends on how the agreement was made.",Lore.Systems,10,true
+Lore_DangerPit,Lore.DangerPit,The Sunken Pit,"The South-East basin is where the Dawn signal became unstable. Alpha Echoes gather there because the pressure makes their elemental memory louder.",Region.DangerPit,20,false
+Lore_ThreeEchoes,Lore.ThreeEchoes,Three Ways to Belong,"Pyrelite follows the horizon, Thornback holds the line, and Aquavine keeps a camp alive. Their roles are different, but none is lesser.",Lore.Echoes,30,false

@@ -5,11 +5,14 @@
 #include "Components/AstrawildCombatComponent.h"
 #include "Data/AstrawildEchoDataAsset.h"
 #include "Components/StaticMeshComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/AstrawildFeedbackComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AstrawildLogChannels.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "Animation/AnimInstance.h"
+#include "Engine/SkeletalMesh.h"
 
 AAstrawildEchoBase::AAstrawildEchoBase()
 	: CurrentState(EAstrawildEchoState::WildPassive)
@@ -18,6 +21,7 @@ AAstrawildEchoBase::AAstrawildEchoBase()
 
 	Attributes = CreateDefaultSubobject<UAstrawildAttributeComponent>(TEXT("Attributes"));
 	Combat = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
+	Feedback = CreateDefaultSubobject<UAstrawildFeedbackComponent>(TEXT("Feedback"));
 
 	FallbackMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FallbackMeshComponent"));
 	FallbackMeshComponent->SetupAttachment(RootComponent);
@@ -85,6 +89,32 @@ void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InDa
 
 void AAstrawildEchoBase::ApplyVisualRepresentation()
 {
+	if (SpeciesData && !SpeciesData->SkeletalMesh.IsNull())
+	{
+		if (USkeletalMesh* LoadedSkeletalMesh = SpeciesData->SkeletalMesh.LoadSynchronous())
+		{
+			GetMesh()->SetSkeletalMesh(LoadedSkeletalMesh);
+			GetMesh()->SetVisibility(true);
+			if (!SpeciesData->AnimationBlueprintClass.IsNull())
+			{
+				if (UClass* LoadedAnimClass = SpeciesData->AnimationBlueprintClass.LoadSynchronous())
+				{
+					GetMesh()->SetAnimInstanceClass(LoadedAnimClass);
+				}
+			}
+			if (FallbackMeshComponent)
+			{
+				FallbackMeshComponent->SetVisibility(false);
+			}
+			return;
+		}
+	}
+
+	if (FallbackMeshComponent)
+	{
+		FallbackMeshComponent->SetVisibility(true);
+	}
+
 	// Check if custom static mesh exists
 	if (SpeciesData && !SpeciesData->FallbackStaticMesh.IsNull())
 	{

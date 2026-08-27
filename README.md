@@ -40,7 +40,8 @@ ASTRAWILD/
 ├── ASTRAWILD.uproject
 ├── Config/                  # Engine, Game, Input configurations
 ├── Docs/                    # Technical, Design, and QA specifications
-├── Content/Astrawild/       # Blueprints, DataAssets, Maps, UI Widgets
+├── Content/Astrawild/       # Blueprints, DataAssets, Maps, UI Widgets, CSV source data
+├── Scripts/                 # Text/content contract validation
 └── Source/
     ├── ASTRAWILD.Target.cs
     ├── ASTRAWILDEditor.Target.cs
@@ -55,3 +56,13 @@ ASTRAWILD/
 - [Combat & Capture Mechanics](Docs/Combat_And_Capture_Design.md)
 - [Crafting & Building Specification](Docs/Crafting_And_Building_Spec.md)
 - [Testing & Verification Guide](Docs/Testing_And_Verification_Guide.md)
+- [P0 Animation Contract](Docs/P0_Animation_Contract.md)
+- [P1 Niagara and Sound Contract](Docs/P1_Feedback_Contract.md)
+- [P2 UMG Contract](Docs/P2_UMG_Contract.md)
+- [P3 Alpha Echo Design](Docs/P3_Alpha_Echo_Design.md)
+- [P4 Lore and Quest Data Contract](Docs/P4_Lore_Quest_Data_Contract.md)
+- [Remote MCP Guide](Docs/REMOTE_MCP_GUIDE.md)
+
+## Validation without Unreal Editor
+
+Run `python Scripts/validate_content_contracts.py` to validate the P0-P4 source contracts and CSV headers. This does not replace an Unreal C++ compile, DataTable import, Blueprint validation, or PIE test.

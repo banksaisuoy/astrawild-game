@@ -16,6 +16,9 @@ class UAstrawildCombatComponent;
 class UAstrawildCaptureComponent;
 class UAstrawildCraftingComponent;
 class UAstrawildBuildingComponent;
+class UAstrawildFeedbackComponent;
+class UAnimInstance;
+class USkeletalMesh;
 class UInputMappingContext;
 class UInputAction;
 
@@ -43,6 +46,16 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	// --- Visual / Animation Contract ---
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visuals|Animation")
+	TSoftObjectPtr<USkeletalMesh> PlayerSkeletalMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visuals|Animation")
+	TSoftClassPtr<UAnimInstance> PlayerAnimationBlueprintClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visuals|Animation")
+	FName AnimationProfileId = TEXT("Player_Default");
+
 	// --- Camera Components ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -68,6 +81,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UAstrawildBuildingComponent> Building;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Feedback")
+	TObjectPtr<UAstrawildFeedbackComponent> Feedback;
 
 	// --- Movement Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -209,4 +225,5 @@ private:
 
 	void UpdateMovementState();
 	void UpdateInteractionFocus();
+	void ApplyVisualRepresentation();
 };

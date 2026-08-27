@@ -10,6 +10,7 @@
 
 class UAstrawildAttributeComponent;
 class UAstrawildCombatComponent;
+class UAstrawildFeedbackComponent;
 class UAstrawildEchoDataAsset;
 class UStaticMeshComponent;
 
@@ -36,6 +37,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> FallbackMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Feedback")
+	TObjectPtr<UAstrawildFeedbackComponent> Feedback;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Data")
 	TObjectPtr<UAstrawildEchoDataAsset> SpeciesData;

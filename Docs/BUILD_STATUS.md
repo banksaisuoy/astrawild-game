@@ -100,7 +100,23 @@ graph TD
 
 ---
 
-## 5. How to Playtest in Unreal Engine 5.8
+## 5. Manus P0-P4 Preparation Status
+
+The release branch now contains the following verified preparation work:
+
+| Priority | Repository change | Runtime/content truth |
+|---|---|---|
+| P0 | Player/Echo skeletal mesh and AnimBP soft-reference hooks; `UAstrawildAnimInstance`; `Docs/P0_Animation_Contract.md` | No skeletal mesh, AnimBP, skeleton, montage, or animation `.uasset` is committed yet. |
+| P1 | `UAstrawildFeedbackComponent`, Niagara module dependency, VFX/SFX contract | No Niagara or Sound Cue `.uasset` is committed yet; properties are ready for assignment. |
+| P2 | `UAstrawildInventoryWidget`, slot widget and crafting widget base classes; UMG contract | No UMG Widget Blueprint `.uasset` is committed yet. |
+| P3 | `AAstrawildAlphaEcho`, phase/telegraph attack patterns and encounter design | No Alpha Blueprint, boss Data Asset, or final encounter map `.uasset` is committed yet. |
+| P4 | `FAstrawildLoreRow`, `FAstrawildQuestRow`, `FAstrawildQuestObjectiveRow` and CSV source files | CSV sources are present; DataTable `.uasset` import and Gameplay Tag validation remain to be done in Editor. |
+
+These are code and content contracts, not proof of a completed Unreal runtime. The target Windows machine must compile the module, import/create the Unreal binary assets, and run the PIE gates before this report can be marked complete.
+
+---
+
+## 6. How to Playtest in Unreal Engine 5.8
 
 1. Open `ASTRAWILD.uproject` in Unreal Engine 5.8 Editor.
 2. Ensure Map `AAstrawildPrototypeArena` is loaded (or placed in viewport).

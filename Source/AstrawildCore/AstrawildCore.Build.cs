@@ -31,8 +31,9 @@ public class AstrawildCore : ModuleRules
 				"GameplayTags",
 				"AIModule",
 				"NavigationSystem",
-				"UMG",
-				"PhysicsCore"
+					"UMG",
+					"Niagara",
+					"PhysicsCore"
 			}
 		);
 

@@ -8,6 +8,7 @@
 #include "AstrawildEchoDataAsset.generated.h"
 
 class AAstrawildEchoBase;
+class UAnimInstance;
 class USkeletalMesh;
 class UStaticMesh;
 
@@ -73,6 +74,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
 	TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals|Animation")
+	TSoftClassPtr<UAnimInstance> AnimationBlueprintClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals|Animation")
+	FName AnimationProfileId = TEXT("Echo_Default");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
 	TSoftObjectPtr<UStaticMesh> FallbackStaticMesh;
