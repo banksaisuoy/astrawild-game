@@ -50,6 +50,10 @@ bool UAstrawildDungeonSubsystem::StartDungeon(const FName DungeonId, AActor* Sta
 
 bool UAstrawildDungeonSubsystem::JoinActiveDungeon(AActor* Participant)
 {
+    if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+    {
+        return false;
+    }
     if (!Participant || !IsDungeonActive())
     {
         return false;
@@ -65,6 +69,10 @@ bool UAstrawildDungeonSubsystem::JoinActiveDungeon(AActor* Participant)
 
 bool UAstrawildDungeonSubsystem::RegisterBossDefeated(const FName DungeonId, AActor* DefeatedBoss)
 {
+    if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+    {
+        return false;
+    }
     if (!IsDungeonActive() || DungeonId != ActiveDungeonId || !DefeatedBoss)
     {
         return false;
