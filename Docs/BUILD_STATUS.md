@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `c5e3953` (local source pass; push pending remote recheck)
+**Latest repository commit:** `fde7d0e888ef616ac85d7f0eae6687fd9be92e9d` (pushed source pass)
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -15,7 +15,7 @@
 
 | Layer | Status | Evidence or limitation |
 |---|---|---|
-| Git branch and repository sync | **PENDING PUSH** | The source pass is committed locally at `c5e3953`; remote recheck and push are the next gate. Windows baseline `a90a83f` was clean/up to date. |
+| Git branch and repository sync | **PASS** | Source pass `fde7d0e` is pushed and local/remote hashes match. Windows baseline `a90a83f` was clean/up to date. |
 | Python content-contract validation | **PASS** | Baseline Windows checks passed; the expanded local suite also passes content, runtime, generated-header, and editor-automation validators. |
 | Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
