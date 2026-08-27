@@ -4,6 +4,8 @@
 **Commit audited:** `13db0f49c85ef8ee7b7e0ec7bba34f882ab704fc`  
 **Audit mode:** repository/source inspection; Unreal Editor compile and PIE evidence are not available in this sandbox.
 
+> **Historical snapshot:** This audit records the repository state at commit `13db0f4` and is retained for traceability. It is not the current branch status. For the latest source/static evidence and Unreal Editor integration gates, use `Docs/BUILD_STATUS.md` and `Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md`.
+
 ## Verified repository facts
 
 | Area | Finding | Confidence |
