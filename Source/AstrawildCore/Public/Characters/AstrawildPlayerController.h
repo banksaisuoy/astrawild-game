@@ -43,4 +43,13 @@ public:
 
 	UFUNCTION(Exec, Category = "Astrawild Debug")
 	void Astrawild_ToggleDebugHUD();
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_SpawnEcho(const FString& SpeciesTagName = TEXT("Echo.Pyrelite"), int32 Level = 1);
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_ListEchoes();
+
+	UFUNCTION(Exec, Category = "Astrawild Debug")
+	void Astrawild_KillAllWildEchoes();
 };

@@ -8,6 +8,8 @@
 #include "AstrawildEchoDataAsset.generated.h"
 
 class AAstrawildEchoBase;
+class USkeletalMesh;
+class UStaticMesh;
 
 UCLASS(BlueprintType)
 class ASTRAWILDCORE_API UAstrawildEchoDataAsset : public UPrimaryDataAsset
@@ -17,6 +19,7 @@ class ASTRAWILDCORE_API UAstrawildEchoDataAsset : public UPrimaryDataAsset
 public:
 	UAstrawildEchoDataAsset();
 
+	// --- Identification ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Identification")
 	FGameplayTag SpeciesTag;
 
@@ -29,16 +32,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Identification")
 	FText LoreDescription;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Element")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Classification")
 	EAstrawildElement ElementalAffinity;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Classification")
+	EAstrawildEchoRole Role;
+
+	// --- Base Attributes ---
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats", meta = (ClampMin = "10"))
 	float BaseMaxHealth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats", meta = (ClampMin = "1"))
 	float BaseAttackPower;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats", meta = (ClampMin = "0"))
 	float BaseDefensePower;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats")
@@ -47,11 +54,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats")
 	float BaseRunSpeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Base Stats")
+	float WorkEfficiencyMultiplier;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Capture")
 	float CaptureDifficultyModifier;
 
+	// --- Combat & Personality ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Combat")
 	TArray<FAstrawildEchoAbility> InnateAbilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Personality")
+	TArray<FGameplayTag> DefaultPersonalityPool;
+
+	// --- Visuals & Audio ---
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
+	FColor PlaceholderTint;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
+	TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
+	TSoftObjectPtr<UStaticMesh> FallbackStaticMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
 	TSoftObjectPtr<UTexture2D> SpeciesIcon;
@@ -59,8 +83,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Echo Visuals")
 	TSoftClassPtr<AAstrawildEchoBase> EchoPawnClass;
 
+public:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override
 	{
 		return FPrimaryAssetId(TEXT("AstrawildEcho"), *SpeciesTag.ToString());
 	}
+
+	UFUNCTION(BlueprintCallable, Category = "Echo Factory")
+	FAstrawildEchoInstance CreateInstance(int32 InLevel = 1, const FText& CustomName = FText::GetEmpty()) const;
 };

@@ -2,11 +2,15 @@
 
 #include "Characters/AstrawildPlayerController.h"
 #include "Characters/AstrawildCharacter.h"
+#include "Echoes/AstrawildEchoBase.h"
+#include "Data/AstrawildEchoDataAsset.h"
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildAttributeComponent.h"
 #include "SaveSystem/AstrawildSaveSubsystem.h"
 #include "UI/AstrawildHUD.h"
 #include "AstrawildLogChannels.h"
+#include "EngineUtils.h"
+#include "Engine/World.h"
 
 AAstrawildPlayerController::AAstrawildPlayerController()
 {
@@ -117,4 +121,108 @@ void AAstrawildPlayerController::Astrawild_LoadGame(const FString& SlotName)
 void AAstrawildPlayerController::Astrawild_ToggleDebugHUD()
 {
 	ToggleDebugHUD();
+}
+
+void AAstrawildPlayerController::Astrawild_SpawnEcho(const FString& SpeciesTagName, int32 Level)
+{
+	APawn* PlayerPawn = GetPawn();
+	UWorld* World = GetWorld();
+	if (!PlayerPawn || !World)
+	{
+		return;
+	}
+
+	const FVector SpawnLoc = PlayerPawn->GetActorLocation() + (PlayerPawn->GetActorForwardVector() * 300.0f) + FVector(0, 0, 50.0f);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	AAstrawildEchoBase* SpawnedEcho = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), SpawnLoc, PlayerPawn->GetActorRotation(), SpawnParams);
+	if (SpawnedEcho)
+	{
+		// Create temporary inline data asset if not loaded from disk
+		UAstrawildEchoDataAsset* TempData = NewObject<UAstrawildEchoDataAsset>();
+		TempData->SpeciesTag = FGameplayTag::RequestGameplayTag(FName(*SpeciesTagName), false);
+		TempData->SpeciesName = FText::FromString(SpeciesTagName);
+
+		if (SpeciesTagName.Contains(TEXT("Pyrelite")))
+		{
+			TempData->SpeciesName = FText::FromString(TEXT("Pyrelite"));
+			TempData->SpeciesTitle = FText::FromString(TEXT("The Ember Fawn"));
+			TempData->ElementalAffinity = EAstrawildElement::Solar;
+			TempData->Role = EAstrawildEchoRole::Exploration;
+			TempData->BaseMaxHealth = 280.0f;
+			TempData->BaseAttackPower = 42.0f;
+			TempData->BaseDefensePower = 22.0f;
+			TempData->BaseWalkSpeed = 300.0f;
+			TempData->BaseRunSpeed = 620.0f;
+		}
+		else if (SpeciesTagName.Contains(TEXT("Thornback")))
+		{
+			TempData->SpeciesName = FText::FromString(TEXT("Thornback"));
+			TempData->SpeciesTitle = FText::FromString(TEXT("The Terra Bastion"));
+			TempData->ElementalAffinity = EAstrawildElement::Geo;
+			TempData->Role = EAstrawildEchoRole::Combat;
+			TempData->BaseMaxHealth = 450.0f;
+			TempData->BaseAttackPower = 32.0f;
+			TempData->BaseDefensePower = 48.0f;
+			TempData->BaseWalkSpeed = 220.0f;
+			TempData->BaseRunSpeed = 420.0f;
+		}
+		else if (SpeciesTagName.Contains(TEXT("Aquavine")))
+		{
+			TempData->SpeciesName = FText::FromString(TEXT("Aquavine"));
+			TempData->SpeciesTitle = FText::FromString(TEXT("The Dew Serpent"));
+			TempData->ElementalAffinity = EAstrawildElement::Torrent;
+			TempData->Role = EAstrawildEchoRole::BaseUtility;
+			TempData->BaseMaxHealth = 340.0f;
+			TempData->BaseAttackPower = 36.0f;
+			TempData->BaseDefensePower = 28.0f;
+			TempData->BaseWalkSpeed = 260.0f;
+			TempData->BaseRunSpeed = 500.0f;
+		}
+
+		SpawnedEcho->InitializeFromSpeciesData(TempData, Level);
+		UE_LOG(LogAstrawildEcho, Log, TEXT("Console Exec: Spawned %s (Level %d) at %s"), *SpeciesTagName, Level, *SpawnLoc.ToString());
+	}
+}
+
+void AAstrawildPlayerController::Astrawild_ListEchoes()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	int32 Count = 0;
+	UE_LOG(LogAstrawildEcho, Log, TEXT("=== ACTIVE WORLD ECHOES ==="));
+	for (TActorIterator<AAstrawildEchoBase> It(World); It; ++It)
+	{
+		Count++;
+		const FString Name = It->SpeciesData ? It->SpeciesData->SpeciesName.ToString() : It->GetName();
+		const FString State = UEnum::GetValueAsString(It->CurrentState);
+		const float HP = It->Attributes ? It->Attributes->CurrentHealth : 0.0f;
+		UE_LOG(LogAstrawildEcho, Log, TEXT("[%d] %s | Level %d | HP: %.0f | State: %s"), Count, *Name, It->InstanceData.Level, HP, *State);
+	}
+	UE_LOG(LogAstrawildEcho, Log, TEXT("Total Active Echoes: %d"), Count);
+}
+
+void AAstrawildPlayerController::Astrawild_KillAllWildEchoes()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	int32 Destroyed = 0;
+	for (TActorIterator<AAstrawildEchoBase> It(World); It; ++It)
+	{
+		if (It->CurrentState == EAstrawildEchoState::WildPassive || It->CurrentState == EAstrawildEchoState::WildHostile)
+		{
+			It->Destroy();
+			Destroyed++;
+		}
+	}
+	UE_LOG(LogAstrawildEcho, Log, TEXT("Destroyed %d wild Echoes."), Destroyed);
 }

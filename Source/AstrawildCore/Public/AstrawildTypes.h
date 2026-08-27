@@ -49,6 +49,29 @@ enum class EAstrawildEchoState : uint8
 };
 
 /**
+ * Functional role classification for Echo species.
+ */
+UENUM(BlueprintType)
+enum class EAstrawildEchoRole : uint8
+{
+	Exploration     UMETA(DisplayName = "Exploration / Scouting"),
+	Combat          UMETA(DisplayName = "Combat / Defense"),
+	BaseUtility     UMETA(DisplayName = "Base / Production Utility")
+};
+
+/**
+ * Ownership state of an Echo instance.
+ */
+UENUM(BlueprintType)
+enum class EAstrawildEchoOwnership : uint8
+{
+	Wild                UMETA(DisplayName = "Wild"),
+	TamedCompanion      UMETA(DisplayName = "Tamed Companion"),
+	CampWorker          UMETA(DisplayName = "Camp Worker"),
+	StoredInSanctuary   UMETA(DisplayName = "Stored in Sanctuary")
+};
+
+/**
  * Harvest resource node classification.
  */
 UENUM(BlueprintType)
@@ -269,7 +292,7 @@ struct ASTRAWILDCORE_API FAstrawildEchoAbility
 };
 
 /**
- * Serialized Data for a Captured Echo (in Party or Storage Sanctuary).
+ * Complete Instance and Serialized Data for an Echo (Wild, Companion, Worker, or Stored).
  */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
@@ -304,7 +327,19 @@ struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 	float DefensePower = 15.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
+	float TrustScore = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	EAstrawildElement Element = EAstrawildElement::Neutral;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
+	EAstrawildEchoRole Role = EAstrawildEchoRole::Combat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
+	EAstrawildEchoOwnership OwnershipState = EAstrawildEchoOwnership::Wild;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
+	FGameplayTagContainer PersonalityTraits;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
 	TArray<FGameplayTag> EquippedAbilities;
@@ -319,10 +354,15 @@ struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 		, MaxHealth(100.0f)
 		, AttackPower(20.0f)
 		, DefensePower(15.0f)
+		, TrustScore(50.0f)
 		, Element(EAstrawildElement::Neutral)
+		, Role(EAstrawildEchoRole::Combat)
+		, OwnershipState(EAstrawildEchoOwnership::Wild)
 	{
 	}
 };
+
+typedef FAstrawildCapturedEchoData FAstrawildEchoInstance;
 
 /**
  * Serialized Building Structure Data.

@@ -4,17 +4,25 @@
 #include "Components/AstrawildAttributeComponent.h"
 #include "Components/AstrawildCombatComponent.h"
 #include "Data/AstrawildEchoDataAsset.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AstrawildLogChannels.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 AAstrawildEchoBase::AAstrawildEchoBase()
 	: CurrentState(EAstrawildEchoState::WildPassive)
-	, CapturedEchoGuid(FGuid::NewGuid())
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	Attributes = CreateDefaultSubobject<UAstrawildAttributeComponent>(TEXT("Attributes"));
 	Combat = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
+
+	FallbackMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FallbackMeshComponent"));
+	FallbackMeshComponent->SetupAttachment(RootComponent);
+	FallbackMeshComponent->SetCollisionProfileName(TEXT("NoCollision"));
+	FallbackMeshComponent->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
@@ -33,25 +41,34 @@ void AAstrawildEchoBase::BeginPlay()
 
 	if (SpeciesData)
 	{
-		InitializeFromSpeciesData(SpeciesData);
+		InitializeFromSpeciesData(SpeciesData, InstanceData.Level > 0 ? InstanceData.Level : 1);
+	}
+	else
+	{
+		UE_LOG(LogAstrawildEcho, Warning, TEXT("Echo %s spawned without SpeciesData! Using safe default fallback parameters."), *GetName());
+		ApplyVisualRepresentation();
 	}
 }
 
-void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InData)
+void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InData, int32 InLevel)
 {
 	if (!InData)
 	{
+		UE_LOG(LogAstrawildEcho, Error, TEXT("InitializeFromSpeciesData called with null data asset on %s!"), *GetName());
 		return;
 	}
 
 	SpeciesData = InData;
+	InstanceData = InData->CreateInstance(InLevel, InstanceData.CustomNickname);
+
 	if (Attributes)
 	{
-		Attributes->MaxHealth = InData->BaseMaxHealth;
-		Attributes->CurrentHealth = InData->BaseMaxHealth;
-		Attributes->AttackPower = InData->BaseAttackPower;
-		Attributes->DefensePower = InData->BaseDefensePower;
-		Attributes->ElementalAffinity = InData->ElementalAffinity;
+		Attributes->MaxHealth = InstanceData.MaxHealth;
+		Attributes->CurrentHealth = InstanceData.CurrentHealth;
+		Attributes->AttackPower = InstanceData.AttackPower;
+		Attributes->DefensePower = InstanceData.DefensePower;
+		Attributes->ElementalAffinity = InstanceData.Element;
+		Attributes->Level = InstanceData.Level;
 	}
 
 	if (GetCharacterMovement())
@@ -59,12 +76,36 @@ void AAstrawildEchoBase::InitializeFromSpeciesData(UAstrawildEchoDataAsset* InDa
 		GetCharacterMovement()->MaxWalkSpeed = InData->BaseWalkSpeed;
 	}
 
-	if (Nickname.IsEmpty())
+	ApplyVisualRepresentation();
+
+	UE_LOG(LogAstrawildEcho, Log, TEXT("Initialized Echo %s: %s (Role: %s, Element: %s, Lv: %d, MaxHP: %.0f)"),
+		*GetName(), *InData->SpeciesName.ToString(), *UEnum::GetValueAsString(InData->Role),
+		*UEnum::GetValueAsString(InData->ElementalAffinity), InstanceData.Level, InstanceData.MaxHealth);
+}
+
+void AAstrawildEchoBase::ApplyVisualRepresentation()
+{
+	// Check if custom static mesh exists
+	if (SpeciesData && !SpeciesData->FallbackStaticMesh.IsNull())
 	{
-		Nickname = InData->SpeciesName;
+		UStaticMesh* LoadedMesh = SpeciesData->FallbackStaticMesh.LoadSynchronous();
+		if (LoadedMesh && FallbackMeshComponent)
+		{
+			FallbackMeshComponent->SetStaticMesh(LoadedMesh);
+			return;
+		}
 	}
 
-	UE_LOG(LogAstrawildEcho, Log, TEXT("Initialized Echo %s [%s] with MaxHP: %.1f"), *GetName(), *InData->SpeciesName.ToString(), InData->BaseMaxHealth);
+	// Fallback to engine basic cylinder / sphere
+	if (FallbackMeshComponent && !FallbackMeshComponent->GetStaticMesh())
+	{
+		UStaticMesh* BasicCylinder = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+		if (BasicCylinder)
+		{
+			FallbackMeshComponent->SetStaticMesh(BasicCylinder);
+			FallbackMeshComponent->SetRelativeScale3D(FVector(0.7f, 0.7f, 0.9f));
+		}
+	}
 }
 
 void AAstrawildEchoBase::SetEchoState(EAstrawildEchoState NewState)
@@ -75,6 +116,9 @@ void AAstrawildEchoBase::SetEchoState(EAstrawildEchoState NewState)
 	}
 
 	CurrentState = NewState;
+	InstanceData.OwnershipState = (NewState == EAstrawildEchoState::SummonedCompanion) ? EAstrawildEchoOwnership::TamedCompanion :
+		(NewState == EAstrawildEchoState::Working) ? EAstrawildEchoOwnership::CampWorker : EAstrawildEchoOwnership::Wild;
+
 	UE_LOG(LogAstrawildEcho, Log, TEXT("Echo %s transitioned to state: %s"), *GetName(), *UEnum::GetValueAsString(NewState));
 
 	if (SpeciesData && GetCharacterMovement())
@@ -110,36 +154,57 @@ bool AAstrawildEchoBase::CastAbility(int32 AbilityIndex, AActor* TargetActor)
 	return true;
 }
 
-FAstrawildCapturedEchoData AAstrawildEchoBase::ExportCapturedData() const
+bool AAstrawildEchoBase::ActivateRolePerk()
 {
-	FAstrawildCapturedEchoData Data;
-	Data.UniqueEchoId = CapturedEchoGuid;
-	Data.CustomNickname = Nickname;
-
-	if (SpeciesData)
+	if (!SpeciesData)
 	{
-		Data.SpeciesTag = SpeciesData->SpeciesTag;
-		Data.Element = SpeciesData->ElementalAffinity;
+		return false;
 	}
 
+	switch (SpeciesData->Role)
+	{
+	case EAstrawildEchoRole::Exploration:
+		// Radar Pulse: scouts surroundings
+		UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated [Exploration Pulse]: Scanning nearby harvest nodes and resources within 20m..."), *GetName());
+		break;
+	case EAstrawildEchoRole::Combat:
+		// Bastion Shield: grants 50% defense power for 8 seconds
+		if (Attributes)
+		{
+			Attributes->DefensePower *= 1.5f;
+			UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated [Bastion Shield]: Defense boosted to %.1f!"), *GetName(), Attributes->DefensePower);
+		}
+		break;
+	case EAstrawildEchoRole::BaseUtility:
+		// Productivity Aura: grants crafting / harvesting efficiency
+		UE_LOG(LogAstrawildEcho, Log, TEXT("%s activated [Harmonic Inspiration Aura]: Camp productivity increased by %.1fx!"),
+			*GetName(), SpeciesData->WorkEfficiencyMultiplier * 1.5f);
+		break;
+	}
+
+	OnRoleAbilityUsed.Broadcast(this, SpeciesData->Role);
+	return true;
+}
+
+FAstrawildEchoInstance AAstrawildEchoBase::ExportCapturedData() const
+{
+	FAstrawildEchoInstance Data = InstanceData;
 	if (Attributes)
 	{
-		Data.Level = Attributes->Level;
-		Data.CurrentEXP = Attributes->CurrentEXP;
 		Data.CurrentHealth = Attributes->CurrentHealth;
 		Data.MaxHealth = Attributes->MaxHealth;
+		Data.Level = Attributes->Level;
+		Data.CurrentEXP = Attributes->CurrentEXP;
 		Data.AttackPower = Attributes->AttackPower;
 		Data.DefensePower = Attributes->DefensePower;
+		Data.Element = Attributes->ElementalAffinity;
 	}
-
 	return Data;
 }
 
-void AAstrawildEchoBase::ImportCapturedData(const FAstrawildCapturedEchoData& Data)
+void AAstrawildEchoBase::ImportCapturedData(const FAstrawildEchoInstance& Data)
 {
-	CapturedEchoGuid = Data.UniqueEchoId;
-	Nickname = Data.CustomNickname;
-
+	InstanceData = Data;
 	if (Attributes)
 	{
 		Attributes->Level = Data.Level;
@@ -163,12 +228,50 @@ void AAstrawildEchoBase::HandleHealthChanged(float CurrentHealth, float MaxHealt
 {
 	if (Delta < 0.0f && CurrentState == EAstrawildEchoState::WildPassive && Instigator)
 	{
-		// Provoked -> Enter Hostile state
 		SetEchoState(EAstrawildEchoState::WildHostile);
 	}
 	else if (CurrentState == EAstrawildEchoState::WildHostile && (CurrentHealth / MaxHealth) < 0.20f)
 	{
-		// Low health -> Try to flee
 		SetEchoState(EAstrawildEchoState::Fleeing);
 	}
+}
+
+FText AAstrawildEchoBase::GetInteractionPrompt_Implementation(AActor* Interactor)
+{
+	const FString SpeciesStr = SpeciesData ? SpeciesData->SpeciesName.ToString() : TEXT("Echo");
+	const FString ElementStr = SpeciesData ? UEnum::GetValueAsString(SpeciesData->ElementalAffinity) : TEXT("Neutral");
+	const FString RoleStr = SpeciesData ? UEnum::GetValueAsString(SpeciesData->Role) : TEXT("Combat");
+	const float HPPct = Attributes ? (Attributes->GetHealthPercent() * 100.0f) : 100.0f;
+
+	if (CurrentState == EAstrawildEchoState::SummonedCompanion)
+	{
+		return FText::FromString(FString::Printf(TEXT("[E] Pet & Command %s (Trust: %.0f%%)"), *SpeciesStr, InstanceData.TrustScore));
+	}
+
+	return FText::FromString(FString::Printf(TEXT("Wild %s [Lv.%d | %s | HP: %.0f%%]"), *SpeciesStr, InstanceData.Level, *RoleStr, HPPct));
+}
+
+bool AAstrawildEchoBase::CanInteract_Implementation(AActor* Interactor)
+{
+	return Attributes && Attributes->IsAlive() && Interactor != nullptr;
+}
+
+bool AAstrawildEchoBase::PerformInteraction_Implementation(AActor* Interactor)
+{
+	if (!CanInteract_Implementation(Interactor))
+	{
+		return false;
+	}
+
+	if (CurrentState == EAstrawildEchoState::SummonedCompanion)
+	{
+		// Pet / Bond interaction: boosts trust
+		InstanceData.TrustScore = FMath::Clamp(InstanceData.TrustScore + 5.0f, 0.0f, 100.0f);
+		ActivateRolePerk();
+		UE_LOG(LogAstrawildEcho, Log, TEXT("Bonded with companion %s. Trust increased to %.1f%%!"), *GetName(), InstanceData.TrustScore);
+		return true;
+	}
+
+	UE_LOG(LogAstrawildEcho, Log, TEXT("Inspected wild Echo: %s"), *GetName());
+	return true;
 }

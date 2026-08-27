@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Environment/AstrawildPrototypeArena.h"
 #include "Environment/AstrawildHarvestableNode.h"
@@ -144,5 +144,66 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	{
 		Bed->BuildingType = EAstrawildBuildingType::RestBed;
 		Bed->BuildingTag = FGameplayTag::RequestGameplayTag(FName("Building.RestBed"), false);
+	}
+
+	// 6. Spawn Prototype Echo 1: Pyrelite (Exploration Specialist)
+	AAstrawildEchoBase* Echo1 = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), Origin + FVector(600, -800, 50), FRotator::ZeroRotator, SpawnParams);
+	if (Echo1)
+	{
+		UAstrawildEchoDataAsset* DA1 = NewObject<UAstrawildEchoDataAsset>();
+		DA1->SpeciesTag = FGameplayTag::RequestGameplayTag(FName("Echo.Pyrelite"), false);
+		DA1->SpeciesName = FText::FromString(TEXT("Pyrelite"));
+		DA1->SpeciesTitle = FText::FromString(TEXT("The Ember Fawn"));
+		DA1->ElementalAffinity = EAstrawildElement::Solar;
+		DA1->Role = EAstrawildEchoRole::Exploration;
+		DA1->BaseMaxHealth = 280.0f;
+		DA1->BaseAttackPower = 42.0f;
+		DA1->BaseDefensePower = 22.0f;
+		DA1->BaseWalkSpeed = 300.0f;
+		DA1->BaseRunSpeed = 620.0f;
+		DA1->PlaceholderTint = FColor(230, 126, 34); // Solar Amber
+
+		Echo1->InitializeFromSpeciesData(DA1, 2);
+	}
+
+	// 7. Spawn Prototype Echo 2: Thornback (Combat Specialist)
+	AAstrawildEchoBase* Echo2 = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), Origin + FVector(600, 0, 50), FRotator::ZeroRotator, SpawnParams);
+	if (Echo2)
+	{
+		UAstrawildEchoDataAsset* DA2 = NewObject<UAstrawildEchoDataAsset>();
+		DA2->SpeciesTag = FGameplayTag::RequestGameplayTag(FName("Echo.Thornback"), false);
+		DA2->SpeciesName = FText::FromString(TEXT("Thornback"));
+		DA2->SpeciesTitle = FText::FromString(TEXT("The Terra Bastion"));
+		DA2->ElementalAffinity = EAstrawildElement::Geo;
+		DA2->Role = EAstrawildEchoRole::Combat;
+		DA2->BaseMaxHealth = 450.0f;
+		DA2->BaseAttackPower = 32.0f;
+		DA2->BaseDefensePower = 48.0f;
+		DA2->BaseWalkSpeed = 220.0f;
+		DA2->BaseRunSpeed = 420.0f;
+		DA2->PlaceholderTint = FColor(46, 204, 113); // Verdurous Green
+
+		Echo2->InitializeFromSpeciesData(DA2, 3);
+	}
+
+	// 8. Spawn Prototype Echo 3: Aquavine (Base Utility Specialist)
+	AAstrawildEchoBase* Echo3 = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), Origin + FVector(600, 800, 50), FRotator::ZeroRotator, SpawnParams);
+	if (Echo3)
+	{
+		UAstrawildEchoDataAsset* DA3 = NewObject<UAstrawildEchoDataAsset>();
+		DA3->SpeciesTag = FGameplayTag::RequestGameplayTag(FName("Echo.Aquavine"), false);
+		DA3->SpeciesName = FText::FromString(TEXT("Aquavine"));
+		DA3->SpeciesTitle = FText::FromString(TEXT("The Dew Serpent"));
+		DA3->ElementalAffinity = EAstrawildElement::Torrent;
+		DA3->Role = EAstrawildEchoRole::BaseUtility;
+		DA3->BaseMaxHealth = 340.0f;
+		DA3->BaseAttackPower = 36.0f;
+		DA3->BaseDefensePower = 28.0f;
+		DA3->BaseWalkSpeed = 260.0f;
+		DA3->BaseRunSpeed = 500.0f;
+		DA3->WorkEfficiencyMultiplier = 1.5f;
+		DA3->PlaceholderTint = FColor(52, 152, 219); // Torrent Cyan
+
+		Echo3->InitializeFromSpeciesData(DA3, 2);
 	}
 }
