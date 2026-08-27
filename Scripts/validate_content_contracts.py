@@ -23,6 +23,7 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_RangedWeapons.csv": {"Name", "WeaponTag", "DisplayName", "WeaponType", "DamageElement", "AmmoTag", "BaseDamage", "RangeCentimeters", "FireIntervalSeconds", "MagazineSize", "ReloadDurationSeconds", "bUseHitscan", "RequiredTechnologyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv": {"Name", "DungeonId", "DisplayName", "RegionTag", "RequiredKeyTag", "bConsumeRequiredKey", "BossSpeciesTag", "BossElement", "RecommendedLevel", "TimeLimitSeconds", "bSupportsCoop", "RewardItemTags", "RewardQuantities"},
     ROOT / "Content/Astrawild/Data/Source/DT_Evolutions.csv": {"Name", "EvolutionId", "SourceSpeciesTag", "TargetSpeciesTag", "TargetSpeciesData", "RequiredLevel", "RequiredItemTag", "RequiredItemQuantity"},
+    ROOT / "Content/Astrawild/Data/Source/DT_Weather.csv": {"Name", "WeatherTag", "DisplayName", "TemperatureModifier", "VisibilityMultiplier", "WindStrength", "RainIntensity", "MinimumDurationSeconds", "MaximumDurationSeconds"},
 }
 REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Animation/AstrawildAnimInstance.h",
@@ -58,7 +59,7 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
     "Source/AstrawildCore/Public/Components/AstrawildEvolutionComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildEvolutionComponent.cpp",
-    "Source/AstrawildCore/Private/World/AstrawildDungeonSubsystem.cpp",
+    "Source/AstrawildCore/Private/World/AstrawildWeatherSubsystem.cpp",
     "Source/AstrawildCore/Public/Components/AstrawildRangedCombatComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildRangedCombatComponent.cpp",
     "Source/AstrawildCore/Public/UI/AstrawildMasterWidgets.h",
@@ -274,6 +275,25 @@ for row in evolution_rows:
             errors.append(f"DT_Evolutions.csv invalid gate in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_Evolutions.csv non-numeric gate in row {row.get('Name', '<unknown>')}")
+
+weather_path = ROOT / "Content/Astrawild/Data/Source/DT_Weather.csv"
+weather_rows = loaded_rows.get(weather_path, [])
+if len(weather_rows) != 8:
+    errors.append(f"DT_Weather.csv must contain exactly 8 rows; found {len(weather_rows)}")
+weather_tags = [row.get("WeatherTag", "") for row in weather_rows]
+if len(weather_tags) != len(set(weather_tags)):
+    errors.append("DT_Weather.csv has duplicate WeatherTag values")
+for row in weather_rows:
+    try:
+        if not -5 <= int(row["TemperatureModifier"]) <= 5:
+            errors.append(f"DT_Weather.csv invalid temperature modifier in row {row.get('Name', '<unknown>')}")
+        for field in ("VisibilityMultiplier", "WindStrength", "RainIntensity"):
+            if not 0.0 <= float(row[field]) <= 1.0:
+                errors.append(f"DT_Weather.csv invalid {field} in row {row.get('Name', '<unknown>')}")
+        if float(row["MinimumDurationSeconds"]) < 30.0 or float(row["MaximumDurationSeconds"]) < float(row["MinimumDurationSeconds"]):
+            errors.append(f"DT_Weather.csv invalid duration in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_Weather.csv non-numeric value in row {row.get('Name', '<unknown>')}")
 
 dungeon_path = ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv"
 dungeon_rows = loaded_rows.get(dungeon_path, [])

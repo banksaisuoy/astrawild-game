@@ -4,6 +4,7 @@
 #include "Components/AstrawildSurvivalComponent.h"
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
+#include "World/AstrawildWeatherSubsystem.h"
 
 UAstrawildEnvironmentHazardComponent::UAstrawildEnvironmentHazardComponent()
 {
@@ -67,7 +68,15 @@ void UAstrawildEnvironmentHazardComponent::SetCampProtectionLevel(const int32 Ne
 
 float UAstrawildEnvironmentHazardComponent::GetEffectiveTemperature() const
 {
-    return static_cast<float>(AmbientTemperatureLevel - InsulationLevel - CampProtectionLevel);
+    int32 WeatherModifier = 0;
+    if (const UWorld* World = GetWorld())
+    {
+        if (const UAstrawildWeatherSubsystem* Weather = World->GetSubsystem<UAstrawildWeatherSubsystem>())
+        {
+            WeatherModifier = Weather->GetTemperatureModifier();
+        }
+    }
+    return static_cast<float>(AmbientTemperatureLevel + WeatherModifier - InsulationLevel - CampProtectionLevel);
 }
 
 bool UAstrawildEnvironmentHazardComponent::IsDangerous() const

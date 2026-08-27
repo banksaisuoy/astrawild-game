@@ -41,6 +41,7 @@ $required = @(
     "Content/Astrawild/Data/Source/DT_RangedWeapons.csv",
     "Content/Astrawild/Data/Source/DT_Dungeons.csv",
     "Content/Astrawild/Data/Source/DT_Evolutions.csv",
+    "Content/Astrawild/Data/Source/DT_Weather.csv",
     "Source/AstrawildCore/Public/Components/AstrawildSanComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildColonyWorkComponent.h",
     "Source/AstrawildCore/Public/Components/AstrawildTechnologyComponent.h",
@@ -49,6 +50,8 @@ $required = @(
     "Source/AstrawildCore/Public/UI/AstrawildMasterWidgets.h",
     "Source/AstrawildCore/Public/Components/AstrawildEvolutionComponent.h",
     "Source/AstrawildCore/Public/Data/AstrawildEvolutionData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildWeatherData.h",
+    "Source/AstrawildCore/Public/World/AstrawildWeatherSubsystem.h",
     "Scripts/validate_runtime_contracts.py",
     "Scripts/validate_generated_headers.py",
     "Docs/M2_EVOLUTION_HANDOFF.md"
