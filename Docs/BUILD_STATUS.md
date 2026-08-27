@@ -6,7 +6,7 @@
 **Primary module:** `AstrawildCore`
 **Target platform:** Windows PC
 **Active branch:** `release/vertical-slice-v1`
-**Latest repository commit:** `6ae86be43bba3f4452d701d4936fb031b7d29148` (pushed exosuit integration, source-hardening, and final status ledger)
+**Latest repository commit:** `5ac0da306895ed54c1312ce44fe47b0e5869af44` (pushed current review and Unreal Editor integration roadmap)
 **Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
 > **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
@@ -15,7 +15,7 @@
 
 | Layer | Status | Evidence or limitation |
 |---|---|---|
-| Git branch and repository sync | **PASS** | Final status-ledger commit `6ae86be` is pushed; local `HEAD` and `origin/release/vertical-slice-v1` match. |
+| Git branch and repository sync | **PASS** | Current review/roadmap commit `5ac0da3` is pushed; local `HEAD` and `origin/release/vertical-slice-v1` match. |
 | Python content-contract validation | **PASS** | Baseline Windows checks passed; the expanded local suite also passes content, runtime, generated-header, and editor-automation validators. |
 | Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
@@ -120,4 +120,5 @@ ASTRAWILD uses original names and data contracts. Do not copy or import characte
 | 2026-08-27 | Manus | `c5e3953` | Sandbox static checks | Expanded boss/visual source pass; 19 CSV mappings, content/runtime/generated-header/editor-automation validators, Python compile and diff check passed | Source pass **PASS**; Windows UE evidence pending |
 | 2026-08-27 | Manus | `edca9b9` | Sandbox static checks | Originalized exosuit data; 32 CSV mappings; authoritative mecha hit trace, cockpit target/LOS validation, strengthened mecha validator, all content/runtime/generated-header/editor-automation/master-asset validators and Python compile passed; source commit pushed to `release/vertical-slice-v1` | Source integration **PASS**; UE compile/AnimBP/Niagara/UI/PIE pending |
 | 2026-08-27 | Manus | `6ae86be` | Documentation/status sync | BUILD_STATUS corrected to the final pushed hash and the staged Unreal Editor Integration plan | Documentation **PASS**; UE compile/Editor import/PIE/package pending |
+| 2026-08-28 | Manus | `5ac0da3` | Repository review/status sync | Current repository review completed; historical audit explicitly labeled; staged UE 5.8 Editor Integration gates documented | Review **PASS**; UE compile/Editor import/PIE/package pending |
 |  | Windows owner |  | UE 5.8 / MSVC 2022 | Add module compile log, DataTable/scaffold reports, automation result, PIE/network screenshots, and package path here | **PENDING** |
