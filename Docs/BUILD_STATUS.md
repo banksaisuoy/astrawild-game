@@ -1,143 +1,93 @@
-﻿# ASTRAWILD: Echoes of the First Dawn — Vertical Slice Build Status & Handoff Specification
+﻿# ASTRAWILD Build Status — Honest Verification Report
 
-**Project File**: `ASTRAWILD.uproject`  
-**Target Engine**: Unreal Engine 5.8  
-**Primary C++ Module**: `AstrawildCore`  
-**Target Platform**: Windows PC (DirectX 12 / Vulkan)  
-**Release Branch**: `release/vertical-slice-v1`
-**Manus P0-P4 Preparation Commit**: `feb2cc0f9e745cb1383974f73587f422dabf4a9a`
-**License**: 100% Original IP & License-Safe Primitives
+**Project:** ASTRAWILD: Echoes of the First Dawn
+**Project file:** `ASTRAWILD.uproject`
+**Target engine:** Unreal Engine 5.8
+**Primary module:** `AstrawildCore`
+**Target platform:** Windows PC
+**Active branch:** `release/vertical-slice-v1`
+**Latest repository commit:** `b6e63f4137e02f0668de33d3d0a8dcd3a856cf40`
+**Repository:** [private GitHub repository](https://github.com/banksaisuoy/astrawild-game)
 
----
+> **Important boundary:** Source/static validation is not Unreal C++ compilation. Unreal compilation is not PIE. PIE is not a packaged shipping build. This file intentionally records only evidence that has actually been produced.
 
-## 1. Executive Summary & Architecture Map
+## Current verification status
 
-ASTRAWILD: Echoes of the First Dawn is a third-person open-world action-RPG survival prototype. The vertical slice features a fully playable, interconnected gameplay loop:
+| Layer | Status | Evidence or limitation |
+|---|---|---|
+| Git branch and repository sync | **PASS** | Latest active branch was pushed to GitHub at commit `b6e63f4`. |
+| Python content-contract validation | **PASS** | `python3 Scripts/validate_content_contracts.py` passed after the latest source/data package. |
+| Git whitespace/diff gate | **PASS** | `git diff --check` passed before the latest milestone commits. |
+| Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
+| Unreal 5.8 C++ compile | **NOT RUN HERE** | Requires the user’s Windows machine with UE 5.8 and MSVC 2022. |
+| DataTable import in Unreal Editor | **NOT RUN HERE** | CSV sources exist; derived `.uasset` DataTables must be imported in Editor. |
+| PIE smoke test | **NOT RUN HERE** | Requires authored map, Blueprint children, imported assets, and Editor execution. |
+| Network PIE/co-op test | **NOT RUN HERE** | Requires a real multiplayer session. Client RPC/prediction hardening remains a later verification task. |
+| Windows Development package | **NOT RUN HERE** | `Tools/Package_Astrawild.ps1` is prepared, but no package was produced in this environment. |
+| Shipping readiness | **NOT READY** | No UE binary assets or executable are tracked in this repository at this time. |
 
-```mermaid
-graph TD
-    Player[Player Character: 3rd Person WASD/Mouse] -->|Sweep Sweep Interact / LMB Attack| Harvest[Harvestable Nodes: Sunwood / LumenStone / AstraShard]
-    Harvest --> Inv[UAstrawildInventoryComponent: 30 Slots, Move/Split/Stack]
-    
-    Inv --> Craft[UAstrawildCraftingComponent: Primal Axe, Pick, Astra Resonators]
-    Craft --> Build[UAstrawildBuildingComponent: Grid-Snapped Campfire & Rest Shelter]
-    
-    Player -->|Combat Combo & Status Effects| WildEcho[Wild Echoes: Pyrelite, Thornback]
-    Player -->|Throw Astra Resonator [Q]| Capture[UAstrawildCaptureComponent: Dynamic Capture Odds & Trust]
-    Capture --> Party[Active Party Companion: Summon/Recall [T], Combat Assistance]
-    
-    Player -->|Rest at Campfire / Bed [E]| Rest[Restore 100% HP & SP, Set Respawn Anchor]
-    
-    Subsystem[UAstrawildSaveSubsystem: Modular v1 Schema] -->|Atomic Backup Sync| Disk[(Save Slot & Backup File)]
+## Delivered production source contracts
+
+The release branch now contains the following source/data preparation slices. These are implementation contracts and are not presented as finished visual content.
+
+| Slice | Delivered preparation |
+|---|---|
+| World and survival | 4.096 km square / 8×8 cell contract, four biome rows, spawn rules, 16 spire rows, environment-hazard component, World Partition handoff, and discovered-spire save field. |
+| EchoDex | 30 original species rows, append-only elemental expansion with legacy Aether preservation, multi-element affinity fields, trait/work/mount/breeding metadata, and element automation-test source. |
+| Mount and breeding | Native mount eligibility/attachment framework, 21 mount profiles, breeding-group and trait tables, deterministic egg inheritance/incubation, and additive egg save state. |
+| Colony and SAN | Echo SAN component, work suitability and efficiency fields, building-hosted colony work queues, authority guards, completion events, and SAN save fields. |
+| Technology | Technology DataTable schema, 20-node research tree, prerequisite/cost validation, authority-gated unlocks, and save fields for unlocked tags/research points. |
+| Crafting | Recipe DataTable schema, 64 source recipes, station and technology gates, DataTable registration, ingredient rollback when output insertion fails, and appended `HeatForge` station enum value. |
+| Ranged combat | Eight weapon rows across bow/repeater/beam classes, elemental ammo fields, cooldown/magazine/reload contract, and a hitscan path routed through the existing combat damage pipeline. |
+| Tower dungeons | Five tower rows, required-key consumption, co-op participant tracking, server-side time limit and boss-completion lifecycle contract. |
+| UI and packaging | Native master HUD, EchoDex, technology, dungeon-status widget bases; expanded validation script; opt-in compile/package PowerShell workflow. |
+
+## Source data inventory
+
+The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The main production tables are `DT_Biomes.csv`, `DT_SpawnRules.csv`, `DT_FastTravelSpires.csv`, `DT_EchoDex.csv`, `DT_EchoTraits.csv`, `DT_BreedingGroups.csv`, `DT_MountProfiles.csv`, `DT_TechnologyNodes.csv`, `DT_Recipes.csv`, `DT_RangedWeapons.csv`, and `DT_Dungeons.csv`.
+
+The repository deliberately does not pretend that CSV files are Unreal DataTable assets. Import them into `Content/Astrawild/Data/Imported/` with the row structs named in the relevant handoff documents. Keep the CSV sources under review and commit derived `.uasset` files with Git LFS when they are authored and tested.
+
+## Unreal Editor work still required
+
+The Windows owner must create or import the Open World/World Partition map, Data Layers, HLOD setup, four biome landscape/material regions, spawner volumes, the 16 spire actors, player/Echo skeletal meshes and Animation Blueprints, Niagara systems, sound cues, UI Widget Blueprints, weapon meshes/animations, breeding pen and egg presentation, tower maps, boss actors, original icons, and final lighting/post-processing. All external assets must be recorded in `Docs/ThirdPartyLicenses.md` before commit.
+
+The native code is intentionally defensive around missing assets, but default engine primitives and empty soft references are not a production art pass. Do not mark P0–P4 or the master UI complete until the assets are imported, assigned, opened without errors, and exercised in PIE.
+
+## Windows verification sequence
+
+Run these commands from the repository root after pulling the active branch:
+
+```powershell
+git fetch origin release/vertical-slice-v1
+git checkout release/vertical-slice-v1
+git pull --ff-only origin release/vertical-slice-v1
+python Scripts/validate_content_contracts.py
+.\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location)
+.\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location) -TryUnreal
 ```
 
----
+After the Editor opens successfully, import the source DataTables, create the derived Blueprint/UI/map assets, compile `ASTRAWILDEditor Win64 Development`, run the element automation test `Astrawild.Systems.Elements.Compatibility`, and record the exact compiler output. Then run PIE for movement, dodge, harvest, capture, summon, mount/dismount, breeding save/load, SAN work assignment, technology unlock, crafting rollback, ranged fire, spire travel, and tower completion. Run a two-player network PIE session for authority boundaries.
 
-## 2. Playable Core Gameplay Systems
+Only after those checks pass should the owner run:
 
-### A. Responsive Player Vertical Slice ([`AAstrawildCharacter`](../Source/AstrawildCore/Public/Characters/AstrawildCharacter.h))
-- **Locomotion**: Walk (500 cm/s), Sprint (850 cm/s), Jump (550 impulse), Dodge Roll (1300 impulse, 0.40s duration, 20 SP cost, i-frame invulnerability).
-- **Camera & Input**: Third-person SpringArm/Camera, Enhanced Input mappings with C++ fallback keybindings (`WASD`, `Mouse`, `Space`, `Shift`, `Alt`, `E`, `LMB`, `Q`, `T`, `I`, `B`, `Tab/F1`).
-- **Dynamic Crosshair & Interaction**: Sphere sweep trace ($350\text{cm}$) targeting `IAstrawildInteractableInterface` actors with UI prompt badges.
+```powershell
+.\Tools\Package_Astrawild.ps1 -ProjectRoot (Get-Location) -PackageDirectory .\Builds\WindowsDevelopment
+```
 
-### B. Data-Driven Creature Ecosystem ([`UAstrawildEchoDataAsset`](../Source/AstrawildCore/Public/Data/AstrawildEchoDataAsset.h))
-- 100% Data-driven creature configuration without hardcoded C++ species classes.
-- **3 Distinct Species**:
-  1. **Pyrelite** (*The Ember Fawn*): Solar exploration specialist ($620\text{cm/s}$, high speed, amber tint).
-  2. **Thornback** (*The Terra Bastion*): Geo combat specialist ($450\text{HP}$, high defense, verdurous tint).
-  3. **Aquavine** (*The Dew Serpent*): Torrent base utility companion ($1.5\times$ work speed, cyan tint).
+The wrapper invokes source validation, the command-line Blueprint compile check, and Unreal `RunUAT BuildCookRun` for a Development package. Inspect the archive, launch the executable, and append the package path, executable hash, map name, engine version, warnings/errors, and screenshots to this file before claiming a working build.
 
-### C. Combat & Damage Pipeline ([`IAstrawildDamageableInterface`](../Source/AstrawildCore/Public/Interfaces/AstrawildDamageableInterface.h))
-- 3-hit light melee combo with scaling damage ($1.0\times, 1.25\times, 1.60\times$) and anti-double-damage attack instance IDs.
-- Elemental status effects (`Status.Ignited` burn DoT, `Status.Drenched` slow, `Status.Shielded` absorption).
-- `AAstrawildTrainingDummy` with 1,000 HP, rolling 1-second DPS calculation, physics flinch scale pulse, and `[E]` stats reset.
+## Performance evidence protocol
 
-### D. Stateful Capture & Relationship Subsystem ([`UAstrawildCaptureComponent`](../Source/AstrawildCore/Public/Components/AstrawildCaptureComponent.h))
-- Dynamic capture odds formula: $\text{Odds} = \left(1.0 - \frac{\text{HP}}{\text{MaxHP}}\right) \times 0.65 + \text{ToolTierBonus} + \text{StatusBonus} (0.25)$.
-- Contextual initial trust scoring (75% for gentle capture, 35% for low-HP brutal capture).
-- Companion summoning/recalling (`[T]`), party cycling (`Mouse Wheel`), and HUD active companion roster.
+No FPS, frame-time, memory, or GPU numbers are claimed in this revision because no Windows profiling capture was supplied. Measure one representative outdoor cell, one worker-heavy base, and one VFX-heavy tower arena. Record game-thread, render-thread, GPU, memory, and network-role behavior at the chosen scalability preset. Use the existing AI distance-LOD and World Partition contracts as hypotheses to verify, not as evidence of a finished performance budget.
 
-### E. Survival Progression, Crafting & Grid Building ([`UAstrawildBuildingComponent`](../Source/AstrawildCore/Public/Components/AstrawildBuildingComponent.h))
-- **30-Slot Inventory**: Move/swap slots, stack splitting, and stack consolidation.
-- **Crafting Service**: Data-driven recipes for Stone Axe, Stone Pick, Resonators T1/T2, Campfires, and Beds.
-- **Grid-Snapped Building**: $100\text{cm}$ grid snap, $45^\circ$ angle increments, slope check ($< 45^\circ$), collision overlap clear check, and anti-double-build lock.
-- **Rest Points & Dismantle**: Interacting with Campfire restores 100% HP/SP. Dismantling building refunds 100% materials to player inventory.
+## License and originality gate
 
-### F. Modular Save/Load Subsystem ([`UAstrawildSaveSubsystem`](../Source/AstrawildCore/Public/SaveSystem/AstrawildSaveSubsystem.h))
-- **Domain Separation**: `FAstrawildPlayerProfile` (Schema v1), `FAstrawildWorldSnapshot` (v1), `FAstrawildSettingsProfile` (v1).
-- **Atomic Safe Write & Auto-Backup**: Creates `SlotName_Backup` on every save; automatically rolls back to backup if primary save is corrupted.
-- **5-Minute Autosave Timer**: Background non-blocking autosave.
-- **HUD Toast Banners**: Dynamic UI toast banners indicating save/load states and recovery alerts.
+ASTRAWILD uses original names and data contracts. Do not copy or import characters, models, maps, textures, UI, sounds, or other protected content from Pokémon, ARK, Palworld, Nintendo, Pocketpair, Studio Wildcard, or related properties. For every third-party asset, record the source URL, creator, license, modifications, and redistribution terms in `Docs/ThirdPartyLicenses.md`.
 
-### G. 4-Zone Vertical Slice Map & AI Simulation LOD ([`AAstrawildPrototypeArena`](../Source/AstrawildCore/Private/Environment/AstrawildPrototypeArena.cpp))
-- **Zone 1**: Central Dawn Spire Monolith Landmark (12m pillar & attunement interactable).
-- **Zone 2**: North-West Sylvan Resource Grove (Trees, Lumen Stone & Astra Shards).
-- **Zone 3**: South-East Sunken Danger Pit & Combat Arena (Wild hostile creatures & Training Dummy).
-- **Zone 4**: North-East Elevated Rest Sanctuary (Campfire, Bed, Crafting Bench, Aquavine).
-- **Distance-Based AI LOD**: $<30\text{m}$ (60Hz full tick), $30-65\text{m}$ (4Hz throttled tick), $>65\text{m}$ (dormant 0Hz).
-- **Leash Tethering**: $2600\text{cm}$ boundary return to prevent runaway creatures.
+## Evidence log
 
----
-
-## 3. Five Critical Safeguard Test Cases
-
-| # | Test Scenario | Action Taken | Verified Behavior | Status |
-| :- | :--- | :--- | :--- | :--- |
-| **1** | **Anti-Double-Spend & Double-Build** | Rapid-click build placement button while materials are near zero. | `bIsPlacingPiece` atomic lock rejects secondary clicks; materials deducted exactly once. | **PASS** |
-| **2** | **Capture Validation & Item Refund** | Throw resonator at out-of-range, dead, or non-capturable entity. | Capture state machine rejects attempt; displays error banner; does not waste resonator. | **PASS** |
-| **3** | **AI Leash & Anti-Exploit Return** | Kite hostile Pyrelite $> 2600\text{cm}$ away from its danger pit. | Creature drops aggro, gains invulnerability, and paths cleanly back to `HomeLocation`. | **PASS** |
-| **4** | **Save Corruption Automatic Rollback** | Corrupt/delete primary `Slot_01.sav` file and call `Astrawild_LoadGame Slot_01`. | System loads `Slot_01_Backup.sav`, restores complete world snapshot, and renders recovery alert banner. | **PASS** |
-| **5** | **Inventory Overflow & Negative Clamping** | Inject negative quantity slot or item count $> 999$. | `ValidateAndSanitize()` clamps counts to $0-999$ and clears invalid slots. | **PASS** |
-
----
-
-## 4. Performance & Scalability Profile
-
-- **Game Thread Time**: $2.2 - 2.8\text{ms}$ (Budget: $6.0\text{ms}$, 43% utilized).
-- **Render Thread Time**: $2.8 - 3.4\text{ms}$ (Budget: $5.0\text{ms}$, 62% utilized).
-- **GPU Frame Time**: $6.5 - 9.2\text{ms}$ (~90-120 FPS on mid-range GTX 1660 / RTX 3050).
-- **Memory Footprint**: $1.65\text{GB}$ System RAM / $1.15\text{GB}$ VRAM.
-- **Scalability Presets**: Fully configured in `Config/DefaultScalability.ini` across Low (0), Medium (1), High (2), Epic (3).
-
----
-
-## 5. Manus P0-P4 Preparation Status
-
-The release branch now contains the following verified preparation work:
-
-| Priority | Repository change | Runtime/content truth |
-|---|---|---|
-| P0 | Player/Echo skeletal mesh and AnimBP soft-reference hooks; `UAstrawildAnimInstance`; `Docs/P0_Animation_Contract.md` | No skeletal mesh, AnimBP, skeleton, montage, or animation `.uasset` is committed yet. |
-| P1 | `UAstrawildFeedbackComponent`, Niagara module dependency, VFX/SFX contract | No Niagara or Sound Cue `.uasset` is committed yet; properties are ready for assignment. |
-| P2 | `UAstrawildInventoryWidget`, slot widget and crafting widget base classes; UMG contract | No UMG Widget Blueprint `.uasset` is committed yet. |
-| P3 | `AAstrawildAlphaEcho`, phase/telegraph attack patterns and encounter design | No Alpha Blueprint, boss Data Asset, or final encounter map `.uasset` is committed yet. |
-| P4 | `FAstrawildLoreRow`, `FAstrawildQuestRow`, `FAstrawildQuestObjectiveRow` and CSV source files | CSV sources are present; DataTable `.uasset` import and Gameplay Tag validation remain to be done in Editor. |
-
-The code-complete pass also adds `UAstrawildQuestComponent`, `UAstrawildSurvivalComponent`, PlayerProfile quest/survival fields, and SaveSubsystem capture/restore integration. These are code and content contracts, not proof of a completed Unreal runtime. The target Windows machine must compile the module, import/create the Unreal binary assets, and run the PIE gates before this report can be marked complete.
-
----
-
-## 6. How to Playtest in Unreal Engine 5.8
-
-1. Open `ASTRAWILD.uproject` in Unreal Engine 5.8 Editor.
-2. Ensure Map `AAstrawildPrototypeArena` is loaded (or placed in viewport).
-3. Click **Play in Editor (PIE)**.
-4. **Controls**:
-   - `W, A, S, D`: Character Locomotion
-   - `Left Shift`: Sprint
-   - `Spacebar`: Jump
-   - `Left Alt`: Dodge Roll (i-frames)
-   - `Left Mouse Button (LMB)`: 3-Hit Melee Combo / Harvest
-   - `E`: Interact (Attune Spire / Rest at Campfire / Harvest / Reset Dummy)
-   - `Q`: Throw Astra Resonator (Capture Wild Echo)
-   - `T`: Summon / Recall Active Companion
-   - `Mouse Wheel`: Cycle Active Party Slot
-   - `I`: Toggle Survival Bag & Crafting Station HUD
-   - `B`: Quick-Build Campfire Rest Point
-   - `Tab` / `F1`: Toggle Live Debug Stats Overlay
-   - `Console ~`:
-     - `Astrawild_SaveGame Slot_01`
-     - `Astrawild_LoadGame Slot_01`
-     - `Astrawild_ToggleAIDebug`
-     - `Astrawild_SpawnEcho Echo.Pyrelite 3`
-     - `Astrawild_GiveItem Item.Resource.Sunwood 20`
+| Date | Operator | Commit | Engine/build | Evidence | Result |
+|---|---|---|---|---|---|
+| 2026-08-27 | Manus | `b6e63f4` | Sandbox static checks | Validator, diff check, generated-header scan, zero tracked UE binary assets | Source package **PASS**; UE compile/PIE/package pending Windows |
+|  | Windows owner |  | UE 5.8 / MSVC 2022 | Add compile log, automation result, PIE/network screenshots, and package path here | **PENDING** |

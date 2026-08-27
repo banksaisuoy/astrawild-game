@@ -71,6 +71,7 @@ REQUIRED_PATHS = [
     "Docs/M3_M5_COLONY_TECHNOLOGY_HANDOFF.md",
     "Docs/M6_M8_COMBAT_DUNGEON_HANDOFF.md",
     "Docs/M9_M10_UI_PACKAGING_HANDOFF.md",
+    "Docs/BUILD_STATUS.md",
     "Tools/Package_Astrawild.ps1",
     "Config/AstrawildWorldPartition.ini",
 ]
