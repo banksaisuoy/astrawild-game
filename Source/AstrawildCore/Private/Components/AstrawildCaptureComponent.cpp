@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Components/AstrawildCaptureComponent.h"
 #include "Echoes/AstrawildCaptureProjectile.h"
@@ -123,7 +123,7 @@ bool UAstrawildCaptureComponent::ThrowResonator(float Power, FGameplayTag Resona
 	SpawnParams.Instigator = Cast<APawn>(OwnerActor);
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	TSubclassOf<AAstrawildCaptureProjectile> SpawnClass = ProjectileClass ? ProjectileClass : AAstrawildCaptureProjectile::StaticClass();
+	TSubclassOf<AAstrawildCaptureProjectile> SpawnClass = ProjectileClass ? ProjectileClass : TSubclassOf<AAstrawildCaptureProjectile>(AAstrawildCaptureProjectile::StaticClass());
 	AAstrawildCaptureProjectile* Proj = GetWorld()->SpawnActor<AAstrawildCaptureProjectile>(SpawnClass, SpawnLoc, EyeRot, SpawnParams);
 	if (Proj)
 	{

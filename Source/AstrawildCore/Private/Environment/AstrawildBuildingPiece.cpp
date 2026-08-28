@@ -59,14 +59,14 @@ void AAstrawildBuildingPiece::Interact(AActor* InteractorActor)
 	OnBuildingInteracted.Broadcast(InteractorActor, this);
 }
 
-bool AAstrawildBuildingPiece::DismantleBuilding(AActor* Instigator)
+bool AAstrawildBuildingPiece::DismantleBuilding(AActor* InInstigator)
 {
-	if (!Instigator)
+	if (!InInstigator)
 	{
 		return false;
 	}
 
-	UAstrawildInventoryComponent* Inv = Instigator->FindComponentByClass<UAstrawildInventoryComponent>();
+	UAstrawildInventoryComponent* Inv = InInstigator->FindComponentByClass<UAstrawildInventoryComponent>();
 	if (Inv)
 	{
 		// Default refunds if not explicitly assigned
@@ -94,7 +94,7 @@ bool AAstrawildBuildingPiece::DismantleBuilding(AActor* Instigator)
 		}
 	}
 
-	UE_LOG(LogAstrawild, Log, TEXT("Dismantled %s. Refunded materials to %s."), *GetName(), *Instigator->GetName());
+	UE_LOG(LogAstrawild, Log, TEXT("Dismantled %s. Refunded materials to %s."), *GetName(), *InInstigator->GetName());
 	OnBuildingDestroyed.Broadcast(this);
 	Destroy();
 	return true;

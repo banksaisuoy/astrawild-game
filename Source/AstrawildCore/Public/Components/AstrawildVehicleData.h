@@ -152,6 +152,12 @@ struct ASTRAWILDCORE_API FAstrawildVehicleInstalledPart
 
     UPROPERTY(BlueprintReadOnly, Category="Vehicle")
     FGameplayTag PartTag;
+
+    UPROPERTY(BlueprintReadOnly, Category="Vehicle")
+    float SpeedMultiplier = 1.0f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Vehicle")
+    float BoostMultiplier = 1.0f;
 };
 
 USTRUCT(BlueprintType)

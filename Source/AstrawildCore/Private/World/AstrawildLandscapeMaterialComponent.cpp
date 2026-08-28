@@ -92,7 +92,7 @@ void UAstrawildLandscapeMaterialComponent::PushMaterialContract()
     Instance->SetScalarParameterValue(MountainHeightMetersParameterName, MountainHeightMeters);
 }
 
-void UAstrawildLandscapeMaterialComponent::HandleWeatherChanged(const FGameplayTag& WeatherTag)
+void UAstrawildLandscapeMaterialComponent::HandleWeatherChanged(FGameplayTag WeatherTag)
 {
     (void)WeatherTag;
     RefreshWeatherParameters();

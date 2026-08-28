@@ -105,10 +105,11 @@ const FAstrawildPlayerPerkRow* UAstrawildPlayerProgressionComponent::FindPerk(co
     }
     TArray<FAstrawildPlayerPerkRow*> rows;
     PerkTable->GetAllRows<FAstrawildPlayerPerkRow>(TEXT("AstrawildPerkLookup"), rows);
-    return rows.FindByPredicate([PerkTag](const FAstrawildPlayerPerkRow* row)
+    FAstrawildPlayerPerkRow** Found = rows.FindByPredicate([PerkTag](const FAstrawildPlayerPerkRow* row)
     {
         return row && row->PerkTag == PerkTag;
     });
+    return Found ? *Found : nullptr;
 }
 
 bool UAstrawildPlayerProgressionComponent::HasAuthorityForProgression() const

@@ -43,7 +43,7 @@ bool UAstrawildGuildSubsystem::HasAuthorityForGuild() const
 
 bool UAstrawildGuildSubsystem::RegisterGuild(const FGameplayTag& GuildTag)
 {
-    return HasAuthorityForGuild() && GuildTag.IsValid() && RegisteredGuilds.Add(GuildTag) > 0;
+    return HasAuthorityForGuild() && GuildTag.IsValid() && RegisteredGuilds.Add(GuildTag).IsValidId();
 }
 
 bool UAstrawildGuildSubsystem::RegisterBuffNode(const FAstrawildGuildBuffNode& BuffNode)

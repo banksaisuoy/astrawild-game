@@ -122,10 +122,11 @@ const FAstrawildWorldEventRow* UAstrawildWorldEventSubsystem::FindEvent(const FG
     }
     TArray<FAstrawildWorldEventRow*> rows;
     EventTable->GetAllRows<FAstrawildWorldEventRow>(TEXT("AstrawildWorldEventLookup"), rows);
-    return rows.FindByPredicate([EventTag](const FAstrawildWorldEventRow* row)
+    FAstrawildWorldEventRow** Found = rows.FindByPredicate([EventTag](const FAstrawildWorldEventRow* row)
     {
         return row && row->EventTag == EventTag;
     });
+    return Found ? *Found : nullptr;
 }
 
 bool UAstrawildWorldEventSubsystem::HasAuthorityForEvents() const

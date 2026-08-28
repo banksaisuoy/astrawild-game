@@ -11,8 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 AAstrawildHUD::AAstrawildHUD()
-	: bShowHUD(true)
-	, bShowDebugOverlay(true) // Enabled by default for vertical slice prototype testing
+	: bShowDebugOverlay(true) // Enabled by default for vertical slice prototype testing
 	, bShowInventoryMenu(false)
 	, HealthBarColor(FColor(46, 204, 113)) // Emerald green
 	, StaminaBarColor(FColor(241, 196, 15)) // Sun gold

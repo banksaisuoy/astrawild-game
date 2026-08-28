@@ -246,10 +246,11 @@ const FAstrawildCookingRecipeRow* UAstrawildSurvivalComponent::FindCookingRecipe
     }
     TArray<FAstrawildCookingRecipeRow*> Rows;
     CookingRecipeTable->GetAllRows<FAstrawildCookingRecipeRow>(TEXT("AstrawildCookingLookup"), Rows);
-    return Rows.FindByPredicate([RecipeTag](const FAstrawildCookingRecipeRow* Row)
+    FAstrawildCookingRecipeRow** Found = Rows.FindByPredicate([RecipeTag](const FAstrawildCookingRecipeRow* Row)
     {
         return Row && Row->RecipeTag == RecipeTag;
     });
+    return Found ? *Found : nullptr;
 }
 
 const FAstrawildCookingRecipeRow* UAstrawildSurvivalComponent::FindFoodDefinition(const FGameplayTag& FoodItemTag) const
@@ -260,10 +261,11 @@ const FAstrawildCookingRecipeRow* UAstrawildSurvivalComponent::FindFoodDefinitio
     }
     TArray<FAstrawildCookingRecipeRow*> Rows;
     CookingRecipeTable->GetAllRows<FAstrawildCookingRecipeRow>(TEXT("AstrawildFoodLookup"), Rows);
-    return Rows.FindByPredicate([FoodItemTag](const FAstrawildCookingRecipeRow* Row)
+    FAstrawildCookingRecipeRow** Found = Rows.FindByPredicate([FoodItemTag](const FAstrawildCookingRecipeRow* Row)
     {
         return Row && Row->OutputItemTag == FoodItemTag;
     });
+    return Found ? *Found : nullptr;
 }
 
 bool UAstrawildSurvivalComponent::HasAuthorityForSurvival() const

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Character.h"
 #include "AstrawildTypes.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "Interfaces/AstrawildDamageableInterface.h"
@@ -85,6 +86,9 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Echo|Partner")
     FGameplayTag GetPartnerSkillTag() const { return InstanceData.PartnerSkillTag; }
+
+    UFUNCTION(BlueprintPure, Category = "Echo")
+    virtual float GetHealthNormalized() const;
 
 	UFUNCTION(BlueprintPure, Category = "Echo")
 	FAstrawildCapturedEchoData ExportCapturedData() const;

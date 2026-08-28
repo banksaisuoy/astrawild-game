@@ -43,8 +43,9 @@ const FAstrawildMechaVFXBindingRow* UAstrawildMechaVFXComponent::FindBinding(con
     }
     TArray<FAstrawildMechaVFXBindingRow*> Rows;
     VFXTable->GetAllRows<FAstrawildMechaVFXBindingRow>(TEXT("AstrawildMechaVFXLookup"), Rows);
-    return Rows.FindByPredicate([EffectTag](const FAstrawildMechaVFXBindingRow* Row)
+    FAstrawildMechaVFXBindingRow** Found = Rows.FindByPredicate([EffectTag](const FAstrawildMechaVFXBindingRow* Row)
     {
         return Row && Row->EffectTag == EffectTag;
     });
+    return Found ? *Found : nullptr;
 }

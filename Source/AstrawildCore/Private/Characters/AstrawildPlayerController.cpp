@@ -7,6 +7,7 @@
 #include "Data/AstrawildEchoDataAsset.h"
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildAttributeComponent.h"
+#include "Components/AstrawildBuildingComponent.h"
 #include "SaveSystem/AstrawildSaveSubsystem.h"
 #include "UI/AstrawildHUD.h"
 #include "AstrawildLogChannels.h"
@@ -57,22 +58,22 @@ void AAstrawildPlayerController::SetUIMode(bool bEnableUI)
 
 void AAstrawildPlayerController::ToggleDebugHUD()
 {
-	AAstrawildHUD* MyHUD = Cast<AAstrawildHUD>(GetHUD());
-	if (MyHUD)
+	AAstrawildHUD* AstrawildHUD = Cast<AAstrawildHUD>(GetHUD());
+	if (AstrawildHUD)
 	{
-		MyHUD->ToggleDebugOverlay();
-		UE_LOG(LogAstrawild, Log, TEXT("Toggled Debug HUD Overlay: %d"), MyHUD->bShowDebugOverlay);
+		AstrawildHUD->ToggleDebugOverlay();
+		UE_LOG(LogAstrawild, Log, TEXT("Toggled Debug HUD Overlay: %d"), AstrawildHUD->bShowDebugOverlay);
 	}
 }
 
 void AAstrawildPlayerController::ToggleInventoryMenu()
 {
-	AAstrawildHUD* MyHUD = Cast<AAstrawildHUD>(GetHUD());
-	if (MyHUD)
+	AAstrawildHUD* AstrawildHUD = Cast<AAstrawildHUD>(GetHUD());
+	if (AstrawildHUD)
 	{
-		MyHUD->ToggleInventoryMenu();
-		SetUIMode(MyHUD->bShowInventoryMenu);
-		UE_LOG(LogAstrawild, Log, TEXT("Toggled Inventory Menu: %d"), MyHUD->bShowInventoryMenu);
+		AstrawildHUD->ToggleInventoryMenu();
+		SetUIMode(AstrawildHUD->bShowInventoryMenu);
+		UE_LOG(LogAstrawild, Log, TEXT("Toggled Inventory Menu: %d"), AstrawildHUD->bShowInventoryMenu);
 	}
 }
 

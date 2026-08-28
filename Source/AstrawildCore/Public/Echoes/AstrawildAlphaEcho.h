@@ -81,8 +81,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="Alpha Echo|Encounter")
     void StopEncounter();
 
-    UFUNCTION(BlueprintPure, Category="Alpha Echo|Encounter")
-    float GetHealthNormalized() const;
+    virtual float GetHealthNormalized() const override;
 
     UFUNCTION(BlueprintPure, Category="Alpha Echo|Encounter")
     bool IsPhaseTwo() const { return CurrentBossPhase == EAstrawildBossPhase::PhaseTwo; }

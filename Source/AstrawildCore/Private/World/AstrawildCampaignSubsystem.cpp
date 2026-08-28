@@ -119,10 +119,11 @@ const FAstrawildCampaignChapterRow* UAstrawildCampaignSubsystem::FindChapter(con
     }
     TArray<FAstrawildCampaignChapterRow*> rows;
     CampaignTable->GetAllRows<FAstrawildCampaignChapterRow>(TEXT("AstrawildCampaignLookup"), rows);
-    return rows.FindByPredicate([ChapterId](const FAstrawildCampaignChapterRow* row)
+    FAstrawildCampaignChapterRow** Found = rows.FindByPredicate([ChapterId](const FAstrawildCampaignChapterRow* row)
     {
         return row && row->ChapterId == ChapterId;
     });
+    return Found ? *Found : nullptr;
 }
 
 bool UAstrawildCampaignSubsystem::HasAuthorityForCampaign() const

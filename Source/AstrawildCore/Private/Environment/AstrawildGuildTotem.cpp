@@ -39,7 +39,7 @@ void AAstrawildGuildTotem::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-bool AAstrawildGuildTotem::CaptureForGuild(const FGameplayTag& GuildTag, AActor* Instigator)
+bool AAstrawildGuildTotem::CaptureForGuild(const FGameplayTag& GuildTag, AActor* InInstigator)
 {
     if (!HasAuthority() || !GetWorld())
     {
@@ -47,7 +47,7 @@ bool AAstrawildGuildTotem::CaptureForGuild(const FGameplayTag& GuildTag, AActor*
     }
     if (UAstrawildGuildSubsystem* Guilds = GetWorld()->GetSubsystem<UAstrawildGuildSubsystem>())
     {
-        return Guilds->CaptureTerritory(GuildTag, TotemTag, Instigator);
+        return Guilds->CaptureTerritory(GuildTag, TotemTag, InInstigator);
     }
     return false;
 }

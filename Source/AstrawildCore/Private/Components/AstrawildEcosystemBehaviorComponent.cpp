@@ -33,14 +33,14 @@ void UAstrawildEcosystemBehaviorComponent::TickComponent(const float DeltaTime, 
     }
 }
 
-void UAstrawildEcosystemBehaviorComponent::SetPerceptionState(const float HealthNormalized, const float FearNormalized, const float InHungerNormalized, const bool bThreatNearby)
+void UAstrawildEcosystemBehaviorComponent::SetPerceptionState(const float InHealthNormalized, const float InFearNormalized, const float InHungerNormalized, const bool bThreatNearby)
 {
     if (!HasAuthorityForEcosystem())
     {
         return;
     }
-    CurrentHealthNormalized = FMath::Clamp(HealthNormalized, 0.0f, 1.0f);
-    CurrentFear = FMath::Clamp(FearNormalized, 0.0f, 1.0f);
+    CurrentHealthNormalized = FMath::Clamp(InHealthNormalized, 0.0f, 1.0f);
+    CurrentFear = FMath::Clamp(InFearNormalized, 0.0f, 1.0f);
     HungerNormalized = FMath::Clamp(InHungerNormalized, 0.0f, 1.0f);
     EvaluateState(bThreatNearby);
 }
@@ -80,10 +80,11 @@ const FAstrawildEcosystemBehaviorRow* UAstrawildEcosystemBehaviorComponent::Find
     }
     TArray<FAstrawildEcosystemBehaviorRow*> rows;
     BehaviorTable->GetAllRows<FAstrawildEcosystemBehaviorRow>(TEXT("AstrawildEcosystemLookup"), rows);
-    return rows.FindByPredicate([this](const FAstrawildEcosystemBehaviorRow* row)
+    FAstrawildEcosystemBehaviorRow** Found = rows.FindByPredicate([this](const FAstrawildEcosystemBehaviorRow* row)
     {
         return row && row->SpeciesTag == SpeciesTag;
     });
+    return Found ? *Found : nullptr;
 }
 
 void UAstrawildEcosystemBehaviorComponent::EvaluateState(const bool bThreatNearby)

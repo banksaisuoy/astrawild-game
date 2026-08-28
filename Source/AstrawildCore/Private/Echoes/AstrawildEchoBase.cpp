@@ -311,13 +311,18 @@ void AAstrawildEchoBase::HandleDeath(AActor* DeadActor)
 	SetActorEnableCollision(false);
 }
 
-void AAstrawildEchoBase::HandleHealthChanged(float CurrentHealth, float MaxHealth, float Delta, AActor* Instigator)
+float AAstrawildEchoBase::GetHealthNormalized() const
 {
-	if (Delta < 0.0f && CurrentState == EAstrawildEchoState::WildPassive && Instigator)
+	return Attributes ? Attributes->GetHealthPercent() : 0.0f;
+}
+
+void AAstrawildEchoBase::HandleHealthChanged(float InCurrentHealth, float InMaxHealth, float Delta, AActor* InInstigator)
+{
+	if (Delta < 0.0f && CurrentState == EAstrawildEchoState::WildPassive && InInstigator)
 	{
 		SetEchoState(EAstrawildEchoState::WildHostile);
 	}
-	else if (CurrentState == EAstrawildEchoState::WildHostile && (CurrentHealth / MaxHealth) < 0.20f)
+	else if (CurrentState == EAstrawildEchoState::WildHostile && (InCurrentHealth / InMaxHealth) < 0.20f)
 	{
 		SetEchoState(EAstrawildEchoState::Fleeing);
 	}

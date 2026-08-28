@@ -359,10 +359,11 @@ const FAstrawildMechaFrameRow* UAstrawildMechaComponent::FindFrameByTag(const FG
     }
     TArray<FAstrawildMechaFrameRow*> Rows;
     FrameTable->GetAllRows<FAstrawildMechaFrameRow>(TEXT("AstrawildMechaFrameLookup"), Rows);
-    return Rows.FindByPredicate([FrameTag](const FAstrawildMechaFrameRow* Row)
+    FAstrawildMechaFrameRow** Found = Rows.FindByPredicate([FrameTag](const FAstrawildMechaFrameRow* Row)
     {
         return Row && Row->FrameTag == FrameTag;
     });
+    return Found ? *Found : nullptr;
 }
 
 const FAstrawildMechaWeaponRow* UAstrawildMechaComponent::FindWeaponForSlot(const EAstrawildMechaHardpoint Slot) const
@@ -375,18 +376,19 @@ const FAstrawildMechaWeaponRow* UAstrawildMechaComponent::FindWeaponForSlot(cons
     WeaponTable->GetAllRows<FAstrawildMechaWeaponRow>(TEXT("AstrawildMechaWeaponLookup"), Rows);
     for (const FGameplayTag& DefaultTag : ActiveFrameData.DefaultWeaponTags)
     {
-        if (const FAstrawildMechaWeaponRow* Preferred = Rows.FindByPredicate([Slot, DefaultTag](const FAstrawildMechaWeaponRow* Row)
+        if (FAstrawildMechaWeaponRow** Preferred = Rows.FindByPredicate([Slot, DefaultTag](const FAstrawildMechaWeaponRow* Row)
         {
             return Row && Row->HardpointSlot == Slot && Row->WeaponTag == DefaultTag;
         }))
         {
-            return Preferred;
+            return *Preferred;
         }
     }
-    return Rows.FindByPredicate([Slot](const FAstrawildMechaWeaponRow* Row)
+    FAstrawildMechaWeaponRow** Fallback = Rows.FindByPredicate([Slot](const FAstrawildMechaWeaponRow* Row)
     {
         return Row && Row->HardpointSlot == Slot;
     });
+    return Fallback ? *Fallback : nullptr;
 }
 
 bool UAstrawildMechaComponent::HasAuthorityForMecha() const
