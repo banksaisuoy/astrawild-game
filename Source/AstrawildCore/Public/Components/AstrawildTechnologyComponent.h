@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Data/AstrawildTechnologyData.h"
-#include "Components/AstrawildTechnologyComponent.generated.h"
+#include "AstrawildTechnologyComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTechnologyUnlockedSignature, FGameplayTag, TechnologyTag);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTechnologyUnlockFailedSignature, const FText&, FailureReason);

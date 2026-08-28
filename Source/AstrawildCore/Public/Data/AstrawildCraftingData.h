@@ -4,7 +4,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "AstrawildTypes.h"
-#include "Data/AstrawildCraftingData.generated.h"
+#include "AstrawildCraftingData.generated.h"
 
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildCraftingRecipeRow : public FTableRowBase

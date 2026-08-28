@@ -4,7 +4,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "AstrawildTypes.h"
-#include "Data/AstrawildBossData.generated.h"
+#include "AstrawildBossData.generated.h"
 
 UENUM(BlueprintType)
 enum class EAstrawildBossControllerState : uint8

@@ -45,7 +45,7 @@ public:
     FOnAstrawildEcosystemStateChangedSignature OnStateChanged;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Ecosystem")
-    void SetPerceptionState(float HealthNormalized, float FearNormalized, float HungerNormalized, bool bThreatNearby);
+    void SetPerceptionState(float InHealthNormalized, float InFearNormalized, float InHungerNormalized, bool bThreatNearby);
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Ecosystem")
     void SetWorldEvent(FGameplayTag EventTag, bool bMigrationActive);

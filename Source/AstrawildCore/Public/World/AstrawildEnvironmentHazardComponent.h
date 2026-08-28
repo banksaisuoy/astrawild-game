@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "World/AstrawildEnvironmentHazardComponent.generated.h"
+#include "AstrawildEnvironmentHazardComponent.generated.h"
 
 class UAstrawildAttributeComponent;
 class UAstrawildSurvivalComponent;

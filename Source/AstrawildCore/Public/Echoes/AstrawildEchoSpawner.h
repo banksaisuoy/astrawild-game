@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -41,7 +41,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner Configuration")
 	int32 MaxSpawnLevel;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawner State")
+	UPROPERTY(VisibleAnywhere, Category = "Spawner State")
 	TArray<TWeakObjectPtr<AAstrawildEchoBase>> ActiveSpawnedEchoes;
 
 public:

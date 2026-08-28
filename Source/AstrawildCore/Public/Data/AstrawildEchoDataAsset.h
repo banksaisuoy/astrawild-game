@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -120,5 +120,5 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable, Category = "Echo Factory")
-	FAstrawildEchoInstance CreateInstance(int32 InLevel = 1, const FText& CustomName = FText::GetEmpty()) const;
+	FAstrawildCapturedEchoData CreateInstance(int32 InLevel = 1, const FText& CustomName = FText::GetEmpty()) const;
 };

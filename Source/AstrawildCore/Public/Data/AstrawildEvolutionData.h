@@ -4,7 +4,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "Data/AstrawildEchoDataAsset.h"
-#include "Data/AstrawildEvolutionData.generated.h"
+#include "AstrawildEvolutionData.generated.h"
 
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildEvolutionRow : public FTableRowBase

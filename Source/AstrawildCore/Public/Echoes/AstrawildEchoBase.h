@@ -53,7 +53,7 @@ public:
 	TObjectPtr<UAstrawildEchoDataAsset> SpeciesData;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo Instance")
-	FAstrawildEchoInstance InstanceData;
+	FAstrawildCapturedEchoData InstanceData;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Echo State")
 	EAstrawildEchoState CurrentState;
@@ -87,16 +87,16 @@ public:
     FGameplayTag GetPartnerSkillTag() const { return InstanceData.PartnerSkillTag; }
 
 	UFUNCTION(BlueprintPure, Category = "Echo")
-	FAstrawildEchoInstance ExportCapturedData() const;
+	FAstrawildCapturedEchoData ExportCapturedData() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Echo")
-	void ImportCapturedData(const FAstrawildEchoInstance& Data);
+	void ImportCapturedData(const FAstrawildCapturedEchoData& Data);
 
 	UFUNCTION()
 	void HandleDeath(AActor* DeadActor);
 
 	UFUNCTION()
-	void HandleHealthChanged(float CurrentHealth, float MaxHealth, float Delta, AActor* Instigator);
+	void HandleHealthChanged(float CurrentHealth, float MaxHealth, float Delta, AActor* InInstigator);
 
 	// --- IAstrawildInteractableInterface Implementation ---
 	virtual FText GetInteractionPrompt_Implementation(AActor* Interactor) override;

@@ -21,7 +21,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
     FName ActiveDungeonId = NAME_None;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Dungeon")
     TSet<TWeakObjectPtr<AActor>> Participants;
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Dungeon|Events")

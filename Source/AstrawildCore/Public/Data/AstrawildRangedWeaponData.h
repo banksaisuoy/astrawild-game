@@ -4,7 +4,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "AstrawildTypes.h"
-#include "Data/AstrawildRangedWeaponData.generated.h"
+#include "AstrawildRangedWeaponData.generated.h"
 
 UENUM(BlueprintType)
 enum class EAstrawildRangedWeaponType : uint8

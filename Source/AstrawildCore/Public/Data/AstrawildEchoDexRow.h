@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "AstrawildTypes.h"
-#include "Data/AstrawildEchoDexRow.generated.h"
+#include "AstrawildEchoDexRow.generated.h"
 
 /**
  * Importable, presentation-agnostic EchoDex row. Binary DataAssets may reference this row after Editor import.

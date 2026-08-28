@@ -68,7 +68,7 @@ public:
 	void Interact(AActor* InteractorActor);
 
 	UFUNCTION(BlueprintCallable, Category = "Building")
-	bool DismantleBuilding(AActor* Instigator);
+	bool DismantleBuilding(AActor* InInstigator);
 
 	UFUNCTION(BlueprintCallable, Category = "Building")
 	void TakeBuildingDamage(float DamageAmount);

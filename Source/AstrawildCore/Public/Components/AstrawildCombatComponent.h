@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -66,7 +66,7 @@ public:
 	bool PerformMeleeAttack(float DamageMultiplier = 1.0f, EAstrawildElement DamageElement = EAstrawildElement::Neutral);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-	bool PerformMeleeCombo(EAstrawildElement DamageElement = EAstrawildElement::Neutral, const FGameplayTag& StatusToApply = FGameplayTag::EmptyTag, float StatusDuration = 0.0f);
+	bool PerformMeleeCombo(EAstrawildElement DamageElement = EAstrawildElement::Neutral, const FGameplayTag& StatusToApply = FGameplayTag(), float StatusDuration = 0.0f);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	float ApplyDamageToTarget(AActor* TargetActor, float RawDamage, EAstrawildElement DamageElement, AActor* DamageDealer);

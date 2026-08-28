@@ -60,7 +60,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Colony")
     TArray<FAstrawildWorkOrder> WorkOrders;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Colony")
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Colony")
     TArray<TWeakObjectPtr<AAstrawildEchoBase>> RegisteredWorkers;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Colony", meta=(ClampMin="1", ClampMax="32"))

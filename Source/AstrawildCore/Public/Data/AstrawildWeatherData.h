@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
-#include "Data/AstrawildWeatherData.generated.h"
+#include "AstrawildWeatherData.generated.h"
 
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildWeatherRow : public FTableRowBase

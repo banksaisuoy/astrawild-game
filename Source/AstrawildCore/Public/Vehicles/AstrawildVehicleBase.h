@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Components/AstrawildVehicleComponent.h"
-#include "Vehicles/AstrawildVehicleBase.generated.h"
+#include "AstrawildVehicleBase.generated.h"
 
 UCLASS()
 class ASTRAWILDCORE_API AAstrawildVehicleBase : public APawn

@@ -78,7 +78,7 @@ public:
     bool AddArenaScore(const FGameplayTag& TeamTag, int32 ScoreDelta);
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Guild|Arena")
-    void EndArenaMatch(int32 WinningTeamIndex = INDEX_NONE);
+    void EndArenaMatch(int32 WinningTeamIndex = -1);
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Guild|Arena")
     bool GetArenaTeamState(const FGameplayTag& TeamTag, FAstrawildGuildArenaTeam& OutTeam) const;

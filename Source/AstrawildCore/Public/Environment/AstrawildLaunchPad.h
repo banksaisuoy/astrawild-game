@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
-#include "Environment/AstrawildLaunchPad.generated.h"
+#include "AstrawildLaunchPad.generated.h"
 
 UCLASS()
 class ASTRAWILDCORE_API AAstrawildLaunchPad : public AActor

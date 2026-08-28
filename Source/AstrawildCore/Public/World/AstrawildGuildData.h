@@ -54,7 +54,7 @@ struct ASTRAWILDCORE_API FAstrawildGuildArenaTeam
     UPROPERTY(BlueprintReadOnly, Category="Guild|Arena")
     FGameplayTag TeamTag;
 
-    UPROPERTY(BlueprintReadOnly, Category="Guild|Arena")
+    UPROPERTY()
     TArray<TWeakObjectPtr<AActor>> Members;
 
     UPROPERTY(BlueprintReadOnly, Category="Guild|Arena")

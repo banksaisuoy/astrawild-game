@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
-#include "Data/AstrawildBreedingData.generated.h"
+#include "AstrawildBreedingData.generated.h"
 
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildBreedingGroupRow : public FTableRowBase

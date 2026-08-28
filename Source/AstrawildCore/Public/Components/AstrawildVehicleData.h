@@ -42,14 +42,6 @@ enum class EAstrawildVehicleCategory : uint8
     OrbitalSpacecraft
 };
 
-UENUM(BlueprintType)
-enum class EAstrawildVehicleSlot : uint8
-{
-    Engine,
-    Armor,
-    Weapon,
-    Utility
-};
 
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildVehicleRow : public FTableRowBase

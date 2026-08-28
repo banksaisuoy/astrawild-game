@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
-#include "Environment/AstrawildGuildTotem.generated.h"
+#include "AstrawildGuildTotem.generated.h"
 
 UCLASS()
 class ASTRAWILDCORE_API AAstrawildGuildTotem : public AActor
@@ -26,5 +26,5 @@ public:
     float TerritoryRadius = 1500.0f;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Guild")
-    bool CaptureForGuild(const FGameplayTag& GuildTag, AActor* Instigator);
+    bool CaptureForGuild(const FGameplayTag& GuildTag, AActor* InInstigator);
 };

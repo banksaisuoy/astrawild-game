@@ -20,9 +20,6 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD Display")
-	bool bShowHUD;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD Display")
 	bool bShowDebugOverlay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD Display")
