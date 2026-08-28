@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASTRAWILD: Echoes of the First Dawn - Playable 3D Web Edition</title>
+    <!-- Babylon.js CDN -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #0b0f19;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            display: block;
+        }
+        .hud-panel {
+            background: rgba(11, 15, 25, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .reticle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="relative w-full h-full text-white">
+
+    <!-- 3D Canvas -->
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- Crosshair Reticle -->
+    <div class="reticle flex flex-col items-center">
+        <div class="w-6 h-6 border-2 border-blue-400 rounded-full flex items-center justify-center opacity-80">
+            <div class="w-1.5 h-1.5 bg-cyan-300 rounded-full"></div>
+        </div>
+        <div id="captureOddsText" class="text-xs font-bold text-cyan-300 mt-1 bg-black/60 px-2 py-0.5 rounded hidden">
+            Capture: 85%
+        </div>
+    </div>
+
+    <!-- Top Left Player HUD -->
+    <div class="absolute top-4 left-4 flex flex-col gap-2 z-10">
+        <div class="hud-panel p-3 rounded-lg flex flex-col gap-1.5 min-w-[240px]">
+            <div class="flex justify-between items-center text-xs text-gray-300">
+                <span class="font-bold text-blue-400">PLAYER (LV. 45)</span>
+                <span id="zoneText">Sylvan Meadows</span>
+            </div>
+            <!-- Health Bar -->
+            <div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden border border-gray-700">
+                <div id="healthBar" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full w-full transition-all duration-200"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-400 font-mono">
+                <span>HP</span>
+                <span id="hpValue">1200 / 1200</span>
+            </div>
+            <!-- Stamina / Energy Bar -->
+            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden border border-gray-700">
+                <div id="staminaBar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full w-full transition-all duration-100"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-400 font-mono">
+                <span id="energyLabel">STAMINA</span>
+                <span id="staminaValue">100%</span>
+            </div>
+        </div>
+
+        <!-- Active Mount / Mecha Status -->
+        <div id="modeStatusCard" class="hud-panel p-2.5 rounded-lg flex items-center gap-3 border-cyan-500/40">
+            <div id="modeIcon" class="w-9 h-9 rounded bg-blue-600/30 border border-blue-400/50 flex items-center justify-center text-lg">
+                🚶
+            </div>
+            <div class="flex flex-col">
+                <span id="modeTitle" class="text-xs font-bold text-cyan-300">ON FOOT</span>
+                <span id="modeDesc" class="text-[10px] text-gray-400">[R] Mount | [M] Gundam Mecha</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Right Quick Info & Controls Guide -->
+    <div class="absolute top-4 right-4 hud-panel p-3 rounded-lg text-xs flex flex-col gap-1 z-10 max-w-xs">
+        <div class="font-bold text-cyan-400 border-b border-gray-700 pb-1 mb-1 flex justify-between">
+            <span>ASTRAWILD 3D CONTROLS</span>
+            <span class="text-[10px] text-green-400 font-mono">60 FPS</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-gray-300">
+            <span><b class="text-white">WASD:</b> Move</span>
+            <span><b class="text-white">Shift:</b> Sprint / Boost</span>
+            <span><b class="text-white">Space:</b> Jump / Fly Up</span>
+            <span><b class="text-white">C:</b> Fly Down</span>
+            <span><b class="text-white">L-Click:</b> Attack / Laser</span>
+            <span><b class="text-white">R-Click:</b> Aim / Missiles</span>
+            <span><b class="text-white">E:</b> Capture Orb</span>
+            <span><b class="text-white">R:</b> Mount Echo</span>
+            <span><b class="text-white">M:</b> Gundam Mecha</span>
+            <span><b class="text-white">B:</b> Build Base</span>
+        </div>
+    </div>
+
+    <!-- Bottom Center Action Quick Bar -->
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-10">
+        <div class="hud-panel px-4 py-2 rounded-xl flex items-center gap-3 border-blue-500/30">
+            <!-- Weapon 1 -->
+            <div class="flex flex-col items-center">
+                <div class="w-11 h-11 rounded-lg bg-blue-900/40 border-2 border-blue-400 flex items-center justify-center text-xl cursor-pointer hover:bg-blue-800/50">
+                    ⚔️
+                </div>
+                <span class="text-[10px] text-gray-300 mt-0.5 font-bold">[1] Sword</span>
+            </div>
+            <!-- Weapon 2 -->
+            <div class="flex flex-col items-center">
+                <div class="w-11 h-11 rounded-lg bg-gray-900/60 border border-gray-700 flex items-center justify-center text-xl cursor-pointer hover:bg-gray-800/50">
+                    🏹
+                </div>
+                <span class="text-[10px] text-gray-400 mt-0.5 font-bold">[2] Bow</span>
+            </div>
+            <!-- Capture Orb -->
+            <div class="flex flex-col items-center">
+                <div class="w-11 h-11 rounded-lg bg-cyan-950/60 border border-cyan-500/50 flex items-center justify-center text-xl cursor-pointer hover:bg-cyan-900/50">
+                    🔮
+                </div>
+                <span class="text-[10px] text-cyan-300 mt-0.5 font-bold">[E] Orb (x25)</span>
+            </div>
+            <!-- Companion -->
+            <div class="flex flex-col items-center">
+                <div class="w-11 h-11 rounded-lg bg-amber-950/60 border border-amber-500/50 flex items-center justify-center text-xl cursor-pointer hover:bg-amber-900/50">
+                    🐺
+                </div>
+                <span class="text-[10px] text-amber-300 mt-0.5 font-bold">[T] Volthound</span>
+            </div>
+            <!-- Mecha Suit -->
+            <div class="flex flex-col items-center">
+                <div class="w-11 h-11 rounded-lg bg-red-950/60 border border-red-500/50 flex items-center justify-center text-xl cursor-pointer hover:bg-red-900/50">
+                    🤖
+                </div>
+                <span class="text-[10px] text-red-400 mt-0.5 font-bold">[M] Mecha</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="absolute top-20 left-1/2 transform -translate-x-1/2 hud-panel px-6 py-2.5 rounded-lg text-sm font-bold text-cyan-300 border-cyan-400 opacity-0 transition-all duration-300 pointer-events-none z-20">
+        Welcome to ASTRAWILD!
+    </div>
+
+    <!-- Game Engine Logic -->
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+
+        // Web Audio Synthesizer for SFX
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) { audioCtx = new AudioCtx(); }
+        }
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.style.opacity = "1";
+            t.style.transform = "translate(-50%, 0)";
+            setTimeout(() => {
+                t.style.opacity = "0";
+                t.style.transform = "translate(-50%, -10px)";
+            }, 2500);
+        }
+
+        // Game State
+        const GameState = {
+            mode: "foot", // "foot", "mount", "mecha"
+            hp: 1200,
+            maxHp: 1200,
+            stamina: 100,
+            maxStamina: 100,
+            energy: 1000,
+            maxEnergy: 1000,
+            orbs: 25,
+            isAiming: false,
+            capturedEchoes: [],
+            activeCompanion: null
+        };
+
+        const createScene = function () {
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color4(0.05, 0.08, 0.15, 1);
+            scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+            scene.fogColor = new BABYLON.Color3(0.08, 0.12, 0.22);
+            scene.fogDensity = 0.003;
+
+            // Camera (Third-Person)
+            const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 3, 10, new BABYLON.Vector3(0, 1.5, 0), scene);
+            camera.lowerRadiusLimit = 4;
+            camera.upperRadiusLimit = 30;
+            camera.attachControl(canvas, true);
+
+            // Lighting (Dynamic Sunlight + Ambient)
+            const sunLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(-1, -2, -1), scene);
+            sunLight.position = new BABYLON.Vector3(20, 40, 20);
+            sunLight.intensity = 1.4;
+            sunLight.diffuse = new BABYLON.Color3(1, 0.95, 0.85);
+
+            const hemiLight = new BABYLON.HemisphericLight("Hemi", new BABYLON.Vector3(0, 1, 0), scene);
+            hemiLight.intensity = 0.6;
+            hemiLight.groundColor = new BABYLON.Color3(0.1, 0.2, 0.1);
+
+            // Terrain Generation
+            const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("ground", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIElEQVQIW2NkQAKM/xkYGBj+M/xnYGBkQBFgZGQAAgA0BwMH6l3j8wAAAABJRU5ErkJggg==", {
+                width: 300,
+                height: 300,
+                subdivisions: 100,
+                minHeight: 0,
+                maxHeight: 18
+            }, scene);
+
+            const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+            groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.45, 0.25);
+            groundMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+            ground.material = groundMat;
+            ground.checkCollisions = true;
+
+            // Player Mesh & Hierarchy
+            const playerRoot = new BABYLON.TransformNode("PlayerRoot", scene);
+            playerRoot.position.y = 2;
+
+            // Character Body
+            const body = BABYLON.MeshBuilder.CreateCylinder("playerBody", { height: 1.6, diameterTop: 0.5, diameterBottom: 0.6 }, scene);
+            body.parent = playerRoot;
+            body.position.y = 0.8;
+            const bodyMat = new BABYLON.StandardMaterial("bodyMat", scene);
+            bodyMat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 0.9);
+            body.material = bodyMat;
+
+            // Character Head
+            const head = BABYLON.MeshBuilder.CreateSphere("playerHead", { diameter: 0.55 }, scene);
+            head.parent = playerRoot;
+            head.position.y = 1.8;
+            const headMat = new BABYLON.StandardMaterial("headMat", scene);
+            headMat.diffuseColor = new BABYLON.Color3(0.9, 0.75, 0.65);
+            head.material = headMat;
+
+            // Gundam Mecha Wings
+            const mechaWings = BABYLON.MeshBuilder.CreateBox("mechaWings", { width: 3.5, height: 0.8, depth: 0.2 }, scene);
+            mechaWings.parent = playerRoot;
+            mechaWings.position.y = 1.2;
+            mechaWings.position.z = -0.3;
+            const mechaMat = new BABYLON.StandardMaterial("mechaMat", scene);
+            mechaMat.diffuseColor = new BABYLON.Color3(0.9, 0.2, 0.2);
+            mechaMat.emissiveColor = new BABYLON.Color3(0.3, 0.1, 0.1);
+            mechaWings.material = mechaMat;
+            mechaWings.setEnabled(false);
+
+            // Procedural Trees & Crystals
+            for (let i = 0; i < 60; i++) {
+                const x = (Math.random() - 0.5) * 240;
+                const z = (Math.random() - 0.5) * 240;
+                if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+
+                const trunk = BABYLON.MeshBuilder.CreateCylinder("trunk", { height: 4, diameterTop: 0.4, diameterBottom: 0.8 }, scene);
+                trunk.position.set(x, 2, z);
+                const trunkMat = new BABYLON.StandardMaterial("trunkMat", scene);
+                trunkMat.diffuseColor = new BABYLON.Color3(0.4, 0.25, 0.15);
+                trunk.material = trunkMat;
+
+                const foliage = BABYLON.MeshBuilder.CreateSphere("foliage", { diameter: 3.2 }, scene);
+                foliage.position.set(x, 4.5, z);
+                const folMat = new BABYLON.StandardMaterial("folMat", scene);
+                folMat.diffuseColor = new BABYLON.Color3(0.15, 0.6, 0.2);
+                foliage.material = folMat;
+            }
+
+            // Roaming Echoes
+            const echoes = [];
+            const echoTypes = [
+                { name: "Volthound (Volt)", color: new BABYLON.Color3(0.9, 0.8, 0.2), scale: 1.2 },
+                { name: "Pyrelite (Solar)", color: new BABYLON.Color3(0.9, 0.3, 0.1), scale: 1.0 },
+                { name: "Terradon (Geo)", color: new BABYLON.Color3(0.5, 0.35, 0.2), scale: 1.8 }
+            ];
+
+            for (let i = 0; i < 15; i++) {
+                const type = echoTypes[i % echoTypes.length];
+                const echoMesh = BABYLON.MeshBuilder.CreateBox("echo_" + i, { size: 1.2 * type.scale }, scene);
+                echoMesh.position.set((Math.random() - 0.5) * 200, 1.5, (Math.random() - 0.5) * 200);
+                const eMat = new BABYLON.StandardMaterial("eMat_" + i, scene);
+                eMat.diffuseColor = type.color;
+                eMat.emissiveColor = type.color.scale(0.2);
+                echoMesh.material = eMat;
+                echoMesh.echoData = type;
+                echoes.push(echoMesh);
+            }
+
+            // Input Handling
+            const inputMap = {};
+            scene.actionManager = new BABYLON.ActionManager(scene);
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key.toLowerCase()] = true;
+                initAudio();
+
+                if (evt.sourceEvent.key.toLowerCase() === 'm') {
+                    toggleMechaMode();
+                } else if (evt.sourceEvent.key.toLowerCase() === 'r') {
+                    toggleMountMode();
+                } else if (evt.sourceEvent.key.toLowerCase() === 'e') {
+                    throwCaptureOrb();
+                }
+            }));
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key.toLowerCase()] = false;
+            }));
+
+            function toggleMechaMode() {
+                if (GameState.mode === "mecha") {
+                    GameState.mode = "foot";
+                    mechaWings.setEnabled(false);
+                    camera.radius = 10;
+                    document.getElementById("modeIcon").innerText = "🚶";
+                    document.getElementById("modeTitle").innerText = "ON FOOT";
+                    document.getElementById("energyLabel").innerText = "STAMINA";
+                    showToast("Exited Mecha Frame. On Foot.");
+                    playTone(200, "sawtooth", 0.3);
+                } else {
+                    GameState.mode = "mecha";
+                    mechaWings.setEnabled(true);
+                    camera.radius = 16;
+                    document.getElementById("modeIcon").innerText = "🤖";
+                    document.getElementById("modeTitle").innerText = "ASTRA GUNDAM MECHA";
+                    document.getElementById("energyLabel").innerText = "MECHA ENERGY";
+                    showToast("Suit Up: Astra Striker Unit-01 Online! 6-DOF Flight Active.");
+                    playTone(600, "sine", 0.4, 0.2);
+                    playTone(900, "square", 0.5, 0.15);
+                }
+            }
+
+            function toggleMountMode() {
+                if (GameState.mode === "mount") {
+                    GameState.mode = "foot";
+                    document.getElementById("modeIcon").innerText = "🚶";
+                    document.getElementById("modeTitle").innerText = "ON FOOT";
+                    showToast("Dismounted.");
+                    playTone(250, "sine", 0.2);
+                } else {
+                    GameState.mode = "mount";
+                    document.getElementById("modeIcon").innerText = "🐺";
+                    document.getElementById("modeTitle").innerText = "RIDING VOLTHOUND";
+                    showToast("Mounted Volthound! +80% Speed Boost.");
+                    playTone(400, "sine", 0.25);
+                }
+            }
+
+            function throwCaptureOrb() {
+                if (GameState.orbs <= 0) {
+                    showToast("No Astra Resonators left!");
+                    return;
+                }
+                GameState.orbs--;
+                playTone(700, "sine", 0.15);
+
+                const orb = BABYLON.MeshBuilder.CreateSphere("orb", { diameter: 0.5 }, scene);
+                orb.position = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.5, 0));
+                const orbMat = new BABYLON.StandardMaterial("orbMat", scene);
+                orbMat.emissiveColor = new BABYLON.Color3(0.2, 0.8, 1);
+                orb.material = orbMat;
+
+                const forward = camera.getForwardRay().direction;
+                let t = 0;
+                scene.onBeforeRenderObservable.add(function throwStep() {
+                    orb.position.addInPlace(forward.scale(0.8));
+                    t++;
+                    if (t > 40) {
+                        scene.onBeforeRenderObservable.removeCallback(throwStep);
+                        orb.dispose();
+                        playTone(880, "triangle", 0.3);
+                        showToast("✨ Captured Wild Volthound (Lv. 24)! Trust +25%");
+                    }
+                });
+            }
+
+            canvas.addEventListener("pointerdown", function (e) {
+                initAudio();
+                if (e.button === 0) {
+                    if (GameState.mode === "mecha") {
+                        fireLaserBeam();
+                    } else {
+                        performMeleeAttack();
+                    }
+                }
+            });
+
+            function fireLaserBeam() {
+                playTone(950, "sawtooth", 0.2, 0.15);
+                const laser = BABYLON.MeshBuilder.CreateCylinder("laser", { height: 12, diameter: 0.2 }, scene);
+                laser.rotation.x = Math.PI / 2;
+                laser.position = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.2, 1));
+                const lMat = new BABYLON.StandardMaterial("lMat", scene);
+                lMat.emissiveColor = new BABYLON.Color3(0.2, 0.9, 1);
+                laser.material = lMat;
+
+                setTimeout(() => laser.dispose(), 150);
+                showToast("⚡ Hyper Beam Rifle Fired! [1,250 DMG]");
+            }
+
+            function performMeleeAttack() {
+                playTone(320, "sine", 0.1);
+                showToast("⚔️ Astra Blade 3-Hit Combo!");
+            }
+
+            // Main Render Loop
+            scene.onBeforeRenderObservable.add(function () {
+                let speed = 0.25;
+                if (inputMap["shift"]) speed = 0.55;
+                if (GameState.mode === "mount") speed = 0.7;
+                if (GameState.mode === "mecha") speed = inputMap["shift"] ? 1.2 : 0.65;
+
+                const cameraForward = camera.getForwardRay().direction;
+                cameraForward.y = 0;
+                cameraForward.normalize();
+
+                const cameraRight = BABYLON.Vector3.Cross(cameraForward, new BABYLON.Vector3(0, 1, 0)).normalize().scale(-1);
+
+                let moveVec = BABYLON.Vector3.Zero();
+
+                if (inputMap["w"]) moveVec.addInPlace(cameraForward);
+                if (inputMap["s"]) moveVec.subtractInPlace(cameraForward);
+                if (inputMap["d"]) moveVec.addInPlace(cameraRight);
+                if (inputMap["a"]) moveVec.subtractInPlace(cameraRight);
+
+                if (moveVec.lengthSquared() > 0.001) {
+                    moveVec.normalize();
+                    playerRoot.position.addInPlace(moveVec.scale(speed));
+                    playerRoot.rotation.y = Math.atan2(moveVec.x, moveVec.z);
+                }
+
+                if (GameState.mode === "mecha") {
+                    if (inputMap[" "]) playerRoot.position.y += 0.4;
+                    if (inputMap["c"]) playerRoot.position.y = Math.max(1.5, playerRoot.position.y - 0.4);
+                }
+
+                camera.target = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.5, 0));
+
+                echoes.forEach((e, idx) => {
+                    e.rotation.y += 0.01 * (idx % 2 === 0 ? 1 : -1);
+                });
+            });
+
+            return scene;
+        };
+
+        const scene = createScene();
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
+
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
