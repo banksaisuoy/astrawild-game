@@ -230,7 +230,8 @@ function handleCodeAudit(verbose) {
       totalErrors++;
     }
 
-    if (f.endsWith('.h') && filename !== 'AstrawildCore.h' && filename !== 'AstrawildLogChannels.h') {
+    const hasReflectionMacros = /UCLASS|USTRUCT|UENUM|UINTERFACE/.test(text);
+    if (f.endsWith('.h') && hasReflectionMacros && filename !== 'AstrawildCore.h' && filename !== 'AstrawildLogChannels.h') {
       const expectedGen = filename.replace('.h', '.generated.h');
       if (!text.includes(expectedGen)) {
         issues.push(`Missing ${expectedGen} include in ${filename}`);
