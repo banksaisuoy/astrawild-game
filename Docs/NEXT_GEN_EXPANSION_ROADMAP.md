@@ -2,7 +2,7 @@
 
 **Scope:** Deep-sea, space flight, cosmetics, vocalization, guild warfare, fishing and racing expansion from the attached production brief.
 
-> **Current decision:** Protect the compact 20–30 minute vertical slice first. Pillar 1 now has a repository-side depth/pressure/oxygen/buoyancy source contract and a 33rd DataTable. Pillars 2–6 remain staged architecture/data/Editor work until their native systems have explicit gameplay ownership, save/network design and Windows UE evidence.
+> **Current decision:** Protect the compact 20–30 minute vertical slice first. Pillar 1 has a repository-side depth/pressure/oxygen/buoyancy source contract, and Sprint 2 now adds source contracts for space flight, guild/arena rules, and 16 cosmetic dyes. All new systems remain staged until their native systems have explicit gameplay ownership, save/network design and Windows UE evidence.
 
 ## Expansion gates
 
@@ -27,9 +27,11 @@ The next implementation boundary is a CharacterMovement/water-volume integration
 
 ## Pillar 2 — Space Flight and Lunar Zenith
 
-**Recommended source design:** `UAstrawildSpaceFlightSubsystem` should own deterministic orbital/biome calculations only; a `UAstrawildSpaceFlightComponent` or CharacterMovement extension should own per-pawn flight state. `AAstrawildLaunchPad` should be an authority-gated interactable that validates a launch sequence, consumes fuel only after successful reservation, and transitions through a travel/save checkpoint rather than teleporting clients independently.
+**Repository status:** Source contract added in `UAstrawildSpaceFlightSubsystem`, `FAstrawildSpaceFlightData` and `AAstrawildLaunchPad`. The subsystem owns launch-pad registration, server-side proximity checks, launch progression, low-gravity scale, per-pilot flight state and vacuum pressure emergency state.
 
-**Data contract to add:** `DT_SpaceZones.csv` with zone tag, gravity scale, atmosphere/pressure, oxygen drain, radiation, launch requirement and return destination. Add `DT_LaunchProfiles.csv` for pad type, fuel item, countdown, passenger capacity and failure refund. Add tags under `Space`, `Hazard`, `Launch` and `Gravity` only after the row structs and validator exist.
+**Required integration boundary:** `UAstrawildSpaceFlightSubsystem` should remain a deterministic world service; a `UAstrawildSpaceFlightComponent` or CharacterMovement extension must own per-pawn movement state. `AAstrawildLaunchPad` validates a launch request but does not own fuel, travel persistence or final flight physics. Fuel must be reserved and consumed atomically by the owning inventory/travel system only after a successful launch reservation.
+
+**Data contract to add:** `DT_SpaceZones.csv` with zone tag, gravity scale, atmosphere/pressure, oxygen drain, radiation, launch requirement and return destination. Add `DT_LaunchProfiles.csv` for pad type, fuel item, countdown, passenger capacity and failure refund. The current source contract exposes tags and tuning but does not yet claim these future tables. Add tags under `Space`, `Hazard`, `Launch` and `Gravity` only after the row structs and validator exist.
 
 **Editor work:** Lunar landscape/map, zero-G traversal volumes, grappling sockets, asteroid-field Niagara, helmet/exosuit materials, launchpad Blueprint, travel loading flow and navigation volumes.
 
@@ -37,9 +39,11 @@ The next implementation boundary is a CharacterMovement/water-volume integration
 
 ## Pillar 3 — Echo Cosmetics and Dye Customization
 
-**Recommended source design:** `UAstrawildCosmeticSubsystem` should be a registry/query service, not the owner of replicated appearance. The owning Player/Echo appearance component should replicate compact cosmetic IDs and dye indices, validate ownership/unlock state on the server, and apply material parameters locally through a presentation layer.
+**Repository status:** `FAstrawildDyeRow` and `DT_Dyes.csv` are now present with exactly 16 original colors, primary/secondary linear tints, material parameter names, unlock tags, craft costs and default-unlock flags.
 
-**Data contract to add:** `DT_CosmeticSkins.csv` with cosmetic ID, target family, material slot contract, unlock condition and original asset path; `DT_Dyes.csv` with 16 stable dye IDs, linear/RGB color values, rarity, recipe and allowed target masks. Avoid storing arbitrary client-provided colors; use a server-approved dye row.
+**Required integration boundary:** A future `UAstrawildCosmeticSubsystem` should be a registry/query service, not the owner of replicated appearance. The owning Player/Echo appearance component should replicate compact cosmetic IDs and dye indices, validate ownership/unlock state on the server, and apply material parameters locally through a presentation layer.
+
+**Data contract to add:** `DT_CosmeticSkins.csv` with cosmetic ID, target family, material slot contract, unlock condition and original asset path; extend `DT_Dyes.csv` later with rarity, recipe and allowed target masks if the final equipment contract requires them. Avoid storing arbitrary client-provided colors; use a server-approved dye row.
 
 **Editor work:** 50 original overlay material instances, master material parameters, preview UI, dye crafting recipes, icons, thumbnail capture and per-family material slot verification.
 
@@ -57,9 +61,11 @@ The audio generator may produce original source WAVs, but generated files are no
 
 ## Pillar 5 — Guild Territory and 4v4 Arena
 
-**Recommended source design:** A persistent guild service must own guild identity, membership, roles, bank transactions, territory claims, technology unlocks and audit records. `AAstrawildGuildTotem` should validate claim radius, contested state, cooldown and server ownership. Do not put guild bank authority in a client inventory component.
+**Repository status:** Source contract added in `UAstrawildGuildSubsystem`, `FAstrawildGuildData` and `AAstrawildGuildTotem`. The current contract covers authority-gated guild registration, prerequisite-gated buff levels, territory capture radius checks and a two-team/four-member arena roster/match state.
 
-**Data contract to add:** `DT_GuildTechNodes.csv` for shared buffs and prerequisites; `DT_TerritoryRules.csv` for claim radius, biome restrictions, raid windows and defense modifiers; `DT_ArenaRules.csv` for team size, bracket timeout, Echo restrictions, scoring and reward tags.
+**Required integration boundary:** A persistent guild service must still own guild identity, membership, roles, bank transactions, territory claims, technology unlocks and audit records. `AAstrawildGuildTotem` must be extended with contested state and cooldown rules before live-like warfare. Do not put guild bank authority in a client inventory component.
+
+**Data contract to add:** `DT_GuildTechNodes.csv` for shared buffs and prerequisites; `DT_TerritoryRules.csv` for claim radius, biome restrictions, raid windows and defense modifiers; `DT_ArenaRules.csv` for team size, bracket timeout, Echo restrictions, scoring and reward tags. The current source structs are runtime registration contracts, not replacements for these authored rule tables.
 
 **Editor/runtime work:** Guild UI, bank transaction UI, territory projection/replication, claim-totem actor, raid rules, matchmaking service boundary, 4v4 arena map, bracket state, spectator/respawn rules, podium and trophy assets.
 
@@ -67,9 +73,11 @@ The audio generator may produce original source WAVs, but generated files are no
 
 ## Pillar 6 — Deep Fishing and Echo Grand Prix
 
-**Recommended source design:** Fishing should use a server-owned session state machine: cast, bite window, tension, line failure, catch reservation and reward commit. Racing should use server-owned track/checkpoint state, signed lap times and deterministic boost-pad/checkpoint validation. Do not trust client-reported catch species, drift distance or lap time.
+**Repository status:** Fishing source contract and `DT_FishDex.csv` are complete for the 30-row bait/depth/tension/reward catalogue. Racing source contract is complete for server-owned track/checkpoint/lap/boost state. Both still require their authored interaction actors, movement bridges and UI.
 
-**Data contract to add:** `DT_FishDex.csv` with 30 species, habitat/depth, bait tags, tension profile, rarity and reward items; `DT_FishingRods.csv` for cast range, line strength and reel speed; `DT_RaceTracks.csv` for checkpoint order, mode, boost pads, lap count, allowed mounts and leaderboard rules.
+**Required integration boundary:** Fishing must use a server-owned session state machine: cast, bite window, tension, line failure, catch reservation and reward commit. Racing must use server-owned track/checkpoint state, signed lap times and deterministic boost-pad/checkpoint validation. Do not trust client-reported catch species, drift distance or lap time.
+
+**Data contract to add:** `DT_FishDex.csv` is now present with 30 species, habitat/depth, bait tags, tension profile, rarity and reward items. Still add `DT_FishingRods.csv` for cast range, line strength and reel speed, and `DT_RaceTracks.csv` for checkpoint order, mode, boost pads, lap count, allowed mounts and leaderboard rules.
 
 **Editor work:** Fishing volumes, original fish meshes/animation, rod/bait assets, tension UI, underwater catch VFX/audio, ground/aerial track maps, checkpoint actors, boost-pad Niagara, drift presentation, leaderboard UI and trophy assets.
 
@@ -80,12 +88,12 @@ The audio generator may produce original source WAVs, but generated files are no
 | Priority | Work package | Why |
 |---:|---|---|
 | 1 | Finish Pillar 1 CharacterMovement/water-volume integration | Builds on the new source contract and directly extends exploration without destabilizing the first loop |
-| 2 | Pillar 3 cosmetics/dyes | Mostly presentation/data work with low simulation risk and strong player-facing value |
+| 2 | Integrate Pillar 3 dyes | The 16-row source table is present; remaining work is presentation, material slots, save and cosmetic replication |
 | 3 | Pillar 4 vocalization/audio | Can be integrated incrementally after event IDs and audio routing are stable |
-| 4 | Pillar 2 space flight/lunar travel | Requires travel/save/network design and should not precede stable map/save boundaries |
-| 5 | Pillar 6 fishing/racing | Two separate server state machines and significant Editor content |
-| 6 | Pillar 5 guild/territory/4v4 | Highest persistence, exploit, matchmaking and live-service complexity; defer until co-op foundations are evidenced |
+| 4 | Integrate Pillar 2 space flight/lunar travel | Source contract is present; movement, travel/save/network design and Lunar map evidence remain |
+| 5 | Integrate Pillar 6 fishing/racing | Source contracts are present; rods, race rules, actors, movement/UI and significant Editor content remain |
+| 6 | Integrate Pillar 5 guild/territory/4v4 | Source contract is present; persistence, exploit prevention, matchmaking and live-service complexity still require co-op evidence |
 
 ## Explicit non-claims
 
-This roadmap does not claim that any Pillar 2–6 native subsystem, DataTable, final visual asset, animation, Niagara graph, UMG screen, multiplayer service or packaged build exists. The next Windows handoff must compile and import Pillar 1 first, then create evidence before expanding the source surface further.
+This roadmap does not claim that the Sprint 2 source contracts are playable Editor features. It does not claim final visual assets, animation, Niagara graphs, UMG screens, multiplayer services, travel persistence or packaged builds. Windows must still compile the native module, import all 38 DataTables, author the required actors/assets and create PIE/Network PIE evidence before the features are considered complete.

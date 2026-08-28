@@ -21,6 +21,10 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_EchoDex.csv": {"Name", "SpeciesTag", "SpeciesName", "SpeciesTitle", "LoreDescription", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "PassiveTraitTags", "WorkSuitabilityTags", "PartnerSkillTag", "MountProfileId", "bCanBeMounted", "BreedingGroupId", "EvolutionTargetId", "EvolutionLevel", "DexOrder"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoDex_200.csv": {"Name", "DexOrder", "SpeciesTag", "SpeciesName", "SpeciesTitle", "AnatomyConcept", "Diet", "SocialBehavior", "Temperament", "HabitatBiomeTag", "ActivityCycleTag", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseStamina", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "WorkSuitabilityLevels", "WorkSuitabilityTags", "PassiveTraitTags", "ActiveSkillTags", "ActiveSkillElementTags", "ActiveSkillCooldowns", "ActiveSkillDamageMultipliers", "ActiveSkillTelegraphs", "PartnerSkillTag", "MountedWeaponTag", "DropItemTags", "DropItemQuantities", "ParentSpeciesA", "ParentSpeciesB"},
     ROOT / "Content/Astrawild/Data/Source/DT_FishDex.csv": {"Name", "FishTag", "DisplayName", "HabitatTag", "MinDepthMeters", "MaxDepthMeters", "BaitTag", "CatchItemTag", "SellPrice", "PullStrength", "RequiredReelSeconds", "SafeTensionMin", "SafeTensionMax", "RarityWeight"},
+    ROOT / "Content/Astrawild/Data/Source/DT_Dyes.csv": {"Name", "DyeTag", "DisplayName", "PrimaryTint", "SecondaryTint", "MaterialParameterName", "UnlockRequirementTag", "CraftCost", "bUnlockedByDefault"},
+    ROOT / "Content/Astrawild/Data/Source/DT_WorldKaijuBosses.csv": {"Name", "BossTag", "DisplayName", "BiomeTag", "RecommendedLevel", "MaxHealth", "PhaseCount", "DisasterAffinityTag", "RequiredArenaTag", "RewardItemTags", "EncounterRadius", "bRequiresWorldEvent"},
+    ROOT / "Content/Astrawild/Data/Source/DT_Vehicles.csv": {"Name", "VehicleTag", "DisplayName", "Description", "Category", "VehicleType", "MaxSpeedCentimetersPerSecond", "BoostSpeedCentimetersPerSecond", "MaxDepthMeters", "CargoCapacityKilograms", "PassengerSeatCount", "Handling", "FuelTypeTag", "WeaponTags", "UtilityTags", "bCanHover", "bCanSubmerge", "bCanFly", "bIsMobileBase"},
+    ROOT / "Content/Astrawild/Data/Source/DT_VehicleParts.csv": {"Name", "PartTag", "DisplayName", "Slot", "CompatibleVehicleTags", "SpeedMultiplier", "FuelConsumptionMultiplier", "ArmorBonus", "BatteryCapacity", "BoostMultiplier", "WeaponPower", "UtilityEffectTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_MountProfiles.csv": {"Name", "MountProfileId", "SaddleSocketName", "SpeedMultiplier", "StaminaCostPerSecond", "JumpMultiplier", "bAllowsCombatFromMount", "MountFamilyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv": {"Name", "BreedingGroupId", "CompatibleSpeciesTags", "IncubationDurationSeconds", "MutationChance", "MaxInheritedTraits"},
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingFusions.csv": {"Name", "ParentSpeciesA", "ParentSpeciesB", "OffspringSpeciesTag", "OffspringElementalAffinities", "GuaranteedInheritedTraitTags", "TraitInheritanceChance", "HiddenPassiveUnlockChance", "FusionGroupTag"},
@@ -81,6 +85,16 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/World/AstrawildRacingData.h",
     "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp",
+    "Source/AstrawildCore/Public/World/AstrawildSpaceFlightData.h",
+    "Source/AstrawildCore/Public/World/AstrawildSpaceFlightSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildSpaceFlightSubsystem.cpp",
+    "Source/AstrawildCore/Public/Environment/AstrawildLaunchPad.h",
+    "Source/AstrawildCore/Private/Environment/AstrawildLaunchPad.cpp",
+    "Source/AstrawildCore/Public/World/AstrawildGuildData.h",
+    "Source/AstrawildCore/Public/World/AstrawildGuildSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildGuildSubsystem.cpp",
+    "Source/AstrawildCore/Public/Environment/AstrawildGuildTotem.h",
+    "Source/AstrawildCore/Private/Environment/AstrawildGuildTotem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldPartitionSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildWorldPartitionSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildEnvironmentHazardComponent.h",
@@ -89,6 +103,18 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/Data/AstrawildFishingData.h",
     "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h",
     "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp",
+    "Source/AstrawildCore/Public/Data/AstrawildDyeData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildWorldKaijuBossData.h",
+    "Source/AstrawildCore/Public/Components/AstrawildVehicleData.h",
+    "Source/AstrawildCore/Public/Data/AstrawildVehicleData.h",
+    "Source/AstrawildCore/Public/Components/AstrawildVehicleComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildVehicleComponent.cpp",
+    "Source/AstrawildCore/Public/Vehicles/AstrawildVehicleBase.h",
+    "Source/AstrawildCore/Private/Vehicles/AstrawildVehicleBase.cpp",
+    "Source/AstrawildCore/Public/World/AstrawildDisasterData.h",
+    "Source/AstrawildCore/Public/World/AstrawildDisasterSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildDisasterSubsystem.cpp",
+    "Source/AstrawildCore/Public/Data/AstrawildWorldKaijuBossData.h",
     "Source/AstrawildCore/Public/Data/AstrawildMasterEchoData.h",
     "Source/AstrawildCore/Public/Data/AstrawildBreedingFusionData.h",
     "Source/AstrawildCore/Public/Data/AstrawildPartnerGearData.h",
@@ -155,6 +181,7 @@ REQUIRED_PATHS = [
     "Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md",
     "Docs/VALIDATION_CATALOG.md",
     "Docs/NEXT_GEN_EXPANSION_ROADMAP.md",
+    "Docs/SPRINT_2_SPACE_GUILD_DYES_HANDOFF.md",
     "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md",
     "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md",
     "Docs/ASSET_PRODUCTION_BIBLE.md",
@@ -597,6 +624,57 @@ for row in ranged_rows:
             errors.append(f"DT_RangedWeapons.csv invalid combat value in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_RangedWeapons.csv non-numeric combat value in row {row.get('Name', '<unknown>')}")
+
+kaiju_path = ROOT / "Content/Astrawild/Data/Source/DT_WorldKaijuBosses.csv"
+kaiju_rows = loaded_rows.get(kaiju_path, [])
+if len(kaiju_rows) != 3:
+    errors.append(f"DT_WorldKaijuBosses.csv must contain exactly 3 rows; found {len(kaiju_rows)}")
+kaiju_tags = [row.get("BossTag", "") for row in kaiju_rows]
+if len(kaiju_tags) != len(set(kaiju_tags)) or any(not tag for tag in kaiju_tags):
+    errors.append("DT_WorldKaijuBosses.csv must have non-empty unique BossTag values")
+for row in kaiju_rows:
+    try:
+        if int(row["RecommendedLevel"]) < 1 or float(row["MaxHealth"]) <= 0 or int(row["PhaseCount"]) < 1 or float(row["EncounterRadius"]) <= 0:
+            errors.append(f"DT_WorldKaijuBosses.csv invalid boss tuning in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_WorldKaijuBosses.csv non-numeric boss tuning in row {row.get('Name', '<unknown>')}")
+
+vehicle_path = ROOT / "Content/Astrawild/Data/Source/DT_Vehicles.csv"
+vehicle_rows = loaded_rows.get(vehicle_path, [])
+if len(vehicle_rows) != 12:
+    errors.append(f"DT_Vehicles.csv must contain exactly 12 rows; found {len(vehicle_rows)}")
+vehicle_tags = [row.get("VehicleTag", "") for row in vehicle_rows]
+if len(vehicle_tags) != len(set(vehicle_tags)) or any(not tag for tag in vehicle_tags):
+    errors.append("DT_Vehicles.csv must have non-empty unique VehicleTag values")
+valid_vehicle_categories = {"LandHover", "ArmoredRover", "MarineSubmersible", "AtmosphericAircraft", "OrbitalSpacecraft"}
+valid_vehicle_types = {"HoverbikeStriker", "SandSkiffDuneRider", "MonowheelGyroStriker", "RoverAstraExplorer", "SiegeTankTitanCrawler", "MobileBaseMammothHauler", "JetSkiHydroGlider", "MiniSubNautilus", "BattleCruiserAstraFrigate", "GyrocopterZephyr", "VTOLExplorerSkyhawk", "AirshipSkyGalleon"}
+for row in vehicle_rows:
+    if row.get("Category", "") not in valid_vehicle_categories:
+        errors.append(f"DT_Vehicles.csv invalid category in row {row.get('Name', '<unknown>')}")
+    if row.get("VehicleType", "") not in valid_vehicle_types:
+        errors.append(f"DT_Vehicles.csv invalid VehicleType in row {row.get('Name', '<unknown>')}")
+    try:
+        if float(row["MaxSpeedCentimetersPerSecond"]) <= 0 or float(row["BoostSpeedCentimetersPerSecond"]) < 0 or float(row["MaxDepthMeters"]) < 0 or float(row["CargoCapacityKilograms"]) < 0 or int(row["PassengerSeatCount"]) < 1 or float(row["Handling"]) <= 0:
+            errors.append(f"DT_Vehicles.csv invalid vehicle tuning in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_Vehicles.csv non-numeric vehicle tuning in row {row.get('Name', '<unknown>')}")
+
+parts_path = ROOT / "Content/Astrawild/Data/Source/DT_VehicleParts.csv"
+parts_rows = loaded_rows.get(parts_path, [])
+if len(parts_rows) != 12:
+    errors.append(f"DT_VehicleParts.csv must contain exactly 12 rows; found {len(parts_rows)}")
+part_tags = [row.get("PartTag", "") for row in parts_rows]
+if len(part_tags) != len(set(part_tags)) or any(not tag for tag in part_tags):
+    errors.append("DT_VehicleParts.csv must have non-empty unique PartTag values")
+valid_part_slots = {"Engine", "Armor", "Weapon", "Utility"}
+for row in parts_rows:
+    if row.get("Slot", "") not in valid_part_slots:
+        errors.append(f"DT_VehicleParts.csv invalid slot in row {row.get('Name', '<unknown>')}")
+    try:
+        if float(row["SpeedMultiplier"]) <= 0 or float(row["FuelConsumptionMultiplier"]) <= 0 or float(row["ArmorBonus"]) < 0 or float(row["BatteryCapacity"]) < 0 or float(row["BoostMultiplier"]) <= 0 or float(row["WeaponPower"]) < 0:
+            errors.append(f"DT_VehicleParts.csv invalid part tuning in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_VehicleParts.csv non-numeric part tuning in row {row.get('Name', '<unknown>')}")
 
 technology_path = ROOT / "Content/Astrawild/Data/Source/DT_TechnologyNodes.csv"
 technology_rows = loaded_rows.get(technology_path, [])

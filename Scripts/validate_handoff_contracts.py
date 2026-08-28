@@ -31,6 +31,7 @@ VALIDATORS = (
     "validate_character_map_assets.py",
     "validate_audio_pack.py",
     "validate_importer_coverage.py",
+    "validate_vehicle_contracts.py",
     "validate_handoff_contracts.py",
 )
 REPORTS = (
@@ -63,7 +64,7 @@ def ordered_positions(text: str, tokens: tuple[str, ...]) -> list[int]:
 
 def main() -> int:
     errors: list[str] = []
-    required_files = (HANDOFF, CATALOG, IMPORTER, SCAFFOLD, VALIDATOR_RUNNER, PACKAGE_RUNNER)
+    required_files = (HANDOFF, CATALOG, IMPORTER, SCAFFOLD, VALIDATOR_RUNNER, PACKAGE_RUNNER, ROOT / "Docs/SPRINT_2_SPACE_GUILD_DYES_HANDOFF.md", ROOT / "Docs/SPRINT_3_DISASTER_KAIJU_VEHICLE_HANDOFF.md")
     for path in required_files:
         if not path.is_file():
             errors.append(f"missing handoff contract file: {path.relative_to(ROOT)}")
@@ -79,7 +80,13 @@ def main() -> int:
     importer = read(IMPORTER)
     underwater_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp")
     fishing_source = read(ROOT / "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h") + read(ROOT / "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp")
+    dye_source = read(ROOT / "Source/AstrawildCore/Public/Data/AstrawildDyeData.h")
+    disaster_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildDisasterData.h") + read(ROOT / "Source/AstrawildCore/Public/World/AstrawildDisasterSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildDisasterSubsystem.cpp")
+    kaiju_source = read(ROOT / "Source/AstrawildCore/Public/Data/AstrawildWorldKaijuBossData.h")
+    vehicle_source = read(ROOT / "Source/AstrawildCore/Public/Components/AstrawildVehicleData.h") + read(ROOT / "Source/AstrawildCore/Public/Components/AstrawildVehicleComponent.h") + read(ROOT / "Source/AstrawildCore/Private/Components/AstrawildVehicleComponent.cpp") + read(ROOT / "Source/AstrawildCore/Public/Vehicles/AstrawildVehicleBase.h") + read(ROOT / "Source/AstrawildCore/Private/Vehicles/AstrawildVehicleBase.cpp")
     racing_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingData.h") + read(ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp")
+    space_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildSpaceFlightData.h") + read(ROOT / "Source/AstrawildCore/Public/World/AstrawildSpaceFlightSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildSpaceFlightSubsystem.cpp") + read(ROOT / "Source/AstrawildCore/Public/Environment/AstrawildLaunchPad.h") + read(ROOT / "Source/AstrawildCore/Private/Environment/AstrawildLaunchPad.cpp")
+    guild_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildGuildData.h") + read(ROOT / "Source/AstrawildCore/Public/World/AstrawildGuildSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildGuildSubsystem.cpp") + read(ROOT / "Source/AstrawildCore/Public/Environment/AstrawildGuildTotem.h") + read(ROOT / "Source/AstrawildCore/Private/Environment/AstrawildGuildTotem.cpp")
     scaffold = read(SCAFFOLD)
     runner = read(VALIDATOR_RUNNER)
     package_runner = read(PACKAGE_RUNNER)
@@ -92,8 +99,8 @@ def main() -> int:
 
     csv_source_dir = ROOT / "Content/Astrawild/Data/Source"
     csv_files = {path.name for path in csv_source_dir.glob("*.csv")}
-    if len(csv_files) != 34:
-        errors.append(f"source CSV count must be 34; found {len(csv_files)}")
+    if len(csv_files) != 38:
+        errors.append(f"source CSV count must be 38; found {len(csv_files)}")
     if set(mapping) != csv_files:
         errors.append("handoff/importer CSV set mismatch")
 
@@ -122,12 +129,35 @@ def main() -> int:
         ROOT / "Source/AstrawildCore/Public/World/AstrawildUnderwaterData.h",
         ROOT / "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h",
         ROOT / "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp",
-        ROOT / "Source/AstrawildCore/Public/Data/AstrawildFishingData.h",
+        ROOT / "Source/AstrawildCore/Public/Data/AstrawildDyeData.h",
+        ROOT / "Source/AstrawildCore/Public/Data/AstrawildWorldKaijuBossData.h",
+        ROOT / "Source/AstrawildCore/Public/Components/AstrawildVehicleData.h",
+        ROOT / "Source/AstrawildCore/Public/Data/AstrawildVehicleData.h",
+        ROOT / "Source/AstrawildCore/Public/Components/AstrawildVehicleComponent.h",
+        ROOT / "Source/AstrawildCore/Private/Components/AstrawildVehicleComponent.cpp",
+        ROOT / "Source/AstrawildCore/Public/Vehicles/AstrawildVehicleBase.h",
+        ROOT / "Source/AstrawildCore/Private/Vehicles/AstrawildVehicleBase.cpp",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildDisasterData.h",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildDisasterSubsystem.h",
+        ROOT / "Source/AstrawildCore/Private/World/AstrawildDisasterSubsystem.cpp",
         ROOT / "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h",
         ROOT / "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp",
         ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingData.h",
         ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h",
         ROOT / "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp",
+        ROOT / "Content/Astrawild/Data/Source/DT_WorldKaijuBosses.csv",
+        ROOT / "Content/Astrawild/Data/Source/DT_Vehicles.csv",
+        ROOT / "Content/Astrawild/Data/Source/DT_VehicleParts.csv",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildSpaceFlightData.h",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildSpaceFlightSubsystem.h",
+        ROOT / "Source/AstrawildCore/Private/World/AstrawildSpaceFlightSubsystem.cpp",
+        ROOT / "Source/AstrawildCore/Public/Environment/AstrawildLaunchPad.h",
+        ROOT / "Source/AstrawildCore/Private/Environment/AstrawildLaunchPad.cpp",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildGuildData.h",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildGuildSubsystem.h",
+        ROOT / "Source/AstrawildCore/Private/World/AstrawildGuildSubsystem.cpp",
+        ROOT / "Source/AstrawildCore/Public/Environment/AstrawildGuildTotem.h",
+        ROOT / "Source/AstrawildCore/Private/Environment/AstrawildGuildTotem.cpp",
     ):
         if not path.is_file():
             errors.append(f"missing Underwater source contract: {path.relative_to(ROOT)}")
@@ -138,13 +168,39 @@ def main() -> int:
     for token in ("FAstrawildFishRow", "StartFishingAuthority", "CommitCatchAuthority", "ServerUpdateReelInput_Implementation"):
         if token not in fishing_source:
             errors.append(f"Fishing component missing operational token: {token}")
+    if "FAstrawildDyeRow" not in dye_source:
+        errors.append("Dye data contract missing FAstrawildDyeRow")
+    for token in ("EAstrawildDisasterType", "RegisterDisasterDefinition", "StartRandomDisaster", "OnDisasterStarted", "Cooldowns.FindRef"):
+        if token not in disaster_source:
+            errors.append(f"Disaster contract missing operational token: {token}")
+    for token in ("FAstrawildWorldKaijuBossRow", "DisasterAffinityTag", "RequiredArenaTag", "EncounterRadius"):
+        if token not in kaiju_source:
+            errors.append(f"World Kaiju contract missing operational token: {token}")
+    for token in ("FAstrawildVehicleRow", "FAstrawildVehiclePartRow", "ServerApplyControlInput", "InstalledParts", "CurrentFuel", "CurrentDurability", "AAstrawildVehicleBase"):
+        if token not in vehicle_source:
+            errors.append(f"Vehicle contract missing operational token: {token}")
+    sprint2_handoff = read(ROOT / "Docs/SPRINT_2_SPACE_GUILD_DYES_HANDOFF.md")
+    sprint3_handoff = read(ROOT / "Docs/SPRINT_3_DISASTER_KAIJU_VEHICLE_HANDOFF.md")
+    for token in ("LowGravityScale", "VacuumEmergency", "GuildSubsystem", "DT_Dyes.csv", "exactly 16 original dye rows", "Network PIE"):
+        if token not in sprint2_handoff:
+            errors.append(f"Sprint 2 handoff missing operational token: {token}")
+    for token in ("World Kaiju", "Magmatitan", "SkyColossus", "AbyssalLeviathan", "Meteor", "Tornado", "Volcanic Ash", "Aurora", "Hoverbike", "Mini-Submarine", "DT_VehicleParts.csv", "12 unique vehicle types", "Network PIE"):
+        if token.lower() not in sprint3_handoff.lower():
+            errors.append(f"Sprint 3 handoff missing operational token: {token}")
     for token in ("FAstrawildRaceCheckpoint", "SubmitCheckpoint", "ActivateBoostPad", "OnRaceFinished.Broadcast"):
         if token not in racing_source:
             errors.append(f"Racing subsystem missing operational token: {token}")
+    for token in ("LowGravityScale", "VacuumPressureLossKPaPerSecond", "RequestLaunch", "UpdateFlightInput", "SetPilotState"):
+        if token not in space_source:
+            errors.append(f"Space Flight contract missing operational token: {token}")
+    for token in ("RegisterBuffNode", "CaptureTerritory", "RegisterArenaTeam", "StartArenaMatch", "ArenaTeamSize"):
+        if token not in guild_source:
+            errors.append(f"Guild contract missing operational token: {token}")
 
     for token in (
         "DESTINATION_PATH = \"/Game/Astrawild/Data/Imported\"",
         "DT_UnderwaterZones.csv",
+        "DT_Dyes.csv",
         "FAstrawildUnderwaterZoneRow",
         "ECHO_MESH_DESTINATION_PATH",
         "CHARACTER_MESH_DESTINATION_PATH",
@@ -198,6 +254,7 @@ def main() -> int:
         "character_map_assets",
         "audio_pack",
         "importer_coverage",
+        "vehicle_contracts",
         "handoff_contracts",
     )))
     if any(position < 0 for position in validator_order):
@@ -231,7 +288,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print("ASTRAWILD handoff contract validation passed (34 CSVs, validator order, reports, UE command gates, and evidence boundaries).")
+    print("ASTRAWILD handoff contract validation passed (38 CSVs, validator order, reports, UE command gates, and evidence boundaries).")
     return 0
 
 

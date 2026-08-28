@@ -1,0 +1,4 @@
+Name,BossTag,DisplayName,BiomeTag,RecommendedLevel,MaxHealth,PhaseCount,DisasterAffinityTag,RequiredArenaTag,RewardItemTags,EncounterRadius,bRequiresWorldEvent
+WorldKaiju_Magmatitan,Boss.WorldKaiju.Magmatitan,Magmatitan,Biome.ScorchedObsidianCaldera,30,18000.0,4,Disaster.VolcanicAsh,Arena.WorldKaiju.Caldera,"(Item.MagmatitanCore,Item.SolarShard,Item.KaijuScale)",4500.0,true
+WorldKaiju_SkyColossus,Boss.WorldKaiju.SkyColossus,SkyColossus,Biome.HighlandSkyreach,35,22000.0,4,Disaster.Aurora,Arena.WorldKaiju.Skyreach,"(Item.SkyColossusCore,Item.AetherShard,Item.KaijuScale)",5000.0,true
+WorldKaiju_AbyssalLeviathan,Boss.WorldKaiju.AbyssalLeviathan,Abyssal Leviathan,Biome.AbyssalTrench,40,26000.0,5,Disaster.MeteorShower,Arena.WorldKaiju.Abyssal,"(Item.AbyssalLeviathanCore,Item.AbyssalShard,Item.KaijuScale)",5500.0,true

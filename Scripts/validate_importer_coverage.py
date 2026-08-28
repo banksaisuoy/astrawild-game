@@ -73,8 +73,8 @@ def main() -> int:
     importer_text = read(IMPORTER)
     mapping = assignments["TABLE_MAPPING"]
     csv_names = {path.name for path in SOURCE_CSV.glob("*.csv")}
-    if len(csv_names) != 34:
-        errors.append(f"source CSV count must be 34; found {len(csv_names)}")
+    if len(csv_names) != 38:
+        errors.append(f"source CSV count must be 38; found {len(csv_names)}")
     if set(mapping) != csv_names:
         errors.append("TABLE_MAPPING does not exactly match source CSV filenames")
 
@@ -167,7 +167,7 @@ def main() -> int:
 
     print(
         "ASTRAWILD importer coverage validation passed "
-        f"(34 CSV mappings; {actual_counts['echoes']} Echo, "
+        f"(38 CSV mappings; {actual_counts['echoes']} Echo, "
         f"{actual_counts['characters']} character, {actual_counts['map_kit']} map-kit, "
         f"{actual_counts['sfx']} SFX, {actual_counts['ambience']} ambience, "
         f"{actual_counts['music']} music sources)."

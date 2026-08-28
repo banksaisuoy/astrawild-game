@@ -215,6 +215,84 @@ def main() -> int:
             "State->BoostRemainingSeconds",
             "RemoveInvalidParticipants",
         ),
+        "Source/AstrawildCore/Public/World/AstrawildSpaceFlightSubsystem.h": (
+            "LowGravityScale",
+            "RequestLaunch",
+            "UpdateFlightInput",
+            "ReturnToSurface",
+        ),
+        "Source/AstrawildCore/Private/World/AstrawildSpaceFlightSubsystem.cpp": (
+            "HasAuthorityForFlight",
+            "VacuumPressureLossKPaPerSecond",
+            "MinimumSafeCabinPressureKPa",
+            "State->FlightState == EAstrawildFlightState::Launching",
+            "State.FlightState = EAstrawildFlightState::VacuumEmergency",
+            "Pilot->SetActorLocation",
+        ),
+        "Source/AstrawildCore/Public/Environment/AstrawildLaunchPad.h": (
+            "RequestLaunch(AActor* Pilot)",
+            "DestinationBiomeTag",
+        ),
+        "Source/AstrawildCore/Public/World/AstrawildGuildSubsystem.h": (
+            "RegisterBuffNode",
+            "CaptureTerritory",
+            "RegisterArenaTeam",
+            "StartArenaMatch",
+            "ArenaTeamSize",
+        ),
+        "Source/AstrawildCore/Private/World/AstrawildGuildSubsystem.cpp": (
+            "HasAuthorityForGuild",
+            "Node->RequiredBuffTag",
+            "Territory->Radius",
+            "Members.Num() != ArenaTeamSize",
+            "ArenaTeams.Num() != 2",
+        ),
+        "Source/AstrawildCore/Public/Environment/AstrawildGuildTotem.h": (
+            "CaptureForGuild",
+            "TerritoryRadius",
+        ),
+        "Source/AstrawildCore/Public/Data/AstrawildDyeData.h": (
+            "FAstrawildDyeRow",
+            "PrimaryTint",
+            "SecondaryTint",
+            "MaterialParameterName",
+        ),
+        "Source/AstrawildCore/Public/World/AstrawildDisasterSubsystem.h": (
+            "RegisterDisasterDefinition",
+            "StartRandomDisaster",
+            "AdvanceDisasters",
+            "OnDisasterStarted",
+        ),
+        "Source/AstrawildCore/Private/World/AstrawildDisasterSubsystem.cpp": (
+            "HasAuthorityForDisaster",
+            "RandomStream.RandRange",
+            "ActiveDisasters.Contains",
+            "Cooldowns.FindRef",
+            "State.RemainingSeconds",
+        ),
+        "Source/AstrawildCore/Public/Data/AstrawildWorldKaijuBossData.h": (
+            "FAstrawildWorldKaijuBossRow",
+            "DisasterAffinityTag",
+            "RewardItemTags",
+            "bRequiresWorldEvent",
+        ),
+        "Source/AstrawildCore/Public/Components/AstrawildVehicleComponent.h": (
+            "ServerApplyControlInput",
+            "ServerInstallPart",
+            "InstalledParts",
+            "RuntimeState",
+        ),
+        "Source/AstrawildCore/Private/Components/AstrawildVehicleComponent.cpp": (
+            "HasAuthorityForVehicle",
+            "CurrentFuel",
+            "CurrentDurability",
+            "ApplyControlInputAuthority",
+            "SimulateVehicle",
+        ),
+        "Source/AstrawildCore/Public/Vehicles/AstrawildVehicleBase.h": (
+            "AAstrawildVehicleBase",
+            "VehicleComponent",
+        ),
     })
 
     for relative, required_tokens in source_checks.items():
@@ -226,6 +304,40 @@ def main() -> int:
         for token in required_tokens:
             if token not in content:
                 errors.append(f"{relative} is missing guard token: {token}")
+
+    dye_path = ROOT / "Content/Astrawild/Data/Source/DT_Dyes.csv"
+    with dye_path.open(encoding="utf-8-sig", newline="") as handle:
+        dye_rows = list(csv.DictReader(handle))
+    if len(dye_rows) != 16:
+        errors.append(f"Dyes must contain exactly 16 rows; found {len(dye_rows)}")
+    dye_tags = [row.get("DyeTag", "") for row in dye_rows]
+    if len(dye_tags) != len(set(dye_tags)) or any(not tag for tag in dye_tags):
+        errors.append("Dyes must have non-empty unique DyeTag values")
+
+    kaiju_path = ROOT / "Content/Astrawild/Data/Source/DT_WorldKaijuBosses.csv"
+    with kaiju_path.open(encoding="utf-8-sig", newline="") as handle:
+        kaiju_rows = list(csv.DictReader(handle))
+    if len(kaiju_rows) != 3:
+        errors.append(f"World Kaiju table must contain exactly 3 rows; found {len(kaiju_rows)}")
+    if {row.get("BossTag", "") for row in kaiju_rows} != {"Boss.WorldKaiju.Magmatitan", "Boss.WorldKaiju.SkyColossus", "Boss.WorldKaiju.AbyssalLeviathan"}:
+        errors.append("World Kaiju table must contain the three required original boss tags")
+
+    vehicle_path = ROOT / "Content/Astrawild/Data/Source/DT_Vehicles.csv"
+    with vehicle_path.open(encoding="utf-8-sig", newline="") as handle:
+        vehicle_rows = list(csv.DictReader(handle))
+    if len(vehicle_rows) != 12:
+        errors.append(f"Vehicle table must contain exactly 12 rows; found {len(vehicle_rows)}")
+    vehicle_tags = [row.get("VehicleTag", "") for row in vehicle_rows]
+    if len(vehicle_tags) != len(set(vehicle_tags)) or any(not tag.startswith("Vehicle.") for tag in vehicle_tags):
+        errors.append("Vehicle table must have unique Vehicle.* tags")
+
+    parts_path = ROOT / "Content/Astrawild/Data/Source/DT_VehicleParts.csv"
+    with parts_path.open(encoding="utf-8-sig", newline="") as handle:
+        parts_rows = list(csv.DictReader(handle))
+    if len(parts_rows) != 12:
+        errors.append(f"Vehicle parts table must contain exactly 12 rows; found {len(parts_rows)}")
+    if {row.get("Slot", "") for row in parts_rows} != {"Engine", "Armor", "Weapon", "Utility"}:
+        errors.append("Vehicle parts table must cover Engine, Armor, Weapon and Utility slots")
 
     fish_path = ROOT / "Content/Astrawild/Data/Source/DT_FishDex.csv"
     with fish_path.open(encoding="utf-8-sig", newline="") as handle:
