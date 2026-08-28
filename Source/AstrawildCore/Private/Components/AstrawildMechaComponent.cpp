@@ -7,15 +7,104 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 UAstrawildMechaComponent::UAstrawildMechaComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
+    SetIsReplicatedByDefault(true);
+}
+
+void UAstrawildMechaComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UAstrawildMechaComponent, bIsMechaActive);
+    DOREPLIFETIME(UAstrawildMechaComponent, bIsFlying);
+    DOREPLIFETIME(UAstrawildMechaComponent, bIsOverboosting);
+    DOREPLIFETIME(UAstrawildMechaComponent, bIsOverheated);
+    DOREPLIFETIME(UAstrawildMechaComponent, CurrentEnergy);
+    DOREPLIFETIME(UAstrawildMechaComponent, MaxEnergy);
+    DOREPLIFETIME(UAstrawildMechaComponent, CurrentHeat);
+    DOREPLIFETIME(UAstrawildMechaComponent, CurrentShield);
+    DOREPLIFETIME(UAstrawildMechaComponent, MaxShield);
+    DOREPLIFETIME(UAstrawildMechaComponent, ActiveFrameData);
+    DOREPLIFETIME(UAstrawildMechaComponent, EquippedWeaponTag);
 }
 
 void UAstrawildMechaComponent::BeginPlay()
 {
     Super::BeginPlay();
+}
+
+void UAstrawildMechaComponent::ServerEquipMechaFrame_Implementation(const FGameplayTag FrameTag)
+{
+    if (const FAstrawildMechaFrameRow* Frame = FindFrameByTag(FrameTag))
+    {
+        EquipMechaFrame(*Frame);
+    }
+}
+
+void UAstrawildMechaComponent::ServerEjectMechaFrame_Implementation()
+{
+    EjectMechaFrame();
+}
+
+void UAstrawildMechaComponent::ServerSetFlightActive_Implementation(const bool bActive)
+{
+    SetFlightActive(bActive);
+}
+
+void UAstrawildMechaComponent::ServerTriggerOverboost_Implementation(const bool bEnable)
+{
+    TriggerOverboost(bEnable);
+}
+
+void UAstrawildMechaComponent::ServerFireHardpointWeapon_Implementation(const EAstrawildMechaHardpoint Slot, const FVector_NetQuantize TargetLocation)
+{
+    FireHardpointWeapon(Slot, TargetLocation);
+}
+
+void UAstrawildMechaComponent::ServerActivateBeamSaberMelee_Implementation()
+{
+    ActivateBeamSaberMelee();
+}
+
+void UAstrawildMechaComponent::OnRepMechaState()
+{
+    if (ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCharacterMovementComponent* Movement = OwnerChar->GetCharacterMovement())
+        {
+            if (!bIsMechaActive)
+            {
+                Movement->SetMovementMode(MOVE_Walking);
+                Movement->MaxWalkSpeed = 500.0f;
+            }
+            else if (bIsFlying || bIsOverboosting)
+            {
+                Movement->SetMovementMode(MOVE_Flying);
+                Movement->MaxFlySpeed = bIsOverboosting ? ActiveFrameData.OverboostSpeed : ActiveFrameData.FlightCruiseSpeed;
+            }
+            else
+            {
+                Movement->SetMovementMode(MOVE_Walking);
+                Movement->MaxWalkSpeed = bIsOverboosting ? ActiveFrameData.OverboostSpeed : ActiveFrameData.GroundRunSpeed;
+            }
+        }
+    }
+    OnFlightStateChanged.Broadcast(bIsFlying);
+    OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+    OnShieldChanged.Broadcast(CurrentShield, MaxShield);
+}
+
+void UAstrawildMechaComponent::OnRepEnergy()
+{
+    OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+}
+
+void UAstrawildMechaComponent::OnRepShield()
+{
+    OnShieldChanged.Broadcast(CurrentShield, MaxShield);
 }
 
 void UAstrawildMechaComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -61,7 +150,15 @@ void UAstrawildMechaComponent::TickComponent(const float DeltaTime, const ELevel
 
 bool UAstrawildMechaComponent::EquipMechaFrame(const FAstrawildMechaFrameRow& FrameData)
 {
-    if (!HasAuthorityForMecha() || !FrameData.FrameTag.IsValid())
+    if (!HasAuthorityForMecha())
+    {
+        if (AActor* OwnerActor = GetOwner(); OwnerActor && OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+        {
+            ServerEquipMechaFrame(FrameData.FrameTag);
+        }
+        return false;
+    }
+    if (!FrameData.FrameTag.IsValid())
     {
         return false;
     }
@@ -93,6 +190,10 @@ void UAstrawildMechaComponent::EjectMechaFrame()
 {
     if (!HasAuthorityForMecha())
     {
+        if (AActor* OwnerActor = GetOwner(); OwnerActor && OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+        {
+            ServerEjectMechaFrame();
+        }
         return;
     }
     TriggerOverboost(false);
@@ -111,7 +212,15 @@ void UAstrawildMechaComponent::EjectMechaFrame()
 
 void UAstrawildMechaComponent::SetFlightActive(const bool bActive)
 {
-    if (!HasAuthorityForMecha() || (bActive && (!bIsMechaActive || CurrentEnergy <= 50.0f || bIsOverheated)))
+    if (!HasAuthorityForMecha())
+    {
+        if (AActor* OwnerActor = GetOwner(); OwnerActor && OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+        {
+            ServerSetFlightActive(bActive);
+        }
+        return;
+    }
+    if (bActive && (!bIsMechaActive || CurrentEnergy <= 50.0f || bIsOverheated))
     {
         return;
     }
@@ -136,7 +245,15 @@ void UAstrawildMechaComponent::SetFlightActive(const bool bActive)
 
 void UAstrawildMechaComponent::TriggerOverboost(const bool bEnable)
 {
-    if (!HasAuthorityForMecha() || (bEnable && (!bIsMechaActive || CurrentEnergy <= 100.0f || bIsOverheated)))
+    if (!HasAuthorityForMecha())
+    {
+        if (AActor* OwnerActor = GetOwner(); OwnerActor && OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+        {
+            ServerTriggerOverboost(bEnable);
+        }
+        return;
+    }
+    if (bEnable && (!bIsMechaActive || CurrentEnergy <= 100.0f || bIsOverheated))
     {
         return;
     }
@@ -153,7 +270,15 @@ void UAstrawildMechaComponent::TriggerOverboost(const bool bEnable)
 
 bool UAstrawildMechaComponent::FireHardpointWeapon(const EAstrawildMechaHardpoint Slot, const FVector TargetLocation)
 {
-    if (!HasAuthorityForMecha() || !bIsMechaActive || bIsOverheated || HardpointCooldownRemaining > 0.0f || TargetLocation.ContainsNaN())
+    if (!HasAuthorityForMecha())
+    {
+        if (AActor* OwnerActor = GetOwner(); OwnerActor && OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+        {
+            ServerFireHardpointWeapon(Slot, FVector_NetQuantize(TargetLocation));
+        }
+        return false;
+    }
+    if (!bIsMechaActive || bIsOverheated || HardpointCooldownRemaining > 0.0f || TargetLocation.ContainsNaN())
     {
         return false;
     }
@@ -195,7 +320,15 @@ bool UAstrawildMechaComponent::FireHardpointWeapon(const EAstrawildMechaHardpoin
 
 void UAstrawildMechaComponent::ActivateBeamSaberMelee()
 {
-    if (!HasAuthorityForMecha() || !bIsMechaActive || bIsOverheated)
+    if (!HasAuthorityForMecha())
+    {
+        if (AActor* OwnerActor = GetOwner(); OwnerActor && OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+        {
+            ServerActivateBeamSaberMelee();
+        }
+        return;
+    }
+    if (!bIsMechaActive || bIsOverheated)
     {
         return;
     }
@@ -216,6 +349,20 @@ void UAstrawildMechaComponent::ActivateBeamSaberMelee()
         bIsOverheated = true;
     }
     OnEnergyChanged.Broadcast(CurrentEnergy, MaxEnergy, CurrentHeat);
+}
+
+const FAstrawildMechaFrameRow* UAstrawildMechaComponent::FindFrameByTag(const FGameplayTag& FrameTag) const
+{
+    if (!FrameTable || !FrameTag.IsValid())
+    {
+        return nullptr;
+    }
+    TArray<FAstrawildMechaFrameRow*> Rows;
+    FrameTable->GetAllRows<FAstrawildMechaFrameRow>(TEXT("AstrawildMechaFrameLookup"), Rows);
+    return Rows.FindByPredicate([FrameTag](const FAstrawildMechaFrameRow* Row)
+    {
+        return Row && Row->FrameTag == FrameTag;
+    });
 }
 
 const FAstrawildMechaWeaponRow* UAstrawildMechaComponent::FindWeaponForSlot(const EAstrawildMechaHardpoint Slot) const

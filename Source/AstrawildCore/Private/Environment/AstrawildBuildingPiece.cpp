@@ -134,8 +134,9 @@ void AAstrawildBuildingPiece::LoadSaveData(const FAstrawildBuildingSaveData& Sav
 	CurrentHealth = SaveData.CurrentHealth;
 	SetActorTransform(SaveData.WorldTransform);
 
-	if (ContainerInventory && SaveData.ContainerInventory.Num() > 0)
+	if (ContainerInventory)
 	{
+		// Loading an empty saved container must clear any level-default contents.
 		ContainerInventory->LoadInventorySlots(SaveData.ContainerInventory);
 	}
 }

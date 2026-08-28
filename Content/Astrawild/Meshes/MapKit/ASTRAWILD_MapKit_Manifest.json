@@ -1,0 +1,37 @@
+{
+  "schema": "ASTRAWILD.CompactMapKit.v1",
+  "assets": [
+    {
+      "kind": "MapKitSourceMesh",
+      "zone": "DawnSpire",
+      "placeholder_static_mesh": true,
+      "file": "Content/Astrawild/Meshes/MapKit/SM_DawnSpire_Kit_Source.obj",
+      "vertices": 30,
+      "faces": 22
+    },
+    {
+      "kind": "MapKitSourceMesh",
+      "zone": "ResourceGrove",
+      "placeholder_static_mesh": true,
+      "file": "Content/Astrawild/Meshes/MapKit/SM_ResourceGrove_Kit_Source.obj",
+      "vertices": 178,
+      "faces": 187
+    },
+    {
+      "kind": "MapKitSourceMesh",
+      "zone": "RestSanctuary",
+      "placeholder_static_mesh": true,
+      "file": "Content/Astrawild/Meshes/MapKit/SM_RestSanctuary_Kit_Source.obj",
+      "vertices": 50,
+      "faces": 52
+    },
+    {
+      "kind": "MapKitSourceMesh",
+      "zone": "DangerPit",
+      "placeholder_static_mesh": true,
+      "file": "Content/Astrawild/Meshes/MapKit/SM_DangerPit_Kit_Source.obj",
+      "vertices": 110,
+      "faces": 91
+    }
+  ]
+}

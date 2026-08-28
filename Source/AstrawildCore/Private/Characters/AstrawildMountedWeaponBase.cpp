@@ -1,6 +1,7 @@
 #include "Characters/AstrawildMountedWeaponBase.h"
 
 #include "Characters/AstrawildCharacter.h"
+#include "Echoes/AstrawildEchoBase.h"
 #include "Components/AstrawildTechnologyComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
@@ -217,23 +218,65 @@ bool AAstrawildMountedWeaponBase::CanFire(FText& OutFailureReason) const
 
 bool AAstrawildMountedWeaponBase::HasRequiredTechnology() const
 {
-    if (!GearData || !GearData->RequiredTechnologyTag.IsValid())
+    if (!GearData)
+    {
+        return false;
+    }
+
+    const TArray<AActor*> Candidates = {MountedOwner.Get(), GetOwner()};
+    bool bTechnologySatisfied = !GearData->RequiredTechnologyTag.IsValid();
+    if (!bTechnologySatisfied)
+    {
+        for (AActor* Candidate : Candidates)
+        {
+            if (const AAstrawildCharacter* Character = Cast<AAstrawildCharacter>(Candidate))
+            {
+                bTechnologySatisfied = Character->Technology && Character->Technology->IsTechnologyUnlocked(GearData->RequiredTechnologyTag);
+                if (bTechnologySatisfied)
+                {
+                    break;
+                }
+            }
+            if (Candidate && Candidate->GetOwner())
+            {
+                if (const AAstrawildCharacter* OwnerCharacter = Cast<AAstrawildCharacter>(Candidate->GetOwner()))
+                {
+                    bTechnologySatisfied = OwnerCharacter->Technology && OwnerCharacter->Technology->IsTechnologyUnlocked(GearData->RequiredTechnologyTag);
+                    if (bTechnologySatisfied)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!bTechnologySatisfied)
+    {
+        return false;
+    }
+    if (!GearData->RequiredPartnerSkillTag.IsValid())
     {
         return true;
     }
 
-    const TArray<AActor*> Candidates = {MountedOwner.Get(), GetOwner()};
     for (AActor* Candidate : Candidates)
     {
-        if (const AAstrawildCharacter* Character = Cast<AAstrawildCharacter>(Candidate))
+        if (const AAstrawildEchoBase* Echo = Cast<AAstrawildEchoBase>(Candidate))
         {
-            return Character->Technology && Character->Technology->IsTechnologyUnlocked(GearData->RequiredTechnologyTag);
+            if (Echo->GetPartnerSkillTag() == GearData->RequiredPartnerSkillTag)
+            {
+                return true;
+            }
         }
         if (Candidate && Candidate->GetOwner())
         {
-            if (const AAstrawildCharacter* OwnerCharacter = Cast<AAstrawildCharacter>(Candidate->GetOwner()))
+            if (const AAstrawildEchoBase* OwnerEcho = Cast<AAstrawildEchoBase>(Candidate->GetOwner()))
             {
-                return OwnerCharacter->Technology && OwnerCharacter->Technology->IsTechnologyUnlocked(GearData->RequiredTechnologyTag);
+                if (OwnerEcho->GetPartnerSkillTag() == GearData->RequiredPartnerSkillTag)
+                {
+                    return true;
+                }
             }
         }
     }

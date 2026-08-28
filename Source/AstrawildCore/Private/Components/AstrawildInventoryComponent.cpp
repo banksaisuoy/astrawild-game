@@ -2,12 +2,51 @@
 
 #include "Components/AstrawildInventoryComponent.h"
 #include "AstrawildLogChannels.h"
+#include "GameFramework/Actor.h"
+#include "Net/UnrealNetwork.h"
 
 UAstrawildInventoryComponent::UAstrawildInventoryComponent()
 	: MaxSlots(30)
 	, MaxWeightCapacity(250.0f)
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
+}
+
+void UAstrawildInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UAstrawildInventoryComponent, Slots);
+}
+
+void UAstrawildInventoryComponent::ServerAddItem_Implementation(const FGameplayTag ItemTag, const int32 Quantity, const float Durability)
+{
+	AddItem(ItemTag, Quantity, Durability);
+}
+
+void UAstrawildInventoryComponent::ServerRemoveItem_Implementation(const FGameplayTag ItemTag, const int32 Quantity)
+{
+	RemoveItem(ItemTag, Quantity);
+}
+
+void UAstrawildInventoryComponent::ServerMoveOrSwapSlot_Implementation(const int32 FromIndex, const int32 ToIndex)
+{
+	MoveOrSwapSlot(FromIndex, ToIndex);
+}
+
+void UAstrawildInventoryComponent::ServerSplitSlot_Implementation(const int32 FromIndex, const int32 ToIndex, const int32 Amount)
+{
+	SplitSlot(FromIndex, ToIndex, Amount);
+}
+
+void UAstrawildInventoryComponent::ServerClearInventory_Implementation()
+{
+	ClearInventory();
+}
+
+void UAstrawildInventoryComponent::OnRepSlots()
+{
+	OnInventoryUpdated.Broadcast();
 }
 
 void UAstrawildInventoryComponent::BeginPlay()
@@ -21,6 +60,14 @@ void UAstrawildInventoryComponent::BeginPlay()
 
 bool UAstrawildInventoryComponent::AddItem(const FGameplayTag& ItemTag, int32 Quantity, float Durability)
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerAddItem(ItemTag, Quantity, Durability);
+		}
+		return false;
+	}
 	if (!ItemTag.IsValid() || Quantity <= 0)
 	{
 		return false;
@@ -77,8 +124,51 @@ bool UAstrawildInventoryComponent::AddItem(const FGameplayTag& ItemTag, int32 Qu
 	return RemainingToAdd == 0;
 }
 
+bool UAstrawildInventoryComponent::CanAddItem(const FGameplayTag& ItemTag, const int32 Quantity) const
+{
+	if (!ItemTag.IsValid() || Quantity <= 0)
+	{
+		return false;
+	}
+
+	int32 RemainingToAdd = Quantity;
+	constexpr int32 MaxStack = 99;
+	for (const FAstrawildItemSlot& Slot : Slots)
+	{
+		if (Slot.ItemTag == ItemTag && Slot.Quantity < MaxStack)
+		{
+			RemainingToAdd -= FMath::Min(RemainingToAdd, MaxStack - Slot.Quantity);
+			if (RemainingToAdd <= 0)
+			{
+				return true;
+			}
+		}
+	}
+
+	for (const FAstrawildItemSlot& Slot : Slots)
+	{
+		if (!Slot.IsValid())
+		{
+			RemainingToAdd -= FMath::Min(RemainingToAdd, MaxStack);
+			if (RemainingToAdd <= 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 bool UAstrawildInventoryComponent::RemoveItem(const FGameplayTag& ItemTag, int32 Quantity)
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerRemoveItem(ItemTag, Quantity);
+		}
+		return false;
+	}
 	if (!ItemTag.IsValid() || Quantity <= 0 || !HasItem(ItemTag, Quantity))
 	{
 		return false;
@@ -152,6 +242,14 @@ int32 UAstrawildInventoryComponent::GetEmptySlotCount() const
 
 bool UAstrawildInventoryComponent::MoveOrSwapSlot(int32 FromIndex, int32 ToIndex)
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerMoveOrSwapSlot(FromIndex, ToIndex);
+		}
+		return false;
+	}
 	if (!Slots.IsValidIndex(FromIndex) || !Slots.IsValidIndex(ToIndex) || FromIndex == ToIndex)
 	{
 		return false;
@@ -186,6 +284,14 @@ bool UAstrawildInventoryComponent::MoveOrSwapSlot(int32 FromIndex, int32 ToIndex
 
 bool UAstrawildInventoryComponent::SplitSlot(int32 FromIndex, int32 ToIndex, int32 Amount)
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerSplitSlot(FromIndex, ToIndex, Amount);
+		}
+		return false;
+	}
 	if (!Slots.IsValidIndex(FromIndex) || !Slots.IsValidIndex(ToIndex) || FromIndex == ToIndex || Amount <= 0)
 	{
 		return false;
@@ -210,6 +316,14 @@ bool UAstrawildInventoryComponent::SplitSlot(int32 FromIndex, int32 ToIndex, int
 
 void UAstrawildInventoryComponent::ClearInventory()
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerClearInventory();
+		}
+		return;
+	}
 	for (FAstrawildItemSlot& Slot : Slots)
 	{
 		Slot.Clear();

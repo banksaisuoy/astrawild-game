@@ -79,6 +79,7 @@ $required = @(
     "Source/AstrawildCore/Private/World/AstrawildWorldClockSubsystem.cpp",
     "Config/DefaultEngine.ini",
     "Config/DefaultScalability.ini",
+    "Config/DefaultGameplayTags.ini",
     "Scripts/import_all_datatables.py",
     "Scripts/setup_project_assets.py",
     "Scripts/validate_content_contracts.py",
@@ -87,11 +88,33 @@ $required = @(
     "Scripts/validate_master_echodex.py",
     "Scripts/validate_generated_assets.py",
     "Scripts/validate_mecha_contracts.py",
-    "Scripts/validate_generated_headers.py",
+    "Scripts/validate_vertical_slice_guards.py",
+    "Scripts\validate_generated_headers.py",
+    "Scripts\generate_character_and_map_assets.py",
+    "Scripts\validate_character_map_assets.py",
+    "Scripts\generate_extended_audio_pack.py",
+    "Scripts\validate_audio_pack.py",
+    "Scripts\validate_importer_coverage.py",
     "Docs/M2_EVOLUTION_HANDOFF.md",
     "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
     "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md",
-    "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md"
+    "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md",
+    "Docs/ASSET_PRODUCTION_BIBLE.md",
+    "Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md",
+    "Content/Astrawild/Meshes/Echoes/ASTRAWILD_Echoes.mtl",
+    "Content/Astrawild/Meshes/Echoes/ASTRAWILD_EchoSource_Manifest.json",
+    "Content/Astrawild/Meshes/Characters/ASTRAWILD_Characters.mtl",
+    "Content/Astrawild/Meshes/Characters/SM_Player_AstralSurveyor_Source.obj",
+    "Content/Astrawild/Meshes/Characters/SM_Alpha_Solarix_Source.obj",
+    "Content/Astrawild/Meshes/MapKit/ASTRAWILD_MapKit.mtl",
+    "Content/Astrawild/Meshes/MapKit/ASTRAWILD_MapKit_Manifest.json",
+    "Content/Astrawild/Meshes/MapKit/SM_DawnSpire_Kit_Source.obj",
+    "Content/Astrawild/Meshes/MapKit/SM_ResourceGrove_Kit_Source.obj",
+    "Content/Astrawild/Meshes/MapKit/SM_RestSanctuary_Kit_Source.obj",
+    "Content/Astrawild/Meshes/MapKit/SM_DangerPit_Kit_Source.obj",
+    "Content/Astrawild/Audio/ASTRAWILD_AudioPack_Manifest.json",
+    "Content/Astrawild/Audio/Music/MUS_Astra_Exploration.mp3",
+    "Content/Astrawild/Audio/Music/MUS_DangerPit_Encounter.mp3"
 )
 foreach ($relative in $required) {
     if (-not (Test-Path (Join-Path $ProjectRoot $relative))) { throw "Missing required path: $relative" }
@@ -104,14 +127,18 @@ $pythonValidators = @(
     "Scripts\validate_editor_automation.py",
     "Scripts\validate_master_echodex.py",
     "Scripts\validate_generated_assets.py",
-    "Scripts\validate_mecha_contracts.py"
+    "Scripts\validate_mecha_contracts.py",
+    "Scripts\validate_vertical_slice_guards.py",
+    "Scripts\validate_character_map_assets.py",
+    "Scripts\validate_audio_pack.py",
+    "Scripts\validate_importer_coverage.py"
 )
 if (Get-Command python -ErrorAction SilentlyContinue) {
     foreach ($validator in $pythonValidators) {
         & python (Join-Path $ProjectRoot $validator)
         if ($LASTEXITCODE -ne 0) { throw "Python validation failed: $validator (exit code $LASTEXITCODE)" }
     }
-    & python -m py_compile (Join-Path $ProjectRoot "Scripts\import_all_datatables.py") (Join-Path $ProjectRoot "Scripts\setup_project_assets.py") (Join-Path $ProjectRoot "Scripts\generate_master_echodex_200.py") (Join-Path $ProjectRoot "Scripts\generate_game_audio.py") (Join-Path $ProjectRoot "Scripts\generate_3d_props.py") (Join-Path $ProjectRoot "Scripts\generate_ecosystem_behavior.py")
+    & python -m py_compile (Join-Path $ProjectRoot "Scripts\import_all_datatables.py") (Join-Path $ProjectRoot "Scripts\setup_project_assets.py") (Join-Path $ProjectRoot "Scripts\generate_master_echodex_200.py") (Join-Path $ProjectRoot "Scripts\generate_game_audio.py") (Join-Path $ProjectRoot "Scripts\generate_3d_props.py") (Join-Path $ProjectRoot "Scripts\generate_ecosystem_behavior.py") (Join-Path $ProjectRoot "Scripts\generate_gameplay_tag_registry.py") (Join-Path $ProjectRoot "Scripts\generate_character_and_map_assets.py") (Join-Path $ProjectRoot "Scripts\generate_extended_audio_pack.py")
     if ($LASTEXITCODE -ne 0) { throw "Unreal Python script syntax validation failed" }
 }
 else {

@@ -249,6 +249,17 @@ bool UAstrawildBuildingComponent::PlaceBuilding()
 		return true;
 	}
 
+		// Spawn failure must be transaction-safe: restore every consumed ingredient.
+	if (Inv)
+	{
+		for (const FAstrawildRecipeIngredient& Ingredient : ActiveBuildingCost)
+		{
+			Inv->AddItem(Ingredient.ItemTag, Ingredient.Quantity);
+		}
+	}
+	LastPlacementErrorMessage = FText::FromString(TEXT("Cannot place: building spawn failed; materials were refunded."));
+	OnBuildingFailed.Broadcast(LastPlacementErrorMessage);
+	UE_LOG(LogAstrawild, Warning, TEXT("Building spawn failed; refunded placement materials."));
 	bIsPlacingPiece = false;
 	return false;
 }

@@ -2,12 +2,23 @@
 
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
+#include "TimerManager.h"
 #include "World/AstrawildWorldClockSubsystem.h"
 
 void UAstrawildPowerGridSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
     RebuildDefaultsFromTable();
+
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+            SimulationTimerHandle,
+            this,
+            &UAstrawildPowerGridSubsystem::HandleSimulationTick,
+            1.0f,
+            true);
+    }
 }
 
 void UAstrawildPowerGridSubsystem::Deinitialize()
@@ -72,6 +83,7 @@ void UAstrawildPowerGridSubsystem::SimulatePowerStep(const float DeltaSeconds)
     }
 
     const float netWatts = generation - demand;
+    float batteryDischargeWatts = 0.0f;
     if (netWatts >= 0.0f)
     {
         BatteryChargeWattHours = FMath::Min(BatteryCapacityWattHours, BatteryChargeWattHours + netWatts * DeltaSeconds / 3600.0f * FMath::Clamp(BatteryChargeEfficiency, 0.0f, 1.0f));
@@ -80,14 +92,13 @@ void UAstrawildPowerGridSubsystem::SimulatePowerStep(const float DeltaSeconds)
     {
         const float neededWattHours = -netWatts * DeltaSeconds / 3600.0f;
         const float suppliedWattHours = FMath::Min(BatteryChargeWattHours, neededWattHours);
+        batteryDischargeWatts = DeltaSeconds > 0.0f ? suppliedWattHours * 3600.0f / DeltaSeconds : 0.0f;
         BatteryChargeWattHours = FMath::Max(0.0f, BatteryChargeWattHours - suppliedWattHours);
     }
 
-    float availableWatts = generation;
-    if (netWatts < 0.0f && DeltaSeconds > 0.0f)
-    {
-        availableWatts += BatteryChargeWattHours * 3600.0f / DeltaSeconds;
-    }
+    // Use the energy discharged during this step to determine consumer power;
+    // do not derive available watts from the already-depleted charge.
+    float availableWatts = generation + batteryDischargeWatts;
     TArray<FGameplayTag> consumerTags;
     ConsumerDemandWatts.GetKeys(consumerTags);
     consumerTags.Sort([this](const FGameplayTag& left, const FGameplayTag& right)

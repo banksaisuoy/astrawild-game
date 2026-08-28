@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/AstrawildInteractableInterface.h"
 #include "GameplayTagContainer.h"
+#include "AstrawildTypes.h"
 #include "AstrawildInteractableActor.generated.h"
 
 class UStaticMeshComponent;
@@ -43,6 +44,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Quest")
 	FGameplayTag QuestTargetTag;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Quest")
+	EAstrawildQuestObjectiveType QuestObjectiveType = EAstrawildQuestObjectiveType::Interact;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	bool bHasBeenInteracted;
 
@@ -51,6 +55,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Reward")
 	int32 RewardItemQuantity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Survival", meta = (ClampMin = "0.0"))
+	float HungerRestoredOnInteract = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Survival", meta = (ClampMin = "0.0"))
+	float ThirstRestoredOnInteract = 0.0f;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|Events")
 	FOnInteractableTriggeredSignature OnInteracted;

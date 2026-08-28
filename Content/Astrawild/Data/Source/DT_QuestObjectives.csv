@@ -6,4 +6,4 @@ Objective_Resonator_Capture,Quest.FirstResonator,CaptureEcho,Capture,Echo.Any,1,
 Objective_DangerPit_Enter,Quest.DangerPit,EnterPit,Reach,Location.DangerPit,1,"Enter the South-East Danger Pit."
 Objective_DangerPit_Alpha,Quest.DangerPit,DefeatAlpha,Defeat,Echo.SolarixAlpha,1,"Defeat the Alpha Echo in the Danger Pit."
 Objective_Campwater_FindSpring,Quest.Campwater,FindSpring,Discover,Location.AquavineSpring,1,"Discover Aquavine's spring."
-Objective_Campwater_Collect,Quest.Campwater,CollectWater,Collect,Item.Resource.TorrentWater,5,"Collect five units of Torrent Water."
+Objective_Campwater_Collect,Quest.Campwater,CollectWater,Collect,Item.Water,5,Collect five units of clean spring water."

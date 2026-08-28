@@ -38,9 +38,12 @@ def main() -> int:
     for struct_name in ("FAstrawildMechaWeaponRow", "FAstrawildMechaFrameRow", "FAstrawildCyberneticEvolutionRow"):
         if f"struct ASTRAWILDCORE_API {struct_name}" not in mecha_data_header:
             errors.append(f"{struct_name} is missing ASTRAWILDCORE_API export")
-    for required_token in ("TargetLocation.ContainsNaN()", "LineTraceSingleByChannel", "ApplyPointDamage"):
+    for required_token in ("TargetLocation.ContainsNaN()", "LineTraceSingleByChannel", "ApplyPointDamage", "GetLifetimeReplicatedProps", "DOREPLIFETIME", "ServerFireHardpointWeapon_Implementation", "ServerEquipMechaFrame_Implementation", "OnRepMechaState"):
         if required_token not in mecha_cpp:
-            errors.append(f"mecha firing contract is missing {required_token}")
+            errors.append(f"mecha runtime/network contract is missing {required_token}")
+    for required_token in ("ReplicatedUsing = OnRepMechaState", "UFUNCTION(Server, Reliable)", "FVector_NetQuantize"):
+        if required_token not in mecha_data_header and required_token not in (ROOT / "Source/AstrawildCore/Public/Components/AstrawildMechaComponent.h").read_text(encoding="utf-8", errors="replace"):
+            errors.append(f"mecha header network contract is missing {required_token}")
     if "IsTargetLockAllowed" not in cockpit_cpp or "LineTraceSingleByChannel" not in cockpit_cpp:
         errors.append("cockpit target lock contract is missing actor/LOS validation")
 
@@ -96,7 +99,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print(f"ASTRAWILD mecha contract validation passed ({len(frames)} frames, {len(weapons)} weapons, {len(animations)} animation profiles, {len(vfx)} VFX bindings).")
+    print(f"ASTRAWILD mecha contract validation passed ({len(frames)} frames, {len(weapons)} weapons, {len(animations)} animation profiles, {len(vfx)} VFX bindings, replicated input/state bridge).")
     return 0
 
 

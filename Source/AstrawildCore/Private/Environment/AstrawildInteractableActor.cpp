@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/AstrawildInventoryComponent.h"
 #include "Components/AstrawildQuestComponent.h"
+#include "Components/AstrawildSurvivalComponent.h"
 #include "AstrawildLogChannels.h"
 
 AAstrawildInteractableActor::AAstrawildInteractableActor()
@@ -60,25 +61,46 @@ bool AAstrawildInteractableActor::PerformInteraction_Implementation(AActor* Inte
 		return false;
 	}
 
-	bHasBeenInteracted = true;
 	UE_LOG(LogAstrawild, Log, TEXT("%s interacted with %s: %s"), *Interactor->GetName(), *GetName(), *DetailedDescription.ToString());
 
 	// Grant reward item if configured
 	if (RewardItemTag.IsValid() && RewardItemQuantity > 0)
 	{
 		UAstrawildInventoryComponent* Inv = Interactor->FindComponentByClass<UAstrawildInventoryComponent>();
-		if (Inv)
+		const bool bRewardAccepted = Inv && Inv->AddItem(RewardItemTag, RewardItemQuantity);
+		if (bRewardAccepted)
 		{
-			Inv->AddItem(RewardItemTag, RewardItemQuantity);
 			UE_LOG(LogAstrawildInventory, Log, TEXT("Granted %s x%d from %s"), *RewardItemTag.ToString(), RewardItemQuantity, *GetName());
+			if (UAstrawildQuestComponent* Quest = Interactor->FindComponentByClass<UAstrawildQuestComponent>())
+			{
+				Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Collect, RewardItemTag, RewardItemQuantity);
+			}
+		}
+		else
+		{
+			UE_LOG(LogAstrawildInventory, Warning, TEXT("Reward %s x%d from %s was not accepted; inventory may be full."), *RewardItemTag.ToString(), RewardItemQuantity, *GetName());
+			return false;
 		}
 	}
 
+	bHasBeenInteracted = true;
 	if (QuestTargetTag.IsValid())
 	{
 		if (UAstrawildQuestComponent* Quest = Interactor->FindComponentByClass<UAstrawildQuestComponent>())
 		{
-			Quest->AddProgressForTarget(EAstrawildQuestObjectiveType::Interact, QuestTargetTag, 1);
+			Quest->AddProgressForTarget(QuestObjectiveType, QuestTargetTag, 1);
+		}
+	}
+
+	if (UAstrawildSurvivalComponent* Survival = Interactor->FindComponentByClass<UAstrawildSurvivalComponent>())
+	{
+		if (HungerRestoredOnInteract > 0.0f)
+		{
+			Survival->ConsumeFood(HungerRestoredOnInteract);
+		}
+		if (ThirstRestoredOnInteract > 0.0f)
+		{
+			Survival->DrinkWater(ThirstRestoredOnInteract);
 		}
 	}
 

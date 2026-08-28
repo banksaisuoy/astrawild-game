@@ -36,4 +36,5 @@ public:
 private:
 	void SpawnTestPlatform(const FVector& Location, const FVector& Extent, const FRotator& Rotation = FRotator::ZeroRotator, const FColor& DebugColor = FColor::White);
 	void SpawnTestEntities();
+	bool bHasGeneratedArena = false;
 };

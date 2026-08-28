@@ -1,0 +1,20 @@
+# ASTRAWILD original generated material palette
+newmtl M_Map_Glow
+Kd 0.5500 0.9000 0.9000
+d 1.0000
+illum 2
+
+newmtl M_Map_Soil
+Kd 0.2000 0.1300 0.0800
+d 1.0000
+illum 2
+
+newmtl M_Map_Stone
+Kd 0.2800 0.3000 0.3100
+d 1.0000
+illum 2
+
+newmtl M_Map_Wood
+Kd 0.3800 0.1800 0.0700
+d 1.0000
+illum 2

@@ -64,28 +64,32 @@ bool AAstrawildHarvestableNode::Harvest(float ToolPower, EAstrawildHarvestType T
 		EfficiencyMultiplier = 0.5f;
 	}
 
+	// Calculate the exact primary yield before mutating the node so a full
+	// inventory cannot consume world resources without granting the result.
+	const int32 BaseYield = FMath::RandRange(MinYieldPerHit, MaxYieldPerHit);
+	OutQuantityHarvested = FMath::Max(1, FMath::RoundToInt(BaseYield * (ToolType == HarvestType ? 1.5f : 1.0f)));
+	UAstrawildInventoryComponent* Inv = HarvesterActor->FindComponentByClass<UAstrawildInventoryComponent>();
+	if (!Inv || !Inv->CanAddItem(PrimaryResourceTag, OutQuantityHarvested))
+	{
+		OutQuantityHarvested = 0;
+		UE_LOG(LogAstrawildInventory, Warning, TEXT("Cannot harvest %s: inventory cannot accept the full yield."), *GetName());
+		return false;
+	}
+
 	const float EffectiveDamage = FMath::Max(10.0f, ToolPower * 20.0f * EfficiencyMultiplier);
 	CurrentNodeHealth = FMath::Max(0.0f, CurrentNodeHealth - EffectiveDamage);
 
-	// Calculate primary yield
-	const int32 BaseYield = FMath::RandRange(MinYieldPerHit, MaxYieldPerHit);
-	OutQuantityHarvested = FMath::Max(1, FMath::RoundToInt(BaseYield * (ToolType == HarvestType ? 1.5f : 1.0f)));
+	// Give directly to harvester inventory
+	const bool bPrimaryAdded = Inv->AddItem(PrimaryResourceTag, OutQuantityHarvested);
 
-	// Give directly to harvester inventory if present
-	UAstrawildInventoryComponent* Inv = HarvesterActor->FindComponentByClass<UAstrawildInventoryComponent>();
-	bool bPrimaryAdded = false;
-	if (Inv)
+			// Rare secondary drop roll (e.g. Astra Shards from minerals)
+	if (RareSecondaryResourceTag.IsValid() && FMath::RandRange(1, 100) <= RareDropChancePercent)
 	{
-		bPrimaryAdded = Inv->AddItem(PrimaryResourceTag, OutQuantityHarvested);
-
-		// Rare secondary drop roll (e.g. Astra Shards from minerals)
-		if (RareSecondaryResourceTag.IsValid() && FMath::RandRange(1, 100) <= RareDropChancePercent)
-		{
-			const int32 RareQty = 1;
-			Inv->AddItem(RareSecondaryResourceTag, RareQty);
-			UE_LOG(LogAstrawild, Log, TEXT("Rare Drop harvested: %s x%d"), *RareSecondaryResourceTag.ToString(), RareQty);
-		}
+		const int32 RareQty = 1;
+		Inv->AddItem(RareSecondaryResourceTag, RareQty);
+		UE_LOG(LogAstrawild, Log, TEXT("Rare Drop harvested: %s x%d"), *RareSecondaryResourceTag.ToString(), RareQty);
 	}
+
 	if (bPrimaryAdded)
 	{
 		if (UAstrawildQuestComponent* Quest = HarvesterActor->FindComponentByClass<UAstrawildQuestComponent>())

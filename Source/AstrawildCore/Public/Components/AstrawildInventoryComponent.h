@@ -18,6 +18,7 @@ class ASTRAWILDCORE_API UAstrawildInventoryComponent : public UActorComponent
 
 public:
 	UAstrawildInventoryComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -29,7 +30,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	float MaxWeightCapacity;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(ReplicatedUsing = OnRepSlots, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FAstrawildItemSlot> Slots;
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
@@ -45,8 +46,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool AddItem(const FGameplayTag& ItemTag, int32 Quantity, float Durability = 100.0f);
 
+	UFUNCTION(Server, Reliable)
+	void ServerAddItem(FGameplayTag ItemTag, int32 Quantity, float Durability);
+
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	bool CanAddItem(const FGameplayTag& ItemTag, int32 Quantity) const;
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool RemoveItem(const FGameplayTag& ItemTag, int32 Quantity);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRemoveItem(FGameplayTag ItemTag, int32 Quantity);
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	bool HasItem(const FGameplayTag& ItemTag, int32 RequiredQuantity = 1) const;
@@ -63,12 +73,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool MoveOrSwapSlot(int32 FromIndex, int32 ToIndex);
 
+	UFUNCTION(Server, Reliable)
+	void ServerMoveOrSwapSlot(int32 FromIndex, int32 ToIndex);
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool SplitSlot(int32 FromIndex, int32 ToIndex, int32 Amount);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSplitSlot(int32 FromIndex, int32 ToIndex, int32 Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void ClearInventory();
 
+	UFUNCTION(Server, Reliable)
+	void ServerClearInventory();
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void LoadInventorySlots(const TArray<FAstrawildItemSlot>& InSlots);
+
+private:
+	UFUNCTION()
+	void OnRepSlots();
 };

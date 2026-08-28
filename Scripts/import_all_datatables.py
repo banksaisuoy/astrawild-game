@@ -19,7 +19,12 @@ import unreal
 
 DESTINATION_PATH = "/Game/Astrawild/Data/Imported"
 MESH_DESTINATION_PATH = "/Game/Astrawild/Meshes/Props"
+ECHO_MESH_DESTINATION_PATH = "/Game/Astrawild/Meshes/Echoes"
+CHARACTER_MESH_DESTINATION_PATH = "/Game/Astrawild/Meshes/Characters"
+MAP_KIT_DESTINATION_PATH = "/Game/Astrawild/Meshes/MapKit"
 AUDIO_DESTINATION_PATH = "/Game/Astrawild/Audio/SFX"
+AMBIENCE_DESTINATION_PATH = "/Game/Astrawild/Audio/Ambience"
+MUSIC_DESTINATION_PATH = "/Game/Astrawild/Audio/Music"
 REGISTRY_ASSET_PATH = f"{DESTINATION_PATH}/DA_GeneratedAssetRegistry"
 
 # The names are actual reflected C++ UStruct names in AstrawildCore. Keep this
@@ -189,41 +194,74 @@ def _create_generated_registry(asset_tools, imported: list[dict]) -> dict:
 def _import_generated_assets(project_dir: Path, asset_tools) -> dict:
     mesh_source_dir = project_dir / "Content" / "Astrawild" / "Meshes" / "Props"
     audio_source_dir = project_dir / "Content" / "Astrawild" / "Audio" / "SFX"
-    _ensure_directory(MESH_DESTINATION_PATH)
-    _ensure_directory(AUDIO_DESTINATION_PATH)
+    source_mesh_groups = (
+        (mesh_source_dir, MESH_DESTINATION_PATH, MESH_FILES, "Prop"),
+        (project_dir / "Content" / "Astrawild" / "Meshes" / "Echoes", ECHO_MESH_DESTINATION_PATH, None, "EchoSource"),
+        (project_dir / "Content" / "Astrawild" / "Meshes" / "Characters", CHARACTER_MESH_DESTINATION_PATH, None, "CharacterSource"),
+        (project_dir / "Content" / "Astrawild" / "Meshes" / "MapKit", MAP_KIT_DESTINATION_PATH, None, "MapKitSource"),
+    )
 
     tasks = []
     metadata = []
     missing = []
-    for filename, contract in sorted(MESH_FILES.items()):
-        source_file = mesh_source_dir / filename
-        asset_path = f"{MESH_DESTINATION_PATH}/{source_file.stem}"
-        if not source_file.is_file():
-            missing.append(str(source_file))
-            continue
-        tasks.append(_make_generic_import_task(source_file, MESH_DESTINATION_PATH, source_file.stem))
-        metadata.append({
-            "kind": "StaticMesh",
-            "source": str(source_file),
-            "asset": asset_path,
-            "asset_id": contract["asset_id"],
-            "consumer": contract["consumer"],
-        })
+    for source_dir, destination_path, explicit_files, source_kind in source_mesh_groups:
+        _ensure_directory(destination_path)
+        if explicit_files is not None:
+            source_files = [(filename, contract) for filename, contract in sorted(explicit_files.items())]
+        else:
+            source_files = [
+                (path.name, {"asset_id": f"Mesh.{path.stem}", "consumer": f"{source_kind} mesh source"})
+                for path in sorted(source_dir.glob("*.obj"))
+            ]
+        for filename, contract in source_files:
+            source_file = source_dir / filename
+            asset_path = f"{destination_path}/{source_file.stem}"
+            if not source_file.is_file():
+                missing.append(str(source_file))
+                continue
+            tasks.append(_make_generic_import_task(source_file, destination_path, source_file.stem))
+            metadata.append({
+                "kind": "StaticMesh",
+                "source_kind": source_kind,
+                "source": str(source_file),
+                "asset": asset_path,
+                "asset_id": contract["asset_id"],
+                "consumer": contract["consumer"],
+            })
 
-    for filename, contract in sorted(AUDIO_FILES.items()):
-        source_file = audio_source_dir / filename
-        asset_path = f"{AUDIO_DESTINATION_PATH}/{source_file.stem}"
-        if not source_file.is_file():
-            missing.append(str(source_file))
-            continue
-        tasks.append(_make_generic_import_task(source_file, AUDIO_DESTINATION_PATH, source_file.stem))
-        metadata.append({
-            "kind": "SoundWave",
-            "source": str(source_file),
-            "asset": asset_path,
-            "cue_id": contract["cue_id"],
-            "consumer": contract["consumer"],
-        })
+    _ensure_directory(AUDIO_DESTINATION_PATH)
+    audio_source_groups = (
+        (audio_source_dir, AUDIO_DESTINATION_PATH, AUDIO_FILES, "CoreSFX"),
+        (project_dir / "Content" / "Astrawild" / "Audio" / "Ambience", AMBIENCE_DESTINATION_PATH, None, "Ambience"),
+        (project_dir / "Content" / "Astrawild" / "Audio" / "Music", MUSIC_DESTINATION_PATH, None, "Music"),
+    )
+    for source_dir, destination_path, explicit_files, source_kind in audio_source_groups:
+        _ensure_directory(destination_path)
+        if explicit_files is not None:
+            source_files = [
+                (path.name, explicit_files.get(path.name, {"cue_id": f"{source_kind}.{path.stem}", "consumer": f"{source_kind} audio source"}))
+                for path in sorted(source_dir.glob("*.wav")) + sorted(source_dir.glob("*.mp3"))
+            ]
+        else:
+            source_files = [
+                (path.name, {"cue_id": f"{source_kind}.{path.stem}", "consumer": f"{source_kind} audio source"})
+                for path in sorted(source_dir.glob("*.wav")) + sorted(source_dir.glob("*.mp3"))
+            ]
+        for filename, contract in source_files:
+            source_file = source_dir / filename
+            asset_path = f"{destination_path}/{source_file.stem}"
+            if not source_file.is_file():
+                missing.append(str(source_file))
+                continue
+            tasks.append(_make_generic_import_task(source_file, destination_path, source_file.stem))
+            metadata.append({
+                "kind": "SoundWave",
+                "source_kind": source_kind,
+                "source": str(source_file),
+                "asset": asset_path,
+                "cue_id": contract["cue_id"],
+                "consumer": contract["consumer"],
+            })
 
     if missing:
         raise RuntimeError("Missing generated asset sources: " + "; ".join(sorted(missing)))
@@ -242,8 +280,8 @@ def _import_generated_assets(project_dir: Path, asset_tools) -> dict:
 
     registry_report = _create_generated_registry(asset_tools, imported)
     report = {
-        "mesh_destination": MESH_DESTINATION_PATH,
-        "audio_destination": AUDIO_DESTINATION_PATH,
+        "mesh_destinations": [MESH_DESTINATION_PATH, ECHO_MESH_DESTINATION_PATH, CHARACTER_MESH_DESTINATION_PATH, MAP_KIT_DESTINATION_PATH],
+        "audio_destinations": [AUDIO_DESTINATION_PATH, AMBIENCE_DESTINATION_PATH, MUSIC_DESTINATION_PATH],
         "expected_count": len(metadata),
         "imported_count": len(imported),
         "failed_count": len(failed),

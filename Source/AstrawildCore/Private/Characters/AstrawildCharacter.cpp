@@ -104,13 +104,17 @@ void AAstrawildCharacter::BeginPlay()
 
 	ApplyVisualRepresentation();
 
-	// Starter inventory items for vertical slice
+	// Starter material for the vertical slice. Resonators are intentionally
+	// debug-only so the FirstResonator quest can exercise the craft objective.
 	if (Inventory)
 	{
 		const FGameplayTag SunwoodTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false);
-		const FGameplayTag ResonatorTag = FGameplayTag::RequestGameplayTag(FName("Item.Tool.AstraResonatorBasic"), false);
 		Inventory->AddItem(SunwoodTag, 10);
-		Inventory->AddItem(ResonatorTag, 5);
+		if (bGrantDebugResonators && DebugResonatorQuantity > 0)
+		{
+			const FGameplayTag ResonatorTag = FGameplayTag::RequestGameplayTag(FName("Item.Tool.AstraResonatorBasic"), false);
+			Inventory->AddItem(ResonatorTag, DebugResonatorQuantity);
+		}
 	}
 }
 

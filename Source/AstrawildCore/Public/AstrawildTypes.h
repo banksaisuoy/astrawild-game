@@ -736,6 +736,48 @@ struct ASTRAWILDCORE_API FAstrawildHarvestNodeSaveData
 };
 
 /**
+ * Serialized food spoilage state kept independent from cooking table definitions.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildFoodSaveState
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food")
+	FGuid ItemInstanceId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food")
+	FGameplayTag FoodItemTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food", meta = (ClampMin = "0"))
+	int32 RemainingQuantity = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food", meta = (ClampMin = "0.0"))
+	float RemainingFreshnessSeconds = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food")
+	bool bRefrigerated = false;
+};
+
+/**
+ * Serialized active food buff state.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildFoodBuffSaveState
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food Buff")
+	FGameplayTag BuffTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food Buff")
+	float Magnitude = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food Buff", meta = (ClampMin = "0.0"))
+	float RemainingDurationSeconds = 0.0f;
+};
+
+/**
  * Isolated Player Profile State.
  */
 USTRUCT(BlueprintType)
@@ -805,6 +847,16 @@ struct ASTRAWILDCORE_API FAstrawildPlayerProfile
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival")
 	float CarryWeight = 0.0f;
+
+	// Additive fields: legacy saves deserialize with empty food state arrays.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival|Food")
+	TArray<FAstrawildFoodSaveState> TrackedFood;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival|Food")
+	TArray<FAstrawildFoodBuffSaveState> ActiveFoodBuffs;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile|Survival|Food")
+	bool bFoodStorageRefrigerated = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
 	FTransform ActiveRespawnTransform;

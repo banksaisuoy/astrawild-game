@@ -163,6 +163,23 @@ bool UAstrawildQuestComponent::CompleteQuest(const FName QuestId)
     ActiveQuestIds.Remove(QuestId);
     CompletedQuestIds.AddUnique(QuestId);
     OnQuestCompleted.Broadcast(QuestId);
+
+    if (bAutoStartDependentQuests && QuestTable)
+    {
+        TArray<FName> DependentQuestIds;
+        for (const TPair<FName, uint8*>& Pair : QuestTable->GetRowMap())
+        {
+            const FAstrawildQuestRow* Candidate = reinterpret_cast<const FAstrawildQuestRow*>(Pair.Value);
+            if (Candidate && Candidate->PrerequisiteQuestTag.IsValid() && Candidate->PrerequisiteQuestTag.ToString() == QuestId.ToString())
+            {
+                DependentQuestIds.AddUnique(Candidate->QuestId);
+            }
+        }
+        for (const FName DependentQuestId : DependentQuestIds)
+        {
+            StartQuest(DependentQuestId);
+        }
+    }
     return true;
 }
 

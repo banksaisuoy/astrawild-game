@@ -134,8 +134,20 @@ bool UAstrawildSurvivalComponent::ConsumeRegisteredFood(const FGuid& ItemInstanc
     const FGameplayTag FoodTag = TrackedFood[Index].FoodItemTag;
     const FAstrawildCookingRecipeRow* Definition = FindFoodDefinition(FoodTag);
     UAstrawildInventoryComponent* Inventory = GetOwner() ? GetOwner()->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
-    if (!Definition || !Inventory || !Inventory->RemoveItem(FoodTag, 1) || !ConsumeFood(Definition->HungerRestored))
+    // Preflight all failure-prone conditions before consuming inventory. In particular,
+    // ConsumeFood returns false when hunger is already full; removing first would lose food.
+    if (!Definition || !Inventory || Definition->HungerRestored <= 0.0f ||
+        CurrentHunger >= MaxHunger - KINDA_SMALL_NUMBER || !Inventory->HasItem(FoodTag, 1))
     {
+        return false;
+    }
+    if (!Inventory->RemoveItem(FoodTag, 1))
+    {
+        return false;
+    }
+    if (!ConsumeFood(Definition->HungerRestored))
+    {
+        Inventory->AddItem(FoodTag, 1);
         return false;
     }
     if (Definition->ThirstRestored > 0.0f)
@@ -285,6 +297,25 @@ void UAstrawildSurvivalComponent::ExportToProfile(FAstrawildPlayerProfile& OutPr
     OutProfile.Thirst = CurrentThirst;
     OutProfile.BodyTemperature = CurrentTemperature;
     OutProfile.CarryWeight = CarryWeight;
+    OutProfile.TrackedFood.Reset();
+    for (const FAstrawildTrackedFoodState& State : TrackedFood)
+    {
+        FAstrawildFoodSaveState& SavedState = OutProfile.TrackedFood.AddDefaulted_GetRef();
+        SavedState.ItemInstanceId = State.ItemInstanceId;
+        SavedState.FoodItemTag = State.FoodItemTag;
+        SavedState.RemainingQuantity = State.RemainingQuantity;
+        SavedState.RemainingFreshnessSeconds = State.RemainingFreshnessSeconds;
+        SavedState.bRefrigerated = State.bRefrigerated;
+    }
+    OutProfile.ActiveFoodBuffs.Reset();
+    for (const FAstrawildActiveFoodBuff& Buff : ActiveFoodBuffs)
+    {
+        FAstrawildFoodBuffSaveState& SavedBuff = OutProfile.ActiveFoodBuffs.AddDefaulted_GetRef();
+        SavedBuff.BuffTag = Buff.BuffTag;
+        SavedBuff.Magnitude = Buff.Magnitude;
+        SavedBuff.RemainingDurationSeconds = Buff.RemainingDurationSeconds;
+    }
+    OutProfile.bFoodStorageRefrigerated = bFoodStorageRefrigerated;
 }
 
 void UAstrawildSurvivalComponent::ImportFromProfile(const FAstrawildPlayerProfile& InProfile)
@@ -293,6 +324,33 @@ void UAstrawildSurvivalComponent::ImportFromProfile(const FAstrawildPlayerProfil
     CurrentThirst = FMath::Clamp(InProfile.Thirst, 0.0f, MaxThirst);
     CurrentTemperature = InProfile.BodyTemperature;
     CarryWeight = FMath::Max(0.0f, InProfile.CarryWeight);
+    TrackedFood.Reset();
+    for (const FAstrawildFoodSaveState& SavedState : InProfile.TrackedFood)
+    {
+        if (!SavedState.FoodItemTag.IsValid() || SavedState.RemainingQuantity <= 0)
+        {
+            continue;
+        }
+        FAstrawildTrackedFoodState& State = TrackedFood.AddDefaulted_GetRef();
+        State.ItemInstanceId = SavedState.ItemInstanceId;
+        State.FoodItemTag = SavedState.FoodItemTag;
+        State.RemainingQuantity = FMath::Max(1, SavedState.RemainingQuantity);
+        State.RemainingFreshnessSeconds = FMath::Max(0.0f, SavedState.RemainingFreshnessSeconds);
+        State.bRefrigerated = SavedState.bRefrigerated;
+    }
+    ActiveFoodBuffs.Reset();
+    for (const FAstrawildFoodBuffSaveState& SavedBuff : InProfile.ActiveFoodBuffs)
+    {
+        if (!SavedBuff.BuffTag.IsValid() || SavedBuff.RemainingDurationSeconds <= 0.0f)
+        {
+            continue;
+        }
+        FAstrawildActiveFoodBuff& Buff = ActiveFoodBuffs.AddDefaulted_GetRef();
+        Buff.BuffTag = SavedBuff.BuffTag;
+        Buff.Magnitude = SavedBuff.Magnitude;
+        Buff.RemainingDurationSeconds = SavedBuff.RemainingDurationSeconds;
+    }
+    bFoodStorageRefrigerated = InProfile.bFoodStorageRefrigerated;
 }
 
 void UAstrawildSurvivalComponent::BroadcastWarnings()

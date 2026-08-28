@@ -28,6 +28,12 @@ FOLDERS = [
     "Audio/Ambience",
     "Audio/Boss",
     "Audio/SFX",
+    "Audio/Music",
+    "Meshes",
+    "Meshes/Props",
+    "Meshes/Echoes",
+    "Meshes/Characters",
+    "Meshes/MapKit",
     "Blueprints",
     "Data",
     "Data/Imported",
@@ -187,6 +193,10 @@ def setup_project_assets() -> dict:
         "skipped": [],
         "failed": [],
         "required_editor_contract_paths": list(MECHA_ANIMATION_CONTRACT_PATHS),
+        "required_source_mesh_manifests": [
+            "/Game/Astrawild/Meshes/Echoes/ASTRAWILD_EchoSource_Manifest.json",
+            "/Game/Astrawild/Meshes/MapKit/ASTRAWILD_MapKit_Manifest.json",
+        ],
         "notes": [
             "Scaffold assets are placeholders only; assign original production art/audio before PIE.",
             "Landscape MPC names and scalar parameters are an authored material-graph contract, not a finished shader.",

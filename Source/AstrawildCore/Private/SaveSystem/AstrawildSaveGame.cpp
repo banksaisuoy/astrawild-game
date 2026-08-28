@@ -35,6 +35,33 @@ bool UAstrawildSaveGame::ValidateAndSanitize()
 		return !Tag.IsValid();
 	});
 
+	for (int32 i = PlayerProfile.TrackedFood.Num() - 1; i >= 0; --i)
+	{
+		FAstrawildFoodSaveState& Food = PlayerProfile.TrackedFood[i];
+		if (!Food.FoodItemTag.IsValid() || Food.RemainingQuantity <= 0)
+		{
+			PlayerProfile.TrackedFood.RemoveAt(i);
+			continue;
+		}
+		if (!Food.ItemInstanceId.IsValid())
+		{
+			Food.ItemInstanceId = FGuid::NewGuid();
+		}
+		Food.RemainingQuantity = FMath::Clamp(Food.RemainingQuantity, 1, 999);
+		Food.RemainingFreshnessSeconds = FMath::Max(0.0f, Food.RemainingFreshnessSeconds);
+	}
+
+	for (int32 i = PlayerProfile.ActiveFoodBuffs.Num() - 1; i >= 0; --i)
+	{
+		FAstrawildFoodBuffSaveState& Buff = PlayerProfile.ActiveFoodBuffs[i];
+		if (!Buff.BuffTag.IsValid() || Buff.RemainingDurationSeconds <= 0.0f)
+		{
+			PlayerProfile.ActiveFoodBuffs.RemoveAt(i);
+			continue;
+		}
+		Buff.RemainingDurationSeconds = FMath::Max(0.0f, Buff.RemainingDurationSeconds);
+	}
+
 	// 2. Sanitize Echoes
 	for (FAstrawildCapturedEchoData& Echo : PlayerProfile.ActiveParty)
 	{

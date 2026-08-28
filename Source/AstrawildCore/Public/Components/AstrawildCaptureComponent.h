@@ -23,6 +23,7 @@ class ASTRAWILDCORE_API UAstrawildCaptureComponent : public UActorComponent
 
 public:
 	UAstrawildCaptureComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -34,22 +35,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Capture")
 	float MaxCaptureRange;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Party", meta = (ClampMax = "5"))
+	UPROPERTY(ReplicatedUsing = OnRepCaptureState, VisibleAnywhere, BlueprintReadOnly, Category = "Party", meta = (ClampMax = "5"))
 	TArray<FAstrawildCapturedEchoData> ActiveParty;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Storage")
+	UPROPERTY(ReplicatedUsing = OnRepCaptureState, VisibleAnywhere, BlueprintReadOnly, Category = "Storage")
 	TArray<FAstrawildCapturedEchoData> ReserveStorage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Party")
+	UPROPERTY(ReplicatedUsing = OnRepCaptureState, VisibleAnywhere, BlueprintReadOnly, Category = "Party")
 	int32 SelectedPartyIndex;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Companion")
 	TWeakObjectPtr<AAstrawildEchoBase> ActiveSummonedEcho;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Capture")
+	UPROPERTY(ReplicatedUsing = OnRepCaptureState, VisibleAnywhere, BlueprintReadOnly, Category = "Capture")
 	EAstrawildCaptureState CurrentCaptureState;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Capture")
+	UPROPERTY(ReplicatedUsing = OnRepCaptureState, VisibleAnywhere, BlueprintReadOnly, Category = "Capture")
 	FText LastCaptureFeedback;
 
 	// --- Delegates ---
@@ -72,6 +73,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Capture")
 	bool ThrowResonator(float Power = 1.0f, FGameplayTag ResonatorItemTag = FGameplayTag());
 
+	UFUNCTION(Server, Reliable)
+	void ServerThrowResonator(float Power, FGameplayTag ResonatorItemTag);
+
 	UFUNCTION(BlueprintPure, Category = "Capture")
 	bool ValidateCapturePrerequisites(AAstrawildEchoBase* TargetEcho, FText& OutFailureReason) const;
 
@@ -87,18 +91,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Companion")
 	bool SummonSelectedCompanion();
 
+	UFUNCTION(Server, Reliable)
+	void ServerSummonSelectedCompanion();
+
 	UFUNCTION(BlueprintCallable, Category = "Companion")
 	void RecallActiveCompanion();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRecallActiveCompanion();
 
 	UFUNCTION(BlueprintCallable, Category = "Companion")
 	void SelectNextPartySlot();
 
+	UFUNCTION(Server, Reliable)
+	void ServerSelectNextPartySlot();
+
 	UFUNCTION(BlueprintCallable, Category = "Companion")
 	void SelectPrevPartySlot();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSelectPrevPartySlot();
 
 	UFUNCTION(BlueprintCallable, Category = "Party")
 	void AddCapturedEcho(const FAstrawildCapturedEchoData& InData);
 
 	UFUNCTION(BlueprintCallable, Category = "Party")
 	void LoadPartyData(const TArray<FAstrawildCapturedEchoData>& InParty, const TArray<FAstrawildCapturedEchoData>& InStorage);
+
+private:
+	UFUNCTION()
+	void OnRepCaptureState();
 };

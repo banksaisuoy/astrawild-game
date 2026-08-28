@@ -32,6 +32,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Quest")
     TMap<FName, int32> ObjectiveProgress;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Quest|Flow")
+    bool bAutoStartDependentQuests = true;
+
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Quest|Events")
     FOnQuestStateChangedSignature OnQuestStarted;
 

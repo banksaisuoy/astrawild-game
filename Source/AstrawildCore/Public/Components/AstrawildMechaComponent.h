@@ -21,6 +21,7 @@ public:
     UAstrawildMechaComponent();
 
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
     bool EquipMechaFrame(const FAstrawildMechaFrameRow& FrameData);
@@ -37,14 +38,35 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
     void TriggerOverboost(bool bEnable);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Frames")
+    TObjectPtr<UDataTable> FrameTable;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Weapons")
     TObjectPtr<UDataTable> WeaponTable;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Weapons")
+    UPROPERTY(ReplicatedUsing = OnRepMechaState, VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Weapons")
     FGameplayTag EquippedWeaponTag;
 
     UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
     bool FireHardpointWeapon(EAstrawildMechaHardpoint Slot, FVector TargetLocation);
+
+    UFUNCTION(Server, Reliable)
+    void ServerEquipMechaFrame(FGameplayTag FrameTag);
+
+    UFUNCTION(Server, Reliable)
+    void ServerEjectMechaFrame();
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetFlightActive(bool bActive);
+
+    UFUNCTION(Server, Reliable)
+    void ServerTriggerOverboost(bool bEnable);
+
+    UFUNCTION(Server, Reliable)
+    void ServerFireHardpointWeapon(EAstrawildMechaHardpoint Slot, FVector_NetQuantize TargetLocation);
+
+    UFUNCTION(Server, Reliable)
+    void ServerActivateBeamSaberMelee();
 
     UFUNCTION(BlueprintCallable, Category = "Astrawild|Mecha")
     void ActivateBeamSaberMelee();
@@ -79,46 +101,56 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    UPROPERTY(ReplicatedUsing = OnRepMechaState, VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
     bool bIsMechaActive = false;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    UPROPERTY(ReplicatedUsing = OnRepMechaState, VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
     bool bIsFlying = false;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    UPROPERTY(ReplicatedUsing = OnRepMechaState, VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
     bool bIsOverboosting = false;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
+    UPROPERTY(ReplicatedUsing = OnRepMechaState, VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|State")
     bool bIsOverheated = false;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    UPROPERTY(ReplicatedUsing = OnRepEnergy, EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float CurrentEnergy = 1000.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    UPROPERTY(ReplicatedUsing = OnRepEnergy, EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float MaxEnergy = 1000.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float EnergyRechargeRate = 120.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    UPROPERTY(ReplicatedUsing = OnRepEnergy, EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float CurrentHeat = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float HeatCoolingRate = 25.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    UPROPERTY(ReplicatedUsing = OnRepShield, EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float CurrentShield = 2500.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
+    UPROPERTY(ReplicatedUsing = OnRepShield, EditAnywhere, BlueprintReadWrite, Category = "Astrawild|Mecha|Stats")
     float MaxShield = 2500.0f;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Config")
+    UPROPERTY(ReplicatedUsing = OnRepMechaState, VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Config")
     FAstrawildMechaFrameRow ActiveFrameData;
 
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astrawild|Mecha|Weapons", meta=(AllowPrivateAccess="true"))
     float HardpointCooldownRemaining = 0.0f;
 
+    UFUNCTION()
+    void OnRepMechaState();
+
+    UFUNCTION()
+    void OnRepEnergy();
+
+    UFUNCTION()
+    void OnRepShield();
+
+    const FAstrawildMechaFrameRow* FindFrameByTag(const FGameplayTag& FrameTag) const;
     const FAstrawildMechaWeaponRow* FindWeaponForSlot(EAstrawildMechaHardpoint Slot) const;
     bool HasAuthorityForMecha() const;
 };

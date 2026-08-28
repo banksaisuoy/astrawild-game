@@ -234,23 +234,66 @@ bool UAstrawildSaveSubsystem::RestoreWorldState(UAstrawildSaveGame* SaveObject)
 			Clock->SetWorldTime(SaveObject->WorldSnapshot.WorldGameTimeSeconds);
 		}
 
-		// 2. Restore Harvest Nodes
-		TMap<FGuid, FAstrawildHarvestNodeSaveData> HarvestDataMap;
-
-	for (const FAstrawildHarvestNodeSaveData& NodeData : SaveObject->WorldSnapshot.HarvestNodes)
-	{
-		HarvestDataMap.Add(NodeData.NodeGuid, NodeData);
-	}
-
-	for (TActorIterator<AAstrawildHarvestableNode> It(World); It; ++It)
-	{
-		if (FAstrawildHarvestNodeSaveData* Found = HarvestDataMap.Find(It->NodeUniqueId))
+		// 2. Restore placed buildings. Match existing authored/runtime actors by
+		// stable GUID first; spawn a generic source-safe fallback for saved actors
+		// that are not present in the currently loaded level.
+		TMap<FGuid, AAstrawildBuildingPiece*> ExistingBuildings;
+		for (TActorIterator<AAstrawildBuildingPiece> It(World); It; ++It)
 		{
-			It->LoadSaveData(*Found);
+			if (It->BuildingUniqueId.IsValid())
+			{
+				ExistingBuildings.Add(It->BuildingUniqueId, *It);
+			}
 		}
-	}
 
-	return true;
+		for (const FAstrawildBuildingSaveData& BuildingData : SaveObject->WorldSnapshot.PlacedBuildings)
+		{
+			if (!BuildingData.BuildingGuid.IsValid())
+			{
+				continue;
+			}
+
+			if (AAstrawildBuildingPiece** Existing = ExistingBuildings.Find(BuildingData.BuildingGuid))
+			{
+				if (IsValid(*Existing))
+				{
+					(*Existing)->LoadSaveData(BuildingData);
+				}
+				continue;
+			}
+
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+			AAstrawildBuildingPiece* RestoredBuilding = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), BuildingData.WorldTransform, SpawnParams);
+			if (RestoredBuilding)
+			{
+				RestoredBuilding->LoadSaveData(BuildingData);
+			}
+			else
+			{
+				UE_LOG(LogAstrawildSave, Warning, TEXT("Failed to restore building %s from save."), *BuildingData.BuildingGuid.ToString());
+			}
+		}
+
+		// 3. Restore harvest nodes by their stable GUIDs.
+		TMap<FGuid, FAstrawildHarvestNodeSaveData> HarvestDataMap;
+		for (const FAstrawildHarvestNodeSaveData& NodeData : SaveObject->WorldSnapshot.HarvestNodes)
+		{
+			if (NodeData.NodeGuid.IsValid())
+			{
+				HarvestDataMap.Add(NodeData.NodeGuid, NodeData);
+			}
+		}
+
+		for (TActorIterator<AAstrawildHarvestableNode> It(World); It; ++It)
+		{
+			if (FAstrawildHarvestNodeSaveData* Found = HarvestDataMap.Find(It->NodeUniqueId))
+			{
+				It->LoadSaveData(*Found);
+			}
+		}
+
+		return true;
 }
 
 bool UAstrawildSaveSubsystem::SaveGameToSlot(const FString& SlotName)

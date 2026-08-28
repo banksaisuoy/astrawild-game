@@ -113,6 +113,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Ranged")
 	TObjectPtr<UAstrawildRangedCombatComponent> RangedCombat;
 
+	// --- First-loop bootstrap ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "First Loop")
+	bool bGrantDebugResonators = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "First Loop", meta = (ClampMin = "0"))
+	int32 DebugResonatorQuantity = 5;
+
 	// --- Movement Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float WalkSpeed;

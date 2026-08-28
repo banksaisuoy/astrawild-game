@@ -1,0 +1,50 @@
+# ASTRAWILD original generated material palette
+newmtl M_Echo_Abyssal
+Kd 0.1600 0.0900 0.2800
+d 1.0000
+illum 2
+
+newmtl M_Echo_Accent
+Kd 0.9600 0.8800 0.4200
+d 1.0000
+illum 2
+
+newmtl M_Echo_Astra
+Kd 0.8400 0.9500 1.0000
+d 1.0000
+illum 2
+
+newmtl M_Echo_Geo
+Kd 0.3500 0.5200 0.1600
+d 1.0000
+illum 2
+
+newmtl M_Echo_Glacial
+Kd 0.4200 0.8200 0.9200
+d 1.0000
+illum 2
+
+newmtl M_Echo_Neutral
+Kd 0.4800 0.4200 0.3000
+d 1.0000
+illum 2
+
+newmtl M_Echo_Soft
+Kd 0.6200 0.4800 0.3400
+d 1.0000
+illum 2
+
+newmtl M_Echo_Solar
+Kd 0.9500 0.4200 0.0800
+d 1.0000
+illum 2
+
+newmtl M_Echo_Torrent
+Kd 0.0800 0.6200 0.8500
+d 1.0000
+illum 2
+
+newmtl M_Echo_Volt
+Kd 0.8200 0.8800 0.1600
+d 1.0000
+illum 2

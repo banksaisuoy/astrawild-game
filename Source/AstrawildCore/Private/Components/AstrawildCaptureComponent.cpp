@@ -12,6 +12,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 UAstrawildCaptureComponent::UAstrawildCaptureComponent()
 	: MaxCaptureRange(1800.0f)
@@ -19,6 +20,47 @@ UAstrawildCaptureComponent::UAstrawildCaptureComponent()
 	, CurrentCaptureState(EAstrawildCaptureState::None)
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
+}
+
+void UAstrawildCaptureComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UAstrawildCaptureComponent, ActiveParty);
+	DOREPLIFETIME(UAstrawildCaptureComponent, ReserveStorage);
+	DOREPLIFETIME(UAstrawildCaptureComponent, SelectedPartyIndex);
+	DOREPLIFETIME(UAstrawildCaptureComponent, CurrentCaptureState);
+	DOREPLIFETIME(UAstrawildCaptureComponent, LastCaptureFeedback);
+}
+
+void UAstrawildCaptureComponent::ServerThrowResonator_Implementation(const float Power, const FGameplayTag ResonatorItemTag)
+{
+	ThrowResonator(Power, ResonatorItemTag);
+}
+
+void UAstrawildCaptureComponent::ServerSummonSelectedCompanion_Implementation()
+{
+	SummonSelectedCompanion();
+}
+
+void UAstrawildCaptureComponent::ServerRecallActiveCompanion_Implementation()
+{
+	RecallActiveCompanion();
+}
+
+void UAstrawildCaptureComponent::ServerSelectNextPartySlot_Implementation()
+{
+	SelectNextPartySlot();
+}
+
+void UAstrawildCaptureComponent::ServerSelectPrevPartySlot_Implementation()
+{
+	SelectPrevPartySlot();
+}
+
+void UAstrawildCaptureComponent::OnRepCaptureState()
+{
+	OnCaptureFeedback.Broadcast(LastCaptureFeedback, CurrentCaptureState == EAstrawildCaptureState::Success);
 }
 
 void UAstrawildCaptureComponent::BeginPlay()
@@ -31,6 +73,14 @@ bool UAstrawildCaptureComponent::ThrowResonator(float Power, FGameplayTag Resona
 	AActor* OwnerActor = GetOwner();
 	if (!OwnerActor || !GetWorld())
 	{
+		return false;
+	}
+	if (!OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerThrowResonator(Power, ResonatorItemTag);
+		}
 		return false;
 	}
 
@@ -83,6 +133,15 @@ bool UAstrawildCaptureComponent::ThrowResonator(float Power, FGameplayTag Resona
 		return true;
 	}
 
+	if (Inv)
+	{
+		// Restore the consumed item when projectile creation fails so a transient
+		// spawn problem cannot permanently delete a capture attempt.
+		Inv->AddItem(ActualTag, 1);
+	}
+	LastCaptureFeedback = FText::FromString(TEXT("Capture failed: Resonator could not be launched; item refunded."));
+	OnCaptureFeedback.Broadcast(LastCaptureFeedback, false);
+	UE_LOG(LogAstrawildEcho, Warning, TEXT("Resonator projectile spawn failed; refunded %s."), *ActualTag.ToString());
 	return false;
 }
 
@@ -172,6 +231,11 @@ float UAstrawildCaptureComponent::CalculateInitialTrust(AAstrawildEchoBase* Targ
 bool UAstrawildCaptureComponent::AttemptCapture(AAstrawildEchoBase* TargetEcho, float ResonatorPower, int32& OutShakesCompleted, FText& OutStatusReason)
 {
 	OutShakesCompleted = 0;
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		OutStatusReason = FText::FromString(TEXT("Capture outcome must be resolved by the server."));
+		return false;
+	}
 
 	// 1. Authoritative Validation & Lock (Anti-Exploit / Double Request Guard)
 	if (!ValidateCapturePrerequisites(TargetEcho, OutStatusReason))
@@ -257,6 +321,10 @@ bool UAstrawildCaptureComponent::AttemptCapture(AAstrawildEchoBase* TargetEcho, 
 
 void UAstrawildCaptureComponent::AddCapturedEcho(const FAstrawildCapturedEchoData& InData)
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		return;
+	}
 	if (ActiveParty.Num() < 5)
 	{
 		ActiveParty.Add(InData);
@@ -269,6 +337,15 @@ void UAstrawildCaptureComponent::AddCapturedEcho(const FAstrawildCapturedEchoDat
 
 bool UAstrawildCaptureComponent::SummonSelectedCompanion()
 {
+	AActor* OwnerActor = GetOwner();
+	if (OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerSummonSelectedCompanion();
+		}
+		return false;
+	}
 	if (!ActiveParty.IsValidIndex(SelectedPartyIndex) || !GetWorld())
 	{
 		return false;
@@ -277,7 +354,6 @@ bool UAstrawildCaptureComponent::SummonSelectedCompanion()
 	RecallActiveCompanion();
 
 	const FAstrawildCapturedEchoData& EchoData = ActiveParty[SelectedPartyIndex];
-	AActor* OwnerActor = GetOwner();
 	if (!OwnerActor)
 	{
 		return false;
@@ -312,6 +388,14 @@ bool UAstrawildCaptureComponent::SummonSelectedCompanion()
 
 void UAstrawildCaptureComponent::RecallActiveCompanion()
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerRecallActiveCompanion();
+		}
+		return;
+	}
 	if (ActiveSummonedEcho.IsValid())
 	{
 		if (ActiveParty.IsValidIndex(SelectedPartyIndex) && ActiveSummonedEcho->Attributes)
@@ -328,6 +412,14 @@ void UAstrawildCaptureComponent::RecallActiveCompanion()
 
 void UAstrawildCaptureComponent::SelectNextPartySlot()
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerSelectNextPartySlot();
+		}
+		return;
+	}
 	if (ActiveParty.Num() > 0)
 	{
 		SelectedPartyIndex = (SelectedPartyIndex + 1) % ActiveParty.Num();
@@ -336,6 +428,14 @@ void UAstrawildCaptureComponent::SelectNextPartySlot()
 
 void UAstrawildCaptureComponent::SelectPrevPartySlot()
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		if (OwnerActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			ServerSelectPrevPartySlot();
+		}
+		return;
+	}
 	if (ActiveParty.Num() > 0)
 	{
 		SelectedPartyIndex = (SelectedPartyIndex - 1 + ActiveParty.Num()) % ActiveParty.Num();
@@ -344,6 +444,10 @@ void UAstrawildCaptureComponent::SelectPrevPartySlot()
 
 void UAstrawildCaptureComponent::LoadPartyData(const TArray<FAstrawildCapturedEchoData>& InParty, const TArray<FAstrawildCapturedEchoData>& InStorage)
 {
+	if (const AActor* OwnerActor = GetOwner(); OwnerActor && !OwnerActor->HasAuthority())
+	{
+		return;
+	}
 	RecallActiveCompanion();
 	ActiveParty = InParty;
 	ReserveStorage = InStorage;

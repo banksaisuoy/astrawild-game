@@ -16,23 +16,23 @@
 
 ## 2. Existing prototype versus required slice
 
-`AAstrawildPrototypeArena` มีฐานสำหรับเริ่มต้น ได้แก่ foundation 80 m × 80 m, central Dawn Spire, resource grove, South-East combat pit, North-East rest sanctuary, ต้นไม้ 3 จุด, ore 2 จุด, training dummy, Pyrelite, Thornback, campfire, bed, crafting bench และ Aquavine อย่างไรก็ตาม implementation ปัจจุบันยังเป็น prototype runtime generation ไม่ใช่ final `.umap` และยังขาดองค์ประกอบที่จำเป็นต่อ loop แบบครบถ้วน
+`AAstrawildPrototypeArena` มี source bootstrap สำหรับสนามทดสอบ ได้แก่ foundation 80 m × 80 m, central Dawn Spire, resource grove, South-East combat pit, North-East rest sanctuary, ต้นไม้ 3 จุด, ore 2 จุด, Dawn Fiber 3 จุด, training dummy, Pyrelite, Thornback, Solarix Alpha, campfire, bed, crafting bench, Storage Chest, Aquavine และ spring interactable อย่างไรก็ตาม implementation ปัจจุบันยังเป็น prototype runtime generation ไม่ใช่ final `.umap`; final Blueprint/DataAsset bindings, authored quest triggers, visual assets และ PIE evidence ยังต้องทำใน Editor
 
 | รายการ | สถานะจาก source ปัจจุบัน | สิ่งที่ต้องทำสำหรับ 20–30 นาที loop |
 |---|---|---|
 | พื้นที่ 80 m × 80 m และ 4 โซน | มีใน `AAstrawildPrototypeArena` | ย้ายหรือประกอบเป็น map package จริงใน Editor และตรวจ collision/navmesh |
 | Dawn Spire และ signal interactable | มี monolith interactable และ reward Resonator ใน prototype | ผูก `Quest.Awakening`, `Location.DawnSpire` และ `Interact.DawnSignal` กับ imported quest tables |
-| Sunwood trees | มี 3 harvest nodes | กำหนด stable `NodeUniqueId`, mesh, collision, yield และ depletion/respawn behavior |
-| Lumen Stone/Astra Shard rocks | มี 2 mining nodes | ตรวจ tool requirement, yields และ rare drop ให้พอสำหรับสูตรที่ใช้ใน slice |
-| Dawn Fiber | ยังไม่มี node ใน prototype | เพิ่ม Dawn Flower/Fiber harvest nodes อย่างน้อย 3 จุด หรือกำหนดให้เป็น starter resource |
-| Player tools | Character เริ่มด้วย Sunwood 10 และ Resonator 5 แต่ไม่เห็น starter Axe/Pick ใน `BeginPlay` | จัดทำ Vertical Slice starting profile ที่มี Axe/Pick หรือเพิ่ม tutorial grant มิฉะนั้น resource loop อาจเริ่มไม่ได้ |
-| Astra Resonator craft | Crafting spec ต้องใช้ Astra Shard 1, Lumen Stone 2, Sunwood 3 ที่ Crafting Bench | ไม่ควรแจก Resonator 5 ตั้งแต่เริ่ม หากต้องการทดสอบ `Quest.FirstResonator`; แยก quick-test profile ออกจาก acceptance profile |
+| Sunwood trees | มี 3 harvest nodes พร้อม stable `NodeUniqueId`, yield และ respawn settings | ตรวจ mesh, collision, save/load และ depletion/respawn behavior ใน Editor |
+| Lumen Stone/Astra Shard rocks | มี 2 mining nodes พร้อม stable `NodeUniqueId`, yield และ rare-drop settings | ตรวจ mesh, collision, tool requirement และ yields ให้พอสำหรับสูตรที่ใช้ใน slice |
+| Dawn Fiber | มี 3 foraging nodes ใน source bootstrap | ตรวจ mesh/collision/IDs ใน Editor และยืนยัน yield เพียงพอสำหรับ Rest Bed |
+| Player tools | Character เริ่มด้วย Sunwood 10 และ Resonator 5 แต่ยังไม่เห็น starter Axe/Pick ใน `BeginPlay`; harvest interaction ใช้ค่า default | ตัดสินใจ acceptance profile ให้ชัด: grant Axe/Pick/Club หรือคง default gather; ห้ามให้ Resonator ฟรีหากต้องทดสอบ craft objective |
+| Astra Resonator craft | Crafting spec ต้องใช้ Astra Shard 1, Lumen Stone 2, Sunwood 3 ที่ Crafting Bench; prototype ยังแจกจาก Player/Spire | ใช้ acceptance profile ที่ไม่แจก Resonator ฟรี และผูก Craft objective กับ imported DataTable; แยก quick-test profile ออกจาก acceptance profile |
 | Pyrelite/Thornback | มี wild actors ใน combat pit | สร้าง Blueprint/DataAsset/mesh/AnimBP จริง, ตั้ง capturable flags และ capture feedback |
-| Aquavine | มี actor ใกล้ sanctuary | เพิ่ม `Location.AquavineSpring` และ Torrent Water source หากจะทดสอบ `Quest.Campwater`/survival |
-| Campfire/Bed/Bench | มีใน prototype | เพิ่ม Storage Chest และกำหนด stable `BuildingUniqueId`; ตรวจ interaction, save/load และ collision |
-| Solarix Alpha | ยังไม่ถูก spawn ใน `AAstrawildPrototypeArena` | เพิ่ม `BP_Echo_SolarixAlpha` + `DA_Echo_SolarixAlpha` ที่ `Location.DangerPit.AlphaSpawn` พร้อม 2 phases |
-| Quest progression | มี CSV/source component contract | สร้าง imported DataTables, bind objective events และตรวจ Awakening → FirstResonator → DangerPit |
-| Food/water survival | Survival component รองรับ drain/restore แต่ prototype ไม่มี food/water flow ที่ครบ | เพิ่ม deterministic food/water source หรือทำ test profile ที่ให้ consumable เริ่มต้น; ห้ามถือว่ามี survival loop เพียงเพราะ component compile |
+| Aquavine | มี actor และ spring interactable ใน source bootstrap | ตรวจ `Location.AquavineSpring`, `Item.Water`, Discover/Collect progression และ hydration restore ใน PIE |
+| Campfire/Bed/Bench/Chest | มีทั้ง 4 building actors ใน source bootstrap พร้อม stable IDs | ตรวจ interaction, container, collision, save/load และเปลี่ยนเป็น authored assets ใน Editor |
+| Solarix Alpha | มี `AAstrawildAlphaEcho` source bootstrap พร้อม 6 abilities และ 2 phase pattern arrays | สร้าง `BP_Echo_SolarixAlpha` + `DA_Echo_SolarixAlpha` ที่ `Location.DangerPit.AlphaSpawn`, ผูก telegraph/VFX/audio และทดสอบ reset/reward |
+| Quest progression | มี CSV/source component contract และ generic interactable รองรับ objective type/reward collect | สร้าง imported DataTables, bind Reach/Interact/Discover/Craft/Capture/Defeat triggers และตรวจ Awakening → FirstResonator → DangerPit |
+| Food/water survival | Spring source เรียก `DrinkWater` และแจก `Item.Water`; cooking/food source ยังไม่ครบ | เพิ่ม deterministic food source หรือกำหนด test profile ให้ชัด; ตรวจ survival drain/restore ใน PIE และไม่ถือว่า component compile เป็น gameplay proof |
 
 ## 3. Physical layout
 
