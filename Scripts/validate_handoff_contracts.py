@@ -78,6 +78,8 @@ def main() -> int:
     catalog = read(CATALOG)
     importer = read(IMPORTER)
     underwater_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp")
+    fishing_source = read(ROOT / "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h") + read(ROOT / "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp")
+    racing_source = read(ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingData.h") + read(ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h") + read(ROOT / "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp")
     scaffold = read(SCAFFOLD)
     runner = read(VALIDATOR_RUNNER)
     package_runner = read(PACKAGE_RUNNER)
@@ -90,8 +92,8 @@ def main() -> int:
 
     csv_source_dir = ROOT / "Content/Astrawild/Data/Source"
     csv_files = {path.name for path in csv_source_dir.glob("*.csv")}
-    if len(csv_files) != 33:
-        errors.append(f"source CSV count must be 33; found {len(csv_files)}")
+    if len(csv_files) != 34:
+        errors.append(f"source CSV count must be 34; found {len(csv_files)}")
     if set(mapping) != csv_files:
         errors.append("handoff/importer CSV set mismatch")
 
@@ -120,6 +122,12 @@ def main() -> int:
         ROOT / "Source/AstrawildCore/Public/World/AstrawildUnderwaterData.h",
         ROOT / "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h",
         ROOT / "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp",
+        ROOT / "Source/AstrawildCore/Public/Data/AstrawildFishingData.h",
+        ROOT / "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h",
+        ROOT / "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingData.h",
+        ROOT / "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h",
+        ROOT / "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp",
     ):
         if not path.is_file():
             errors.append(f"missing Underwater source contract: {path.relative_to(ROOT)}")
@@ -127,6 +135,12 @@ def main() -> int:
     for token in ("AbyssalTrenchMinDepthMeters", "CalculatePressureDamagePerSecond"):
         if token not in underwater_source:
             errors.append(f"Underwater subsystem missing operational token: {token}")
+    for token in ("FAstrawildFishRow", "StartFishingAuthority", "CommitCatchAuthority", "ServerUpdateReelInput_Implementation"):
+        if token not in fishing_source:
+            errors.append(f"Fishing component missing operational token: {token}")
+    for token in ("FAstrawildRaceCheckpoint", "SubmitCheckpoint", "ActivateBoostPad", "OnRaceFinished.Broadcast"):
+        if token not in racing_source:
+            errors.append(f"Racing subsystem missing operational token: {token}")
 
     for token in (
         "DESTINATION_PATH = \"/Game/Astrawild/Data/Imported\"",
@@ -217,7 +231,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print("ASTRAWILD handoff contract validation passed (33 CSVs, validator order, reports, UE command gates, and evidence boundaries).")
+    print("ASTRAWILD handoff contract validation passed (34 CSVs, validator order, reports, UE command gates, and evidence boundaries).")
     return 0
 
 

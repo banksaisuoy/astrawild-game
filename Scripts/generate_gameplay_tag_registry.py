@@ -26,6 +26,7 @@ ALLOWED_ROOTS = {
     "Echo",
     "Effect",
     "Food",
+    "Fish",
     "Frame",
     "Group",
     "Hazard",

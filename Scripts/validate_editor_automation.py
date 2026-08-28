@@ -17,6 +17,7 @@ EXPECTED_STRUCTS = {
     "DT_EcosystemBehavior.csv": "FAstrawildEcosystemBehaviorRow",
     "DT_BossAttacks.csv": "FAstrawildBossAttackRow",
     "DT_EchoDex_200.csv": "FAstrawildMasterEchoRow",
+    "DT_FishDex.csv": "FAstrawildFishRow",
     "DT_BossEncounters.csv": "FAstrawildBossEncounterRow",
     "DT_CyberneticEvolutions.csv": "FAstrawildCyberneticEvolutionRow",
     "DT_FoliageRules.csv": "FAstrawildFoliageRuleRow",

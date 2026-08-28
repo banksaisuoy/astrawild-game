@@ -173,6 +173,48 @@ def main() -> int:
             "State.MovementMode = EAstrawildUnderwaterMovementMode::PressureEmergency",
             "FindRow<FAstrawildUnderwaterZoneRow>",
         ),
+        "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h": (
+            "EAstrawildFishingResult",
+            "ServerStartFishing",
+            "ServerUpdateReelInput",
+            "ServerStopFishing",
+            "UpdateReelInput",
+            "IsTensionSafe",
+        ),
+        "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp": (
+            "GetLifetimeReplicatedProps",
+            "StartFishingAuthority",
+            "SelectFishForContext",
+            "Tension >= 100.0f",
+            "InventoryFull",
+            "Inventory->CanAddItem",
+            "ServerStartFishing_Implementation",
+            "ServerUpdateReelInput_Implementation",
+            "ServerStopFishing_Implementation",
+        ),
+        "Source/AstrawildCore/Public/World/AstrawildRacingData.h": (
+            "FAstrawildRaceCheckpoint",
+            "FAstrawildRaceBoostPad",
+            "FAstrawildRaceTrackDefinition",
+            "FAstrawildRaceParticipantState",
+        ),
+        "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h": (
+            "RegisterTrack",
+            "SubmitCheckpoint",
+            "ActivateBoostPad",
+            "GetParticipantSpeedMultiplier",
+        ),
+        "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp": (
+            "HasAuthorityForRacing",
+            "CheckpointIndex != State->NextCheckpointIndex",
+            "FVector::DistSquared(TrustedLocation",
+            "State->CompletedLaps++",
+            "State->bFinished = true",
+            "OnRaceFinished.Broadcast",
+            "MatchingPad",
+            "State->BoostRemainingSeconds",
+            "RemoveInvalidParticipants",
+        ),
     })
 
     for relative, required_tokens in source_checks.items():
@@ -184,6 +226,14 @@ def main() -> int:
         for token in required_tokens:
             if token not in content:
                 errors.append(f"{relative} is missing guard token: {token}")
+
+    fish_path = ROOT / "Content/Astrawild/Data/Source/DT_FishDex.csv"
+    with fish_path.open(encoding="utf-8-sig", newline="") as handle:
+        fish_rows = list(csv.DictReader(handle))
+    if len(fish_rows) != 30:
+        errors.append(f"FishDex must contain exactly 30 rows; found {len(fish_rows)}")
+    if len({row.get("FishTag", "") for row in fish_rows}) != len(fish_rows):
+        errors.append("FishDex FishTag values must be unique")
 
     underwater_path = ROOT / "Content/Astrawild/Data/Source/DT_UnderwaterZones.csv"
     with underwater_path.open(encoding="utf-8-sig", newline="") as handle:
@@ -230,7 +280,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print("ASTRAWILD vertical-slice guard validation passed (map bootstrap, interaction, save/build/capture rollback, power-grid, mounted-weapon, and underwater guards).")
+    print("ASTRAWILD vertical-slice guard validation passed (map bootstrap, interaction, save/build/capture rollback, power-grid, mounted-weapon, underwater, Fishing, and Racing guards).")
     return 0
 
 

@@ -20,6 +20,7 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_FastTravelSpires.csv": {"Name", "SpireId", "DisplayName", "BiomeId", "QuestTargetTag", "WorldTransform", "bUnlockedByDefault"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoDex.csv": {"Name", "SpeciesTag", "SpeciesName", "SpeciesTitle", "LoreDescription", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "PassiveTraitTags", "WorkSuitabilityTags", "PartnerSkillTag", "MountProfileId", "bCanBeMounted", "BreedingGroupId", "EvolutionTargetId", "EvolutionLevel", "DexOrder"},
     ROOT / "Content/Astrawild/Data/Source/DT_EchoDex_200.csv": {"Name", "DexOrder", "SpeciesTag", "SpeciesName", "SpeciesTitle", "AnatomyConcept", "Diet", "SocialBehavior", "Temperament", "HabitatBiomeTag", "ActivityCycleTag", "PrimaryElement", "ElementalAffinities", "Role", "BaseMaxHealth", "BaseAttackPower", "BaseDefensePower", "BaseStamina", "BaseWalkSpeed", "BaseRunSpeed", "CaptureDifficultyModifier", "WorkSuitabilityLevels", "WorkSuitabilityTags", "PassiveTraitTags", "ActiveSkillTags", "ActiveSkillElementTags", "ActiveSkillCooldowns", "ActiveSkillDamageMultipliers", "ActiveSkillTelegraphs", "PartnerSkillTag", "MountedWeaponTag", "DropItemTags", "DropItemQuantities", "ParentSpeciesA", "ParentSpeciesB"},
+    ROOT / "Content/Astrawild/Data/Source/DT_FishDex.csv": {"Name", "FishTag", "DisplayName", "HabitatTag", "MinDepthMeters", "MaxDepthMeters", "BaitTag", "CatchItemTag", "SellPrice", "PullStrength", "RequiredReelSeconds", "SafeTensionMin", "SafeTensionMax", "RarityWeight"},
     ROOT / "Content/Astrawild/Data/Source/DT_MountProfiles.csv": {"Name", "MountProfileId", "SaddleSocketName", "SpeedMultiplier", "StaminaCostPerSecond", "JumpMultiplier", "bAllowsCombatFromMount", "MountFamilyTag"},
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingGroups.csv": {"Name", "BreedingGroupId", "CompatibleSpeciesTags", "IncubationDurationSeconds", "MutationChance", "MaxInheritedTraits"},
     ROOT / "Content/Astrawild/Data/Source/DT_BreedingFusions.csv": {"Name", "ParentSpeciesA", "ParentSpeciesB", "OffspringSpeciesTag", "OffspringElementalAffinities", "GuaranteedInheritedTraitTags", "TraitInheritanceChance", "HiddenPassiveUnlockChance", "FusionGroupTag"},
@@ -77,11 +78,17 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Public/World/AstrawildUnderwaterData.h",
     "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp",
+    "Source/AstrawildCore/Public/World/AstrawildRacingData.h",
+    "Source/AstrawildCore/Public/World/AstrawildRacingSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildRacingSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldPartitionSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildWorldPartitionSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildEnvironmentHazardComponent.h",
     "Source/AstrawildCore/Private/World/AstrawildEnvironmentHazardComponent.cpp",
     "Source/AstrawildCore/Public/Data/AstrawildEchoDexRow.h",
+    "Source/AstrawildCore/Public/Data/AstrawildFishingData.h",
+    "Source/AstrawildCore/Public/Components/AstrawildFishingComponent.h",
+    "Source/AstrawildCore/Private/Components/AstrawildFishingComponent.cpp",
     "Source/AstrawildCore/Public/Data/AstrawildMasterEchoData.h",
     "Source/AstrawildCore/Public/Data/AstrawildBreedingFusionData.h",
     "Source/AstrawildCore/Public/Data/AstrawildPartnerGearData.h",
@@ -475,6 +482,36 @@ for row in underwater_rows:
             errors.append(f"DT_UnderwaterZones.csv missing hazard/spawn tags in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_UnderwaterZones.csv non-numeric value in row {row.get('Name', '<unknown>')}")
+
+
+fish_path = ROOT / "Content/Astrawild/Data/Source/DT_FishDex.csv"
+fish_rows = loaded_rows.get(fish_path, [])
+if len(fish_rows) != 30:
+    errors.append(f"DT_FishDex.csv must contain exactly 30 fish rows; found {len(fish_rows)}")
+fish_tags = [row.get("FishTag", "") for row in fish_rows]
+if len(fish_tags) != len(set(fish_tags)):
+    errors.append("DT_FishDex.csv has duplicate FishTag values")
+for row in fish_rows:
+    try:
+        min_depth = float(row["MinDepthMeters"])
+        max_depth = float(row["MaxDepthMeters"])
+        sell_price = int(row["SellPrice"])
+        pull_strength = float(row["PullStrength"])
+        reel_seconds = float(row["RequiredReelSeconds"])
+        tension_min = float(row["SafeTensionMin"])
+        tension_max = float(row["SafeTensionMax"])
+        rarity_weight = float(row["RarityWeight"])
+        if min_depth < 0.0 or max_depth <= min_depth:
+            errors.append(f"DT_FishDex.csv invalid depth range in row {row.get('Name', '<unknown>')}")
+        if sell_price < 1 or pull_strength <= 0.0 or reel_seconds <= 0.0 or rarity_weight <= 0.0:
+            errors.append(f"DT_FishDex.csv invalid tuning value in row {row.get('Name', '<unknown>')}")
+        if not 0.0 <= tension_min < tension_max <= 100.0:
+            errors.append(f"DT_FishDex.csv invalid safe tension range in row {row.get('Name', '<unknown>')}")
+        for field in ("FishTag", "HabitatTag", "BaitTag", "CatchItemTag"):
+            if not row.get(field):
+                errors.append(f"DT_FishDex.csv missing {field} in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_FishDex.csv non-numeric value in row {row.get('Name', '<unknown>')}")
 
 
 dungeon_path = ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv"

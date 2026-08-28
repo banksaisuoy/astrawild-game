@@ -1,0 +1,31 @@
+Name,FishTag,DisplayName,HabitatTag,MinDepthMeters,MaxDepthMeters,BaitTag,CatchItemTag,SellPrice,PullStrength,RequiredReelSeconds,SafeTensionMin,SafeTensionMax,RarityWeight
+Fish_Sunscale,Fish.Sunscale,Sunscale Minnow,Location.AquavineSpring,0,8,Item.Bait.FiberGrub,Item.Fish.Sunscale,12,0.8,3.0,20,82,2.5
+Fish_Dawnfin,Fish.Dawnfin,Dawnfin,Location.AquavineSpring,0,15,Item.Bait.FiberGrub,Item.Fish.Dawnfin,18,0.9,3.5,18,84,2.0
+Fish_Glassgill,Fish.Glassgill,Glassgill,Location.AquavineSpring,2,25,Item.Bait.LumenWorm,Item.Fish.Glassgill,28,1.0,4.0,22,80,1.5
+Fish_Mossback,Fish.Mossback,Mossback,Location.AquavineSpring,4,40,Item.Bait.FiberGrub,Item.Fish.Mossback,35,1.2,4.5,25,78,1.2
+Fish_Rippledart,Fish.Rippledart,Rippledart,Location.AquavineSpring,0,12,Item.Bait.Sunseed,Item.Fish.Rippledart,10,0.7,2.8,15,86,3.0
+Fish_Embergill,Fish.Embergill,Embergill,Location.ScorchedObsidianCaldera,5,35,Item.Bait.AshBeetle,Item.Fish.Embergill,42,1.3,4.8,28,76,1.1
+Fish_Cinderjaw,Fish.Cinderjaw,Cinderjaw,Location.ScorchedObsidianCaldera,20,75,Item.Bait.AshBeetle,Item.Fish.Cinderjaw,70,1.8,6.0,32,72,0.6
+Fish_Lavafin,Fish.Lavafin,Lavafin,Location.ScorchedObsidianCaldera,10,55,Item.Bait.MagmaGrub,Item.Fish.Lavafin,58,1.5,5.5,30,74,0.8
+Fish_CharcoalSkate,Fish.CharcoalSkate,Charcoal Skate,Location.ScorchedObsidianCaldera,35,100,Item.Bait.MagmaGrub,Item.Fish.CharcoalSkate,95,2.0,6.8,35,68,0.4
+Fish_Sparkscale,Fish.Sparkscale,Sparkscale,Location.ScorchedObsidianCaldera,0,20,Item.Bait.Sunseed,Item.Fish.Sparkscale,25,1.0,3.8,20,82,1.6
+Fish_RainbowEel,Fish.RainbowEel,Rainbow Eel,Location.SylvanRainforest,5,45,Item.Bait.LumenWorm,Item.Fish.RainbowEel,46,1.1,4.8,22,80,1.0
+Fish_Vinewhisker,Fish.Vinewhisker,Vinewhisker,Location.SylvanRainforest,0,18,Item.Bait.FiberGrub,Item.Fish.Vinewhisker,16,0.8,3.2,18,84,2.4
+Fish_Pondwarden,Fish.Pondwarden,Pondwarden,Location.SylvanRainforest,10,60,Item.Bait.FiberGrub,Item.Fish.Pondwarden,62,1.5,5.8,28,76,0.8
+Fish_Leafrunner,Fish.Leafrunner,Leafrunner,Location.SylvanRainforest,0,10,Item.Bait.Sunseed,Item.Fish.Leafrunner,14,0.7,2.6,15,87,2.8
+Fish_Deepbud,Fish.Deepbud,Deepbud,Location.SylvanRainforest,25,90,Item.Bait.LumenWorm,Item.Fish.Deepbud,88,1.9,6.5,34,70,0.45
+Fish_Frostscale,Fish.Frostscale,Frostscale,Location.GlacialZenith,10,45,Item.Bait.IceMite,Item.Fish.Frostscale,52,1.2,5.0,26,78,1.0
+Fish_Icewhisker,Fish.Icewhisker,Icewhisker,Location.GlacialZenith,0,20,Item.Bait.IceMite,Item.Fish.Icewhisker,30,0.9,3.8,20,82,1.8
+Fish_BlueComet,Fish.BlueComet,Blue Comet,Location.GlacialZenith,20,80,Item.Bait.LumenWorm,Item.Fish.BlueComet,78,1.7,6.2,32,72,0.55
+Fish_Snowbell,Fish.Snowbell,Snowbell,Location.GlacialZenith,5,30,Item.Bait.IceMite,Item.Fish.Snowbell,26,0.8,3.6,18,84,2.0
+Fish_PalePike,Fish.PalePike,Pale Pike,Location.GlacialZenith,35,110,Item.Bait.FiberGrub,Item.Fish.PalePike,110,2.1,7.2,38,66,0.3
+Fish_TrenchLantern,Fish.TrenchLantern,Trench Lantern,Underwater.AbyssalTrench,100,220,Item.Bait.LumenWorm,Item.Fish.TrenchLantern,145,1.8,7.0,35,68,0.35
+Fish_AbyssalRay,Fish.AbyssalRay,Abyssal Ray,Underwater.AbyssalTrench,180,420,Item.Bait.DeepGlowGrub,Item.Fish.AbyssalRay,210,2.5,8.5,40,64,0.2
+Fish_Ventcrawler,Fish.Ventcrawler,Ventcrawler,Underwater.AbyssalTrench,250,600,Item.Bait.MagmaGrub,Item.Fish.Ventcrawler,260,2.8,9.0,42,62,0.15
+Fish_Blackcurrent,Fish.Blackcurrent,Blackcurrent,Underwater.AbyssalTrench,300,800,Item.Bait.DeepGlowGrub,Item.Fish.Blackcurrent,330,3.2,10.5,45,60,0.1
+Fish_StarlessKoi,Fish.StarlessKoi,Starless Koi,Underwater.AbyssalTrench,400,1000,Item.Bait.DeepGlowGrub,Item.Fish.StarlessKoi,500,3.8,12.0,48,58,0.05
+Fish_SolarDarter,Fish.SolarDarter,Solar Darter,Location.DawnSpire,0,30,Item.Bait.Sunseed,Item.Fish.SolarDarter,36,1.0,4.2,20,82,1.4
+Fish_SpireCarp,Fish.SpireCarp,Spire Carp,Location.DawnSpire,5,50,Item.Bait.FiberGrub,Item.Fish.SpireCarp,64,1.4,5.5,25,76,0.8
+Fish_AetherSail,Fish.AetherSail,Aether Sailfish,Location.DawnSpire,15,70,Item.Bait.LumenWorm,Item.Fish.AetherSail,125,2.2,7.0,34,70,0.25
+Fish_Stormneedle,Fish.Stormneedle,Stormneedle,Location.DawnSpire,20,90,Item.Bait.Sunseed,Item.Fish.Stormneedle,155,2.6,8.0,38,66,0.15
+Fish_FirstDawnSturgeon,Fish.FirstDawnSturgeon,First Dawn Sturgeon,Location.DawnSpire,40,150,Item.Bait.DeepGlowGrub,Item.Fish.FirstDawnSturgeon,420,3.5,11.0,45,60,0.08

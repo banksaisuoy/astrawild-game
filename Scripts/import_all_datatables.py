@@ -41,6 +41,7 @@ TABLE_MAPPING = {
     "DT_Dungeons.csv": "FAstrawildDungeonRow",
     "DT_EchoDex.csv": "FAstrawildEchoDexRow",
     "DT_EchoDex_200.csv": "FAstrawildMasterEchoRow",
+    "DT_FishDex.csv": "FAstrawildFishRow",
     "DT_EcosystemBehavior.csv": "FAstrawildEcosystemBehaviorRow",
     "DT_EchoTraits.csv": "FAstrawildEchoTraitRow",
     "DT_Evolutions.csv": "FAstrawildEvolutionRow",

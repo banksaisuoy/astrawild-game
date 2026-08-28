@@ -75,18 +75,18 @@ The expected terminal results are the following. The exact output should be copi
 
 | Validator | Required scope | Expected result |
 |---|---|---|
-| `validate_content_contracts.py` | Required source paths, 33 CSV schemas, row counts, numeric ranges, canonical biome/spire/Echo/recipe/evolution/weather/dungeon/boss/ranged/mecha data, reflected-header presence and basic brace/parenthesis balance | `ASTRAWILD content contract validation passed.` |
+| `validate_content_contracts.py` | Required source paths, 34 CSV schemas, row counts, numeric ranges, canonical biome/spire/Echo/recipe/evolution/weather/dungeon/boss/ranged/mecha data, reflected-header presence and basic brace/parenthesis balance | `ASTRAWILD content contract validation passed.` |
 | `validate_runtime_contracts.py` | Cross-table references for quests, objectives, traits, breeding, mounts, spawns, evolutions, recipes, dungeons, boss encounters/attacks and fast-travel spires | `ASTRAWILD runtime contract validation passed.` |
 | `validate_generated_headers.py` | `generated.h` include guard for reflected headers | `Generated-header validation passed.` |
-| `validate_editor_automation.py` | AST parse of `TABLE_MAPPING`, exact source CSV set, expected row structs, importer/scaffold markers and visual config markers | `ASTRAWILD Editor automation contract validation passed (33 CSV mappings).` |
+| `validate_editor_automation.py` | AST parse of `TABLE_MAPPING`, exact source CSV set, expected row structs, importer/scaffold markers and visual config markers | `ASTRAWILD Editor automation contract validation passed (34 CSV mappings).` |
 | `validate_master_echodex.py` | 200 unique master Echo rows, 3 active skills and 12 work levels per row | `ASTRAWILD master Echo validation passed ...` |
 | `validate_generated_assets.py` | Nine prop OBJ and seven core SFX WAV legacy manifests, topology/material references and WAV metadata/hashes | `ASTRAWILD generated asset validation passed ...` |
 | `validate_mecha_contracts.py` | Five frame rows, fourteen weapon rows, five animation profiles, five VFX bindings, data references, target/LOS logic and replicated input/state source bridge | `ASTRAWILD mecha contract validation passed ...` |
-| `validate_vertical_slice_guards.py` | Map bootstrap, quest chain, interaction, capture/build rollback, inventory capacity/RPC, food preflight/rollback, save, power-grid and mounted-partner guards | `ASTRAWILD vertical-slice guard validation passed ...` |
+| `validate_vertical_slice_guards.py` | Map bootstrap, quest chain, interaction, capture/build rollback, inventory capacity/RPC, food preflight/rollback, save, power-grid, mounted-partner, underwater, Fishing and Racing guards | `ASTRAWILD vertical-slice guard validation passed ...` |
 | `validate_character_map_assets.py` | 218 Echo source meshes, Player/Alpha source meshes, four map-kit meshes and manifest coverage/originality | `ASTRAWILD character/map asset validation passed ...` |
 | `validate_audio_pack.py` | 24 extended SFX, nine ambience loops and two MP3 music files; file existence, codec/duration and manifest uniqueness | `ASTRAWILD audio pack validation passed ...` |
 | `validate_importer_coverage.py` | Mesh/audio destinations, OBJ/WAV/MP3 discovery and generated registry report markers | `ASTRAWILD importer coverage validation passed ...` |
-| `validate_handoff_contracts.py` | Handoff/runners/importer/scaffold alignment, 33 CSV count, validator order, report names, UE command gates and explicit evidence boundaries | `ASTRAWILD handoff contract validation passed ...` |
+| `validate_handoff_contracts.py` | Handoff/runners/importer/scaffold alignment, 34 CSV count, validator order, report names, UE command gates and explicit evidence boundaries | `ASTRAWILD handoff contract validation passed ...` |
 
 The validators are intentionally complementary. They do not replace one another: the legacy generated-asset validator covers the original nine props and seven core SFX, while the newer character/map and audio-pack validators cover the broader source coverage. A complete host-Python pass requires all rows above to pass.
 
@@ -151,7 +151,9 @@ The importer’s source contract is:
 
 | Import group | Source | UE destination |
 |---|---|---|
-| DataTables | 33 CSV files under `Content/Astrawild/Data/Source` | `/Game/Astrawild/Data/Imported` |
+| DataTables | 34 CSV files under `Content/Astrawild/Data/Source` | `/Game/Astrawild/Data/Imported` |
+| FishDex | `DT_FishDex.csv`, row struct `FAstrawildFishRow`, 30 fish rows | `/Game/Astrawild/Data/Imported/DT_FishDex` |
+| Racing source | `FAstrawildRacingData` and `UAstrawildRacingSubsystem`; register track/checkpoints/boost pads from authored level code or Blueprint | `/Game/Astrawild/Racing` |
 | Props | 9 explicit OBJ files | `/Game/Astrawild/Meshes/Props` |
 | Echoes | Every `*.obj` under `Content/Astrawild/Meshes/Echoes` | `/Game/Astrawild/Meshes/Echoes` |
 | Characters | Player and Alpha source OBJ files | `/Game/Astrawild/Meshes/Characters` |
@@ -160,7 +162,7 @@ The importer’s source contract is:
 | Ambience | WAV loops under `Audio/Ambience` | `/Game/Astrawild/Audio/Ambience` |
 | Music | MP3 files under `Audio/Music` | `/Game/Astrawild/Audio/Music` |
 
-The importer uses explicit reflected row-struct names for all 33 CSVs, replaces existing import tasks, saves created assets, and fails loudly when a source file, reflected struct or expected asset is missing. It also builds or updates the source-side `DA_GeneratedAssetRegistry` when the compiled registry class is available.
+The importer uses explicit reflected row-struct names for all 34 CSVs, replaces existing import tasks, saves created assets, and fails loudly when a source file, reflected struct or expected asset is missing. It also builds or updates the source-side `DA_GeneratedAssetRegistry` when the compiled registry class is available.
 
 Inspect these files after the run:
 
@@ -184,7 +186,7 @@ The required report conditions are:
 
 A report with `skipped` entries is not automatically a failure because the importer and registry are source-side bridges. A skipped or missing final material, skeletal rig, Sound Cue, AnimBP, Niagara system or Blueprint reference still means the corresponding production asset is incomplete.
 
-Save the JSON reports and capture the Content Browser showing the 33 DataTables and all generated-asset destination folders. Do not treat the Output Log sentence alone as evidence.
+Save the JSON reports and capture the Content Browser showing the 34 DataTables and all generated-asset destination folders. Do not treat the Output Log sentence alone as evidence.
 
 ## 6. Underwater Editor integration gate
 
@@ -332,7 +334,7 @@ Keep evidence under `Saved/Astrawild/WindowsEvidence` or another reviewed extern
 | `01-preflight-transcript.txt` | Hash, branch, clean/dirty state and host context |
 | `02-Validate_Astrawild-host.txt` | PowerShell host-only validation result |
 | `03-Validate_Astrawild-try-unreal.txt` | Optional command-line Blueprint check result |
-| `DataTableImportReport.json` | 33 DataTable import result |
+| `DataTableImportReport.json` | 34 DataTable import result |
 | `GeneratedAssetImportReport.json` | Generated mesh/audio import result |
 | `GeneratedAssetRegistry.json` | Source-side imported asset registry |
 | `AssetScaffoldReport.json` | Created/existing/configured/skipped/failed scaffold result |

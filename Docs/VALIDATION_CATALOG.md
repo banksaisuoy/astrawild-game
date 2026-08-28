@@ -15,7 +15,7 @@
 | Syntax and file safety | `python -m py_compile`, `validate_generated_headers.py` | Python และ reflected headers | Syntax Python และ `generated.h` include guard |
 | Content and runtime contracts | `validate_content_contracts.py`, `validate_runtime_contracts.py`, `validate_master_echodex.py` | CSV, C++, config | Schema, ranges, row counts, cross-table references และ master Echo shape |
 | Asset/import contracts | `validate_generated_assets.py`, `validate_character_map_assets.py`, `validate_audio_pack.py`, `validate_importer_coverage.py` | OBJ/WAV/MP3, manifests, importer source | Source asset existence, metadata, count, manifest coverage และ importer destinations |
-| High-risk integration and handoff | `validate_mecha_contracts.py`, `validate_vertical_slice_guards.py`, `validate_editor_automation.py`, `validate_handoff_contracts.py` | Mecha CSV/source, gameplay C++, importer/scaffold, docs/runners | Authority/RPC source markers, first-loop guards, 33 CSV mappings, report/gate alignment และ explicit UE evidence boundaries |
+| High-risk integration and handoff | `validate_mecha_contracts.py`, `validate_vertical_slice_guards.py`, `validate_editor_automation.py`, `validate_handoff_contracts.py` | Mecha CSV/source, gameplay C++, importer/scaffold, docs/runners | Authority/RPC source markers, first-loop guards, 34 CSV mappings, report/gate alignment และ explicit UE evidence boundaries |
 
 ## 2. Required host-Python suite
 
@@ -49,7 +49,7 @@ The command list must remain synchronized with the `$pythonValidators` array in 
 
 ### 3.2 `validate_content_contracts.py`
 
-This is the broad static content validator. It requires the source/config/docs paths, confirms that the current source set contains **33 CSV files**, validates required columns, nonempty and unique row names, and checks key counts/ranges for biomes, foliage, spawns, spires, EchoDex, mounts, breeding, traits, recipes, evolutions, weather, dungeons, bosses, ranged weapons, technology and mecha data.
+This is the broad static content validator. It requires the source/config/docs paths, confirms that the current source set contains **34 CSV files**, validates required columns, nonempty and unique row names, and checks key counts/ranges for biomes, foliage, spawns, spires, EchoDex, mounts, breeding, traits, recipes, evolutions, weather, dungeons, bosses, ranged weapons, technology and mecha data.
 
 It also verifies the four canonical biomes, one default fast-travel spire, Echo order 1–30, recipe/evolution/weather/dungeon/ranged row counts, boss phase thresholds, reward/ingredient array lengths, and basic C++ brace/parenthesis balance. These checks are intentionally conservative. Balanced braces are not equivalent to compiling C++.
 
@@ -63,11 +63,11 @@ This validator checks references between tables rather than merely checking indi
 
 ### 3.4 `validate_editor_automation.py`
 
-This validator parses `Scripts/import_all_datatables.py` with Python AST and reads the `TABLE_MAPPING` literal. It requires an exact match between the mapped CSV filenames and the 33 files in `Content/Astrawild/Data/Source/`, then checks the expected reflected row struct for each high-risk mapping. It also checks importer markers, scaffold factory markers, Niagara/Sound Cue contract names and visual configuration markers.
+This validator parses `Scripts/import_all_datatables.py` with Python AST and reads the `TABLE_MAPPING` literal. It requires an exact match between the mapped CSV filenames and the 34 files in `Content/Astrawild/Data/Source/`, then checks the expected reflected row struct for each high-risk mapping. It also checks importer markers, scaffold factory markers, Niagara/Sound Cue contract names and visual configuration markers.
 
 It does not run `unreal.AssetImportTask`, `DataTableFactory`, `EditorAssetLibrary` or any other Editor API. Its purpose is to catch drift before the Editor is opened.
 
-**Pass condition:** The script prints `ASTRAWILD Editor automation contract validation passed (33 CSV mappings).`
+**Pass condition:** The script prints `ASTRAWILD Editor automation contract validation passed (34 CSV mappings).`
 
 ### 3.5 `validate_master_echodex.py`
 
@@ -103,11 +103,11 @@ Passing this validator does not create Sound Cues, attenuation, concurrency, ada
 
 ### 3.9 `validate_importer_coverage.py`
 
-This validator performs concrete checks rather than marker-only checks. It parses the importer literals, confirms the 33 CSV mapping set, checks every destination constant, counts source files for props/Echoes/characters/map kit/SFX/ambience/music, verifies the nine explicit prop and seven explicit core-SFX files, validates Echo/map manifests and confirms the expanded audio manifest counts.
+This validator performs concrete checks rather than marker-only checks. It parses the importer literals, confirms the 34 CSV mapping set, checks every destination constant, counts source files for props/Echoes/characters/map kit/SFX/ambience/music, verifies the nine explicit prop and seven explicit core-SFX files, validates Echo/map manifests and confirms the expanded audio manifest counts.
 
 It also requires the importer implementation markers for OBJ/WAV/MP3 discovery, `AssetTools.import_asset_tasks`, generated import reports, and failure handling.
 
-**Pass condition:** The script prints the current 33 CSV, 218 Echo, 2 character, 4 map-kit, 31 SFX, 9 ambience and 2 music source counts.
+**Pass condition:** The script prints the current 34 CSV, 218 Echo, 2 character, 4 map-kit, 31 SFX, 9 ambience and 2 music source counts.
 
 ### 3.10 `validate_mecha_contracts.py`
 
@@ -125,7 +125,7 @@ It intentionally uses source tokens for some guards because no Unreal runtime ex
 
 ### 3.12 `validate_handoff_contracts.py`
 
-This validator is the final documentation/automation consistency gate. It checks that the handoff, importer, scaffold, PowerShell runners and all validators exist; that the source directory contains exactly 33 CSVs; that `TABLE_MAPPING` equals the source CSV set; that every validator appears in both the handoff and PowerShell runner; that all four JSON reports are produced/referenced; that importer/scaffold operational markers exist; that UE compile/package command markers exist; and that the validator order is deterministic inside `$pythonValidators` rather than being confused by required-file lists.
+This validator is the final documentation/automation consistency gate. It checks that the handoff, importer, scaffold, PowerShell runners and all validators exist; that the source directory contains exactly 34 CSVs; that `TABLE_MAPPING` equals the source CSV set; that every validator appears in both the handoff and PowerShell runner; that all four JSON reports are produced/referenced; that importer/scaffold operational markers exist; that UE compile/package command markers exist; and that the validator order is deterministic inside `$pythonValidators` rather than being confused by required-file lists.
 
 It also checks for explicit statements that source validation does not prove C++ compilation, Blueprint compilation, PIE, Network PIE or packaging, and for explicit full-hunger, two-player network PIE and Development cook/package test language. The check rejects unqualified UE success claims in the handoff.
 
@@ -136,6 +136,12 @@ It also checks for explicit statements that source validation does not prove C++
 The Underwater expansion adds `FAstrawildUnderwaterZoneRow`, `DT_UnderwaterZones.csv` and `UAstrawildUnderwaterSubsystem`. The source contract covers the Abyssal Trench depth range of 100–1000 meters, pressure damage without protection, depth-scaled oxygen drain, gradual surface refill, buoyancy multiplier, pressure-emergency movement mode, hazard/spawn tags and optional active-zone DataTable lookup.
 
 The subsystem is deliberately a calculation/data contract rather than a hidden character-movement implementation. It does not replace a CharacterMovementComponent swimming mode, water-volume detection, physical buoyancy simulation, damage application, oxygen inventory/tank item, pressure-suit equipment, underwater camera, navigation, aquatic AI, submerged base actors, or Editor-authored bioluminescent/hydrothermal assets. Those responsibilities require explicit actor/component integration and UE 5.8 runtime tests. The content, Editor-automation, importer-coverage and handoff validators now require the Underwater header, source, CSV and mapping.
+
+## 5. Fishing and Racing source contracts
+
+`FAstrawildFishRow` and `DT_FishDex.csv` define exactly 30 fish entries with habitat/depth bounds, bait tags, catch item tags, sell price, pull strength, reel duration, safe tension window and rarity weight. `UAstrawildFishingComponent` keeps the active minigame state authoritative, selects only fish valid for the bait/depth/habitat context, clamps client reel input, breaks the line at maximum tension and checks inventory capacity before committing a catch. The component does not itself create fishing rods, water volumes, fish meshes, catch animations, sell UI or economy transactions; those remain Editor/gameplay integration work.
+
+`FAstrawildRacingData` and `UAstrawildRacingSubsystem` define server-owned track checkpoints, lap state, participant timing and boost pads. Checkpoints require the expected order and server actor location; the reported client location is only a consistency check. Boost pads require a registered pad, server distance validation and an active participant. The subsystem does not replace CharacterMovement speed application, mount physics, race UI, track collision, respawn rules, matchmaking or leaderboard persistence.
 
 ## 5. PowerShell runner behavior
 
