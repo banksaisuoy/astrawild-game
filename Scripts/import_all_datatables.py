@@ -61,6 +61,7 @@ TABLE_MAPPING = {
     "DT_SpawnRules.csv": "FAstrawildWorldSpawnRule",
     "DT_TechnologyNodes.csv": "FAstrawildTechnologyNodeRow",
     "DT_Weather.csv": "FAstrawildWeatherRow",
+    "DT_UnderwaterZones.csv": "FAstrawildUnderwaterZoneRow",
     "DT_WorldEvents.csv": "FAstrawildWorldEventRow",
 }
 

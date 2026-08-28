@@ -9,7 +9,7 @@
 
 ## Executive summary
 
-The repository now contains a coherent compact vertical-slice source package: a server-guarded prototype arena contract, first-loop data and quest bootstrap, transactional capture/build/food/inventory safeguards, source-level inventory/capture/mecha replication bridges, generated original source meshes for the complete current Echo catalogue, generated audio coverage, Editor importer/scaffold scripts, and regression validators. The branch is **not a finished playable Unreal build** because the sandbox does not contain Unreal Engine 5.8, Windows MSVC, the Unreal Python module, or the Editor-created binary content required by the final runtime.
+The repository now contains a coherent compact vertical-slice source package: a server-guarded prototype arena contract, first-loop data and quest bootstrap, transactional capture/build/food/inventory safeguards, source-level inventory/capture/mecha replication bridges, generated original source meshes for the complete current Echo catalogue, generated audio coverage, Editor importer/scaffold scripts, concrete importer-count/manifest checks, a handoff/runbook consistency validator and regression validators. The branch is **not a finished playable Unreal build** because the sandbox does not contain Unreal Engine 5.8, Windows MSVC, the Unreal Python module, or the Editor-created binary content required by the final runtime.
 
 The recommended production order remains: **compile first, import second, author the four-zone compact map and P0 assets third, run a deterministic single-player loop fourth, then verify only the network surfaces that have deliberate replication coverage**. Adding more catalogue breadth before those gates pass would increase review noise rather than increase playable quality.
 
@@ -27,15 +27,16 @@ The recommended production order remains: **compile first, import second, author
 | Mecha | Five frames, fourteen weapons, animation/VFX contracts, authority-gated input/state RPC bridge and replicated presentation fields | Mecha validator + vertical-slice guard | Final skeletal mesh, AnimBP, Niagara, cockpit Widget Blueprint, socket setup and Network PIE are pending |
 | Character/Echo models | 218 deterministic original static OBJ source meshes plus Player and Alpha source meshes | Character/map asset validator | OBJ files are not rigged skeletal meshes, final materials, LODs, collision or `.uasset` assets |
 | Map models | Four compact-map kit OBJ source meshes and manifest | Character/map asset validator | No authored World Partition map, navigation, landscape, lighting, HLOD or Data Layers in repository |
+| Underwater source contract | `FAstrawildUnderwaterZoneRow`, `DT_UnderwaterZones.csv`, and `UAstrawildUnderwaterSubsystem` for Abyssal Trench depth/pressure/oxygen/buoyancy calculations, gradual surface refill and emergency state | Content/vertical-slice/handoff validators | Full 6-DOF swimming, water volume, oxygen/damage equipment binding, underwater presentation, aquatic AI and submerged base actors require UE Editor/runtime work |
 | Audio | 31 SFX WAV, 9 ambience WAV, 2 original MP3 music tracks and codec/duration manifest | Audio validator + ffprobe-backed manifest | Sound Cues, attenuation, concurrency, adaptive music, mix and runtime event routing require Editor |
-| Import/scaffold | 32 CSV mappings plus generated OBJ/audio discovery and reports | Importer coverage validator | Actual execution requires Unreal Editor Python and reflected classes |
+| Import/scaffold | 33 CSV mappings plus generated OBJ/audio discovery and reports; concrete source counts/destinations/manifests and handoff order checks | Importer coverage + handoff contract validators | Actual execution requires Unreal Editor Python and reflected classes |
 | Originality | ASTRAWILD names/data and generated source assets use original direction; guard lists are validator data only | Static content/originality review | Any future third-party asset must be recorded in `Docs/ThirdPartyLicenses.md` before commit |
 
 ## High-priority remaining work
 
 ### P0 — Establish a real playable slice in Unreal Editor
 
-Compile `ASTRAWILDEditor Win64 Development` with UE 5.8 and MSVC 2022. Fix every UHT, link, Blueprint nativization, and reflected-property issue before importing or authoring content. Run the importer inside the Unreal Editor Python environment and retain its JSON reports. Verify that all 32 DataTables resolve to the expected reflected row structs and that the generated asset registry is saved.
+Compile `ASTRAWILDEditor Win64 Development` with UE 5.8 and MSVC 2022. Fix every UHT, link, Blueprint nativization, and reflected-property issue before importing or authoring content. Run the importer inside the Unreal Editor Python environment and retain its JSON reports. Verify that all 33 DataTables resolve to the expected reflected row structs and that the generated asset registry is saved.
 
 Author or replace the source placeholders with original production assets for the Player, Pyrelite, Thornback, Aquavine and Solarix Alpha. Each Echo needs a valid skeletal mesh, skeleton, physics asset, material instances, collision, LOD policy and Animation Blueprint. The static OBJ catalogue is a coverage scaffold, not the final character art pass.
 
@@ -84,4 +85,4 @@ The generated WAV/MP3 files are original source audio coverage. The two music fi
 
 ## Decision
 
-The repository-side production pass should be considered **source/configuration ready for the Windows Editor handoff, but not production-playable or shipping-ready**. The next highest-value action is to restore GitHub authentication, safely fetch the branch, push the reviewed source pass, and then execute the Windows evidence gates in order. If any UE compile/import gate fails, stop and fix it before increasing content scope.
+The repository-side production pass should be considered **source/configuration ready for the Windows Editor handoff, but not production-playable or shipping-ready**. See `Docs/VALIDATION_CATALOG.md` for validator behavior and `Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md` for the ordered Windows runbook. The reviewed source pass is already pushed; the next highest-value action is to execute the Windows evidence gates in order. If any UE compile/import gate fails, stop and fix it before increasing content scope.

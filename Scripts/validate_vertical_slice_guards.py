@@ -147,6 +147,34 @@ def main() -> int:
         ),
     }
 
+    source_checks.update({
+        "Source/AstrawildCore/Public/World/AstrawildUnderwaterData.h": (
+            "FAstrawildUnderwaterZoneRow",
+            "MinDepthMeters",
+            "MaxDepthMeters",
+            "PressureDamagePerSecond",
+            "OxygenDrainMultiplier",
+            "HazardTags",
+            "SpawnSpeciesTags",
+        ),
+        "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h": (
+            "EAstrawildUnderwaterMovementMode",
+            "PressureEmergency",
+            "OxygenTankCapacitySeconds",
+            "SurfaceOxygenRefillPerSecond",
+            "EvaluateDiverState",
+            "GetActiveZoneRow",
+        ),
+        "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp": (
+            "IsAbyssalTrenchDepth",
+            "CalculatePressureDamagePerSecond",
+            "CalculateOxygenDrainPerSecond",
+            "FMath::Min(SafeCapacity",
+            "State.MovementMode = EAstrawildUnderwaterMovementMode::PressureEmergency",
+            "FindRow<FAstrawildUnderwaterZoneRow>",
+        ),
+    })
+
     for relative, required_tokens in source_checks.items():
         path = ROOT / relative
         if not path.exists():
@@ -157,6 +185,18 @@ def main() -> int:
             if token not in content:
                 errors.append(f"{relative} is missing guard token: {token}")
 
+    underwater_path = ROOT / "Content/Astrawild/Data/Source/DT_UnderwaterZones.csv"
+    with underwater_path.open(encoding="utf-8-sig", newline="") as handle:
+        underwater_rows = list(csv.DictReader(handle))
+    abyssal = next((row for row in underwater_rows if row.get("Name") == "Underwater_AbyssalTrench"), None)
+    if not abyssal:
+        errors.append("Underwater DataTable must contain Underwater_AbyssalTrench")
+    else:
+        if abyssal.get("MinDepthMeters") != "100" or abyssal.get("MaxDepthMeters") != "1000":
+            errors.append("Abyssal Trench depth contract must be 100-1000 meters")
+        if abyssal.get("PressureDamagePerSecond") != "5.0" or abyssal.get("OxygenDrainMultiplier") != "1.5":
+            errors.append("Abyssal Trench pressure/oxygen multipliers drifted")
+
     quest_path = ROOT / "Content/Astrawild/Data/Source/DT_QuestObjectives.csv"
     with quest_path.open(encoding="utf-8-sig", newline="") as handle:
         quest_rows = list(csv.DictReader(handle))
@@ -165,7 +205,7 @@ def main() -> int:
         errors.append("Campwater collect objective must target the shared Item.Water tag")
 
     tag_registry = read("Config/DefaultGameplayTags.ini")
-    for required_tag in ("Item.Water", "Location.AquavineSpring", "Echo.SolarixAlpha"):
+    for required_tag in ("Item.Water", "Location.AquavineSpring", "Echo.SolarixAlpha", "Biome.AbyssalTrench", "Hazard.Pressure"):
         if f'Tag="{required_tag}"' not in tag_registry:
             errors.append(f"gameplay tag registry is missing {required_tag}")
     for forbidden_false_positive in ("Ability.BaseDamage", "Ability.AbilityName", "Work.WorkEfficiencyMultiplier"):
@@ -190,7 +230,7 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print("ASTRAWILD vertical-slice guard validation passed (map bootstrap, interaction, save/build/capture rollback, power-grid, and mounted-weapon guards).")
+    print("ASTRAWILD vertical-slice guard validation passed (map bootstrap, interaction, save/build/capture rollback, power-grid, mounted-weapon, and underwater guards).")
     return 0
 
 

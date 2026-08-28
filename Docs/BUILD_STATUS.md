@@ -17,9 +17,9 @@
 |---|---|---|
 | Git branch and repository sync | **PASS** | The branch was fetched and checked against `origin/release/vertical-slice-v1` before the latest documentation push; run `git rev-parse HEAD` and the remote comparison after pulling to reproduce the check. |
 | Python content-contract validation | **PASS** | Baseline Windows checks passed; the expanded local suite also passes content, runtime, generated-header, and editor-automation validators. |
-| Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass. |
+| Git whitespace/diff gate | **PASS** | `git diff --check` passes for the current local source/config/data pass; staged and final commit checks are required before push. |
 | Generated-header presence scan | **PASS** | Static scan found no reflected header missing a `generated.h` include. |
-| Vertical-slice source guard validation | **PASS** | `validate_vertical_slice_guards.py` checks map bootstrap, quest chain, capture/build rollback, inventory capacity, save/food persistence, power-grid timer/battery, mounted-partner skill gating, and Gameplay Tag registry. |
+| Vertical-slice source guard validation | **PASS** | `validate_vertical_slice_guards.py` checks map bootstrap, quest chain, capture/build rollback, inventory capacity/RPC, save/food persistence and rollback, power-grid timer/battery, mounted-partner skill gating, and Gameplay Tag registry. |
 | Unreal 5.8 C++ compile | **NOT RUN HERE** | Requires the user’s Windows machine with UE 5.8 and MSVC 2022. |
 | DataTable import in Unreal Editor | **NOT RUN HERE** | CSV sources exist; derived `.uasset` DataTables must be imported in Editor. |
 | PIE smoke test | **NOT RUN HERE** | Requires authored map, Blueprint children, imported assets, and Editor execution. |
@@ -46,13 +46,14 @@ The release branch now contains the following source/data preparation slices. Th
 | Visual/world polish contracts | Lumen/scalability presets, landscape MPC parameter contract, weather-driven wetness bridge, 15 foliage distribution rows, editor scaffold expansion, original audio registry, and asset production bible; final material graphs, foliage meshes, Niagara graphs, Sound Cues, map actors, skeletal rigs, and binary assets remain Windows Editor work. |
 | Astra exosuit integration | Originalized 5 frame profiles and 14 weapon rows, cybernetic evolution data, 5 AnimBP profile rows, 5 Niagara VFX bindings, native AnimInstance bindings, authority/data-driven MechaComponent hardpoint state, source-level replicated input/state RPC bridge, MechaVFXComponent and CockpitWidget contracts. Final skeletal meshes, AnimBPs, Niagara graphs, Widget Blueprint and UE runtime tests remain pending. |
 | Compact vertical-slice bootstrap | PrototypeArena now has server-only/idempotent generation, stable resource/building IDs, three Dawn Fiber nodes, Solarix Alpha source encounter data, Storage Chest, Aquavine spring hydration/reward interaction, and GameMode soft-path quest table bootstrap. Final authored map and controller/DataTable assignment still require Editor verification. |
+| Underwater expansion source contract | `FAstrawildUnderwaterZoneRow`, `DT_UnderwaterZones.csv`, and `UAstrawildUnderwaterSubsystem` provide Abyssal Trench depth/pressure/oxygen/buoyancy calculation, gradual surface refill, pressure-emergency mode, hazard/spawn tags and optional zone-table lookup. Full 6-DOF swimming, water volumes, oxygen/damage equipment binding, underwater presentation, aquatic AI and submerged base actors remain UE Editor/runtime work. |
 | Generated character/map asset coverage | Deterministic original static source meshes for 218 unique Echo rows, Player placeholder, Alpha Solarix, and four compact-map kits, with OBJ/MTL manifests and character/map validator. These are source placeholders, not final skeletal meshes or `.uasset` content. |
 | Generated audio coverage | 24 additional gameplay/Echo/boss/exosuit/UI SFX WAVs, 9 zone ambience WAV loops and 2 original encounter/exploration MP3 tracks, with a master audio manifest and codec/duration validator. Sound Cue routing, attenuation, adaptive music and mix remain Editor work. |
 | First-loop runtime hardening | Capture/build rollback on failed operations, source-level replicated inventory/capture request bridges, inventory capacity preflight, auto-start dependent quests, food spoilage/buff save state, food-consumption preflight/rollback, placed-building restore, PowerGrid timer/battery correction, mounted partner-skill gating, and project Gameplay Tag registry. These are source contracts pending UE compile/runtime verification. |
 
 ## Source data inventory
 
-The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The current inventory is 32 tables, including world-event, ecosystem, cooking, progression and exosuit animation/VFX tables.
+The reviewable source-of-truth CSVs are under `Content/Astrawild/Data/Source/`. The current inventory is 33 tables, including world-event, ecosystem, cooking, progression, underwater and exosuit animation/VFX tables. `Scripts/validate_handoff_contracts.py` checks that this runbook, the PowerShell runners, importer, scaffold and validator order remain synchronized. Detailed validator behavior is documented in `Docs/VALIDATION_CATALOG.md`.
 
 The repository deliberately does not pretend that CSV files are Unreal DataTable assets. Import them into `Content/Astrawild/Data/Imported/` with the row structs named in the relevant handoff documents. Keep the CSV sources under review and commit derived `.uasset` files with Git LFS when they are authored and tested.
 
@@ -79,6 +80,10 @@ python Scripts/validate_master_echodex.py
 python Scripts/validate_generated_assets.py
 python Scripts/validate_mecha_contracts.py
 python Scripts/validate_vertical_slice_guards.py
+python Scripts/validate_character_map_assets.py
+python Scripts/validate_audio_pack.py
+python Scripts/validate_importer_coverage.py
+python Scripts/validate_handoff_contracts.py
 python -m py_compile Scripts/*.py
 .\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location)
 .\Tools\Validate_Astrawild.ps1 -ProjectRoot (Get-Location) -TryUnreal
@@ -130,5 +135,5 @@ ASTRAWILD uses original names and data contracts. Do not copy or import characte
 | 2026-08-28 | Manus | `5ac0da3` | Repository review/status sync | Current repository review completed; historical audit explicitly labeled; staged UE 5.8 Editor Integration gates documented | Review **PASS**; UE compile/Editor import/PIE/package pending |
 | 2026-08-28 | Manus | `7c85c7f` | Status hash correction | BUILD_STATUS latest hash synchronized with the pushed branch head | Documentation **PASS**; UE compile/Editor import/PIE/package pending |
 | 2026-08-28 | Manus | `e36dc26` | Status hash correction | BUILD_STATUS synchronized with the final review commit and branch head | Documentation **PASS**; UE compile/Editor import/PIE/package pending |
-| 2026-08-28 | Manus | current source pass | Sandbox static checks | Added compact-map bootstrap, first-loop runtime hardening, Gameplay Tag registry, deterministic source meshes for 218 Echo rows plus Player/Alpha/map kits, 24 SFX/9 ambience/2 music sources, importer/scaffold wiring, inventory/capture/mecha source replication bridges, food-consumption rollback, asset validators and updated handoff; `py_compile`, content/runtime/generated-header/vertical/audio/character-map/mecha guards and `git diff --check` passed | Source/config/assets **PASS**; UE compile/Editor import/PIE/package pending |
+| 2026-08-28 | Manus | current source pass | Sandbox static checks | Added compact-map bootstrap, first-loop runtime hardening, Gameplay Tag registry, deterministic source meshes for 218 Echo rows plus Player/Alpha/map kits, 24 SFX/9 ambience/2 music sources, importer/scaffold wiring, inventory/capture/mecha source replication bridges, food-consumption rollback, concrete importer coverage checks, handoff contract validator, validation catalog and expanded operational runbook; full static suite and `git diff --check` passed | Source/config/assets **PASS**; UE compile/Editor import/PIE/package pending |
 |  | Windows owner |  | UE 5.8 / MSVC 2022 | Add module compile log, DataTable/scaffold reports, automation result, PIE/network screenshots, and package path here | **PENDING** |

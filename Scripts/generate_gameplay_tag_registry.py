@@ -28,6 +28,7 @@ ALLOWED_ROOTS = {
     "Food",
     "Frame",
     "Group",
+    "Hazard",
     "Harvest",
     "Interact",
     "Item",

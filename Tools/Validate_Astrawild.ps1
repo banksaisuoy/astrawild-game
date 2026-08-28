@@ -45,6 +45,7 @@ $required = @(
     "Content/Astrawild/Data/Source/DT_Dungeons.csv",
     "Content/Astrawild/Data/Source/DT_Evolutions.csv",
     "Content/Astrawild/Data/Source/DT_Weather.csv",
+    "Content/Astrawild/Data/Source/DT_UnderwaterZones.csv",
     "Content/Astrawild/Data/Source/DT_MechaFrames.csv",
     "Content/Astrawild/Data/Source/DT_MechaWeapons.csv",
     "Content/Astrawild/Data/Source/DT_CyberneticEvolutions.csv",
@@ -77,6 +78,9 @@ $required = @(
     "Source/AstrawildCore/Private/World/AstrawildAudioSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldClockSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildWorldClockSubsystem.cpp",
+    "Source/AstrawildCore/Public/World/AstrawildUnderwaterData.h",
+    "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp",
     "Config/DefaultEngine.ini",
     "Config/DefaultScalability.ini",
     "Config/DefaultGameplayTags.ini",
@@ -95,12 +99,15 @@ $required = @(
     "Scripts\generate_extended_audio_pack.py",
     "Scripts\validate_audio_pack.py",
     "Scripts\validate_importer_coverage.py",
+    "Scripts\validate_handoff_contracts.py",
     "Docs/M2_EVOLUTION_HANDOFF.md",
     "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
     "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md",
     "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md",
     "Docs/ASSET_PRODUCTION_BIBLE.md",
     "Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md",
+    "Docs/VALIDATION_CATALOG.md",
+    "Docs/NEXT_GEN_EXPANSION_ROADMAP.md",
     "Content/Astrawild/Meshes/Echoes/ASTRAWILD_Echoes.mtl",
     "Content/Astrawild/Meshes/Echoes/ASTRAWILD_EchoSource_Manifest.json",
     "Content/Astrawild/Meshes/Characters/ASTRAWILD_Characters.mtl",
@@ -131,7 +138,8 @@ $pythonValidators = @(
     "Scripts\validate_vertical_slice_guards.py",
     "Scripts\validate_character_map_assets.py",
     "Scripts\validate_audio_pack.py",
-    "Scripts\validate_importer_coverage.py"
+    "Scripts\validate_importer_coverage.py",
+    "Scripts\validate_handoff_contracts.py"
 )
 if (Get-Command python -ErrorAction SilentlyContinue) {
     foreach ($validator in $pythonValidators) {

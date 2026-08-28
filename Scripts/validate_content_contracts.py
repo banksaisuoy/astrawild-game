@@ -33,6 +33,7 @@ REQUIRED_CSV = {
     ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv": {"Name", "DungeonId", "DisplayName", "RegionTag", "RequiredKeyTag", "bConsumeRequiredKey", "BossSpeciesTag", "BossElement", "RecommendedLevel", "TimeLimitSeconds", "bSupportsCoop", "RewardItemTags", "RewardQuantities"},
     ROOT / "Content/Astrawild/Data/Source/DT_Evolutions.csv": {"Name", "EvolutionId", "SourceSpeciesTag", "TargetSpeciesTag", "TargetSpeciesData", "RequiredLevel", "RequiredItemTag", "RequiredItemQuantity"},
     ROOT / "Content/Astrawild/Data/Source/DT_Weather.csv": {"Name", "WeatherTag", "DisplayName", "TemperatureModifier", "VisibilityMultiplier", "WindStrength", "RainIntensity", "MinimumDurationSeconds", "MaximumDurationSeconds"},
+    ROOT / "Content/Astrawild/Data/Source/DT_UnderwaterZones.csv": {"Name", "ZoneId", "DisplayName", "MinDepthMeters", "MaxDepthMeters", "PressureDamagePerSecond", "OxygenDrainMultiplier", "BuoyancyMultiplier", "BiomeTag", "HazardTags", "SpawnSpeciesTags"},
     ROOT / "Content/Astrawild/Data/Source/DT_WorldEvents.csv": {"Name", "EventTag", "DisplayName", "EventType", "BiomeTag", "WeatherTag", "SpawnRuleTags", "RewardItemTags", "DurationSeconds", "CooldownSeconds", "MaxActiveSpecialSpawns", "bRequiresNight", "bRequiresStorm"},
     ROOT / "Content/Astrawild/Data/Source/DT_CampaignChapters.csv": {"Name", "ChapterId", "DisplayName", "Summary", "RequiredQuestIds", "OptionalQuestIds", "RequiredBossEncounterTag", "UnlockRegionTag", "UnlockSpireTag", "EndingChoiceTags", "bIsFinalChapter"},
     ROOT / "Content/Astrawild/Data/Source/DT_EcosystemBehavior.csv": {"Name", "SpeciesTag", "Temperament", "DietTag", "SocialGroupTag", "PerceptionRadius", "TerritoryRadius", "HungerSecondsUntilForage", "FleeHealthThreshold", "DefendHealthThreshold", "bCanMigrateDuringWorldEvents", "bFormsGroups", "bDefendsYoung"},
@@ -73,6 +74,9 @@ REQUIRED_PATHS = [
     "Source/AstrawildCore/Private/World/AstrawildBossAIController.cpp",
     "Source/AstrawildCore/Private/Echoes/AstrawildAlphaEcho.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldData.h",
+    "Source/AstrawildCore/Public/World/AstrawildUnderwaterData.h",
+    "Source/AstrawildCore/Public/World/AstrawildUnderwaterSubsystem.h",
+    "Source/AstrawildCore/Private/World/AstrawildUnderwaterSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildWorldPartitionSubsystem.h",
     "Source/AstrawildCore/Private/World/AstrawildWorldPartitionSubsystem.cpp",
     "Source/AstrawildCore/Public/World/AstrawildEnvironmentHazardComponent.h",
@@ -142,6 +146,8 @@ REQUIRED_PATHS = [
     "Docs/M9_M10_UI_PACKAGING_HANDOFF.md",
     "Docs/VISUAL_AND_WORLD_POLISH_HANDOFF.md",
     "Docs/UNREAL_EDITOR_AUTOMATION_HANDOFF.md",
+    "Docs/VALIDATION_CATALOG.md",
+    "Docs/NEXT_GEN_EXPANSION_ROADMAP.md",
     "Docs/P5_ASTRA_EXOSUIT_SYSTEM_SPEC.md",
     "Docs/VERTICAL_SLICE_MAP_20MIN_SPEC.md",
     "Docs/ASSET_PRODUCTION_BIBLE.md",
@@ -165,6 +171,7 @@ REQUIRED_PATHS = [
     "Scripts/generate_extended_audio_pack.py",
     "Scripts/validate_audio_pack.py",
     "Scripts/validate_importer_coverage.py",
+    "Scripts/validate_handoff_contracts.py",
     "Scripts/validate_runtime_contracts.py",
     "Scripts/validate_editor_automation.py",
     "Scripts/validate_generated_headers.py",
@@ -445,6 +452,30 @@ for row in weather_rows:
             errors.append(f"DT_Weather.csv invalid duration in row {row.get('Name', '<unknown>')}")
     except (KeyError, ValueError):
         errors.append(f"DT_Weather.csv non-numeric value in row {row.get('Name', '<unknown>')}")
+
+underwater_path = ROOT / "Content/Astrawild/Data/Source/DT_UnderwaterZones.csv"
+underwater_rows = loaded_rows.get(underwater_path, [])
+if len(underwater_rows) != 1:
+    errors.append(f"DT_UnderwaterZones.csv must contain exactly one authored zone row; found {len(underwater_rows)}")
+underwater_ids = [row.get("ZoneId", "") for row in underwater_rows]
+if len(underwater_ids) != len(set(underwater_ids)):
+    errors.append("DT_UnderwaterZones.csv has duplicate ZoneId values")
+for row in underwater_rows:
+    try:
+        min_depth = float(row["MinDepthMeters"])
+        max_depth = float(row["MaxDepthMeters"])
+        pressure = float(row["PressureDamagePerSecond"])
+        oxygen_multiplier = float(row["OxygenDrainMultiplier"])
+        buoyancy = float(row["BuoyancyMultiplier"])
+        if min_depth < 0.0 or max_depth <= min_depth or max_depth > 10000.0:
+            errors.append(f"DT_UnderwaterZones.csv invalid depth range in row {row.get('Name', '<unknown>')}")
+        if pressure < 0.0 or oxygen_multiplier <= 0.0 or buoyancy <= 0.0:
+            errors.append(f"DT_UnderwaterZones.csv invalid pressure/oxygen/buoyancy value in row {row.get('Name', '<unknown>')}")
+        if not row.get("BiomeTag") or not row.get("HazardTags") or not row.get("SpawnSpeciesTags"):
+            errors.append(f"DT_UnderwaterZones.csv missing hazard/spawn tags in row {row.get('Name', '<unknown>')}")
+    except (KeyError, ValueError):
+        errors.append(f"DT_UnderwaterZones.csv non-numeric value in row {row.get('Name', '<unknown>')}")
+
 
 dungeon_path = ROOT / "Content/Astrawild/Data/Source/DT_Dungeons.csv"
 dungeon_rows = loaded_rows.get(dungeon_path, [])

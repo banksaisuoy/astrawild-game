@@ -1,0 +1,2 @@
+Name,ZoneId,DisplayName,MinDepthMeters,MaxDepthMeters,PressureDamagePerSecond,OxygenDrainMultiplier,BuoyancyMultiplier,BiomeTag,HazardTags,SpawnSpeciesTags
+Underwater_AbyssalTrench,Underwater.AbyssalTrench,Abyssal Trench,100,1000,5.0,1.5,0.85,Biome.AbyssalTrench,"(Hazard.Pressure,Hazard.LowVisibility,Hazard.HydrothermalVent)","(Echo.Aquavine,Echo.Miremaw,Echo.Geyserspout)"

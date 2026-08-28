@@ -26,6 +26,7 @@ EXPECTED_STRUCTS = {
     "DT_MechaWeapons.csv": "FAstrawildMechaWeaponRow",
     "DT_PlayerPerks.csv": "FAstrawildPlayerPerkRow",
     "DT_PowerGrid.csv": "FAstrawildPowerGridNodeRow",
+    "DT_UnderwaterZones.csv": "FAstrawildUnderwaterZoneRow",
     "DT_WorldEvents.csv": "FAstrawildWorldEventRow",
 }
 EXPECTED_IMPORTER_MARKERS = (
