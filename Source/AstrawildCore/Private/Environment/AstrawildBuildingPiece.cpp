@@ -39,11 +39,20 @@ void AAstrawildBuildingPiece::BeginPlay()
 	{
 		if (BuildingType == EAstrawildBuildingType::Campfire)
 		{
-			UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-			if (CylinderMesh)
+			UStaticMesh* PropMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Astrawild/Meshes/Props/SM_CampfireBase.SM_CampfireBase"));
+			if (PropMesh)
 			{
-				MeshComponent->SetStaticMesh(CylinderMesh);
-				MeshComponent->SetRelativeScale3D(FVector(1.4f, 1.4f, 0.4f));
+				MeshComponent->SetStaticMesh(PropMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.6f, 1.6f, 1.6f));
+			}
+			else
+			{
+				UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+				if (CylinderMesh)
+				{
+					MeshComponent->SetStaticMesh(CylinderMesh);
+					MeshComponent->SetRelativeScale3D(FVector(1.4f, 1.4f, 0.4f));
+				}
 			}
 		}
 		else if (BuildingType == EAstrawildBuildingType::RestBed)

@@ -141,6 +141,25 @@ void AAstrawildEchoBase::ApplyVisualRepresentation()
 		}
 	}
 
+	// Check if custom imported static mesh exists in /Game/Astrawild/Meshes/
+	if (FallbackMeshComponent && SpeciesData)
+	{
+		FString CleanSpeciesName = SpeciesData->SpeciesName.ToString().Replace(TEXT(" "), TEXT(""));
+		FString MeshPath = FString::Printf(TEXT("/Game/Astrawild/Meshes/Echoes/SM_Echo_%s.SM_Echo_%s"), *CleanSpeciesName, *CleanSpeciesName);
+		UStaticMesh* LoadedMesh = LoadObject<UStaticMesh>(nullptr, *MeshPath);
+		if (!LoadedMesh)
+		{
+			FString CharMeshPath = FString::Printf(TEXT("/Game/Astrawild/Meshes/Characters/SM_Alpha_%s.SM_Alpha_%s"), *CleanSpeciesName, *CleanSpeciesName);
+			LoadedMesh = LoadObject<UStaticMesh>(nullptr, *CharMeshPath);
+		}
+		if (LoadedMesh)
+		{
+			FallbackMeshComponent->SetStaticMesh(LoadedMesh);
+			FallbackMeshComponent->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
+			return;
+		}
+	}
+
 	// Fallback to engine basic cylinder / sphere
 	if (FallbackMeshComponent && !FallbackMeshComponent->GetStaticMesh())
 	{

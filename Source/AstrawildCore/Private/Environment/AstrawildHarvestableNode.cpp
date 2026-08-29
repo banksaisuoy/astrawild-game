@@ -38,21 +38,39 @@ void AAstrawildHarvestableNode::BeginPlay()
 		FColor NodeTint = FColor::White;
 		if (HarvestType == EAstrawildHarvestType::Lumber)
 		{
-			UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-			if (CylinderMesh)
+			UStaticMesh* PropMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Astrawild/Meshes/Props/SM_SunwoodLog.SM_SunwoodLog"));
+			if (PropMesh)
 			{
-				MeshComponent->SetStaticMesh(CylinderMesh);
-				MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 5.0f));
+				MeshComponent->SetStaticMesh(PropMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.8f, 1.8f, 1.8f));
+			}
+			else
+			{
+				UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+				if (CylinderMesh)
+				{
+					MeshComponent->SetStaticMesh(CylinderMesh);
+					MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 5.0f));
+				}
 			}
 			NodeTint = FColor(121, 85, 72); // Wooden Bark Brown
 		}
 		else if (HarvestType == EAstrawildHarvestType::Mining)
 		{
-			UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-			if (CubeMesh)
+			UStaticMesh* PropMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Astrawild/Meshes/Props/SM_LumenRock.SM_LumenRock"));
+			if (PropMesh)
 			{
-				MeshComponent->SetStaticMesh(CubeMesh);
-				MeshComponent->SetRelativeScale3D(FVector(2.0f, 2.0f, 1.6f));
+				MeshComponent->SetStaticMesh(PropMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 1.5f));
+			}
+			else
+			{
+				UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+				if (CubeMesh)
+				{
+					MeshComponent->SetStaticMesh(CubeMesh);
+					MeshComponent->SetRelativeScale3D(FVector(2.0f, 2.0f, 1.6f));
+				}
 			}
 			NodeTint = FColor(0, 188, 212); // Astra Crystal Cyan
 		}

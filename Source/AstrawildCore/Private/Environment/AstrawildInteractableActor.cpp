@@ -33,11 +33,20 @@ void AAstrawildInteractableActor::BeginPlay()
 
 	if (MeshComponent && !MeshComponent->GetStaticMesh())
 	{
-		UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-		if (CylinderMesh)
+		UStaticMesh* KitMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Astrawild/Meshes/MapKit/SM_DawnSpire_Kit.SM_DawnSpire_Kit"));
+		if (KitMesh)
 		{
-			MeshComponent->SetStaticMesh(CylinderMesh);
-			MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 6.0f));
+			MeshComponent->SetStaticMesh(KitMesh);
+			MeshComponent->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
+		}
+		else
+		{
+			UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+			if (CylinderMesh)
+			{
+				MeshComponent->SetStaticMesh(CylinderMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 6.0f));
+			}
 		}
 	}
 }
