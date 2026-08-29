@@ -180,11 +180,10 @@ def _set_property(object_or_class, property_name: str, value) -> None:
 
 
 def _make_datatable_import_task(source_file: Path, destination_name: str, row_struct):
-    factory = unreal.DataTableFactory()
-    # DataTableFactory.struct is an ObjectProperty typed as ScriptStruct.
-    # Convert the loaded class (Python `type`) to an Object instance.
-    struct_instance = _to_script_struct_instance(row_struct)
-    _set_property(factory, "struct", struct_instance)
+    factory = unreal.CSVImportFactory()
+    settings = factory.get_editor_property("automated_import_settings")
+    settings.set_editor_property("import_row_struct", row_struct)
+    settings.set_editor_property("import_type", unreal.CSVImportType.ECSV_DATA_TABLE)
 
     task = unreal.AssetImportTask()
     _set_property(task, "filename", str(source_file))
