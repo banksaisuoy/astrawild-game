@@ -130,6 +130,18 @@ void AAstrawildCharacter::ApplyVisualRepresentation()
 		if (USkeletalMesh* LoadedMesh = PlayerSkeletalMesh.LoadSynchronous())
 		{
 			GetMesh()->SetSkeletalMesh(LoadedMesh);
+			GetMesh()->SetVisibility(true);
+		}
+	}
+	else
+	{
+		// Default Manny Skeletal Mesh
+		if (USkeletalMesh* MannySK = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")))
+		{
+			GetMesh()->SetSkeletalMesh(MannySK);
+			GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+			GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+			GetMesh()->SetVisibility(true);
 		}
 	}
 
@@ -138,6 +150,14 @@ void AAstrawildCharacter::ApplyVisualRepresentation()
 		if (UClass* LoadedAnimClass = PlayerAnimationBlueprintClass.LoadSynchronous())
 		{
 			GetMesh()->SetAnimInstanceClass(LoadedAnimClass);
+		}
+	}
+	else
+	{
+		// Default Unarmed Animation Blueprint
+		if (UClass* UnarmedAnim = LoadClass<UAnimInstance>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed_C")))
+		{
+			GetMesh()->SetAnimInstanceClass(UnarmedAnim);
 		}
 	}
 }
@@ -228,6 +248,19 @@ void AAstrawildCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	// 1. Try Enhanced Input Binding
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
+		if (!MoveAction)
+		{
+			MoveAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Move.IA_Move"));
+		}
+		if (!LookAction)
+		{
+			LookAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Look.IA_Look"));
+		}
+		if (!JumpAction)
+		{
+			JumpAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/Input/Actions/IA_Jump.IA_Jump"));
+		}
+
 		if (MoveAction)
 		{
 			EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAstrawildCharacter::InputMove);

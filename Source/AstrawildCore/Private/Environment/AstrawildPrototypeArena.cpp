@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Environment/AstrawildPrototypeArena.h"
 #include "Environment/AstrawildHarvestableNode.h"
@@ -119,7 +119,7 @@ void AAstrawildPrototypeArena::SpawnTestPlatform(const FVector& Location, const 
 		}
 
 		MeshComp->SetCollisionProfileName(TEXT("BlockAll"));
-		MeshComp->SetMobility(EComponentMobility::Static);
+		MeshComp->SetMobility(EComponentMobility::Movable);
 	}
 }
 

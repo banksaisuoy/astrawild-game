@@ -10,6 +10,8 @@
 #include "Components/AstrawildBuildingComponent.h"
 #include "SaveSystem/AstrawildSaveSubsystem.h"
 #include "UI/AstrawildHUD.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
 #include "AstrawildLogChannels.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
@@ -23,6 +25,15 @@ void AAstrawildPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	SetUIMode(false);
+
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	{
+		if (UInputMappingContext* DefaultIMC = LoadObject<UInputMappingContext>(nullptr, TEXT("/Game/Input/IMC_Default.IMC_Default")))
+		{
+			Subsystem->AddMappingContext(DefaultIMC, 0);
+			UE_LOG(LogAstrawild, Log, TEXT("AAstrawildPlayerController: Successfully registered IMC_Default mapping context."));
+		}
+	}
 }
 
 void AAstrawildPlayerController::SetupInputComponent()

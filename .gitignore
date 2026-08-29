@@ -35,3 +35,5 @@ CrashReportClient/
 # Untracked local shortcuts/scripts
 *.lnk
 Play_NFS_Heat_Modded.bat
+Packaged/
+*.slnx
