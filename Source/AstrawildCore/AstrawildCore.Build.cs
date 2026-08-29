@@ -16,7 +16,11 @@ public class AstrawildCore : ModuleRules
                 "EnhancedInput",
                 "GameplayAbilities",
                 "GameplayTags",
-                "GameplayTasks"
+                "GameplayTasks",
+                // V2 architecture (audit §F): AI, navigation, UI foundation.
+                "AIModule",
+                "NavigationSystem",
+                "UMG"
             }
         );
 
