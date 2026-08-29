@@ -92,6 +92,7 @@ private:
     void ExecuteWork();
     void ExecuteSleep();
     void ExecuteSearchFood();
+    void ExecuteSocialize();
 
     bool TryAttackTarget(AActor* Target, float DeltaThinkSeconds);
     AActor* FindNearestPlayer(float MaxDistance) const;

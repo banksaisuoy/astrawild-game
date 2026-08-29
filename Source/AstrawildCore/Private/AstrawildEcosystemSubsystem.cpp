@@ -23,7 +23,139 @@ TStatId UAstrawildEcosystemSubsystem::GetStatId() const
 void UAstrawildEcosystemSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
-    UE_LOG(LogAstrawildAI, Log, TEXT("Ecosystem subsystem online (LOD tiers: %.0f / %.0f / %.0f cm)."), Tier0Distance, Tier1Distance, Tier2Distance);
+    BuildDefaultFoodChain();
+    UE_LOG(LogAstrawildAI, Log, TEXT("Ecosystem subsystem online (LOD tiers: %.0f / %.0f / %.0f cm, %d predator chains, %d herding species)."),
+        Tier0Distance, Tier1Distance, Tier2Distance, PredatorChains.Num(), HerdingSpecies.Num());
+}
+
+void UAstrawildEcosystemSubsystem::BuildDefaultFoodChain()
+{
+    // Dawn Fields food chain (directive §7/§21): Gloomfangs hunt the gentle species.
+    AddPredatorPair(TEXT("Echo_Gloomfang"), TEXT("Echo_Lumewisp"));
+    AddPredatorPair(TEXT("Echo_Gloomfang"), TEXT("Echo_Duskmoth"));
+
+    // Lumewisps travel in loose herds — Social personalities anchor them together.
+    MarkHerdingSpecies(TEXT("Echo_Lumewisp"));
+}
+
+void UAstrawildEcosystemSubsystem::AddPredatorPair(const FName PredatorId, const FName PreyId)
+{
+    if (PredatorId.IsNone() || PreyId.IsNone() || PredatorId == PreyId)
+    {
+        return;
+    }
+
+    TArray<FName>& Chain = PredatorChains.FindOrAdd(PredatorId);
+    if (!Chain.Contains(PreyId))
+    {
+        Chain.Add(PreyId);
+    }
+}
+
+bool UAstrawildEcosystemSubsystem::IsPredator(const FName SpeciesId) const
+{
+    return PredatorChains.Contains(SpeciesId);
+}
+
+bool UAstrawildEcosystemSubsystem::IsPreyOf(const FName PredatorId, const FName PreyId) const
+{
+    const TArray<FName>* Chain = PredatorChains.Find(PredatorId);
+    return Chain && Chain->Contains(PreyId);
+}
+
+TArray<FName> UAstrawildEcosystemSubsystem::GetPreySpecies(const FName PredatorId) const
+{
+    if (const TArray<FName>* Chain = PredatorChains.Find(PredatorId))
+    {
+        return *Chain;
+    }
+    return TArray<FName>();
+}
+
+void UAstrawildEcosystemSubsystem::MarkHerdingSpecies(const FName SpeciesId)
+{
+    if (!SpeciesId.IsNone())
+    {
+        HerdingSpecies.Add(SpeciesId);
+    }
+}
+
+bool UAstrawildEcosystemSubsystem::IsHerdingSpecies(const FName SpeciesId) const
+{
+    return HerdingSpecies.Contains(SpeciesId);
+}
+
+AAstrawildEchoCharacter* UAstrawildEcosystemSubsystem::FindHerdAnchor(const AAstrawildEchoCharacter* Echo, const float MaxDistance) const
+{
+    if (!IsValid(Echo) || !IsValid(Echo->EchoDefinition))
+    {
+        return nullptr;
+    }
+
+    const FName SpeciesId = Echo->EchoDefinition->DefinitionId;
+    if (!IsHerdingSpecies(SpeciesId))
+    {
+        return nullptr;
+    }
+
+    AAstrawildEchoCharacter* Best = nullptr;
+    float BestDistance = MaxDistance;
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : RegisteredEchoes)
+    {
+        AAstrawildEchoCharacter* Other = Weak.Get();
+        if (!Other || Other == Echo || Other->bCaptured || Other->IsDefeated())
+        {
+            continue;
+        }
+        if (!IsValid(Other->EchoDefinition) || Other->EchoDefinition->DefinitionId != SpeciesId)
+        {
+            continue;
+        }
+        const float Distance = FVector::Dist(Echo->GetActorLocation(), Other->GetActorLocation());
+        if (Distance > 100.0f && Distance < BestDistance) // Not stacked on itself.
+        {
+            BestDistance = Distance;
+            Best = Other;
+        }
+    }
+    return Best;
+}
+
+AAstrawildEchoCharacter* UAstrawildEcosystemSubsystem::FindPreyFor(const AAstrawildEchoCharacter* Predator, const float MaxDistance) const
+{
+    if (!IsValid(Predator) || !IsValid(Predator->EchoDefinition))
+    {
+        return nullptr;
+    }
+
+    const FName PredatorId = Predator->EchoDefinition->DefinitionId;
+    const TArray<FName> PreyIds = GetPreySpecies(PredatorId);
+    if (PreyIds.IsEmpty())
+    {
+        return nullptr;
+    }
+
+    AAstrawildEchoCharacter* Best = nullptr;
+    float BestDistance = MaxDistance;
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : RegisteredEchoes)
+    {
+        AAstrawildEchoCharacter* Other = Weak.Get();
+        if (!Other || Other == Predator || Other->bCaptured || Other->IsDefeated())
+        {
+            continue;
+        }
+        if (!IsValid(Other->EchoDefinition) || !PreyIds.Contains(Other->EchoDefinition->DefinitionId))
+        {
+            continue;
+        }
+        const float Distance = FVector::Dist(Predator->GetActorLocation(), Other->GetActorLocation());
+        if (Distance < BestDistance)
+        {
+            BestDistance = Distance;
+            Best = Other;
+        }
+    }
+    return Best;
 }
 
 void UAstrawildEcosystemSubsystem::RegisterEcho(AAstrawildEchoCharacter* Echo)

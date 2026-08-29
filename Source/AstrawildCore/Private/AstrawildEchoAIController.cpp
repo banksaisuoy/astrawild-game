@@ -191,11 +191,37 @@ EAstrawildEchoAIState AAstrawildEchoAIController::DecideState() const
         return EAstrawildEchoAIState::Flee;
     }
 
+    // Food-chain hunting (directive §7): predators stalk their prey species before players.
+    if (GetEcosystem() && GetEcosystem()->IsPredator(Echo->EchoDefinition ? Echo->EchoDefinition->DefinitionId : NAME_None))
+    {
+        if (!TargetActor.IsValid())
+        {
+            // Hunt prey when healthy; players remain a target once perceived (below).
+            if (!bPerceivedThreat || Echo->GetHealthFraction() > 0.75f)
+            {
+                TargetActor = GetEcosystem()->FindPreyFor(Echo, 4000.0f);
+            }
+        }
+        if (TargetActor.IsValid() && !Cast<AAstrawildPlayerCharacter>(TargetActor.Get()))
+        {
+            return EAstrawildEchoAIState::Combat; // Creature-vs-creature hunting.
+        }
+    }
+
     // Hostile species aggro on perceived players (directive §21).
     const bool bHostileSpecies = IsValid(Echo->EchoDefinition) && Echo->EchoDefinition->bHostileToPlayers;
     if (bHostileSpecies && bPerceivedThreat)
     {
         return EAstrawildEchoAIState::Combat;
+    }
+
+    // Social personalities keep herds together (directive §5/§7).
+    if (Echo->Personality == EAstrawildPersonality::Social && !Echo->bCaptured)
+    {
+        if (GetEcosystem() && GetEcosystem()->FindHerdAnchor(Echo, 2000.0f))
+        {
+            return EAstrawildEchoAIState::Socialize;
+        }
     }
 
     // Sleep outside the activity window (directive §13).
@@ -266,6 +292,9 @@ void AAstrawildEchoAIController::ExecuteState(const float DeltaThinkSeconds)
         break;
     case EAstrawildEchoAIState::Investigate:
         ExecuteFollow(); // Move toward the investigate target.
+        break;
+    case EAstrawildEchoAIState::Socialize:
+        ExecuteSocialize();
         break;
     case EAstrawildEchoAIState::Idle:
     default:
@@ -506,6 +535,33 @@ void AAstrawildEchoAIController::ExecuteSearchFood()
     // Wander while hungry; the ecosystem will grow feeding grounds in future content passes.
     ExecuteExplore();
     Echo->Needs.Hunger = FMath::Clamp(Echo->Needs.Hunger + 0.1f, 0.0f, 100.0f); // Grazing trickle.
+}
+
+void AAstrawildEchoAIController::ExecuteSocialize()
+{
+    AAstrawildEchoCharacter* Echo = GetEcho();
+    if (!Echo || !GetEcosystem())
+    {
+        return;
+    }
+
+    // Herd cohesion (directive §7): drift toward the nearest same-species herd anchor.
+    AAstrawildEchoCharacter* Anchor = GetEcosystem()->FindHerdAnchor(Echo, 2500.0f);
+    if (Anchor)
+    {
+        const float Distance = FVector::Dist(Echo->GetActorLocation(), Anchor->GetActorLocation());
+        if (Distance > 350.0f)
+        {
+            MoveToActor(Anchor, 300.0f, true, true, true);
+        }
+        else
+        {
+            StopMovement();
+        }
+    }
+
+    // Socializing lifts mood slowly (directive §5 Social).
+    Echo->Needs.Mood = FMath::Clamp(Echo->Needs.Mood + 0.2f * ThinkIntervalSeconds, 0.0f, 100.0f);
 }
 
 bool AAstrawildEchoAIController::TryAttackTarget(AActor* Target, const float DeltaThinkSeconds)

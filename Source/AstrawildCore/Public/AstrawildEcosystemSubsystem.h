@@ -101,6 +101,37 @@ public:
     /** Count a defeat. */
     void NotifyDefeated(FName DefinitionId);
 
+    // --- Food chain (directive §7): predator species hunt prey species. ---
+
+    /** Declare that PredatorId preys on PreyId. Idempotent. */
+    void AddPredatorPair(FName PredatorId, FName PreyId);
+
+    /** Is the species a predator of anything? */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ecosystem")
+    bool IsPredator(FName SpeciesId) const;
+
+    /** Does Predator hunt Prey? */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ecosystem")
+    bool IsPreyOf(FName PredatorId, FName PreyId) const;
+
+    /** Preferred prey species ids for a predator (empty when herbivore). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ecosystem")
+    TArray<FName> GetPreySpecies(FName PredatorId) const;
+
+    // --- Herd behavior (directive §7): social species group together. ---
+
+    /** Declare a species as herding (Social personalities seek their own kind). */
+    void MarkHerdingSpecies(FName SpeciesId);
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ecosystem")
+    bool IsHerdingSpecies(FName SpeciesId) const;
+
+    /** Nearest herd anchor (a same-species Echo) for cohesion movement, or nullptr. */
+    AAstrawildEchoCharacter* FindHerdAnchor(const AAstrawildEchoCharacter* Echo, float MaxDistance) const;
+
+    /** Nearest visible prey Echo for a predator within MaxDistance, or nullptr. */
+    AAstrawildEchoCharacter* FindPreyFor(const AAstrawildEchoCharacter* Predator, float MaxDistance) const;
+
 protected:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
@@ -110,6 +141,15 @@ private:
     TMap<FName, FAstrawildSpeciesPopulation> Populations;
     TMap<FObjectKey, EAstrawildSimulationTier> EchoTiers;
     float TierSweepAccumulator = 0.0f;
+
+    /** Predator -> prey species ids (directive §7 food chain). */
+    TMap<FName, TArray<FName>> PredatorChains;
+
+    /** Species ids that move in herds. */
+    TSet<FName> HerdingSpecies;
+
+    /** Register the default Dawn Fields food chain (directive §21 content). */
+    void BuildDefaultFoodChain();
 
     void RunTierSweep();
     float FindNearestPlayerDistance(const FVector& Location) const;

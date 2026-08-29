@@ -3,6 +3,7 @@
 #include "AstrawildCraftingStationActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDungeonGeneratorActor.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -285,6 +286,16 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         FarmSite->OutputItemId = TEXT("Item_Berry");
         FarmSite->SecondsPerOutput = 14.0f;
         FarmSite->bRequiresPower = false;
+    }
+
+    // First dungeon (directive §21/§23): the Hollow Underlight — placed beyond the eastern wilds.
+    AAstrawildDungeonGeneratorActor* Dungeon = World->SpawnActor<AAstrawildDungeonGeneratorActor>(
+        AAstrawildDungeonGeneratorActor::StaticClass(), FVector(ArenaSize * 1.4f, 0.0f, 100.0f), FRotator::ZeroRotator, Params);
+    if (Dungeon)
+    {
+        Dungeon->RoomCount = 5;
+        Dungeon->BossDefinitionId = TEXT("Echo_Gloomfang");
+        // Generate() runs in BeginPlay on the server.
     }
 }
 

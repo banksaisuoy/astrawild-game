@@ -38,9 +38,15 @@ for required in \
   Source/AstrawildCore/Public/AstrawildHudWidget.h \
   Source/AstrawildCore/Public/AstrawildGameMode.h \
   Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h \
+  Source/AstrawildCore/Public/AstrawildDungeonRoomActor.h \
+  Source/AstrawildCore/Public/AstrawildDungeonGeneratorActor.h \
+  Source/AstrawildCore/Public/AstrawildEchoBossCharacter.h \
   Source/AstrawildCore/Public/AstrawildCheatManager.h \
   Source/AstrawildCore/Public/AstrawildNPCCharacter.h \
   Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp \
+  Source/AstrawildCore/Private/AstrawildDungeonRoomActor.cpp \
+  Source/AstrawildCore/Private/AstrawildDungeonGeneratorActor.cpp \
+  Source/AstrawildCore/Private/AstrawildEchoBossCharacter.cpp \
   Source/AstrawildCore/Private/AstrawildAutomationTests.cpp \
   Docs/ASTRAWILD_UE5_ARCHITECTURE_AUDIT.md \
   Docs/ASTRAWILD_UE5_ARCHITECTURE_V2.md \

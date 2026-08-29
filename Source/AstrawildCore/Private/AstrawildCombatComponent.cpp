@@ -3,6 +3,7 @@
 #include "AstrawildCore.h"
 #include "AstrawildDamageTarget.h"
 #include "AstrawildEchoCharacter.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildLog.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Camera/CameraComponent.h"
@@ -232,6 +233,15 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             }
             const float Actual = Echo->ApplyElementalDamage(BaseDamage, AttackElement);
             TotalDamageDealt += Actual;
+        }
+        else if (AAstrawildEchoBossCharacter* Boss = Cast<AAstrawildEchoBossCharacter>(HitActor))
+        {
+            // Boss encounters have their own phase pipeline (directive §24).
+            if (Boss->IsDefeated())
+            {
+                continue;
+            }
+            TotalDamageDealt += Boss->ApplyBossDamage(BaseDamage);
         }
         else if (AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(HitActor))
         {
