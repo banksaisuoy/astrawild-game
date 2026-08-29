@@ -77,6 +77,10 @@ struct ASTRAWILDCORE_API FAstrawildEchoStats
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0"))
     float Stamina = 100.0f;
+
+    /** 0 = very easy to capture, 1 = almost impossible. Scales the weaken bonus. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0", ClampMax="1.0"))
+    float CaptureResilience = 0.35f;
 };
 
 USTRUCT(BlueprintType)

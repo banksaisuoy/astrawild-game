@@ -25,6 +25,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Capture")
     bool TryCapture(AActor* Target, float InitialTrust = 0.0f);
 
+    /** Capture chance for a target Echo (0..1) before any roll, for HUD/UI display. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Capture")
+    float PreviewCaptureChance(const AAstrawildEchoCharacter* Target) const;
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Capture")
     bool IsOnCooldown() const;
 

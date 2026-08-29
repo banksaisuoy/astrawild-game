@@ -10,6 +10,8 @@ class AAstrawildEchoCharacter;
 class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoDefeated, AAstrawildEchoCharacter*, Echo);
 
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildEchoCharacter : public ACharacter
@@ -24,6 +26,12 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoCaptured OnCaptured;
+
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoDamaged OnDamaged;
+
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoDefeated OnDefeated;
 
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TObjectPtr<UAstrawildEchoDefinition> EchoDefinition;
@@ -57,6 +65,18 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
+
+    /** Health fraction in 0..1 range. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    float GetHealthFraction() const;
+
+    /**
+     * Capture chance in 0..1 following the design rule:
+     * capture succeeds by weakening the Echo first or by building trust,
+     * never at full health with zero trust, and never once defeated.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    float ComputeCaptureChance() const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     FAstrawildEchoInstanceSaveData ToSaveData() const;

@@ -64,7 +64,32 @@ bool AAstrawildEchoCharacter::ApplyDamage(const float DamageAmount)
 
     const float MitigatedDamage = FMath::Max(0.0f, DamageAmount - CachedStats.Defense);
     CurrentHealth = FMath::Max(0.0f, CurrentHealth - MitigatedDamage);
+    OnDamaged.Broadcast(this, CurrentHealth);
+    if (IsDefeated())
+    {
+        OnDefeated.Broadcast(this);
+    }
     return true;
+}
+
+float AAstrawildEchoCharacter::GetHealthFraction() const
+{
+    const float MaxHealth = FMath::Max(1.0f, CachedStats.MaxHealth);
+    return FMath::Clamp(CurrentHealth / MaxHealth, 0.0f, 1.0f);
+}
+
+float AAstrawildEchoCharacter::ComputeCaptureChance() const
+{
+    if (IsDefeated() || !IsValid(EchoDefinition))
+    {
+        return 0.0f;
+    }
+
+    const float HealthFraction = GetHealthFraction();
+    const float Resilience = FMath::Clamp(CachedStats.CaptureResilience, 0.0f, 1.0f);
+    const float WeakenBonus = (1.0f - HealthFraction) * (1.0f - Resilience);
+    const float TrustBonus = FMath::Clamp(Trust / 100.0f, 0.0f, 1.0f) * 0.5f;
+    return FMath::Clamp(0.05f + WeakenBonus + TrustBonus, 0.05f, 0.95f);
 }
 
 bool AAstrawildEchoCharacter::Capture(const float InitialTrust)
