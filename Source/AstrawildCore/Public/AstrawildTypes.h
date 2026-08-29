@@ -210,7 +210,7 @@ struct ASTRAWILDCORE_API FAstrawildItemSlot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float Durability = 100.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", meta = (IgnoreForMemberInitializationTest))
 	FGuid InstanceId;
 
 	FAstrawildItemSlot()
@@ -515,7 +515,7 @@ struct ASTRAWILDCORE_API FAstrawildEchoEggData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg", meta = (IgnoreForMemberInitializationTest))
 	FGuid EggId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
@@ -524,10 +524,10 @@ struct ASTRAWILDCORE_API FAstrawildEchoEggData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
 	FGameplayTag OffspringSpeciesTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg", meta = (IgnoreForMemberInitializationTest))
 	FGuid ParentAId;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg", meta = (IgnoreForMemberInitializationTest))
 	FGuid ParentBId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo Egg", meta = (ClampMin = "0.0", ClampMax = "1.0"))
@@ -562,7 +562,7 @@ struct ASTRAWILDCORE_API FAstrawildCapturedEchoData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo", meta = (IgnoreForMemberInitializationTest))
 	FGuid UniqueEchoId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Echo")
@@ -678,7 +678,7 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building", meta = (IgnoreForMemberInitializationTest))
 	FGuid BuildingGuid;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building")
@@ -714,7 +714,7 @@ struct ASTRAWILDCORE_API FAstrawildHarvestNodeSaveData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment", meta = (IgnoreForMemberInitializationTest))
 	FGuid NodeGuid;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
@@ -743,7 +743,7 @@ struct ASTRAWILDCORE_API FAstrawildFoodSaveState
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food", meta = (IgnoreForMemberInitializationTest))
 	FGuid ItemInstanceId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Food")
@@ -788,7 +788,7 @@ struct ASTRAWILDCORE_API FAstrawildPlayerProfile
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
 	int32 SchemaVersion = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile", meta = (IgnoreForMemberInitializationTest))
 	FGuid PlayerGuid;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Profile")

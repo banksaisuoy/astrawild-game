@@ -12,7 +12,7 @@ struct ASTRAWILDCORE_API FAstrawildWorkOrder
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Colony Work")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Colony Work", meta=(IgnoreForMemberInitializationTest))
     FGuid WorkOrderId;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Colony Work")

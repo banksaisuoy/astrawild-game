@@ -142,13 +142,23 @@ def _to_script_struct_instance(struct_or_class):
     reference that DataTableFactory accepts. The factory's `struct` property is
     `ObjectProperty` typed as `ScriptStruct` — it needs the UObject* form, not
     the Python class.
+
+    In UE 5.8 Python, `unreal.AstrawildBiomeDefinition` is a Python class object,
+    and `.static_struct()` returns the underlying UScriptStruct* as a
+    `<class 'ScriptStruct'>` instance — which is what DataTableFactory needs.
     """
     if struct_or_class is None:
         return None
     # If it already has a get_path_name method, it's an instance
     if hasattr(struct_or_class, "get_path_name"):
         return struct_or_class
-    # Otherwise it is the class; instantiate
+    # If it's the Python class form, call static_struct() to get the UScriptStruct*
+    if hasattr(struct_or_class, "static_struct"):
+        try:
+            return struct_or_class.static_struct()
+        except Exception:
+            pass
+    # Otherwise try to instantiate (works for some Python wrapper types)
     try:
         return struct_or_class()
     except Exception:
