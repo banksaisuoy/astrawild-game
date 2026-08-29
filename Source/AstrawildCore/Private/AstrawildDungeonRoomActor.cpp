@@ -1,6 +1,7 @@
 #include "AstrawildDungeonRoomActor.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
@@ -148,7 +149,7 @@ void AAstrawildDungeonRoomActor::GrantClearReward()
         return;
     }
 
-    // Reward the first player with research points + event (loot tables arrive with content pass).
+    // Reward the first player with research points + event.
     if (APlayerController* PC = World->GetFirstPlayerController())
     {
         if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
@@ -156,6 +157,27 @@ void AAstrawildDungeonRoomActor::GrantClearReward()
             if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
             {
                 EventBus->PublishEvent(TAG_Astrawild_Event_HostileDefeated, Player, TEXT("DungeonRoomCleared"), 1, GetActorLocation());
+            }
+
+            // Wave 3: rooms carrying a loot table grant it on clear (boss rooms hold the boss table).
+            if (!Template.ClearLootTableId.IsNone() && Player->InventoryComponent)
+            {
+                if (UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>())
+                {
+                    if (const UAstrawildLootTableDefinition* LootTable = Registry->FindLootTable(Template.ClearLootTableId))
+                    {
+                        for (const FAstrawildItemStack& Drop : LootTable->GuaranteedDrops)
+                        {
+                            Player->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
+                        }
+                        if (LootTable->BonusRollChance > 0.0f && FMath::FRand() < LootTable->BonusRollChance && LootTable->GuaranteedDrops.Num() > 0)
+                        {
+                            const FAstrawildItemStack& Bonus = LootTable->GuaranteedDrops[FMath::RandRange(0, LootTable->GuaranteedDrops.Num() - 1)];
+                            Player->InventoryComponent->AddItem(Bonus.ItemId, Bonus.Quantity);
+                        }
+                        UE_LOG(LogAstrawildEconomy, Log, TEXT("Dungeon room %d loot granted to first player (%s)."), RoomIndex, *Template.ClearLootTableId.ToString());
+                    }
+                }
             }
         }
     }

@@ -20,6 +20,7 @@ void UAstrawildInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePr
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UAstrawildInventoryComponent, Items);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedItemId);
+    DOREPLIFETIME(UAstrawildInventoryComponent, EquippedShieldItemId);
 }
 
 void UAstrawildInventoryComponent::BeginPlay()
@@ -215,7 +216,21 @@ bool UAstrawildInventoryComponent::EquipItem(const FName ItemId)
         const UAstrawildItemDefinition* ItemDef = Registry->FindItem(ItemId);
         if (ItemDef && ItemDef->Category == EAstrawildItemCategory::Equipment)
         {
-            EquippedItemId = ItemId;
+            // Wave 3 routing: attack items are weapons, mitigation items are shields.
+            if (ItemDef->AttackPower > 0.0f)
+            {
+                EquippedItemId = ItemId;
+            }
+            else if (ItemDef->BlockMitigation > 0.0f)
+            {
+                EquippedShieldItemId = ItemId;
+            }
+            else
+            {
+                // Statless equipment keeps the legacy weapon slot behaviour.
+                EquippedItemId = ItemId;
+            }
+            OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
             return true;
         }
     }
@@ -225,6 +240,40 @@ bool UAstrawildInventoryComponent::EquipItem(const FName ItemId)
 void UAstrawildInventoryComponent::Unequip()
 {
     EquippedItemId = NAME_None;
+    EquippedShieldItemId = NAME_None;
+    OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
+}
+
+float UAstrawildInventoryComponent::GetEquippedWeaponAttackPower() const
+{
+    if (EquippedItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedItemId))
+        {
+            return ItemDef->AttackPower;
+        }
+    }
+    return 0.0f;
+}
+
+float UAstrawildInventoryComponent::GetEquippedShieldMitigation() const
+{
+    if (EquippedShieldItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedShieldItemId))
+        {
+            return ItemDef->BlockMitigation;
+        }
+    }
+    return 0.0f;
 }
 
 void UAstrawildInventoryComponent::BroadcastWeight()

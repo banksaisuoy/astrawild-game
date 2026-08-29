@@ -69,8 +69,9 @@ public:
     float DodgeImpulseStrength = 900.0f;
 
     // --- Block tunables ---
+    /** Unarmed block mitigation — a shield overrides this with its own value (wave 3). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Block", meta=(ClampMin="0.0", ClampMax="0.9"))
-    float BlockMitigation = 0.65f;
+    float UnarmedBlockMitigation = 0.45f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Block", meta=(ClampMin="0.0", ClampMax="0.5"))
     float BlockSpeedMultiplier = 0.45f;
@@ -93,6 +94,18 @@ public:
     /** Mitigated damage from an incoming hit while blocking. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat")
     float GetMitigatedIncomingDamage(float RawDamage) const;
+
+    /** Effective block mitigation: shield value when a shield is equipped, unarmed baseline otherwise (wave 3). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Block")
+    float GetEffectiveBlockMitigation() const;
+
+    /** Attack bonus granted by the equipped weapon (wave 3). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Attack")
+    float GetEquippedWeaponAttackPower() const;
+
+    /** Resolved outgoing damage for an attack: base tunable + equipped weapon bonus (wave 3). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Attack")
+    float GetOutgoingAttackDamage(bool bHeavy) const;
 
     /** Damage the player deals to a target right now (0 if on cooldown/dead). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat")

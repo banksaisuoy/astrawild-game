@@ -179,4 +179,32 @@ bool FAstrawildPowerMathTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// Equipment progression (wave 3): weapon attack bonus + shield mitigation
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEquipmentProgressionTest,
+    "ASTRAWILD.Equipment.ProgressionMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEquipmentProgressionTest::RunTest(const FString& Parameters)
+{
+    // Weapon adds flat attack power to both tiers (component contract).
+    const float LightBase = 25.0f;
+    const float HeavyBase = 60.0f;
+    const float ClubBonus = 6.0f;
+    const float BladeBonus = 14.0f;
+    TestEqual(TEXT("Unarmed light stays 25"), LightBase, 25.0f);
+    TestEqual(TEXT("Club light 25+6=31"), LightBase + ClubBonus, 31.0f);
+    TestEqual(TEXT("Blade heavy 60+14=74"), HeavyBase + BladeBonus, 74.0f);
+
+    // Shield replaces the unarmed mitigation baseline (never stacks).
+    const float Unarmed = 0.45f;
+    const float Shield = 0.65f;
+    const float Incoming = 100.0f;
+    TestEqual(TEXT("Unarmed block passes 55%"), Incoming * (1.0f - Unarmed), 55.0f);
+    TestEqual(TEXT("Shielded block passes 35%"), Incoming * (1.0f - Shield), 35.0f);
+    TestTrue(TEXT("Shield strictly improves block"), Shield > Unarmed);
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

@@ -62,6 +62,10 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> CommandText;
 
+    /** Wave 3: equipped weapon + shield readout (right-bottom). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> EquipmentText;
+
     UPROPERTY()
     TObjectPtr<UTextBlock> NotificationText;
 

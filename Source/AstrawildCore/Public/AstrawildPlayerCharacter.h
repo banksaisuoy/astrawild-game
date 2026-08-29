@@ -117,6 +117,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> ConsumeAction;
 
+    /** Equip-best: auto-equip the strongest owned weapon + shield (wave 3). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> EquipBestAction;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> BuildRotateAction;
 
@@ -184,6 +188,9 @@ protected:
     void ToggleBuildMode(const FInputActionValue& Value);
     void RotateBuilding(const FInputActionValue& Value);
     void SmartConsume(const FInputActionValue& Value);
+
+    /** Wave 3: equip the strongest owned weapon + shield. */
+    void EquipBest(const FInputActionValue& Value);
     void QuickSave(const FInputActionValue& Value);
     void QuickLoad(const FInputActionValue& Value);
 

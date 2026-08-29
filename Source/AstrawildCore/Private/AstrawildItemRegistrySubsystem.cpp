@@ -70,6 +70,22 @@ void UAstrawildItemRegistrySubsystem::RegisterQuest(UAstrawildQuestDefinition* D
     }
 }
 
+void UAstrawildItemRegistrySubsystem::RegisterLootTable(UAstrawildLootTableDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->LootTableId.IsNone())
+    {
+        LootTables.Add(Definition->LootTableId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterNPC(UAstrawildNPCDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->NpcId.IsNone())
+    {
+        NPCDefinitions.Add(Definition->NpcId, Definition);
+    }
+}
+
 UAstrawildItemDefinition* UAstrawildItemRegistrySubsystem::FindItem(const FName ItemId) const
 {
     return Items.FindRef(ItemId);
@@ -98,6 +114,16 @@ UAstrawildTechnologyDefinition* UAstrawildItemRegistrySubsystem::FindTechnology(
 UAstrawildQuestDefinition* UAstrawildItemRegistrySubsystem::FindQuest(const FName QuestId) const
 {
     return Quests.FindRef(QuestId);
+}
+
+UAstrawildLootTableDefinition* UAstrawildItemRegistrySubsystem::FindLootTable(const FName LootTableId) const
+{
+    return LootTables.FindRef(LootTableId);
+}
+
+UAstrawildNPCDefinition* UAstrawildItemRegistrySubsystem::FindNPCDefinition(const FName NpcId) const
+{
+    return NPCDefinitions.FindRef(NpcId);
 }
 
 TArray<UAstrawildBuildingDefinition*> UAstrawildItemRegistrySubsystem::GetUnlockedBuildings(FName PlayerId) const

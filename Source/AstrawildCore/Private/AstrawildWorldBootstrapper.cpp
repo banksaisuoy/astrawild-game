@@ -8,6 +8,7 @@
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildResourceNode.h"
 #include "AstrawildRestPoint.h"
 #include "AstrawildWorkSiteActor.h"
@@ -280,6 +281,20 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         GatheringSite->OutputItemId = TEXT("Item_Fiber");
         GatheringSite->SecondsPerOutput = 10.0f;
         GatheringSite->bRequiresPower = false;
+    }
+
+    // NPCs (wave 3, directive §26): the warden offering the first quest + a trader.
+    UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+    if (Registry)
+    {
+        if (AAstrawildNPCCharacter* Warden = World->SpawnActor<AAstrawildNPCCharacter>(AAstrawildNPCCharacter::StaticClass(), FVector(CampRadius * 0.7f, -CampRadius * 0.7f, 100.0f), FRotator::ZeroRotator, Params))
+        {
+            Warden->NpcDefinition = Registry->FindNPCDefinition(TEXT("NPC_WardenMaren"));
+        }
+        if (AAstrawildNPCCharacter* Trader = World->SpawnActor<AAstrawildNPCCharacter>(AAstrawildNPCCharacter::StaticClass(), FVector(-CampRadius * 0.7f, -CampRadius * 0.7f, 100.0f), FRotator::ZeroRotator, Params))
+        {
+            Trader->NpcDefinition = Registry->FindNPCDefinition(TEXT("NPC_VendorTam"));
+        }
     }
 
     AAstrawildWorkSiteActor* FarmSite = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), FVector(-CampRadius * 0.7f, CampRadius * 0.7f, 100.0f), FRotator::ZeroRotator, Params);

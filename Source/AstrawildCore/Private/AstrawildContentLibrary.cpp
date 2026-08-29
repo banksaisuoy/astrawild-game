@@ -161,6 +161,20 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     UAstrawildItemDefinition* HerbalSalve = MakeItem(Outer, TEXT("Item_HerbalSalve"), TEXT("Dawnbloom Salve"), EAstrawildItemCategory::Consumable, 0.25f, 20);
     HerbalSalve->HealValue = 70.0f;
     Registry->RegisterItem(HerbalSalve);
+
+    // --- Equipment (CODE_DEFAULT wave 3): weapon + shield progression. ---
+
+    UAstrawildItemDefinition* DawnwoodClub = MakeItem(Outer, TEXT("Item_DawnwoodClub"), TEXT("Dawnwood Club"), EAstrawildItemCategory::Equipment, 2.5f, 1);
+    DawnwoodClub->AttackPower = 6.0f;
+    Registry->RegisterItem(DawnwoodClub);
+
+    UAstrawildItemDefinition* StonehideShield = MakeItem(Outer, TEXT("Item_StonehideShield"), TEXT("Stonehide Shield"), EAstrawildItemCategory::Equipment, 4.0f, 1);
+    StonehideShield->BlockMitigation = 0.65f;
+    Registry->RegisterItem(StonehideShield);
+
+    UAstrawildItemDefinition* CrystalBlade = MakeItem(Outer, TEXT("Item_CrystalBlade"), TEXT("Dawn Crystal Blade"), EAstrawildItemCategory::Equipment, 3.0f, 1);
+    CrystalBlade->AttackPower = 14.0f;
+    Registry->RegisterItem(CrystalBlade);
 }
 
 // ---------------------------------------------------------------------------
@@ -199,6 +213,20 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_HerbalSalve"), TEXT("Dawnbloom Salve"),
         { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Fiber"), 1) },
         { Stack(TEXT("Item_HerbalSalve"), 1) }, 4.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
+
+    // --- Equipment (CODE_DEFAULT wave 3): armory progression ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_DawnwoodClub"), TEXT("Dawnwood Club"),
+        { Stack(TEXT("Item_Wood"), 3), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_DawnwoodClub"), 1) }, 3.0f, NAME_None, TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_StonehideShield"), TEXT("Stonehide Shield"),
+        { Stack(TEXT("Item_Stone"), 3), Stack(TEXT("Item_Wood"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_StonehideShield"), 1) }, 5.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CrystalBlade"), TEXT("Dawn Crystal Blade"),
+        { Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_WoodPlank"), 2), Stack(TEXT("Item_EmberAsh"), 1) },
+        { Stack(TEXT("Item_CrystalBlade"), 1) }, 8.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +377,11 @@ void UAstrawildContentLibrary::BuildTechnologies(UAstrawildItemRegistrySubsystem
 
     Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Husbandry"), TEXT("Echo Husbandry"), EAstrawildTechEra::Primitive, 10,
         { TEXT("Tech_Cooking") }, { TEXT("Recipe_FeedMix"), TEXT("Recipe_HerbalSalve") }, { TEXT("Building_FeedTrough") }));
+
+    // --- Content expansion (CODE_DEFAULT wave 3): the armory branch. ---
+
+    Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Armory"), TEXT("Armory"), EAstrawildTechEra::Primitive, 8,
+        { TEXT("Tech_BasicCrafting") }, { TEXT("Recipe_StonehideShield"), TEXT("Recipe_CrystalBlade") }, {}));
 }
 
 // ---------------------------------------------------------------------------
@@ -492,6 +525,46 @@ void UAstrawildContentLibrary::BuildQuests(UAstrawildItemRegistrySubsystem* Regi
     Registry->RegisterQuest(Quest6);
 }
 
+// ---------------------------------------------------------------------------
+// Loot tables (CODE_DEFAULT wave 3 — directive §6 loot)
+// ---------------------------------------------------------------------------
+void UAstrawildContentLibrary::BuildLootTables(UAstrawildItemRegistrySubsystem* Registry)
+{
+    UObject* Outer = Registry;
+
+    UAstrawildLootTableDefinition* DungeonBoss = NewObject<UAstrawildLootTableDefinition>(Outer);
+    DungeonBoss->LootTableId = TEXT("Loot_DungeonBoss");
+    DungeonBoss->GuaranteedDrops = { Stack(TEXT("Item_AncientCore"), 1), Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_EmberAsh"), 2) };
+    DungeonBoss->BonusRollChance = 0.75f;
+    Registry->RegisterLootTable(DungeonBoss);
+
+    UAstrawildLootTableDefinition* VendorStarter = NewObject<UAstrawildLootTableDefinition>(Outer);
+    VendorStarter->LootTableId = TEXT("Loot_VendorStarter");
+    VendorStarter->GuaranteedDrops = { Stack(TEXT("Item_Berry"), 3), Stack(TEXT("Item_WaterFlask"), 1), Stack(TEXT("Item_Bandage"), 2) };
+    VendorStarter->BonusRollChance = 0.0f;
+    Registry->RegisterLootTable(VendorStarter);
+}
+
+// ---------------------------------------------------------------------------
+// NPCs (CODE_DEFAULT wave 3 — directive §26 quest hooks + vendor)
+// ---------------------------------------------------------------------------
+void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Registry)
+{
+    UObject* Outer = Registry;
+
+    UAstrawildNPCDefinition* WardenMaren = NewObject<UAstrawildNPCDefinition>(Outer);
+    WardenMaren->NpcId = TEXT("NPC_WardenMaren");
+    WardenMaren->DisplayName = FText::FromString(TEXT("Warden Maren"));
+    WardenMaren->OfferedQuestId = TEXT("Quest_FirstLight");
+    Registry->RegisterNPC(WardenMaren);
+
+    UAstrawildNPCDefinition* VendorTam = NewObject<UAstrawildNPCDefinition>(Outer);
+    VendorTam->NpcId = TEXT("NPC_VendorTam");
+    VendorTam->DisplayName = FText::FromString(TEXT("Trader Tam"));
+    VendorTam->ShopLootTableId = TEXT("Loot_VendorStarter");
+    Registry->RegisterNPC(VendorTam);
+}
+
 void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Registry)
 {
     if (!Registry)
@@ -505,6 +578,8 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildBuildings(Registry);
     BuildTechnologies(Registry);
     BuildQuests(Registry);
+    BuildLootTables(Registry);
+    BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 16 items, 7 recipes, 7 Echo species, 10 buildings, 5 technologies, 6 quests."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 19 items, 10 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs."));
 }

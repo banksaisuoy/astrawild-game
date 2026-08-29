@@ -76,6 +76,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
             if (Player->InventoryComponent)
             {
                 SaveGame->PlayerInventory = Player->InventoryComponent->GetItemStacks();
+                SaveGame->EquippedWeaponId = Player->InventoryComponent->EquippedItemId;
+                SaveGame->EquippedShieldId = Player->InventoryComponent->EquippedShieldItemId;
             }
         }
 
@@ -215,6 +217,15 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
             if (Player->InventoryComponent)
             {
                 Player->InventoryComponent->SetItemStacks(SaveGame->PlayerInventory);
+                // Wave 3: restore equipment only when the items survived in the inventory.
+                if (!SaveGame->EquippedWeaponId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedWeaponId, 1))
+                {
+                    Player->InventoryComponent->EquipItem(SaveGame->EquippedWeaponId);
+                }
+                if (!SaveGame->EquippedShieldId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedShieldId, 1))
+                {
+                    Player->InventoryComponent->EquipItem(SaveGame->EquippedShieldId);
+                }
             }
 
             // Respawn party Echoes around the player (directive §10 party of 3).

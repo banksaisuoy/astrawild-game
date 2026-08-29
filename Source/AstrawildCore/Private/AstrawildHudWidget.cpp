@@ -2,9 +2,11 @@
 
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInteractable.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildSurvivalComponent.h"
@@ -93,6 +95,10 @@ void UAstrawildHudWidget::BuildWidgetTree()
     // --- Right-bottom party command (directive §10) ---
     CommandText = MakeText(TEXT("CommandText"), FLinearColor(0.70f, 0.85f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(CommandText), FVector2D(0.98f, 0.93f), FVector2D(0.98f, 0.93f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 20.0f));
+
+    // --- Right-bottom equipment readout (wave 3) ---
+    EquipmentText = MakeText(TEXT("EquipmentText"), FLinearColor(0.98f, 0.80f, 0.55f, 1.0f), 14);
+    AnchorSlot(RootCanvas->AddChildToCanvas(EquipmentText), FVector2D(0.98f, 0.90f), FVector2D(0.98f, 0.90f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 20.0f));
 
     // --- Notification line ---
     NotificationText = MakeText(TEXT("NotificationText"), FLinearColor(0.95f, 0.95f, 0.85f, 1.0f), 15);
@@ -208,6 +214,26 @@ void UAstrawildHudWidget::RefreshState()
     {
         CommandText->SetText(FText::FromString(FString::Printf(TEXT("Party command [C]: %s"),
             *UEnum::GetDisplayValueAsText(Pawn->CurrentPartyCommand).ToString())));
+    }
+
+    // Equipment readout (wave 3): weapon ATK + shield block.
+    if (EquipmentText && Pawn->InventoryComponent)
+    {
+        const UWorld* World = GetWorld();
+        const UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+        auto ResolveName = [Registry](const FName ItemId) -> FString
+        {
+            if (ItemId.IsNone() || !Registry)
+            {
+                return TEXT("Unarmed");
+            }
+            const UAstrawildItemDefinition* Def = Registry->FindItem(ItemId);
+            return Def ? Def->DisplayName.ToString() : ItemId.ToString();
+        };
+        EquipmentText->SetText(FText::FromString(FString::Printf(TEXT("Weapon: %s (+%.0f) | Shield: %s"),
+            *ResolveName(Pawn->InventoryComponent->EquippedItemId),
+            Pawn->InventoryComponent->GetEquippedWeaponAttackPower(),
+            *ResolveName(Pawn->InventoryComponent->EquippedShieldItemId))));
     }
 
     // Quest tracker.

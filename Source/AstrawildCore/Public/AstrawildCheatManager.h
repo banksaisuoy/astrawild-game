@@ -21,6 +21,10 @@ public:
     UFUNCTION(Exec)
     void GiveItem(FName ItemId, int32 Quantity);
 
+    /** Wave 3: equip an owned equipment item by id (weapon or shield routing). */
+    UFUNCTION(Exec)
+    void EquipItem(FName ItemId);
+
     UFUNCTION(Exec)
     void SetTime(int32 Hour, int32 Minute);
 

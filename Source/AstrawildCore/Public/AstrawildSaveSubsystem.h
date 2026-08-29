@@ -44,6 +44,13 @@ public:
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     FAstrawildWorldSaveData WorldState;
 
+    /** Wave 3: equipped weapon/shield ids persist across sessions (additive v2 payload). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EquippedWeaponId = NAME_None;
+
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EquippedShieldId = NAME_None;
+
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     FAstrawildSurvivalStats PlayerSurvival;
 

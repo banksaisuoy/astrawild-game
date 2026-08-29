@@ -4,6 +4,7 @@
 #include "AstrawildDamageTarget.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoBossCharacter.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Camera/CameraComponent.h"
@@ -224,7 +225,7 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             continue;
         }
 
-        const float BaseDamage = bHeavy ? HeavyAttackDamage : LightAttackDamage;
+        const float BaseDamage = GetOutgoingAttackDamage(bHeavy);
         if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(HitActor))
         {
             if (Echo->IsDefeated())
@@ -266,7 +267,39 @@ float UAstrawildCombatComponent::GetMitigatedIncomingDamage(const float RawDamag
     }
     if (bIsBlocking)
     {
-        return RawDamage * (1.0f - BlockMitigation);
+        return RawDamage * (1.0f - GetEffectiveBlockMitigation());
     }
     return RawDamage;
+}
+
+float UAstrawildCombatComponent::GetEffectiveBlockMitigation() const
+{
+    // Wave 3: an equipped shield replaces the unarmed baseline (never stacks below it).
+    const AActor* Owner = GetOwner();
+    if (const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr)
+    {
+        const float ShieldMitigation = Inventory->GetEquippedShieldMitigation();
+        if (ShieldMitigation > 0.0f)
+        {
+            return FMath::Clamp(ShieldMitigation, 0.0f, 0.8f);
+        }
+    }
+    return UnarmedBlockMitigation;
+}
+
+float UAstrawildCombatComponent::GetEquippedWeaponAttackPower() const
+{
+    const AActor* Owner = GetOwner();
+    if (const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr)
+    {
+        return Inventory->GetEquippedWeaponAttackPower();
+    }
+    return 0.0f;
+}
+
+float UAstrawildCombatComponent::GetOutgoingAttackDamage(const bool bHeavy) const
+{
+    // Wave 3: the equipped weapon adds flat attack power to both attack tiers.
+    const float Base = bHeavy ? HeavyAttackDamage : LightAttackDamage;
+    return Base + GetEquippedWeaponAttackPower();
 }

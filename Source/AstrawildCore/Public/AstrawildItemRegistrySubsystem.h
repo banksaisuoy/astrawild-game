@@ -10,6 +10,8 @@ class UAstrawildEchoDefinition;
 class UAstrawildBuildingDefinition;
 class UAstrawildTechnologyDefinition;
 class UAstrawildQuestDefinition;
+class UAstrawildLootTableDefinition;
+class UAstrawildNPCDefinition;
 
 /**
  * Central registry of gameplay definitions (directive §35).
@@ -34,6 +36,12 @@ public:
     void RegisterTechnology(UAstrawildTechnologyDefinition* Definition);
     void RegisterQuest(UAstrawildQuestDefinition* Definition);
 
+    /** Wave 3: weighted loot tables resolve through the same registry contract. */
+    void RegisterLootTable(UAstrawildLootTableDefinition* Definition);
+
+    /** Wave 3: NPC definitions (dialogue/quest hooks) resolve through the registry. */
+    void RegisterNPC(UAstrawildNPCDefinition* Definition);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     UAstrawildItemDefinition* FindItem(FName ItemId) const;
 
@@ -51,6 +59,12 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     UAstrawildQuestDefinition* FindQuest(FName QuestId) const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    UAstrawildLootTableDefinition* FindLootTable(FName LootTableId) const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    UAstrawildNPCDefinition* FindNPCDefinition(FName NpcId) const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     TArray<UAstrawildBuildingDefinition*> GetUnlockedBuildings(FName PlayerId) const;
@@ -79,6 +93,12 @@ private:
 
     UPROPERTY()
     TMap<FName, TObjectPtr<UAstrawildQuestDefinition>> Quests;
+
+    UPROPERTY()
+    TMap<FName, TObjectPtr<UAstrawildLootTableDefinition>> LootTables;
+
+    UPROPERTY()
+    TMap<FName, TObjectPtr<UAstrawildNPCDefinition>> NPCDefinitions;
 
     void BuildContentDefaults();
 };

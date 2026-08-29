@@ -191,6 +191,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     BuildModeAction = MakeRuntimeAction(TEXT("AWD_BuildMode"), static_cast<uint8>(EInputActionValueType::Boolean));
     BuildRotateAction = MakeRuntimeAction(TEXT("AWD_BuildRotate"), static_cast<uint8>(EInputActionValueType::Boolean));
     ConsumeAction = MakeRuntimeAction(TEXT("AWD_Consume"), static_cast<uint8>(EInputActionValueType::Boolean));
+    EquipBestAction = MakeRuntimeAction(TEXT("AWD_EquipBest"), static_cast<uint8>(EInputActionValueType::Boolean));
     SaveAction = MakeRuntimeAction(TEXT("AWD_Save"), static_cast<uint8>(EInputActionValueType::Boolean));
     LoadAction = MakeRuntimeAction(TEXT("AWD_Load"), static_cast<uint8>(EInputActionValueType::Boolean));
 
@@ -244,11 +245,12 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(BuildModeAction, EKeys::B);
     Context->MapKey(BuildRotateAction, EKeys::N);
     Context->MapKey(ConsumeAction, EKeys::G);
+    Context->MapKey(EquipBestAction, EKeys::X);
     Context->MapKey(SaveAction, EKeys::F5);
     Context->MapKey(LoadAction, EKeys::F9);
 
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (16 actions, WASD+mouse)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (17 actions, WASD+mouse)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -330,6 +332,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (LoadAction)
     {
         EnhancedInput->BindAction(LoadAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::QuickLoad);
+    }
+    if (EquipBestAction)
+    {
+        EnhancedInput->BindAction(EquipBestAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::EquipBest);
     }
 }
 
@@ -640,6 +646,52 @@ void AAstrawildPlayerCharacter::SmartConsume(const FInputActionValue& Value)
         UE_LOG(LogAstrawildEconomy, Log, TEXT("Consumed %s (+%.0f food, +%.0f water, +%.0f heal)."),
             *Best->ItemId.ToString(), Best->FoodValue, Best->WaterValue, Best->HealValue);
     }
+}
+
+void AAstrawildPlayerCharacter::EquipBest(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority || !InventoryComponent)
+    {
+        return;
+    }
+
+    UAstrawildItemRegistrySubsystem* Registry = GetWorld() ? GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (!Registry)
+    {
+        return;
+    }
+
+    // Equip-best (wave 3): strongest owned weapon by AttackPower + strongest shield by BlockMitigation.
+    const UAstrawildItemDefinition* BestWeapon = nullptr;
+    const UAstrawildItemDefinition* BestShield = nullptr;
+    for (const FAstrawildItemStack& Stack : InventoryComponent->GetItemStacks())
+    {
+        const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Stack.ItemId);
+        if (!ItemDef || ItemDef->Category != EAstrawildItemCategory::Equipment)
+        {
+            continue;
+        }
+        if (ItemDef->AttackPower > 0.0f && (!BestWeapon || ItemDef->AttackPower > BestWeapon->AttackPower))
+        {
+            BestWeapon = ItemDef;
+        }
+        if (ItemDef->BlockMitigation > 0.0f && (!BestShield || ItemDef->BlockMitigation > BestShield->BlockMitigation))
+        {
+            BestShield = ItemDef;
+        }
+    }
+
+    if (BestWeapon)
+    {
+        InventoryComponent->EquipItem(BestWeapon->ItemId);
+    }
+    if (BestShield)
+    {
+        InventoryComponent->EquipItem(BestShield->ItemId);
+    }
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Equip-best: weapon=%s shield=%s."),
+        BestWeapon ? *BestWeapon->ItemId.ToString() : TEXT("none"),
+        BestShield ? *BestShield->ItemId.ToString() : TEXT("none"));
 }
 
 void AAstrawildPlayerCharacter::QuickSave(const FInputActionValue& Value)

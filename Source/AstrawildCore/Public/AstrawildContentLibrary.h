@@ -29,4 +29,6 @@ private:
     static void BuildBuildings(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildTechnologies(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildQuests(UAstrawildItemRegistrySubsystem* Registry);
+    static void BuildLootTables(UAstrawildItemRegistrySubsystem* Registry);
+    static void BuildNPCs(UAstrawildItemRegistrySubsystem* Registry);
 };

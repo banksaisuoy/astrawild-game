@@ -7,9 +7,11 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildInventoryChanged, FName, ItemId, int32, NewQuantity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildWeightChanged, float, CurrentWeight);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEquipmentChanged, FName, WeaponItemId, FName, ShieldItemId);
 
 /**
- * Data-driven inventory (directive §14): stacks + weight + capacity + one equipment slot.
+ * Data-driven inventory (directive §14): stacks + weight + capacity + equipment
+ * slots (wave 3: weapon + shield, auto-routed by item stat).
  * Server-authoritative; UI is a presentation layer only.
  */
 UCLASS(ClassGroup=(ASTRAWILD), meta=(BlueprintSpawnableComponent))
@@ -65,15 +67,37 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory")
     bool CanAddItem(FName ItemId, int32 Quantity) const;
 
-    // --- Equipment (single weapon slot v1) ---
+    // --- Equipment (wave 3: weapon + shield slots, auto-routed by item stat) ---
+    /**
+     * Equips an Equipment-category item. Routing (wave 3): items with
+     * AttackPower > 0 occupy the weapon slot, items with BlockMitigation > 0
+     * occupy the shield slot. Returns false when the item is not equipment.
+     */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Inventory|Equipment")
     bool EquipItem(FName ItemId);
 
+    /** Unequips every slot (weapon + shield). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Inventory|Equipment")
     void Unequip();
 
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment")
     FName EquippedItemId = NAME_None;
+
+    /** Wave 3 shield slot — feeding block mitigation on the combat component. */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment")
+    FName EquippedShieldItemId = NAME_None;
+
+    /** Fired whenever either equipment slot changes (UI hook). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Inventory|Equipment")
+    FAstrawildEquipmentChanged OnEquipmentChanged;
+
+    /** Attack power of the equipped weapon (0 when unarmed) — resolves via registry. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedWeaponAttackPower() const;
+
+    /** Block mitigation of the equipped shield (0 when none) — resolves via registry. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedShieldMitigation() const;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

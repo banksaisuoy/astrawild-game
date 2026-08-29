@@ -43,6 +43,7 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
         Template.HalfExtents = FVector(900.0f, 900.0f, 400.0f);
         Template.bIsBossRoom = true;
         Template.CreatureSpawnOffsets = { FVector(-300.0f, -300.0f, 120.0f) };
+        Template.ClearLootTableId = TEXT("Loot_DungeonBoss"); // Wave 3: boss loot table.
     }
     else if (RoomIndex == RoomCount - 2)
     {

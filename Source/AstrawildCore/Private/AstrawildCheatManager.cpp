@@ -52,6 +52,18 @@ void UAstrawildCheatManager::GiveItem(const FName ItemId, const int32 Quantity)
     }
 }
 
+void UAstrawildCheatManager::EquipItem(const FName ItemId)
+{
+    AAstrawildPlayerCharacter* Player = GetPlayer();
+    if (Player && Player->InventoryComponent)
+    {
+        if (!Player->InventoryComponent->EquipItem(ItemId))
+        {
+            UE_LOG(LogAstrawildAI, Warning, TEXT("AW.EquipItem failed — item missing or not equipment: %s"), *ItemId.ToString());
+        }
+    }
+}
+
 void UAstrawildCheatManager::SetTime(const int32 Hour, const int32 Minute)
 {
     UWorld* World = GetWorld();
