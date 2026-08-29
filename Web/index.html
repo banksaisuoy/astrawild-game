@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASTRAWILD: Echoes of the First Dawn - Playable 3D Web Edition</title>
-    <!-- Babylon.js CDN -->
+    <title>ASTRAWILD: Echoes of the First Dawn - 3D Open World</title>
+    <!-- Babylon.js 3D Engine -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,8 +15,8 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            background: #0b0f19;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #070a13;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             user-select: none;
         }
         #renderCanvas {
@@ -25,11 +25,14 @@
             touch-action: none;
             display: block;
         }
-        .hud-panel {
-            background: rgba(11, 15, 25, 0.75);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        .hud-glass {
+            background: rgba(10, 15, 29, 0.82);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+        .hud-glow {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
         }
         .reticle {
             position: absolute;
@@ -37,6 +40,13 @@
             left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .pulse-anim {
+            animation: pulse-glow 2s infinite ease-in-out;
         }
     </style>
 </head>
@@ -46,43 +56,63 @@
     <canvas id="renderCanvas"></canvas>
 
     <!-- Crosshair Reticle -->
-    <div class="reticle flex flex-col items-center">
-        <div class="w-6 h-6 border-2 border-blue-400 rounded-full flex items-center justify-center opacity-80">
+    <div class="reticle flex flex-col items-center z-10">
+        <div class="w-6 h-6 border-2 border-cyan-400 rounded-full flex items-center justify-center opacity-85">
             <div class="w-1.5 h-1.5 bg-cyan-300 rounded-full"></div>
         </div>
-        <div id="captureOddsText" class="text-xs font-bold text-cyan-300 mt-1 bg-black/60 px-2 py-0.5 rounded hidden">
-            Capture: 85%
+        <div id="targetPrompt" class="text-xs font-bold text-yellow-300 mt-1 bg-black/75 px-2.5 py-0.5 rounded-full hidden border border-yellow-400/40">
+            [E] Harvest Sunwood
         </div>
     </div>
 
-    <!-- Top Left Player HUD -->
-    <div class="absolute top-4 left-4 flex flex-col gap-2 z-10">
-        <div class="hud-panel p-3 rounded-lg flex flex-col gap-1.5 min-w-[240px]">
-            <div class="flex justify-between items-center text-xs text-gray-300">
-                <span class="font-bold text-blue-400">PLAYER (LV. 45)</span>
-                <span id="zoneText">Sylvan Meadows</span>
+    <!-- Top Left Player Status Card -->
+    <div class="absolute top-4 left-4 flex flex-col gap-2 z-20">
+        <div class="hud-glass p-3.5 rounded-xl flex flex-col gap-2 min-w-[260px]">
+            <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-cyan-400 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span id="playerTitle">ASTRA RANGER (LV. 1)</span>
+                </span>
+                <span id="zoneText" class="text-gray-400 font-mono text-[11px]">Dawn Valley</span>
             </div>
+            
             <!-- Health Bar -->
-            <div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden border border-gray-700">
-                <div id="healthBar" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full w-full transition-all duration-200"></div>
+            <div>
+                <div class="w-full bg-gray-900/80 h-3 rounded-full overflow-hidden border border-gray-700">
+                    <div id="healthBar" class="bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-300 h-full w-full transition-all duration-150"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-400 font-mono mt-0.5">
+                    <span>HEALTH</span>
+                    <span id="hpValue">100 / 100</span>
+                </div>
             </div>
-            <div class="flex justify-between text-[10px] text-gray-400 font-mono">
-                <span>HP</span>
-                <span id="hpValue">1200 / 1200</span>
-            </div>
+
             <!-- Stamina / Energy Bar -->
-            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden border border-gray-700">
-                <div id="staminaBar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full w-full transition-all duration-100"></div>
+            <div>
+                <div class="w-full bg-gray-900/80 h-2.5 rounded-full overflow-hidden border border-gray-700">
+                    <div id="staminaBar" class="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 h-full w-full transition-all duration-75"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-400 font-mono mt-0.5">
+                    <span id="energyLabel">STAMINA</span>
+                    <span id="staminaValue">100 / 100</span>
+                </div>
             </div>
-            <div class="flex justify-between text-[10px] text-gray-400 font-mono">
-                <span id="energyLabel">STAMINA</span>
-                <span id="staminaValue">100%</span>
+
+            <!-- EXP Bar -->
+            <div>
+                <div class="w-full bg-gray-900/80 h-1.5 rounded-full overflow-hidden border border-gray-800">
+                    <div id="expBar" class="bg-gradient-to-r from-cyan-500 to-blue-400 h-full w-[10%] transition-all duration-300"></div>
+                </div>
+                <div class="flex justify-between text-[9px] text-gray-400 font-mono mt-0.5">
+                    <span>EXP</span>
+                    <span id="expValue">0 / 100</span>
+                </div>
             </div>
         </div>
 
-        <!-- Active Mount / Mecha Status -->
-        <div id="modeStatusCard" class="hud-panel p-2.5 rounded-lg flex items-center gap-3 border-cyan-500/40">
-            <div id="modeIcon" class="w-9 h-9 rounded bg-blue-600/30 border border-blue-400/50 flex items-center justify-center text-lg">
+        <!-- Mode & Companion Status Card -->
+        <div class="hud-glass p-2.5 rounded-xl flex items-center gap-3 border-cyan-500/30">
+            <div id="modeIcon" class="w-10 h-10 rounded-lg bg-blue-600/30 border border-blue-400/50 flex items-center justify-center text-xl">
                 🚶
             </div>
             <div class="flex flex-col">
@@ -92,70 +122,206 @@
         </div>
     </div>
 
-    <!-- Top Right Quick Info & Controls Guide -->
-    <div class="absolute top-4 right-4 hud-panel p-3 rounded-lg text-xs flex flex-col gap-1 z-10 max-w-xs">
-        <div class="font-bold text-cyan-400 border-b border-gray-700 pb-1 mb-1 flex justify-between">
-            <span>ASTRAWILD 3D CONTROLS</span>
-            <span class="text-[10px] text-green-400 font-mono">60 FPS</span>
+    <!-- Top Center Boss Health Bar (Hidden by default) -->
+    <div id="bossBarContainer" class="absolute top-4 left-1/2 transform -translate-x-1/2 hud-glass px-6 py-3 rounded-2xl flex flex-col gap-1 z-20 min-w-[420px] hidden border-red-500/50">
+        <div class="flex justify-between items-center text-xs font-bold">
+            <span class="text-red-400 flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                SOLARIX ALPHA (ANCIENT SUN TITAN)
+            </span>
+            <span id="bossHpText" class="text-red-300 font-mono">5,000 / 5,000</span>
         </div>
-        <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-gray-300">
-            <span><b class="text-white">WASD:</b> Move</span>
-            <span><b class="text-white">Shift:</b> Sprint / Boost</span>
-            <span><b class="text-white">Space:</b> Jump / Fly Up</span>
-            <span><b class="text-white">C:</b> Fly Down</span>
-            <span><b class="text-white">L-Click:</b> Attack / Laser</span>
-            <span><b class="text-white">R-Click:</b> Aim / Missiles</span>
-            <span><b class="text-white">E:</b> Capture Orb</span>
-            <span><b class="text-white">R:</b> Mount Echo</span>
-            <span><b class="text-white">M:</b> Gundam Mecha</span>
-            <span><b class="text-white">B:</b> Build Base</span>
+        <div class="w-full bg-gray-950 h-3.5 rounded-full overflow-hidden border border-red-800">
+            <div id="bossHpBar" class="bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 h-full w-full transition-all duration-150"></div>
         </div>
     </div>
 
-    <!-- Bottom Center Action Quick Bar -->
-    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-10">
-        <div class="hud-panel px-4 py-2 rounded-xl flex items-center gap-3 border-blue-500/30">
+    <!-- Top Right Quest Objective Tracker -->
+    <div class="absolute top-4 right-4 flex flex-col gap-2 z-20 max-w-xs">
+        <div class="hud-glass p-3.5 rounded-xl flex flex-col gap-1.5 text-xs">
+            <div class="font-bold text-yellow-400 border-b border-gray-700/60 pb-1 flex justify-between items-center">
+                <span>📜 MAIN QUEST: AWAKENING</span>
+                <span class="text-[10px] text-green-400 font-mono">60 FPS</span>
+            </div>
+            <div id="questList" class="flex flex-col gap-1 text-[11px] text-gray-300 mt-1">
+                <div id="q1" class="flex items-center gap-1.5">
+                    <span class="text-cyan-400">🔹</span> Harvest Sunwood (<span id="q1_count">0</span>/5)
+                </div>
+                <div id="q2" class="flex items-center gap-1.5">
+                    <span class="text-gray-500">⚪</span> Craft Astra Resonator [I]
+                </div>
+                <div id="q3" class="flex items-center gap-1.5">
+                    <span class="text-gray-500">⚪</span> Capture a Wild Echo [Q]
+                </div>
+                <div id="q4" class="flex items-center gap-1.5">
+                    <span class="text-gray-500">⚪</span> Defeat Boss Solarix Alpha
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Guide Toggle Button -->
+        <div class="hud-glass p-2.5 rounded-xl text-[11px] text-gray-300 flex justify-between items-center">
+            <span>Controls: <b>[WASD]</b> Move | <b>[Shift]</b> Sprint</span>
+            <button onclick="toggleInventory()" class="px-2 py-0.5 bg-cyan-600/40 hover:bg-cyan-500/60 border border-cyan-400/50 rounded text-cyan-300 font-bold text-[10px]">
+                [I] INVENTORY
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Center Hotbar -->
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-20">
+        <div class="hud-glass px-4 py-2.5 rounded-2xl flex items-center gap-3 border-cyan-500/30">
             <!-- Weapon 1 -->
             <div class="flex flex-col items-center">
-                <div class="w-11 h-11 rounded-lg bg-blue-900/40 border-2 border-blue-400 flex items-center justify-center text-xl cursor-pointer hover:bg-blue-800/50">
+                <div class="w-11 h-11 rounded-xl bg-blue-950/60 border-2 border-cyan-400 flex items-center justify-center text-xl shadow-lg shadow-cyan-500/20">
                     ⚔️
                 </div>
-                <span class="text-[10px] text-gray-300 mt-0.5 font-bold">[1] Sword</span>
-            </div>
-            <!-- Weapon 2 -->
-            <div class="flex flex-col items-center">
-                <div class="w-11 h-11 rounded-lg bg-gray-900/60 border border-gray-700 flex items-center justify-center text-xl cursor-pointer hover:bg-gray-800/50">
-                    🏹
-                </div>
-                <span class="text-[10px] text-gray-400 mt-0.5 font-bold">[2] Bow</span>
+                <span class="text-[10px] text-cyan-300 font-bold mt-1">[L-Click] Attack</span>
             </div>
             <!-- Capture Orb -->
             <div class="flex flex-col items-center">
-                <div class="w-11 h-11 rounded-lg bg-cyan-950/60 border border-cyan-500/50 flex items-center justify-center text-xl cursor-pointer hover:bg-cyan-900/50">
+                <div class="w-11 h-11 rounded-xl bg-cyan-950/60 border border-cyan-500/50 flex items-center justify-center text-xl relative">
                     🔮
+                    <span id="orbBadge" class="absolute -top-1.5 -right-1.5 bg-cyan-500 text-[10px] font-bold px-1.5 rounded-full text-black">10</span>
                 </div>
-                <span class="text-[10px] text-cyan-300 mt-0.5 font-bold">[E] Orb (x25)</span>
+                <span class="text-[10px] text-gray-300 font-bold mt-1">[Q] Capture</span>
             </div>
             <!-- Companion -->
             <div class="flex flex-col items-center">
-                <div class="w-11 h-11 rounded-lg bg-amber-950/60 border border-amber-500/50 flex items-center justify-center text-xl cursor-pointer hover:bg-amber-900/50">
+                <div class="w-11 h-11 rounded-xl bg-amber-950/60 border border-amber-500/50 flex items-center justify-center text-xl">
                     🐺
                 </div>
-                <span class="text-[10px] text-amber-300 mt-0.5 font-bold">[T] Volthound</span>
+                <span class="text-[10px] text-amber-300 font-bold mt-1">[T] Summon</span>
             </div>
-            <!-- Mecha Suit -->
+            <!-- Mount -->
             <div class="flex flex-col items-center">
-                <div class="w-11 h-11 rounded-lg bg-red-950/60 border border-red-500/50 flex items-center justify-center text-xl cursor-pointer hover:bg-red-900/50">
+                <div class="w-11 h-11 rounded-xl bg-emerald-950/60 border border-emerald-500/50 flex items-center justify-center text-xl">
+                    🏇
+                </div>
+                <span class="text-[10px] text-emerald-300 font-bold mt-1">[R] Mount</span>
+            </div>
+            <!-- Mecha -->
+            <div class="flex flex-col items-center">
+                <div class="w-11 h-11 rounded-xl bg-red-950/60 border border-red-500/50 flex items-center justify-center text-xl">
                     🤖
                 </div>
-                <span class="text-[10px] text-red-400 mt-0.5 font-bold">[M] Mecha</span>
+                <span class="text-[10px] text-red-400 font-bold mt-1">[M] Mecha</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory & Crafting Modal ([I]) -->
+    <div id="inventoryModal" class="absolute inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-30 hidden">
+        <div class="hud-glass p-6 rounded-2xl w-full max-w-2xl border-cyan-400/40 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3">
+                <h2 class="text-lg font-bold text-cyan-300 flex items-center gap-2">
+                    🎒 INVENTORY & FORGE CRAFTING
+                </h2>
+                <button onclick="toggleInventory()" class="text-gray-400 hover:text-white font-bold text-lg px-2">✕</button>
+            </div>
+
+            <!-- Resources Grid -->
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 mb-2 font-mono">GATHERED RESOURCES</h3>
+                <div class="grid grid-cols-4 gap-3 text-xs">
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex items-center gap-2.5">
+                        <span class="text-2xl">🪵</span>
+                        <div>
+                            <div class="font-bold text-amber-200">Sunwood</div>
+                            <div class="text-[11px] text-gray-400 font-mono"><span id="inv_sunwood">0</span> units</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex items-center gap-2.5">
+                        <span class="text-2xl">💎</span>
+                        <div>
+                            <div class="font-bold text-cyan-200">Lumen Stone</div>
+                            <div class="text-[11px] text-gray-400 font-mono"><span id="inv_lumen">0</span> units</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex items-center gap-2.5">
+                        <span class="text-2xl">🔮</span>
+                        <div>
+                            <div class="font-bold text-purple-200">Resonators</div>
+                            <div class="text-[11px] text-gray-400 font-mono"><span id="inv_resonator">10</span> pcs</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex items-center gap-2.5">
+                        <span class="text-2xl">🧪</span>
+                        <div>
+                            <div class="font-bold text-emerald-200">Health Potion</div>
+                            <div class="text-[11px] text-gray-400 font-mono"><span id="inv_potions">2</span> pcs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crafting Recipes -->
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 mb-2 font-mono">CRAFTING BLUEPRINTS</h3>
+                <div class="flex flex-col gap-2.5">
+                    <!-- Craft Resonator -->
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🔮</span>
+                            <div>
+                                <div class="font-bold text-sm text-cyan-300">Astra Resonator (Capture Orb)</div>
+                                <div class="text-xs text-gray-400">Cost: 3 Sunwood, 2 Lumen Stone</div>
+                            </div>
+                        </div>
+                        <button onclick="craftItem('resonator', 3, 2)" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold">
+                            Craft (+1)
+                        </button>
+                    </div>
+                    <!-- Craft Health Potion -->
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🧪</span>
+                            <div>
+                                <div class="font-bold text-sm text-emerald-300">Sanctuary Health Potion</div>
+                                <div class="text-xs text-gray-400">Cost: 2 Sunwood, 1 Lumen Stone (+50 HP)</div>
+                            </div>
+                        </div>
+                        <button onclick="craftItem('potion', 2, 1)" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">
+                            Craft (+1)
+                        </button>
+                    </div>
+                    <!-- Use Potion -->
+                    <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">💖</span>
+                            <div>
+                                <div class="font-bold text-sm text-pink-300">Consume Health Potion</div>
+                                <div class="text-xs text-gray-400">Restore 50 HP immediately</div>
+                            </div>
+                        </div>
+                        <button onclick="usePotion()" class="px-4 py-1.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-xs font-bold">
+                            Drink Potion
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Captured Echoes Collection -->
+            <div>
+                <h3 class="text-xs font-bold text-gray-400 mb-2 font-mono">ECHODEX (CAPTURED CREATURES)</h3>
+                <div id="echodexList" class="grid grid-cols-3 gap-2.5 text-xs text-gray-400">
+                    <div class="p-2.5 rounded-lg bg-gray-950/60 border border-gray-800 text-center">
+                        🦊 Pyrelite (Solar)
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-gray-950/60 border border-gray-800 text-center">
+                        🐗 Thornback (Flora)
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-gray-950/60 border border-gray-800 text-center">
+                        🐺 Volthound (Volt)
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Notification Toast -->
-    <div id="toast" class="absolute top-20 left-1/2 transform -translate-x-1/2 hud-panel px-6 py-2.5 rounded-lg text-sm font-bold text-cyan-300 border-cyan-400 opacity-0 transition-all duration-300 pointer-events-none z-20">
-        Welcome to ASTRAWILD!
+    <div id="toast" class="absolute top-20 left-1/2 transform -translate-x-1/2 hud-glass px-6 py-2.5 rounded-xl text-sm font-bold text-cyan-300 border-cyan-400 opacity-0 transition-all duration-300 pointer-events-none z-40">
+        Welcome to Dawn Valley!
     </div>
 
     <!-- Game Engine Logic -->
@@ -163,13 +329,13 @@
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
-        // Web Audio Synthesizer for SFX
+        // Synthesizer Audio Context
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
         function initAudio() {
             if (!audioCtx) { audioCtx = new AudioCtx(); }
         }
-        function playTone(freq, type, duration, vol = 0.1) {
+        function playSfx(freq, type, duration, vol = 0.15) {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -196,126 +362,304 @@
 
         // Game State
         const GameState = {
-            mode: "foot", // "foot", "mount", "mecha"
-            hp: 1200,
-            maxHp: 1200,
+            level: 1,
+            exp: 0,
+            maxExp: 100,
+            hp: 100,
+            maxHp: 100,
             stamina: 100,
             maxStamina: 100,
-            energy: 1000,
-            maxEnergy: 1000,
-            orbs: 25,
-            isAiming: false,
-            capturedEchoes: [],
-            activeCompanion: null
+            mode: "foot", // "foot", "mount", "mecha"
+            sunwood: 0,
+            lumen: 0,
+            resonators: 10,
+            potions: 2,
+            capturedEchoes: ["Pyrelite (Solar)", "Volthound (Volt)"],
+            quest: {
+                harvestSunwood: 0,
+                craftedResonator: false,
+                capturedEcho: false,
+                bossDefeated: false
+            }
         };
 
+        function updateHUD() {
+            document.getElementById("hpValue").innerText = `${Math.ceil(GameState.hp)} / ${GameState.maxHp}`;
+            document.getElementById("healthBar").style.width = `${(GameState.hp / GameState.maxHp) * 100}%`;
+
+            document.getElementById("staminaValue").innerText = `${Math.ceil(GameState.stamina)} / ${GameState.maxStamina}`;
+            document.getElementById("staminaBar").style.width = `${(GameState.stamina / GameState.maxStamina) * 100}%`;
+
+            document.getElementById("expValue").innerText = `${GameState.exp} / ${GameState.maxExp}`;
+            document.getElementById("expBar").style.width = `${(GameState.exp / GameState.maxExp) * 100}%`;
+
+            document.getElementById("playerTitle").innerText = `ASTRA RANGER (LV. ${GameState.level})`;
+            document.getElementById("orbBadge").innerText = GameState.resonators;
+
+            // Inventory modal bindings
+            document.getElementById("inv_sunwood").innerText = GameState.sunwood;
+            document.getElementById("inv_lumen").innerText = GameState.lumen;
+            document.getElementById("inv_resonator").innerText = GameState.resonators;
+            document.getElementById("inv_potions").innerText = GameState.potions;
+
+            // Quest updates
+            document.getElementById("q1_count").innerText = Math.min(5, GameState.quest.harvestSunwood);
+            if (GameState.quest.harvestSunwood >= 5) {
+                document.getElementById("q1").innerHTML = `<span class="text-emerald-400">✅</span> Harvest Sunwood (5/5)`;
+            }
+            if (GameState.quest.craftedResonator) {
+                document.getElementById("q2").innerHTML = `<span class="text-emerald-400">✅</span> Craft Astra Resonator`;
+            }
+            if (GameState.quest.capturedEcho) {
+                document.getElementById("q3").innerHTML = `<span class="text-emerald-400">✅</span> Capture a Wild Echo`;
+            }
+            if (GameState.quest.bossDefeated) {
+                document.getElementById("q4").innerHTML = `<span class="text-emerald-400">✅</span> Defeat Boss Solarix Alpha`;
+            }
+        }
+
+        function gainExp(amount) {
+            GameState.exp += amount;
+            if (GameState.exp >= GameState.maxExp) {
+                GameState.level++;
+                GameState.exp -= GameState.maxExp;
+                GameState.maxExp = Math.floor(GameState.maxExp * 1.4);
+                GameState.maxHp += 20;
+                GameState.hp = GameState.maxHp;
+                showToast(`🎉 LEVEL UP! You reached Level ${GameState.level}! HP restored!`);
+                playSfx(523, "sine", 0.15);
+                setTimeout(() => playSfx(659, "sine", 0.15), 150);
+                setTimeout(() => playSfx(784, "sine", 0.3), 300);
+            }
+            updateHUD();
+        }
+
+        function toggleInventory() {
+            const modal = document.getElementById("inventoryModal");
+            modal.classList.toggle("hidden");
+            updateHUD();
+        }
+
+        function craftItem(type, woodCost, lumenCost) {
+            if (GameState.sunwood < woodCost || GameState.lumen < lumenCost) {
+                showToast("❌ Not enough resources to craft!");
+                playSfx(150, "sawtooth", 0.2);
+                return;
+            }
+            GameState.sunwood -= woodCost;
+            GameState.lumen -= lumenCost;
+
+            if (type === 'resonator') {
+                GameState.resonators++;
+                GameState.quest.craftedResonator = true;
+                showToast("✨ Crafted Astra Resonator (+1)!");
+                playSfx(880, "triangle", 0.3);
+            } else if (type === 'potion') {
+                GameState.potions++;
+                showToast("✨ Crafted Health Potion (+1)!");
+                playSfx(600, "sine", 0.25);
+            }
+            gainExp(25);
+            updateHUD();
+        }
+
+        function usePotion() {
+            if (GameState.potions <= 0) {
+                showToast("❌ No potions in inventory!");
+                return;
+            }
+            if (GameState.hp >= GameState.maxHp) {
+                showToast("Health is already full!");
+                return;
+            }
+            GameState.potions--;
+            GameState.hp = Math.min(GameState.maxHp, GameState.hp + 50);
+            showToast("💖 Restored +50 HP!");
+            playSfx(587, "sine", 0.2);
+            updateHUD();
+        }
+
+        // 3D Scene Initialization
         const createScene = function () {
             const scene = new BABYLON.Scene(engine);
-            scene.clearColor = new BABYLON.Color4(0.05, 0.08, 0.15, 1);
+            scene.clearColor = new BABYLON.Color4(0.04, 0.07, 0.14, 1);
             scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-            scene.fogColor = new BABYLON.Color3(0.08, 0.12, 0.22);
-            scene.fogDensity = 0.003;
+            scene.fogColor = new BABYLON.Color3(0.06, 0.1, 0.18);
+            scene.fogDensity = 0.0025;
 
-            // Camera (Third-Person)
-            const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 3, 10, new BABYLON.Vector3(0, 1.5, 0), scene);
+            // Camera (Third-Person Follow)
+            const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 3, 12, new BABYLON.Vector3(0, 2, 0), scene);
             camera.lowerRadiusLimit = 4;
-            camera.upperRadiusLimit = 30;
+            camera.upperRadiusLimit = 35;
             camera.attachControl(canvas, true);
 
-            // Lighting (Dynamic Sunlight + Ambient)
-            const sunLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(-1, -2, -1), scene);
-            sunLight.position = new BABYLON.Vector3(20, 40, 20);
-            sunLight.intensity = 1.4;
-            sunLight.diffuse = new BABYLON.Color3(1, 0.95, 0.85);
+            // Lighting (Dawn Sun + Sky Ambient)
+            const sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(-1, -2, -1), scene);
+            sun.position = new BABYLON.Vector3(50, 80, 50);
+            sun.intensity = 1.6;
+            sun.diffuse = new BABYLON.Color3(1, 0.92, 0.82);
 
-            const hemiLight = new BABYLON.HemisphericLight("Hemi", new BABYLON.Vector3(0, 1, 0), scene);
-            hemiLight.intensity = 0.6;
-            hemiLight.groundColor = new BABYLON.Color3(0.1, 0.2, 0.1);
+            const hemi = new BABYLON.HemisphericLight("Hemi", new BABYLON.Vector3(0, 1, 0), scene);
+            hemi.intensity = 0.7;
+            hemi.groundColor = new BABYLON.Color3(0.12, 0.2, 0.14);
 
-            // Terrain Generation
-            const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("ground", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIElEQVQIW2NkQAKM/xkYGBj+M/xnYGBkQBFgZGQAAgA0BwMH6l3j8wAAAABJRU5ErkJggg==", {
-                width: 300,
-                height: 300,
-                subdivisions: 100,
+            // Vast Dawn Valley Terrain (500m x 500m)
+            const terrain = BABYLON.MeshBuilder.CreateGroundFromHeightMap("terrain", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIElEQVQIW2NkQAKM/xkYGBj+M/xnYGBkQBFgZGQAAgA0BwMH6l3j8wAAAABJRU5ErkJggg==", {
+                width: 450,
+                height: 450,
+                subdivisions: 120,
                 minHeight: 0,
-                maxHeight: 18
+                maxHeight: 24
             }, scene);
 
             const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
-            groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.45, 0.25);
-            groundMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
-            ground.material = groundMat;
-            ground.checkCollisions = true;
+            groundMat.diffuseColor = new BABYLON.Color3(0.18, 0.42, 0.22);
+            groundMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
+            terrain.material = groundMat;
+            terrain.checkCollisions = true;
 
-            // Player Mesh & Hierarchy
+            // Perimeter Mountain Ridge Walls
+            for (let i = 0; i < 16; i++) {
+                const angle = (i / 16) * Math.PI * 2;
+                const dist = 210;
+                const mtn = BABYLON.MeshBuilder.CreateCylinder("mountain_" + i, { height: 45, diameterTop: 10, diameterBottom: 65 }, scene);
+                mtn.position.set(Math.cos(angle) * dist, 15, Math.sin(angle) * dist);
+                const mMat = new BABYLON.StandardMaterial("mMat_" + i, scene);
+                mMat.diffuseColor = new BABYLON.Color3(0.2, 0.22, 0.28);
+                mtn.material = mMat;
+            }
+
+            // Central Ancient Dawn Spire & Dais
+            const dais = BABYLON.MeshBuilder.CreateCylinder("dais", { height: 1.5, diameter: 40 }, scene);
+            dais.position.set(0, 0.8, 0);
+            const daisMat = new BABYLON.StandardMaterial("daisMat", scene);
+            daisMat.diffuseColor = new BABYLON.Color3(0.4, 0.45, 0.5);
+            dais.material = daisMat;
+
+            const monolith = BABYLON.MeshBuilder.CreateCylinder("monolith", { height: 28, diameterTop: 2, diameterBottom: 4 }, scene);
+            monolith.position.set(0, 14, 0);
+            const monoMat = new BABYLON.StandardMaterial("monoMat", scene);
+            monoMat.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.9);
+            monoMat.emissiveColor = new BABYLON.Color3(0.1, 0.3, 0.6);
+            monolith.material = monoMat;
+
+            // Player Hierarchy
             const playerRoot = new BABYLON.TransformNode("PlayerRoot", scene);
-            playerRoot.position.y = 2;
+            playerRoot.position.set(0, 2, -15);
 
-            // Character Body
-            const body = BABYLON.MeshBuilder.CreateCylinder("playerBody", { height: 1.6, diameterTop: 0.5, diameterBottom: 0.6 }, scene);
+            const body = BABYLON.MeshBuilder.CreateCylinder("pBody", { height: 1.6, diameterTop: 0.5, diameterBottom: 0.65 }, scene);
             body.parent = playerRoot;
             body.position.y = 0.8;
-            const bodyMat = new BABYLON.StandardMaterial("bodyMat", scene);
-            bodyMat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 0.9);
+            const bodyMat = new BABYLON.StandardMaterial("pBodyMat", scene);
+            bodyMat.diffuseColor = new BABYLON.Color3(0.15, 0.45, 0.85);
             body.material = bodyMat;
 
-            // Character Head
-            const head = BABYLON.MeshBuilder.CreateSphere("playerHead", { diameter: 0.55 }, scene);
+            const head = BABYLON.MeshBuilder.CreateSphere("pHead", { diameter: 0.55 }, scene);
             head.parent = playerRoot;
             head.position.y = 1.8;
-            const headMat = new BABYLON.StandardMaterial("headMat", scene);
-            headMat.diffuseColor = new BABYLON.Color3(0.9, 0.75, 0.65);
+            const headMat = new BABYLON.StandardMaterial("pHeadMat", scene);
+            headMat.diffuseColor = new BABYLON.Color3(0.95, 0.8, 0.7);
             head.material = headMat;
 
-            // Gundam Mecha Wings
-            const mechaWings = BABYLON.MeshBuilder.CreateBox("mechaWings", { width: 3.5, height: 0.8, depth: 0.2 }, scene);
+            // Mecha Wings (Hidden by default)
+            const mechaWings = BABYLON.MeshBuilder.CreateBox("mechaWings", { width: 3.8, height: 0.9, depth: 0.2 }, scene);
             mechaWings.parent = playerRoot;
-            mechaWings.position.y = 1.2;
-            mechaWings.position.z = -0.3;
+            mechaWings.position.set(0, 1.2, -0.35);
             const mechaMat = new BABYLON.StandardMaterial("mechaMat", scene);
-            mechaMat.diffuseColor = new BABYLON.Color3(0.9, 0.2, 0.2);
-            mechaMat.emissiveColor = new BABYLON.Color3(0.3, 0.1, 0.1);
+            mechaMat.diffuseColor = new BABYLON.Color3(0.9, 0.15, 0.15);
+            mechaMat.emissiveColor = new BABYLON.Color3(0.4, 0.1, 0.1);
             mechaWings.material = mechaMat;
             mechaWings.setEnabled(false);
 
-            // Procedural Trees & Crystals
-            for (let i = 0; i < 60; i++) {
-                const x = (Math.random() - 0.5) * 240;
-                const z = (Math.random() - 0.5) * 240;
-                if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+            // Active Companion Following Player
+            const companion = BABYLON.MeshBuilder.CreateBox("companionEcho", { size: 1.1 }, scene);
+            companion.position.set(2, 2, -17);
+            const compMat = new BABYLON.StandardMaterial("compMat", scene);
+            compMat.diffuseColor = new BABYLON.Color3(0.9, 0.8, 0.2);
+            compMat.emissiveColor = new BABYLON.Color3(0.3, 0.25, 0.05);
+            companion.material = compMat;
 
-                const trunk = BABYLON.MeshBuilder.CreateCylinder("trunk", { height: 4, diameterTop: 0.4, diameterBottom: 0.8 }, scene);
-                trunk.position.set(x, 2, z);
-                const trunkMat = new BABYLON.StandardMaterial("trunkMat", scene);
-                trunkMat.diffuseColor = new BABYLON.Color3(0.4, 0.25, 0.15);
-                trunk.material = trunkMat;
+            // Harvestable Trees (Sunwood)
+            const trees = [];
+            for (let i = 0; i < 45; i++) {
+                const x = (Math.random() - 0.5) * 320;
+                const z = (Math.random() - 0.5) * 320;
+                if (Math.abs(x) < 25 && Math.abs(z) < 25) continue;
 
-                const foliage = BABYLON.MeshBuilder.CreateSphere("foliage", { diameter: 3.2 }, scene);
-                foliage.position.set(x, 4.5, z);
-                const folMat = new BABYLON.StandardMaterial("folMat", scene);
-                folMat.diffuseColor = new BABYLON.Color3(0.15, 0.6, 0.2);
-                foliage.material = folMat;
+                const treeNode = new BABYLON.TransformNode("treeNode_" + i, scene);
+                treeNode.position.set(x, 0, z);
+
+                const trunk = BABYLON.MeshBuilder.CreateCylinder("trunk_" + i, { height: 4.5, diameterTop: 0.4, diameterBottom: 0.9 }, scene);
+                trunk.parent = treeNode;
+                trunk.position.y = 2.25;
+                const tMat = new BABYLON.StandardMaterial("tMat_" + i, scene);
+                tMat.diffuseColor = new BABYLON.Color3(0.45, 0.28, 0.15);
+                trunk.material = tMat;
+
+                const foliage = BABYLON.MeshBuilder.CreateSphere("foliage_" + i, { diameter: 3.6 }, scene);
+                foliage.parent = treeNode;
+                foliage.position.y = 5;
+                const fMat = new BABYLON.StandardMaterial("fMat_" + i, scene);
+                fMat.diffuseColor = new BABYLON.Color3(0.18, 0.65, 0.25);
+                foliage.material = fMat;
+
+                treeNode.resourceType = "Sunwood";
+                treeNode.health = 3;
+                trees.push(treeNode);
             }
 
-            // Roaming Echoes
-            const echoes = [];
+            // Harvestable Lumen Crystal Rocks
+            const rocks = [];
+            for (let i = 0; i < 30; i++) {
+                const x = (Math.random() - 0.5) * 320;
+                const z = (Math.random() - 0.5) * 320;
+                if (Math.abs(x) < 20 && Math.abs(z) < 20) continue;
+
+                const rock = BABYLON.MeshBuilder.CreatePolyhedron("rock_" + i, { type: 1, size: 1.4 }, scene);
+                rock.position.set(x, 1.2, z);
+                const rMat = new BABYLON.StandardMaterial("rMat_" + i, scene);
+                rMat.diffuseColor = new BABYLON.Color3(0.1, 0.75, 0.9);
+                rMat.emissiveColor = new BABYLON.Color3(0.1, 0.35, 0.5);
+                rock.material = rMat;
+
+                rock.resourceType = "Lumen";
+                rock.health = 3;
+                rocks.push(rock);
+            }
+
+            // Roaming Wild Echoes
+            const wildEchoes = [];
             const echoTypes = [
-                { name: "Volthound (Volt)", color: new BABYLON.Color3(0.9, 0.8, 0.2), scale: 1.2 },
-                { name: "Pyrelite (Solar)", color: new BABYLON.Color3(0.9, 0.3, 0.1), scale: 1.0 },
-                { name: "Terradon (Geo)", color: new BABYLON.Color3(0.5, 0.35, 0.2), scale: 1.8 }
+                { name: "Pyrelite", element: "Solar", color: new BABYLON.Color3(0.95, 0.35, 0.1), size: 1.1, hp: 80, maxHp: 80 },
+                { name: "Thornback", element: "Flora", color: new BABYLON.Color3(0.2, 0.7, 0.3), size: 1.4, hp: 120, maxHp: 120 },
+                { name: "Volthound", element: "Volt", color: new BABYLON.Color3(0.95, 0.85, 0.2), size: 1.2, hp: 100, maxHp: 100 }
             ];
 
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 18; i++) {
                 const type = echoTypes[i % echoTypes.length];
-                const echoMesh = BABYLON.MeshBuilder.CreateBox("echo_" + i, { size: 1.2 * type.scale }, scene);
-                echoMesh.position.set((Math.random() - 0.5) * 200, 1.5, (Math.random() - 0.5) * 200);
+                const echo = BABYLON.MeshBuilder.CreateBox("wildEcho_" + i, { size: type.size }, scene);
+                echo.position.set((Math.random() - 0.5) * 300, 1.5, (Math.random() - 0.5) * 300);
                 const eMat = new BABYLON.StandardMaterial("eMat_" + i, scene);
                 eMat.diffuseColor = type.color;
-                eMat.emissiveColor = type.color.scale(0.2);
-                echoMesh.material = eMat;
-                echoMesh.echoData = type;
-                echoes.push(echoMesh);
+                eMat.emissiveColor = type.color.scale(0.25);
+                echo.material = eMat;
+
+                echo.echoData = { ...type };
+                echo.vx = (Math.random() - 0.5) * 0.08;
+                echo.vz = (Math.random() - 0.5) * 0.08;
+                wildEchoes.push(echo);
             }
+
+            // Boss: Solarix Alpha (In Obsidian Caldera at x: 120, z: 120)
+            const boss = BABYLON.MeshBuilder.CreateCylinder("bossSolarix", { height: 8, diameterTop: 4, diameterBottom: 6 }, scene);
+            boss.position.set(120, 4, 120);
+            const bMat = new BABYLON.StandardMaterial("bMat", scene);
+            bMat.diffuseColor = new BABYLON.Color3(0.95, 0.15, 0.1);
+            bMat.emissiveColor = new BABYLON.Color3(0.6, 0.1, 0.05);
+            boss.material = bMat;
+            boss.hp = 5000;
+            boss.maxHp = 5000;
+            boss.isAlive = true;
 
             // Input Handling
             const inputMap = {};
@@ -324,127 +668,235 @@
                 inputMap[evt.sourceEvent.key.toLowerCase()] = true;
                 initAudio();
 
-                if (evt.sourceEvent.key.toLowerCase() === 'm') {
-                    toggleMechaMode();
-                } else if (evt.sourceEvent.key.toLowerCase() === 'r') {
-                    toggleMountMode();
-                } else if (evt.sourceEvent.key.toLowerCase() === 'e') {
-                    throwCaptureOrb();
+                const k = evt.sourceEvent.key.toLowerCase();
+                if (k === 'm') {
+                    toggleMecha();
+                } else if (k === 'r') {
+                    toggleMount();
+                } else if (k === 'q') {
+                    throwResonator();
+                } else if (k === 'i' || k === 'tab') {
+                    evt.sourceEvent.preventDefault();
+                    toggleInventory();
+                } else if (k === 'e') {
+                    interactWithTarget();
                 }
             }));
             scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
                 inputMap[evt.sourceEvent.key.toLowerCase()] = false;
             }));
 
-            function toggleMechaMode() {
+            function toggleMecha() {
                 if (GameState.mode === "mecha") {
                     GameState.mode = "foot";
                     mechaWings.setEnabled(false);
-                    camera.radius = 10;
+                    camera.radius = 12;
                     document.getElementById("modeIcon").innerText = "🚶";
                     document.getElementById("modeTitle").innerText = "ON FOOT";
                     document.getElementById("energyLabel").innerText = "STAMINA";
                     showToast("Exited Mecha Frame. On Foot.");
-                    playTone(200, "sawtooth", 0.3);
+                    playSfx(220, "sawtooth", 0.25);
                 } else {
                     GameState.mode = "mecha";
                     mechaWings.setEnabled(true);
-                    camera.radius = 16;
+                    camera.radius = 18;
                     document.getElementById("modeIcon").innerText = "🤖";
-                    document.getElementById("modeTitle").innerText = "ASTRA GUNDAM MECHA";
+                    document.getElementById("modeTitle").innerText = "ASTRA MECHA UNIT";
                     document.getElementById("energyLabel").innerText = "MECHA ENERGY";
-                    showToast("Suit Up: Astra Striker Unit-01 Online! 6-DOF Flight Active.");
-                    playTone(600, "sine", 0.4, 0.2);
-                    playTone(900, "square", 0.5, 0.15);
+                    showToast("🚀 Astra Mecha Activated! 6-DOF Aerial Flight Online.");
+                    playSfx(600, "sine", 0.35, 0.2);
+                    playSfx(900, "square", 0.4, 0.15);
                 }
             }
 
-            function toggleMountMode() {
+            function toggleMount() {
                 if (GameState.mode === "mount") {
                     GameState.mode = "foot";
                     document.getElementById("modeIcon").innerText = "🚶";
                     document.getElementById("modeTitle").innerText = "ON FOOT";
                     showToast("Dismounted.");
-                    playTone(250, "sine", 0.2);
+                    playSfx(260, "sine", 0.2);
                 } else {
                     GameState.mode = "mount";
-                    document.getElementById("modeIcon").innerText = "🐺";
+                    document.getElementById("modeIcon").innerText = "🏇";
                     document.getElementById("modeTitle").innerText = "RIDING VOLTHOUND";
-                    showToast("Mounted Volthound! +80% Speed Boost.");
-                    playTone(400, "sine", 0.25);
+                    showToast("🏇 Mounted Volthound! Speed +80%");
+                    playSfx(440, "sine", 0.25);
                 }
             }
 
-            function throwCaptureOrb() {
-                if (GameState.orbs <= 0) {
-                    showToast("No Astra Resonators left!");
+            // Interact Key [E]
+            function interactWithTarget() {
+                // Check nearby trees
+                for (let i = 0; i < trees.length; i++) {
+                    const t = trees[i];
+                    if (t.health > 0 && BABYLON.Vector3.Distance(playerRoot.position, t.position) < 6) {
+                        t.health--;
+                        GameState.sunwood += 2;
+                        GameState.quest.harvestSunwood += 2;
+                        showToast("🪵 Harvested Sunwood (+2)!");
+                        playSfx(200, "sawtooth", 0.15);
+                        gainExp(15);
+                        if (t.health <= 0) {
+                            t.dispose();
+                            showToast("✨ Tree fell down! Yielded extra Sunwood (+3)!");
+                            GameState.sunwood += 3;
+                            GameState.quest.harvestSunwood += 3;
+                        }
+                        updateHUD();
+                        return;
+                    }
+                }
+
+                // Check nearby rocks
+                for (let i = 0; i < rocks.length; i++) {
+                    const r = rocks[i];
+                    if (r.health > 0 && BABYLON.Vector3.Distance(playerRoot.position, r.position) < 6) {
+                        r.health--;
+                        GameState.lumen += 2;
+                        showToast("💎 Mined Lumen Stone (+2)!");
+                        playSfx(750, "triangle", 0.2);
+                        gainExp(20);
+                        if (r.health <= 0) {
+                            r.dispose();
+                            showToast("✨ Crystal Shattered! Yielded extra Lumen Stone (+3)!");
+                            GameState.lumen += 3;
+                        }
+                        updateHUD();
+                        return;
+                    }
+                }
+            }
+
+            // Capture Orb [Q]
+            function throwResonator() {
+                if (GameState.resonators <= 0) {
+                    showToast("❌ Out of Astra Resonators! Craft more in [I]");
+                    playSfx(180, "sawtooth", 0.2);
                     return;
                 }
-                GameState.orbs--;
-                playTone(700, "sine", 0.15);
+                GameState.resonators--;
+                updateHUD();
+                playSfx(650, "sine", 0.15);
 
-                const orb = BABYLON.MeshBuilder.CreateSphere("orb", { diameter: 0.5 }, scene);
+                const orb = BABYLON.MeshBuilder.CreateSphere("orb", { diameter: 0.6 }, scene);
                 orb.position = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.5, 0));
                 const orbMat = new BABYLON.StandardMaterial("orbMat", scene);
                 orbMat.emissiveColor = new BABYLON.Color3(0.2, 0.8, 1);
                 orb.material = orbMat;
 
                 const forward = camera.getForwardRay().direction;
-                let t = 0;
-                scene.onBeforeRenderObservable.add(function throwStep() {
-                    orb.position.addInPlace(forward.scale(0.8));
-                    t++;
-                    if (t > 40) {
-                        scene.onBeforeRenderObservable.removeCallback(throwStep);
+                let step = 0;
+
+                scene.onBeforeRenderObservable.add(function throwAnim() {
+                    orb.position.addInPlace(forward.scale(0.85));
+                    step++;
+
+                    // Check collision with wild echoes
+                    for (let i = 0; i < wildEchoes.length; i++) {
+                        const w = wildEchoes[i];
+                        if (w.isCaptured) continue;
+                        if (BABYLON.Vector3.Distance(orb.position, w.position) < 2.5) {
+                            scene.onBeforeRenderObservable.removeCallback(throwAnim);
+                            orb.dispose();
+                            w.isCaptured = true;
+                            w.dispose();
+
+                            GameState.quest.capturedEcho = true;
+                            GameState.capturedEchoes.push(w.echoData.name);
+                            showToast(`✨ CAPTURED ${w.echoData.name} (${w.echoData.element})! Added to EchoDex!`);
+                            playSfx(880, "triangle", 0.35);
+                            gainExp(60);
+                            updateHUD();
+                            return;
+                        }
+                    }
+
+                    if (step > 45) {
+                        scene.onBeforeRenderObservable.removeCallback(throwAnim);
                         orb.dispose();
-                        playTone(880, "triangle", 0.3);
-                        showToast("✨ Captured Wild Volthound (Lv. 24)! Trust +25%");
                     }
                 });
             }
 
+            // Pointer Left Click Attack
             canvas.addEventListener("pointerdown", function (e) {
                 initAudio();
                 if (e.button === 0) {
                     if (GameState.mode === "mecha") {
-                        fireLaserBeam();
+                        fireMechaLaser();
                     } else {
-                        performMeleeAttack();
+                        performMeleeSlash();
                     }
                 }
             });
 
-            function fireLaserBeam() {
-                playTone(950, "sawtooth", 0.2, 0.15);
-                const laser = BABYLON.MeshBuilder.CreateCylinder("laser", { height: 12, diameter: 0.2 }, scene);
+            function performMeleeSlash() {
+                playSfx(380, "sine", 0.12);
+                showToast("⚔️ Astra Blade 3-Hit Combo!");
+
+                // Check distance to boss
+                if (boss.isAlive && BABYLON.Vector3.Distance(playerRoot.position, boss.position) < 8) {
+                    const dmg = 250;
+                    boss.hp = Math.max(0, boss.hp - dmg);
+                    document.getElementById("bossHpBar").style.width = `${(boss.hp / boss.maxHp) * 100}%`;
+                    document.getElementById("bossHpText").innerText = `${boss.hp} / ${boss.maxHp}`;
+                    playSfx(160, "sawtooth", 0.2);
+                    showToast(`💥 Strike on Solarix Alpha! [-${dmg} DMG]`);
+
+                    if (boss.hp <= 0) {
+                        boss.isAlive = false;
+                        boss.dispose();
+                        GameState.quest.bossDefeated = true;
+                        document.getElementById("bossBarContainer").classList.add("hidden");
+                        showToast("🏆 BOSS SLAIN! Solarix Alpha Defeated! You saved Dawn Valley!");
+                        playSfx(523, "sine", 0.2);
+                        setTimeout(() => playSfx(659, "sine", 0.2), 200);
+                        setTimeout(() => playSfx(784, "sine", 0.4), 400);
+                        gainExp(500);
+                    }
+                }
+            }
+
+            function fireMechaLaser() {
+                playSfx(920, "sawtooth", 0.2, 0.15);
+                const laser = BABYLON.MeshBuilder.CreateCylinder("laser", { height: 16, diameter: 0.25 }, scene);
                 laser.rotation.x = Math.PI / 2;
-                laser.position = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.2, 1));
+                laser.position = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.2, 2));
                 const lMat = new BABYLON.StandardMaterial("lMat", scene);
                 lMat.emissiveColor = new BABYLON.Color3(0.2, 0.9, 1);
                 laser.material = lMat;
-
                 setTimeout(() => laser.dispose(), 150);
-                showToast("⚡ Hyper Beam Rifle Fired! [1,250 DMG]");
+
+                if (boss.isAlive && BABYLON.Vector3.Distance(playerRoot.position, boss.position) < 35) {
+                    const dmg = 450;
+                    boss.hp = Math.max(0, boss.hp - dmg);
+                    document.getElementById("bossHpBar").style.width = `${(boss.hp / boss.maxHp) * 100}%`;
+                    document.getElementById("bossHpText").innerText = `${boss.hp} / ${boss.maxHp}`;
+                    showToast(`⚡ Hyper Beam Hit! [-${dmg} DMG]`);
+                }
             }
 
-            function performMeleeAttack() {
-                playTone(320, "sine", 0.1);
-                showToast("⚔️ Astra Blade 3-Hit Combo!");
-            }
-
-            // Main Render Loop
+            // Main Animation & Movement Loop
             scene.onBeforeRenderObservable.add(function () {
-                let speed = 0.25;
-                if (inputMap["shift"]) speed = 0.55;
-                if (GameState.mode === "mount") speed = 0.7;
-                if (GameState.mode === "mecha") speed = inputMap["shift"] ? 1.2 : 0.65;
+                let speed = 0.3;
+                if (inputMap["shift"]) {
+                    if (GameState.stamina > 2) {
+                        speed = 0.65;
+                        GameState.stamina -= 0.25;
+                    }
+                } else {
+                    GameState.stamina = Math.min(GameState.maxStamina, GameState.stamina + 0.3);
+                }
+
+                if (GameState.mode === "mount") speed = 0.85;
+                if (GameState.mode === "mecha") speed = inputMap["shift"] ? 1.4 : 0.8;
 
                 const cameraForward = camera.getForwardRay().direction;
                 cameraForward.y = 0;
                 cameraForward.normalize();
 
                 const cameraRight = BABYLON.Vector3.Cross(cameraForward, new BABYLON.Vector3(0, 1, 0)).normalize().scale(-1);
-
                 let moveVec = BABYLON.Vector3.Zero();
 
                 if (inputMap["w"]) moveVec.addInPlace(cameraForward);
@@ -458,16 +910,41 @@
                     playerRoot.rotation.y = Math.atan2(moveVec.x, moveVec.z);
                 }
 
+                // Mecha Vertical Flight
                 if (GameState.mode === "mecha") {
-                    if (inputMap[" "]) playerRoot.position.y += 0.4;
-                    if (inputMap["c"]) playerRoot.position.y = Math.max(1.5, playerRoot.position.y - 0.4);
+                    if (inputMap[" "]) playerRoot.position.y += 0.5;
+                    if (inputMap["c"]) playerRoot.position.y = Math.max(2, playerRoot.position.y - 0.5);
                 }
 
+                // Camera follow player
                 camera.target = playerRoot.position.clone().add(new BABYLON.Vector3(0, 1.5, 0));
 
-                echoes.forEach((e, idx) => {
-                    e.rotation.y += 0.01 * (idx % 2 === 0 ? 1 : -1);
+                // Companion follow player
+                const compTarget = playerRoot.position.clone().add(new BABYLON.Vector3(2, 0, -2));
+                companion.position = BABYLON.Vector3.Lerp(companion.position, compTarget, 0.08);
+
+                // Wild echoes wander
+                wildEchoes.forEach(e => {
+                    if (!e.isCaptured) {
+                        e.position.x += e.vx;
+                        e.position.z += e.vz;
+                        if (Math.abs(e.position.x) > 190) e.vx *= -1;
+                        if (Math.abs(e.position.z) > 190) e.vz *= -1;
+                    }
                 });
+
+                // Boss distance trigger
+                if (boss.isAlive) {
+                    const distToBoss = BABYLON.Vector3.Distance(playerRoot.position, boss.position);
+                    const bContainer = document.getElementById("bossBarContainer");
+                    if (distToBoss < 60) {
+                        bContainer.classList.remove("hidden");
+                    } else {
+                        bContainer.classList.add("hidden");
+                    }
+                }
+
+                updateHUD();
             });
 
             return scene;
