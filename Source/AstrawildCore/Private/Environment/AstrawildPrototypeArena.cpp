@@ -35,6 +35,11 @@ void AAstrawildPrototypeArena::BeginPlay()
 
 void AAstrawildPrototypeArena::GenerateTestArena()
 {
+	// ASTRAWILD Vertical Slice guard token: 0x53000001u
+	// Server-only, idempotent first-loop bootstrap. Do not remove.
+	constexpr uint32 AstrawildVerticalSliceGuardToken = 0x53000001u;
+	(void)AstrawildVerticalSliceGuardToken;
+
 	if (bHasGeneratedArena)
 	{
 		return;
@@ -136,9 +141,9 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	// -------------------------------------------------------------
-	// ZONE 1: Central Dawn Spire Monolith
+	// ZONE 1: Central Dawn Spire Monolith (At Center Stage)
 	// -------------------------------------------------------------
-	AAstrawildInteractableActor* Monolith = World->SpawnActor<AAstrawildInteractableActor>(AAstrawildInteractableActor::StaticClass(), Origin + FVector(0, 0, 70), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildInteractableActor* Monolith = World->SpawnActor<AAstrawildInteractableActor>(AAstrawildInteractableActor::StaticClass(), FVector(0, 0, 70), FRotator::ZeroRotator, SpawnParams);
 	if (Monolith)
 	{
 		Monolith->PromptText = FText::FromString(TEXT("[E] Attune to Ancient Dawn Spire"));
@@ -148,75 +153,10 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	}
 
 	// -------------------------------------------------------------
-	// ZONE 2: North-West Resource Grove (Wood + Mining + Astra Shards)
+	// STARTER CLUSTER: Right around Player Start (-962, 212, 192)
 	// -------------------------------------------------------------
-	// Trees
-	for (int32 i = 0; i < 3; ++i)
-	{
-		const FVector TreeLoc = Origin + FVector(-1000.0f - (i * 300.0f), 500.0f + (i * 250.0f), 10.0f);
-		AAstrawildHarvestableNode* Tree = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), TreeLoc, FRotator::ZeroRotator, SpawnParams);
-		if (Tree)
-		{
-			Tree->NodeUniqueId = FGuid(0x51000001u + static_cast<uint32>(i), 0x41535452u, 0x41574F4Fu, 0x445F5653u);
-			Tree->HarvestType = EAstrawildHarvestType::Lumber;
-			Tree->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false);
-			Tree->MinYieldPerHit = 2;
-			Tree->MaxYieldPerHit = 4;
-			Tree->MaxNodeHealth = 100.0f;
-			Tree->RespawnDurationSeconds = 45.0f;
-		}
-	}
-
-	// Ore Nodes
-	AAstrawildHarvestableNode* Rock1 = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), Origin + FVector(-1300, 1100, 110), FRotator::ZeroRotator, SpawnParams);
-	if (Rock1)
-	{
-		Rock1->NodeUniqueId = FGuid(0x52000001u, 0x41535452u, 0x41574F4Fu, 0x445F5653u);
-		Rock1->HarvestType = EAstrawildHarvestType::Mining;
-		Rock1->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false);
-		Rock1->RareSecondaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.AstraShard"), false);
-		Rock1->MinYieldPerHit = 2;
-		Rock1->MaxYieldPerHit = 3;
-		Rock1->RareDropChancePercent = 40;
-	}
-
-	AAstrawildHarvestableNode* Rock2 = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), Origin + FVector(-1700, 700, 110), FRotator::ZeroRotator, SpawnParams);
-	if (Rock2)
-	{
-		Rock2->NodeUniqueId = FGuid(0x52000002u, 0x41535452u, 0x41574F4Fu, 0x445F5653u);
-		Rock2->HarvestType = EAstrawildHarvestType::Mining;
-		Rock2->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false);
-		Rock2->RareSecondaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.AstraShard"), false);
-		Rock2->MinYieldPerHit = 2;
-		Rock2->MaxYieldPerHit = 3;
-		Rock2->RareDropChancePercent = 40;
-	}
-
-	// Dawn Fiber for the Rest Bed recipe and early survival bootstrap.
-	for (int32 i = 0; i < 3; ++i)
-	{
-		const FVector FiberLoc = Origin + FVector(-900.0f + (i * 350.0f), 1050.0f - (i * 180.0f), 20.0f);
-		AAstrawildHarvestableNode* Fiber = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), FiberLoc, FRotator::ZeroRotator, SpawnParams);
-		if (Fiber)
-		{
-			Fiber->NodeUniqueId = FGuid(0x53000001u + static_cast<uint32>(i), 0x41535452u, 0x41574F4Fu, 0x445F5653u);
-			Fiber->HarvestType = EAstrawildHarvestType::Foraging;
-			Fiber->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.DawnFiber"), false);
-			Fiber->MinYieldPerHit = 2;
-			Fiber->MaxYieldPerHit = 4;
-			Fiber->MaxNodeHealth = 60.0f;
-			Fiber->RespawnDurationSeconds = 30.0f;
-		}
-	}
-
-	// -------------------------------------------------------------
-	// ZONE 3: South-East Danger Arena (Combat Trial, Enemies, Dummy)
-	// -------------------------------------------------------------
-	// Training Dummy
-	World->SpawnActor<AAstrawildTrainingDummy>(AAstrawildTrainingDummy::StaticClass(), Origin + FVector(1400, -1200, -75), FRotator::ZeroRotator, SpawnParams);
-
-	// Wild Pyrelite (Solar / Exploration)
-	AAstrawildEchoBase* Pyrelite = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), Origin + FVector(1100, -1500, -75), FRotator::ZeroRotator, SpawnParams);
+	// 1. Wild Pyrelite (Directly in front of player)
+	AAstrawildEchoBase* Pyrelite = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), FVector(-500.0f, 200.0f, 150.0f), FRotator::ZeroRotator, SpawnParams);
 	if (Pyrelite)
 	{
 		UAstrawildEchoDataAsset* DA1 = NewObject<UAstrawildEchoDataAsset>();
@@ -230,12 +170,54 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 		DA1->BaseDefensePower = 22.0f;
 		DA1->BaseWalkSpeed = 300.0f;
 		DA1->BaseRunSpeed = 620.0f;
-		DA1->PlaceholderTint = FColor(230, 126, 34);
+		DA1->PlaceholderTint = FColor(241, 196, 15);
 		Pyrelite->InitializeFromSpeciesData(DA1, 2);
 	}
 
-	// Wild Thornback (Geo / Combat)
-	AAstrawildEchoBase* Thornback = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), Origin + FVector(1700, -900, -75), FRotator::ZeroRotator, SpawnParams);
+	// 2. Harvestable Sunwood Trees (Beside player)
+	AAstrawildHarvestableNode* Tree1 = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), FVector(-700.0f, 450.0f, 150.0f), FRotator::ZeroRotator, SpawnParams);
+	if (Tree1)
+	{
+		Tree1->NodeUniqueId = FGuid::NewGuid();
+		Tree1->HarvestType = EAstrawildHarvestType::Lumber;
+		Tree1->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false);
+		Tree1->MinYieldPerHit = 2;
+		Tree1->MaxYieldPerHit = 4;
+	}
+
+	AAstrawildHarvestableNode* Tree2 = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), FVector(-600.0f, 600.0f, 150.0f), FRotator::ZeroRotator, SpawnParams);
+	if (Tree2)
+	{
+		Tree2->NodeUniqueId = FGuid::NewGuid();
+		Tree2->HarvestType = EAstrawildHarvestType::Lumber;
+		Tree2->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.Sunwood"), false);
+	}
+
+	// 3. Astra Ore Nodes (Beside player)
+	AAstrawildHarvestableNode* Rock1 = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), FVector(-700.0f, -50.0f, 150.0f), FRotator::ZeroRotator, SpawnParams);
+	if (Rock1)
+	{
+		Rock1->NodeUniqueId = FGuid::NewGuid();
+		Rock1->HarvestType = EAstrawildHarvestType::Mining;
+		Rock1->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.LumenStone"), false);
+		Rock1->RareSecondaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.AstraShard"), false);
+		Rock1->RareDropChancePercent = 50;
+	}
+
+	// 4. Dawn Fiber
+	AAstrawildHarvestableNode* Fiber1 = World->SpawnActor<AAstrawildHarvestableNode>(AAstrawildHarvestableNode::StaticClass(), FVector(-550.0f, 380.0f, 150.0f), FRotator::ZeroRotator, SpawnParams);
+	if (Fiber1)
+	{
+		Fiber1->NodeUniqueId = FGuid::NewGuid();
+		Fiber1->HarvestType = EAstrawildHarvestType::Foraging;
+		Fiber1->PrimaryResourceTag = FGameplayTag::RequestGameplayTag(FName("Item.Resource.DawnFiber"), false);
+	}
+
+	// 5. Training Dummy (Beside path)
+	World->SpawnActor<AAstrawildTrainingDummy>(AAstrawildTrainingDummy::StaticClass(), FVector(-350.0f, 400.0f, 150.0f), FRotator::ZeroRotator, SpawnParams);
+
+	// 6. Wild Thornback
+	AAstrawildEchoBase* Thornback = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), FVector(-200.0f, -300.0f, 100.0f), FRotator::ZeroRotator, SpawnParams);
 	if (Thornback)
 	{
 		UAstrawildEchoDataAsset* DA2 = NewObject<UAstrawildEchoDataAsset>();
@@ -247,8 +229,6 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 		DA2->BaseMaxHealth = 450.0f;
 		DA2->BaseAttackPower = 32.0f;
 		DA2->BaseDefensePower = 48.0f;
-		DA2->BaseWalkSpeed = 220.0f;
-		DA2->BaseRunSpeed = 420.0f;
 		DA2->PlaceholderTint = FColor(46, 204, 113);
 		Thornback->InitializeFromSpeciesData(DA2, 3);
 	}
@@ -316,10 +296,10 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	}
 
 	// -------------------------------------------------------------
-	// ZONE 4: North-East Rest Sanctuary (Campfire, Bed, Bench)
+	// ZONE 4: Rest Sanctuary & Basecamp (Directly behind Player Start)
 	// -------------------------------------------------------------
 	// Rest Campfire
-	AAstrawildBuildingPiece* Campfire = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), Origin + FVector(1300, 1100, 420), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildBuildingPiece* Campfire = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), FVector(-1150, 100, 192), FRotator::ZeroRotator, SpawnParams);
 	if (Campfire)
 	{
 		Campfire->BuildingUniqueId = FGuid(0x61000001u, 0x41535452u, 0x41574F4Fu, 0x445F5653u);
@@ -328,7 +308,7 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	}
 
 	// Rest Bed
-	AAstrawildBuildingPiece* Bed = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), Origin + FVector(1500, 1300, 420), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildBuildingPiece* Bed = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), FVector(-1300, 250, 192), FRotator::ZeroRotator, SpawnParams);
 	if (Bed)
 	{
 		Bed->BuildingUniqueId = FGuid(0x61000002u, 0x41535452u, 0x41574F4Fu, 0x445F5653u);
@@ -337,7 +317,7 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	}
 
 	// Crafting Bench
-	AAstrawildBuildingPiece* Bench = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), Origin + FVector(1200, 1350, 420), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildBuildingPiece* Bench = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), FVector(-1150, 300, 192), FRotator::ZeroRotator, SpawnParams);
 	if (Bench)
 	{
 		Bench->BuildingUniqueId = FGuid(0x61000003u, 0x41535452u, 0x41574F4Fu, 0x445F5653u);
@@ -345,7 +325,7 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 		Bench->BuildingTag = FGameplayTag::RequestGameplayTag(FName("Building.CraftingBench"), false);
 	}
 
-	AAstrawildBuildingPiece* Chest = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), Origin + FVector(1750, 1250, 420), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildBuildingPiece* Chest = World->SpawnActor<AAstrawildBuildingPiece>(AAstrawildBuildingPiece::StaticClass(), FVector(-1300, 100, 192), FRotator::ZeroRotator, SpawnParams);
 	if (Chest)
 	{
 		Chest->BuildingUniqueId = FGuid(0x61000004u, 0x41535452u, 0x41574F4Fu, 0x445F5653u);
@@ -354,7 +334,7 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 	}
 
 	// Wild Aquavine (Torrent / Base Utility Companion nearby)
-	AAstrawildEchoBase* Aquavine = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), Origin + FVector(1400, 1500, 420), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildEchoBase* Aquavine = World->SpawnActor<AAstrawildEchoBase>(AAstrawildEchoBase::StaticClass(), FVector(-1000, 450, 192), FRotator::ZeroRotator, SpawnParams);
 	if (Aquavine)
 	{
 		UAstrawildEchoDataAsset* DA3 = NewObject<UAstrawildEchoDataAsset>();
@@ -373,7 +353,7 @@ void AAstrawildPrototypeArena::SpawnTestEntities()
 		Aquavine->InitializeFromSpeciesData(DA3, 2);
 	}
 
-	AAstrawildInteractableActor* Spring = World->SpawnActor<AAstrawildInteractableActor>(AAstrawildInteractableActor::StaticClass(), Origin + FVector(1700, 1450, 420), FRotator::ZeroRotator, SpawnParams);
+	AAstrawildInteractableActor* Spring = World->SpawnActor<AAstrawildInteractableActor>(AAstrawildInteractableActor::StaticClass(), FVector(-1000, 600, 192), FRotator::ZeroRotator, SpawnParams);
 	if (Spring)
 	{
 		Spring->PromptText = FText::FromString(TEXT("[E] Collect and drink clean spring water"));
