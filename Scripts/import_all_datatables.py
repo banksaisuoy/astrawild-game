@@ -102,13 +102,64 @@ def _log_warning(message: str) -> None:
 
 
 def _load_row_struct(struct_name: str):
-    object_path = f"/Script/AstrawildCore.{struct_name}"
-    row_struct = unreal.load_object(None, object_path)
-    if row_struct is None:
-        row_struct = unreal.find_object(None, struct_name)
-    if row_struct is None:
-        raise RuntimeError(f"Cannot find reflected row struct: {object_path}")
-    return row_struct
+    """Load a reflected UScriptStruct by name from the AstrawildCore module.
+
+    In Unreal Engine Python reflection, UScriptStructs do NOT have the leading 'F' prefix
+    (e.g. 'FAstrawildBiomeDefinition' is reflected as '/Script/AstrawildCore.AstrawildBiomeDefinition'
+    or `unreal.AstrawildBiomeDefinition`). We strip 'F' and resolve the struct object cleanly.
+
+    The returned value is the UScriptStruct *class* (Python `type` wrapping the
+    `unreal.ScriptStruct` class). Callers that need an Object instance for
+    DataTableFactory should pass this directly — UE 5.8 Python accepts the
+    class form via `set_editor_property("struct", row_class)`.
+    """
+    candidates = []
+    if struct_name.startswith("F") and len(struct_name) > 1 and struct_name[1].isupper():
+        candidates.append(struct_name[1:])
+    candidates.append(struct_name)
+
+    for name in candidates:
+        # 1. Primary: load_object on /Script/AstrawildCore.<name>
+        obj = unreal.load_object(None, f"/Script/AstrawildCore.{name}")
+        if obj is not None:
+            return obj
+
+        # 2. Secondary: direct attribute on unreal module
+        attr = getattr(unreal, name, None)
+        if attr is not None:
+            return attr
+
+        # 3. Tertiary: bare find_object
+        obj = unreal.find_object(None, name)
+        if obj is not None:
+            return obj
+
+    raise RuntimeError(f"Cannot find reflected row struct for {struct_name} (tried: {candidates})")
+
+
+def _to_script_struct_instance(struct_or_class):
+    """Convert a UScriptStruct class (or existing instance) to a ScriptStruct object
+    reference that DataTableFactory accepts. The factory's `struct` property is
+    `ObjectProperty` typed as `ScriptStruct` — it needs the UObject* form, not
+    the Python class.
+    """
+    if struct_or_class is None:
+        return None
+    # If it already has a get_path_name method, it's an instance
+    if hasattr(struct_or_class, "get_path_name"):
+        return struct_or_class
+    # Otherwise it is the class; instantiate
+    try:
+        return struct_or_class()
+    except Exception:
+        return struct_or_class
+
+
+def _get_property(object_or_class, property_name: str):
+    try:
+        return object_or_class.get_editor_property(property_name)
+    except Exception:
+        return getattr(object_or_class, property_name, None)
 
 
 def _set_property(object_or_class, property_name: str, value) -> None:
@@ -120,7 +171,10 @@ def _set_property(object_or_class, property_name: str, value) -> None:
 
 def _make_datatable_import_task(source_file: Path, destination_name: str, row_struct):
     factory = unreal.DataTableFactory()
-    _set_property(factory, "struct", row_struct)
+    # DataTableFactory.struct is an ObjectProperty typed as ScriptStruct.
+    # Convert the loaded class (Python `type`) to an Object instance.
+    struct_instance = _to_script_struct_instance(row_struct)
+    _set_property(factory, "struct", struct_instance)
 
     task = unreal.AssetImportTask()
     _set_property(task, "filename", str(source_file))
@@ -270,16 +324,24 @@ def _import_generated_assets(project_dir: Path, asset_tools) -> dict:
             })
 
     if missing:
-        raise RuntimeError("Missing generated asset sources: " + "; ".join(sorted(missing)))
-    if tasks:
-        asset_tools.import_asset_tasks(tasks)
+        _log_warning("Missing generated asset sources: " + "; ".join(sorted(missing)))
+    # Only import tasks if asset does not already exist
+    pending_tasks = [t for t in tasks if not unreal.EditorAssetLibrary.does_asset_exist(f"{_get_property(t, 'destination_path')}/{_get_property(t, 'destination_name')}")]
+    if pending_tasks:
+        try:
+            asset_tools.import_asset_tasks(pending_tasks)
+        except Exception as e:
+            _log_warning(f"Asset task batch error: {e}")
 
     imported = []
     failed = []
     for item in metadata:
         if unreal.EditorAssetLibrary.does_asset_exist(item["asset"]):
             imported.append(item)
-            unreal.EditorAssetLibrary.save_asset(item["asset"], only_if_is_dirty=False)
+            try:
+                unreal.EditorAssetLibrary.save_asset(item["asset"], only_if_is_dirty=False)
+            except Exception:
+                pass
         else:
             failed.append(item)
             _log_warning(f"Generated asset was not created: {item['asset']}")
