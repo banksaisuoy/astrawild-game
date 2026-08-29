@@ -113,6 +113,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> BuildModeAction;
 
+    /** Smart-consume: eat/drink the most needed item (directive §11). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> ConsumeAction;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> BuildRotateAction;
 
@@ -179,6 +183,7 @@ protected:
     void FeedTarget(const FInputActionValue& Value);
     void ToggleBuildMode(const FInputActionValue& Value);
     void RotateBuilding(const FInputActionValue& Value);
+    void SmartConsume(const FInputActionValue& Value);
     void QuickSave(const FInputActionValue& Value);
     void QuickLoad(const FInputActionValue& Value);
 

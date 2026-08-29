@@ -64,7 +64,7 @@ void AAstrawildEchoAIController::OnPossess(APawn* InPawn)
         }
     }
 
-    GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think));
+    GetWorldTimerManager().SetTimer(ThinkTimerHandle, FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think), ThinkIntervalSeconds, false);
 }
 
 void AAstrawildEchoAIController::OnUnPossess()
@@ -142,7 +142,7 @@ void AAstrawildEchoAIController::Think()
         Interval = FMath::Max(ThinkIntervalSeconds, TierInterval);
     }
 
-    World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think));
+    World->GetTimerManager().SetTimer(ThinkTimerHandle, FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think), Interval, false);
 }
 
 EAstrawildEchoAIState AAstrawildEchoAIController::DecideState() const

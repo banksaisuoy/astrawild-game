@@ -81,8 +81,8 @@ const FAstrawildWeatherProfile& UAstrawildWeatherSubsystem::GetProfile(const EAs
         { EAstrawildWeatherState::HeavyRain, MakeProfile(-7.0f, 1.0f, 0.70f) },
         { EAstrawildWeatherState::Storm,     MakeProfile(-9.0f, 0.6f, 0.55f) },
         { EAstrawildWeatherState::Fog,       MakeProfile(-3.0f, 1.2f, 0.45f) },
-        { EAstrawildWeatherState::Heat,      MakeProfile(10.0f, 1.0f, 1.10f) },
-        { EAstrawildWeatherState::Cold,      MakeProfile(-12.0f, 0.8f, 1.00f) }
+        { EAstrawildWeatherState::Heat,      MakeProfile(20.0f, 1.0f, 1.10f) },
+        { EAstrawildWeatherState::Cold,      MakeProfile(-17.0f, 0.8f, 1.00f) }
     };
     return Profiles.FindRef(State);
 }

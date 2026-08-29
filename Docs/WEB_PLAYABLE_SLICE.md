@@ -1,5 +1,13 @@
 # ASTRAWILD — Web Playable Slice (Design Validation Prototype)
 
+> **STATUS: LEGACY — superseded by the UE5 C++ slice (2026-08-29).**
+> The browser prototype described below was a design-validation artifact from before the UE5 production
+> pivot. It is **not** the playable build and **not** the source of truth for any gameplay rule — the UE5
+> C++ module `AstrawildCore` (see `Docs/ASTRAWILD_UE5_ARCHITECTURE_V2.md`,
+> `Docs/ASTRAWILD_TEST_PLAN.md`) now implements the vertical slice in-engine with zero-asset playability.
+> The web prototype is retained for historical/design-reference only. Nothing below should be used to
+> verify current gameplay behavior.
+
 **สถานะ:** เอกสารอ้างอิง — ต้นแบบที่เล่นได้บนเบราว์เซอร์เพื่อตรวจสอบวงจรการเล่นของ Vertical Slice
 **Source of truth:** โมดูล `AstrawildCore` (C++) ยังคงเป็นผู้กำหนดกติกาที่แท้จริง เว็บต้นแบบนี้ใช้เพื่อการตัดสินใจด้านดีไซน์ก่อนนำไปสร้างคอนเทนต์ใน Unreal Editor
 

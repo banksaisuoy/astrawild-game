@@ -74,6 +74,7 @@ private:
     FVector HomeLocation = FVector::ZeroVector;
     TWeakObjectPtr<AAstrawildEchoCharacter> EchoPawn;
     TWeakObjectPtr<AActor> TargetActor;
+    FTimerHandle ThinkTimerHandle;
     double LastAttackTime = -BIG_NUMBER;
     double NextWanderTime = 0.0;
     bool bPerceivedThreat = false;

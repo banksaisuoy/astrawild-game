@@ -91,6 +91,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_LocationReached, "Event.LocationReach
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_QuestObjectiveCompleted, "Event.QuestObjectiveCompleted");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_RecipeCrafted, "Event.RecipeCrafted");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoFed, "Event.EchoFed");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoObserved, "Event.EchoObserved");
 
 // --- Faction.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Faction_Wild, "Faction.Wild");

@@ -190,6 +190,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     FeedAction = MakeRuntimeAction(TEXT("AWD_Feed"), static_cast<uint8>(EInputActionValueType::Boolean));
     BuildModeAction = MakeRuntimeAction(TEXT("AWD_BuildMode"), static_cast<uint8>(EInputActionValueType::Boolean));
     BuildRotateAction = MakeRuntimeAction(TEXT("AWD_BuildRotate"), static_cast<uint8>(EInputActionValueType::Boolean));
+    ConsumeAction = MakeRuntimeAction(TEXT("AWD_Consume"), static_cast<uint8>(EInputActionValueType::Boolean));
     SaveAction = MakeRuntimeAction(TEXT("AWD_Save"), static_cast<uint8>(EInputActionValueType::Boolean));
     LoadAction = MakeRuntimeAction(TEXT("AWD_Load"), static_cast<uint8>(EInputActionValueType::Boolean));
 
@@ -242,6 +243,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(FeedAction, EKeys::R);
     Context->MapKey(BuildModeAction, EKeys::B);
     Context->MapKey(BuildRotateAction, EKeys::N);
+    Context->MapKey(ConsumeAction, EKeys::G);
     Context->MapKey(SaveAction, EKeys::F5);
     Context->MapKey(LoadAction, EKeys::F9);
 
@@ -316,6 +318,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (BuildRotateAction)
     {
         EnhancedInput->BindAction(BuildRotateAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::RotateBuilding);
+    }
+    if (ConsumeAction)
+    {
+        EnhancedInput->BindAction(ConsumeAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::SmartConsume);
     }
     if (SaveAction)
     {
@@ -590,6 +596,49 @@ void AAstrawildPlayerCharacter::RotateBuilding(const FInputActionValue& Value)
     if (BuildingComponent)
     {
         BuildingComponent->RotatePreview(15.0f);
+    }
+}
+
+void AAstrawildPlayerCharacter::SmartConsume(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority || !InventoryComponent || !SurvivalComponent)
+    {
+        return;
+    }
+
+    // Smart consume (directive §11): address the most depleted vital first.
+    const FAstrawildSurvivalStats& Stats = SurvivalComponent->GetStats();
+    const bool bNeedWater = Stats.Thirst < Stats.Hunger;
+
+    UAstrawildItemRegistrySubsystem* Registry = GetWorld() ? GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (!Registry)
+    {
+        return;
+    }
+
+    // Rank consumables: strongest for the needed vital first.
+    const UAstrawildItemDefinition* Best = nullptr;
+    float BestScore = 0.0f;
+    for (const FAstrawildItemStack& Stack : InventoryComponent->GetItemStacks())
+    {
+        const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Stack.ItemId);
+        if (!ItemDef || ItemDef->Category != EAstrawildItemCategory::Consumable)
+        {
+            continue;
+        }
+        const float Score = (bNeedWater ? ItemDef->WaterValue : ItemDef->FoodValue) + ItemDef->HealValue * 0.5f;
+        if (Score > BestScore)
+        {
+            BestScore = Score;
+            Best = ItemDef;
+        }
+    }
+
+    if (Best && BestScore > 0.0f && InventoryComponent->RemoveItem(Best->ItemId, 1))
+    {
+        SurvivalComponent->ApplyConsumption(Best->FoodValue, Best->WaterValue, Best->HealValue);
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Consumed %s (+%.0f food, +%.0f water, +%.0f heal)."),
+            *Best->ItemId.ToString(), Best->FoodValue, Best->WaterValue, Best->HealValue);
     }
 }
 

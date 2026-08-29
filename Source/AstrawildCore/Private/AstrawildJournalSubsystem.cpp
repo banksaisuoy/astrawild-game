@@ -48,13 +48,21 @@ void UAstrawildJournalSubsystem::Tick(const float DeltaTime)
         return;
     }
 
+    // Throttled observation sweep (T-6 fix — no per-frame actor iteration).
+    ObservationSweepAccumulator += DeltaTime;
+    if (ObservationSweepAccumulator < 0.5f)
+    {
+        return;
+    }
+    ObservationSweepAccumulator = 0.0f;
+
     for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
     {
         if (const APlayerController* PC = It->Get())
         {
             if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
             {
-                ObservePlayer(Player, DeltaTime);
+                ObservePlayer(Player, 0.5f);
             }
         }
     }
@@ -141,6 +149,18 @@ void UAstrawildJournalSubsystem::GrantKnowledgeMilestones(FAstrawildJournalEntry
             Research->AddResearchPoints(ObservationResearchReward);
         }
         UE_LOG(LogAstrawildAI, Log, TEXT("Journal milestone for %s at %.0f%%."), *DefinitionId.ToString(), P);
+    }
+
+    // Publish observation event for quests (directive §25 ObserveEcho objectives).
+    if (bScanNew)
+    {
+        if (UWorld* World = GetWorld())
+        {
+            if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+            {
+                EventBus->PublishEvent(TAG_Astrawild_Event_EchoObserved, nullptr, DefinitionId, 1, FVector::ZeroVector);
+            }
+        }
     }
 }
 

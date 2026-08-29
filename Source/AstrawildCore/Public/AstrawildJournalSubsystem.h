@@ -60,6 +60,9 @@ protected:
 private:
     TMap<FName, FAstrawildJournalEntry> Entries;
 
+    /** Throttle accumulator for the observation sweep (0.5s cadence). */
+    float ObservationSweepAccumulator = 0.0f;
+
     void ObservePlayer(AAstrawildPlayerCharacter* Player, float DeltaTime);
     void GrantKnowledgeMilestones(FAstrawildJournalEntry& Entry, const FName DefinitionId);
     class UAstrawildResearchSubsystem* GetResearch() const;

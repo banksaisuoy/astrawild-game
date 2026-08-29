@@ -179,6 +179,9 @@ void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& 
         case EAstrawildQuestObjectiveType::UnlockTechnology:
             bMatches = Event.EventTag == TAG_Astrawild_Event_TechUnlocked && Event.TargetId == Objective.TargetId;
             break;
+        case EAstrawildQuestObjectiveType::ObserveEcho:
+            bMatches = Event.EventTag == TAG_Astrawild_Event_EchoObserved && Event.TargetId == Objective.TargetId;
+            break;
         default:
             break;
         }
