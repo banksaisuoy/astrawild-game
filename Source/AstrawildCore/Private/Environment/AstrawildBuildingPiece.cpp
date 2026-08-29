@@ -34,6 +34,46 @@ void AAstrawildBuildingPiece::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;
+
+	if (MeshComponent && !MeshComponent->GetStaticMesh())
+	{
+		if (BuildingType == EAstrawildBuildingType::Campfire)
+		{
+			UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+			if (CylinderMesh)
+			{
+				MeshComponent->SetStaticMesh(CylinderMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.4f, 1.4f, 0.4f));
+			}
+		}
+		else if (BuildingType == EAstrawildBuildingType::RestBed)
+		{
+			UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+			if (CubeMesh)
+			{
+				MeshComponent->SetStaticMesh(CubeMesh);
+				MeshComponent->SetRelativeScale3D(FVector(2.2f, 1.2f, 0.4f));
+			}
+		}
+		else if (BuildingType == EAstrawildBuildingType::CraftingBench)
+		{
+			UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+			if (CubeMesh)
+			{
+				MeshComponent->SetStaticMesh(CubeMesh);
+				MeshComponent->SetRelativeScale3D(FVector(2.0f, 1.0f, 1.0f));
+			}
+		}
+		else
+		{
+			UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+			if (CubeMesh)
+			{
+				MeshComponent->SetStaticMesh(CubeMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.0f, 1.0f, 0.8f));
+			}
+		}
+	}
 }
 
 void AAstrawildBuildingPiece::Interact(AActor* InteractorActor)

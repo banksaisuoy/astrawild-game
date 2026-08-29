@@ -97,6 +97,9 @@ void AAstrawildPrototypeArena::GenerateTestArena()
 	SpawnTestEntities();
 }
 
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+
 void AAstrawildPrototypeArena::SpawnTestPlatform(const FVector& Location, const FVector& Extent, const FRotator& Rotation, const FColor& DebugColor)
 {
 	UWorld* World = GetWorld();
@@ -125,6 +128,24 @@ void AAstrawildPrototypeArena::SpawnTestPlatform(const FVector& Location, const 
 
 		MeshComp->SetCollisionProfileName(TEXT("BlockAll"));
 		MeshComp->SetMobility(EComponentMobility::Movable);
+
+		// Apply vibrant dynamic color material to terrain and platforms
+		UMaterialInterface* BaseMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray.MI_PrototypeGrid_Gray"));
+		if (!BaseMat)
+		{
+			BaseMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+		}
+		if (BaseMat)
+		{
+			UMaterialInstanceDynamic* DynMat = UMaterialInstanceDynamic::Create(BaseMat, Block);
+			if (DynMat)
+			{
+				DynMat->SetVectorParameterValue(TEXT("Color"), FLinearColor(DebugColor));
+				DynMat->SetVectorParameterValue(TEXT("Albedo"), FLinearColor(DebugColor));
+				DynMat->SetVectorParameterValue(TEXT("BaseColor"), FLinearColor(DebugColor));
+				MeshComp->SetMaterial(0, DynMat);
+			}
+		}
 	}
 }
 

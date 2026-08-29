@@ -25,10 +25,60 @@ AAstrawildHarvestableNode::AAstrawildHarvestableNode()
 	MeshComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 }
 
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+
 void AAstrawildHarvestableNode::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentNodeHealth = MaxNodeHealth;
+
+	if (MeshComponent && !MeshComponent->GetStaticMesh())
+	{
+		FColor NodeTint = FColor::White;
+		if (HarvestType == EAstrawildHarvestType::Lumber)
+		{
+			UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+			if (CylinderMesh)
+			{
+				MeshComponent->SetStaticMesh(CylinderMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 5.0f));
+			}
+			NodeTint = FColor(121, 85, 72); // Wooden Bark Brown
+		}
+		else if (HarvestType == EAstrawildHarvestType::Mining)
+		{
+			UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+			if (CubeMesh)
+			{
+				MeshComponent->SetStaticMesh(CubeMesh);
+				MeshComponent->SetRelativeScale3D(FVector(2.0f, 2.0f, 1.6f));
+			}
+			NodeTint = FColor(0, 188, 212); // Astra Crystal Cyan
+		}
+		else
+		{
+			UStaticMesh* SphereMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+			if (SphereMesh)
+			{
+				MeshComponent->SetStaticMesh(SphereMesh);
+				MeshComponent->SetRelativeScale3D(FVector(1.2f, 1.2f, 1.0f));
+			}
+			NodeTint = FColor(139, 195, 74); // Vibrant Plant Green
+		}
+
+		UMaterialInterface* BaseMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray.MI_PrototypeGrid_Gray"));
+		if (BaseMat)
+		{
+			UMaterialInstanceDynamic* DynMat = UMaterialInstanceDynamic::Create(BaseMat, this);
+			if (DynMat)
+			{
+				DynMat->SetVectorParameterValue(TEXT("Color"), FLinearColor(NodeTint));
+				DynMat->SetVectorParameterValue(TEXT("Albedo"), FLinearColor(NodeTint));
+				MeshComponent->SetMaterial(0, DynMat);
+			}
+		}
+	}
 }
 
 void AAstrawildHarvestableNode::Tick(float DeltaTime)

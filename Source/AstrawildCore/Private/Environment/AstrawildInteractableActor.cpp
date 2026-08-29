@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Environment/AstrawildInteractableActor.h"
 #include "Components/StaticMeshComponent.h"
@@ -30,6 +30,16 @@ AAstrawildInteractableActor::AAstrawildInteractableActor()
 void AAstrawildInteractableActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (MeshComponent && !MeshComponent->GetStaticMesh())
+	{
+		UStaticMesh* CylinderMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+		if (CylinderMesh)
+		{
+			MeshComponent->SetStaticMesh(CylinderMesh);
+			MeshComponent->SetRelativeScale3D(FVector(1.5f, 1.5f, 6.0f));
+		}
+	}
 }
 
 FText AAstrawildInteractableActor::GetInteractionPrompt_Implementation(AActor* Interactor)

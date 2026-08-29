@@ -150,6 +150,18 @@ void AAstrawildEchoBase::ApplyVisualRepresentation()
 			FallbackMeshComponent->SetStaticMesh(BasicCylinder);
 			FallbackMeshComponent->SetRelativeScale3D(FVector(0.7f, 0.7f, 0.9f));
 		}
+
+		UMaterialInterface* BaseMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/LevelPrototyping/Materials/MI_PrototypeGrid_Gray.MI_PrototypeGrid_Gray"));
+		if (BaseMat)
+		{
+			UMaterialInstanceDynamic* DynMat = UMaterialInstanceDynamic::Create(BaseMat, this);
+			if (DynMat && SpeciesData)
+			{
+				DynMat->SetVectorParameterValue(TEXT("Color"), FLinearColor(SpeciesData->PlaceholderTint));
+				DynMat->SetVectorParameterValue(TEXT("Albedo"), FLinearColor(SpeciesData->PlaceholderTint));
+				FallbackMeshComponent->SetMaterial(0, DynMat);
+			}
+		}
 	}
 }
 
