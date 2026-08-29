@@ -1,6 +1,8 @@
 #include "AstrawildRestPoint.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildPlayerCharacter.h"
+#include "AstrawildSurvivalComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
@@ -50,11 +52,20 @@ void AAstrawildRestPoint::Interact_Implementation(AActor* InteractingActor)
         return;
     }
     ActivateRestPoint();
+
+    // Resting fully restores the player's vitals (directive §11).
+    if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(InteractingActor))
+    {
+        if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
+        {
+            Survival->FullRestore();
+        }
+    }
 }
 
 FText AAstrawildRestPoint::GetInteractionPrompt_Implementation() const
 {
-    return NSLOCTEXT("ASTRAWILD", "RestPointPrompt", "เปิดใช้งานจุดพัก");
+    return NSLOCTEXT("ASTRAWILD", "RestPointPrompt", "พักฟื้น (ฟื้นพลังทั้งหมด) [E]");
 }
 
 FAstrawildRestPointSaveData AAstrawildRestPoint::ToSaveData() const

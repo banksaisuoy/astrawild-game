@@ -1,11 +1,36 @@
 #include "AstrawildInventoryComponent.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
+#include "AstrawildEventBusSubsystem.h"
+#include "AstrawildGameplayTags.h"
+#include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildLog.h"
+#include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 
 UAstrawildInventoryComponent::UAstrawildInventoryComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
-    SetIsReplicatedByDefault(false);
+    SetIsReplicatedByDefault(true);
+}
+
+void UAstrawildInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UAstrawildInventoryComponent, Items);
+    DOREPLIFETIME(UAstrawildInventoryComponent, EquippedItemId);
+}
+
+void UAstrawildInventoryComponent::BeginPlay()
+{
+    Super::BeginPlay();
+}
+
+UAstrawildItemRegistrySubsystem* UAstrawildInventoryComponent::GetRegistry() const
+{
+    const UWorld* World = GetWorld();
+    return World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
 }
 
 bool UAstrawildInventoryComponent::IsValidQuantityRequest(const FName ItemId, const int32 Quantity) const
@@ -13,59 +38,121 @@ bool UAstrawildInventoryComponent::IsValidQuantityRequest(const FName ItemId, co
     return !ItemId.IsNone() && Quantity > 0;
 }
 
+float UAstrawildInventoryComponent::GetCurrentWeight() const
+{
+    float Weight = 0.0f;
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        for (const TPair<FName, int32>& Pair : Items)
+        {
+            if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Pair.Key))
+            {
+                Weight += ItemDef->Weight * Pair.Value;
+            }
+        }
+    }
+    return Weight;
+}
+
+float UAstrawildInventoryComponent::GetWeightFraction() const
+{
+    if (MaxWeight <= 0.0f)
+    {
+        return 0.0f;
+    }
+    return FMath::Clamp(GetCurrentWeight() / MaxWeight, 0.0f, 1.0f);
+}
+
+bool UAstrawildInventoryComponent::CanAddItem(const FName ItemId, const int32 Quantity) const
+{
+    if (!IsValidQuantityRequest(ItemId, Quantity))
+    {
+        return false;
+    }
+
+    if (MaxWeight <= 0.0f)
+    {
+        return true;
+    }
+
+    float AddedWeight = static_cast<float>(Quantity);
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(ItemId))
+        {
+            AddedWeight = ItemDef->Weight * Quantity;
+        }
+    }
+    return GetCurrentWeight() + AddedWeight <= MaxWeight + KINDA_SMALL_NUMBER;
+}
+
 bool UAstrawildInventoryComponent::AddItem(const FName ItemId, const int32 Quantity)
 {
     if (!IsValidQuantityRequest(ItemId, Quantity))
     {
-        UE_LOG(LogAstrawild, Warning, TEXT("Inventory AddItem rejected: invalid request for %s x%d"), *ItemId.ToString(), Quantity);
         return false;
     }
 
-    int32& CurrentQuantity = Items.FindOrAdd(ItemId);
-    CurrentQuantity = FMath::Max(0, CurrentQuantity + Quantity);
-    OnInventoryChanged.Broadcast(ItemId, CurrentQuantity);
+    // Weight gate (server authoritative; clients keep a loose copy for UI).
+    if (GetOwnerRole() == ROLE_Authority && !CanAddItem(ItemId, Quantity))
+    {
+        UE_LOG(LogAstrawildEconomy, Verbose, TEXT("AddItem rejected (over weight): %s x%d"), *ItemId.ToString(), Quantity);
+        return false;
+    }
+
+    int32& Count = Items.FindOrAdd(ItemId);
+    Count += Quantity;
+    OnInventoryChanged.Broadcast(ItemId, Count);
+    BroadcastWeight();
+
+    // Publish collection event for quests/journal (server only, directive §25).
+    if (GetOwnerRole() == ROLE_Authority)
+    {
+        if (UWorld* World = GetWorld())
+        {
+            if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+            {
+                EventBus->PublishEvent(TAG_Astrawild_Event_ItemCollected, GetOwner(), ItemId, Quantity, GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector);
+            }
+        }
+    }
     return true;
 }
 
 bool UAstrawildInventoryComponent::RemoveItem(const FName ItemId, const int32 Quantity)
 {
-    if (!IsValidQuantityRequest(ItemId, Quantity) || !HasItem(ItemId, Quantity))
+    if (!HasItem(ItemId, Quantity))
     {
-        UE_LOG(LogAstrawild, Verbose, TEXT("Inventory RemoveItem rejected: %s x%d is unavailable"), *ItemId.ToString(), Quantity);
         return false;
     }
 
-    int32& CurrentQuantity = Items.FindChecked(ItemId);
-    CurrentQuantity -= Quantity;
-    const int32 NewQuantity = CurrentQuantity;
-    if (CurrentQuantity <= 0)
+    int32& Count = Items.FindChecked(ItemId);
+    Count -= Quantity;
+    if (Count <= 0)
     {
         Items.Remove(ItemId);
     }
-
-    OnInventoryChanged.Broadcast(ItemId, NewQuantity);
+    OnInventoryChanged.Broadcast(ItemId, Count);
+    BroadcastWeight();
     return true;
 }
 
 int32 UAstrawildInventoryComponent::GetQuantity(const FName ItemId) const
 {
-    if (const int32* Quantity = Items.Find(ItemId))
-    {
-        return *Quantity;
-    }
-    return 0;
+    const int32* Count = Items.Find(ItemId);
+    return Count ? *Count : 0;
 }
 
 bool UAstrawildInventoryComponent::HasItem(const FName ItemId, const int32 Quantity) const
 {
-    return !ItemId.IsNone() && Quantity > 0 && GetQuantity(ItemId) >= Quantity;
+    return GetQuantity(ItemId) >= Quantity;
 }
 
 bool UAstrawildInventoryComponent::ConsumeItems(const TArray<FAstrawildItemStack>& RequiredItems)
 {
     for (const FAstrawildItemStack& Required : RequiredItems)
     {
-        if (!Required.IsValid() || !HasItem(Required.ItemId, Required.Quantity))
+        if (!HasItem(Required.ItemId, Required.Quantity))
         {
             return false;
         }
@@ -80,21 +167,19 @@ bool UAstrawildInventoryComponent::ConsumeItems(const TArray<FAstrawildItemStack
 
 TArray<FAstrawildItemStack> UAstrawildInventoryComponent::GetItemStacks() const
 {
-    TArray<FAstrawildItemStack> Result;
-    Result.Reserve(Items.Num());
+    TArray<FAstrawildItemStack> Stacks;
+    Stacks.Reserve(Items.Num());
     for (const TPair<FName, int32>& Pair : Items)
     {
-        if (Pair.Key.IsNone() || Pair.Value <= 0)
+        if (Pair.Value > 0)
         {
-            continue;
+            FAstrawildItemStack Stack;
+            Stack.ItemId = Pair.Key;
+            Stack.Quantity = Pair.Value;
+            Stacks.Add(Stack);
         }
-
-        FAstrawildItemStack Stack;
-        Stack.ItemId = Pair.Key;
-        Stack.Quantity = Pair.Value;
-        Result.Add(Stack);
     }
-    return Result;
+    return Stacks;
 }
 
 void UAstrawildInventoryComponent::SetItemStacks(const TArray<FAstrawildItemStack>& InStacks)
@@ -104,22 +189,45 @@ void UAstrawildInventoryComponent::SetItemStacks(const TArray<FAstrawildItemStac
     {
         if (Stack.IsValid())
         {
-            Items.FindOrAdd(Stack.ItemId) += Stack.Quantity;
+            Items.Add(Stack.ItemId, Stack.Quantity);
         }
     }
-
-    for (const TPair<FName, int32>& Pair : Items)
-    {
-        OnInventoryChanged.Broadcast(Pair.Key, Pair.Value);
-    }
+    OnInventoryChanged.Broadcast(NAME_None, 0);
+    BroadcastWeight();
 }
 
 void UAstrawildInventoryComponent::ClearInventory()
 {
-    const TArray<FAstrawildItemStack> ExistingStacks = GetItemStacks();
     Items.Reset();
-    for (const FAstrawildItemStack& Stack : ExistingStacks)
+    OnInventoryChanged.Broadcast(NAME_None, 0);
+    BroadcastWeight();
+}
+
+bool UAstrawildInventoryComponent::EquipItem(const FName ItemId)
+{
+    if (!HasItem(ItemId, 1))
     {
-        OnInventoryChanged.Broadcast(Stack.ItemId, 0);
+        return false;
     }
+
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        const UAstrawildItemDefinition* ItemDef = Registry->FindItem(ItemId);
+        if (ItemDef && ItemDef->Category == EAstrawildItemCategory::Equipment)
+        {
+            EquippedItemId = ItemId;
+            return true;
+        }
+    }
+    return false;
+}
+
+void UAstrawildInventoryComponent::Unequip()
+{
+    EquippedItemId = NAME_None;
+}
+
+void UAstrawildInventoryComponent::BroadcastWeight()
+{
+    OnWeightChanged.Broadcast(GetCurrentWeight());
 }

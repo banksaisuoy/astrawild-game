@@ -7,12 +7,22 @@
 
 class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
+class AAstrawildWorkSiteActor;
 class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoDefeated, AAstrawildEchoCharacter*, Echo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoLevelUp, AAstrawildEchoCharacter*, Echo, int32, NewLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoCommandReceived, AAstrawildEchoCharacter*, Echo, EAstrawildEchoCommand, Command);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoAIStateChanged, AAstrawildEchoCharacter*, Echo, EAstrawildEchoAIState, NewState);
 
+/**
+ * Echo — the creature heart of ASTRAWILD (directive §4).
+ * One class serves both wild and captured instances; behaviour is driven by
+ * definition (species template) + instance state (personality, needs, bond, command).
+ * Combat/needs/growth simulate server-side; UI reads replicated state.
+ */
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildEchoCharacter : public ACharacter
 {
@@ -33,6 +43,15 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoDefeated OnDefeated;
 
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoLevelUp OnLevelUp;
+
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoCommandReceived OnCommandReceived;
+
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoAIStateChanged OnAIStateChanged;
+
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TObjectPtr<UAstrawildEchoDefinition> EchoDefinition;
 
@@ -45,17 +64,58 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0"))
     float Trust = 0.0f;
 
+    /** 0..100 bond with its owner (directive §4 Relationship). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0", ClampMax="100.0"))
+    float Bond = 0.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     float CurrentHealth = 0.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     bool bCaptured = false;
 
+    /** Instance personality — rolled on spawn from species dominant personality (directive §5). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    EAstrawildPersonality Personality = EAstrawildPersonality::Curious;
+
+    /** Runtime needs — decay server-side, drive AI (directive §4/§11). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    FAstrawildEchoNeeds Needs;
+
+    /** Accumulated growth experience (directive §4 Growth). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    float Experience = 0.0f;
+
+    /** Current AI state (replicated for client-side feedback, e.g. nameplate icon). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    EAstrawildEchoAIState CurrentAIState = EAstrawildEchoAIState::Idle;
+
+    /** Active player command (replicated). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    EAstrawildEchoCommand ActiveCommand = EAstrawildEchoCommand::Follow;
+
+    /** Owning player id once captured (multiplayer ownership, directive §28). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    FName OwnerPlayerId = NAME_None;
+
+    /** Assigned work site for base jobs (directive §18). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
+    TWeakObjectPtr<AAstrawildWorkSiteActor> AssignedWorkSite;
+
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     bool InitializeFromDefinition(UAstrawildEchoDefinition* InDefinition, const FGuid& OptionalInstanceId = FGuid());
 
+    /** v2 init with explicit personality override. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    bool InitializeFromDefinitionWithPersonality(UAstrawildEchoDefinition* InDefinition, EAstrawildPersonality InPersonality, const FGuid& OptionalInstanceId = FGuid());
+
+    /** Physical damage (defense-mitigated). Returns applied damage. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     bool ApplyDamage(float DamageAmount);
+
+    /** Elemental damage pipeline — weakness x1.5, own element resisted (directive §9). Returns applied damage. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    float ApplyElementalDamage(float DamageAmount, EAstrawildElementType InElement);
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     bool Capture(float InitialTrust = 0.0f);
@@ -63,27 +123,95 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     void AddTrust(float Amount);
 
+    /** Feeding path — preferred food multiplies trust/bond gain (directive §8). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    float Feed(FName FoodItemId, float FeedValue);
+
+    /** Growth (directive §4): XP gain with level scaling. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    void AddExperience(float Amount);
+
+    /** Issue a player command (server). Personality gates obedience (directive §5/§10). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    bool IssueCommand(EAstrawildEchoCommand Command);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
 
-    /** Health fraction in 0..1 range. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     float GetHealthFraction() const;
+
+    /** Max health including level scaling. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    float GetMaxHealth() const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    float GetAttackPower() const;
 
     /**
      * Capture chance in 0..1 following the design rule:
      * capture succeeds by weakening the Echo first or by building trust,
      * never at full health with zero trust, and never once defeated.
+     * Feeding with preferred food and preferred weather/time add bonuses (v2).
      */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     float ComputeCaptureChance() const;
 
+    /** Species activity gate vs current world time (directive §13). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    bool IsCurrentlyActiveTime() const;
+
+    // --- Personality-driven behavior modifiers (directive §5) ---
+
+    /** Multiplier on flee health threshold (Timid > 1 = flees earlier). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Personality")
+    float GetFleeHealthThresholdMultiplier() const;
+
+    /** Multiplier on aggro detection radius (Aggressive > 1 = aggro from farther). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Personality")
+    float GetAggroRadiusMultiplier() const;
+
+    /** Work speed multiplier (Lazy 0.6, Energetic 1.4...). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Personality")
+    float GetWorkSpeedMultiplier() const;
+
+    /** Command obedience 0..1 — Independent/Lazy obey less (directive §5/§10). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Personality")
+    float GetCommandObedience() const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    const FAstrawildEchoStats& GetCachedStats() const { return CachedStats; }
+
+    // --- Save/load v2 (schema v2, directive §27) ---
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     FAstrawildEchoInstanceSaveData ToSaveData() const;
 
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    FAstrawildEchoInstanceV2 ToSaveDataV2() const;
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    bool FromSaveDataV2(const FAstrawildEchoInstanceV2& Data);
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick(float DeltaTime) override;
+
+    UFUNCTION()
+    void HandleNeedsDecay(float DeltaSeconds);
 
 private:
     FAstrawildEchoStats CachedStats;
+
+    /** Needs simulate at a throttled cadence based on ecosystem LOD tier (directive §34). */
+    float NeedsDecayAccumulator = 0.0f;
+
+    void RollPersonalityFromDefinition();
+    void RegisterWithEcosystem();
+    void UnregisterFromEcosystem();
+    class UAstrawildEcosystemSubsystem* GetEcosystem() const;
+    void SetAIState(EAstrawildEchoAIState NewState);
 };

@@ -1,0 +1,66 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/WorldSubsystem.h"
+#include "AstrawildTypes.h"
+#include "AstrawildJournalSubsystem.generated.h"
+
+class AAstrawildEchoCharacter;
+class AAstrawildPlayerCharacter;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildJournalUpdated, FName, EchoDefinitionId, const FAstrawildJournalEntry&, Entry);
+
+/**
+ * Field Journal (directive §20): automatic observation of creatures in the player's
+ * view. Knowledge is progression — scan/food/habitat/weakness unlock gradually and
+ * feed capture bonuses + research points.
+ */
+UCLASS()
+class ASTRAWILDCORE_API UAstrawildJournalSubsystem : public UTickableWorldSubsystem
+{
+    GENERATED_BODY()
+
+public:
+    UAstrawildJournalSubsystem();
+
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Journal")
+    FAstrawildJournalUpdated OnJournalUpdated;
+
+    /** Observation progress per real second while a creature is in clear view. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Journal", meta=(ClampMin="0.0"))
+    float ObservationProgressPerSecond = 5.0f;
+
+    /** Max distance for observation. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Journal", meta=(ClampMin="100.0"))
+    float ObservationDistance = 1400.0f;
+
+    virtual void Tick(float DeltaTime) override;
+    virtual TStatId GetStatId() const override;
+    virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Journal")
+    const FAstrawildJournalEntry* FindEntry(const AAstrawildEchoCharacter* Echo) const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Journal")
+    FAstrawildJournalEntry GetEntry(FName EchoDefinitionId) const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Journal")
+    TArray<FAstrawildJournalEntry> GetAllEntries() const;
+
+    /** Research points awarded for completing an observation. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Journal", meta=(ClampMin="0"))
+    int32 ObservationResearchReward = 2;
+
+    void ExportForSave(TArray<FAstrawildJournalEntry>& OutEntries) const;
+    void ImportFromSave(const TArray<FAstrawildJournalEntry>& InEntries);
+
+protected:
+    virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
+private:
+    TMap<FName, FAstrawildJournalEntry> Entries;
+
+    void ObservePlayer(AAstrawildPlayerCharacter* Player, float DeltaTime);
+    void GrantKnowledgeMilestones(FAstrawildJournalEntry& Entry, const FName DefinitionId);
+    class UAstrawildResearchSubsystem* GetResearch() const;
+};

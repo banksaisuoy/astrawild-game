@@ -7,16 +7,25 @@
 
 class AAstrawildDamageTarget;
 class AAstrawildEchoCharacter;
+class UAstrawildBuildingComponent;
 class UAstrawildCaptureComponent;
+class UAstrawildCombatComponent;
 class UAstrawildCraftingComponent;
 class UAstrawildInventoryComponent;
+class UAstrawildSurvivalComponent;
 class UCameraComponent;
-class UStaticMeshComponent;
 class UInputAction;
 class UInputMappingContext;
 class USpringArmComponent;
+class UStaticMeshComponent;
 struct FInputActionValue;
 
+/**
+ * The player character (directive §1/§9/§11).
+ * Input is wired through Enhanced Input. If no editor-made Input Assets are assigned,
+ * a complete default Keyboard+Mouse mapping context is constructed at runtime
+ * (zero-asset playability — see Docs/ASTRAWILD_UI_ARCHITECTURE.md).
+ */
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildPlayerCharacter : public ACharacter
 {
@@ -30,6 +39,8 @@ public:
 
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void FellOutOfWorld(const UDamageType& DmgType) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
@@ -46,6 +57,19 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
     TObjectPtr<UAstrawildCaptureComponent> CaptureComponent;
 
+    /** Survival vitals (directive §11) — server authoritative. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildSurvivalComponent> SurvivalComponent;
+
+    /** Action combat (directive §9) — light/heavy/dodge/block. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildCombatComponent> CombatComponent;
+
+    /** Base building placement (directive §16). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildBuildingComponent> BuildingComponent;
+
+    // --- Input assets (optional; runtime defaults are built when unset) ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
@@ -59,11 +83,46 @@ public:
     TObjectPtr<UInputAction> SprintAction;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> JumpAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> InteractAction;
 
+    /** Light attack. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> AttackAction;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> HeavyAttackAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> DodgeAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> BlockAction;
+
+    /** Issue the cycled party command. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> CommandAction;
+
+    /** Feed the targeted Echo (capture pipeline step, directive §8). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> FeedAction;
+
+    /** Toggle build placement mode (directive §16). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> BuildModeAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> BuildRotateAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> SaveAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> LoadAction;
+
+    // --- Tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat", meta=(ClampMin="0.0"))
     float AttackDamage = 25.0f;
 
@@ -91,6 +150,19 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Interaction")
     bool bDrawInteractionDebug = false;
 
+    /** Current party command cycled by CommandAction. */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Echo")
+    EAstrawildEchoCommand CurrentPartyCommand = EAstrawildEchoCommand::Follow;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Interaction")
+    AActor* FindInteractableActor() const;
+
+    /** Server-side respawn hook used by the game mode. */
+    void HandleRespawn(const FTransform& SpawnTransform);
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Player")
+    bool IsAlive() const;
+
 protected:
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
@@ -98,9 +170,36 @@ protected:
     void StopSprint(const FInputActionValue& Value);
     void Interact(const FInputActionValue& Value);
     void Attack(const FInputActionValue& Value);
+    void HeavyAttack(const FInputActionValue& Value);
+    void Dodge(const FInputActionValue& Value);
+    void StartBlock(const FInputActionValue& Value);
+    void StopBlock(const FInputActionValue& Value);
+    void HandleJump(const FInputActionValue& Value);
+    void CyclePartyCommand(const FInputActionValue& Value);
+    void FeedTarget(const FInputActionValue& Value);
+    void ToggleBuildMode(const FInputActionValue& Value);
+    void RotateBuilding(const FInputActionValue& Value);
+    void QuickSave(const FInputActionValue& Value);
+    void QuickLoad(const FInputActionValue& Value);
+
+    void RefreshMovementSpeed();
+
+    /** Builds a complete default Enhanced Input setup in code (zero-asset playability). */
+    void BuildRuntimeInputDefaults();
+    class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY);
+
+    UFUNCTION()
+    void OnPlayerDied();
 
 private:
     void SetMovementSpeed(float NewSpeed);
-    AActor* FindInteractableActor() const;
     double LastAttackTimeSeconds = -BIG_NUMBER;
+    bool bSprinting = false;
+
+    /** Runtime-built input objects kept alive for GC. */
+    UPROPERTY()
+    TObjectPtr<UInputMappingContext> RuntimeMappingContext;
+
+    UPROPERTY()
+    TArray<TObjectPtr<UInputAction>> RuntimeActions;
 };

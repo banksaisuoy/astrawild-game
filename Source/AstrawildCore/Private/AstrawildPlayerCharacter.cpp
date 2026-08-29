@@ -1,30 +1,49 @@
 #include "AstrawildPlayerCharacter.h"
 
-#include "AstrawildCore.h"
+#include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
-#include "AstrawildDamageTarget.h"
-#include "AstrawildEchoCharacter.h"
+#include "AstrawildCombatComponent.h"
+#include "AstrawildCore.h"
 #include "AstrawildCraftingComponent.h"
+#include "AstrawildDataAssets.h"
+#include "AstrawildEchoCharacter.h"
+#include "AstrawildEchoAIController.h"
+#include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildEventBusSubsystem.h"
+#include "AstrawildGameMode.h"
+#include "AstrawildGameplayTags.h"
 #include "AstrawildInteractable.h"
 #include "AstrawildInventoryComponent.h"
+#include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildLog.h"
+#include "AstrawildSaveSubsystem.h"
+#include "AstrawildSurvivalComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
-#include "UObject/ConstructorHelpers.h"
+#include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameModeBase.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
+#include "InputMappingContext.h"
+#include "InputModifiers.h"
+#include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "TimerManager.h"
+#include "UObject/ConstructorHelpers.h"
 
 AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
+
+    bReplicates = true;
+    SetReplicatingMovement(true);
 
     GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
     bUseControllerRotationYaw = false;
@@ -59,6 +78,9 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     InventoryComponent = CreateDefaultSubobject<UAstrawildInventoryComponent>(TEXT("Inventory"));
     CraftingComponent = CreateDefaultSubobject<UAstrawildCraftingComponent>(TEXT("Crafting"));
     CaptureComponent = CreateDefaultSubobject<UAstrawildCaptureComponent>(TEXT("Capture"));
+    SurvivalComponent = CreateDefaultSubobject<UAstrawildSurvivalComponent>(TEXT("Survival"));
+    CombatComponent = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
+    BuildingComponent = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
 
     FAstrawildItemStack Wood;
     Wood.ItemId = TEXT("Item_Wood");
@@ -79,7 +101,7 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 void AAstrawildPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    SetMovementSpeed(WalkSpeed);
+    RefreshMovementSpeed();
 
     if (bGivePrototypeStarterItems && HasAuthority() && InventoryComponent && InventoryComponent->GetItemStacks().IsEmpty())
     {
@@ -92,10 +114,22 @@ void AAstrawildPlayerCharacter::BeginPlay()
         }
     }
 
+    if (SurvivalComponent)
+    {
+        SurvivalComponent->OnDied.AddDynamic(this, &AAstrawildPlayerCharacter::OnPlayerDied);
+    }
+
     APlayerController* PlayerController = Cast<APlayerController>(GetController());
     if (!IsValid(PlayerController))
     {
         return;
+    }
+
+    // Build a complete default mapping context when no editor assets are assigned
+    // (zero-asset playability — directive §50).
+    if (!DefaultMappingContext)
+    {
+        BuildRuntimeInputDefaults();
     }
 
     ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
@@ -111,6 +145,108 @@ void AAstrawildPlayerCharacter::BeginPlay()
     {
         UE_LOG(LogAstrawild, Warning, TEXT("Player input mapping is not assigned on %s."), *GetName());
     }
+}
+
+void AAstrawildPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+}
+
+void AAstrawildPlayerCharacter::FellOutOfWorld(const UDamageType& DmgType)
+{
+    Super::FellOutOfWorld(DmgType);
+    if (SurvivalComponent && GetLocalRole() == ROLE_Authority)
+    {
+        SurvivalComponent->ApplyDamage(9999.0f);
+    }
+}
+
+bool AAstrawildPlayerCharacter::IsAlive() const
+{
+    return !SurvivalComponent || !SurvivalComponent->IsDead();
+}
+
+UInputAction* AAstrawildPlayerCharacter::MakeRuntimeAction(const FString& Name, const uint8 ValueType, const bool bNegateY)
+{
+    UInputAction* Action = NewObject<UInputAction>(this, *Name);
+    Action->ValueType = static_cast<EInputActionValueType>(ValueType);
+    RuntimeActions.Add(Action);
+    return Action;
+}
+
+void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
+{
+    // --- Actions ---
+    MoveAction = MakeRuntimeAction(TEXT("AWD_Move"), static_cast<uint8>(EInputActionValueType::Axis2D));
+    LookAction = MakeRuntimeAction(TEXT("AWD_Look"), static_cast<uint8>(EInputActionValueType::Axis2D));
+    SprintAction = MakeRuntimeAction(TEXT("AWD_Sprint"), static_cast<uint8>(EInputActionValueType::Boolean));
+    JumpAction = MakeRuntimeAction(TEXT("AWD_Jump"), static_cast<uint8>(EInputActionValueType::Boolean));
+    InteractAction = MakeRuntimeAction(TEXT("AWD_Interact"), static_cast<uint8>(EInputActionValueType::Boolean));
+    AttackAction = MakeRuntimeAction(TEXT("AWD_LightAttack"), static_cast<uint8>(EInputActionValueType::Boolean));
+    HeavyAttackAction = MakeRuntimeAction(TEXT("AWD_HeavyAttack"), static_cast<uint8>(EInputActionValueType::Boolean));
+    DodgeAction = MakeRuntimeAction(TEXT("AWD_Dodge"), static_cast<uint8>(EInputActionValueType::Boolean));
+    BlockAction = MakeRuntimeAction(TEXT("AWD_Block"), static_cast<uint8>(EInputActionValueType::Boolean));
+    CommandAction = MakeRuntimeAction(TEXT("AWD_Command"), static_cast<uint8>(EInputActionValueType::Boolean));
+    FeedAction = MakeRuntimeAction(TEXT("AWD_Feed"), static_cast<uint8>(EInputActionValueType::Boolean));
+    BuildModeAction = MakeRuntimeAction(TEXT("AWD_BuildMode"), static_cast<uint8>(EInputActionValueType::Boolean));
+    BuildRotateAction = MakeRuntimeAction(TEXT("AWD_BuildRotate"), static_cast<uint8>(EInputActionValueType::Boolean));
+    SaveAction = MakeRuntimeAction(TEXT("AWD_Save"), static_cast<uint8>(EInputActionValueType::Boolean));
+    LoadAction = MakeRuntimeAction(TEXT("AWD_Load"), static_cast<uint8>(EInputActionValueType::Boolean));
+
+    RuntimeMappingContext = NewObject<UInputMappingContext>(this, TEXT("AWD_DefaultIMC"));
+    UInputMappingContext* Context = RuntimeMappingContext;
+
+    // --- Movement: WASD. A single 2D action fed by four keys with explicit axis modifiers. ---
+    auto MapMoveKey = [&Context, this](const FKey& Key, const float X, const float Y)
+    {
+        FEnhancedActionKeyMapping& Mapping = Context->MapKey(MoveAction, Key);
+        if (X < 0.0f)
+        {
+            UInputModifierNegate* NegateX = NewObject<UInputModifierNegate>(this);
+            NegateX->bX = true;
+            NegateX->bY = false;
+            NegateX->bZ = false;
+            Mapping.Modifiers.Add(NegateX);
+        }
+        if (Y < 0.0f)
+        {
+            UInputModifierNegate* NegateY = NewObject<UInputModifierNegate>(this);
+            NegateY->bX = false;
+            NegateY->bY = true;
+            NegateY->bZ = false;
+            Mapping.Modifiers.Add(NegateY);
+        }
+    };
+    MapMoveKey(EKeys::W, 0.0f, 1.0f);
+    MapMoveKey(EKeys::S, 0.0f, -1.0f);
+    MapMoveKey(EKeys::D, 1.0f, 0.0f);
+    MapMoveKey(EKeys::A, -1.0f, 0.0f);
+
+    // --- Look: mouse delta. Negate Y for standard third-person pitch. ---
+    FEnhancedActionKeyMapping& LookMapping = Context->MapKey(LookAction, EKeys::Mouse2D);
+    UInputModifierNegate* LookNegateY = NewObject<UInputModifierNegate>(this);
+    LookNegateY->bX = false;
+    LookNegateY->bY = true;
+    LookNegateY->bZ = false;
+    LookMapping.Modifiers.Add(LookNegateY);
+
+    // --- Simple key bindings. ---
+    Context->MapKey(SprintAction, EKeys::LeftShift);
+    Context->MapKey(JumpAction, EKeys::SpaceBar);
+    Context->MapKey(InteractAction, EKeys::E);
+    Context->MapKey(AttackAction, EKeys::LeftMouseButton);
+    Context->MapKey(HeavyAttackAction, EKeys::F);
+    Context->MapKey(DodgeAction, EKeys::Q);
+    Context->MapKey(BlockAction, EKeys::RightMouseButton);
+    Context->MapKey(CommandAction, EKeys::C);
+    Context->MapKey(FeedAction, EKeys::R);
+    Context->MapKey(BuildModeAction, EKeys::B);
+    Context->MapKey(BuildRotateAction, EKeys::N);
+    Context->MapKey(SaveAction, EKeys::F5);
+    Context->MapKey(LoadAction, EKeys::F9);
+
+    DefaultMappingContext = Context;
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (16 actions, WASD+mouse)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -138,6 +274,11 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
         EnhancedInput->BindAction(SprintAction, ETriggerEvent::Completed, this, &AAstrawildPlayerCharacter::StopSprint);
         EnhancedInput->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AAstrawildPlayerCharacter::StopSprint);
     }
+    if (JumpAction)
+    {
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::HandleJump);
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+    }
     if (InteractAction)
     {
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::Interact);
@@ -146,10 +287,53 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::Attack);
     }
+    if (HeavyAttackAction)
+    {
+        EnhancedInput->BindAction(HeavyAttackAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::HeavyAttack);
+    }
+    if (DodgeAction)
+    {
+        EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::Dodge);
+    }
+    if (BlockAction)
+    {
+        EnhancedInput->BindAction(BlockAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::StartBlock);
+        EnhancedInput->BindAction(BlockAction, ETriggerEvent::Completed, this, &AAstrawildPlayerCharacter::StopBlock);
+        EnhancedInput->BindAction(BlockAction, ETriggerEvent::Canceled, this, &AAstrawildPlayerCharacter::StopBlock);
+    }
+    if (CommandAction)
+    {
+        EnhancedInput->BindAction(CommandAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::CyclePartyCommand);
+    }
+    if (FeedAction)
+    {
+        EnhancedInput->BindAction(FeedAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::FeedTarget);
+    }
+    if (BuildModeAction)
+    {
+        EnhancedInput->BindAction(BuildModeAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleBuildMode);
+    }
+    if (BuildRotateAction)
+    {
+        EnhancedInput->BindAction(BuildRotateAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::RotateBuilding);
+    }
+    if (SaveAction)
+    {
+        EnhancedInput->BindAction(SaveAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::QuickSave);
+    }
+    if (LoadAction)
+    {
+        EnhancedInput->BindAction(LoadAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::QuickLoad);
+    }
 }
 
 void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
 {
+    if (!IsAlive())
+    {
+        return;
+    }
+
     const FVector2D MovementVector = Value.Get<FVector2D>();
     if (!Controller || MovementVector.IsNearlyZero())
     {
@@ -174,51 +358,300 @@ void AAstrawildPlayerCharacter::Look(const FInputActionValue& Value)
 
 void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
 {
-    SetMovementSpeed(SprintSpeed);
+    if (!IsAlive())
+    {
+        return;
+    }
+
+    bSprinting = true;
+    RefreshMovementSpeed();
 }
 
 void AAstrawildPlayerCharacter::StopSprint(const FInputActionValue& Value)
 {
-    SetMovementSpeed(WalkSpeed);
+    bSprinting = false;
+    RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::RefreshMovementSpeed()
+{
+    float TargetSpeed = WalkSpeed;
+
+    if (bSprinting && IsAlive())
+    {
+        // Cannot sprint while exhausted (directive §11 stamina).
+        const bool bHasStamina = !SurvivalComponent || SurvivalComponent->GetStaminaFraction() > 0.05f;
+        if (bHasStamina)
+        {
+            TargetSpeed = SprintSpeed;
+        }
+    }
+
+    if (CombatComponent && CombatComponent->IsBlocking())
+    {
+        TargetSpeed *= CombatComponent->BlockSpeedMultiplier;
+    }
+
+    SetMovementSpeed(TargetSpeed);
+}
+
+void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
+{
+    if (IsAlive())
+    {
+        Jump();
+    }
 }
 
 void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
 {
-    AActor* InteractableActor = FindInteractableActor();
-    if (!IsValid(InteractableActor) || !InteractableActor->GetClass()->ImplementsInterface(UAstrawildInteractable::StaticClass()))
+    if (!IsAlive())
     {
         return;
     }
 
-    IAstrawildInteractable::Execute_Interact(InteractableActor, this);
+    AActor* InteractableActor = FindInteractableActor();
+
+    // Standard interactables (nodes, stations, rest points, NPCs).
+    if (IsValid(InteractableActor) && InteractableActor->GetClass()->ImplementsInterface(UAstrawildInteractable::StaticClass()))
+    {
+        IAstrawildInteractable::Execute_Interact(InteractableActor, this);
+        return;
+    }
+
+    // Wild Echo in reach -> capture attempt (directive §8).
+    if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(InteractableActor))
+    {
+        if (CaptureComponent && !Echo->bCaptured)
+        {
+            if (CaptureComponent->TryCapture(Echo))
+            {
+                // Join the roster + party (directive §4/§10).
+                if (UGameInstance* GameInstance = GetGameInstance())
+                {
+                    if (UAstrawildEchoRosterSubsystem* Roster = GameInstance->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+                    {
+                        Roster->AddToRoster(Echo);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void AAstrawildPlayerCharacter::Attack(const FInputActionValue& Value)
 {
-    const UWorld* World = GetWorld();
-    if (!World || (World->GetTimeSeconds() - LastAttackTimeSeconds) < AttackCooldownSeconds || !FollowCamera)
+    if (!IsAlive() || !CombatComponent)
     {
         return;
     }
 
-    LastAttackTimeSeconds = World->GetTimeSeconds();
-    const FVector Start = FollowCamera->GetComponentLocation();
-    const FVector End = Start + FollowCamera->GetForwardVector() * AttackDistance;
-    FHitResult HitResult;
-    FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDPlayerAttack), false, this);
-    if (!World->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams))
+    // While in build placement mode, the primary button confirms placement instead.
+    if (BuildingComponent && BuildingComponent->IsPlacing())
+    {
+        BuildingComponent->ConfirmPlacement();
+        return;
+    }
+
+    CombatComponent->RequestLightAttack();
+}
+
+void AAstrawildPlayerCharacter::HeavyAttack(const FInputActionValue& Value)
+{
+    if (IsAlive() && CombatComponent)
+    {
+        CombatComponent->RequestHeavyAttack();
+    }
+}
+
+void AAstrawildPlayerCharacter::Dodge(const FInputActionValue& Value)
+{
+    if (!IsAlive() || !CombatComponent)
     {
         return;
     }
 
-    if (AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(HitResult.GetActor()))
+    // Dodge along the current movement input direction (or forward).
+    FVector DodgeDirection = GetLastMovementInputVector().GetSafeNormal2D();
+    if (DodgeDirection.IsNearlyZero())
     {
-        DamageTarget->ApplyDamage(AttackDamage);
+        DodgeDirection = GetActorForwardVector().GetSafeNormal2D();
     }
-    else if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(HitResult.GetActor()))
+    CombatComponent->RequestDodge(DodgeDirection);
+}
+
+void AAstrawildPlayerCharacter::StartBlock(const FInputActionValue& Value)
+{
+    if (IsAlive() && CombatComponent)
     {
-        Echo->ApplyDamage(AttackDamage);
+        CombatComponent->RequestSetBlocking(true);
     }
+}
+
+void AAstrawildPlayerCharacter::StopBlock(const FInputActionValue& Value)
+{
+    if (CombatComponent)
+    {
+        CombatComponent->RequestSetBlocking(false);
+    }
+}
+
+void AAstrawildPlayerCharacter::CyclePartyCommand(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    // Follow -> Attack -> Defend -> Stay -> Work -> Follow ...
+    switch (CurrentPartyCommand)
+    {
+    case EAstrawildEchoCommand::Follow: CurrentPartyCommand = EAstrawildEchoCommand::Attack; break;
+    case EAstrawildEchoCommand::Attack: CurrentPartyCommand = EAstrawildEchoCommand::Defend; break;
+    case EAstrawildEchoCommand::Defend: CurrentPartyCommand = EAstrawildEchoCommand::Stay; break;
+    case EAstrawildEchoCommand::Stay: CurrentPartyCommand = EAstrawildEchoCommand::Work; break;
+    default: CurrentPartyCommand = EAstrawildEchoCommand::Follow; break;
+    }
+
+    // Broadcast the command to every owned party Echo (directive §10).
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    const FName OwnerId = GetFName();
+    TArray<AActor*> Echoes;
+    UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+        if (Echo && Echo->bCaptured && Echo->OwnerPlayerId == OwnerId)
+        {
+            Echo->IssueCommand(CurrentPartyCommand);
+        }
+    }
+
+    UE_LOG(LogAstrawildAI, Log, TEXT("Party command -> %d"), static_cast<int32>(CurrentPartyCommand));
+}
+
+void AAstrawildPlayerCharacter::FeedTarget(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority || !InventoryComponent)
+    {
+        return;
+    }
+
+    AActor* Target = FindInteractableActor();
+    AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Target);
+    if (!Echo || Echo->IsDefeated() || !IsValid(Echo->EchoDefinition))
+    {
+        return;
+    }
+
+    // Preferred food first, then any consumable (directive §8).
+    for (const FName FoodId : Echo->EchoDefinition->PreferredFoodIds)
+    {
+        if (InventoryComponent->HasItem(FoodId, 1))
+        {
+            if (InventoryComponent->RemoveItem(FoodId, 1))
+            {
+                Echo->Feed(FoodId, 8.0f);
+                return;
+            }
+        }
+    }
+
+    // Fallback: any item with food value in the registry.
+    if (UAstrawildItemRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>())
+    {
+        for (const FAstrawildItemStack& Stack : InventoryComponent->GetItemStacks())
+        {
+            const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Stack.ItemId);
+            if (ItemDef && ItemDef->EchoFeedValue > 0.0f && InventoryComponent->RemoveItem(Stack.ItemId, 1))
+            {
+                Echo->Feed(Stack.ItemId, ItemDef->EchoFeedValue);
+                return;
+            }
+        }
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleBuildMode(const FInputActionValue& Value)
+{
+    if (IsAlive() && BuildingComponent)
+    {
+        BuildingComponent->TogglePlacementMode();
+    }
+}
+
+void AAstrawildPlayerCharacter::RotateBuilding(const FInputActionValue& Value)
+{
+    if (BuildingComponent)
+    {
+        BuildingComponent->RotatePreview(15.0f);
+    }
+}
+
+void AAstrawildPlayerCharacter::QuickSave(const FInputActionValue& Value)
+{
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+    {
+        SaveSubsystem->SaveWorld(GetWorld());
+    }
+}
+
+void AAstrawildPlayerCharacter::QuickLoad(const FInputActionValue& Value)
+{
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+    {
+        SaveSubsystem->LoadWorld(GetWorld());
+    }
+}
+
+void AAstrawildPlayerCharacter::OnPlayerDied()
+{
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Player died — awaiting respawn."));
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        DisableInput(PC);
+    }
+
+    // Ask the game mode for a respawn after a short delay (directive §11).
+    if (UWorld* World = GetWorld())
+    {
+        if (AAstrawildGameMode* GameMode = World->GetAuthGameMode<AAstrawildGameMode>())
+        {
+            GameMode->RequestPlayerRespawn(GetController(), 5.0f);
+        }
+    }
+}
+
+void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)
+{
+    SetActorTransform(SpawnTransform, false, nullptr, ETeleportType::TeleportPhysics);
+
+    if (SurvivalComponent)
+    {
+        SurvivalComponent->FullRestore();
+    }
+
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        EnableInput(PC);
+    }
+    RefreshMovementSpeed();
 }
 
 void AAstrawildPlayerCharacter::SetMovementSpeed(const float NewSpeed)
