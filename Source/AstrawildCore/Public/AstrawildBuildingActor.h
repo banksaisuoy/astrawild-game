@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AstrawildTypes.h"
+#include "AstrawildInteractable.h"
 #include "AstrawildBuildingActor.generated.h"
 
 class UAstrawildBuildingDefinition;
@@ -16,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildBuildingDamaged, class AAs
  * Power nodes register with the power subsystem automatically.
  */
 UCLASS(Blueprintable)
-class ASTRAWILDCORE_API AAstrawildBuildingActor : public AActor
+class ASTRAWILDCORE_API AAstrawildBuildingActor : public AActor, public IAstrawildInteractable
 {
     GENERATED_BODY()
 
@@ -58,6 +59,10 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
     bool IsDestroyed() const { return CurrentHealth <= 0.0f; }
+
+    /** IAstrawildInteractable (audit C-2): Research Desk spends points on the next tech. */
+    virtual void Interact_Implementation(AActor* InteractingActor) override;
+    virtual FText GetInteractionPrompt_Implementation() const override;
 
     FAstrawildBuildingSaveData ToSaveData() const;
     bool FromSaveData(const FAstrawildBuildingSaveData& Data);

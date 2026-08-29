@@ -96,13 +96,28 @@ void UAstrawildBuildingComponent::TogglePlacementMode()
     OnPlacementModeChanged.Broadcast(bPlacementMode);
 }
 
-void UAstrawildBuildingComponent::CycleBuildingDefinition()
+void UAstrawildBuildingComponent::CycleBuildingDefinition(const int32 Direction)
 {
     if (!bPlacementMode || CachedUnlockedIds.Num() <= 1)
     {
         return;
     }
-    CurrentDefinitionIndex = (CurrentDefinitionIndex + 1) % CachedUnlockedIds.Num();
+    // Audit C-6: signed direction (mouse wheel up/down) with wrap-around.
+    const int32 Count = CachedUnlockedIds.Num();
+    CurrentDefinitionIndex = ((CurrentDefinitionIndex % Count) + Count + (Direction >= 0 ? 1 : -1)) % Count;
+}
+
+FText UAstrawildBuildingComponent::GetCurrentDefinitionDisplayName() const
+{
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    const UAstrawildBuildingDefinition* Def = Registry ? Registry->FindBuilding(GetCurrentDefinitionId()) : nullptr;
+    return Def ? Def->DisplayName : FText::FromString(GetCurrentDefinitionId().ToString());
+}
+
+void UAstrawildBuildingComponent::GetPlacementPieceInfo(int32& OutPieceIndex, int32& OutPieceCount) const
+{
+    OutPieceCount = CachedUnlockedIds.Num();
+    OutPieceIndex = CachedUnlockedIds.IsValidIndex(CurrentDefinitionIndex) ? CurrentDefinitionIndex + 1 : 0;
 }
 
 void UAstrawildBuildingComponent::RotatePreview(const float Degrees)

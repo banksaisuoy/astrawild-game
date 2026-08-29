@@ -26,6 +26,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
     TSubclassOf<UAstrawildHudWidget> HudWidgetClass;
 
+    /**
+     * Audit C-2/C-7: transient HUD notification for gameplay feedback (research
+     * unlocks, work-site collection, capture results). No-op when no HUD exists.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void Notify(const FText& Message);
+
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
 

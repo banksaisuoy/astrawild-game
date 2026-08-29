@@ -73,6 +73,9 @@ public:
     TArray<UAstrawildRecipeDefinition*> GetAllRecipes() const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildTechnologyDefinition*> GetAllTechnologies() const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     TArray<UAstrawildEchoDefinition*> GetAllEchoDefinitions() const;
 
 private:

@@ -33,6 +33,7 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
+#include "NavigationInvokerComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
@@ -82,6 +83,11 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     CombatComponent = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
     BuildingComponent = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
 
+    // Audit C-3: broad navmesh generation around the player covers the camp, the
+    // arena interior and the dungeon approach in the zero-asset world.
+    NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
+    NavInvoker->SetRadii(12000.0f, 16000.0f);
+
     FAstrawildItemStack Wood;
     Wood.ItemId = TEXT("Item_Wood");
     Wood.Quantity = 20;
@@ -119,6 +125,21 @@ void AAstrawildPlayerCharacter::BeginPlay()
         SurvivalComponent->OnDied.AddDynamic(this, &AAstrawildPlayerCharacter::OnPlayerDied);
     }
 
+    // Input context binding also runs here for the initial spawn; PossessedBy covers
+    // respawned pawns (audit C-8 — RestartPlayer spawns the pawn before possession,
+    // so BeginPlay alone used to leave respawned pawns without an input mapping).
+    ApplyMappingContext();
+}
+
+void AAstrawildPlayerCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+    // Audit C-8: rebind input on every possession so respawned pawns keep control.
+    ApplyMappingContext();
+}
+
+void AAstrawildPlayerCharacter::ApplyMappingContext()
+{
     APlayerController* PlayerController = Cast<APlayerController>(GetController());
     if (!IsValid(PlayerController))
     {
@@ -139,9 +160,11 @@ void AAstrawildPlayerCharacter::BeginPlay()
 
     if (InputSubsystem && DefaultMappingContext)
     {
+        // Idempotent: remove first so repeated possession never stacks the context.
+        InputSubsystem->RemoveMappingContext(DefaultMappingContext);
         InputSubsystem->AddMappingContext(DefaultMappingContext, 0);
     }
-    else
+    else if (GetNetMode() != NM_DedicatedServer)
     {
         UE_LOG(LogAstrawild, Warning, TEXT("Player input mapping is not assigned on %s."), *GetName());
     }
@@ -194,6 +217,8 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     EquipBestAction = MakeRuntimeAction(TEXT("AWD_EquipBest"), static_cast<uint8>(EInputActionValueType::Boolean));
     SaveAction = MakeRuntimeAction(TEXT("AWD_Save"), static_cast<uint8>(EInputActionValueType::Boolean));
     LoadAction = MakeRuntimeAction(TEXT("AWD_Load"), static_cast<uint8>(EInputActionValueType::Boolean));
+    // Audit C-6: mouse-wheel piece cycling while in build mode.
+    BuildCycleAction = MakeRuntimeAction(TEXT("AWD_BuildCycle"), static_cast<uint8>(EInputActionValueType::Axis1D));
 
     RuntimeMappingContext = NewObject<UInputMappingContext>(this, TEXT("AWD_DefaultIMC"));
     UInputMappingContext* Context = RuntimeMappingContext;
@@ -244,13 +269,14 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(FeedAction, EKeys::R);
     Context->MapKey(BuildModeAction, EKeys::B);
     Context->MapKey(BuildRotateAction, EKeys::N);
+    Context->MapKey(BuildCycleAction, EKeys::MouseWheelAxis);
     Context->MapKey(ConsumeAction, EKeys::G);
     Context->MapKey(EquipBestAction, EKeys::X);
     Context->MapKey(SaveAction, EKeys::F5);
     Context->MapKey(LoadAction, EKeys::F9);
 
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (17 actions, WASD+mouse)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (18 actions, WASD+mouse+wheel)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -320,6 +346,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (BuildRotateAction)
     {
         EnhancedInput->BindAction(BuildRotateAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::RotateBuilding);
+    }
+    if (BuildCycleAction)
+    {
+        EnhancedInput->BindAction(BuildCycleAction, ETriggerEvent::Triggered, this, &AAstrawildPlayerCharacter::CycleBuildingPiece);
     }
     if (ConsumeAction)
     {
@@ -605,6 +635,22 @@ void AAstrawildPlayerCharacter::RotateBuilding(const FInputActionValue& Value)
     }
 }
 
+void AAstrawildPlayerCharacter::CycleBuildingPiece(const FInputActionValue& Value)
+{
+    // Audit C-6: mouse-wheel cycling through the unlocked building pieces while in
+    // placement mode (previously only one arbitrary piece was ever placeable).
+    if (!BuildingComponent || !BuildingComponent->IsPlacing())
+    {
+        return;
+    }
+
+    const float Axis = Value.Get<float>();
+    if (!FMath::IsNearlyZero(Axis))
+    {
+        BuildingComponent->CycleBuildingDefinition(Axis > 0.0f ? 1 : -1);
+    }
+}
+
 void AAstrawildPlayerCharacter::SmartConsume(const FInputActionValue& Value)
 {
     if (!IsAlive() || GetLocalRole() != ROLE_Authority || !InventoryComponent || !SurvivalComponent)
@@ -716,7 +762,8 @@ void AAstrawildPlayerCharacter::QuickLoad(const FInputActionValue& Value)
 
     if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
     {
-        SaveSubsystem->LoadWorld(GetWorld());
+        // Audit H-3: load the newest slot — the autosave was previously unreachable.
+        SaveSubsystem->LoadLatest(GetWorld());
     }
 }
 

@@ -15,6 +15,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Protect, "State.Creature.Pro
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Follow, "State.Creature.Follow");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Work, "State.Creature.Work");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_ReturnHome, "State.Creature.ReturnHome");
+// Audit M-12: previously missing states.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Injured, "State.Creature.Injured");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Dead, "State.Creature.Dead");
 
 // --- State.Player.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Player_Dead, "State.Player.Dead");
@@ -41,6 +44,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Element_Ash, "Element.Ash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Element_Flora, "Element.Flora");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Element_Frost, "Element.Frost");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Element_Pulse, "Element.Pulse");
+// Audit M-12: Ember was missing — Echo_Emberfang had no tag representation.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Element_Ember, "Element.Ember");
 
 // --- Damage.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Damage_Physical, "Damage.Physical");

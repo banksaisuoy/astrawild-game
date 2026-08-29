@@ -50,6 +50,14 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> WeatherText;
 
+    /** Audit C-2: research pool readout (top-center, under weather). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> ResearchText;
+
+    /** Audit C-6: build-mode readout (center, above the prompt). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> BuildText;
+
     UPROPERTY()
     TObjectPtr<UTextBlock> QuestText;
 

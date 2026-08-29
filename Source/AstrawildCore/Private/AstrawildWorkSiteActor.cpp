@@ -5,12 +5,17 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
+#include "AstrawildInventoryComponent.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildPowerSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -152,5 +157,106 @@ void AAstrawildWorkSiteActor::RemoveWorker(AAstrawildEchoCharacter* Echo)
     if (IsValid(Echo))
     {
         Echo->AssignedWorkSite = nullptr;
+    }
+}
+
+FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
+{
+    // Audit C-7: dynamic prompt — collect when output waits, assign otherwise.
+    if (StoredOutput > 0)
+    {
+        return FText::FromString(FString::Printf(TEXT("Collect %d x %s [E]"),
+            StoredOutput, *OutputItemId.ToString()));
+    }
+    if (!Workers.IsEmpty())
+    {
+        return FText::FromString(FString::Printf(TEXT("%s — working (%s) [E]"),
+            *UEnum::GetDisplayValueAsText(WorkType).ToString(), *OutputItemId.ToString()));
+    }
+    return FText::FromString(FString::Printf(TEXT("Assign idle Echo to %s [E]"),
+        *UEnum::GetDisplayValueAsText(WorkType).ToString()));
+}
+
+void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
+{
+    // Audit C-7: the automation loop entry point — collect output, or assign the nearest
+    // idle captured Echo owned by this player. Server-authoritative like every mutation.
+    AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(InteractingActor);
+    UWorld* World = GetWorld();
+    if (!Player || !World || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    auto Notify = [World](const FText& Message)
+    {
+        if (APlayerController* PC = World->GetFirstPlayerController())
+        {
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+            {
+                AstrawildPC->Notify(Message);
+            }
+        }
+    };
+
+    // 1) Collect accumulated output first.
+    if (StoredOutput > 0)
+    {
+        const int32 Collected = CollectOutput();
+        if (Collected > 0 && Player->InventoryComponent)
+        {
+            if (Player->InventoryComponent->AddItem(OutputItemId, Collected))
+            {
+                if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+                {
+                    EventBus->PublishEvent(TAG_Astrawild_Event_ItemCollected, Player, OutputItemId, Collected, GetActorLocation());
+                }
+                Notify(FText::FromString(FString::Printf(TEXT("Collected %d x %s"),
+                    Collected, *OutputItemId.ToString())));
+            }
+            else
+            {
+                // Weight gate refused — keep the output stored instead of destroying it.
+                StoredOutput = Collected;
+                Notify(FText::FromString(TEXT("Too heavy to collect — lighten your pack first.")));
+            }
+        }
+        return;
+    }
+
+    // 2) Assign the nearest idle captured Echo of this player.
+    const FName OwnerId = Player->GetFName();
+    AAstrawildEchoCharacter* Best = nullptr;
+    float BestDistance = 4000.0f;
+    for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+    {
+        AAstrawildEchoCharacter* Echo = *It;
+        if (!Echo || !Echo->bCaptured || Echo->IsDefeated() || Echo->AssignedWorkSite.IsValid())
+        {
+            continue;
+        }
+        if (!OwnerId.IsNone() && Echo->OwnerPlayerId != OwnerId)
+        {
+            continue;
+        }
+        const float Distance = FVector::Dist(GetActorLocation(), Echo->GetActorLocation());
+        if (Distance < BestDistance)
+        {
+            BestDistance = Distance;
+            Best = Echo;
+        }
+    }
+
+    if (Best)
+    {
+        if (AssignWorker(Best))
+        {
+            Notify(FText::FromString(FString::Printf(TEXT("%s assigned to %s."),
+                *Best->GetName(), *UEnum::GetDisplayValueAsText(WorkType).ToString())));
+        }
+    }
+    else
+    {
+        Notify(FText::FromString(TEXT("No idle Echo nearby — capture one and command it to Work (C).")));
     }
 }

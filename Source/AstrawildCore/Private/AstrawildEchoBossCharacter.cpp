@@ -1,5 +1,6 @@
 #include "AstrawildEchoBossCharacter.h"
 
+#include "AstrawildCombatComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -215,11 +216,17 @@ void AAstrawildEchoBossCharacter::ExecuteAttack(const float DeltaTime)
         LastAttackTime = World->GetTimeSeconds();
 
         // Telegraphed hit: the swing lands after the cooldown gate (timing tuning in-engine).
+        // Audit C-5: routed through the player's combat component so dodge i-frames and
+        // block mitigation apply (consistent with Echo attacks — previously bypassed).
         if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
         {
-            Survival->ApplyDamage(GetAttackDamage());
+            const float RawDamage = GetAttackDamage();
+            const float Mitigated = Player->CombatComponent
+                ? Player->CombatComponent->GetMitigatedIncomingDamage(RawDamage)
+                : RawDamage;
+            Survival->ApplyDamage(Mitigated);
             UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss hit player for %.1f (phase %d%s)."),
-                GetAttackDamage(), CurrentPhase, bEnraged ? TEXT(" ENRAGED") : TEXT(""));
+                Mitigated, CurrentPhase, bEnraged ? TEXT(" ENRAGED") : TEXT(""));
         }
     }
 }

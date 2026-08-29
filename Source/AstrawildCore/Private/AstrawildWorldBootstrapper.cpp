@@ -17,6 +17,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
+#include "NavigationSystem.h"
 
 // Engine light classes for the runtime lighting rig.
 #include "Engine/DirectionalLight.h"
@@ -65,6 +66,14 @@ void AAstrawildWorldBootstrapper::BeginPlay()
     SpawnWildEchoes();
     SpawnHostiles();
     SpawnPointsOfInterest();
+
+    // Audit C-3: kick the navmesh build — tiles generate around navigation invokers
+    // (player + Echoes; see DefaultEngine.ini) so pathfinding works from frame one.
+    if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+    {
+        NavSys->Build();
+        UE_LOG(LogAstrawildWorld, Log, TEXT("Runtime navmesh build requested (invoker-driven generation)."));
+    }
 
     UE_LOG(LogAstrawildWorld, Log, TEXT("Dawn Fields bootstrapped: %d nodes, %d wild Echoes, %d hostiles."),
         ResourceNodeCount, WildEchoCount, HostileCount);

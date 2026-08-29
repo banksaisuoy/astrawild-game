@@ -14,6 +14,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -40,6 +41,13 @@ AAstrawildEchoCharacter::AAstrawildEchoCharacter()
         PlaceholderMesh->SetStaticMesh(SphereMesh.Object);
         PlaceholderMesh->SetWorldScale3D(FVector(0.8f));
     }
+
+    // Audit C-3: runtime navmesh generation anchor — without an authored navmesh in
+    // the zero-asset world, this invoker makes tiles generate around the creature so
+    // all MoveTo* pathfinding works (project setting: navigation generation around
+    // invokers only).
+    NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
+    NavInvoker->SetRadii(5000.0f, 7000.0f);
 }
 
 void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -164,6 +172,8 @@ void AAstrawildEchoCharacter::RollPersonalityFromDefinition()
 
 void AAstrawildEchoCharacter::SetAIState(const EAstrawildEchoAIState NewState)
 {
+    // Public entry (audit H-8): broadcast on every transition so UI/audio observers
+    // can react to AI state changes.
     if (CurrentAIState != NewState)
     {
         CurrentAIState = NewState;

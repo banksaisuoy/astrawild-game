@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AstrawildTypes.h"
+#include "AstrawildInteractable.h"
 #include "AstrawildWorkSiteActor.generated.h"
 
 class AAstrawildWorkSiteActor;
@@ -15,9 +16,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAstrawildWorkProduced, AAstrawil
  * A base work site (directive §18): Echoes assigned here produce items over time.
  * Rate scales with species work affinity, personality and needs. Sites powered by
  * the power grid (workstations) produce faster.
+ *
+ * Audit C-7: now interactable — E collects stored output; with the output empty it
+ * assigns the nearest idle captured Echo (the automation loop is reachable in play).
  */
 UCLASS(Blueprintable)
-class ASTRAWILDCORE_API AAstrawildWorkSiteActor : public AActor
+class ASTRAWILDCORE_API AAstrawildWorkSiteActor : public AActor, public IAstrawildInteractable
 {
     GENERATED_BODY()
 
@@ -66,6 +70,14 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
     void RemoveWorker(AAstrawildEchoCharacter* Echo);
+
+    /** IAstrawildInteractable (audit C-7): collect output / assign nearest idle Echo. */
+    virtual void Interact_Implementation(AActor* InteractingActor) override;
+    virtual FText GetInteractionPrompt_Implementation() const override;
+
+    /** True when at least one worker is currently assigned. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
+    bool HasAnyWorkers() const { return !Workers.IsEmpty(); }
 
 protected:
     virtual void BeginPlay() override;

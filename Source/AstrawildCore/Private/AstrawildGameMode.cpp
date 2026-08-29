@@ -6,6 +6,7 @@
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
+#include "AstrawildResearchSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildWorldBootstrapper.h"
 #include "Engine/World.h"
@@ -42,6 +43,25 @@ void AAstrawildGameMode::BeginPlay()
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         Bootstrapper = World->SpawnActor<AAstrawildWorldBootstrapper>(
             AAstrawildWorldBootstrapper::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params);
+    }
+
+    // Audit C-2: free root technologies (e.g. BasicCrafting) are granted every session
+    // so crafting gates open from the start — previously NO legitimate unlock path existed.
+    if (World && World->GetGameInstance())
+    {
+        if (UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
+        {
+            Research->GrantStartingTechnologies();
+        }
+    }
+
+    // Audit H-3: optional "continue" path — load the newest save (auto vs manual) on boot.
+    if (bAutoLoadLatestOnBeginPlay && World && World->GetGameInstance())
+    {
+        if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+        {
+            SaveSubsystem->LoadLatest(World);
+        }
     }
 
     // Autosave cadence (directive §27).

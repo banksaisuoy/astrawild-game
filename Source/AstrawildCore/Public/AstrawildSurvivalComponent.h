@@ -84,6 +84,13 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
     void FullRestore();
 
+    /**
+     * Audit H-1: restore a saved vitals snapshot (server). Previously LoadWorld called
+     * FullRestore(), silently discarding the saved hunger/thirst/health every load.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void SetStatsForRestore(const FAstrawildSurvivalStats& InStats);
+
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
     void AddStatusEffect(const FAstrawildStatusEffect& Effect);
 

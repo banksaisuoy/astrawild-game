@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
@@ -59,6 +60,13 @@ void AAstrawildDungeonRoomActor::BuildRoomShell()
     }
 }
 
+void AAstrawildDungeonRoomActor::RefreshRoomShell()
+{
+    // Audit fix: the generator assigns Template AFTER SpawnActor (BeginPlay already ran
+    // with the default template), so the shell must be rebuilt once real extents are set.
+    BuildRoomShell();
+}
+
 void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDefinitionIds)
 {
     UWorld* World = GetWorld();
@@ -68,10 +76,27 @@ void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDef
         return;
     }
 
-    // Boss room spawns the boss definition once; other rooms cycle the pool.
-    const FName SpeciesId = Template.bIsBossRoom
-        ? (CreatureDefinitionIds.Num() > 0 ? CreatureDefinitionIds[0] : NAME_None)
-        : CreatureDefinitionIds[RoomIndex % CreatureDefinitionIds.Num()];
+    // Audit C-5: boss rooms spawn the phased boss character (previously a plain Echo
+    // spawned here and the whole 3-phase boss class was unreachable dead code).
+    if (Template.bIsBossRoom)
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        const FVector SpawnLocation = GetActorLocation() + FVector(0.0f, 0.0f, 120.0f);
+        AAstrawildEchoBossCharacter* Boss = World->SpawnActor<AAstrawildEchoBossCharacter>(
+            AAstrawildEchoBossCharacter::StaticClass(), SpawnLocation, FRotator::ZeroRotator, Params);
+        if (Boss)
+        {
+            BossCreature = Boss;
+            UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon boss room %d: phased boss spawned."), RoomIndex);
+        }
+        return;
+    }
+
+    // Combat/elite/puzzle rooms cycle the creature pool.
+    const FName SpeciesId = CreatureDefinitionIds.Num() > 0
+        ? CreatureDefinitionIds[RoomIndex % CreatureDefinitionIds.Num()]
+        : NAME_None;
 
     UAstrawildEchoDefinition* Definition = Registry->FindEcho(SpeciesId);
     if (!Definition)
@@ -115,14 +140,19 @@ void AAstrawildDungeonRoomActor::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (GetLocalRole() != ROLE_Authority || bCleared || EncounterCreatures.IsEmpty())
+    // Audit C-4: rooms with neither creatures nor a boss have nothing to check — the
+    // generator clears them at spawn time. The boss counts toward the clear condition.
+    if (GetLocalRole() != ROLE_Authority || bCleared || !HasEncounter())
     {
         return;
     }
 
-    // Room clears when every encounter creature is defeated (directive §23).
+    // Room clears when every encounter creature AND the boss (if any) are defeated
+    // (directive §23; audit C-4 — the entry-room early-out previously stalled the whole
+    // dungeon at RoomsCleared == N-1).
     EncounterCreatures.RemoveAll([](const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak) { return !Weak.IsValid(); });
-    if (IsEncounterDefeated())
+    const bool bBossDown = !BossCreature.IsValid() || (BossCreature.IsValid() && BossCreature->IsDefeated());
+    if (IsEncounterDefeated() && bBossDown)
     {
         MarkCleared();
     }

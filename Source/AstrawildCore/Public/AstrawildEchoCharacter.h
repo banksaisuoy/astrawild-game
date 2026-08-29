@@ -9,6 +9,7 @@ class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
 class AAstrawildWorkSiteActor;
 class UStaticMeshComponent;
+class UNavigationInvokerComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
@@ -182,6 +183,13 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     const FAstrawildEchoStats& GetCachedStats() const { return CachedStats; }
 
+    /**
+     * Public AI state setter (audit H-8): the AI controller routes every transition
+     * through here so OnAIStateChanged actually broadcasts for UI/audio consumers.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    void SetAIState(EAstrawildEchoAIState NewState);
+
     // --- Save/load v2 (schema v2, directive §27) ---
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
@@ -213,5 +221,12 @@ private:
     void RegisterWithEcosystem();
     void UnregisterFromEcosystem();
     class UAstrawildEcosystemSubsystem* GetEcosystem() const;
-    void SetAIState(EAstrawildEchoAIState NewState);
+
+    /**
+     * Navigation invoker (audit C-3): the zero-asset world has no authored navmesh —
+     * each Echo generates navmesh tiles around itself at runtime so pathfinding
+     * (MoveToLocation/MoveToActor) actually works.
+     */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Echo")
+    TObjectPtr<UNavigationInvokerComponent> NavInvoker;
 };

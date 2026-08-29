@@ -63,6 +63,10 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon", Replicated)
     bool bCleared = false;
 
+    /** Rebuild the placeholder shell from the current Template (generator assigns it after spawn). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Dungeon")
+    void RefreshRoomShell();
+
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -81,9 +85,17 @@ public:
 
 private:
     TArray<TWeakObjectPtr<class AAstrawildEchoCharacter>> EncounterCreatures;
+
+    /** Audit C-5: boss-room encounter — the phased boss character (never spawned before). */
+    TWeakObjectPtr<class AAstrawildEchoBossCharacter> BossCreature;
+
     float ClearCheckAccumulator = 0.0f;
 
     void BuildRoomShell();
     bool IsEncounterDefeated() const;
     void GrantClearReward();
+
+public:
+    /** Audit C-4: rooms with no encounter at all (e.g. Entry) clear instantly. */
+    bool HasEncounter() const { return !EncounterCreatures.IsEmpty() || BossCreature.IsValid(); }
 };

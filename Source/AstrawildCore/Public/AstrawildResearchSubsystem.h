@@ -48,6 +48,21 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Research")
     bool TryUnlockTech(FName TechId);
 
+    /**
+     * Audit C-2: auto-grant every cost-0 root technology so crafting gates open from
+     * session start (previously no legitimate path unlocked ANY tech — the tree was
+     * cosmetic and quests 4-6 were impossible without cheats).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Research")
+    void GrantStartingTechnologies();
+
+    /**
+     * Audit C-2: cheapest currently unlockable tech (ties broken by registry order).
+     * Returns NAME_None when nothing is unlockable; OutCost/OutName describe the pick.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Research")
+    FName GetNextUnlockableTechId(int32& OutCost, FText& OutDisplayName) const;
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Research")
     TArray<FName> GetUnlockedTechIds() const;
 

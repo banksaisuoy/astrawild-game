@@ -87,6 +87,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Save")
     bool LoadWorld(UWorld* World, const FString& SlotName = TEXT("ASTRAWILD_Main"), int32 UserIndex = 0);
 
+    /**
+     * Audit H-3: load the newest existing save — the autosave slot wins when it is more
+     * recent than the manual slot. Previously the autosave was written every 5 minutes but
+     * NO code path ever loaded it, breaking crash recovery entirely.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Save")
+    bool LoadLatest(UWorld* World, int32 UserIndex = 0);
+
     /** v1-compatible snapshot API kept for legacy callers. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Save")
     bool SaveSnapshot(const TArray<FAstrawildItemStack>& Inventory, const TArray<FAstrawildEchoInstanceSaveData>& EchoRoster, const TArray<FAstrawildRestPointSaveData>& RestPoints, const FGuid& ActiveRestPointId, const FString& SlotName = TEXT("ASTRAWILD_Main"), int32 UserIndex = 0);

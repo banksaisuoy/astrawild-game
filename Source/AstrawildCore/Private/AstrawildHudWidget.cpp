@@ -1,5 +1,6 @@
 #include "AstrawildHudWidget.h"
 
+#include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -9,6 +10,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildResearchSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
@@ -79,6 +81,15 @@ void UAstrawildHudWidget::BuildWidgetTree()
 
     WeatherText = MakeText(TEXT("WeatherText"), FLinearColor(0.75f, 0.85f, 0.95f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(WeatherText), FVector2D(0.5f, 0.055f), FVector2D(0.5f, 0.055f), FVector2D(-110.0f, 0.0f), FVector2D(220.0f, 20.0f));
+
+    // Audit C-2: research points readout — the player needs to see the pool they spend
+    // at the Research Desk (previously research state was invisible).
+    ResearchText = MakeText(TEXT("ResearchText"), FLinearColor(0.70f, 0.90f, 0.98f, 1.0f), 14);
+    AnchorSlot(RootCanvas->AddChildToCanvas(ResearchText), FVector2D(0.5f, 0.085f), FVector2D(0.5f, 0.085f), FVector2D(-110.0f, 0.0f), FVector2D(220.0f, 20.0f));
+
+    // Audit C-6: build-mode readout — current piece + piece index/total + controls.
+    BuildText = MakeText(TEXT("BuildText"), FLinearColor(0.90f, 0.88f, 0.60f, 1.0f), 15);
+    AnchorSlot(RootCanvas->AddChildToCanvas(BuildText), FVector2D(0.5f, 0.72f), FVector2D(0.5f, 0.72f), FVector2D(-260.0f, 0.0f), FVector2D(520.0f, 22.0f));
 
     // --- Top-left quest tracker (directive §25) ---
     QuestText = MakeText(TEXT("QuestText"), FLinearColor(0.98f, 0.90f, 0.60f, 1.0f), 14);
@@ -171,10 +182,48 @@ void UAstrawildHudWidget::RefreshState()
             }
             if (WeatherText)
             {
+                // Audit fix (M-4): show the REAL ambient temperature from the survival
+                // component instead of a hardcoded 20C.
+                const float TemperatureC = Pawn->SurvivalComponent
+                    ? Pawn->SurvivalComponent->GetStats().Temperature
+                    : 20.0f;
                 WeatherText->SetText(FText::FromString(FString::Printf(TEXT("%s  %.0fC"),
                     *UEnum::GetDisplayValueAsText(GameState->WeatherState).ToString(),
-                    20.0f)));
+                    TemperatureC)));
             }
+        }
+    }
+
+    // Audit C-2: research pool readout.
+    if (ResearchText)
+    {
+        if (const UWorld* World = GetWorld())
+        {
+            if (World->GetGameInstance())
+            {
+                if (const UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
+                {
+                    ResearchText->SetText(FText::FromString(FString::Printf(TEXT("Research: %d RP"),
+                        Research->GetResearchPoints())));
+                }
+            }
+        }
+    }
+
+    // Audit C-6: build-mode readout — piece name, index/total and the control hints.
+    if (BuildText)
+    {
+        if (Pawn->BuildingComponent && Pawn->BuildingComponent->IsPlacing())
+        {
+            int32 PieceIndex = 0;
+            int32 PieceCount = 0;
+            Pawn->BuildingComponent->GetPlacementPieceInfo(PieceIndex, PieceCount);
+            BuildText->SetText(FText::FromString(FString::Printf(TEXT("Build: %s [%d/%d]  wheel:cycle  N:rotate  LMB:place  B:exit"),
+                *Pawn->BuildingComponent->GetCurrentDefinitionDisplayName().ToString(), PieceIndex, PieceCount)));
+        }
+        else
+        {
+            BuildText->SetText(FText::GetEmpty());
         }
     }
 

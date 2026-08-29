@@ -104,6 +104,70 @@ TArray<FName> UAstrawildResearchSubsystem::GetUnlockedTechIds() const
     return UnlockedTechIds;
 }
 
+void UAstrawildResearchSubsystem::GrantStartingTechnologies()
+{
+    // Audit C-2: free root techs (cost 0, no prerequisites) unlock automatically so
+    // basic crafting works from a fresh session. Runs server-side from the game mode.
+    UAstrawildItemRegistrySubsystem* Registry = GetRegistryFromWorld();
+    if (!Registry)
+    {
+        return;
+    }
+
+    int32 Granted = 0;
+    for (const UAstrawildTechnologyDefinition* Tech : Registry->GetAllTechnologies())
+    {
+        if (!Tech || Tech->TechId.IsNone() || IsTechUnlocked(Tech->TechId))
+        {
+            continue;
+        }
+        if (Tech->ResearchCost <= 0 && Tech->PrerequisiteTechIds.IsEmpty())
+        {
+            // TryUnlockTech re-checks gates (points >= 0 passes) and publishes events.
+            if (TryUnlockTech(Tech->TechId))
+            {
+                ++Granted;
+            }
+        }
+    }
+
+    if (Granted > 0)
+    {
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Granted %d starting technologies (free root nodes)."), Granted);
+    }
+}
+
+FName UAstrawildResearchSubsystem::GetNextUnlockableTechId(int32& OutCost, FText& OutDisplayName) const
+{
+    OutCost = 0;
+    OutDisplayName = FText::GetEmpty();
+
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistryFromWorld();
+    if (!Registry)
+    {
+        return NAME_None;
+    }
+
+    FName BestId = NAME_None;
+    int32 BestCost = MAX_int32;
+    for (const UAstrawildTechnologyDefinition* Tech : Registry->GetAllTechnologies())
+    {
+        if (!Tech || !CanUnlockTech(Tech->TechId))
+        {
+            continue;
+        }
+        if (Tech->ResearchCost < BestCost)
+        {
+            BestCost = Tech->ResearchCost;
+            BestId = Tech->TechId;
+            OutDisplayName = Tech->DisplayName;
+        }
+    }
+
+    OutCost = (BestId != NAME_None) ? BestCost : 0;
+    return BestId;
+}
+
 void UAstrawildResearchSubsystem::ExportForSave(FAstrawildResearchSaveData& OutData) const
 {
     OutData.UnlockedTechIds = UnlockedTechIds;

@@ -3,6 +3,7 @@
 #include "AstrawildCore.h"
 #include "AstrawildGameState.h"
 #include "AstrawildLog.h"
+#include "AstrawildResearchSubsystem.h"
 #include "Engine/World.h"
 
 AAstrawildDungeonGeneratorActor::AAstrawildDungeonGeneratorActor()
@@ -117,6 +118,8 @@ void AAstrawildDungeonGeneratorActor::Generate()
         Room->Template = Template;
         Room->RoomIndex = i;
         Room->OnRoomCleared.AddDynamic(this, &AAstrawildDungeonGeneratorActor::HandleRoomCleared);
+        // Audit fix: BeginPlay ran with the default template — rebuild the shell with real extents.
+        Room->RefreshRoomShell();
         Rooms.Add(Room);
 
         // Boss room uses the boss id; other rooms cycle the pool (entry spawns nothing).
@@ -127,6 +130,13 @@ void AAstrawildDungeonGeneratorActor::Generate()
         else if (!Template.CreatureSpawnOffsets.IsEmpty())
         {
             Room->SpawnEncounter(CreaturePoolIds);
+        }
+
+        // Audit C-4: rooms with no encounter (the entry) clear immediately — previously
+        // they could never satisfy the clear check, so OnDungeonCompleted never fired.
+        if (!Room->HasEncounter())
+        {
+            Room->MarkCleared();
         }
     }
 
@@ -142,6 +152,18 @@ void AAstrawildDungeonGeneratorActor::HandleRoomCleared(AAstrawildDungeonRoomAct
     if (RoomsCleared >= Rooms.Num())
     {
         UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon completed — all %d rooms cleared."), Rooms.Num());
+
+        // Audit C-4: completion reward — research points for the shared pool so dungeon
+        // runs feed the technology loop (previously the completion event had no consumer).
+        UWorld* World = GetWorld();
+        if (World && World->GetGameInstance())
+        {
+            if (UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
+            {
+                Research->AddResearchPoints(DungeonCompletionResearchPoints);
+            }
+        }
+
         OnDungeonCompleted.Broadcast(this);
     }
 }

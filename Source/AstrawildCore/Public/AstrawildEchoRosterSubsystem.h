@@ -6,6 +6,7 @@
 #include "AstrawildEchoRosterSubsystem.generated.h"
 
 class AAstrawildEchoCharacter;
+class APlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildRosterChanged, int32, RosterSize);
 
@@ -47,6 +48,13 @@ public:
 
     void ExportForSave(TArray<FAstrawildEchoInstanceV2>& OutRoster) const;
     void ImportFromSave(const TArray<FAstrawildEchoInstanceV2>& InRoster);
+
+    /**
+     * Audit H-2: spawn the saved party (up to MaxPartySize) around the player's pawn.
+     * Server-side; returns the number of Echoes spawned.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    int32 SpawnPartyActors(APlayerController* Owner);
 
 private:
     TArray<FAstrawildEchoInstanceV2> Roster;

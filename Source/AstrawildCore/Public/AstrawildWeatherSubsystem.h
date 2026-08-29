@@ -67,7 +67,9 @@ protected:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 private:
-    static const FAstrawildWeatherProfile& GetProfile(EAstrawildWeatherState State);
+    /** Audit H-4: returns by value — the old const& signature bound FindRef's by-value
+     *  result to a dangling reference (undefined behaviour). */
+    static FAstrawildWeatherProfile GetProfile(EAstrawildWeatherState State);
 
     /** Absolute in-world minutes (day*1440 + minute) of the last transition decision. */
     int64 LastDecisionAbsoluteMinutes = -1;

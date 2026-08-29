@@ -39,3 +39,13 @@ void AAstrawildPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 }
+
+void AAstrawildPlayerController::Notify(const FText& Message)
+{
+    // Audit C-2/C-7: gameplay feedback path — HUD notification previously existed but
+    // had zero callers, so players never saw research/work/capture outcomes.
+    if (HudWidget)
+    {
+        HudWidget->PushNotification(Message);
+    }
+}

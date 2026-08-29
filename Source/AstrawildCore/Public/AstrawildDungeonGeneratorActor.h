@@ -46,6 +46,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FName BossDefinitionId = TEXT("Echo_Gloomfang");
 
+    /** Audit C-4: research points granted to the shared pool when the dungeon is completed. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", meta=(ClampMin="0"))
+    int32 DungeonCompletionResearchPoints = 10;
+
     virtual void BeginPlay() override;
 
     /** Build the room chain (server). Deterministic given the world seed. */

@@ -186,6 +186,31 @@ void UAstrawildSurvivalComponent::FullRestore()
     OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
 }
 
+void UAstrawildSurvivalComponent::SetStatsForRestore(const FAstrawildSurvivalStats& InStats)
+{
+    // Audit H-1: load-path vitals restore — clamp everything to safe ranges and keep
+    // MaxHealth/MaxStamina from the component so tunable changes survive save/load.
+    if (GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    Stats.Health = FMath::Clamp(InStats.Health, 0.0f, Stats.MaxHealth);
+    Stats.Stamina = FMath::Clamp(InStats.Stamina, 0.0f, Stats.MaxStamina);
+    Stats.Hunger = FMath::Clamp(InStats.Hunger, 0.0f, 100.0f);
+    Stats.Thirst = FMath::Clamp(InStats.Thirst, 0.0f, 100.0f);
+    Stats.Temperature = InStats.Temperature;
+    // A snapshot with zero health was saved mid-death — treat it as alive-at-minimum so
+    // loading never instant-kills the player.
+    Stats.bIsDead = false;
+    if (Stats.Health <= 0.0f)
+    {
+        Stats.Health = 1.0f;
+    }
+    StatusEffects.Reset();
+    OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+}
+
 void UAstrawildSurvivalComponent::AddStatusEffect(const FAstrawildStatusEffect& Effect)
 {
     if (GetOwnerRole() != ROLE_Authority || Effect.StatusId.IsNone() || Effect.RemainingSeconds <= 0.0f)

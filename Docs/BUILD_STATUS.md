@@ -3,12 +3,13 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30
-- Branch: `main` (latest commits: content wave 2 + UMG crafting hooks, then content wave 3 + docs sync)
-- Latest change: **CODE_DEFAULT wave 3** — equipment progression (weapon + shield slots, armory recipes,
-  equip-best on X), 2 camp NPCs (Warden Maren, Trader Tam), loot tables (dungeon boss + vendor starter),
-  equipment save persistence — plus a full docs sync (this round, Task 2-b)
-- Codebase: **86 C++ files (42 `.cpp` + 44 `.h`), 13,398 LOC** in `Source/AstrawildCore` (single module)
+- Last updated: 2026-08-30 (Production Audit + Batch 1 "Core Loop Unblocked")
+- Branch: `main` (latest: evidence-based production audit → Batch 1 loop-unblock fixes)
+- Latest change: **Production audit + First Implementation Batch** — 3 audit reports
+  (`ASTRAWILD_UE5_PRODUCTION_AUDIT.md`, `ASTRAWILD_IMPLEMENTATION_GAP_REPORT.md`,
+  `ASTRAWILD_ULTIMATE_GAP_ANALYSIS.md`) followed by dependency-ordered fixes for every
+  Critical gap that severed the vertical-slice loop (details below)
+- Codebase: **86 C++ files (42 `.cpp` + 44 `.h`), ~13.5k LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -21,14 +22,57 @@
 
 - Target: `ASTRAWILDEditor Win64 Development` — pending Antigravity (user machine)
 - Result: `NOT_RUN` (unchanged — sandbox has no UE5; honest status per Definition of Done)
-- Errors: Not measured; Unreal Editor unavailable in sandbox environments
+- Errors: **2 latent compile errors found by the audit and fixed in source this round** —
+  (1) `AstrawildCraftingStationActor.cpp:52` TPair-iteration over `TArray` (C-1);
+  (2) `MakeRuntimeAction` declared 3 required params while all 17 call sites pass 2 (C-1b).
+  Both await engine compile confirmation; more latent errors may surface.
 - Warnings: Not measured
 - Build duration: Not measured
 - Validation steps for the target machine: `Docs/ASTRAWILD_TEST_PLAN.md` §4
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — content wave 3: equipment progression, NPCs, loot tables + docs sync)
+## Changes in this round (2026-08-30 — Production Audit + Batch 1: Core Loop Unblocked)
+
+### Audit deliverables (evidence-based, line-cited)
+
+- `Docs/ASTRAWILD_UE5_PRODUCTION_AUDIT.md` — every Checklist V2 section audited with file:line evidence;
+  system classification KEEP/REFACTOR/ADD matrix; honest compile/runtime status
+- `Docs/ASTRAWILD_IMPLEMENTATION_GAP_REPORT.md` — 8 CRITICAL / 14 HIGH / 14 MEDIUM / 9 LOW gaps
+- `Docs/ASTRAWILD_ULTIMATE_GAP_ANALYSIS.md` — 12-category analysis vs Roadmap V3 with acceptance criteria
+
+### Batch 1 fixes (dependency-ordered; all server-authoritative, zero-asset compatible)
+
+| ID | Fix | Files |
+|---|---|---|
+| C-1 | Crafting station compile error (TPair → element iteration) | `AstrawildCraftingStationActor.cpp` |
+| C-1b | Latent compile error: `MakeRuntimeAction` missing param default | `AstrawildPlayerCharacter.h` |
+| C-2 | Research unlock path: free root techs auto-granted at session start + **Research Desk is now interactable** (E spends pooled RP on cheapest unlockable tech) + HUD research readout + `GetNextUnlockableTechId`/`GrantStartingTechnologies` APIs + registry `GetAllTechnologies` | `AstrawildResearchSubsystem`, `AstrawildGameMode`, `AstrawildBuildingActor` (now `IAstrawildInteractable`), `AstrawildItemRegistrySubsystem`, `AstrawildHudWidget` |
+| C-3 | **Runtime navmesh**: `UNavigationInvokerComponent` on player (120m/160m radii) + every Echo (50m/70m) + `bGenerateNavigationOnlyAroundNavigationInvokers=True` config + bootstrapper build kick — creature pathfinding now possible in the zero-asset world | `AstrawildPlayerCharacter`, `AstrawildEchoCharacter`, `Config/DefaultEngine.ini`, `AstrawildWorldBootstrapper` |
+| C-4 | Dungeon completion: empty rooms (entry) auto-clear; boss counts toward clear; completion grants +10 RP (first completion consumer) | `AstrawildDungeonGeneratorActor`, `AstrawildDungeonRoomActor` |
+| C-5 | **Phased boss finally spawns** in the boss room (was fully-coded dead code); boss damage now routes through player mitigation (dodge/block apply) | `AstrawildDungeonRoomActor`, `AstrawildEchoBossCharacter` |
+| C-6 | Build piece cycling: mouse-wheel action + HUD build readout (piece name, index/count, control hints); signed wrap-around cycling | `AstrawildPlayerCharacter`, `AstrawildBuildingComponent`, `AstrawildHudWidget` |
+| C-7 | Work sites interactable: **E collects stored output** (weight-gate safe, publishes ItemCollected) or **assigns nearest idle captured Echo**; dynamic prompts — the automation loop is reachable in play | `AstrawildWorkSiteActor` (now `IAstrawildInteractable`) |
+| C-8 | Respawn input death fixed: input context (re)bound on every `PossessedBy` (idempotent remove-then-add) | `AstrawildPlayerCharacter` |
+| H-1 | Saved vitals now restored on load (`SetStatsForRestore`, clamp-safe, never load-dead) instead of `FullRestore()` | `AstrawildSurvivalComponent`, `AstrawildSaveSubsystem` |
+| H-2 | Captured party **respawns around the player on load** (`SpawnPartyActors`); redundant double roster import removed | `AstrawildEchoRosterSubsystem`, `AstrawildSaveSubsystem` |
+| H-3 | `LoadLatest()` — F9/cheat/optional boot-continue now load the NEWEST slot (autosave was previously write-only) | `AstrawildSaveSubsystem`, `AstrawildPlayerCharacter`, `AstrawildCheatManager`, `AstrawildGameMode` (`bAutoLoadLatestOnBeginPlay`, default off) |
+| H-4 | Weather `GetProfile` dangling-reference UB → returns by value | `AstrawildWeatherSubsystem` |
+| H-5 | Building damage persists across load (health applied AFTER definition re-init) | `AstrawildBuildingActor` |
+| H-7 | Captured "Attack" command can no longer target the owner (owner exclusion in target acquisition) | `AstrawildEchoAIController` |
+| H-8 | `OnAIStateChanged` now actually broadcasts (public `SetAIState`, controller routes through it) | `AstrawildEchoCharacter`, `AstrawildEchoAIController` |
+| M-4 | HUD shows real ambient temperature (was hardcoded 20 °C) | `AstrawildHudWidget` |
+| M-12 | Missing native tags added: `Element.Ember`, `State.Creature.Injured`, `State.Creature.Dead` | `AstrawildGameplayTags` |
+| — | `PlayerController::Notify` wires gameplay feedback to the HUD notification line (research/work results) | `AstrawildPlayerController` |
+| — | Dungeon room shells rebuild with real template extents (BeginPlay ordering fix) | `AstrawildDungeonRoomActor` |
+
+**Vertical-slice loop after Batch 1 (pending engine compile):**
+Start → gather → craft (station path compiles) → build (any unlocked piece, wheel-cycled) →
+research (auto root tech + Research Desk E) → power (Tech_Electrical now reachable) →
+work (site interact) → dungeon (completes) → phased boss → save (F5) → quit → load (F9,
+newest slot, vitals + party + buildings restored) → continue. **No cheats required.**
+
+## Changes in the previous round (2026-08-30 — content wave 3: equipment progression, NPCs, loot tables + docs sync)
 
 ### Content expansion (CODE_DEFAULT wave 3)
 

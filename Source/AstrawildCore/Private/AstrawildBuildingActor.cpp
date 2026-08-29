@@ -4,10 +4,14 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildPowerSubsystem.h"
+#include "AstrawildResearchSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -147,6 +151,92 @@ void AAstrawildBuildingActor::SetSwitchedOn(const bool bOn)
     }
 }
 
+FText AAstrawildBuildingActor::GetInteractionPrompt_Implementation() const
+{
+    const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
+    if (!Def)
+    {
+        return FText::GetEmpty();
+    }
+
+    // Audit C-2: the Research Desk is the in-world research entry point.
+    if (Def->Category == EAstrawildBuildingCategory::Research)
+    {
+        if (UWorld* World = GetWorld())
+        {
+            if (World->GetGameInstance())
+            {
+                if (const UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
+                {
+                    int32 Cost = 0;
+                    FText DisplayName;
+                    if (Research->GetNextUnlockableTechId(Cost, DisplayName) != NAME_None)
+                    {
+                        return FText::FromString(FString::Printf(TEXT("Study: unlock %s (%d RP) [E]"),
+                            *DisplayName.ToString(), Cost));
+                    }
+                    return FText::FromString(FString::Printf(TEXT("Research Desk — %d RP (nothing unlockable) [E]"),
+                        Research->GetResearchPoints()));
+                }
+            }
+        }
+    }
+
+    return FText::FromString(FString::Printf(TEXT("%s"), *Def->DisplayName.ToString()));
+}
+
+void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
+{
+    // Audit C-2: Research Desk interaction — spend pooled research points on the
+    // cheapest unlockable technology. Authority-gated like every other mutation.
+    const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
+    UWorld* World = GetWorld();
+    if (!Def || Def->Category != EAstrawildBuildingCategory::Research || !World || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    UAstrawildResearchSubsystem* Research = World->GetGameInstance()
+        ? World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>()
+        : nullptr;
+    if (!Research)
+    {
+        return;
+    }
+
+    auto Notify = [World](const FText& Message)
+    {
+        if (APlayerController* PC = World->GetFirstPlayerController())
+        {
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+            {
+                AstrawildPC->Notify(Message);
+            }
+        }
+    };
+
+    int32 Cost = 0;
+    FText DisplayName;
+    const FName NextTech = Research->GetNextUnlockableTechId(Cost, DisplayName);
+    if (NextTech.IsNone())
+    {
+        Notify(FText::FromString(FString::Printf(TEXT("Research: %d RP — observe Echoes and complete quests to earn more."),
+            Research->GetResearchPoints())));
+        return;
+    }
+
+    if (Research->TryUnlockTech(NextTech))
+    {
+        Notify(FText::FromString(FString::Printf(TEXT("Research unlocked: %s (-%d RP)"),
+            *DisplayName.ToString(), Cost)));
+    }
+    else
+    {
+        Notify(FText::FromString(FString::Printf(TEXT("Research needs %d RP (have %d)."),
+            Cost, Research->GetResearchPoints())));
+    }
+}
+
 float AAstrawildBuildingActor::GetHealthFraction() const
 {
     return FMath::Clamp(CurrentHealth / FMath::Max(1.0f, MaxHealth), 0.0f, 1.0f);
@@ -175,7 +265,6 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
     BuildingId = Data.BuildingId;
     DefinitionId = Data.DefinitionId;
     SetActorTransform(Data.Transform);
-    CurrentHealth = Data.CurrentHealth;
     StoredCharge = Data.StoredCharge;
     bIsSwitchedOn = Data.bIsSwitchedOn;
     OwnerPlayerId = Data.OwnerPlayerId;
@@ -185,6 +274,13 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
     {
         MaxHealth = FMath::Max(1.0f, Def->MaxHealth);
         InitializeFromDefinition(Def, OwnerPlayerId);
+        // Audit H-5: apply the saved health AFTER initialization — InitializeFromDefinition
+        // resets CurrentHealth to MaxHealth, which used to heal every damaged building on load.
+        CurrentHealth = FMath::Clamp(Data.CurrentHealth, 1.0f, MaxHealth);
+    }
+    else
+    {
+        CurrentHealth = FMath::Max(1.0f, Data.CurrentHealth);
     }
     return true;
 }

@@ -1,7 +1,10 @@
 #include "AstrawildEchoRosterSubsystem.h"
 
 #include "AstrawildEchoCharacter.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 
 bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo)
 {
@@ -90,4 +93,70 @@ void UAstrawildEchoRosterSubsystem::ImportFromSave(const TArray<FAstrawildEchoIn
     Roster = InRoster;
     SpawnedParty.Reset();
     OnRosterChanged.Broadcast(Roster.Num());
+}
+
+int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
+{
+    // Audit H-2: load-path party respawn — previously LoadWorld only destroyed the live
+    // party and re-imported roster DATA, so captured Echoes vanished from the world on load.
+    UWorld* World = Owner ? Owner->GetWorld() : nullptr;
+    if (!World || World->GetNetMode() == NM_Client)
+    {
+        return 0;
+    }
+
+    UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+    if (!Registry)
+    {
+        return 0;
+    }
+
+    const FVector Origin = Owner->GetPawn() ? Owner->GetPawn()->GetActorLocation() : FVector::ZeroVector;
+    int32 Spawned = 0;
+    SpawnedParty.Reset();
+
+    for (const FAstrawildEchoInstanceV2& Entry : Roster)
+    {
+        if (static_cast<int32>(SpawnedParty.Num()) >= MaxPartySize)
+        {
+            break;
+        }
+        if (!Entry.bInParty || !Entry.InstanceId.IsValid() || Entry.DefinitionId.IsNone())
+        {
+            continue;
+        }
+
+        UAstrawildEchoDefinition* Definition = Registry->FindEcho(Entry.DefinitionId);
+        if (!Definition)
+        {
+            UE_LOG(LogAstrawildAI, Warning, TEXT("Party respawn: species %s missing from registry."), *Entry.DefinitionId.ToString());
+            continue;
+        }
+
+        // Ring placement around the player.
+        const float Angle = (PI * 2.0f * Spawned) / FMath::Max(1, MaxPartySize);
+        const FVector Location = Origin + FVector(FMath::Cos(Angle) * 250.0f, FMath::Sin(Angle) * 250.0f, 150.0f);
+
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        AAstrawildEchoCharacter* Echo = World->SpawnActor<AAstrawildEchoCharacter>(
+            AAstrawildEchoCharacter::StaticClass(), Location, FRotator::ZeroRotator, Params);
+        if (Echo && Echo->InitializeFromDefinition(Definition, Entry.InstanceId) && Echo->FromSaveDataV2(Entry))
+        {
+            Echo->OwnerPlayerId = Owner->GetFName();
+            Echo->IssueCommand(EAstrawildEchoCommand::Follow);
+            SpawnedParty.Add(Echo);
+            ++Spawned;
+        }
+        else if (Echo)
+        {
+            Echo->Destroy();
+        }
+    }
+
+    if (Spawned > 0)
+    {
+        UE_LOG(LogAstrawildAI, Log, TEXT("Party respawned from roster: %d Echoes."), Spawned);
+    }
+    return Spawned;
 }

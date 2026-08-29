@@ -72,7 +72,7 @@ void UAstrawildWeatherSubsystem::Tick(const float DeltaTime)
     }
 }
 
-const FAstrawildWeatherProfile& UAstrawildWeatherSubsystem::GetProfile(const EAstrawildWeatherState State)
+FAstrawildWeatherProfile UAstrawildWeatherSubsystem::GetProfile(const EAstrawildWeatherState State)
 {
     static const TMap<EAstrawildWeatherState, FAstrawildWeatherProfile> Profiles = {
         { EAstrawildWeatherState::Clear,     MakeProfile( 2.0f, 3.0f, 1.00f) },

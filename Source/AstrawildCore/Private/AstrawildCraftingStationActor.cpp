@@ -49,9 +49,10 @@ void AAstrawildCraftingStationActor::Interact_Implementation(AActor* Interacting
     }
 
     // Craft the first station recipe whose gates pass (vertical-slice behavior).
-    for (const TPair<FName, TObjectPtr<UAstrawildRecipeDefinition>>& Pair : Registry->GetAllRecipes())
+    // NOTE: GetAllRecipes() returns TArray<UAstrawildRecipeDefinition*> (audit C-1 —
+    // the previous TPair iteration could not compile).
+    for (const UAstrawildRecipeDefinition* Recipe : Registry->GetAllRecipes())
     {
-        const UAstrawildRecipeDefinition* Recipe = Pair.Value;
         if (!Recipe || Recipe->RequiredStationId != StationId)
         {
             continue;

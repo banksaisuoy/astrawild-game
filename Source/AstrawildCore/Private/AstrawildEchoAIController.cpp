@@ -256,9 +256,9 @@ void AAstrawildEchoAIController::TransitionTo(const EAstrawildEchoAIState NewSta
     if (Echo->CurrentAIState != NewState)
     {
         UE_LOG(LogAstrawildAI, Verbose, TEXT("Echo %s AI: %d -> %d."), *Echo->GetName(), static_cast<int32>(Echo->CurrentAIState), static_cast<int32>(NewState));
-        // CurrentAIState is replicated on the Echo; route through the setter for the delegate.
-        // (SetAIState is private on the character; the controller writes via friend-free API below.)
-        Echo->CurrentAIState = NewState;
+        // Route through the public setter (audit H-8) so OnAIStateChanged broadcasts
+        // for UI/audio consumers instead of silently writing the replicated enum.
+        Echo->SetAIState(NewState);
     }
 }
 
@@ -357,8 +357,10 @@ void AAstrawildEchoAIController::ExecuteCombat(const float DeltaThinkSeconds)
     AActor* Target = TargetActor.Get();
     if (!Target)
     {
-        // Acquire nearest player as combat target.
-        Target = FindNearestPlayer(4000.0f);
+        // Acquire nearest player as combat target — never the owner for captured
+        // Echoes (audit H-7: commanded Echoes used to hunt their own player).
+        const FName ExcludeId = Echo->bCaptured ? Echo->OwnerPlayerId : NAME_None;
+        Target = FindNearestPlayer(4000.0f, ExcludeId);
         TargetActor = Target;
     }
 
@@ -606,7 +608,7 @@ bool AAstrawildEchoAIController::TryAttackTarget(AActor* Target, const float Del
     return false;
 }
 
-AActor* AAstrawildEchoAIController::FindNearestPlayer(const float MaxDistance) const
+AActor* AAstrawildEchoAIController::FindNearestPlayer(const float MaxDistance, const FName ExcludePlayerId) const
 {
     const AAstrawildEchoCharacter* Echo = GetEcho();
     const UWorld* World = GetWorld();
@@ -621,6 +623,11 @@ AActor* AAstrawildEchoAIController::FindNearestPlayer(const float MaxDistance) c
     {
         const APlayerController* PC = It->Get();
         if (!PC || !PC->GetPawn())
+        {
+            continue;
+        }
+        // Owner exclusion (audit H-7) — captured Echoes never target their own player.
+        if (!ExcludePlayerId.IsNone() && PC->GetPawn()->GetFName() == ExcludePlayerId)
         {
             continue;
         }

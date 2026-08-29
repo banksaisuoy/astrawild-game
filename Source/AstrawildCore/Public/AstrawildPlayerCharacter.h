@@ -16,6 +16,7 @@ class UAstrawildSurvivalComponent;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
+class UNavigationInvokerComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
 struct FInputActionValue;
@@ -40,6 +41,7 @@ public:
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void PossessedBy(AController* NewController) override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Camera")
@@ -68,6 +70,13 @@ public:
     /** Base building placement (directive §16). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
     TObjectPtr<UAstrawildBuildingComponent> BuildingComponent;
+
+    /**
+     * Navigation invoker (audit C-3): generates navmesh tiles around the player in
+     * the zero-asset world so creature pathfinding works everywhere the player goes.
+     */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Systems")
+    TObjectPtr<UNavigationInvokerComponent> NavInvoker;
 
     // --- Input assets (optional; runtime defaults are built when unset) ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
@@ -123,6 +132,10 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> BuildRotateAction;
+
+    /** Audit C-6: cycle building pieces with the mouse wheel while placing. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> BuildCycleAction;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> SaveAction;
@@ -187,6 +200,7 @@ protected:
     void FeedTarget(const FInputActionValue& Value);
     void ToggleBuildMode(const FInputActionValue& Value);
     void RotateBuilding(const FInputActionValue& Value);
+    void CycleBuildingPiece(const FInputActionValue& Value);
     void SmartConsume(const FInputActionValue& Value);
 
     /** Wave 3: equip the strongest owned weapon + shield. */
@@ -198,7 +212,12 @@ protected:
 
     /** Builds a complete default Enhanced Input setup in code (zero-asset playability). */
     void BuildRuntimeInputDefaults();
-    class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY);
+    // Audit C-1b (latent compile error): every existing call passes 2 arguments while the
+    // declaration demanded 3 — default bNegateY so the file compiles (value is unused).
+    class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY = false);
+
+    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay and every PossessedBy (audit C-8). */
+    void ApplyMappingContext();
 
     UFUNCTION()
     void OnPlayerDied();

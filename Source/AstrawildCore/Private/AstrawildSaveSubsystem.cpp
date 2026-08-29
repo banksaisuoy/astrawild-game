@@ -212,7 +212,9 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
             Player->SetActorTransform(SaveGame->PlayerTransform, false, nullptr, ETeleportType::TeleportPhysics);
             if (Player->SurvivalComponent)
             {
-                Player->SurvivalComponent->FullRestore();
+                // Audit H-1: restore the saved vitals snapshot instead of FullRestore(),
+                // which silently reset hunger/thirst/health on every load.
+                Player->SurvivalComponent->SetStatsForRestore(SaveGame->PlayerSurvival);
             }
             if (Player->InventoryComponent)
             {
@@ -228,12 +230,14 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                 }
             }
 
-            // Respawn party Echoes around the player (directive §10 party of 3).
+            // Audit H-2: respawn the captured party AROUND the player — the roster was
+            // already imported once above; the old second ImportFromSave was redundant and
+            // this block previously only despawned the party without ever recreating it.
             if (World->GetGameInstance())
             {
                 if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
                 {
-                    // Despawn current party first.
+                    // Despawn the pre-load party first (fresh actors get spawned below).
                     for (AAstrawildEchoCharacter* Echo : Roster->GetSpawnedParty())
                     {
                         if (IsValid(Echo))
@@ -241,7 +245,7 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                             Echo->Destroy();
                         }
                     }
-                    Roster->ImportFromSave(SaveGame->EchoRosterV2);
+                    Roster->SpawnPartyActors(PC);
                 }
             }
         }
@@ -281,6 +285,47 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     return true;
 }
 
+bool UAstrawildSaveSubsystem::LoadLatest(UWorld* World, const int32 UserIndex)
+{
+    // Audit H-3: pick the newest slot between the manual save and the autosave. Reads the
+    // SavedAtUtc header only (cheap) — corrupt slots fall back to the alternative.
+    static const TCHAR* MainSlot = TEXT("ASTRAWILD_Main");
+    static const TCHAR* AutoSlot = TEXT("ASTRAWILD_Auto");
+
+    const bool bMainExists = DoesSaveExist(MainSlot, UserIndex);
+    const bool bAutoExists = DoesSaveExist(AutoSlot, UserIndex);
+
+    if (!bMainExists && !bAutoExists)
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("LoadLatest: no save slots exist."));
+        return false;
+    }
+    if (!bAutoExists)
+    {
+        return LoadWorld(World, MainSlot, UserIndex);
+    }
+    if (!bMainExists)
+    {
+        return LoadWorld(World, AutoSlot, UserIndex);
+    }
+
+    FDateTime MainTime(0);
+    FDateTime AutoTime(0);
+    if (const UAstrawildSaveGame* MainSave = Cast<UAstrawildSaveGame>(UGameplayStatics::LoadGameFromSlot(MainSlot, UserIndex)))
+    {
+        MainTime = MainSave->SavedAtUtc;
+    }
+    if (const UAstrawildSaveGame* AutoSave = Cast<UAstrawildSaveGame>(UGameplayStatics::LoadGameFromSlot(AutoSlot, UserIndex)))
+    {
+        AutoTime = AutoSave->SavedAtUtc;
+    }
+
+    const FString& Chosen = (AutoTime > MainTime) ? FString(AutoSlot) : FString(MainSlot);
+    UE_LOG(LogAstrawildSave, Log, TEXT("LoadLatest: choosing slot %s (auto %s vs main %s)."),
+        *Chosen, *AutoTime.ToString(), *MainTime.ToString());
+    return LoadWorld(World, Chosen, UserIndex);
+}
+
 bool UAstrawildSaveSubsystem::SaveSnapshot(const TArray<FAstrawildItemStack>& Inventory, const TArray<FAstrawildEchoInstanceSaveData>& EchoRoster, const TArray<FAstrawildRestPointSaveData>& RestPoints, const FGuid& ActiveRestPointId, const FString& SlotName, const int32 UserIndex)
 {
     if (SlotName.IsEmpty())
@@ -296,7 +341,10 @@ bool UAstrawildSaveSubsystem::SaveSnapshot(const TArray<FAstrawildItemStack>& In
         return false;
     }
 
-    SaveGame->SaveSchemaVersion = CurrentSchemaVersion;
+    // Audit fix: this legacy API fills ONLY v1 fields — stamp schema 1 so a later
+    // LoadWorld migrates the roster instead of reading an empty EchoRosterV2 while
+    // believing it is already schema v2 (which silently stranded legacy saves).
+    SaveGame->SaveSchemaVersion = 1;
     SaveGame->SavedAtUtc = FDateTime::UtcNow();
     SaveGame->IntegrityChecksum = ComputeChecksum(SaveGame->SaveSchemaVersion, SaveGame->SavedAtUtc);
     SaveGame->PlayerInventory = Inventory;

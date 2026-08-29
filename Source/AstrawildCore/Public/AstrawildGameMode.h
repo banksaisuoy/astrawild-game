@@ -25,6 +25,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Rules", meta=(ClampMin="0.0"))
     float AutosaveIntervalSeconds = 300.0f;
 
+    /**
+     * Audit H-3: when true, the session auto-loads the latest save (autosave wins over
+     * manual if newer) at BeginPlay — the "continue game" path. Default OFF so PIE
+     * iteration starts fresh; enable in a main-menu GameMode subclass later.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Rules")
+    bool bAutoLoadLatestOnBeginPlay = false;
+
     /** Queue a respawn for a controller (server). */
     void RequestPlayerRespawn(AController* Controller, float DelaySeconds);
 

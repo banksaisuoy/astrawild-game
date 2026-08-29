@@ -46,9 +46,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
     void TogglePlacementMode();
 
-    /** Cycle to the next unlocked building definition. */
+    /** Cycle to the next/previous unlocked building definition (audit C-6). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
-    void CycleBuildingDefinition();
+    void CycleBuildingDefinition(int32 Direction = 1);
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
     void RotatePreview(float Degrees);
@@ -68,6 +68,14 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
     bool IsPlacementValid() const { return bPlacementValid; }
+
+    /** Audit C-6: HUD placement info — current piece display name + index/count. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
+    FText GetCurrentDefinitionDisplayName() const;
+
+    /** Audit C-6: 1-based piece index / unlocked count for the HUD readout. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
+    void GetPlacementPieceInfo(int32& OutPieceIndex, int32& OutPieceCount) const;
 
 protected:
     virtual void BeginPlay() override;

@@ -95,7 +95,7 @@ private:
     void ExecuteSocialize();
 
     bool TryAttackTarget(AActor* Target, float DeltaThinkSeconds);
-    AActor* FindNearestPlayer(float MaxDistance) const;
+    AActor* FindNearestPlayer(float MaxDistance, FName ExcludePlayerId = NAME_None) const;
     AAstrawildEchoCharacter* GetEcho() const;
     class UAstrawildEcosystemSubsystem* GetEcosystem() const;
 };

@@ -154,6 +154,15 @@ TArray<UAstrawildRecipeDefinition*> UAstrawildItemRegistrySubsystem::GetAllRecip
     return Out;
 }
 
+TArray<UAstrawildTechnologyDefinition*> UAstrawildItemRegistrySubsystem::GetAllTechnologies() const
+{
+    // Audit C-2: research unlock path needs to enumerate the full tech list (auto-grant
+    // of root techs + "next unlockable" selection at the Research Desk).
+    TArray<UAstrawildTechnologyDefinition*> Out;
+    Technologies.GenerateValueArray(Out);
+    return Out;
+}
+
 TArray<UAstrawildEchoDefinition*> UAstrawildItemRegistrySubsystem::GetAllEchoDefinitions() const
 {
     TArray<UAstrawildEchoDefinition*> Out;

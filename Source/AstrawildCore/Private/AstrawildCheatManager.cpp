@@ -162,7 +162,8 @@ void UAstrawildCheatManager::LoadNow()
     {
         if (UAstrawildSaveSubsystem* Save = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
         {
-            Save->LoadWorld(World);
+            // Audit H-3: newest slot (auto vs manual) instead of the manual slot only.
+            Save->LoadLatest(World);
         }
     }
 }

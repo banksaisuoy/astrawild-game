@@ -21,6 +21,9 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Protect);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Follow);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Work);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_ReturnHome);
+// Audit M-12: enum states previously missing their tags (dead/injured had no representation).
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Injured);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Dead);
 
 // --- State.Player.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Player_Dead);
@@ -47,6 +50,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Element_Ash);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Element_Flora);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Element_Frost);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Element_Pulse);
+// Audit M-12: Ember species (Echo_Emberfang) previously had no matching element tag.
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Element_Ember);
 
 // --- Damage.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Damage_Physical);
