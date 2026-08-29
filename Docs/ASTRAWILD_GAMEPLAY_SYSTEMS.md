@@ -1,7 +1,7 @@
 # ASTRAWILD — Gameplay Systems Overview
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — equipment progression, loot tables, camp NPCs)
 
 This is the system map of the V2 foundation round: every gameplay system, where it lives, and how it feeds
 the core loop. Deep dives live in the per-system documents referenced in each row.
@@ -37,15 +37,15 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 | **Explore** | WASD + sprint (stamina), day/night lighting, weather states | Time, Weather, Survival, HUD | Time pressure (nocturnal Gloomfangs at night), weather capture bonuses |
 | **Discover** | Approach creatures / resource nodes; journal fills by looking at Echoes | Journal (observation cone), Ecosystem (population), HUD prompt | Knowledge milestones → research points |
 | **Interact** | E on nodes/stations/rest points/NPCs; B/N/LMB building placement | Interaction interface, ResourceNode, CraftingStation, RestPoint, Building | Materials, crafting, rest, base growth |
-| **Fight** | LMB light / F heavy / Q dodge / RMB block | Combat, Survival (stamina), Echo AI (flee/aggro) | Weakened Echo = higher capture chance; loot on defeat |
+| **Fight** | LMB light / F heavy / Q dodge / RMB block (weapon adds flat ATK, shield replaces unarmed block) | Combat, Survival (stamina), Echo AI (flee/aggro), Equipment (wave 3) | Weakened Echo = higher capture chance; loot on defeat |
 | **Capture** | E on a wild Echo with a Resonator; feed first for trust | Capture pipeline, Journal bonus, Echo trust/bond, Roster | New companion joins party (max 3) |
 | **Observe** | Keep an Echo in view | Journal subsystem | +2 RP per milestone (4 per species), +15 % capture bonus at 100 % |
-| **Collect** | Harvest nodes, defeat loot, work-site output | Inventory (weight 120 kg gate), EventBus `Event.ItemCollected` | Quest objectives tick; craft ingredients |
+| **Collect** | Harvest nodes, defeat loot, work-site output, dungeon clear rewards | Inventory (weight 120 kg gate), EventBus `Event.ItemCollected`, Loot tables (wave 3) | Quest objectives tick; craft ingredients; boss-room loot |
 | **Return** | Walk back to camp; rest point heals | RestPoint `FullRestore`, autosave every 300 s | Safe prep point |
-| **Craft / Research / Build** | Station interact (E); tech unlock via points; B placement | Crafting, Research, Building, Power grid | Better gear, electrical buildings, powered work sites |
-| **Upgrade** | Echo XP/levels (+10 % HP, +8 % ATK per level), bond growth | Echo growth, Work sites | Stronger party, faster production |
-| **Unlock** | Spend research points | Research (4 techs), ContentLibrary gates | New recipes (Cooking) and buildings (Generator/Battery/Lamp) |
-| **Explore deeper** | — | PLANNED (dungeons, bosses, new biomes — see Roadmap) | Long-term motivation |
+| **Craft / Research / Build** | Station interact (E); tech unlock via points; B placement | Crafting, Research, Building, Power grid | Better gear (armory equipment — wave 3), electrical buildings, powered work sites |
+| **Upgrade** | Echo XP/levels (+10 % HP, +8 % ATK per level), bond growth; X to equip best gear | Echo growth, Work sites, Equipment (wave 3) | Stronger party, faster production, sharper combat numbers |
+| **Unlock** | Spend research points | Research (6 techs), ContentLibrary gates | New recipes (Cooking, Armory equipment) and buildings (Generator/Battery/Lamp/FeedTrough) |
+| **Explore deeper** | Enter Hollow Underlight east of the arena (procedural dungeon + 3-phase boss) | Dungeon generator + rooms + Echo boss | Boss-room loot table (Ancient Core, shards, ash — wave 3); new biomes still PLANNED |
 
 ---
 
@@ -55,32 +55,34 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 |---|---|---|---|---|
 | 1 | Player controller & camera | `AAstrawildPlayerCharacter`, `AAstrawildPlayerController` | UI/Input docs | Third-person movement, sprint/jump, interaction trace, component host |
 | 2 | Survival vitals | `UAstrawildSurvivalComponent` | `ASTRAWILD_SURVIVAL_SYSTEM.md` | HP/stamina/hunger/thirst/temperature + status effects + death |
-| 3 | Combat | `UAstrawildCombatComponent` | `ASTRAWILD_COMBAT_SYSTEM.md` | Light/heavy/dodge/block + elemental damage pipeline |
+| 3 | Combat | `UAstrawildCombatComponent` | `ASTRAWILD_COMBAT_SYSTEM.md` | Light/heavy/dodge/block + elemental damage pipeline (weapon ATK + shield mitigation feed in) |
 | 4 | Echo creatures | `AAstrawildEchoCharacter` | `ASTRAWILD_CREATURE_SYSTEM.md` | Definition-driven instances: personality, needs, trust, bond, growth, commands |
 | 5 | Echo AI | `AAstrawildEchoAIController` | `ASTRAWILD_AI_ARCHITECTURE.md` | Sight perception + 16-state machine, LOD think rates |
 | 6 | Ecosystem & population | `UAstrawildEcosystemSubsystem` | World doc | LOD tiers, wild/captured/defeated counts per species |
 | 7 | Capture pipeline | `UAstrawildCaptureComponent` | Creature doc §5 | Resonator + weaken/trust/observe/track/weather → chance roll |
 | 8 | Field journal | `UAstrawildJournalSubsystem` | Creature doc §6 | Observation progress, knowledge milestones, research points |
 | 9 | Echo roster & party | `UAstrawildEchoRosterSubsystem` | Creature doc §7 | Captured roster (party cap 3), save round-trip |
-| 10 | Inventory | `UAstrawildInventoryComponent` | — | Stacks + weight gate (120 kg) + equipment slot |
-| 11 | Item registry & content library | `UAstrawildItemRegistrySubsystem`, `UAstrawildContentLibrary` | `ASTRAWILD_ASSET_PIPELINE.md` | Id→definition resolution; CODE_DEFAULT content |
+| 10 | Inventory | `UAstrawildInventoryComponent` | — | Stacks + weight gate (120 kg) + equipment slots (weapon + shield, wave 3) |
+| 11 | Item registry & content library | `UAstrawildItemRegistrySubsystem`, `UAstrawildContentLibrary` | `ASTRAWILD_ASSET_PIPELINE.md` | Id→definition resolution; CODE_DEFAULT content (items/recipes/species/buildings/techs/quests/loot tables/NPCs) |
 | 12 | Crafting | `UAstrawildCraftingComponent`, `AAstrawildCraftingStationActor` | `ASTRAWILD_CRAFTING_SYSTEM.md` | Timed queue, station/tech/ingredient gates |
 | 13 | Building placement | `UAstrawildBuildingComponent`, `AAstrawildBuildingActor` | `ASTRAWILD_BUILDING_SYSTEM.md` | Preview/snap/rotate/validate + server-authoritative placement |
 | 14 | Power grid | `UAstrawildPowerSubsystem` | Building doc §7 | Generation/draw/battery, brownout shedding, 2 s re-solve |
 | 15 | Echo work | `AAstrawildWorkSiteActor` | Creature doc §8 | Affinity/personality/mood/energy-scaled production |
-| 16 | Research / tech tree | `UAstrawildResearchSubsystem` | `ASTRAWILD_RESEARCH_SYSTEM.md` | Points, prerequisites, unlock gates |
-| 17 | Quests | `UAstrawildQuestComponent` | `ASTRAWILD_QUEST_SYSTEM.md` | Event-driven objectives, 5-quest First Dawn chain |
+| 16 | Research / tech tree | `UAstrawildResearchSubsystem` | `ASTRAWILD_RESEARCH_SYSTEM.md` | Points, prerequisites, unlock gates (6 techs incl. Armory) |
+| 17 | Quests | `UAstrawildQuestComponent` | `ASTRAWILD_QUEST_SYSTEM.md` | Event-driven objectives, 6-quest First Dawn chain |
 | 18 | World state (time/weather) | `AAstrawildGameState`, `UAstrawildTimeSubsystem`, `UAstrawildWeatherSubsystem` | `ASTRAWILD_WORLD_SYSTEM.md` | 24-min days, 8 weather states, replicated |
 | 19 | Event bus | `UAstrawildEventBusSubsystem` | Architecture V2 §6 | Decoupled gameplay event pub/sub |
-| 20 | Procedural world | `AAstrawildWorldBootstrapper` | World doc §5 | Zero-asset Dawn Fields arena |
-| 21 | Save/load | `UAstrawildSaveSubsystem` | `ASTRAWILD_SAVE_SYSTEM.md` | Schema v2, checksum, migration, autosave |
-| 22 | HUD | `UAstrawildHudWidget` | `ASTRAWILD_UI_ARCHITECTURE.md` | Pure-C++ HUD |
-| 23 | Input | runtime Enhanced Input (in PlayerCharacter) | `ASTRAWILD_INPUT_REFERENCE.md` | 15 runtime actions, full default keymap |
+| 20 | Procedural world | `AAstrawildWorldBootstrapper` | World doc §5 | Zero-asset Dawn Fields arena + camp NPCs |
+| 21 | Save/load | `UAstrawildSaveSubsystem` | `ASTRAWILD_SAVE_SYSTEM.md` | Schema v2, checksum, migration, autosave, equipment persistence |
+| 22 | HUD | `UAstrawildHudWidget` | `ASTRAWILD_UI_ARCHITECTURE.md` | Pure-C++ HUD (12 widgets incl. equipment readout) |
+| 23 | Input | runtime Enhanced Input (in PlayerCharacter) | `ASTRAWILD_INPUT_REFERENCE.md` | 17 runtime actions, full default keymap |
 | 24 | Gameplay tags | `AstrawildGameplayTags.h/.cpp` | `ASTRAWILD_GAMEPLAY_TAGS.md` | 77 native tags |
-| 25 | Debug/cheats | `UAstrawildCheatManager` | Input Reference §3 | 12 console commands |
-| 26 | NPCs | `AAstrawildNPCCharacter` | Quest doc §6 | Quest-offering interactable; schedule PLANNED |
+| 25 | Debug/cheats | `UAstrawildCheatManager` | Input Reference §3 | 13 console commands |
+| 26 | NPCs | `AAstrawildNPCCharacter` | Quest doc §6 | Camp NPCs (Warden Maren, Trader Tam — wave 3); schedule/dialogue screens PLANNED |
 | 27 | Game mode / session | `AAstrawildGameMode` | — | Bootstrapper spawn, respawn (5 s), autosave (300 s) |
-| 28 | Tests | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` | 8 automation tests |
+| 28 | Tests | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` | 9 automation tests |
+| 29 | Equipment progression | `UAstrawildInventoryComponent` (slots) + `UAstrawildCombatComponent` (math) | Combat doc §2.3/§4 | Weapon ATK + shield mitigation routing, equip-best (X), save persistence |
+| 30 | Loot tables | `UAstrawildLootTableDefinition` + registry | Asset Manifest §7 | Guaranteed drops + bonus roll; dungeon clear rewards, vendor stock |
 
 ---
 
@@ -138,9 +140,16 @@ The current content deliberately walks a new player through one complete loop:
    (weaken it or feed Glimmer Berries first) → +10 Berries, +10 RP.
 3. **Quest: Homeground** — place a Foundation and a Workbench → +10 RP.
 4. **Quest: The Spark** — unlock Electrical Foundations (15 RP) and build an Echo Dynamo → +15 RP.
-5. **Quest: Dawn Guard** — defeat 3 Gloomfangs (night hostiles) → Ancient Core + 20 RP. Chain ends here.
+5. **Quest: Dawn Guard** — defeat 3 Gloomfangs (night hostiles) → Ancient Core + 20 RP.
+6. **Quest: Shepherd's Dawn** (wave 2) — unlock Echo Husbandry, capture a Sprigling, place a Feed Trough,
+   craft 3 Feed Mix → +5 Feed Mix, +2 Salves, +20 RP. Chain ends here.
 
 Each quest auto-activates the next on completion (`NextQuestId` chaining).
+
+**Equipment progression (wave 3)** runs alongside the chain: craft the Dawnwood Club (3 Wood + 1 Sunfiber,
+no tech) early, then unlock the Armory (8 RP) for the Stonehide Shield and Dawn Crystal Blade; the boss
+room of Hollow Underlight drops the blade ingredients (Dawn Crystal Shards, Ember Ash) — press **X** to
+auto-equip the best owned gear at any time.
 
 ---
 
@@ -148,7 +157,7 @@ Each quest auto-activates the next on completion (`NextQuestId` chaining).
 
 | Channel | Implementation |
 |---|---|
-| HUD | Bars (HP/stamina/hunger/thirst), time/weather, quest tracker, interaction prompt, live capture chance %, party command, notification line |
+| HUD | Bars (HP/stamina/hunger/thirst), time/weather, quest tracker, interaction prompt, live capture chance %, party command, equipment readout (wave 3), notification line |
 | Delegates | Every system broadcasts `On*` dynamic multicast delegates (`OnStatsChanged`, `OnDamaged`, `OnQuestStateChanged`, `OnTechUnlocked`, `OnRosterChanged`, …) for future UI/audio |
 | Event bus | Cross-cutting gameplay events for quests/journal/analytics |
 | Logging | 8 categories (`LogAstrawild` + 7 subsystem categories) |

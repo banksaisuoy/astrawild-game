@@ -1,7 +1,7 @@
 # ASTRAWILD — Crafting System
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — armory equipment recipes; 10 recipes total)
 **Primary sources:** `AstrawildCraftingComponent.h/.cpp`, `AstrawildCraftingStationActor.h/.cpp`,
 `AstrawildContentLibrary.cpp::BuildRecipes()`
 
@@ -23,7 +23,7 @@ contract is in §6.
 
 ---
 
-## 2. The 5 CODE_DEFAULT Recipes
+## 2. The 10 CODE_DEFAULT Recipes
 
 From `AstrawildContentLibrary.cpp::BuildRecipes()`:
 
@@ -34,6 +34,16 @@ From `AstrawildContentLibrary.cpp::BuildRecipes()`:
 | Dawnwood Plank | `Recipe_WoodPlank` | Wood ×2 | Plank ×1 | 2.0 s | — | `Station_Workbench` |
 | Seared Meat | `Recipe_CookedMeat` | Raw Meat ×1 | Cooked Meat ×1 | 5.0 s | `Tech_Cooking` | `Station_Campfire` |
 | Dew Flask | `Recipe_WaterFlask` | Fiber ×2 + Crystal Shard ×1 | Flask ×1 | 4.0 s | — | `Station_Workbench` |
+| Echo Feed Mix | `Recipe_FeedMix` | Berry ×2 + Fiber ×1 | Feed Mix ×1 | 4.0 s | `Tech_Husbandry` | `Station_Campfire` |
+| Dawnbloom Salve | `Recipe_HerbalSalve` | Dawnbloom ×2 + Fiber ×1 | Salve ×1 | 4.0 s | `Tech_Husbandry` | `Station_Workbench` |
+| Dawnwood Club | `Recipe_DawnwoodClub` | Wood ×3 + Fiber ×1 | Club ×1 | 3.0 s | — | `Station_Workbench` |
+| Stonehide Shield | `Recipe_StonehideShield` | Stone ×3 + Wood ×2 + Fiber ×1 | Shield ×1 | 5.0 s | `Tech_Armory` | `Station_Workbench` |
+| Dawn Crystal Blade | `Recipe_CrystalBlade` | Crystal Shard ×2 + Wood Plank ×2 + Ember Ash ×1 | Blade ×1 | 8.0 s | `Tech_Armory` | `Station_Workbench` |
+
+The three equipment recipes (wave 3) output stack-1 `Equipment`-category items: the club adds flat
+**AttackPower +6**, the shield **BlockMitigation 0.65**, the blade **AttackPower +14** — feed straight
+into the combat math (see `ASTRAWILD_COMBAT_SYSTEM.md` §2.3/§4). Equipment items are re-equipped after
+load only if still in the inventory (Save doc §4).
 
 ---
 
@@ -80,9 +90,11 @@ playable before any UMG screen exists. It is not the final UX.
 
 ## 5. Tech Gating Summary
 
-Only `Recipe_CookedMeat` is tech-gated today (via `Tech_Cooking`, 5 RP). Recipe → tech binding lives on
-the recipe definition; the Research subsystem doc describes the unlock path. Stations themselves are not
-tech-gated (the buildings that *represent* them are separate — see Building doc).
+Tech-gated recipes today: `Recipe_CookedMeat` (`Tech_Cooking`, 5 RP), `Recipe_FeedMix` +
+`Recipe_HerbalSalve` (`Tech_Husbandry`, 10 RP), and `Recipe_StonehideShield` + `Recipe_CrystalBlade`
+(`Tech_Armory`, 8 RP — wave 3). Recipe → tech binding lives on the recipe definition; the Research
+subsystem doc describes the unlock path. Stations themselves are not tech-gated (the buildings that
+*represent* them are separate — see Building doc).
 
 ---
 

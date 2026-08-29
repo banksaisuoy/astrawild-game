@@ -1,7 +1,7 @@
 # ASTRAWILD — Research & Technology System
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — `Tech_Armory` node added)
 **Primary sources:** `AstrawildResearchSubsystem.h/.cpp`, `AstrawildContentLibrary.cpp::BuildTechnologies()`,
 `AstrawildJournalSubsystem.cpp` (point sources), `AstrawildQuestComponent.cpp` (quest rewards)
 
@@ -20,12 +20,14 @@ This is the documented co-op decision — in multiplayer, the pool is **shared b
 | Cheat | `AW.ResearchPoints N` | testing only |
 
 Full-journaling all 7 species = 56 points total; the First Dawn quest chain awards 80 points across its
-six quests (wave 2 adds `Tech_Husbandry` at 10 RP — Cooking 5 + Husbandry 10 + Electrical 15 = 30 points
-for the tree, comfortably affordable through moderate journaling and quests).
+six quests. The full 6-node tree costs **68 RP** (Cooking 5 + Armory 8 + Electrical 15 + Husbandry 10 +
+AdvancedEnergy 30 — Basic Crafting is free), comfortably affordable through moderate journaling and quests.
+Wave 3's `Tech_Armory` (8 RP, prereq Basic Crafting) opens the equipment tier: Stonehide Shield + Dawn
+Crystal Blade recipes.
 
 ---
 
-## 2. The Tech Tree (5 CODE_DEFAULT nodes)
+## 2. The Tech Tree (6 CODE_DEFAULT nodes)
 
 From `AstrawildContentLibrary.cpp::BuildTechnologies()`:
 
@@ -36,8 +38,11 @@ From `AstrawildContentLibrary.cpp::BuildTechnologies()`:
 | Electrical Foundations | `Tech_Electrical` | Electrical | **15** | `Tech_BasicCrafting` | — | `Building_Generator`, `Building_Battery`, `Building_LampPost` |
 | Advanced Energy | `Tech_AdvancedEnergy` | AdvancedEnergy | **30** | `Tech_Electrical` | — (future content) | — (future content) |
 | Echo Husbandry | `Tech_Husbandry` | Primitive | **10** | `Tech_Cooking` | `Recipe_FeedMix`, `Recipe_HerbalSalve` | `Building_FeedTrough` |
+| Armory | `Tech_Armory` | Primitive | **8** | `Tech_BasicCrafting` | `Recipe_StonehideShield`, `Recipe_CrystalBlade` | — |
 
 `Tech_BasicCrafting` costs 0 and gates nothing itself — it is the root identity that other nodes reference.
+`Tech_Armory` (wave 3) branches off Basic Crafting in parallel with Cooking/Electrical and gates the
+equipment progression (see `ASTRAWILD_COMBAT_SYSTEM.md` §2.3 for what the recipes feed).
 
 ---
 
@@ -50,7 +55,8 @@ From `AstrawildContentLibrary.cpp::BuildTechnologies()`:
 | Quest_Homeground | 10 |
 | Quest_Spark | 15 |
 | Quest_DawnGuard | 20 |
-| **Total** | **60** |
+| Quest_ShepherdsDawn | 20 |
+| **Total** | **80** |
 
 `Quest_Spark` also *requires* unlocking `Tech_Electrical` as an objective, and quest definitions can carry
 `RewardTechId` for instant story-driven unlocks (unused by current content — data path exists and is tested
@@ -105,6 +111,6 @@ respawns, and (per the co-op decision) are shared across players in a session.
 | Feature | Status |
 |---|---|
 | Tech tree UI | NOT IMPLEMENTED (unlocks happen through play; `AW.UnlockTech` cheat for testing) |
-| Era progression beyond 4 nodes | PLANNED (AdvancedEnergy unlocks nothing yet — placeholder for future content) |
+| Era progression beyond 5 spendable nodes | PLANNED (AdvancedEnergy unlocks nothing yet — placeholder for future content) |
 | Research by Echo assist (Duskmoth ResearchAssist ×1.6 affinity) | Work sites produce items; a research-point-producing site is NOT IMPLEMENTED |
 | Per-player research in co-op | DELIBERATELY NOT per-player — shared pool decision (see Assumptions) |

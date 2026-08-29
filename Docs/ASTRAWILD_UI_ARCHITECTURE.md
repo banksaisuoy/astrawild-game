@@ -1,7 +1,7 @@
 # ASTRAWILD — UI Architecture
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — `EquipmentText` HUD readout, 17 runtime actions)
 **Primary sources:** `AstrawildHudWidget.h/.cpp`, `AstrawildPlayerController.cpp`,
 `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / SetupPlayerInputComponent)
 
@@ -24,6 +24,8 @@ assets are assigned. This keeps the project playable straight from compile with 
 
 ### 1.1 Widget tree & layout (actual anchors/sizes from code)
 
+**12 widgets** — 4 progress bars + 8 text blocks (verified against `MakeBar`/`MakeText` calls):
+
 | Widget | Anchor (min/max) | Offset | Size | Color | Content source |
 |---|---|---|---|---|---|
 | `HealthBar` | (0.02, 0.86) | 0,0 | 280×18 | red (0.85, 0.16, 0.12) | `Survival->GetHealthFraction()` |
@@ -36,7 +38,12 @@ assets are assigned. This keeps the project playable straight from compile with 
 | `PromptText` | (0.5, 0.82) | −200, 0 | 400×22 | white, 16 pt | interactable prompt or `"Capture Echo [E] — needs Resonator"` |
 | `CaptureText` | (0.5, 0.855) | −200, 0 | 400×22 | green, 15 pt | `"Capture chance: NN%"` (`PreviewCaptureChance` × 100) |
 | `CommandText` | (0.98, 0.93) | −300, 0 | 300×20 | blue, 14 pt | `"Party command [C]: <command>"` |
+| `EquipmentText` | (0.98, 0.90) | −300, 0 | 300×20 | amber (0.98, 0.80, 0.55), 14 pt | `"Weapon: <name> (+N) | Shield: <name>"` (wave 3) |
 | `NotificationText` | (0.5, 0.14) | −320, 0 | 640×24 | cream, 15 pt | `PushNotification(msg)` — 4 s timeout |
+
+`EquipmentText` resolves item display names through the item registry (`FindItem`); empty/unknown slots
+print `"Unarmed"`, and the weapon name is followed by its flat attack bonus (`(+N)`). It sits one row
+above `CommandText` in the right-bottom corner.
 
 ### 1.2 Data flow
 
@@ -58,10 +65,11 @@ weather), queries public APIs (`FindInteractableActor`, `PreviewCaptureChance`, 
 `AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()` runs in `BeginPlay` **only when no editor IMC is
 assigned** (zero-asset playability). It creates:
 
-- **15 runtime input actions** (UInputAction objects, named `AWD_*`, kept GC-rooted in `RuntimeActions`):
+- **17 runtime input actions** (UInputAction objects, named `AWD_*`, kept GC-rooted in `RuntimeActions`):
   Move (Axis2D), Look (Axis2D), Sprint, Jump, Interact, LightAttack, HeavyAttack, Dodge, Block, Command,
-  Feed, BuildMode, BuildRotate, Save, Load (all Boolean).
-  *(The code's log line says "16 actions" — cosmetic off-by-one in the log string; 15 actions are created.)*
+  Feed, BuildMode, BuildRotate, Consume, EquipBest, Save, Load (all Boolean).
+  *(Wave 3 note: the code's log line now says "17 actions" — it previously said "16" while creating one
+  fewer/later count; the created count is now 17 and matches the log.)*
 - One `UInputMappingContext` (`AWD_DefaultIMC`) with key mappings:
 
 | Key | Action | Modifiers |
@@ -80,6 +88,8 @@ assigned** (zero-asset playability). It creates:
 | R | Feed | — |
 | B | BuildMode | — |
 | N | BuildRotate (+15°) | — |
+| G | Consume | — |
+| X | EquipBest | — |
 | F5 | Save | — |
 | F9 | Load | — |
 

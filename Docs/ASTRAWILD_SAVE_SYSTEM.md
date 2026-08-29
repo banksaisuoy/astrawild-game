@@ -1,7 +1,7 @@
 # ASTRAWILD — Save System (Schema v2)
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — equipped weapon/shield persistence, still schema v2)
 **Primary sources:** `AstrawildSaveSubsystem.h/.cpp`, `AstrawildTypes.h` (save structs),
 `AstrawildGameMode.cpp` (autosave), `AstrawildPlayerCharacter.cpp` (F5/F9)
 
@@ -26,6 +26,8 @@ ids — never object references.
 | Field | Type | Contents |
 |---|---|---|
 | `WorldState` | `FAstrawildWorldSaveData` | `ElapsedWorldMinutes`, `DayNumber`, `Weather`, `Seed` |
+| `EquippedWeaponId` | FName | Equipped weapon id (wave 3; `NAME_None` default) |
+| `EquippedShieldId` | FName | Equipped shield id (wave 3; `NAME_None` default) |
 | `PlayerSurvival` | `FAstrawildSurvivalStats` | HP/stamina/hunger/thirst/temperature/dead |
 | `PlayerTransform` | FTransform | Player world transform |
 | `EchoRosterV2` | `TArray<FAstrawildEchoInstanceV2>` | Captured Echoes: instance id, definition id, personality, level, XP, trust, bond, needs, transform, in-party |
@@ -36,6 +38,11 @@ ids — never object references.
 
 **v1 payload (kept for migration + legacy snapshot API)**: `PlayerInventory`, `EchoRoster`
 (`FAstrawildEchoInstanceSaveData`), `RestPoints`, `ActiveRestPointId`.
+
+> **Wave 3 schema decision — additive fields, no version bump.** `EquippedWeaponId` / `EquippedShieldId`
+> are plain `FName` UPROPERTYs defaulting to `NAME_None`, so **older v2 saves load unchanged** (fields
+> deserialize to defaults) and `SaveSchemaVersion` stays **2**. This follows the additive-fields policy in
+> §3/§7: only a payload change a legacy loader cannot digest would justify a v3 bump + migration step.
 
 ---
 
@@ -76,8 +83,9 @@ old payloads destructively.
 
 1. Create `UAstrawildSaveGame`; stamp schema version + UTC now + checksum.
 2. **World state** from GameState (time, day, weather, seed).
-3. **Player**: transform, survival stats, inventory stacks (first player controller — single-player-first);
-   **quests** from the PlayerController's QuestComponent.
+3. **Player**: transform, survival stats, inventory stacks, **equipped weapon/shield ids**
+   (`EquippedItemId` / `EquippedShieldItemId` from the inventory component — first player controller,
+   single-player-first); **quests** from the PlayerController's QuestComponent.
 4. **Roster** (`EchoRosterSubsystem->ExportForSave` — refreshes entries from live party actors first) and
    **research** (GameInstance subsystems).
 5. **Buildings**: every `AAstrawildBuildingActor` → `ToSaveData()`.
@@ -90,8 +98,10 @@ old payloads destructively.
 2. Migrate if schema < 2.
 3. **World state**: time, day (advance until `DayNumber` matches), weather, seed.
 4. **Research** import, **roster** import (GameInstance scope).
-5. **Player**: teleport to saved transform, `FullRestore` vitals, `SetItemStacks` inventory; despawn current
-   party Echoes and re-import roster data.
+5. **Player**: teleport to saved transform, `FullRestore` vitals, `SetItemStacks` inventory, then
+   **re-equip only if the item still exists in the inventory** — each id is re-equipped via `EquipItem`
+   only when `HasItem(id, 1)` passes (a save referencing a removed/consumed item loads unarmed instead of
+   granting a ghost equip); despawn current party Echoes and re-import roster data.
 6. **Quests** import (restores active/completed + objective progress).
 7. **Buildings**: destroy all placed `AAstrawildBuildingActor`s, respawn each from save data
    (`FromSaveData` re-initializes definition, health, power registration).

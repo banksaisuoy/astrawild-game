@@ -1,7 +1,7 @@
 # ASTRAWILD — Quest System
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — camp NPCs wired to definitions; wave 2's quest 6 synced)
 **Primary sources:** `AstrawildQuestComponent.h/.cpp`, `AstrawildQuestDefinition` (AstrawildDataAssets.h),
 `AstrawildContentLibrary.cpp::BuildQuests()`, `AstrawildNPCCharacter.cpp`
 
@@ -37,20 +37,22 @@ survives death/respawn.
 | `CraftRecipe` | ✅ WIRED | `Event.RecipeCrafted` (target = recipe id) |
 | `PlaceBuilding` | ✅ WIRED | `Event.BuildingPlaced` (target = building definition id) |
 | `UnlockTechnology` | ✅ WIRED | `Event.TechUnlocked` (target = tech id) |
+| `ObserveEcho` | ✅ WIRED (fixed 2026-08-29, was T-1) | `Event.EchoObserved` (target = echo definition id; published by the journal at the 25 % first-scan milestone) |
 | `ReachLocation` | ⛔ NOT WIRED — enum + data support only (no event publisher yet) |
-| `ObserveEcho` | ⛔ NOT WIRED — quest data uses it (see §3, Quest 2) but no `Event.*` publisher exists for observation today |
 | `SurviveTime` | ⛔ NOT WIRED — no publisher |
 
-**Honest consequence:** Quest_FirstEcho's "Observe a Lumewisp" objective will not progress through the
-event bus in the current build; the quest is completable only via its capture objective + `AW.CaptureAll`
-testing. Wiring `Event.*` publishers for these three types is on the fix list (see Test Plan §5).
+**Honest consequence:** 7 of 9 objective types are wired. `ReachLocation` and `SurviveTime` have no
+`Event.*` publisher yet (no CODE_DEFAULT quest uses them today — the enum + data path exist for future
+content). The former T-1 gap (Quest_FirstEcho's "Observe a Lumewisp") was fixed by publishing
+`Event.EchoObserved` from the journal's first-scan milestone; verify on the target machine once compiled
+(Test Plan §5).
 
 Progress math: `ProgressCount = min(RequiredCount, Progress + max(1, Event.Amount))`; a quest completes
 when **all** objectives are complete; completion is idempotent.
 
 ---
 
-## 3. The First Dawn Chain (5 CODE_DEFAULT quests)
+## 3. The First Dawn Chain (6 CODE_DEFAULT quests)
 
 From `AstrawildContentLibrary.cpp::BuildQuests()`:
 
@@ -101,7 +103,20 @@ Rewards: **+15 RP**. Next: `Quest_DawnGuard`.
 |---|---|---|---|---|
 | 1 | DefeatCreature | `Echo_Gloomfang` | 3 | Defeat 3 Gloomfangs |
 
-Rewards: **1 × Ancient Core**, **+20 RP**. Next: none — chain ends (open end for the next story arc).
+Rewards: **1 × Ancient Core**, **+20 RP**. Next: `Quest_ShepherdsDawn`.
+
+### Quest 6 — Shepherd's Dawn (`Quest_ShepherdsDawn`) — wave 2
+> *"Sprigling herds graze the meadows. Learn the ways of Echo husbandry."*
+
+| # | Type | Target | Count | Text |
+|---|---|---|---|---|
+| 1 | UnlockTechnology | `Tech_Husbandry` | 1 | Unlock Echo Husbandry |
+| 2 | CaptureEcho | `Echo_Sprigling` | 1 | Capture a Sprigling |
+| 3 | PlaceBuilding | `Building_FeedTrough` | 1 | Place an Echo Feed Trough |
+| 4 | CollectItem | `Item_FeedMix` | 3 | Craft 3 Echo Feed Mix |
+
+Rewards: **5 × Echo Feed Mix**, **2 × Dawnbloom Salve**, **+20 RP**. Next: none — chain ends (open end for
+the next story arc).
 
 ---
 
@@ -144,8 +159,17 @@ HUD integration: `GetActiveObjectives()` renders the top-left tracker (`[ ] Coll
 
 `AAstrawildNPCCharacter` (interactable): E → `Quests->StartQuest(NpcDefinition->OfferedQuestId)` when the
 definition carries a quest. Prompt shows the NPC display name. NPC definitions (`UAstrawildNPCDefinition`)
-support `ShopLootTableId` (future). Schedule/dialogue/faction behavior is PLANNED — the class is an
-architecture-ready shell; no CODE_DEFAULT NPC definition or spawned NPC exists yet.
+support `ShopLootTableId`. Schedule/dialogue/faction behavior is PLANNED.
+
+**Wave 3:** two CODE_DEFAULT NPCs are registered by the content library and spawned at the starting camp
+by `AAstrawildWorldBootstrapper::SpawnPointsOfInterest`:
+
+| NPC | Id | Definition hook | Spawn |
+|---|---|---|---|
+| Warden Maren | `NPC_WardenMaren` | `OfferedQuestId = Quest_FirstLight` (talk to (re-)start the first quest) | (630, −630, 100) |
+| Trader Tam | `NPC_VendorTam` | `ShopLootTableId = Loot_VendorStarter` (definition-level stock; purchase logic NOT IMPLEMENTED) | (−630, −630, 100) |
+
+Bodies still use the engine capsule placeholder (see Asset Manifest §8/§9).
 
 ---
 
@@ -158,4 +182,4 @@ architecture-ready shell; no CODE_DEFAULT NPC definition or spawned NPC exists y
 | Multiple simultaneous active quests | NOT IMPLEMENTED (single `ActiveQuestId`) |
 | Quest text presentation beyond the HUD tracker | NOT IMPLEMENTED (no dialogue UI) |
 | Per-player quest replication for co-op clients | NOT IMPLEMENTED — component is not replicated; host/SP only today |
-| NPC content | PLANNED (class + definition ready, no instances) |
+| NPC dialogue/schedule screens, vendor purchase flow | NOT IMPLEMENTED — 2 CODE_DEFAULT NPCs exist (Warden Maren, Trader Tam); interaction is quest-start only; shop table is a data hook |

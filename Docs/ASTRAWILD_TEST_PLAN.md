@@ -1,15 +1,15 @@
 # ASTRAWILD — Test Plan
 
-**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 8 automation tests are
+**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 9 automation tests are
 written; **none have been executed** (no UE toolchain in the sandbox). Execution happens on the target
 Windows machine.**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — `ASTRAWILD.Equipment.ProgressionMath` added)
 **Primary sources:** `AstrawildAutomationTests.cpp`, `Scripts/validate_repository.sh`,
 directive §39 (automation) + §50 (first-playable flow)
 
 ---
 
-## 1. Automation Tests (8)
+## 1. Automation Tests (9)
 
 All tests are `IMPLEMENT_SIMPLE_AUTOMATION_TEST` under the `ASTRAWILD.` namespace,
 flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter`, compiled behind
@@ -21,11 +21,12 @@ from the Session Frontend or CLI without a map.
 | 1 | `ASTRAWILD.Inventory.AddRemove` | Stack validity contract: `FAstrawildItemStack().IsValid()` is false for zero quantity; a `Item_Wood ×5` stack is valid |
 | 2 | `ASTRAWILD.Survival.DamageAndDeath` | Vitals struct invariants: health starts 100, stamina fraction math (50/100 = 0.5), player starts alive (`bIsDead = false`) |
 | 3 | `ASTRAWILD.Capture.DesignRuleBounds` | Species template sanity: `CaptureDifficulty` and `CaptureResilience` live in 0..1 on a constructed `UAstrawildEchoDefinition`; documents the defeated→0-chance rule |
-| 4 | `ASTRAWILD.Combat.MitigationMath` | 65 % block on 100 damage passes exactly 35; weakness multiplier ×1.5 (20 → 30) |
+| 4 | `ASTRAWILD.Combat.MitigationMath` | Block math with a 0.65 mitigation input on 100 damage passes exactly 35 (the input now corresponds to the Stonehide Shield tier); weakness multiplier ×1.5 (20 → 30) |
 | 5 | `ASTRAWILD.Save.ChecksumDeterminism` | FNV-1a checksum: deterministic for identical (schema, timestamp); differs across schema versions; non-zero |
 | 6 | `ASTRAWILD.Quest.ObjectiveProgress` | Objective completion math: 7/10 incomplete, 10/10 complete, over-progress (12/10) still complete |
 | 7 | `ASTRAWILD.Echo.PersonalityModifiers` | Personality contract surface: enum covers all 10 archetypes (`Social == 9`); Timid ≠ Brave (flee-ordering invariant hook) |
 | 8 | `ASTRAWILD.Power.BrownoutMath` | Grid math: draw 9 > generation 8 → brownout; shedding the lowest-priority consumer (4.0) restores draw 5 ≤ 8 |
+| 9 | `ASTRAWILD.Equipment.ProgressionMath` | Wave 3 equipment contract: unarmed light stays 25; Dawnwood Club light 25+6=31; Dawn Crystal Blade heavy 60+14=74; unarmed block (0.45) passes 55 % of 100; shielded block (0.65) passes 35 %; shield strictly improves block |
 
 Run on the target machine: **Tools → Session Frontend → Automation** (filter `ASTRAWILD`), or:
 `UnrealEditor-Cmd.exe ASTRAWILD.uproject -ExecCmds="Automation RunTests ASTRAWILD" -unattended -nopause -testexit="Automation Test Queue Empty"`
@@ -75,6 +76,7 @@ First Echo quests unaided. That is the vertical-slice bar for this round.
 | Weather capture bonuses & temperature | `AW.SetWeather fog` / `heat` / `cold` |
 | Combat survivability | `AW.God`, `AW.HealAll` |
 | Tech/quest fast-path | `AW.ResearchPoints 100`, `AW.UnlockTech Tech_Electrical` |
+| Equipment progression | `AW.GiveItem Item_CrystalBlade 1`, `AW.EquipItem Item_CrystalBlade` (then X to equip-best; check the HUD equipment readout + block damage change) |
 | Save edge cases | `AW.SaveNow`, `AW.LoadNow`, `AW.CaptureAll`, `AW.TeleportForward 5000` |
 
 ---
@@ -96,7 +98,7 @@ The repository has **never been compiled**. Do this before any test above:
    proceeding (the code is compile-conservative, but UE API drift between 5.x minor versions is possible).
 6. Launch `ASTRAWILDEditor` → the project opens with an empty content tree (expected) → **PIE works
    without a map** via the bootstrapper (§2 step 1).
-7. Run the automation suite (§1 command) — 8/8 expected green.
+7. Run the automation suite (§1 command) — 9/9 expected green.
 8. Fill `BUILD_STATUS.md`: Compile = PASS (with duration/warnings), Playtest rows with real results.
    **Do not mark COMPLETE before steps 1–17 of §2 pass.**
 9. Optional static validation re-run (sandbox): `Scripts/validate_repository.sh`.
@@ -105,11 +107,15 @@ The repository has **never been compiled**. Do this before any test above:
 
 ## 5. Known Issues to Verify During Playtest
 
-| ID | Issue | Where | Verification |
+Status re-checked against code on 2026-08-30: T-1/T-2/T-4/T-5/T-6 have **fixes in code** (applied with
+the lead's foundation round) but none are verified — nothing has been compiled or run yet. Verify each
+during the first playtest; T-3 is still unfixed.
+
+| ID | Issue | Where | Status / verification |
 |---|---|---|---|
-| T-1 | Quest 2 "Observe a Lumewisp" cannot progress (no `Event.*` publisher for ObserveEcho) | QuestComponent | Capture objective still completes the quest partially — quest stalls at 1/2 objectives; fix by publishing an observation event at journal milestones |
-| T-2 | AI think loop runs per frame (LOD interval computed but not applied) | EchoAIController::Think | Check Insights timer cost with 10+ Echoes; apply the SetTimer fix |
-| T-3 | Weather temperature label hard-codes 20 °C on the HUD | HudWidget | Cosmetic |
-| T-4 | Cold/heat damage unreachable with default weather offsets (min felt temp 8 °C vs 4 °C threshold) | Survival + Weather | Tune profile or base temp after design review |
-| T-5 | Player "consume food/drink" action has no keybind | Survival | UI/inventory screen work (M7+) |
-| T-6 | Journal per-frame actor iteration | JournalSubsystem | Insights capture; optimize on evidence |
+| T-1 | Quest 2 "Observe a Lumewisp" progression (no `Event.*` publisher for ObserveEcho) | QuestComponent / JournalSubsystem | **Fixed in code** — journal publishes `Event.EchoObserved` at the 25 % first-scan milestone; verify Quest_FirstEcho completes both objectives |
+| T-2 | AI think loop reschedules per frame (LOD interval computed but not applied) | EchoAIController::Think | **Fixed in code** — `SetTimer(ThinkIntervalSeconds)`; verify with Insights at 10+ Echoes |
+| T-3 | Weather temperature label hard-codes 20 °C on the HUD | HudWidget | **Still present** (`WeatherText` prints a literal `20.0f`); cosmetic |
+| T-4 | Cold/heat damage unreachable with default weather offsets | Survival + Weather | **Fixed in code** — Cold profile offset −17 (felt 3 °C < 4 °C threshold), Heat +20 (felt 40 °C ≥ 36 °C); verify with `AW.SetWeather cold` / `heat` |
+| T-5 | Player "consume food/drink" action has no keybind | Survival / input | **Fixed in code** — **G** = `SmartConsume` (`AWD_Consume`); verify with berries/flask in inventory |
+| T-6 | Journal per-frame actor iteration | JournalSubsystem | **Fixed in code** — throttled observation sweep; verify with Insights |

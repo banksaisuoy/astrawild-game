@@ -3,7 +3,7 @@
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — server-authoritative rules
 and replication are in code; **multiplayer has NOT been play-tested** (no second client / no netcode test
 run in this round). Single player & listen-server host paths are the validated-by-design targets.**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — `EquippedShieldItemId` replication)
 **Primary sources:** every `GetLifetimeReplicatedProps` + `UFUNCTION(Server)` in `Source/AstrawildCore`
 (grep `DOREPLIFETIME`, `UFUNCTION(Server)`), `AstrawildGameMode.cpp`, subsystem authority guards
 
@@ -33,7 +33,12 @@ requests; ghost placement math; HUD reads of replicated state; dodge direction n
 
 ## 2. Replication Inventory (every replicated property, per class)
 
-Grep-verified against `DOREPLIFETIME(...)` calls — **20 replicated properties across 7 classes**:
+Grep-verified against `DOREPLIFETIME(...)` calls — **25 replicated properties across 9 classes**.
+
+> **Count reconciliation (2026-08-30):** this table previously said "20 properties / 7 classes". The
+> dungeon/boss round added 4 properties (`AAstrawildEchoBossCharacter` ×3,
+> `AAstrawildDungeonRoomActor` ×1) that were never synced into this doc, and wave 3 adds
+> `EquippedShieldItemId`. Both gaps are corrected here — 20 + 4 + 1 = 25 across 9 classes.
 
 ### `AAstrawildGameState` (GameStateBase — replicated by default; `bReplicates` engine-managed)
 | Property | Mode |
@@ -81,10 +86,23 @@ Grep-verified against `DOREPLIFETIME(...)` calls — **20 replicated properties 
 | Property | Mode |
 |---|---|
 | `Items` (TMap<FName,int32>) | Replicated |
-| `EquippedItemId` | Replicated |
+| `EquippedItemId` | Replicated (weapon slot) |
+| `EquippedShieldItemId` | Replicated (shield slot — wave 3; feeds block mitigation + HUD) |
 
 ### `AAstrawildPlayerCharacter` (`bReplicates = true`, replicating movement)
 No custom properties — movement replication + component replication above.
+
+### `AAstrawildEchoBossCharacter` (`bReplicates = true` — added with the dungeon/boss round)
+| Property | Mode |
+|---|---|
+| `CurrentHealth` | Replicated |
+| `CurrentPhase` | Replicated |
+| `bEnraged` | Replicated |
+
+### `AAstrawildDungeonRoomActor` (`bReplicates = true` — added with the dungeon/boss round)
+| Property | Mode |
+|---|---|
+| `bCleared` | Replicated |
 
 ### Not replicated (deliberate or gap)
 `AAstrawildResourceNode` (`SetReplicates(false)` — harvested locally is a known v1 simplification),
@@ -145,7 +163,7 @@ Ordered by priority for the co-op milestone:
 
 ## 6. Honest Status Summary
 
-- **Implemented in code:** authority guards everywhere, 20 replicated properties across 7 classes, 5 server
+- **Implemented in code:** authority guards everywhere, 25 replicated properties across 9 classes, 5 server
   RPCs, shared research pool, replicated world state.
 - **Not implemented:** client-side prediction of results (only request-gating), per-player quest/save/roster,
   dedicated-server routing, any actual multiplayer test session.

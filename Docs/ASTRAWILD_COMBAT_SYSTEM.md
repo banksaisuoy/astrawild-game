@@ -1,7 +1,7 @@
 # ASTRAWILD — Combat System
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
+**Date: 2026-08-30** (wave 3 sync — weapon attack power + shield block integration)
 **Primary sources:** `AstrawildCombatComponent.h/.cpp`, `AstrawildSurvivalComponent.cpp`,
 `AstrawildEchoCharacter.cpp` (ApplyElementalDamage), `AstrawildPlayerCharacter.cpp` (input wiring)
 
@@ -26,7 +26,7 @@ reliable `Server_` RPCs.
 | | `DodgeStaminaCost` | 22 |
 | | `DodgeInvulnerabilitySeconds` | 0.4 s |
 | | `DodgeImpulseStrength` | 900 (LaunchCharacter impulse) |
-| Block | `BlockMitigation` | 0.65 (65 %) |
+| Block | `UnarmedBlockMitigation` | 0.45 (45 %) — renamed in wave 3 (was `BlockMitigation` 0.65); an equipped shield replaces it |
 | | `BlockSpeedMultiplier` | 0.45 (movement ×0.45 while blocking) |
 
 Player-character legacy mirror (`AAstrawildPlayerCharacter`): `AttackDamage 25`, `AttackDistance 280`,
@@ -54,9 +54,9 @@ Input (LMB / F)
 3. Records attack time (per-type cooldown clocks).
 4. **Hit resolution sweep**: `SweepMultiByChannel` on `ECC_Pawn`, sphere radius **90 cm**, from the player
    location to `location + forward × AttackRange (320 cm)`, ignoring self.
-5. For each hit: Echoes (skip defeated) take `ApplyElementalDamage(BaseDamage, AttackElement)`; damage
-   targets take `ApplyDamage`. Accumulates total damage into the `OnAttackExecuted(bHeavy, DamageDealt)`
-   broadcast.
+5. For each hit: Echoes (skip defeated) take `ApplyElementalDamage(GetOutgoingAttackDamage(bHeavy),
+   AttackElement)`; damage targets take `ApplyDamage`. Accumulates total damage into the
+   `OnAttackExecuted(bHeavy, DamageDealt)` broadcast.
 
 Damage numbers land **after** the target's own defense/elemental math, so the broadcast reports applied damage.
 
@@ -75,6 +75,25 @@ Health −= Damage
   Dawn Guard quest.
 - Physical attacks (element `None`) skip both elemental modifiers; only flat defense applies.
 - Players currently have **no elemental resistance** (see Known Gaps).
+
+### 2.3 Equipment integration (wave 3)
+
+`ExecuteAttack` resolves outgoing damage through **`GetOutgoingAttackDamage(bHeavy)`**:
+
+```
+Outgoing = (bHeavy ? HeavyAttackDamage : LightAttackDamage) + Inventory->GetEquippedWeaponAttackPower()
+```
+
+- The equipped weapon's flat `AttackPower` (item definition) is added to **both** attack tiers.
+- `UAstrawildCombatComponent::GetEquippedWeaponAttackPower()` proxies the inventory component
+  (resolves `EquippedItemId` through the item registry; 0 when unarmed or the id is unknown).
+- CODE_DEFAULT progression: **Dawnwood Club +6** (light 25→31, heavy 60→66), **Dawn Crystal Blade
+  +14** (light 25→39, heavy 60→74).
+- Weapon routing on equip: `InventoryComponent::EquipItem` puts items with `AttackPower > 0` in the
+  weapon slot (`EquippedItemId`), items with `BlockMitigation > 0` in the shield slot
+  (`EquippedShieldItemId`) — both replicated, both persisted in the save.
+- Quick access: **X** (equip-best) equips the strongest owned weapon + shield; `AW.EquipItem <id>`
+  cheats a specific item on; the HUD shows `Weapon: <name> (+N) | Shield: <name>`.
 
 ---
 
@@ -108,19 +127,21 @@ Input (RMB hold) ─► RequestSetBlocking(true/false)   [client]
                        └─ bIsBlocking (Replicated) + OnBlockingChanged broadcast
 ```
 
-- **Mitigation 65 %**: `GetMitigatedIncomingDamage(Raw)` returns `Raw × (1 − 0.65)` while blocking.
+- **Mitigation is equipment-dependent (wave 3)**: `GetMitigatedIncomingDamage(Raw)` returns
+  `Raw × (1 − GetEffectiveBlockMitigation())` while blocking.
+  - Unarmed baseline: `UnarmedBlockMitigation = 0.45` → 55 % of raw damage passes.
+  - With the **Stonehide Shield** equipped (`BlockMitigation 0.65`): the shield value **replaces** the
+    unarmed baseline (never stacks with it) → 35 % passes. Shield values are clamped to 0..0.8.
 - **Speed**: `PlayerCharacter::RefreshMovementSpeed` multiplies walk/sprint speed by
-  `BlockSpeedMultiplier (0.45)` while blocking.
+  `BlockSpeedMultiplier (0.45)` while blocking — unchanged.
 - Block applies to all incoming AI melee damage routed through the combat component (both Echo-on-player
   paths in the AI controller use `GetMitigatedIncomingDamage`).
-- Equipment-driven `BlockMitigation` per item exists on `UAstrawildItemDefinition` (0..0.8) — **PLANNED**
-  to replace the flat component value once equipment is wired.
 
 ### Combined incoming-damage resolution
 
 ```
 IsDodging?            ──► 0 damage (i-frames)
-else IsBlocking?      ──► Raw × 0.35
+else IsBlocking?      ──► Raw × (1 − EffectiveBlockMitigation)   (0.55 unarmed / 0.35 with Stonehide Shield)
 else                  ──► Raw
 then SurvivalComponent::ApplyDamage  (god mode check → health −, OnStatsChanged, death at 0)
 ```
@@ -163,5 +184,5 @@ Fall-out-of-world: `FellOutOfWorld` applies 9999 damage server-side.
 | Hit reactions / stagger | NOT IMPLEMENTED (damage numbers + AI flee state only) |
 | Telegraphs / VFX / sound | NOT IMPLEMENTED (placeholder visuals only) |
 | Player elemental resistances | NOT IMPLEMENTED |
-| Equipment attack power / block mitigation integration | Data fields exist on item definitions; runtime wiring PLANNED |
-| Combat UI (damage numbers) | NOT IMPLEMENTED (HUD shows bars only) |
+| Weapon-driven `AttackElement` override | NOT IMPLEMENTED (component `AttackElement` stays `Ash`; only flat weapon damage is wired) |
+| Combat UI (damage numbers) | NOT IMPLEMENTED (HUD shows bars + the wave 3 equipment readout only) |

@@ -4,8 +4,11 @@
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
 - Last updated: 2026-08-30
-- Branch: `main` (latest commit: content wave 2 + UMG crafting hooks)
-- Latest change: STEP 22 dungeon/boss + ecosystem chains (`a0634f6`), then content wave 2 — husbandry economy (Sprigling/Emberfang species, Feed Mix/Salve recipes, Feed Trough, Tech_Husbandry, quest #6) + UMG crafting screen contract (`UAstrawildCraftingScreenWidget`, server RPC craft requests, cancel + refund)
+- Branch: `main` (latest commits: content wave 2 + UMG crafting hooks, then content wave 3 + docs sync)
+- Latest change: **CODE_DEFAULT wave 3** — equipment progression (weapon + shield slots, armory recipes,
+  equip-best on X), 2 camp NPCs (Warden Maren, Trader Tam), loot tables (dungeon boss + vendor starter),
+  equipment save persistence — plus a full docs sync (this round, Task 2-b)
+- Codebase: **86 C++ files (42 `.cpp` + 44 `.h`), 13,398 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -17,7 +20,7 @@
 ## Compile
 
 - Target: `ASTRAWILDEditor Win64 Development` — pending Antigravity (user machine)
-- Result: `NOT_RUN`
+- Result: `NOT_RUN` (unchanged — sandbox has no UE5; honest status per Definition of Done)
 - Errors: Not measured; Unreal Editor unavailable in sandbox environments
 - Warnings: Not measured
 - Build duration: Not measured
@@ -25,7 +28,47 @@
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — content wave 2 + UMG crafting hooks)
+## Changes in this round (2026-08-30 — content wave 3: equipment progression, NPCs, loot tables + docs sync)
+
+### Content expansion (CODE_DEFAULT wave 3)
+
+| Content | Entries |
+|---|---|
+| Items 16 → **19** | `Item_DawnwoodClub` (Equipment, ATK +6, 2.5 kg), `Item_StonehideShield` (Equipment, BlockMitigation 0.65, 4.0 kg), `Item_CrystalBlade` (Equipment, ATK +14, 3.0 kg) — all stack 1 |
+| Recipes 7 → **10** | `Recipe_DawnwoodClub` (3 Wood + 1 Fiber, 3 s, no tech), `Recipe_StonehideShield` (3 Stone + 2 Wood + 1 Fiber, 5 s, `Tech_Armory`), `Recipe_CrystalBlade` (2 Crystal Shard + 2 Plank + 1 Ember Ash, 8 s, `Tech_Armory`) — all workbench |
+| Technologies 5 → **6** | `Tech_Armory` (8 RP, Primitive, prereq `Tech_BasicCrafting`; unlocks shield + blade recipes) |
+| Loot tables 0 → **2** | `Loot_DungeonBoss` (Ancient Core ×1 + Crystal Shard ×2 + Ember Ash ×2, bonus roll 0.75 — wired to the Hollow Underlight boss room), `Loot_VendorStarter` (Berry ×3 + Dew Flask ×1 + Bandage ×2, no bonus roll — Trader Tam's stock hook) |
+| NPCs 0 → **2** | `NPC_WardenMaren` (offers `Quest_FirstLight`; spawned at camp (630, −630, 100)), `NPC_VendorTam` (`ShopLootTableId = Loot_VendorStarter`; spawned at (−630, −630, 100)) |
+
+### Systems (wave 3 code changes — already implemented by the lead, verified by this round)
+
+| Area | Change |
+|---|---|
+| Registry | `+RegisterLootTable/FindLootTable`, `+RegisterNPC/FindNPCDefinition` (new `LootTables` + `NPCDefinitions` maps on `UAstrawildItemRegistrySubsystem`) |
+| Inventory | Two equipment slots: `EquippedItemId` (weapon) + **`EquippedShieldItemId`** (both replicated); `EquipItem` auto-routes by stat (AttackPower > 0 → weapon, BlockMitigation > 0 → shield); `+OnEquipmentChanged` delegate; `+GetEquippedWeaponAttackPower/GetEquippedShieldMitigation` (BlueprintPure) |
+| Combat | `BlockMitigation` renamed **`UnarmedBlockMitigation`** (default 0.65 → **0.45**); `+GetEffectiveBlockMitigation()` (shield replaces unarmed baseline, clamped 0..0.8); `+GetEquippedWeaponAttackPower()`; `+GetOutgoingAttackDamage(bHeavy)` = base + weapon flat ATK (used by `ExecuteAttack`) |
+| Save | v2 payload + `EquippedWeaponId` + `EquippedShieldId` (additive FNames, `NAME_None` defaults — **schema stays v2**, old saves load fine); load re-equips only when `HasItem` passes |
+| Dungeons | `GrantClearReward` grants `Template.ClearLootTableId` to the first player (guaranteed drops + one bonus roll); boss room template sets `ClearLootTableId = Loot_DungeonBoss` |
+| Input | **X** = equip-best (strongest owned weapon + shield) — 17 actions / 17 keys; log line fixed to "17 actions" |
+| Cheats | `+AW.EquipItem <ItemId>` — **13 commands** (warns when the item is missing or not equipment) |
+| HUD | `+EquipmentText` right-bottom readout (anchor 0.98/0.90, amber, 300×20, font 14): `Weapon: <name> (+N) | Shield: <name>` — 12 widgets total |
+| Tests | `+ASTRAWILD.Equipment.ProgressionMath` — **9 automation tests** (club light 25+6=31, blade heavy 60+14=74, unarmed block 55 %, shielded 35 %) |
+
+### Docs sync (this round — Task 2-b, docs only)
+
+Updated 13 docs to match the wave 3 code (every value re-verified against source):
+`ASTRAWILD_ASSET_MANIFEST` (19 items/10 recipes/6 techs + loot-table & NPC sections) ·
+`ASTRAWILD_INPUT_REFERENCE` (17 keys → 17 actions, X row, `AW.EquipItem`, 13 commands) ·
+`ASTRAWILD_COMBAT_SYSTEM` (§2.3 equipment integration, §4 block rework) ·
+`ASTRAWILD_SAVE_SYSTEM` (v2 payload + additive-no-bump decision) ·
+`ASTRAWILD_MULTIPLAYER` (25 replicated props / 9 classes — corrected a stale 20/7 count that missed
+the dungeon round's 4 props) · `ASTRAWILD_UI_ARCHITECTURE` (EquipmentText, 12 widgets, 17 actions) ·
+`ASTRAWILD_TEST_PLAN` (9 tests + T-1..T-6 fix-status re-check) · `ASTRAWILD_RESEARCH_SYSTEM` (6-node
+tree, quest totals) · `ASTRAWILD_GAMEPLAY_SYSTEMS` (30-row system inventory) ·
+`ASTRAWILD_CRAFTING_SYSTEM` (10 recipes) · `ASTRAWILD_QUEST_SYSTEM` (quest 6 + camp NPCs + ObserveEcho
+wiring fix status) · `BUILD_STATUS` (this file) · `ASTRAWILD_PRODUCTION_ROADMAP_V2` (STEP 28 note).
+
+## Changes in the previous round (2026-08-30 — content wave 2 + UMG crafting hooks)
 
 ### Content expansion (CODE_DEFAULT wave 2 — husbandry economy)
 
@@ -77,18 +120,18 @@ No `Source/` files were modified by DOCS-1.
 | Capture pipeline + field journal | `AstrawildCaptureComponent`, `AstrawildJournalSubsystem` | `ASTRAWILD_CREATURE_SYSTEM.md` |
 | Echo roster/party (max 3) | `AstrawildEchoRosterSubsystem` | `ASTRAWILD_CREATURE_SYSTEM.md` |
 | Echo work sites | `AstrawildWorkSiteActor` | `ASTRAWILD_CREATURE_SYSTEM.md` |
-| Inventory v2 (weight 120 kg, equipment slot) | `AstrawildInventoryComponent` | `ASTRAWILD_GAMEPLAY_SYSTEMS.md` |
+| Inventory v2 (weight 120 kg, equipment slots — weapon + shield) | `AstrawildInventoryComponent` | `ASTRAWILD_GAMEPLAY_SYSTEMS.md` |
 | Item registry + CODE_DEFAULT content library | `AstrawildItemRegistrySubsystem`, `AstrawildContentLibrary` | `ASTRAWILD_ASSET_PIPELINE.md` |
 | Timed crafting + stations | `AstrawildCraftingComponent`, `AstrawildCraftingStationActor` | `ASTRAWILD_CRAFTING_SYSTEM.md` |
 | Building placement + actors + power grid | `AstrawildBuildingComponent`, `AstrawildBuildingActor`, `AstrawildPowerSubsystem` | `ASTRAWILD_BUILDING_SYSTEM.md` |
 | Research / tech tree | `AstrawildResearchSubsystem` | `ASTRAWILD_RESEARCH_SYSTEM.md` |
-| Quests (event-driven, 5-quest chain) | `AstrawildQuestComponent` | `ASTRAWILD_QUEST_SYSTEM.md` |
+| Quests (event-driven, 6-quest chain) | `AstrawildQuestComponent` | `ASTRAWILD_QUEST_SYSTEM.md` |
 | Save schema v2 (checksum, migration, autosave) | `AstrawildSaveSubsystem` | `ASTRAWILD_SAVE_SYSTEM.md` |
 | Pure-C++ HUD + runtime Enhanced Input | `AstrawildHudWidget`, `AstrawildPlayerCharacter` | `ASTRAWILD_UI_ARCHITECTURE.md` |
-| Cheat manager (12 commands) | `AstrawildCheatManager` | `ASTRAWILD_INPUT_REFERENCE.md` |
+| Cheat manager (13 commands) | `AstrawildCheatManager` | `ASTRAWILD_INPUT_REFERENCE.md` |
 | NPC base (architecture-ready) | `AstrawildNPCCharacter` | `ASTRAWILD_QUEST_SYSTEM.md` |
-| Automation tests (8) | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` |
-| Multiplayer authority/replication (20 props, 5 RPCs) | across classes | `ASTRAWILD_MULTIPLAYER.md` |
+| Automation tests (9) | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` |
+| Multiplayer authority/replication (25 props, 5 RPCs) | across classes | `ASTRAWILD_MULTIPLAYER.md` |
 
 ### Docs created this round (DOCS-1)
 
@@ -117,7 +160,7 @@ No `Source/` files were modified by DOCS-1.
 |---|---|---|
 | Open project | NOT_RUN | Awaiting target-machine compile (Test Plan §4) |
 | Compile Development Editor | NOT_RUN | **Blocking step for everything below** |
-| Automation suite (8 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` |
+| Automation suite (9 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` |
 | Player movement/camera | NOT_RUN | Manual flow step 4 |
 | Interaction | NOT_RUN | Step 5 |
 | Harvest resource | NOT_RUN | Step 10 |
@@ -134,20 +177,22 @@ No `Source/` files were modified by DOCS-1.
 | Severity | Issue | File/asset | Reproduction | Owner/next action |
 |---|---|---|---|---|
 | **Blocker** | Repository has never been compiled | `Source/AstrawildCore/` | Any build attempt | Antigravity: Test Plan §4, then fix-forward |
-| High | Quest "Observe a Lumewisp" objective cannot progress (no event publisher for ObserveEcho) | `AstrawildQuestComponent.cpp` | Start Quest_FirstEcho and observe a Lumewisp | Add observation event publish at journal milestones (Test Plan T-1) |
-| High | AI think loop reschedules per frame; LOD interval computed but not applied | `AstrawildEchoAIController.cpp:Think` | Spawn 10+ Echoes, profile | Replace `SetTimerForNextTick` with `SetTimer(Interval)` (T-2) |
-| Medium | Cold/heat damage unreachable with default weather profile (min felt temp 8 °C vs 4 °C threshold) | `AstrawildWeatherSubsystem` / Survival | `AW.SetWeather cold` and wait | Tune profile/base temp after design review (T-4) |
-| Medium | Player consume food/drink action has no keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press keys | Wire with inventory UI (M8+) (T-5) |
-| Medium | Journal subsystem iterates all Echoes every frame per player | `AstrawildJournalSubsystem.cpp:Tick` | Insights capture | Optimize on profiling evidence (T-6) |
-| Low | HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (T-3) |
-| Low | Log-line count drift ("16 actions" / "10 items" vs actual 15/12) | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Cosmetic; correct the strings when touched |
+| High | T-1 ObserveEcho quest wiring | `AstrawildQuestComponent.cpp` / `AstrawildJournalSubsystem.cpp` | Start Quest_FirstEcho and observe a Lumewisp | **Fix in code** (journal publishes `Event.EchoObserved` at the 25 % scan milestone) — verify at playtest |
+| High | T-2 AI think loop / LOD interval | `AstrawildEchoAIController.cpp:Think` | Spawn 10+ Echoes, profile | **Fix in code** (`SetTimer` with the LOD interval) — verify via Insights |
+| Medium | T-4 cold/heat damage reachability | `AstrawildWeatherSubsystem` / Survival | `AW.SetWeather cold` and wait | **Fix in code** (Cold −17 °C offset → felt 3 °C < 4 °C threshold) — verify at playtest |
+| Medium | T-5 consume keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press **G** | **Fix in code** (G = `SmartConsume`) — verify at playtest |
+| Medium | T-6 journal per-frame iteration | `AstrawildJournalSubsystem.cpp` | Insights capture | **Fix in code** (throttled observation sweep) — verify via Insights |
+| Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (still present) |
+| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "17 actions" / "19 items, … 2 loot tables, 2 NPCs" and matches the code |
+| Low | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | `ShopLootTableId` is a definition-level hook only — purchase flow NOT IMPLEMENTED (future round) |
 
 ## Handoff to Antigravity
 
-The C++ core (single module `AstrawildCore`, ~11.4k LOC, 78 source files), the zero-asset playability layer
-(procedural world + runtime input + C++ HUD), save schema v2, the CODE_DEFAULT content set, the
-documentation suite (23 system docs), the test plan, and the asset manifest/replacement pipeline are all in
-the repository. Antigravity must: **pull, generate project files, compile `ASTRAWILDEditor Win64
-Development`, run the 8 automation tests, execute the 17-step first-playable checklist, and fill this report
-with real results.** Do not mark `COMPLETE` until Compile, the automation suite, the core-loop Playtest,
-and Save/Load have all passed (see `Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
+The C++ core (single module `AstrawildCore`, **~13.4k LOC, 86 source files**), the zero-asset playability
+layer (procedural world + runtime input + C++ HUD), save schema v2 (with wave 3 equipment persistence),
+the CODE_DEFAULT content set (19 items / 10 recipes / 7 species / 10 buildings / 6 techs / 6 quests /
+2 loot tables / 2 NPCs), the documentation suite, the test plan, and the asset manifest/replacement
+pipeline are all in the repository. Antigravity must: **pull, generate project files, compile
+`ASTRAWILDEditor Win64 Development`, run the 9 automation tests, execute the 17-step first-playable
+checklist, and fill this report with real results.** Do not mark `COMPLETE` until Compile, the automation
+suite, the core-loop Playtest, and Save/Load have all passed (see `Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
