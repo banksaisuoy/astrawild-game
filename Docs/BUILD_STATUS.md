@@ -3,9 +3,9 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-29
-- Branch: `main` (latest code commit `7775668`; docs suite added this round, uncommitted)
-- Latest change: V2 foundation round — world simulation, survival, combat, Echo v2 (needs/personality/AI), capture pipeline, journal, research, quests, crafting, building, power grid, save schema v2, zero-asset world bootstrap, C++ HUD, cheats, 8 automation tests, 23-file docs suite
+- Last updated: 2026-08-30
+- Branch: `main` (latest commit: content wave 2 + UMG crafting hooks)
+- Latest change: STEP 22 dungeon/boss + ecosystem chains (`a0634f6`), then content wave 2 — husbandry economy (Sprigling/Emberfang species, Feed Mix/Salve recipes, Feed Trough, Tech_Husbandry, quest #6) + UMG crafting screen contract (`UAstrawildCraftingScreenWidget`, server RPC craft requests, cancel + refund)
 
 ## Environment
 
@@ -25,7 +25,33 @@
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-29, DOCS-1 — docs suite)
+## Changes in this round (2026-08-30 — content wave 2 + UMG crafting hooks)
+
+### Content expansion (CODE_DEFAULT wave 2 — husbandry economy)
+
+| Content | Entries |
+|---|---|
+| Items 12 → **16** | `Item_Dawnbloom`, `Item_EmberAsh`, `Item_FeedMix`, `Item_HerbalSalve` |
+| Recipes 5 → **7** | `Recipe_FeedMix` (campfire), `Recipe_HerbalSalve` (workbench) |
+| Echo species 5 → **7** | `Echo_Sprigling` (Flora support, Social, herding, Farming 1.7, loot: Dawnbloom), `Echo_Emberfang` (new Ember element, crepuscular predator, loot: Ember Ash) |
+| Buildings 9 → **10** | `Building_FeedTrough` (Farm, Tech_Husbandry) |
+| Technologies 4 → **5** | `Tech_Husbandry` (10 RP, prereq Cooking) |
+| Quests 5 → **6** | `Quest_ShepherdsDawn` chained after Dawn Guard |
+| Elements | new `Ember` element on `EAstrawildElementType` (additive) |
+| Ecosystem | Emberfang→Sprigling/Voltling + Gloomfang→Sprigling chains; Sprigling herding |
+| World spawn | wild rotation 4 species; hostiles alternate Gloomfang/Emberfang |
+
+### UMG crafting screen contract (formerly "future UMG contract")
+
+- `UAstrawildCraftingScreenWidget` (Abstract, Blueprintable): base class that binds the owning pawn's
+  crafting component and forwards everything to `BP_OnRecipesAvailable/BP_OnCraftStarted/BP_OnCraftProgress/
+  BP_OnCraftCompleted/BP_OnCraftCancelled` events — UMG assets stay pure view code.
+- `UAstrawildCraftingComponent` additions: `OnCraftStarted`/`OnCraftCancelled` delegates,
+  `ServerRequestCraft`/`ServerRequestCancelCraft` Server RPCs (client-safe), `CancelActiveCraft()` with
+  ingredient refund, `GetCraftingProgress()`, `GetCraftTimeRemaining()`, `GetTechUnlockedRecipes()`,
+  `GetNearbyStationIds()`.
+
+## Changes in the previous round (2026-08-29, DOCS-1 — docs suite)
 
 The C++ for all systems below landed in commits `3872c7e`→`7775668`; this round adds the complete
 documentation suite (23 new files in `Docs/`, see "New systems documented" table) and this status refresh.

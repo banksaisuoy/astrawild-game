@@ -9,6 +9,8 @@ class UAstrawildRecipeDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildCraftCompleted, FName, RecipeId, bool, bSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildCraftProgress, FName, RecipeId, float, ProgressFraction);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildCraftStarted, FName, RecipeId, float, DurationSeconds);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildCraftCancelled, FName, RecipeId, bool, bRefunded);
 
 /**
  * Timed, tech-gated crafting (directive §15). One craft at a time per component.
@@ -27,6 +29,14 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Crafting")
     FAstrawildCraftProgress OnCraftProgress;
+
+    /** Fired when a timed craft begins (UMG crafting screen hook). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Crafting")
+    FAstrawildCraftStarted OnCraftStarted;
+
+    /** Fired when the active craft is cancelled (UMG crafting screen hook). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Crafting")
+    FAstrawildCraftCancelled OnCraftCancelled;
 
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -50,6 +60,34 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Crafting")
     FName GetActiveRecipeId() const { return ActiveRecipeId; }
+
+    /** Client -> server craft request (UMG screens call this from any net role). */
+    UFUNCTION(Server, Reliable)
+    void ServerRequestCraft(FName RecipeId);
+
+    /** Client -> server cancel request (server refunds ingredients). */
+    UFUNCTION(Server, Reliable)
+    void ServerRequestCancelCraft();
+
+    /** Cancel the active timed craft and refund ingredients (server only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Crafting")
+    bool CancelActiveCraft();
+
+    /** Progress of the active craft (0..1; 0 when idle) — for UMG progress bars. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Crafting")
+    float GetCraftingProgress() const;
+
+    /** Seconds left on the active craft (0 when idle). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Crafting")
+    float GetCraftTimeRemaining() const { return FMath::Max(0.0f, CraftTimeRemaining); }
+
+    /** All recipes visible to this player (tech gate only, ignores ingredients/station) — UMG listing source. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Crafting")
+    TArray<UAstrawildRecipeDefinition*> GetTechUnlockedRecipes() const;
+
+    /** Station ids currently in use range (UMG "craftable here" indicator). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Crafting")
+    TArray<FName> GetNearbyStationIds() const;
 
 protected:
     virtual void BeginPlay() override;

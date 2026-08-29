@@ -147,7 +147,108 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
     CraftTimeTotal = Recipe->CraftDurationSeconds;
     CraftTimeRemaining = CraftTimeTotal;
     PendingOutputs = Recipe->Outputs;
+    OnCraftStarted.Broadcast(Recipe->RecipeId, Recipe->CraftDurationSeconds);
     return true;
+}
+
+void UAstrawildCraftingComponent::ServerRequestCraft(const FName RecipeId)
+{
+    CraftByRecipeId(RecipeId);
+}
+
+void UAstrawildCraftingComponent::ServerRequestCancelCraft()
+{
+    CancelActiveCraft();
+}
+
+bool UAstrawildCraftingComponent::CancelActiveCraft()
+{
+    if (GetOwnerRole() != ROLE_Authority || !IsCrafting())
+    {
+        return false;
+    }
+
+    const FName CancelledRecipe = ActiveRecipeId;
+    bool bRefunded = false;
+
+    // Refund ingredients from the recipe definition (server-authoritative).
+    UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    UAstrawildRecipeDefinition* Recipe = Registry ? Registry->FindRecipe(CancelledRecipe) : nullptr;
+    UAstrawildInventoryComponent* Inventory = GetInventory();
+    if (Recipe && Inventory)
+    {
+        for (const FAstrawildItemStack& Ingredient : Recipe->Ingredients)
+        {
+            Inventory->AddItem(Ingredient.ItemId, Ingredient.Quantity);
+        }
+        bRefunded = true;
+    }
+
+    ActiveRecipeId = NAME_None;
+    PendingOutputs.Reset();
+    CraftTimeRemaining = 0.0f;
+    CraftTimeTotal = 0.0f;
+
+    OnCraftCancelled.Broadcast(CancelledRecipe, bRefunded);
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Craft cancelled: %s (refunded: %s)."), *CancelledRecipe.ToString(), bRefunded ? TEXT("yes") : TEXT("no"));
+    return true;
+}
+
+float UAstrawildCraftingComponent::GetCraftingProgress() const
+{
+    if (!IsCrafting() || CraftTimeTotal <= 0.0f)
+    {
+        return 0.0f;
+    }
+    return FMath::Clamp(1.0f - CraftTimeRemaining / CraftTimeTotal, 0.0f, 1.0f);
+}
+
+TArray<UAstrawildRecipeDefinition*> UAstrawildCraftingComponent::GetTechUnlockedRecipes() const
+{
+    TArray<UAstrawildRecipeDefinition*> Result;
+
+    UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    if (!Registry)
+    {
+        return Result;
+    }
+
+    UAstrawildResearchSubsystem* Research = GetResearch();
+    for (UAstrawildRecipeDefinition* Recipe : Registry->GetAllRecipes())
+    {
+        if (!Recipe)
+        {
+            continue;
+        }
+        if (Recipe->RequiredTechId.IsNone() || (Research && Research->IsTechUnlocked(Recipe->RequiredTechId)))
+        {
+            Result.Add(Recipe);
+        }
+    }
+    return Result;
+}
+
+TArray<FName> UAstrawildCraftingComponent::GetNearbyStationIds() const
+{
+    TArray<FName> Result;
+
+    const AActor* Owner = GetOwner();
+    const UWorld* World = GetWorld();
+    if (!Owner || !World)
+    {
+        return Result;
+    }
+
+    for (TActorIterator<AAstrawildCraftingStationActor> It(World); It; ++It)
+    {
+        const AAstrawildCraftingStationActor* Station = *It;
+        if (Station && !Station->StationId.IsNone() &&
+            FVector::Dist(Station->GetActorLocation(), Owner->GetActorLocation()) <= Station->UseRadius)
+        {
+            Result.AddUnique(Station->StationId);
+        }
+    }
+    return Result;
 }
 
 bool UAstrawildCraftingComponent::CraftByRecipeId(const FName RecipeId)

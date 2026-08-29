@@ -142,6 +142,25 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_Resonator"), TEXT("Echo Resonator"), EAstrawildItemCategory::CreatureItem, 0.4f, 20));
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_AncientCore"), TEXT("Ancient Core"), EAstrawildItemCategory::QuestItem, 1.0f, 10));
+
+    // --- Content expansion (CODE_DEFAULT wave 2) ---
+
+    UAstrawildItemDefinition* Dawnbloom = MakeItem(Outer, TEXT("Item_Dawnbloom"), TEXT("Dawnbloom Petal"), EAstrawildItemCategory::Material, 0.1f, 100);
+    Dawnbloom->Description = FText::FromString(TEXT("A luminous petal shed by Spriglings. Basis of dawn-field remedies."));
+    Registry->RegisterItem(Dawnbloom);
+
+    UAstrawildItemDefinition* EmberAsh = MakeItem(Outer, TEXT("Item_EmberAsh"), TEXT("Ember Ash"), EAstrawildItemCategory::Material, 0.2f, 50);
+    EmberAsh->Description = FText::FromString(TEXT("Still-warm residue left behind by Emberfangs."));
+    Registry->RegisterItem(EmberAsh);
+
+    UAstrawildItemDefinition* FeedMix = MakeItem(Outer, TEXT("Item_FeedMix"), TEXT("Echo Feed Mix"), EAstrawildItemCategory::Consumable, 0.3f, 40);
+    FeedMix->FoodValue = 5.0f;
+    FeedMix->EchoFeedValue = 14.0f;
+    Registry->RegisterItem(FeedMix);
+
+    UAstrawildItemDefinition* HerbalSalve = MakeItem(Outer, TEXT("Item_HerbalSalve"), TEXT("Dawnbloom Salve"), EAstrawildItemCategory::Consumable, 0.25f, 20);
+    HerbalSalve->HealValue = 70.0f;
+    Registry->RegisterItem(HerbalSalve);
 }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +189,16 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_WaterFlask"), TEXT("Dew Flask"),
         { Stack(TEXT("Item_Fiber"), 2), Stack(TEXT("Item_CrystalShard"), 1) },
         { Stack(TEXT("Item_WaterFlask"), 1) }, 4.0f, NAME_None, TEXT("Station_Workbench")));
+
+    // --- Content expansion (CODE_DEFAULT wave 2: husbandry economy) ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FeedMix"), TEXT("Echo Feed Mix"),
+        { Stack(TEXT("Item_Berry"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_FeedMix"), 1) }, 4.0f, TEXT("Tech_Husbandry"), TEXT("Station_Campfire")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_HerbalSalve"), TEXT("Dawnbloom Salve"),
+        { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_HerbalSalve"), 1) }, 4.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
 }
 
 // ---------------------------------------------------------------------------
@@ -231,6 +260,30 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
     Registry->RegisterEcho(Gloomfang);
+
+    // --- Content expansion (CODE_DEFAULT wave 2) ---
+
+    // Herding flora companion: the husbandry anchor species (directive §7 herds).
+    UAstrawildEchoDefinition* Sprigling = MakeEcho(Outer, TEXT("Echo_Sprigling"), TEXT("Sprigling"), EAstrawildElementType::Flora,
+        EAstrawildEchoRole::Support, 50.0f, 5.0f, 3.0f, 290.0f, EAstrawildPersonality::Social,
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.30f, EAstrawildElementType::Frost, false);
+    Sprigling->PreferredWeather = { EAstrawildWeatherState::Clear, EAstrawildWeatherState::Rain };
+    Sprigling->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
+    FAstrawildWorkAffinity FarmWork;
+    FarmWork.WorkType = EAstrawildWorkType::Farming;
+    FarmWork.Affinity = 1.7f;
+    Sprigling->WorkAffinities.Add(FarmWork);
+    Sprigling->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 2));
+    Sprigling->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 1));
+    Registry->RegisterEcho(Sprigling);
+
+    // Ember predator: crepuscular stalker of the meadow edges (directive §7 food chain).
+    UAstrawildEchoDefinition* Emberfang = MakeEcho(Outer, TEXT("Echo_Emberfang"), TEXT("Emberfang"), EAstrawildElementType::Ember,
+        EAstrawildEchoRole::Combat, 130.0f, 20.0f, 5.0f, 400.0f, EAstrawildPersonality::Aggressive,
+        EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.90f, EAstrawildElementType::Frost, true);
+    Emberfang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
+    Emberfang->DefeatLoot.Add(Stack(TEXT("Item_EmberAsh"), 2));
+    Registry->RegisterEcho(Emberfang);
 }
 
 // ---------------------------------------------------------------------------
@@ -266,6 +319,11 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_ResearchDesk"), TEXT("Research Desk"), EAstrawildBuildingCategory::Research,
         TEXT("Item_Wood"), 6, NAME_None, 350.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::ResearchAssist));
+
+    // --- Content expansion (CODE_DEFAULT wave 2) ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_FeedTrough"), TEXT("Echo Feed Trough"), EAstrawildBuildingCategory::Farm,
+        TEXT("Item_Wood"), 5, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::Farming));
 }
 
 // ---------------------------------------------------------------------------
@@ -286,6 +344,11 @@ void UAstrawildContentLibrary::BuildTechnologies(UAstrawildItemRegistrySubsystem
 
     Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_AdvancedEnergy"), TEXT("Advanced Energy"), EAstrawildTechEra::AdvancedEnergy, 30,
         { TEXT("Tech_Electrical") }, {}, {}));
+
+    // --- Content expansion (CODE_DEFAULT wave 2): the husbandry branch. ---
+
+    Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Husbandry"), TEXT("Echo Husbandry"), EAstrawildTechEra::Primitive, 10,
+        { TEXT("Tech_Cooking") }, { TEXT("Recipe_FeedMix"), TEXT("Recipe_HerbalSalve") }, { TEXT("Building_FeedTrough") }));
 }
 
 // ---------------------------------------------------------------------------
@@ -389,8 +452,44 @@ void UAstrawildContentLibrary::BuildQuests(UAstrawildItemRegistrySubsystem* Regi
     Quest5->Objectives.Add(ObjDefeat);
     Quest5->RewardItems.Add(Stack(TEXT("Item_AncientCore"), 1));
     Quest5->RewardResearchPoints = 20;
-    Quest5->NextQuestId = NAME_None;
+    Quest5->NextQuestId = TEXT("Quest_ShepherdsDawn");
     Registry->RegisterQuest(Quest5);
+
+    // --- Content expansion (CODE_DEFAULT wave 2): husbandry chain finale. ---
+
+    UAstrawildQuestDefinition* Quest6 = NewObject<UAstrawildQuestDefinition>(Outer);
+    Quest6->QuestId = TEXT("Quest_ShepherdsDawn");
+    Quest6->Title = FText::FromString(TEXT("Shepherd's Dawn"));
+    Quest6->Summary = FText::FromString(TEXT("Sprigling herds graze the meadows. Learn the ways of Echo husbandry."));
+    FAstrawildQuestObjective ObjHusbandry;
+    ObjHusbandry.Type = EAstrawildQuestObjectiveType::UnlockTechnology;
+    ObjHusbandry.TargetId = TEXT("Tech_Husbandry");
+    ObjHusbandry.RequiredCount = 1;
+    ObjHusbandry.ObjectiveText = FText::FromString(TEXT("Unlock Echo Husbandry"));
+    Quest6->Objectives.Add(ObjHusbandry);
+    FAstrawildQuestObjective ObjCaptureSprigling;
+    ObjCaptureSprigling.Type = EAstrawildQuestObjectiveType::CaptureEcho;
+    ObjCaptureSprigling.TargetId = TEXT("Echo_Sprigling");
+    ObjCaptureSprigling.RequiredCount = 1;
+    ObjCaptureSprigling.ObjectiveText = FText::FromString(TEXT("Capture a Sprigling"));
+    Quest6->Objectives.Add(ObjCaptureSprigling);
+    FAstrawildQuestObjective ObjTrough;
+    ObjTrough.Type = EAstrawildQuestObjectiveType::PlaceBuilding;
+    ObjTrough.TargetId = TEXT("Building_FeedTrough");
+    ObjTrough.RequiredCount = 1;
+    ObjTrough.ObjectiveText = FText::FromString(TEXT("Place an Echo Feed Trough"));
+    Quest6->Objectives.Add(ObjTrough);
+    FAstrawildQuestObjective ObjFeed;
+    ObjFeed.Type = EAstrawildQuestObjectiveType::CollectItem;
+    ObjFeed.TargetId = TEXT("Item_FeedMix");
+    ObjFeed.RequiredCount = 3;
+    ObjFeed.ObjectiveText = FText::FromString(TEXT("Craft 3 Echo Feed Mix"));
+    Quest6->Objectives.Add(ObjFeed);
+    Quest6->RewardItems.Add(Stack(TEXT("Item_FeedMix"), 5));
+    Quest6->RewardItems.Add(Stack(TEXT("Item_HerbalSalve"), 2));
+    Quest6->RewardResearchPoints = 20;
+    Quest6->NextQuestId = NAME_None;
+    Registry->RegisterQuest(Quest6);
 }
 
 void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Registry)
@@ -407,5 +506,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildTechnologies(Registry);
     BuildQuests(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 10 items, 5 recipes, 5 Echo species, 9 buildings, 4 technologies, 5 quests."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 16 items, 7 recipes, 7 Echo species, 10 buildings, 5 technologies, 6 quests."));
 }

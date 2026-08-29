@@ -33,9 +33,15 @@ void UAstrawildEcosystemSubsystem::BuildDefaultFoodChain()
     // Dawn Fields food chain (directive §7/§21): Gloomfangs hunt the gentle species.
     AddPredatorPair(TEXT("Echo_Gloomfang"), TEXT("Echo_Lumewisp"));
     AddPredatorPair(TEXT("Echo_Gloomfang"), TEXT("Echo_Duskmoth"));
+    AddPredatorPair(TEXT("Echo_Gloomfang"), TEXT("Echo_Sprigling"));
 
-    // Lumewisps travel in loose herds — Social personalities anchor them together.
+    // Ember predator (content wave 2): crepuscular stalker of Sprigling herds and Voltlings.
+    AddPredatorPair(TEXT("Echo_Emberfang"), TEXT("Echo_Sprigling"));
+    AddPredatorPair(TEXT("Echo_Emberfang"), TEXT("Echo_Voltling"));
+
+    // Herding species — Social personalities anchor them together (directive §7).
     MarkHerdingSpecies(TEXT("Echo_Lumewisp"));
+    MarkHerdingSpecies(TEXT("Echo_Sprigling"));
 }
 
 void UAstrawildEcosystemSubsystem::AddPredatorPair(const FName PredatorId, const FName PreyId)

@@ -181,12 +181,12 @@ void AAstrawildWorldBootstrapper::SpawnWildEchoes()
         return;
     }
 
-    // Day-active friendly species (directive §21 first Echo encounters).
-    const FName Species[3] = { TEXT("Echo_Lumewisp"), TEXT("Echo_Stonehide"), TEXT("Echo_Duskmoth") };
+    // Day-active friendly species (directive §21 first Echo encounters + wave-2 Sprigling herds).
+    const FName Species[4] = { TEXT("Echo_Lumewisp"), TEXT("Echo_Stonehide"), TEXT("Echo_Duskmoth"), TEXT("Echo_Sprigling") };
 
     for (int32 i = 0; i < WildEchoCount; ++i)
     {
-        UAstrawildEchoDefinition* Definition = Registry->FindEcho(Species[i % 3]);
+        UAstrawildEchoDefinition* Definition = Registry->FindEcho(Species[i % 4]);
         if (!Definition)
         {
             continue;
@@ -217,6 +217,7 @@ void AAstrawildWorldBootstrapper::SpawnHostiles()
     }
 
     UAstrawildEchoDefinition* Gloomfang = Registry->FindEcho(TEXT("Echo_Gloomfang"));
+    UAstrawildEchoDefinition* Emberfang = Registry->FindEcho(TEXT("Echo_Emberfang"));
     if (!Gloomfang)
     {
         return;
@@ -224,6 +225,8 @@ void AAstrawildWorldBootstrapper::SpawnHostiles()
 
     for (int32 i = 0; i < HostileCount; ++i)
     {
+        // Alternate night stalker and ember predator (content wave 2).
+        UAstrawildEchoDefinition* HostileDef = (Emberfang && (i % 2 == 1)) ? Emberfang : Gloomfang;
         const FVector Location(
             RandomStream.FRandRange(-ArenaSize * 0.9f, ArenaSize * 0.9f),
             RandomStream.FRandRange(-ArenaSize * 0.9f, ArenaSize * 0.9f),
@@ -234,7 +237,7 @@ void AAstrawildWorldBootstrapper::SpawnHostiles()
         AAstrawildEchoCharacter* Echo = World->SpawnActor<AAstrawildEchoCharacter>(AAstrawildEchoCharacter::StaticClass(), Location, FRotator::ZeroRotator, Params);
         if (Echo)
         {
-            Echo->InitializeFromDefinition(Gloomfang);
+            Echo->InitializeFromDefinition(HostileDef);
         }
     }
 }

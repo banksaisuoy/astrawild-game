@@ -11,7 +11,8 @@ enum class EAstrawildElementType : uint8
     Ash UMETA(DisplayName="Ash"),
     Flora UMETA(DisplayName="Flora"),
     Frost UMETA(DisplayName="Frost"),
-    Pulse UMETA(DisplayName="Pulse")
+    Pulse UMETA(DisplayName="Pulse"),
+    Ember UMETA(DisplayName="Ember")
 };
 
 UENUM(BlueprintType)

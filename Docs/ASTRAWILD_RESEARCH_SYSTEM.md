@@ -19,13 +19,13 @@ This is the documented co-op decision — in multiplayer, the pool is **shared b
 | Quest rewards | Per quest (see §3) | `QuestComponent::GrantRewards` → `AddResearchPoints(RewardResearchPoints)` |
 | Cheat | `AW.ResearchPoints N` | testing only |
 
-Full-journaling all 5 species = 40 points total; the First Dawn quest chain awards 60 points across its
-five quests. Cooking (5) + Electrical (15) = 20 points for the current tree, so a player who journals even
-moderately and quests will afford both well before Dawn Guard.
+Full-journaling all 7 species = 56 points total; the First Dawn quest chain awards 80 points across its
+six quests (wave 2 adds `Tech_Husbandry` at 10 RP — Cooking 5 + Husbandry 10 + Electrical 15 = 30 points
+for the tree, comfortably affordable through moderate journaling and quests).
 
 ---
 
-## 2. The Tech Tree (4 CODE_DEFAULT nodes)
+## 2. The Tech Tree (5 CODE_DEFAULT nodes)
 
 From `AstrawildContentLibrary.cpp::BuildTechnologies()`:
 
@@ -35,6 +35,7 @@ From `AstrawildContentLibrary.cpp::BuildTechnologies()`:
 | Cooking | `Tech_Cooking` | Primitive | **5** | `Tech_BasicCrafting` | `Recipe_CookedMeat` | — |
 | Electrical Foundations | `Tech_Electrical` | Electrical | **15** | `Tech_BasicCrafting` | — | `Building_Generator`, `Building_Battery`, `Building_LampPost` |
 | Advanced Energy | `Tech_AdvancedEnergy` | AdvancedEnergy | **30** | `Tech_Electrical` | — (future content) | — (future content) |
+| Echo Husbandry | `Tech_Husbandry` | Primitive | **10** | `Tech_Cooking` | `Recipe_FeedMix`, `Recipe_HerbalSalve` | `Building_FeedTrough` |
 
 `Tech_BasicCrafting` costs 0 and gates nothing itself — it is the root identity that other nodes reference.
 

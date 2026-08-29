@@ -86,21 +86,29 @@ tech-gated (the buildings that *represent* them are separate — see Building do
 
 ---
 
-## 6. Future UMG Crafting Screen Contract
+## 6. UMG Crafting Screen Contract (IMPLEMENTED in C++, 2026-08-30)
 
-The real crafting UI (PLANNED — see Roadmap) must use this existing API surface and nothing else:
+The real crafting UI binds through `UAstrawildCraftingScreenWidget` — an Abstract/Blueprintable base
+class that owns all component binding; UMG assets subclass it and implement the `BP_*` events, staying a
+pure presentation layer:
 
 | Need | API |
 |---|---|
-| List recipes | `Registry->GetAllRecipes()` |
+| Recipe list (tech-gated) | `Crafting->GetTechUnlockedRecipes()` → `BP_OnRecipesAvailable` / `RefreshRecipes()` |
 | Per-recipe availability (list view, ignore distance) | `Crafting->CanCraftIgnoringStation(recipe)` |
 | Per-recipe availability (craft button) | `Crafting->CanCraft(recipe)` |
-| Start craft | `Crafting->CraftRecipe(recipe)` / `CraftByRecipeId(id)` |
-| Active craft + progress | `Crafting->IsCrafting()`, `GetActiveRecipeId()`, `OnCraftProgress` delegate |
-| Completion feedback | `OnCraftCompleted` delegate |
+| "At station" indicator | `Crafting->GetNearbyStationIds()` |
+| Start craft (client-safe) | `Widget->RequestCraft(recipeId)` → `ServerRequestCraft` RPC → `CraftByRecipeId` |
+| Active craft + progress | `Crafting->IsCrafting()`, `GetActiveRecipeId()`, `GetCraftingProgress()`, `GetCraftTimeRemaining()` |
+| Craft start feedback | `OnCraftStarted` delegate → `BP_OnCraftStarted(recipeId, duration)` |
+| Progress feedback | `OnCraftProgress` delegate → `BP_OnCraftProgress(recipeId, fraction)` |
+| Completion feedback | `OnCraftCompleted` delegate → `BP_OnCraftCompleted(recipeId, success)` |
+| Cancel + refund (client-safe) | `Widget->RequestCancelCraft()` → `ServerRequestCancelCraft` RPC → `CancelActiveCraft()` (refunds ingredients) |
+| Cancel feedback | `OnCraftCancelled` delegate → `BP_OnCraftCancelled(recipeId, refunded)` |
 | Ingredient tooltips | `Registry->FindItem(id)` → definition (weight, category, values) |
 
-No additional gameplay hooks are required — the screen is a pure presentation layer over the component.
+UMG **assets** (the .umap/.uasset widget) are still NOT IMPLEMENTED — the C++ base class and all hooks
+are in place; the pure-C++ HUD keeps the game playable until then (see `ASTRAWILD_UI_ARCHITECTURE.md`).
 
 ---
 
@@ -108,8 +116,7 @@ No additional gameplay hooks are required — the screen is a pure presentation 
 
 | Feature | Status |
 |---|---|
-| UMG crafting screen | NOT IMPLEMENTED (station interact stopgap) |
+| UMG crafting screen **assets** | NOT IMPLEMENTED (C++ base class `UAstrawildCraftingScreenWidget` + all hooks ready; station interact stopgap remains the active UX) |
 | Multi-slot craft queue | NOT IMPLEMENTED (single active craft by design v1) |
-| Craft cancellation / refund mid-craft | NOT IMPLEMENTED (materials are consumed at start) |
 | Station visuals | PLACEHOLDER engine cylinders |
 | Recipe output to a container (chest) | NOT IMPLEMENTED (outputs go to player inventory) |
