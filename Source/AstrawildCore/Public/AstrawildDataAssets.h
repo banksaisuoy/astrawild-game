@@ -7,6 +7,9 @@
 
 class USkeletalMesh;
 class UTexture2D;
+class UStaticMesh;
+class UMaterialInterface;
+class USoundBase;
 
 UENUM(BlueprintType)
 enum class EAstrawildItemCategory : uint8
@@ -139,6 +142,60 @@ public:
     /** Deployable: consuming this item spawns a utility robot worker. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
     bool bDeploysRobot = false;
+
+    // --- Production V2 (additive) — weapons, armor, scanner, drone modules ---
+
+    /** Weapon behaviour profile (firing family, damage, VFX hooks). NAME_None = legacy stat path. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    FName WeaponDefinitionId = NAME_None;
+
+    /** Content rarity (display + economy signal). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item")
+    EAstrawildRarity Rarity = EAstrawildRarity::Common;
+
+    /** Armor/helmet/exosuit: cold-side insulation in Celsius (0 = none). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0"))
+    float ColdInsulationRating = 0.0f;
+
+    /** Armor/helmet/exosuit: heat-side insulation in Celsius (0 = none). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0"))
+    float HeatInsulationRating = 0.0f;
+
+    /** Equipment tier label for UI/progression (Field/Mk I-III/Experimental). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    EAstrawildTechTier TechTier = EAstrawildTechTier::Field;
+
+    /** Scanner: observation range multiplier while equipped (1 = base 1400cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="1.0", ClampMax="4.0"))
+    float ScannerRangeMultiplier = 1.0f;
+
+    /** Scanner: reveals hidden resource nodes (scanner-gated harvesting). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    bool bHiddenResourceDetection = false;
+
+    /** Scanner: doubles ancient-POI discovery radius + unlocks signal tracking HUD. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    bool bAncientSignalTracking = false;
+
+    /** Drone module: adds to the drone's scan pulse radius (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|DroneModule", meta=(ClampMin="0.0"))
+    float DroneScanRadiusBonus = 0.0f;
+
+    /** Drone module: adds to the drone's harvest radius (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|DroneModule", meta=(ClampMin="0.0"))
+    float DroneHarvestRadiusBonus = 0.0f;
+
+    /** Drone module: adds to observation progress per scan pulse. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|DroneModule", meta=(ClampMin="0.0"))
+    float DroneScanRateBonus = 0.0f;
+
+    /** Drone module: extends the deployed battery capacity (seconds). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|DroneModule", meta=(ClampMin="0.0"))
+    float DroneBatteryBonusSeconds = 0.0f;
+
+    /** Robot: chassis specialization id (mining/farming/defense profiles). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    FName RobotDefinitionId = NAME_None;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
@@ -313,6 +370,16 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo", meta=(ClampMin="0"))
     int32 CodexIndex = 0;
 
+    // --- Production V2 (additive) — production roster fields ---
+
+    /** Rarity tier — capture bragging rights + spawn table weighting (Master Plan §6). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
+    EAstrawildRarity Rarity = EAstrawildRarity::Common;
+
+    /** Permanent party aura while this Echo fights beside the player. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Behavior")
+    EAstrawildEchoPassive Passive = EAstrawildEchoPassive::None;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("Echo")), DefinitionId);
@@ -417,6 +484,12 @@ public:
     /** Buildings unlocked by this tech. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Tech")
     TArray<FName> UnlockedBuildingIds;
+
+    // --- Production V2 (additive): research branch grouping (Master Plan §16) ---
+
+    /** Progression branch shown in the research UI. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Tech")
+    EAstrawildResearchBranch Branch = EAstrawildResearchBranch::Survival;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
@@ -537,5 +610,505 @@ public:
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("NPC")), NpcId);
+    }
+};
+
+// ============================================================================
+// PRODUCTION V2 DATA ASSETS — weapon/resource/robot/worksite/event/POI/biome
+// definitions (Master Plan §3 STEP 3: content is data, not hardcoded classes)
+// ============================================================================
+
+/**
+ * Weapon behaviour profile (Master Plan §8): each family maps to a distinct
+ * firing archetype. The ITEM remains the inventory/economy entity; this
+ * definition carries combat behaviour + VFX/audio hooks for Antigravity.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildWeaponDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon")
+    FName WeaponId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon")
+    FText DisplayName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon", meta=(MultiLine=true))
+    FText Description;
+
+    /** Family — progression ladder + UI grouping (Kinetic→Experimental). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon")
+    EAstrawildWeaponFamily Family = EAstrawildWeaponFamily::Kinetic;
+
+    /** Tier label (Field grade → Experimental). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon")
+    EAstrawildTechTier Tier = EAstrawildTechTier::Field;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon")
+    EAstrawildRarity Rarity = EAstrawildRarity::Common;
+
+    /** Delivery archetype — drives the combat component execution branch. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon")
+    EAstrawildWeaponFireMode FireMode = EAstrawildWeaponFireMode::Projectile;
+
+    /** Damage per hit BEFORE the equipped-weapon attack bonus is added. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Damage", meta=(ClampMin="1.0"))
+    float DamagePerHit = 20.0f;
+
+    /** Seconds between shots (server-side gate). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Damage", meta=(ClampMin="0.05"))
+    float FireIntervalSeconds = 0.35f;
+
+    /** Elemental payload — drives weaknesses + status effects. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Damage")
+    EAstrawildElementType Element = EAstrawildElementType::None;
+
+    /** Ammo item consumed per shot (NAME_None = free). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Ammo")
+    FName AmmoItemId = NAME_None;
+
+    // --- Projectile mode tuning ---
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Projectile", meta=(ClampMin="500.0"))
+    float ProjectileSpeed = 6000.0f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Projectile", meta=(ClampMin="0.1"))
+    float ProjectileVisualScale = 0.35f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Projectile", meta=(ClampMin="0.5"))
+    float ProjectileLifetimeSeconds = 5.0f;
+
+    // --- Homing mode tuning (missiles) ---
+
+    /** Cone half-angle used to acquire a lock-on target (degrees). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Homing", meta=(ClampMin="5.0", ClampMax="45.0"))
+    float LockOnConeHalfAngle = 18.0f;
+
+    /** Max distance a lock-on target may be acquired at (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Homing", meta=(ClampMin="1000.0"))
+    float LockOnRange = 9000.0f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Homing", meta=(ClampMin="10.0"))
+    float HomingAcceleration = 2400.0f;
+
+    // --- Beam / Arc tuning (hitscan) ---
+
+    /** Max trace distance (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Beam", meta=(ClampMin="1000.0"))
+    float BeamRange = 15000.0f;
+
+    /** Beam: how many enemies a single shot pierces through. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Beam", meta=(ClampMin="0"))
+    int32 PierceCount = 0;
+
+    /** Arc: how many extra targets the bolt chains to. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Beam", meta=(ClampMin="0"))
+    int32 ChainCount = 0;
+
+    /** Arc: chain search radius around the previous target (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Beam", meta=(ClampMin="100.0"))
+    float ChainRadius = 600.0f;
+
+    /** Fraction of the base damage carried by each arc chain hop (0..1). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Beam", meta=(ClampMin="0.0", ClampMax="1.0"))
+    float ChainDamageFraction = 0.6f;
+
+    // --- Antigravity VFX/audio contract (bind Niagara/SoundCues by id) ---
+
+    /** Niagara muzzle flash asset id (VFX contract: NS_AW_Weap_<MuzzleVfxId>). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|VFX")
+    FName MuzzleVfxId = NAME_None;
+
+    /** Niagara projectile/beam trail asset id. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|VFX")
+    FName TrailVfxId = NAME_None;
+
+    /** Niagara impact asset id. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|VFX")
+    FName ImpactVfxId = NAME_None;
+
+    /** Fire sound id (audio contract: SC_AW_Weap_<FireSoundId>). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|VFX")
+    FName FireSoundId = NAME_None;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("Weapon")), WeaponId);
+    }
+};
+
+/**
+ * Deterministic resource node identity (P0 fix — resolves the ResourceItemId
+ * bootstrap weakness flagged in the Production V2 Master Plan §1).
+ * Spawners reference NodeId; the actor resolves every stat from this data.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildResourceNodeDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    FName NodeId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    FText DisplayName;
+
+    /** Item granted per harvest — the ONLY source of truth (never empty for valid defs). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    FName ResourceItemId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    EAstrawildRarity Rarity = EAstrawildRarity::Common;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode", meta=(ClampMin="1"))
+    int32 QuantityPerHarvest = 2;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode", meta=(ClampMin="1"))
+    int32 MaxQuantity = 3;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode", meta=(ClampMin="0.0"))
+    float RespawnDurationSeconds = 30.0f;
+
+    /** Hidden veins: harvestable only while a scanner with HiddenResourceDetection is equipped. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    bool bRequiresScannerDetection = false;
+
+    /** Placeholder body tint until Antigravity binds real meshes (visual contract). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    FLinearColor NodeTint = FLinearColor(0.55f, 0.55f, 0.55f);
+
+    /** Visual scale of the placeholder mesh. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode", meta=(ClampMin="0.1"))
+    float VisualScale = 1.0f;
+
+    /** Antigravity mesh contract: static mesh override for this node type. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|ResourceNode")
+    TSoftObjectPtr<UStaticMesh> MeshOverride;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("ResourceNode")), NodeId);
+    }
+};
+
+/**
+ * Robot chassis specialization (Master Plan §12): mining/farming/defense
+ * profiles share the existing robot actor — behaviour comes from this data.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildRobotDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot")
+    FName RobotId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot")
+    FText DisplayName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot", meta=(MultiLine=true))
+    FText Description;
+
+    /** Work sites of this type get the specialist rate; everything else the generic rate. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot")
+    EAstrawildWorkType PrimaryWorkType = EAstrawildWorkType::Gathering;
+
+    /** Work rate when the site's WorkType matches PrimaryWorkType. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot", meta=(ClampMin="0.0", ClampMax="4.0"))
+    float SpecialistWorkRate = 1.4f;
+
+    /** Work rate on every other site type. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot", meta=(ClampMin="0.0", ClampMax="4.0"))
+    float GenericWorkRate = 0.6f;
+
+    /** Movement speed multiplier toward its site. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot", meta=(ClampMin="0.1", ClampMax="4.0"))
+    float MoveSpeedMultiplier = 1.0f;
+
+    /** Chassis body tint (procedural placeholder until real meshes bind). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot")
+    FLinearColor PrimaryTint = FLinearColor(0.62f, 0.62f, 0.66f);
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Robot")
+    EAstrawildRarity Rarity = EAstrawildRarity::Common;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("Robot")), RobotId);
+    }
+};
+
+/**
+ * Work-site definition (Master Plan §7): the data-driven
+ * Build → Power → Assign → Work → Consume → Produce loop. Bootstrapper
+ * spawns sites from these definitions; input items gate production.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildWorkSiteDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    FName SiteId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    FText DisplayName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    EAstrawildWorkType WorkType = EAstrawildWorkType::Gathering;
+
+    /** Item produced per completed cycle. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    FName OutputItemId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite", meta=(ClampMin="1"))
+    int32 OutputQuantity = 1;
+
+    /** Inputs consumed per cycle (empty = harvest-from-the-land sites). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    TArray<FAstrawildItemStack> InputItems;
+
+    /** Seconds of worker time per output cycle. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite", meta=(ClampMin="1.0"))
+    float SecondsPerOutput = 12.0f;
+
+    /** Power-gated site: no grid power → no production (Master Plan §14). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    bool bRequiresPower = false;
+
+    /** Zone the site is placed in (bootstrapper places by zone + offset). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    EAstrawildZone Zone = EAstrawildZone::DawnFields;
+
+    /** Offset from the zone center (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorkSite")
+    FVector2D OffsetFromZoneCenter = FVector2D::ZeroVector;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("WorkSite")), SiteId);
+    }
+};
+
+/**
+ * World event definition (Master Plan §19): data-driven, save-safe ambient
+ * world dynamism. The scheduler subsystem reads these; effects resolve
+ * deterministically from this data (no per-event subclasses).
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildWorldEventDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent")
+    FName EventId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent")
+    FText DisplayName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent", meta=(MultiLine=true))
+    FText Description;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent")
+    EAstrawildWorldEventKind Kind = EAstrawildWorldEventKind::ResourceSurge;
+
+    /** Selection weight in the roll pool. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent", meta=(ClampMin="0.0"))
+    float RarityWeight = 1.0f;
+
+    /** In-world hours before this event may fire again. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent", meta=(ClampMin="0.0"))
+    float CooldownGameHours = 24.0f;
+
+    /** First day this event may appear on (progression gating). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent", meta=(ClampMin="1"))
+    int32 MinDay = 1;
+
+    /** Duration in in-world minutes (0 = instant). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent", meta=(ClampMin="0"))
+    int32 DurationGameMinutes = 60;
+
+    /** Restricts the event to one zone (None = world-wide). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent")
+    EAstrawildZone Zone = EAstrawildZone::None;
+
+    /** Only fires between 21:00 and 06:00. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent")
+    bool bRequiresNight = false;
+
+    // --- Deterministic effect payloads ---
+
+    /** Research points granted to every player when the event resolves. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects", meta=(ClampMin="0"))
+    int32 ResearchPointReward = 0;
+
+    /** Loot table id granted at the event location (supply drop / meteor). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects")
+    FName RewardLootTableId = NAME_None;
+
+    /** Species id that spawns extra wild instances (migration / rare bloom). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects")
+    FName SpeciesBoostId = NAME_None;
+
+    /** How many extra instances the boost spawns. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects", meta=(ClampMin="0"))
+    int32 SpeciesBoostCount = 0;
+
+    /** Hostiles spawned near the player camp (night raid). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects", meta=(ClampMin="0"))
+    int32 RaidHostileCount = 0;
+
+    /** Resource nodes spawned at the location (resource surge / meteor crater). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects")
+    TArray<FName> BonusNodeIds;
+
+    /** Weather state forced while the event runs (None = leave weather alone). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects")
+    EAstrawildWeatherState ForcedWeather = EAstrawildWeatherState::Clear;
+
+    /** Event cares about weather state (display only until weather coupling lands). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|WorldEvent|Effects")
+    bool bForcesWeather = false;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("WorldEvent")), EventId);
+    }
+};
+
+/**
+ * Point of interest definition (Master Plan §5/§31): the data Antigravity's
+ * vertical-slice dressing binds to, and the discovery state the POI subsystem
+ * tracks + saves.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildPOIDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    FName PoiId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    FText DisplayName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI", meta=(MultiLine=true))
+    FText Description;
+
+    /** One-line lore shown when discovered (field journal flavour). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    FText LoreLine;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    EAstrawildPOIType Type = EAstrawildPOIType::Landmark;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    EAstrawildZone Zone = EAstrawildZone::DawnFields;
+
+    /** Offset from the zone center (cm) — resolved at spawn. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    FVector2D OffsetFromZoneCenter = FVector2D::ZeroVector;
+
+    /** Discovery radius around the marker (cm). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI", meta=(ClampMin="100.0"))
+    float DiscoveryRadius = 1200.0f;
+
+    /** Loot granted the first time this POI is discovered. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    FName RewardLootTableId = NAME_None;
+
+    /** Research points granted on first discovery. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI", meta=(ClampMin="0"))
+    int32 ResearchReward = 0;
+
+    /** Ancient signal sources: only discoverable with an ancient-signal scanner. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    bool bRequiresSignalScanner = false;
+
+    /** Antigravity asset contract: prop/dressing set to place at this POI. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|POI")
+    FName DressingSetId = NAME_None;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("POI")), PoiId);
+    }
+};
+
+/**
+ * Biome definition (Master Plan §5/§31 — Visual Vertical Slice support):
+ * the binding surface between the 12 gameplay zones and Antigravity's
+ * environment assets. Pure data: landscape/foliage/water/audio/sky references
+ * the editor pipeline fills in — the runtime game keeps working with
+ * placeholders until real assets land.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildBiomeDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    /** Zone this biome dresses (matches ZoneId in the zone table). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome")
+    FName BiomeId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome")
+    FText DisplayName;
+
+    /** Art direction notes for the vertical slice (one-liner). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome")
+    FText ArtDirection;
+
+    /** Zone gameplay data mirrored for asset binding convenience. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome")
+    EAstrawildZone Zone = EAstrawildZone::DawnFields;
+
+    /** Starting biome — the P1 vertical slice lands here first. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome")
+    bool bStartingBiome = false;
+
+    // --- Antigravity asset contract (soft refs — bind in editor, runtime falls back) ---
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Assets")
+    TSoftObjectPtr<UMaterialInterface> LandscapeMaterial;
+
+    /** Foliage types to scatter (grass ground cover). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Assets")
+    TArray<TSoftObjectPtr<UStaticMesh>> GrassMeshes;
+
+    /** Trees / large foliage. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Assets")
+    TArray<TSoftObjectPtr<UStaticMesh>> TreeMeshes;
+
+    /** Rock / cliff dressing meshes. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Assets")
+    TArray<TSoftObjectPtr<UStaticMesh>> RockMeshes;
+
+    /** Ambient audio loop (biome soundscape). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Assets")
+    TSoftObjectPtr<USoundBase> AmbientAudio;
+
+    /** Gameplay anchoring: which resource node defs spawn in this biome. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Gameplay")
+    TArray<FName> ResourceNodeIds;
+
+    /** Signature species for spawn weighting (bestiary ids). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Gameplay")
+    TArray<FName> SignatureSpeciesIds;
+
+    /** POIs anchored in this biome. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Gameplay")
+    TArray<FName> PoiIds;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("Biome")), BiomeId);
     }
 };

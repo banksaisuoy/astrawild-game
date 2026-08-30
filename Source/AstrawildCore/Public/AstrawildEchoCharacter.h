@@ -158,6 +158,13 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     bool IssueCommand(EAstrawildEchoCommand Command);
 
+    /**
+     * Production V2: true when the player has a captured, healthy party Echo with
+     * the given passive within Radius (static query — AI perception + inventory).
+     */
+    static bool HasPlayerPartyPassive(const class UWorld* World, const class AActor* Player,
+        EAstrawildEchoPassive Passive, float Radius = 1500.0f);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
 
@@ -254,6 +261,12 @@ protected:
 
     UFUNCTION()
     void HandleNeedsDecay(float DeltaSeconds);
+
+    /** Production V2 (Master Plan §6): party passive aura tick (1s cadence). */
+    void ApplyPartyPassive(float AuraSeconds);
+
+    /** Production V2: throttles the passive aura tick. */
+    float PassiveAuraAccumulator = 0.0f;
 
 private:
     FAstrawildEchoStats CachedStats;

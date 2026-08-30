@@ -119,6 +119,16 @@ void UAstrawildWeatherSubsystem::ForceWeather(const EAstrawildWeatherState NewSt
 
     GameState->SetWeatherState(NewState);
     OnWeatherChanged.Broadcast(NewState, OldState);
+
+    // Production V2 (Master Plan §19): weather transitions are now first-class
+    // gameplay events — quests/world-events react through the event bus.
+    if (UWorld* World = GetWorld())
+    {
+        if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+        {
+            EventBus->PublishEvent(TAG_Astrawild_Event_WeatherChanged, nullptr, FName(*UEnum::GetDisplayValueAsText(NewState).ToString()), 1, FVector::ZeroVector);
+        }
+    }
     UE_LOG(LogAstrawildWorld, Log, TEXT("Weather forced: %d -> %d."), static_cast<int32>(OldState), static_cast<int32>(NewState));
 }
 

@@ -1,6 +1,7 @@
 #include "AstrawildCombatComponent.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoBossCharacter.h"
@@ -10,6 +11,7 @@
 #include "AstrawildSurvivalComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -304,8 +306,9 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
 
 bool UAstrawildCombatComponent::ExecuteRangedAttack()
 {
-    // Final production run (PHASE 12): energy-weapon path — validates the ranged
-    // weapon + ammo, consumes a cell, then spawns the server-authoritative bolt.
+    // Production V2 (Master Plan §8): the weapon DEFINITION drives the firing
+    // archetype — projectile / homing missile / piercing beam / chaining arc —
+    // while ammo gating + server authority stay exactly as the Pulse Lance path.
     UWorld* World = GetWorld();
     UAstrawildSurvivalComponent* Survival = GetSurvival();
     ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
@@ -320,13 +323,20 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
         return false;
     }
 
-    if (World->GetTimeSeconds() - LastRangedAttackTime < RangedAttackCooldown)
+    const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition();
+    const float FireInterval = GetRangedFireInterval();
+    if (World->GetTimeSeconds() - LastRangedAttackTime < FireInterval)
     {
         return false;
     }
 
-    // Ammo gate: weapons without AmmoItemId are free; the Pulse Lance burns cells.
-    const FName AmmoId = Inventory->GetEquippedAmmoItemId();
+    // Ammo gate: the weapon profile is authoritative; the legacy item field is
+    // the fallback (weapons without either are free).
+    FName AmmoId = WeaponDef ? WeaponDef->AmmoItemId : Inventory->GetEquippedAmmoItemId();
+    if (AmmoId.IsNone())
+    {
+        AmmoId = Inventory->GetEquippedAmmoItemId();
+    }
     if (!AmmoId.IsNone())
     {
         FAstrawildItemStack AmmoCost;
@@ -344,6 +354,18 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
     const FVector AimOrigin = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
     const FVector AimDirection = OwnerCharacter->GetActorForwardVector();
 
+    // --- Fire-mode branches (data-driven archetypes) ---
+
+    if (WeaponDef && WeaponDef->FireMode == EAstrawildWeaponFireMode::Beam)
+    {
+        return ExecuteBeamAttack(WeaponDef, OwnerCharacter);
+    }
+    if (WeaponDef && WeaponDef->FireMode == EAstrawildWeaponFireMode::ArcChain)
+    {
+        return ExecuteArcAttack(WeaponDef, OwnerCharacter);
+    }
+
+    // Projectile + Homing families share the spawned bolt; homing acquires a lock.
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     Params.Instigator = OwnerCharacter;
@@ -354,9 +376,266 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
         return false;
     }
 
-    Bolt->Launch(AimDirection, GetOutgoingAttackDamage(false), GetResolvedAttackElement(), OwnerCharacter);
+    if (WeaponDef)
+    {
+        AActor* HomingTarget = nullptr;
+        if (WeaponDef->FireMode == EAstrawildWeaponFireMode::HomingProjectile)
+        {
+            HomingTarget = AcquireLockOnTarget(WeaponDef, OwnerCharacter, AimOrigin, AimDirection);
+        }
+        Bolt->LaunchFromWeapon(AimDirection, GetRangedDamage(), GetResolvedAttackElement(), OwnerCharacter,
+            WeaponDef->ProjectileSpeed, WeaponDef->ProjectileVisualScale, WeaponDef->ProjectileLifetimeSeconds,
+            HomingTarget, HomingTarget ? WeaponDef->HomingAcceleration : 0.0f);
+    }
+    else
+    {
+        Bolt->Launch(AimDirection, GetOutgoingAttackDamage(false), GetResolvedAttackElement(), OwnerCharacter);
+    }
+
     OnAttackExecuted.Broadcast(false, 0.0f);
     return true;
+}
+
+float UAstrawildCombatComponent::ResolveRangedHit(AActor* Target, const float BaseDamage, const EAstrawildElementType Element) const
+{
+    // One damage vocabulary for every ranged archetype (projectile/beam/arc) —
+    // mirrors the melee sweep exactly: Echo → elemental, boss → elemental boss
+    // pipeline, damage target → flat. Returns damage actually dealt (0 when the
+    // target is not a valid combat participant).
+    if (!IsValid(Target))
+    {
+        return 0.0f;
+    }
+    if (const AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Target))
+    {
+        if (!Echo->IsDefeated())
+        {
+            return const_cast<AAstrawildEchoCharacter*>(Echo)->ApplyElementalDamage(BaseDamage, Element);
+        }
+        return 0.0f;
+    }
+    if (const AAstrawildEchoBossCharacter* Boss = Cast<AAstrawildEchoBossCharacter>(Target))
+    {
+        if (!Boss->IsDefeated())
+        {
+            return const_cast<AAstrawildEchoBossCharacter*>(Boss)->ApplyElementalBossDamage(BaseDamage, Element);
+        }
+        return 0.0f;
+    }
+    if (const AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(Target))
+    {
+        if (!DamageTarget->IsDefeated())
+        {
+            const_cast<AAstrawildDamageTarget*>(DamageTarget)->ApplyDamage(BaseDamage);
+            return BaseDamage;
+        }
+    }
+    return 0.0f;
+}
+
+bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefinition* WeaponDef, ACharacter* OwnerCharacter)
+{
+    // Laser/Rail family: instant hitscan down the view axis. The beam pierces
+    // through up to PierceCount targets (VFX contract: TrailVfxId beam draw —
+    // Antigravity binds the Niagara beam; the damage resolves server-side now).
+    UWorld* World = GetWorld();
+    if (!World || !WeaponDef || !OwnerCharacter)
+    {
+        return false;
+    }
+
+    const FVector Start = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector End = Start + OwnerCharacter->GetActorForwardVector() * WeaponDef->BeamRange;
+
+    TArray<FHitResult> HitResults;
+    FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDBeamAttack), false, OwnerCharacter);
+    World->LineTraceMultiByChannel(HitResults, Start, End, ECC_Pawn, QueryParams);
+
+    const int32 MaxTargets = 1 + FMath::Max(0, WeaponDef->PierceCount);
+    int32 DamagedTargets = 0;
+    float TotalDamage = 0.0f;
+    for (const FHitResult& Hit : HitResults)
+    {
+        if (DamagedTargets >= MaxTargets)
+        {
+            break;
+        }
+        AActor* HitActor = Hit.GetActor();
+        if (!IsValid(HitActor) || HitActor == OwnerCharacter)
+        {
+            continue;
+        }
+        const float Dealt = ResolveRangedHit(HitActor, GetRangedDamage(), GetResolvedAttackElement());
+        if (Dealt > 0.0f)
+        {
+            TotalDamage += Dealt;
+            ++DamagedTargets;
+        }
+    }
+
+    OnAttackExecuted.Broadcast(false, TotalDamage);
+    return true;
+}
+
+bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinition* WeaponDef, ACharacter* OwnerCharacter)
+{
+    // Arc family: hitscan the first target, then the bolt CHAINS to the nearest
+    // additional targets (ChainCount) within ChainRadius, each hop dealing
+    // ChainDamageFraction of the previous hop — the electric weapon feel.
+    UWorld* World = GetWorld();
+    if (!World || !WeaponDef || !OwnerCharacter)
+    {
+        return false;
+    }
+
+    const FVector Start = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector End = Start + OwnerCharacter->GetActorForwardVector() * WeaponDef->BeamRange;
+
+    FHitResult FirstHit;
+    FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDArcAttack), false, OwnerCharacter);
+    if (!World->LineTraceSingleByChannel(FirstHit, Start, End, ECC_Pawn, QueryParams))
+    {
+        OnAttackExecuted.Broadcast(false, 0.0f);
+        return true; // The shot fired (blank) — cooldown/ammo already spent.
+    }
+
+    float TotalDamage = 0.0f;
+    AActor* Current = FirstHit.GetActor();
+    if (IsValid(Current) && Current != OwnerCharacter)
+    {
+        TotalDamage += ResolveRangedHit(Current, GetRangedDamage(), GetResolvedAttackElement());
+    }
+
+    // Chain hops: nearest valid combatant around the previous target.
+    int32 HopsLeft = FMath::Max(0, WeaponDef->ChainCount);
+    float HopDamage = GetRangedDamage() * FMath::Clamp(WeaponDef->ChainDamageFraction, 0.0f, 1.0f);
+    TSet<AActor*> AlreadyZapped;
+    AlreadyZapped.Add(Current);
+    while (HopsLeft > 0 && IsValid(Current))
+    {
+        const FVector ChainOrigin = Current->GetActorLocation();
+        TArray<FOverlapResult> Overlaps;
+        FCollisionQueryParams ChainParams(SCENE_QUERY_STAT(ASTRAWILDArcChain), false, OwnerCharacter);
+        World->OverlapMultiByChannel(Overlaps, ChainOrigin, FQuat::Identity, ECC_Pawn,
+            FCollisionShape::MakeSphere(WeaponDef->ChainRadius), ChainParams);
+
+        AActor* NextTarget = nullptr;
+        float BestDist = TNumericLimits<float>::Max();
+        for (const FOverlapResult& Overlap : Overlaps)
+        {
+            AActor* Candidate = Overlap.GetActor();
+            if (!IsValid(Candidate) || Candidate == OwnerCharacter || AlreadyZapped.Contains(Candidate))
+            {
+                continue;
+            }
+            const bool bCombatant = Cast<AAstrawildEchoCharacter>(Candidate) || Cast<AAstrawildEchoBossCharacter>(Candidate) || Cast<AAstrawildDamageTarget>(Candidate);
+            if (!bCombatant)
+            {
+                continue;
+            }
+            const float Dist = FVector::Dist(ChainOrigin, Candidate->GetActorLocation());
+            if (Dist < BestDist)
+            {
+                BestDist = Dist;
+                NextTarget = Candidate;
+            }
+        }
+
+        if (!NextTarget)
+        {
+            break;
+        }
+        TotalDamage += ResolveRangedHit(NextTarget, HopDamage, GetResolvedAttackElement());
+        AlreadyZapped.Add(NextTarget);
+        Current = NextTarget;
+        HopDamage *= FMath::Clamp(WeaponDef->ChainDamageFraction, 0.0f, 1.0f);
+        --HopsLeft;
+    }
+
+    OnAttackExecuted.Broadcast(false, TotalDamage);
+    return true;
+}
+
+AActor* UAstrawildCombatComponent::AcquireLockOnTarget(const UAstrawildWeaponDefinition* WeaponDef, ACharacter* OwnerCharacter, const FVector& AimOrigin, const FVector& AimDirection) const
+{
+    // Missile lock-on: pick the valid combatant with the smallest angle to the
+    // view axis inside the weapon's acquisition cone + range. No target = dumb-fire.
+    // Iterates only the three combatant classes (never the whole actor list —
+    // a missile shot must stay cheap with 200+ creatures in the world).
+    UWorld* World = GetWorld();
+    if (!World || !WeaponDef || !OwnerCharacter)
+    {
+        return nullptr;
+    }
+
+    const float ConeCos = FMath::Cos(FMath::Clamp(WeaponDef->LockOnConeHalfAngle, 5.0f, 45.0f) * PI / 180.0f);
+    const float RangeSq = FMath::Square(FMath::Max(1000.0f, WeaponDef->LockOnRange));
+
+    AActor* Best = nullptr;
+    float BestAngleCos = ConeCos;
+
+    const auto ConsiderActor = [&](AActor* Candidate)
+    {
+        if (!IsValid(Candidate) || Candidate == OwnerCharacter)
+        {
+            return;
+        }
+        const FVector ToTarget = Candidate->GetActorLocation() - AimOrigin;
+        if (ToTarget.SizeSquared() > RangeSq)
+        {
+            return;
+        }
+        const float AngleCos = FVector::DotProduct(AimDirection, ToTarget.GetSafeNormal());
+        if (AngleCos >= BestAngleCos)
+        {
+            BestAngleCos = AngleCos;
+            Best = Candidate;
+        }
+    };
+
+    for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+    {
+        ConsiderActor(*It);
+    }
+    for (TActorIterator<AAstrawildEchoBossCharacter> It(World); It; ++It)
+    {
+        ConsiderActor(*It);
+    }
+    for (TActorIterator<AAstrawildDamageTarget> It(World); It; ++It)
+    {
+        ConsiderActor(*It);
+    }
+    return Best;
+}
+
+UAstrawildWeaponDefinition* UAstrawildCombatComponent::GetEquippedWeaponDefinition() const
+{
+    const AActor* Owner = GetOwner();
+    if (const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr)
+    {
+        return Inventory->GetEquippedWeaponDefinition();
+    }
+    return nullptr;
+}
+
+float UAstrawildCombatComponent::GetRangedFireInterval() const
+{
+    if (const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition())
+    {
+        return FMath::Max(0.05f, WeaponDef->FireIntervalSeconds);
+    }
+    return RangedAttackCooldown;
+}
+
+float UAstrawildCombatComponent::GetRangedDamage() const
+{
+    // Weapon profile damage + the equipped item's flat attack bonus (the item
+    // still carries the progression stat; the definition carries behaviour).
+    if (const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition())
+    {
+        return FMath::Max(1.0f, WeaponDef->DamagePerHit) + GetEquippedWeaponAttackPower();
+    }
+    return GetOutgoingAttackDamage(false);
 }
 
 float UAstrawildCombatComponent::GetMitigatedIncomingDamage(const float RawDamage) const

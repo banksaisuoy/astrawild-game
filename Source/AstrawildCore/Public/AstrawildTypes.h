@@ -347,7 +347,10 @@ enum class EAstrawildQuestObjectiveType : uint8
     SurviveTime UMETA(DisplayName="Survive Time"),
     // Final production run (appended — serialization-safe for existing saves):
     // consumes Event.ZoneEntered (published by the zone subsystem since Batch 7).
-    VisitZone UMETA(DisplayName="Visit Zone")
+    VisitZone UMETA(DisplayName="Visit Zone"),
+    // Production V2 (appended — serialization-safe): consumes Event.PoiDiscovered
+    // published by the POI subsystem when a point of interest is first discovered.
+    DiscoverPOI UMETA(DisplayName="Discover Point of Interest")
 };
 
 /** Crafting / research eras (directive §19). */
@@ -754,6 +757,16 @@ struct ASTRAWILDCORE_API FAstrawildWorkSiteSaveData
     /** True when a utility robot mans this site. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     bool bHasRobot = false;
+
+    // --- Production V2 (additive, save schema v4): consume->produce loop state ---
+
+    /** Input buffer staged for the next production cycle (definition-driven sites). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildItemStack> InputBuffer;
+
+    /** Output produced per completed work cycle (definition default 1). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="1"))
+    int32 OutputQuantity = 1;
 };
 
 /** Utility drone snapshot (save schema v3). */
@@ -770,6 +783,12 @@ struct ASTRAWILDCORE_API FAstrawildDroneSaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     bool bDeployed = false;
+
+    // --- Production V2 (additive, save schema v4): drone battery state ---
+
+    /** Battery seconds remaining at save time (modules extend the capacity). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0"))
+    float BatteryRemainingSeconds = 0.0f;
 };
 
 /** Utility robot snapshot (save schema v3). */
@@ -787,6 +806,12 @@ struct ASTRAWILDCORE_API FAstrawildRobotSaveData
     /** Site id the robot was working at save time. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     FName AssignedSiteId = NAME_None;
+
+    // --- Production V2 (additive, save schema v4): robot specialization ---
+
+    /** Robot definition id (specialized chassis: mining/farming/defense). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName RobotDefinitionId = NAME_None;
 };
 
 /** Power-grid snapshot (save schema v3 — battery charge finally persists). */
@@ -800,3 +825,152 @@ struct ASTRAWILDCORE_API FAstrawildPowerGridSaveData
     float StoredEnergy = 0.0f;
 };
 
+
+// ============================================================================
+// PRODUCTION V2 TYPES — data-driven content foundation (Master Plan §3-19)
+// (additive; appended-only so every existing save keeps deserializing)
+// ============================================================================
+
+/** Content rarity ladder shared by items, Echoes, weapons and events (Master Plan §6). */
+UENUM(BlueprintType)
+enum class EAstrawildRarity : uint8
+{
+    Common UMETA(DisplayName="Common"),
+    Uncommon UMETA(DisplayName="Uncommon"),
+    Rare UMETA(DisplayName="Rare"),
+    Epic UMETA(DisplayName="Epic"),
+    Legendary UMETA(DisplayName="Legendary"),
+    Mythic UMETA(DisplayName="Mythic")
+};
+
+/** Weapon family — each maps to a distinct firing archetype (Master Plan §8). */
+UENUM(BlueprintType)
+enum class EAstrawildWeaponFamily : uint8
+{
+    Kinetic UMETA(DisplayName="Kinetic"),
+    Pulse UMETA(DisplayName="Pulse"),
+    Plasma UMETA(DisplayName="Plasma"),
+    Laser UMETA(DisplayName="Laser"),
+    Arc UMETA(DisplayName="Arc"),
+    Rail UMETA(DisplayName="Rail"),
+    Missile UMETA(DisplayName="Missile"),
+    Experimental UMETA(DisplayName="Experimental")
+};
+
+/** How a weapon delivers damage — drives the combat component's execution branch. */
+UENUM(BlueprintType)
+enum class EAstrawildWeaponFireMode : uint8
+{
+    Projectile UMETA(DisplayName="Projectile"),
+    HomingProjectile UMETA(DisplayName="Homing Projectile"),
+    Beam UMETA(DisplayName="Beam (hitscan, pierce)"),
+    ArcChain UMETA(DisplayName="Arc (hitscan, chains)")
+};
+
+/** Equipment technology tier — armor sets and weapons share the ladder (Master Plan §9). */
+UENUM(BlueprintType)
+enum class EAstrawildTechTier : uint8
+{
+    Field UMETA(DisplayName="Field Grade"),
+    Mk1 UMETA(DisplayName="Mk I"),
+    Mk2 UMETA(DisplayName="Mk II"),
+    Mk3 UMETA(DisplayName="Mk III"),
+    Experimental UMETA(DisplayName="Experimental")
+};
+
+/** Echo passive trait — permanent aura while the Echo is in the active party (Master Plan §6). */
+UENUM(BlueprintType)
+enum class EAstrawildEchoPassive : uint8
+{
+    None UMETA(DisplayName="None"),
+    PartyHeal UMETA(DisplayName="Mending Aura (party heal)"),
+    PlayerStamina UMETA(DisplayName="Rhythm Aura (player stamina regen)"),
+    CarryBoost UMETA(DisplayName="Pack Instinct (carry weight)"),
+    ThreatDampener UMETA(DisplayName="Calm Presence (reduces wild aggro)")
+};
+
+/** Research tree branch — display/progression grouping (Master Plan §16). */
+UENUM(BlueprintType)
+enum class EAstrawildResearchBranch : uint8
+{
+    Survival UMETA(DisplayName="Survival"),
+    Tools UMETA(DisplayName="Tools"),
+    Weapons UMETA(DisplayName="Weapons"),
+    Armor UMETA(DisplayName="Armor"),
+    Energy UMETA(DisplayName="Energy"),
+    Automation UMETA(DisplayName="Automation"),
+    Scanner UMETA(DisplayName="Scanner"),
+    EchoTech UMETA(DisplayName="Echo Technology"),
+    Exploration UMETA(DisplayName="Exploration")
+};
+
+/** Point-of-interest archetype (Master Plan §5 world production). */
+UENUM(BlueprintType)
+enum class EAstrawildPOIType : uint8
+{
+    Landmark UMETA(DisplayName="Landmark"),
+    AncientTech UMETA(DisplayName="Ancient Technology"),
+    Ruin UMETA(DisplayName="Starter Ruin"),
+    CaveEntrance UMETA(DisplayName="Cave Entrance"),
+    Watchtower UMETA(DisplayName="Watchtower"),
+    SignalSource UMETA(DisplayName="Ancient Signal Source")
+};
+
+/** World-event archetype — deterministic effects live in the definition data (Master Plan §19). */
+UENUM(BlueprintType)
+enum class EAstrawildWorldEventKind : uint8
+{
+    StormSurge UMETA(DisplayName="Storm Surge"),
+    Migration UMETA(DisplayName="Creature Migration"),
+    ResourceSurge UMETA(DisplayName="Resource Surge"),
+    SupplyDrop UMETA(DisplayName="Supply Drop"),
+    AncientSignal UMETA(DisplayName="Ancient Signal"),
+    NightRaid UMETA(DisplayName="Night Raid"),
+    MeteorFall UMETA(DisplayName="Meteor Fall"),
+    RareEchoBloom UMETA(DisplayName="Rare Echo Bloom"),
+    BossStirring UMETA(DisplayName="Boss Stirring")
+};
+
+// --- Save schema v4 extensions (additive) ---
+
+/** Active/completed world-event runtime snapshot (save schema v4). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildWorldEventSaveData
+{
+    GENERATED_BODY()
+
+    /** Definition id of the event. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EventId = NAME_None;
+
+    /** In-world minute the event ends (0 = not time-limited). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 EndAbsoluteMinute = 0;
+
+    /** Zone the event is anchored to (None = world-wide). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    EAstrawildZone Zone = EAstrawildZone::None;
+
+    /** Location payload (supply crate / meteor crater / signal marker). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FVector Location = FVector::ZeroVector;
+};
+
+/** World-event scheduler snapshot (save schema v4). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildWorldEventScheduleSaveData
+{
+    GENERATED_BODY()
+
+    /** Events currently running. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildWorldEventSaveData> ActiveEvents;
+
+    /** Absolute in-world minute of the next scheduled roll (deterministic resumption). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 NextRollAbsoluteMinute = 0;
+
+    /** Per-event cooldown end (absolute in-world minute); pruned as they expire. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, int32> CooldownEndMinutes;
+};

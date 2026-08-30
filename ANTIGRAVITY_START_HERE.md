@@ -1,6 +1,19 @@
 # ASTRAWILD — Antigravity Start Here
 
-> ### 🌊 อัปเดตล่าสุด (BATCH 8 "THE GRAND EXPANSE + GRAND MENAGERIE")
+> ### 🏭 อัปเดตล่าสุด (PRODUCTION V2 BATCH 1 — DATA FOUNDATION)
+> **ตาม Master Plan ใหม่ `Docs/ASTRAWILD_PRODUCTION_V2_MASTER_PLAN.md`** — batch นี้วางรากฐาน
+> data-driven ทั้งหมด: **อาวุธ 8 ตระกูล** (Kinetic/Pulse/Plasma/Laser/Arc/Rail/Missile/Experimental —
+> 4 รูปแบบการยิงจริง: กระสุน/homing lock-on/beam เจาะทะลุ/arc ลูกโซ่) · **ชุดเกราะ Mk II/III/
+> Experimental** + ฉนวนแยกฝั่งร้อน/เย็น · **เครื่องสแกน 3 เทียร** (Mk II มองเห็น vein ลับ, Oracle
+> แทร็กสัญญาณโบราณ ×2.5 ระยะ) · **โดรนมีแบต+โมดูล 3 ชิ้น + หุ่นยนต์เฉพาะทาง 3 รุ่น**
+> (Borebot ขุด/Cultivator เกษตร/Sentinel เฝ้า) · **ไซต์ผลิตแบบ consume→produce** (Camp Kitchen:
+> เนื้อดิบ→เนื้อสุก) · **World events 9 แบบ** (พายุ/raid กลางคืน/อุกกาบาต/ของตก...) + **POI 12
+> จุด** พร้อมระบบค้นพบ · **Echo โปรดักชัน 6 ตัว** พร้อม passive aura + **เควส 11-12** ·
+> **save schema v4** (โหลด save v3 เก่าได้) · รวม 39 automation tests
+> **→ อ่าน `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_1.md` ก่อนเริ่มงานทุกครั้ง** (แผนบิวด์/ทดสอบ/
+> ข้อจำกัด อยู่ในนั้นครบ)
+>
+> ### 🌊 อัปเดตก่อนหน้า (BATCH 8 "THE GRAND EXPANSE + GRAND MENAGERIE")
 > **โลกขยายเป็น 12 โซน (3.2×2.4 กม.)** — ทะเล Azure Shallows, เกาะ Tidebreaker Isles,
 > ทะเลทราย Sunscar, ภูเขา Stormcrest, ป่า Verdant Reach, แนวปะการัง Pearlsea Reef +
 > น้ำทะเลเดินได้ (water planes) · **Echo 214 สายพันธุ์** (มังกร/หุ่นยนต์/วิญญาณ/อสูรน้ำ...)

@@ -188,6 +188,36 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
     FName GetEquippedAmmoItemId() const;
 
+    // --- Production V2 (additive): weapon profiles, split insulation, scanner tiers ---
+
+    /** Behaviour profile of the equipped weapon (null when the item has no WeaponDefinitionId). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    class UAstrawildWeaponDefinition* GetEquippedWeaponDefinition() const;
+
+    /** Cold-side insulation from helmet + exosuit + torso (legacy InsulationRating counts on both sides). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedColdInsulationRating() const;
+
+    /** Heat-side insulation from helmet + exosuit + torso (legacy InsulationRating counts on both sides). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedHeatInsulationRating() const;
+
+    /** Observation range multiplier of the equipped scanner (1 = no scanner/stock). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedScannerRangeMultiplier() const;
+
+    /** True when the equipped scanner reveals hidden resource nodes. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    bool HasHiddenResourceDetection() const;
+
+    /** True when the equipped scanner tracks ancient signals (POI + event hooks). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    bool HasAncientSignalTracking() const;
+
+    /** Rarity of the equipped weapon (display hook). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    EAstrawildRarity GetEquippedWeaponRarity() const;
+
     /** Effective carry limit including the exosuit bonus (kg). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
     float GetEffectiveMaxWeight() const;

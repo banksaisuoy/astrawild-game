@@ -84,6 +84,54 @@ void AAstrawildProjectileActor::Launch(const FVector& Direction, const float Dam
     UE_LOG(LogAstrawildCombat, Verbose, TEXT("Projectile launched (damage %.1f, element %d)."), DamageAmount, static_cast<int32>(Element));
 }
 
+void AAstrawildProjectileActor::LaunchFromWeapon(const FVector& Direction, const float Damage, const EAstrawildElementType InElement,
+    AActor* InOwner, const float Speed, const float InVisualScale, const float InLifetimeSeconds,
+    AActor* HomingTarget, const float HomingAcceleration)
+{
+    // Production V2 (Master Plan §8): weapon-definition flight profile. Everything
+    // routes through the legacy Launch so hit resolution stays identical.
+    DamageAmount = FMath::Max(0.0f, Damage);
+    Element = InElement;
+    OwnerActor = InOwner;
+    LifetimeSeconds = FMath::Max(0.5f, InLifetimeSeconds);
+    VisualScale = FMath::Max(0.05f, InVisualScale);
+    VisualMesh->SetWorldScale3D(FVector(VisualScale));
+
+    if (InOwner)
+    {
+        CollisionSphere->IgnoreActorWhenMoving(InOwner, true);
+    }
+
+    if (ProjectileMovement)
+    {
+        ProjectileMovement->InitialSpeed = FMath::Max(500.0f, Speed);
+        ProjectileMovement->MaxSpeed = FMath::Max(500.0f, Speed);
+
+        // Missile lock-on family: home onto the acquired target's root component.
+        HomingTargetActor = HomingTarget;
+        if (IsValid(HomingTarget) && HomingTarget->GetRootComponent())
+        {
+            ProjectileMovement->HomingTargetComponent = HomingTarget->GetRootComponent();
+            ProjectileMovement->HomingAccelerationMagnitude = FMath::Max(0.0f, HomingAcceleration);
+            ProjectileMovement->bIsHomingProjectile = HomingAcceleration > 0.0f;
+        }
+        else
+        {
+            ProjectileMovement->bIsHomingProjectile = false;
+            ProjectileMovement->HomingAccelerationMagnitude = 0.0f;
+        }
+
+        const FVector Normalized = Direction.GetSafeNormal();
+        if (!Normalized.IsNearlyZero())
+        {
+            ProjectileMovement->Velocity = Normalized * ProjectileMovement->InitialSpeed;
+        }
+    }
+
+    UE_LOG(LogAstrawildCombat, Verbose, TEXT("Weapon projectile launched (damage %.1f, speed %.0f, homing %d)."),
+        DamageAmount, Speed, IsValid(HomingTarget) ? 1 : 0);
+}
+
 void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AActor* OtherActor, UPrimitiveComponent* /*OtherComp*/, FVector /*NormalImpulse*/, const FHitResult& /*Hit*/)
 {
     // Resolve only on the server (single player shares the same path).

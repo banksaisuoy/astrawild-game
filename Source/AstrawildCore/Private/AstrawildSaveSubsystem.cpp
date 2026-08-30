@@ -2,13 +2,17 @@
 
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildDungeonGeneratorActor.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInventoryComponent.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildPOISubsystem.h"
+#include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPowerSubsystem.h"
@@ -101,6 +105,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
                 DroneData.OwnerPlayerId = Drone->GetOwnerPlayerId();
                 DroneData.Transform = Drone->GetActorTransform();
                 DroneData.bDeployed = true;
+                // Production V2 (v4): battery state persists mid-drain.
+                DroneData.BatteryRemainingSeconds = Drone->BatteryRemainingSeconds;
                 SaveGame->Drones.Add(DroneData);
             }
         }
@@ -184,6 +190,16 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         ZoneSub->ExportForSave(SaveGame->Zones.DiscoveredZones);
     }
 
+    // --- Production V2 (v4): world-event scheduler + POI discoveries ---
+    if (const UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
+    {
+        WorldEvents->ExportForSave(SaveGame->WorldEvents);
+    }
+    if (const UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
+    {
+        POIs->ExportForSave(SaveGame->DiscoveredPOIIds);
+    }
+
     const bool bSaved = UGameplayStatics::SaveGameToSlot(SaveGame, SlotName, UserIndex);
     if (bSaved)
     {
@@ -238,6 +254,20 @@ void UAstrawildSaveSubsystem::MigrateV2ToV3(UAstrawildSaveGame* SaveGame) const
     UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v2 to v3 (additive)."));
 }
 
+void UAstrawildSaveSubsystem::MigrateV3ToV4(UAstrawildSaveGame* SaveGame) const
+{
+    if (!SaveGame || SaveGame->SaveSchemaVersion != 3)
+    {
+        return;
+    }
+
+    // v3 -> v4: purely additive — world-event scheduler state + POI discovery
+    // list default-init (no events running, nothing discovered). Drone battery
+    // defaults to full on legacy saves (deployed drones recharge on migration).
+    SaveGame->SaveSchemaVersion = 4;
+    UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v3 to v4 (additive)."));
+}
+
 bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, const int32 UserIndex)
 {
     if (!World || World->GetNetMode() == NM_Client || !DoesSaveExist(SlotName, UserIndex))
@@ -264,6 +294,7 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     {
         MigrateV1ToV2(SaveGame);
         MigrateV2ToV3(SaveGame);
+        MigrateV3ToV4(SaveGame);
     }
 
     // --- World state ---
@@ -448,6 +479,18 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         }
         Robot->SetOwnerPlayerId(RobotData.OwnerPlayerId);
 
+        // Production V2 (v4): specialist chassis resolve their profile by id.
+        if (!RobotData.RobotDefinitionId.IsNone())
+        {
+            if (UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>())
+            {
+                if (UAstrawildRobotDefinition* RobotDef = Registry->FindRobot(RobotData.RobotDefinitionId))
+                {
+                    Robot->InitializeFromDefinition(RobotDef);
+                }
+            }
+        }
+
         if (!RobotData.AssignedSiteId.IsNone())
         {
             for (TActorIterator<AAstrawildWorkSiteActor> SiteIt(World); SiteIt; ++SiteIt)
@@ -476,6 +519,12 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                 if (AAstrawildUtilityDroneActor* Drone = Player->SpawnUtilityDrone())
                 {
                     Drone->SetActorTransform(DroneData.Transform, false, nullptr, ETeleportType::TeleportPhysics);
+                    // Production V2 (v4): resume the battery mid-drain (legacy
+                    // saves default to full via the default-init field).
+                    if (DroneData.BatteryRemainingSeconds > 0.0f)
+                    {
+                        Drone->BatteryRemainingSeconds = DroneData.BatteryRemainingSeconds;
+                    }
                 }
             }
         }
@@ -491,6 +540,16 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (UAstrawildZoneSubsystem* ZoneSub = World->GetSubsystem<UAstrawildZoneSubsystem>())
     {
         ZoneSub->ImportFromSave(SaveGame->Zones.DiscoveredZones);
+    }
+
+    // --- Production V2 (v4): world-event scheduler + POI discoveries. ---
+    if (UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
+    {
+        WorldEvents->ImportFromSave(SaveGame->WorldEvents);
+    }
+    if (UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
+    {
+        POIs->ImportFromSave(SaveGame->DiscoveredPOIIds);
     }
 
     // --- Dungeons (Batch 6 — gap M-7): generators already built their rooms during

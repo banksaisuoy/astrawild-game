@@ -1,6 +1,7 @@
 #include "AstrawildContentLibrary.h"
 
 #include "AstrawildBestiaryData.h"
+#include "AstrawildProductionContent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -1162,6 +1163,66 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     Registry->RegisterNPC(OldSaltPerry);
 }
 
+namespace
+{
+    /**
+     * Production V2 retrofits: existing content gains the new data fields without
+     * duplicating definitions (weapon profile links, tier labels, research
+     * branches, quest chain extension into the new content).
+     */
+    void ApplyProductionV2Retrofits(UAstrawildItemRegistrySubsystem* Registry)
+    {
+        // Weapon profile links (items -> definitions).
+        if (UAstrawildItemDefinition* PulseLance = Registry->FindItem(TEXT("Item_PulseLance")))
+        {
+            PulseLance->WeaponDefinitionId = TEXT("Weapon_PulseLance");
+            PulseLance->TechTier = EAstrawildTechTier::Mk1;
+            PulseLance->Rarity = EAstrawildRarity::Uncommon;
+        }
+        if (UAstrawildItemDefinition* FieldScanner = Registry->FindItem(TEXT("Item_FieldScanner")))
+        {
+            FieldScanner->TechTier = EAstrawildTechTier::Mk1;
+        }
+        if (UAstrawildItemDefinition* ResonanceHelm = Registry->FindItem(TEXT("Item_ResonanceHelm")))
+        {
+            ResonanceHelm->TechTier = EAstrawildTechTier::Mk1;
+        }
+        if (UAstrawildItemDefinition* Exosuit = Registry->FindItem(TEXT("Item_DawnstriderExosuit")))
+        {
+            Exosuit->TechTier = EAstrawildTechTier::Mk1;
+        }
+
+        // Research branches on the ten legacy techs (display grouping — Master Plan §16).
+        struct FBranchRow { FName TechId; EAstrawildResearchBranch Branch; };
+        const FBranchRow BranchRows[] =
+        {
+            { TEXT("Tech_BasicCrafting"), EAstrawildResearchBranch::Tools },
+            { TEXT("Tech_Cooking"), EAstrawildResearchBranch::Survival },
+            { TEXT("Tech_Electrical"), EAstrawildResearchBranch::Energy },
+            { TEXT("Tech_AdvancedEnergy"), EAstrawildResearchBranch::Energy },
+            { TEXT("Tech_Husbandry"), EAstrawildResearchBranch::EchoTech },
+            { TEXT("Tech_Armory"), EAstrawildResearchBranch::Weapons },
+            { TEXT("Tech_Mechanics"), EAstrawildResearchBranch::Tools },
+            { TEXT("Tech_Thermal"), EAstrawildResearchBranch::Survival },
+            { TEXT("Tech_Agriculture"), EAstrawildResearchBranch::EchoTech },
+            { TEXT("Tech_AncientResonance"), EAstrawildResearchBranch::Exploration },
+        };
+        for (const FBranchRow& Row : BranchRows)
+        {
+            if (UAstrawildTechnologyDefinition* Tech = Registry->FindTechnology(Row.TechId))
+            {
+                Tech->Branch = Row.Branch;
+            }
+        }
+
+        // Quest chain: The Sunken Vault now flows into Signals in the Static.
+        if (UAstrawildQuestDefinition* SunkenVault = Registry->FindQuest(TEXT("Quest_SunkenVault")))
+        {
+            SunkenVault->NextQuestId = TEXT("Quest_SignalsInTheStatic");
+        }
+    }
+}
+
 void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Registry)
 {
     if (!Registry)
@@ -1178,5 +1239,11 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 40 items, 26 recipes, 214 Echo species (10 authored + 204 bestiary), 13 buildings, 10 technologies, 10 quests, 5 loot tables, 12 NPCs."));
+    // Production V2 (Master Plan STEP 3): the data-driven content foundation.
+    UAstrawildProductionContent::BuildAll(Registry);
+
+    // Production V2 retrofits: existing items/techs gain their new data fields.
+    ApplyProductionV2Retrofits(Registry);
+
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 220 Echo species (16 authored + 204 bestiary), 13 buildings, 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes."));
 }

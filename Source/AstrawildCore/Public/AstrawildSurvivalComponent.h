@@ -85,6 +85,13 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
     const FAstrawildSurvivalStats& GetStats() const { return Stats; }
 
+    /** Production V2 (Master Plan §6): party-aura restore hooks (server-side). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void RestoreStamina(float Amount);
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void RestoreHealth(float Amount);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
     float GetHealthFraction() const;
 
@@ -173,5 +180,11 @@ private:
     class UAstrawildWeatherSubsystem* GetWeatherSubsystem() const;
     // Final production run (PHASE 12): advanced-equipment integration helpers.
     float GetEquippedInsulation() const;
+
+    /** Production V2: split thermal bands — cold-side insulation. */
+    float GetEquippedColdInsulation() const;
+
+    /** Production V2: split thermal bands — heat-side insulation. */
+    float GetEquippedHeatInsulation() const;
     float GetExosuitStaminaRegenBonus() const;
 };

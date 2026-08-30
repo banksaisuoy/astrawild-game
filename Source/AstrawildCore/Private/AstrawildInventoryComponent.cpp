@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -554,5 +555,138 @@ FName UAstrawildInventoryComponent::GetEquippedAmmoItemId() const
 
 float UAstrawildInventoryComponent::GetEffectiveMaxWeight() const
 {
-    return MaxWeight + GetEquippedCarryWeightBonus();
+    // Production V2 (Master Plan §6): Pack Instinct party passive — a healthy
+    // captured Echo with the CarryBoost aura nearby adds carry capacity (+20kg).
+    float Weight = MaxWeight + GetEquippedCarryWeightBonus();
+    if (AAstrawildEchoCharacter::HasPlayerPartyPassive(GetWorld(), GetOwner(), EAstrawildEchoPassive::CarryBoost, 1500.0f))
+    {
+        Weight += 20.0f;
+    }
+    return Weight;
+}
+
+// --- Production V2 (additive): weapon profiles, split insulation, scanner tiers ---
+
+UAstrawildWeaponDefinition* UAstrawildInventoryComponent::GetEquippedWeaponDefinition() const
+{
+    if (EquippedItemId.IsNone())
+    {
+        return nullptr;
+    }
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    if (const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(EquippedItemId) : nullptr)
+    {
+        return ItemDef->WeaponDefinitionId.IsNone()
+            ? nullptr
+            : Registry->FindWeapon(ItemDef->WeaponDefinitionId);
+    }
+    return nullptr;
+}
+
+float UAstrawildInventoryComponent::GetEquippedColdInsulationRating() const
+{
+    // Split-band insulation (Master Plan §9): dedicated cold/heat fields win;
+    // the legacy InsulationRating still counts on BOTH sides so every existing
+    // armor piece keeps its documented behaviour.
+    float Total = 0.0f;
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    if (!Registry)
+    {
+        return 0.0f;
+    }
+    const auto AddPiece = [&Total, Registry](const FName ItemId)
+    {
+        if (ItemId.IsNone())
+        {
+            return;
+        }
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(ItemId))
+        {
+            Total += ItemDef->ColdInsulationRating > 0.0f ? ItemDef->ColdInsulationRating : ItemDef->InsulationRating;
+        }
+    };
+    AddPiece(EquippedHelmetItemId);
+    AddPiece(EquippedExosuitItemId);
+    AddPiece(EquippedArmorItemId);
+    return Total;
+}
+
+float UAstrawildInventoryComponent::GetEquippedHeatInsulationRating() const
+{
+    float Total = 0.0f;
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    if (!Registry)
+    {
+        return 0.0f;
+    }
+    const auto AddPiece = [&Total, Registry](const FName ItemId)
+    {
+        if (ItemId.IsNone())
+        {
+            return;
+        }
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(ItemId))
+        {
+            Total += ItemDef->HeatInsulationRating > 0.0f ? ItemDef->HeatInsulationRating : ItemDef->InsulationRating;
+        }
+    };
+    AddPiece(EquippedHelmetItemId);
+    AddPiece(EquippedExosuitItemId);
+    AddPiece(EquippedArmorItemId);
+    return Total;
+}
+
+float UAstrawildInventoryComponent::GetEquippedScannerRangeMultiplier() const
+{
+    if (EquippedScannerItemId.IsNone())
+    {
+        return 1.0f;
+    }
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    if (const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(EquippedScannerItemId) : nullptr)
+    {
+        return FMath::Clamp(ItemDef->ScannerRangeMultiplier, 1.0f, 4.0f);
+    }
+    return 1.0f;
+}
+
+bool UAstrawildInventoryComponent::HasHiddenResourceDetection() const
+{
+    if (EquippedScannerItemId.IsNone())
+    {
+        return false;
+    }
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(EquippedScannerItemId) : nullptr;
+    return ItemDef && ItemDef->bHiddenResourceDetection;
+}
+
+bool UAstrawildInventoryComponent::HasAncientSignalTracking() const
+{
+    if (EquippedScannerItemId.IsNone())
+    {
+        return false;
+    }
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(EquippedScannerItemId) : nullptr;
+    return ItemDef && ItemDef->bAncientSignalTracking;
+}
+
+EAstrawildRarity UAstrawildInventoryComponent::GetEquippedWeaponRarity() const
+{
+    if (const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition())
+    {
+        return WeaponDef->Rarity;
+    }
+    if (!EquippedItemId.IsNone())
+    {
+        if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+        {
+            if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedItemId))
+            {
+                return ItemDef->Rarity;
+            }
+        }
+    }
+    return EAstrawildRarity::Common;
 }

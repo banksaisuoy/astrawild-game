@@ -1271,7 +1271,7 @@ AAstrawildUtilityDroneActor* AAstrawildPlayerCharacter::SpawnUtilityDrone()
     return Drone;
 }
 
-bool AAstrawildPlayerCharacter::SpawnUtilityRobot()
+bool AAstrawildPlayerCharacter::SpawnUtilityRobot(FName RobotDefinitionOverride)
 {
     UWorld* World = GetWorld();
     if (!World || GetLocalRole() != ROLE_Authority)
@@ -1316,6 +1316,17 @@ bool AAstrawildPlayerCharacter::SpawnUtilityRobot()
     }
 
     Robot->SetOwnerPlayerId(GetFName());
+    // Production V2: specialist chassis resolve their profile from the registry.
+    if (!RobotDefinitionOverride.IsNone())
+    {
+        if (UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>())
+        {
+            if (UAstrawildRobotDefinition* RobotDef = Registry->FindRobot(RobotDefinitionOverride))
+            {
+                Robot->InitializeFromDefinition(RobotDef);
+            }
+        }
+    }
     Robot->AssignToSite(Best);
 
     if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
@@ -1369,7 +1380,29 @@ void AAstrawildPlayerCharacter::DeployRobot(const FInputActionValue& Value)
         return;
     }
 
-    if (!InventoryComponent->HasItem(TEXT("Item_UtilityRobot"), 1))
+    // Production V2 (Master Plan §12): specialist chassis deploy first when
+    // carried (mining/farming/defense frames), the general frame is the fallback.
+    static const FName RobotItemIds[] =
+    {
+        TEXT("Item_RobotBorebot"),
+        TEXT("Item_RobotCultivator"),
+        TEXT("Item_RobotSentinel"),
+        TEXT("Item_UtilityRobot")
+    };
+
+    FName ChosenItem = NAME_None;
+    FName ChosenDefinition = NAME_None;
+    for (const FName ItemId : RobotItemIds)
+    {
+        if (InventoryComponent->HasItem(ItemId, 1))
+        {
+            ChosenItem = ItemId;
+            ChosenDefinition = ResolveRobotDefinitionIdForItem(ItemId);
+            break;
+        }
+    }
+
+    if (ChosenItem.IsNone())
     {
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
         {
@@ -1379,12 +1412,21 @@ void AAstrawildPlayerCharacter::DeployRobot(const FInputActionValue& Value)
     }
 
     FAstrawildItemStack Cost;
-    Cost.ItemId = TEXT("Item_UtilityRobot");
+    Cost.ItemId = ChosenItem;
     Cost.Quantity = 1;
     if (InventoryComponent->ConsumeItems(TArray<FAstrawildItemStack>{Cost}))
     {
-        SpawnUtilityRobot();
+        SpawnUtilityRobot(ChosenDefinition);
     }
+}
+
+FName AAstrawildPlayerCharacter::ResolveRobotDefinitionIdForItem(const FName RobotItemId) const
+{
+    // Robot chassis id comes from the item definition (data-driven mapping).
+    const UWorld* World = GetWorld();
+    const UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(RobotItemId) : nullptr;
+    return (ItemDef && !ItemDef->RobotDefinitionId.IsNone()) ? ItemDef->RobotDefinitionId : NAME_None;
 }
 
 void AAstrawildPlayerCharacter::ToggleInventoryScreenInput(const FInputActionValue& Value)

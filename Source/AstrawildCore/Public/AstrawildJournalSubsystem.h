@@ -89,4 +89,7 @@ private:
     void ObservePlayer(AAstrawildPlayerCharacter* Player, float DeltaTime);
     void GrantKnowledgeMilestones(FAstrawildJournalEntry& Entry, const FName DefinitionId);
     class UAstrawildResearchSubsystem* GetResearch() const;
+
+    /** Production V2: equipped scanner range multiplier (1 = stock/no scanner). */
+    static float GetScannerRangeMultiplier(const AAstrawildPlayerCharacter* Player);
 };

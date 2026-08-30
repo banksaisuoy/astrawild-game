@@ -9,12 +9,15 @@
 #include "AstrawildGameplayTags.h"
 #include "AstrawildGameState.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
+#include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
 #include "AstrawildWorkSiteActor.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ProceduralMeshComponent.h"
@@ -435,6 +438,19 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
     if (GetLocalRole() == ROLE_Authority && !IsDefeated())
     {
         HandleNeedsDecay(DeltaTime);
+
+        // Production V2 (Master Plan §6): party passive auras — captured Echoes
+        // radiate their passive while healthy (throttled to once per second).
+        if (bCaptured && IsValid(EchoDefinition) && EchoDefinition->Passive != EAstrawildEchoPassive::None)
+        {
+            PassiveAuraAccumulator += DeltaTime;
+            if (PassiveAuraAccumulator >= 1.0f)
+            {
+                const float AuraSeconds = PassiveAuraAccumulator;
+                PassiveAuraAccumulator = 0.0f;
+                ApplyPartyPassive(AuraSeconds);
+            }
+        }
 
         // Batch 3 — Item A: status ticks (DoT + expiry + speed multiplier).
         const float PreviousSpeedMultiplier = GetStatusSpeedMultiplier();
@@ -1115,4 +1131,111 @@ bool AAstrawildEchoCharacter::FromSaveDataV2(const FAstrawildEchoInstanceV2& Dat
         GetCharacterMovement()->MaxWalkSpeed = CachedStats.MoveSpeed;
     }
     return true;
+}
+
+void AAstrawildEchoCharacter::ApplyPartyPassive(const float AuraSeconds)
+{
+    // Production V2 (Master Plan §6): deterministic aura effects — healing
+    // (Mending Aura), stamina regen (Rhythm Aura) apply to the owner player and
+    // nearby party Echoes while this Echo is captured, healthy and close enough.
+    UWorld* World = GetWorld();
+    if (!World || !bCaptured || IsDefeated() || !IsValid(EchoDefinition) || AuraSeconds <= 0.0f)
+    {
+        return;
+    }
+
+    const EAstrawildEchoPassive Passive = EchoDefinition->Passive;
+    if (Passive == EAstrawildEchoPassive::None)
+    {
+        return;
+    }
+
+    constexpr float AuraRadius = 1500.0f;
+    constexpr float HealPerSecond = 1.0f;
+    constexpr float StaminaPerSecond = 2.0f;
+
+    for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
+    {
+        AAstrawildPlayerCharacter* Player = *It;
+        if (!Player || !Player->IsAlive() || Player->GetFName() != OwnerPlayerId)
+        {
+            continue;
+        }
+        if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) > AuraRadius)
+        {
+            continue;
+        }
+
+        if (Passive == EAstrawildEchoPassive::PartyHeal)
+        {
+            if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
+            {
+                Survival->RestoreHealth(HealPerSecond * AuraSeconds);
+            }
+        }
+        else if (Passive == EAstrawildEchoPassive::PlayerStamina)
+        {
+            if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
+            {
+                Survival->RestoreStamina(StaminaPerSecond * AuraSeconds);
+            }
+        }
+
+        // Mending Aura also tends wounded party Echoes near the player.
+        if (Passive == EAstrawildEchoPassive::PartyHeal)
+        {
+            for (TActorIterator<AAstrawildEchoCharacter> EchoIt(World); EchoIt; ++EchoIt)
+            {
+                AAstrawildEchoCharacter* Ally = *EchoIt;
+                if (!Ally || Ally == this || !Ally->bCaptured || Ally->IsDefeated())
+                {
+                    continue;
+                }
+                if (Ally->OwnerPlayerId != OwnerPlayerId)
+                {
+                    continue;
+                }
+                if (FVector::Dist(GetActorLocation(), Ally->GetActorLocation()) > AuraRadius)
+                {
+                    continue;
+                }
+                Ally->CurrentHealth = FMath::Min(Ally->CurrentHealth + HealPerSecond * AuraSeconds, Ally->CachedStats.MaxHealth);
+            }
+        }
+        break; // One owner player per aura.
+    }
+}
+
+bool AAstrawildEchoCharacter::HasPlayerPartyPassive(const UWorld* World, const AActor* Player,
+    const EAstrawildEchoPassive Passive, const float Radius)
+{
+    // Static aura query: captured Echoes of THIS player radiate while healthy and
+    // nearby. Used by the AI perception layer (ThreatDampener) and the inventory
+    // (CarryBoost) — one shared truth for party passive presence.
+    if (!World || !Player || Passive == EAstrawildEchoPassive::None)
+    {
+        return false;
+    }
+    const FName PlayerId = Player->GetFName();
+    if (PlayerId.IsNone())
+    {
+        return false;
+    }
+    for (TActorIterator<AAstrawildEchoCharacter> It(const_cast<UWorld*>(World)); It; ++It)
+    {
+        const AAstrawildEchoCharacter* Echo = *It;
+        if (!Echo || !Echo->bCaptured || Echo->IsDefeated() || !IsValid(Echo->EchoDefinition))
+        {
+            continue;
+        }
+        if (Echo->OwnerPlayerId != PlayerId || Echo->EchoDefinition->Passive != Passive)
+        {
+            continue;
+        }
+        if (FVector::Dist(Echo->GetActorLocation(), Player->GetActorLocation()) <= Radius)
+        {
+            return true;
+        }
+    }
+    return false;
 }

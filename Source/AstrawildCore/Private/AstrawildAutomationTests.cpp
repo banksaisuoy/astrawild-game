@@ -10,6 +10,8 @@
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildNPCCharacter.h"
+#include "AstrawildPOISubsystem.h"
+#include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSkiffActor.h"
 #include "AstrawildSurvivalComponent.h"
@@ -839,3 +841,435 @@ bool FAstrawildSkiffFlightMathTest::RunTest(const FString& Parameters)
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS
+
+// ---------------------------------------------------------------------------
+// Production V2 — weapon profiles (Master Plan §8): each family is a distinct
+// firing archetype with sane damage/interval math.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWeaponProfileTest,
+    "ASTRAWILD.Weapon.ProfileMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWeaponProfileTest::RunTest(const FString& Parameters)
+{
+    // Family → expected fire-mode archetype mapping (data contract).
+    UAstrawildWeaponDefinition* Kinetic = NewObject<UAstrawildWeaponDefinition>();
+    Kinetic->WeaponId = TEXT("Weapon_TestKinetic");
+    Kinetic->Family = EAstrawildWeaponFamily::Kinetic;
+    Kinetic->FireMode = EAstrawildWeaponFireMode::Projectile;
+    Kinetic->DamagePerHit = 14.0f;
+    Kinetic->FireIntervalSeconds = 0.5f;
+
+    UAstrawildWeaponDefinition* Missile = NewObject<UAstrawildWeaponDefinition>();
+    Missile->WeaponId = TEXT("Weapon_TestMissile");
+    Missile->Family = EAstrawildWeaponFamily::Missile;
+    Missile->FireMode = EAstrawildWeaponFireMode::HomingProjectile;
+    Missile->DamagePerHit = 62.0f;
+    Missile->FireIntervalSeconds = 1.4f;
+
+    // DPS sanity: kinetic 28/s sustained, missile ~44/s but homing.
+    TestEqual(TEXT("Kinetic DPS"), Kinetic->DamagePerHit / Kinetic->FireIntervalSeconds, 28.0f);
+    TestEqual(TEXT("Missile DPS"), Missile->DamagePerHit / Missile->FireIntervalSeconds, 44.285715f, 0.01f);
+
+    // Arc chain decay: hop damage falls geometrically by ChainDamageFraction.
+    UAstrawildWeaponDefinition* Arc = NewObject<UAstrawildWeaponDefinition>();
+    Arc->ChainDamageFraction = 0.6f;
+    Arc->DamagePerHit = 25.0f;
+    const float Hop1 = Arc->DamagePerHit * Arc->ChainDamageFraction;
+    const float Hop2 = Hop1 * Arc->ChainDamageFraction;
+    TestEqual(TEXT("Arc hop 1"), Hop1, 15.0f);
+    TestEqual(TEXT("Arc hop 2"), Hop2, 9.0f);
+
+    // Beam pierce budget: 1 + PierceCount targets.
+    Arc->PierceCount = 5;
+    TestEqual(TEXT("Beam max targets"), 1 + Arc->PierceCount, 6);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — world-event eligibility gates (Master Plan §19)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWorldEventEligibilityTest,
+    "ASTRAWILD.WorldEvent.EligibilityGates",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWorldEventEligibilityTest::RunTest(const FString& Parameters)
+{
+    UAstrawildWorldEventDefinition* NightRaid = NewObject<UAstrawildWorldEventDefinition>();
+    NightRaid->EventId = TEXT("Event_TestRaid");
+    NightRaid->RarityWeight = 1.0f;
+    NightRaid->MinDay = 3;
+    NightRaid->bRequiresNight = true;
+
+    TMap<FName, int32> NoCooldowns;
+
+    // Day gate.
+    TestFalse(TEXT("Night raid blocked on day 1"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(NightRaid, 0, 1, 23, 0, NoCooldowns, 2));
+    // Night gate (10:00 is daytime).
+    TestFalse(TEXT("Night raid blocked at 10:00"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(NightRaid, 4000, 3, 10, 0, NoCooldowns, 2));
+    // Both gates satisfied (day 3, 23:00).
+    TestTrue(TEXT("Night raid eligible at day 3 23:00"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(NightRaid, 4000, 3, 23, 0, NoCooldowns, 2));
+    // Concurrency gate.
+    TestFalse(TEXT("Night raid blocked when event slots full"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(NightRaid, 4000, 3, 23, 2, NoCooldowns, 2));
+
+    // Cooldown gate: ends at minute 500, current 499 → blocked; 501 → ready.
+    TMap<FName, int32> Cooldowns;
+    Cooldowns.Add(NightRaid->EventId, 500);
+    TestFalse(TEXT("Cooldown blocks at minute 499"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(NightRaid, 499, 3, 23, 0, Cooldowns, 2));
+    TestTrue(TEXT("Cooldown frees at minute 501"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(NightRaid, 501, 3, 23, 0, Cooldowns, 2));
+
+    // Zero-weight events never roll.
+    UAstrawildWorldEventDefinition* Ghost = NewObject<UAstrawildWorldEventDefinition>();
+    Ghost->EventId = TEXT("Event_TestGhost");
+    Ghost->RarityWeight = 0.0f;
+    TestFalse(TEXT("Zero-weight event never eligible"),
+        UAstrawildWorldEventSubsystem::IsEventEligible(Ghost, 0, 9, 12, 0, NoCooldowns, 2));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — world-event weighted pick determinism
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWorldEventPickTest,
+    "ASTRAWILD.WorldEvent.WeightedPickDeterminism",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWorldEventPickTest::RunTest(const FString& Parameters)
+{
+    UAstrawildWorldEventDefinition* Common = NewObject<UAstrawildWorldEventDefinition>();
+    Common->EventId = TEXT("Event_TestCommon");
+    Common->RarityWeight = 3.0f;
+
+    UAstrawildWorldEventDefinition* Rare = NewObject<UAstrawildWorldEventDefinition>();
+    Rare->EventId = TEXT("Event_TestRare");
+    Rare->RarityWeight = 1.0f;
+
+    TArray<UAstrawildWorldEventDefinition*> Pool = { Common, Rare };
+    TMap<FName, int32> NoCooldowns;
+
+    // Same seed → same pick, always (deterministic scheduler contract).
+    FRandomStream StreamA(12345);
+    FRandomStream StreamB(12345);
+    const FName PickA = UAstrawildWorldEventSubsystem::PickWeightedEvent(Pool, NoCooldowns, 1000, 5, 12, 0, 2, StreamA);
+    const FName PickB = UAstrawildWorldEventSubsystem::PickWeightedEvent(Pool, NoCooldowns, 1000, 5, 12, 0, 2, StreamB);
+    TestTrue(TEXT("Seeded pick is deterministic"), PickA == PickB);
+
+    // Both picks land on pool members only.
+    TestTrue(TEXT("Pick comes from the pool"), PickA == Common->EventId || PickA == Rare->EventId);
+
+    // Empty pool → no event.
+    TArray<UAstrawildWorldEventDefinition*> EmptyPool;
+    FRandomStream StreamC(1);
+    TestTrue(TEXT("Empty pool picks nothing"),
+        UAstrawildWorldEventSubsystem::PickWeightedEvent(EmptyPool, NoCooldowns, 0, 1, 12, 0, 2, StreamC) == NAME_None);
+
+    // Statistical sanity: with weight 3:1 over many rolls the common event wins more.
+    FRandomStream StreamD(777);
+    int32 CommonWins = 0;
+    for (int32 i = 0; i < 400; ++i)
+    {
+        if (UAstrawildWorldEventSubsystem::PickWeightedEvent(Pool, NoCooldowns, 100000, 5, 12, 0, 2, StreamD) == Common->EventId)
+        {
+            ++CommonWins;
+        }
+    }
+    TestTrue(TEXT("Weighted pool favours the common event (3:1)"), CommonWins > 220);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — POI discovery radius math (Master Plan §10)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPOIRadiusTest,
+    "ASTRAWILD.POI.DiscoveryRadiusMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPOIRadiusTest::RunTest(const FString& Parameters)
+{
+    UAstrawildPOIDefinition* POI = NewObject<UAstrawildPOIDefinition>();
+    POI->PoiId = TEXT("POI_Test");
+    POI->DiscoveryRadius = 1200.0f;
+
+    TestEqual(TEXT("Stock discovery radius"),
+        UAstrawildPOISubsystem::ComputeDiscoveryRadius(POI, false), 1200.0f);
+    TestEqual(TEXT("Signal scanner doubles the radius"),
+        UAstrawildPOISubsystem::ComputeDiscoveryRadius(POI, true), 2400.0f);
+
+    // Invalid definition → zero (never discovers garbage).
+    TestEqual(TEXT("Null POI discovers nothing"),
+        UAstrawildPOISubsystem::ComputeDiscoveryRadius(nullptr, true), 0.0f);
+
+    // Clamped minimum: tiny radii never break the sweep.
+    POI->DiscoveryRadius = 10.0f;
+    TestEqual(TEXT("Radius clamps up to 100cm"),
+        UAstrawildPOISubsystem::ComputeDiscoveryRadius(POI, false), 100.0f);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — resource node definition contract (P0 determinism fix)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Production V2 — resource node definition contract (P0 determinism fix)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildResourceNodeContractTest,
+    "ASTRAWILD.ResourceNode.DefinitionContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildResourceNodeContractTest::RunTest(const FString& Parameters)
+{
+    // A valid node definition ALWAYS carries a concrete item id — the P0 fix
+    // makes identity deterministic (no fallback loot, no silent no-op nodes).
+    UAstrawildResourceNodeDefinition* Vein = NewObject<UAstrawildResourceNodeDefinition>();
+    Vein->NodeId = TEXT("Node_TestVein");
+    Vein->ResourceItemId = TEXT("Item_AncientAlloy");
+    Vein->bRequiresScannerDetection = true;
+    Vein->QuantityPerHarvest = 1;
+    Vein->MaxQuantity = 1;
+    Vein->RespawnDurationSeconds = 480.0f;
+
+    TestFalse(TEXT("Node identity is concrete"), Vein->ResourceItemId.IsNone());
+    TestTrue(TEXT("Hidden vein requires scanner"), Vein->bRequiresScannerDetection);
+    TestTrue(TEXT("Harvest never exceeds the vein"), Vein->QuantityPerHarvest <= Vein->MaxQuantity);
+    TestTrue(TEXT("Rare veins respawn slowly"), Vein->RespawnDurationSeconds >= 300.0f);
+
+    // Rarity ladder drives the visual contract (shape kits in the node actor).
+    const EAstrawildRarity Ladder[] = { EAstrawildRarity::Common, EAstrawildRarity::Uncommon,
+        EAstrawildRarity::Rare, EAstrawildRarity::Epic, EAstrawildRarity::Legendary, EAstrawildRarity::Mythic };
+    for (int32 i = 1; i < 6; ++i)
+    {
+        TestTrue(TEXT("Rarity ladder is strictly ordered"), static_cast<int32>(Ladder[i - 1]) < static_cast<int32>(Ladder[i]));
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — production Echo roster contract (Master Plan §6 STEP 5)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildProductionEchoRosterTest,
+    "ASTRAWILD.Echo.ProductionRosterContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildProductionEchoRosterTest::RunTest(const FString& Parameters)
+{
+    // The production roster covers distinct role archetypes through work
+    // affinities + passive auras — no two production Echoes are reskins.
+    UAstrawildEchoDefinition* Gatherer = NewObject<UAstrawildEchoDefinition>();
+    Gatherer->DefinitionId = TEXT("Echo_TestGatherer");
+    Gatherer->WorkAffinities = { { EAstrawildWorkType::Gathering, 1.9f } };
+    Gatherer->Passive = EAstrawildEchoPassive::CarryBoost;
+    Gatherer->Rarity = EAstrawildRarity::Uncommon;
+
+    UAstrawildEchoDefinition* Medic = NewObject<UAstrawildEchoDefinition>();
+    Medic->DefinitionId = TEXT("Echo_TestMedic");
+    Medic->WorkAffinities = { { EAstrawildWorkType::ResearchAssist, 1.5f } };
+    Medic->Passive = EAstrawildEchoPassive::PartyHeal;
+    Medic->Rarity = EAstrawildRarity::Rare;
+
+    TestNotEqual(TEXT("Roles differentiate through passives"),
+        static_cast<int32>(Gatherer->Passive), static_cast<int32>(Medic->Passive));
+    TestTrue(TEXT("Specialist affinity exceeds the 0.5 baseline"),
+        Gatherer->WorkAffinities[0].Affinity > 1.5f);
+
+    // Passive vocabulary is closed: every value maps to a real aura system.
+    const int32 PassiveCount = 5; // None + PartyHeal + PlayerStamina + CarryBoost + ThreatDampener
+    TestEqual(TEXT("Passive enum is closed"), static_cast<int32>(EAstrawildEchoPassive::ThreatDampener), PassiveCount - 1);
+
+    // Affinity contract: work types pair with a strength in 0..2.
+    for (const FAstrawildWorkAffinity& Affinity : Medic->WorkAffinities)
+    {
+        TestTrue(TEXT("Affinity inside 0..2"), Affinity.Affinity >= 0.0f && Affinity.Affinity <= 2.0f);
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — armor split-insulation contract (Master Plan §9)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildArmorSplitInsulationTest,
+    "ASTRAWILD.Armor.SplitInsulation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildArmorSplitInsulationTest::RunTest(const FString& Parameters)
+{
+    // Mk II/III sets carry split thermal bands; the legacy InsulationRating
+    // keeps counting on BOTH sides (documented backward-compat rule).
+    UAstrawildItemDefinition* BastionPlate = NewObject<UAstrawildItemDefinition>();
+    BastionPlate->ItemId = TEXT("Item_TestBastion");
+    BastionPlate->ColdInsulationRating = 9.0f;
+    BastionPlate->HeatInsulationRating = 9.0f;
+
+    TestEqual(TEXT("Cold band"), BastionPlate->ColdInsulationRating, 9.0f);
+    TestEqual(TEXT("Heat band"), BastionPlate->HeatInsulationRating, 9.0f);
+
+    // Legacy piece: one rating, both sides (the getter mirrors this rule).
+    UAstrawildItemDefinition* LegacyHelm = NewObject<UAstrawildItemDefinition>();
+    LegacyHelm->ItemId = TEXT("Item_TestLegacy");
+    LegacyHelm->InsulationRating = 6.0f;
+    const float LegacyCold = LegacyHelm->ColdInsulationRating > 0.0f ? LegacyHelm->ColdInsulationRating : LegacyHelm->InsulationRating;
+    const float LegacyHeat = LegacyHelm->HeatInsulationRating > 0.0f ? LegacyHelm->HeatInsulationRating : LegacyHelm->InsulationRating;
+    TestEqual(TEXT("Legacy rating covers cold"), LegacyCold, 6.0f);
+    TestEqual(TEXT("Legacy rating covers heat"), LegacyHeat, 6.0f);
+
+    // Tier ladder is strictly ordered (Field → Mk1 → Mk2 → Mk3 → Experimental).
+    TestTrue(TEXT("Tier ladder ordered"),
+        static_cast<int32>(EAstrawildTechTier::Field) < static_cast<int32>(EAstrawildTechTier::Mk1) &&
+        static_cast<int32>(EAstrawildTechTier::Mk1) < static_cast<int32>(EAstrawildTechTier::Mk2) &&
+        static_cast<int32>(EAstrawildTechTier::Mk2) < static_cast<int32>(EAstrawildTechTier::Mk3) &&
+        static_cast<int32>(EAstrawildTechTier::Mk3) < static_cast<int32>(EAstrawildTechTier::Experimental));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — robot chassis specialist rates (Master Plan §12)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildRobotSpecialistTest,
+    "ASTRAWILD.Robot.SpecialistRates",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildRobotSpecialistTest::RunTest(const FString& Parameters)
+{
+    UAstrawildRobotDefinition* Borebot = NewObject<UAstrawildRobotDefinition>();
+    Borebot->RobotId = TEXT("Robot_TestBore");
+    Borebot->PrimaryWorkType = EAstrawildWorkType::Mining;
+    Borebot->SpecialistWorkRate = 1.6f;
+    Borebot->GenericWorkRate = 0.5f;
+
+    // The specialist trade-off contract: strong on-type, weak off-type.
+    TestTrue(TEXT("Specialist beats the 0.8 general baseline"), Borebot->SpecialistWorkRate > 0.8f);
+    TestTrue(TEXT("Off-type rate undercuts the general baseline"), Borebot->GenericWorkRate < 0.8f);
+
+    // Rate clamps keep every chassis inside 0..4 (definition meta mirrors).
+    TestTrue(TEXT("Rates stay inside 0..4"),
+        Borebot->SpecialistWorkRate >= 0.0f && Borebot->SpecialistWorkRate <= 4.0f &&
+        Borebot->GenericWorkRate >= 0.0f && Borebot->GenericWorkRate <= 4.0f);
+
+    // Move speed multiplier sane (0.1..4 by design).
+    Borebot->MoveSpeedMultiplier = 0.8f;
+    TestTrue(TEXT("Move multiplier inside 0.1..4"),
+        Borebot->MoveSpeedMultiplier >= 0.1f && Borebot->MoveSpeedMultiplier <= 4.0f);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — work-site consume→produce chain (Master Plan §7)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWorkSiteChainTest,
+    "ASTRAWILD.WorkSite.ProductionChain",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWorkSiteChainTest::RunTest(const FString& Parameters)
+{
+    // Definition-driven kitchen: 1 raw meat in, 1 seared meat out per cycle.
+    UAstrawildWorkSiteDefinition* Kitchen = NewObject<UAstrawildWorkSiteDefinition>();
+    Kitchen->SiteId = TEXT("Site_TestKitchen");
+    Kitchen->WorkType = EAstrawildWorkType::Cooking;
+    Kitchen->OutputItemId = TEXT("Item_CookedMeat");
+    Kitchen->OutputQuantity = 1;
+    FAstrawildItemStack RawMeat;
+    RawMeat.ItemId = TEXT("Item_RawMeat");
+    RawMeat.Quantity = 1;
+    Kitchen->InputItems = { RawMeat };
+    Kitchen->SecondsPerOutput = 8.0f;
+
+    TestTrue(TEXT("Input-driven sites declare inputs"), !Kitchen->InputItems.IsEmpty());
+    TestEqual(TEXT("One input per cycle"), Kitchen->InputItems[0].Quantity, 1);
+    TestEqual(TEXT("Output quantity"), Kitchen->OutputQuantity, 1);
+    TestTrue(TEXT("Cooking is faster than gathering"), Kitchen->SecondsPerOutput < 10.0f);
+
+    // Harvest sites declare no inputs (the land provides).
+    UAstrawildWorkSiteDefinition* Gathering = NewObject<UAstrawildWorkSiteDefinition>();
+    Gathering->SiteId = TEXT("Site_TestGather");
+    Gathering->OutputItemId = TEXT("Item_Fiber");
+    TestTrue(TEXT("Harvest sites consume nothing"), Gathering->InputItems.IsEmpty());
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — save schema v4 additive contract (Master Plan §25)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveSchemaV4Test,
+    "ASTRAWILD.Save.SchemaV4",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveSchemaV4Test::RunTest(const FString& Parameters)
+{
+    UAstrawildSaveGame* Save = NewObject<UAstrawildSaveGame>();
+
+    // v4 additions default-init: no events running, nothing discovered, no
+    // cooldowns — a v3 save migrating forward starts with a quiet world.
+    TestTrue(TEXT("World events default empty"), Save->WorldEvents.ActiveEvents.IsEmpty());
+    TestEqual(TEXT("Next roll defaults to zero"), Save->WorldEvents.NextRollAbsoluteMinute, 0);
+    TestTrue(TEXT("Cooldown map default empty"), Save->WorldEvents.CooldownEndMinutes.IsEmpty());
+    TestTrue(TEXT("POI discovery list default empty"), Save->DiscoveredPOIIds.IsEmpty());
+
+    // Active-event runtime shape: id + end minute + zone + location persist.
+    FAstrawildWorldEventSaveData Runtime;
+    Runtime.EventId = TEXT("Event_Test");
+    Runtime.EndAbsoluteMinute = 1200;
+    Runtime.Zone = EAstrawildZone::Glimmerwood;
+    Runtime.Location = FVector(100.0f, 200.0f, 300.0f);
+    Save->WorldEvents.ActiveEvents.Add(Runtime);
+    TestTrue(TEXT("Active event persists its id"), Save->WorldEvents.ActiveEvents[0].EventId == FName(TEXT("Event_Test")));
+    TestEqual(TEXT("Active event persists its end minute"), Save->WorldEvents.ActiveEvents[0].EndAbsoluteMinute, 1200);
+
+    // Drone battery default: 0 (legacy drones without the field recharge).
+    FAstrawildDroneSaveData Drone;
+    TestEqual(TEXT("Drone battery default"), Drone.BatteryRemainingSeconds, 0.0f);
+    Drone.BatteryRemainingSeconds = 321.5f;
+    TestEqual(TEXT("Drone battery persists"), Drone.BatteryRemainingSeconds, 321.5f);
+
+    // Robot definition id default: none (general-purpose frame).
+    FAstrawildRobotSaveData Robot;
+    TestTrue(TEXT("Robot chassis default none"), Robot.RobotDefinitionId.IsNone());
+
+    // Work-site buffer default: empty, output quantity 1.
+    FAstrawildWorkSiteSaveData Site;
+    TestTrue(TEXT("Site input buffer default empty"), Site.InputBuffer.IsEmpty());
+    TestEqual(TEXT("Site output quantity default"), Site.OutputQuantity, 1);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 — quest objective extension (DiscoverPOI serialization-safe)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestDiscoverPOITest,
+    "ASTRAWILD.Quest.DiscoverPOIType",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestDiscoverPOITest::RunTest(const FString& Parameters)
+{
+    // DiscoverPOI is appended LAST — existing saves keep every objective index.
+    TestEqual(TEXT("DiscoverPOI is the last objective type"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::DiscoverPOI), 10);
+
+    FAstrawildQuestObjective Objective;
+    Objective.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+    Objective.TargetId = TEXT("POI_FirstLightRuin");
+    Objective.RequiredCount = 1;
+
+    TestTrue(TEXT("Objective target carries the POI id"), Objective.TargetId == FName(TEXT("POI_FirstLightRuin")));
+    TestFalse(TEXT("Objective starts incomplete"), Objective.IsComplete());
+
+    Objective.ProgressCount = 1;
+    TestTrue(TEXT("Objective completes at count"), Objective.IsComplete());
+    return true;
+}

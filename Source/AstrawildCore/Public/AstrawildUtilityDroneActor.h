@@ -17,6 +17,11 @@ class UStaticMeshComponent;
  *     flows through the standard node interaction so quests/weight/events all
  *     behave exactly like hand-harvesting.
  *
+ * Production V2 (Master Plan §11): drone MODULES — items in the owner's
+ * inventory auto-apply (best per category): scan radius, harvest radius, scan
+ * rate and battery capacity. The battery drains while deployed; at 0 the drone
+ * auto-recalls. Battery state persists in save schema v4.
+ *
  * One drone per player (the deploy key recalls an active drone instead of
  * spending another item). Save/load: FAstrawildDroneSaveData.
  */
@@ -69,6 +74,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Drone|Harvest", meta=(ClampMin="100.0"))
     float HarvestRadius = 700.0f;
 
+    // --- Production V2: battery + modules ---
+
+    /** Base deployed battery capacity (seconds) — modules extend it. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Drone|Battery", meta=(ClampMin="60.0"))
+    float BaseBatterySeconds = 600.0f;
+
+    /** Battery seconds remaining (drains server-side while deployed). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Drone|Battery", meta=(ClampMin="0.0"))
+    float BatteryRemainingSeconds = 600.0f;
+
     virtual void Tick(float DeltaTime) override;
 
     /** Server: bind the drone to its owner (called right after deploy). */
@@ -80,6 +95,21 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Drone")
     void SetOwnerPlayerId(FName InOwnerPlayerId) { OwnerPlayerId = InOwnerPlayerId; }
+
+    /** Production V2: effective battery capacity including the best module. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone|Battery")
+    float GetEffectiveBatterySeconds() const;
+
+    /** Production V2: battery fraction 0..1 (HUD drone readout). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone|Battery")
+    float GetBatteryFraction() const;
+
+    /**
+     * Production V2: resolve the best drone module per category from the owner's
+     * inventory (pure — unit-tested stacking shape).
+     */
+    static void ResolveModules(const class UAstrawildInventoryComponent* Inventory,
+        float& OutScanRadiusBonus, float& OutHarvestRadiusBonus, float& OutScanRateBonus, float& OutBatteryBonus);
 
 protected:
     virtual void BeginPlay() override;

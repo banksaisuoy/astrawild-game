@@ -16,6 +16,10 @@ class USphereComponent;
  * ApplyElementalBossDamage, damage target -> ApplyDamage — so elemental
  * statuses, weaknesses and quest credit behave identically at range.
  *
+ * Production V2 (Master Plan §8): the weapon definition now drives the
+ * flight profile — speed, scale, lifetime and optional homing (missile
+ * lock-on family) resolve from UAstrawildWeaponDefinition data.
+ *
  * Server-authoritative: the server spawns, simulates and resolves the hit;
  * clients see the replicated actor travel (visual-only on remotes).
  */
@@ -48,10 +52,26 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Projectile", meta=(ClampMin="0.5"))
     float LifetimeSeconds = 5.0f;
 
+    /** Visual scale of the placeholder bolt (weapon families differ visibly). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Projectile", meta=(ClampMin="0.05"))
+    float VisualScale = 0.35f;
+
+    /** VFX contract id (Antigravity binds NS_AW_Weap_<TrailVfxId> to the trail). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Projectile")
+    FName TrailVfxId = NAME_None;
+
     virtual void BeginPlay() override;
 
     /** Server: initialize the payload and launch direction. */
     void Launch(const FVector& Direction, float Damage, EAstrawildElementType InElement, AActor* InOwner);
+
+    /**
+     * Production V2: weapon-definition launch — speed/scale/lifetime from data,
+     * optional homing target (missile lock-on). Falls back to Launch defaults.
+     */
+    void LaunchFromWeapon(const FVector& Direction, float Damage, EAstrawildElementType InElement,
+        AActor* InOwner, float Speed, float InVisualScale, float InLifetimeSeconds,
+        AActor* HomingTarget, float HomingAcceleration);
 
 protected:
     /** Component-hit callback: resolve damage against the hit actor, then die. */
@@ -61,6 +81,9 @@ protected:
 private:
     /** Weak owner reference — never dereference after death, only for ignore checks. */
     TWeakObjectPtr<AActor> OwnerActor;
+
+    /** Homing target (missiles) — steering handled by ProjectileMovement homing fields. */
+    TWeakObjectPtr<AActor> HomingTargetActor;
 
     float ElapsedSeconds = 0.0f;
 

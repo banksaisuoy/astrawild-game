@@ -108,6 +108,14 @@ void AAstrawildEchoAIController::HandlePerception(AActor* Actor, FAIStimulus Sti
         return;
     }
 
+    // Production V2 (Master Plan §6): Calm Presence party passive — a healthy
+    // captured Echo with the ThreatDampener aura standing with the player keeps
+    // wild aggression from locking on (perception is quietly discarded).
+    if (AAstrawildEchoCharacter::HasPlayerPartyPassive(GetWorld(), Actor, EAstrawildEchoPassive::ThreatDampener, 1600.0f))
+    {
+        return;
+    }
+
     bPerceivedThreat = true;
 
     // Curious personalities investigate unknown actors instead of immediately reacting (directive §5).

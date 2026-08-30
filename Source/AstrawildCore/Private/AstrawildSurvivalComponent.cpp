@@ -70,10 +70,12 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
 
     // --- Environment temperature ---
     UpdateTemperature();
-    // Final production run (PHASE 12): helmet + exosuit insulation widens the
-    // comfortable band on BOTH sides — cold protection and thermal protection.
-    const float Insulation = GetEquippedInsulation();
-    if (Stats.Temperature <= ColdThresholdCelsius - Insulation || Stats.Temperature >= HeatThresholdCelsius + Insulation)
+    // Production V2 (Master Plan §9): split thermal bands — cold-side and
+    // heat-side insulation now resolve independently so frost/heat armor sets
+    // can specialize. Legacy InsulationRating still counts on both sides.
+    const float ColdInsulation = GetEquippedColdInsulation();
+    const float HeatInsulation = GetEquippedHeatInsulation();
+    if (Stats.Temperature <= ColdThresholdCelsius - ColdInsulation || Stats.Temperature >= HeatThresholdCelsius + HeatInsulation)
     {
         Stats.Health = FMath::Max(0.0f, Stats.Health - ExposureHealthDamagePerSecond * DeltaTime);
     }
@@ -122,6 +124,20 @@ float UAstrawildSurvivalComponent::GetEquippedInsulation() const
     const AActor* Owner = GetOwner();
     const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
     return Inventory ? Inventory->GetEquippedInsulationRating() : 0.0f;
+}
+
+float UAstrawildSurvivalComponent::GetEquippedColdInsulation() const
+{
+    const AActor* Owner = GetOwner();
+    const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
+    return Inventory ? Inventory->GetEquippedColdInsulationRating() : 0.0f;
+}
+
+float UAstrawildSurvivalComponent::GetEquippedHeatInsulation() const
+{
+    const AActor* Owner = GetOwner();
+    const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
+    return Inventory ? Inventory->GetEquippedHeatInsulationRating() : 0.0f;
 }
 
 float UAstrawildSurvivalComponent::GetExosuitStaminaRegenBonus() const
@@ -343,5 +359,27 @@ void UAstrawildSurvivalComponent::Die()
 
 void UAstrawildSurvivalComponent::OnRep_Stats()
 {
+    OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+}
+
+void UAstrawildSurvivalComponent::RestoreStamina(const float Amount)
+{
+    // Production V2: aura-driven regen (Rhythm Aura party passive). Server-only,
+    // broadcast keeps HUD/clients in sync through the standard stats delegate.
+    if (Amount <= 0.0f || GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+    Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Amount);
+    OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+}
+
+void UAstrawildSurvivalComponent::RestoreHealth(const float Amount)
+{
+    if (Amount <= 0.0f || GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+    Stats.Health = FMath::Clamp(Stats.Health + Amount, 0.0f, Stats.MaxHealth);
     OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
 }

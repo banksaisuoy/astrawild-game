@@ -264,6 +264,11 @@ void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& 
         case EAstrawildQuestObjectiveType::SurviveTime:
             // Time-based — accrued by TickSurviveTimeObjectives, not by events.
             break;
+        case EAstrawildQuestObjectiveType::DiscoverPOI:
+            // Production V2: consumes Event.PoiDiscovered (published by the POI
+            // subsystem on first discovery, POI id as TargetId).
+            bMatches = Event.EventTag == TAG_Astrawild_Event_PoiDiscovered && Event.TargetId == Objective.TargetId;
+            break;
         default:
             break;
         }

@@ -5,6 +5,8 @@
 #include "AstrawildTypes.h"
 #include "AstrawildCombatComponent.generated.h"
 
+class UAstrawildWeaponDefinition;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildAttackExecuted, bool, bWasHeavy, float, DamageDealt);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildDodgeStateChanged, bool, bIsDodging, float, RemainingInvulnerabilitySeconds);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildBlockingChanged, bool, bIsBlocking);
@@ -185,6 +187,20 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat")
     bool CanAttack(bool bHeavy) const;
 
+    // --- Production V2 (Master Plan §8): weapon-definition combat path ---
+
+    /** Behaviour profile of the equipped weapon (null when unarmed/legacy stat item). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Weapon")
+    UAstrawildWeaponDefinition* GetEquippedWeaponDefinition() const;
+
+    /** Effective fire interval: weapon-definition profile or the component tunable. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Weapon")
+    float GetRangedFireInterval() const;
+
+    /** Effective per-hit damage: weapon profile + equipped-item attack bonus. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Weapon")
+    float GetRangedDamage() const;
+
 protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -224,5 +240,18 @@ private:
 
     bool ExecuteAttack(bool bHeavy);
     void ApplyDodgeImpulse(const FVector& Direction);
+
+    /** Production V2: shared ranged hit resolution (projectile/beams/arcs all funnel here). */
+    float ResolveRangedHit(AActor* Target, float BaseDamage, EAstrawildElementType Element) const;
+
+    /** Production V2: hitscan trace + pierce (Beam family). */
+    bool ExecuteBeamAttack(const UAstrawildWeaponDefinition* WeaponDef, ACharacter* OwnerCharacter);
+
+    /** Production V2: hitscan + chain-to-nearby (Arc family). */
+    bool ExecuteArcAttack(const UAstrawildWeaponDefinition* WeaponDef, ACharacter* OwnerCharacter);
+
+    /** Production V2: acquire the best lock-on target inside the weapon's cone. */
+    AActor* AcquireLockOnTarget(const UAstrawildWeaponDefinition* WeaponDef, ACharacter* OwnerCharacter, const FVector& AimOrigin, const FVector& AimDirection) const;
+
     class UAstrawildSurvivalComponent* GetSurvival() const;
 };

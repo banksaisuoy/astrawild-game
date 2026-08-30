@@ -110,6 +110,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_ZoneLeft, "Event.ZoneLeft");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoScanned, "Event.EchoScanned");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_DroneDeployed, "Event.DroneDeployed");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_RobotDeployed, "Event.RobotDeployed");
+// Production V2: world dynamism.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_WeatherChanged, "Event.WeatherChanged");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_WorldEventStarted, "Event.WorldEventStarted");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_WorldEventEnded, "Event.WorldEventEnded");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_PoiDiscovered, "Event.PoiDiscovered");
 
 // --- Faction.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Faction_Wild, "Faction.Wild");

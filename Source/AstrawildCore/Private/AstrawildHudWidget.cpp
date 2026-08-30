@@ -4,6 +4,8 @@
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildPowerSubsystem.h"
+#include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
@@ -97,6 +99,16 @@ void UAstrawildHudWidget::BuildWidgetTree()
     AnchorSlot(RootCanvas->AddChildToCanvas(ZoneBannerText), FVector2D(0.5f, 0.125f), FVector2D(0.5f, 0.125f), FVector2D(-160.0f, 0.0f), FVector2D(320.0f, 24.0f));
 
     ZoneSubText = MakeText(TEXT("ZoneSubText"), FLinearColor(0.62f, 0.70f, 0.72f, 1.0f), 12);
+
+    // Production V2: world-event banner (amber, urgent) + power readout + weapon line.
+    WorldEventText = MakeText(TEXT("WorldEventText"), FLinearColor(1.0f, 0.72f, 0.28f, 1.0f), 16);
+    AnchorSlot(RootCanvas->AddChildToCanvas(WorldEventText), FVector2D(0.5f, 0.185f), FVector2D(0.5f, 0.185f), FVector2D(-180.0f, 0.0f), FVector2D(360.0f, 22.0f));
+
+    PowerText = MakeText(TEXT("PowerText"), FLinearColor(0.55f, 0.95f, 0.85f, 1.0f), 13);
+    AnchorSlot(RootCanvas->AddChildToCanvas(PowerText), FVector2D(0.5f, 0.105f), FVector2D(0.5f, 0.105f), FVector2D(-110.0f, 0.0f), FVector2D(220.0f, 18.0f));
+
+    WeaponText = MakeText(TEXT("WeaponText"), FLinearColor(0.98f, 0.80f, 0.55f, 1.0f), 13);
+    AnchorSlot(RootCanvas->AddChildToCanvas(WeaponText), FVector2D(0.98f, 0.86f), FVector2D(0.98f, 0.86f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 18.0f));
     ZoneSubText->SetAutoWrapText(true);
     AnchorSlot(RootCanvas->AddChildToCanvas(ZoneSubText), FVector2D(0.5f, 0.155f), FVector2D(0.5f, 0.155f), FVector2D(-170.0f, 0.0f), FVector2D(340.0f, 30.0f));
 
@@ -367,6 +379,57 @@ void UAstrawildHudWidget::RefreshState()
             *ResolveName(Pawn->InventoryComponent->EquippedShieldItemId),
             *ResolveName(Pawn->InventoryComponent->EquippedArmorItemId),
             Pawn->InventoryComponent->GetEquippedArmorRating())));
+
+        // Production V2 (Master Plan §8): weapon + ammo readability line.
+        if (WeaponText)
+        {
+            FString WeaponLine;
+            if (Pawn->CombatComponent)
+            {
+                if (UAstrawildWeaponDefinition* WeaponDef = Pawn->CombatComponent->GetEquippedWeaponDefinition())
+                {
+                    WeaponLine = FString::Printf(TEXT("%s | DMG %.0f | %.1fs"),
+                        *WeaponDef->DisplayName.ToString(), Pawn->CombatComponent->GetRangedDamage(),
+                        Pawn->CombatComponent->GetRangedFireInterval());
+                    if (!WeaponDef->AmmoItemId.IsNone() && Pawn->InventoryComponent)
+                    {
+                        WeaponLine += FString::Printf(TEXT(" | AMMO %d"), Pawn->InventoryComponent->GetQuantity(WeaponDef->AmmoItemId));
+                    }
+                }
+                else if (!Pawn->InventoryComponent->EquippedItemId.IsNone())
+                {
+                    WeaponLine = FString::Printf(TEXT("%s (melee)"), *ResolveName(Pawn->InventoryComponent->EquippedItemId));
+                }
+            }
+            WeaponText->SetText(FText::FromString(WeaponLine));
+        }
+    }
+
+    // Production V2 (Master Plan §14): power-grid readout.
+    if (PowerText)
+    {
+        if (const UWorld* World = GetWorld())
+        {
+            if (const UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
+            {
+                PowerText->SetText(FText::FromString(FString::Printf(TEXT("GRID  +%.0f / -%.0f  |  CELL %.0f"),
+                    Power->GetTotalGeneration(), Power->GetTotalDraw(), Power->GetStoredEnergy())));
+            }
+        }
+    }
+
+    // Production V2 (Master Plan §19): active world-event banner.
+    if (WorldEventText)
+    {
+        if (const UWorld* World = GetWorld())
+        {
+            if (const UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
+            {
+                const FText EventSummary = WorldEvents->GetActiveEventSummaryText();
+                WorldEventText->SetText(EventSummary);
+                WorldEventText->SetVisibility(EventSummary.IsEmpty() ? ESlateVisibility::Hidden : ESlateVisibility::HitTestInvisible);
+            }
+        }
     }
 
     // Quest tracker.

@@ -2,9 +2,10 @@
 
 ## Status
 
-- Overall: `PARTIAL` — **PLAYABLE BUILD CANDIDATE on the source side** (23/23 gameplay-loop stages
-  implemented + **Batch 8 "The Grand Expanse/Grand Menagerie"**; **still never compiled** — the sole
-  remaining blocker is the in-engine build on the target machine)
+- Overall: `PARTIAL` — **PRODUCTION V2 DATA FOUNDATION COMPLETE on the source side** (verified
+  technical prototype per the V2 Master Plan baseline `eceabd3` + Batch 8 + **V2 Batch 1 data
+  foundation**; the V2 batch is source-implemented and awaits compile verification on the UE
+  5.8.2 target machine — see `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_1.md`)
 - Last updated: 2026-08-30 (Batch 8 — 214-species bestiary, 12-zone world with sea/islands/desert,
   living villages + NPC AI, Dawn Skiff aircraft, dungeon #2, quests 9-10)
 - Branch: `main` (latest: Batch 8; preceded by `eceabd3` final production run, `249eec7` tests,
@@ -54,7 +55,42 @@
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Batch 8 "The Grand Expanse + Grand Menagerie")
+## Changes in this round (2026-08-30 — PRODUCTION V2 BATCH 1: Data Foundation & Production Contracts)
+
+Source-implemented per `Docs/ASTRAWILD_PRODUCTION_V2_MASTER_PLAN.md` (baseline: V2 docs @ `f5745f8`):
+
+1. **P0 fix — deterministic resource identity**: `UAstrawildResourceNodeDefinition` ×10 (Master Plan §1
+   known limitation closed); nodes resolve identity/quantities/respawn/rarity-shape from definitions;
+   identity-less nodes ERROR-log and disable instead of silently no-oping.
+2. **Weapons — 8 families as data** (`UAstrawildWeaponDefinition`): Kinetic/Pulse/Plasma/Laser/Arc/
+   Rail/Missile/Experimental with 4 firing archetypes wired into the combat component (projectile,
+   homing lock-on, piercing beam hitscan, chaining arc) + one shared damage vocabulary. New ammo
+   economy (Rail Slug/Seeker Missile/Nova Cell/Ancient Alloy) + HUD weapon/ammo line.
+3. **Armor Mk II/III/Experimental sets + split thermal bands** (cold/heat insulation resolve
+   independently; legacy rating keeps both sides) + **scanner tiers** (Array Scanner Mk II with
+   hidden-vein detection, Oracle Scanner with ancient-signal tracking ×2.5 range).
+4. **Robotics**: drone modules (battery/scan/harvest — best-per-category auto-apply) + drone battery
+   with auto-recall; specialist robot chassis (Borebot/Cultivator/Sentinel — data-driven rates).
+5. **Base automation consume→produce**: `UAstrawildWorkSiteDefinition` ×4 with input buffers (Camp
+   Kitchen: Raw Meat→Seared Meat; Ridge Breaker Rig: powered mining).
+6. **World events ×9** (`UAstrawildWorldEventSubsystem` — deterministic seeded scheduler, day/night/
+   cooldown/concurrency gates, forced weather, raids, meteor craters, supply drops) + `Event.WeatherChanged`.
+7. **POIs ×12** (`UAstrawildPOISubsystem` + beacon markers; ancient signal sources gated by the
+   Oracle Scanner) + `DiscoverPOI` quest objective.
+8. **Biome asset contracts ×12** (`UAstrawildBiomeDefinition` — the Visual Vertical Slice binding
+   surface; Dawn Fields flagged as the starting biome).
+9. **Echo production roster ×6** with party passive auras (Mending/Rhythm/Carry/Calm Presence) +
+   rarity field.
+10. **Research branches on all 16 techs** + 6 new techs + **quests 11-12** ("Signals in the Static",
+    "The Vanguard Protocol").
+11. **Save schema v4** (additive: world events, POIs, drone battery, robot chassis, site buffers) +
+    `MigrateV3ToV4`.
+12. **39 automation tests** (+11 new — all deterministic world-free).
+
+Status: SOURCE_IMPLEMENTED (compile NOT_RUN in sandbox — UE5 target machine verification required).
+Handoff: `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_1.md`.
+
+## Changes in the previous round (2026-08-30 — Batch 8 "The Grand Expanse + Grand Menagerie")
 
 **User directive:** ตัวละคร 200+ (มังกร/หุ่นยนต์/วิญญาณ/NPC เดินวิ่งสู้เก่ง + AI), หมู่บ้าน, ดันเจียน,
 แมพหลายโซน (ทะเล/เกาะ/ภูเขา/ทะเลทราย), เครื่องบิน, แต่ละตัวมีดีไซน์รูปร่าง-ถิ่นที่อยู่ + สคริปต์สั่งงาน

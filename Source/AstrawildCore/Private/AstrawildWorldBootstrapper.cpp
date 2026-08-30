@@ -8,6 +8,7 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildPOIMarkerActor.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildResourceNode.h"
@@ -85,41 +86,50 @@ namespace
         { EAstrawildZone::PearlseaReef, TEXT("Echo_Pearlcrest"), 2 },
         { EAstrawildZone::PearlseaReef, TEXT("Echo_Abyssjelly"), 1 },
         { EAstrawildZone::PearlseaReef, TEXT("Echo_Embershade"), 1 },
+        // --- Production V2: the role-differentiated production roster ---
+        { EAstrawildZone::DawnFields, TEXT("Echo_Terraquill"), 2 },
+        { EAstrawildZone::DuskMarsh, TEXT("Echo_Mistmender"), 1 },
+        { EAstrawildZone::EmberRidge, TEXT("Echo_Cindermule"), 1 },
+        { EAstrawildZone::Glimmerwood, TEXT("Echo_Voltpylon"), 1 },
+        { EAstrawildZone::VerdantReach, TEXT("Echo_Bastionbeetle"), 1 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Echo_Deepdelver"), 1 },
     };
 
-    // Per-zone resource nodes: signature materials per region.
+    // Per-zone resource nodes: signature NODE DEFINITIONS per region
+    // (Production V2 — deterministic node identity, Master Plan §1 P0 fix).
     struct FZoneResourceRow
     {
         EAstrawildZone Zone;
-        FName ItemId;
+        FName NodeId;
         int32 Count;
     };
 
     const FZoneResourceRow ZoneResources[] = {
-        { EAstrawildZone::DuskMarsh, TEXT("Item_Fiber"), 8 },
-        { EAstrawildZone::DuskMarsh, TEXT("Item_Wood"), 5 },
-        { EAstrawildZone::Glimmerwood, TEXT("Item_Wood"), 6 },
-        { EAstrawildZone::Glimmerwood, TEXT("Item_CrystalShard"), 5 },
-        { EAstrawildZone::EmberRidge, TEXT("Item_Stone"), 7 },
-        { EAstrawildZone::EmberRidge, TEXT("Item_EmberAsh"), 5 },
-        { EAstrawildZone::EmberRidge, TEXT("Item_CrystalShard"), 4 },
-        { EAstrawildZone::FrostveilExpanse, TEXT("Item_Stone"), 6 },
-        { EAstrawildZone::FrostveilExpanse, TEXT("Item_CrystalShard"), 3 },
-        { EAstrawildZone::HollowApproach, TEXT("Item_Stone"), 4 },
-        { EAstrawildZone::HollowApproach, TEXT("Item_CrystalShard"), 4 },
+        { EAstrawildZone::DuskMarsh, TEXT("Node_Sunfiber"), 8 },
+        { EAstrawildZone::DuskMarsh, TEXT("Node_Dawnwood"), 5 },
+        { EAstrawildZone::Glimmerwood, TEXT("Node_Dawnwood"), 6 },
+        { EAstrawildZone::Glimmerwood, TEXT("Node_DawnCrystal"), 5 },
+        { EAstrawildZone::EmberRidge, TEXT("Node_Fieldstone"), 7 },
+        { EAstrawildZone::EmberRidge, TEXT("Node_EmberAsh"), 5 },
+        { EAstrawildZone::EmberRidge, TEXT("Node_DawnCrystal"), 4 },
+        { EAstrawildZone::FrostveilExpanse, TEXT("Node_Fieldstone"), 6 },
+        { EAstrawildZone::FrostveilExpanse, TEXT("Node_DawnCrystal"), 3 },
+        { EAstrawildZone::HollowApproach, TEXT("Node_Fieldstone"), 4 },
+        { EAstrawildZone::HollowApproach, TEXT("Node_DawnCrystal"), 4 },
+        { EAstrawildZone::HollowApproach, TEXT("Node_AncientVein"), 2 },
         // --- Batch 8 zones: signature materials ---
-        { EAstrawildZone::SunscarDesert, TEXT("Item_DuneGlass"), 6 },
-        { EAstrawildZone::SunscarDesert, TEXT("Item_Stone"), 4 },
-        { EAstrawildZone::StormcrestHighlands, TEXT("Item_StormSilver"), 5 },
-        { EAstrawildZone::StormcrestHighlands, TEXT("Item_Stone"), 4 },
-        { EAstrawildZone::VerdantReach, TEXT("Item_Fiber"), 6 },
-        { EAstrawildZone::VerdantReach, TEXT("Item_Wood"), 4 },
-        { EAstrawildZone::AzureShallows, TEXT("Item_SeaPearl"), 4 },
-        { EAstrawildZone::AzureShallows, TEXT("Item_Stone"), 2 },
-        { EAstrawildZone::TidebreakerIsles, TEXT("Item_SeaPearl"), 3 },
-        { EAstrawildZone::TidebreakerIsles, TEXT("Item_Wood"), 3 },
-        { EAstrawildZone::PearlseaReef, TEXT("Item_CoralShard"), 5 },
-        { EAstrawildZone::PearlseaReef, TEXT("Item_SeaPearl"), 2 },
+        { EAstrawildZone::SunscarDesert, TEXT("Node_DuneGlass"), 6 },
+        { EAstrawildZone::SunscarDesert, TEXT("Node_Fieldstone"), 4 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Node_StormSilver"), 5 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Node_Fieldstone"), 4 },
+        { EAstrawildZone::VerdantReach, TEXT("Node_Sunfiber"), 6 },
+        { EAstrawildZone::VerdantReach, TEXT("Node_Dawnwood"), 4 },
+        { EAstrawildZone::AzureShallows, TEXT("Node_SeaPearl"), 4 },
+        { EAstrawildZone::AzureShallows, TEXT("Node_Fieldstone"), 2 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Node_SeaPearl"), 3 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Node_Dawnwood"), 3 },
+        { EAstrawildZone::PearlseaReef, TEXT("Node_CoralShard"), 5 },
+        { EAstrawildZone::PearlseaReef, TEXT("Node_SeaPearl"), 2 },
     };
 }
 
@@ -227,6 +237,7 @@ void AAstrawildWorldBootstrapper::BeginPlay()
 
     // Batch 8 — the Grand Expanse: sea, living villages, aircraft.
     SpawnWaterPlanes();
+    SpawnPOIMarkers();
     SpawnVillages();
     SpawnSkiffs();
 
@@ -411,9 +422,11 @@ void AAstrawildWorldBootstrapper::ScatterResourceNodes()
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    // --- Dawn Fields: the classic camp ring (legacy knobs, directive §21) ---
+    // --- Dawn Fields: the classic camp ring (legacy knobs, directive §21).
+    //     Production V2: nodes now reference DEFINITIONS — identity, quantities,
+    //     respawn and rarity-shape visuals resolve deterministically on BeginPlay.
     const FVector2D CampXY = GetCampCenterXY();
-    const FName ResourceIds[3] = { TEXT("Item_Wood"), TEXT("Item_Stone"), TEXT("Item_Fiber") };
+    const FName NodeIds[3] = { TEXT("Node_Dawnwood"), TEXT("Node_Fieldstone"), TEXT("Node_Sunfiber") };
 
     for (int32 i = 0; i < ResourceNodeCount; ++i)
     {
@@ -425,13 +438,11 @@ void AAstrawildWorldBootstrapper::ScatterResourceNodes()
             FVector(Point.X, Point.Y, GroundZ(Point) + 100.0f), FRotator::ZeroRotator, Params);
         if (Node)
         {
-            Node->ResourceItemId = ResourceIds[i % 3];
-            Node->ResourceQuantityPerHarvest = 2;
-            Node->RemainingQuantity = 3;
+            Node->NodeDefinitionId = NodeIds[i % 3];
         }
     }
 
-    // --- Outer zones: signature materials per region ---
+    // --- Outer zones: signature nodes per region ---
     for (const FZoneResourceRow& Row : ZoneResources)
     {
         const FAstrawildZoneDescriptor* ZoneDesc = UAstrawildZoneSubsystem::FindZone(Row.Zone);
@@ -447,9 +458,7 @@ void AAstrawildWorldBootstrapper::ScatterResourceNodes()
                 FVector(Point.X, Point.Y, Point.Z + 100.0f), FRotator::ZeroRotator, Params);
             if (Node)
             {
-                Node->ResourceItemId = Row.ItemId;
-                Node->ResourceQuantityPerHarvest = 2;
-                Node->RemainingQuantity = 3;
+                Node->NodeDefinitionId = Row.NodeId;
             }
         }
     }
@@ -604,23 +613,48 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
     }
 
     // Work sites for captured Echoes (directive §18): gathering + farming.
-    // Final production run: stable SiteIds so save/load can re-link workers.
-    if (AAstrawildWorkSiteActor* GatheringSite = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), CampLocation(-CampRadius, 0.0f), FRotator::ZeroRotator, Params))
+    // Production V2 (Master Plan §7): work sites spawn from DEFINITIONS — the
+    // Build→Power→Assign→Work→Consume→Produce loop is data-driven. Camp sites
+    // keep their historical placements; new sites (Ridge rig, Camp kitchen) place
+    // from their definition's zone + offset.
+    if (UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>())
     {
-        GatheringSite->SiteId = TEXT("Site_CampGathering");
-        GatheringSite->WorkType = EAstrawildWorkType::Gathering;
-        GatheringSite->OutputItemId = TEXT("Item_Fiber");
-        GatheringSite->SecondsPerOutput = 10.0f;
-        GatheringSite->bRequiresPower = false;
-    }
+        struct FSitePlacement { FName SiteId; FVector Location; };
+        const FSitePlacement Placements[] =
+        {
+            { TEXT("Site_CampGathering"), CampLocation(-CampRadius, 0.0f) },
+            { TEXT("Site_CampFarm"), CampLocation(-CampRadius * 0.7f, CampRadius * 0.7f) },
+        };
+        for (const FSitePlacement& Placement : Placements)
+        {
+            if (UAstrawildWorkSiteDefinition* SiteDef = Registry->FindWorkSite(Placement.SiteId))
+            {
+                if (AAstrawildWorkSiteActor* Site = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), Placement.Location, FRotator::ZeroRotator, Params))
+                {
+                    Site->InitializeFromDefinition(SiteDef);
+                }
+            }
+        }
 
-    if (AAstrawildWorkSiteActor* FarmSite = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), CampLocation(-CampRadius * 0.7f, CampRadius * 0.7f), FRotator::ZeroRotator, Params))
-    {
-        FarmSite->SiteId = TEXT("Site_CampFarm");
-        FarmSite->WorkType = EAstrawildWorkType::Farming;
-        FarmSite->OutputItemId = TEXT("Item_Berry");
-        FarmSite->SecondsPerOutput = 14.0f;
-        FarmSite->bRequiresPower = false;
+        // Definition-placed sites outside the camp (zone center + offset).
+        for (UAstrawildWorkSiteDefinition* SiteDef : Registry->GetAllWorkSiteDefinitions())
+        {
+            if (SiteDef->Zone == EAstrawildZone::DawnFields)
+            {
+                continue; // Camp sites placed above at their historical spots.
+            }
+            const FAstrawildZoneDescriptor* ZoneDesc = UAstrawildZoneSubsystem::FindZone(SiteDef->Zone);
+            if (!ZoneDesc)
+            {
+                continue;
+            }
+            const FVector2D Center = ZoneDesc->GetCenter();
+            const FVector2D SiteXY(Center.X + SiteDef->OffsetFromZoneCenter.X, Center.Y + SiteDef->OffsetFromZoneCenter.Y);
+            if (AAstrawildWorkSiteActor* Site = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), FVector(SiteXY.X, SiteXY.Y, GroundZ(SiteXY) + 80.0f), FRotator::ZeroRotator, Params))
+            {
+                Site->InitializeFromDefinition(SiteDef);
+            }
+        }
     }
 
     // NPCs: Batch 8 — the full village rosters now spawn through SpawnVillages()
@@ -732,6 +766,44 @@ FVector AAstrawildWorldBootstrapper::FindDrySpotNear(const FVector2D& Center, co
         }
     }
     return Best;
+}
+
+void AAstrawildWorldBootstrapper::SpawnPOIMarkers()
+{
+    // Production V2 (Master Plan §5/§31): one marker per registered POI
+    // definition, placed from the definition's zone + offset. The POI subsystem
+    // tracks discovery (radius sweep + rewards + save v4).
+    UWorld* World = GetWorld();
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (!World || !Registry)
+    {
+        return;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    for (UAstrawildPOIDefinition* POI : Registry->GetAllPOIs())
+    {
+        if (!POI)
+        {
+            continue;
+        }
+        const FAstrawildZoneDescriptor* ZoneDesc = UAstrawildZoneSubsystem::FindZone(POI->Zone);
+        if (!ZoneDesc)
+        {
+            continue;
+        }
+        const FVector2D Center = ZoneDesc->GetCenter();
+        const FVector2D PoiXY(Center.X + POI->OffsetFromZoneCenter.X, Center.Y + POI->OffsetFromZoneCenter.Y);
+        if (AAstrawildPOIMarkerActor* Marker = World->SpawnActor<AAstrawildPOIMarkerActor>(
+            AAstrawildPOIMarkerActor::StaticClass(), FVector(PoiXY.X, PoiXY.Y, GroundZ(PoiXY) + 130.0f), FRotator::ZeroRotator, Params))
+        {
+            Marker->InitializeFromDefinition(POI);
+        }
+    }
+
+    UE_LOG(LogAstrawild, Log, TEXT("POI markers placed from registry definitions."));
 }
 
 void AAstrawildWorldBootstrapper::SpawnWaterPlanes()

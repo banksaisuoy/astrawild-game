@@ -173,3 +173,138 @@ TArray<UAstrawildEchoDefinition*> UAstrawildItemRegistrySubsystem::GetAllEchoDef
     Echoes.GenerateValueArray(Out);
     return Out;
 }
+
+// --- Production V2: data-driven content foundation registries ---
+
+void UAstrawildItemRegistrySubsystem::RegisterWeapon(UAstrawildWeaponDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->WeaponId.IsNone())
+    {
+        Weapons.Add(Definition->WeaponId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterResourceNode(UAstrawildResourceNodeDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->NodeId.IsNone() && !Definition->ResourceItemId.IsNone())
+    {
+        ResourceNodes.Add(Definition->NodeId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterRobot(UAstrawildRobotDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->RobotId.IsNone())
+    {
+        Robots.Add(Definition->RobotId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterWorkSite(UAstrawildWorkSiteDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->SiteId.IsNone() && !Definition->OutputItemId.IsNone())
+    {
+        WorkSites.Add(Definition->SiteId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterWorldEvent(UAstrawildWorldEventDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->EventId.IsNone())
+    {
+        WorldEvents.Add(Definition->EventId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterPOI(UAstrawildPOIDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->PoiId.IsNone())
+    {
+        POIs.Add(Definition->PoiId, Definition);
+    }
+}
+
+void UAstrawildItemRegistrySubsystem::RegisterBiome(UAstrawildBiomeDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->BiomeId.IsNone())
+    {
+        Biomes.Add(Definition->BiomeId, Definition);
+    }
+}
+
+UAstrawildWeaponDefinition* UAstrawildItemRegistrySubsystem::FindWeapon(const FName WeaponId) const
+{
+    return Weapons.FindRef(WeaponId);
+}
+
+UAstrawildResourceNodeDefinition* UAstrawildItemRegistrySubsystem::FindResourceNode(const FName NodeId) const
+{
+    return ResourceNodes.FindRef(NodeId);
+}
+
+UAstrawildRobotDefinition* UAstrawildItemRegistrySubsystem::FindRobot(const FName RobotId) const
+{
+    return Robots.FindRef(RobotId);
+}
+
+UAstrawildWorkSiteDefinition* UAstrawildItemRegistrySubsystem::FindWorkSite(const FName SiteId) const
+{
+    return WorkSites.FindRef(SiteId);
+}
+
+UAstrawildWorldEventDefinition* UAstrawildItemRegistrySubsystem::FindWorldEvent(const FName EventId) const
+{
+    return WorldEvents.FindRef(EventId);
+}
+
+UAstrawildPOIDefinition* UAstrawildItemRegistrySubsystem::FindPOI(const FName PoiId) const
+{
+    return POIs.FindRef(PoiId);
+}
+
+UAstrawildBiomeDefinition* UAstrawildItemRegistrySubsystem::FindBiome(const FName BiomeId) const
+{
+    return Biomes.FindRef(BiomeId);
+}
+
+TArray<UAstrawildWeaponDefinition*> UAstrawildItemRegistrySubsystem::GetAllWeapons() const
+{
+    TArray<UAstrawildWeaponDefinition*> Out;
+    Weapons.GenerateValueArray(Out);
+    return Out;
+}
+
+TArray<UAstrawildWorldEventDefinition*> UAstrawildItemRegistrySubsystem::GetAllWorldEvents() const
+{
+    TArray<UAstrawildWorldEventDefinition*> Out;
+    WorldEvents.GenerateValueArray(Out);
+    return Out;
+}
+
+TArray<UAstrawildPOIDefinition*> UAstrawildItemRegistrySubsystem::GetAllPOIs() const
+{
+    TArray<UAstrawildPOIDefinition*> Out;
+    POIs.GenerateValueArray(Out);
+    return Out;
+}
+
+TArray<UAstrawildWorkSiteDefinition*> UAstrawildItemRegistrySubsystem::GetAllWorkSiteDefinitions() const
+{
+    TArray<UAstrawildWorkSiteDefinition*> Out;
+    WorkSites.GenerateValueArray(Out);
+    return Out;
+}
+
+TArray<UAstrawildBiomeDefinition*> UAstrawildItemRegistrySubsystem::GetAllBiomes() const
+{
+    TArray<UAstrawildBiomeDefinition*> Out;
+    Biomes.GenerateValueArray(Out);
+    return Out;
+}
+
+TArray<UAstrawildResourceNodeDefinition*> UAstrawildItemRegistrySubsystem::GetAllResourceNodeDefinitions() const
+{
+    TArray<UAstrawildResourceNodeDefinition*> Out;
+    ResourceNodes.GenerateValueArray(Out);
+    return Out;
+}

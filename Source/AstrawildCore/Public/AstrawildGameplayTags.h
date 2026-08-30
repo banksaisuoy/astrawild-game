@@ -118,6 +118,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_EchoScanned);
 // Final production run: robotics deployments (drone/robot spawned).
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_DroneDeployed);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_RobotDeployed);
+// Production V2: world dynamism (weather transitions, scheduled world events, POI discovery).
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_WeatherChanged);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_WorldEventStarted);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_WorldEventEnded);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_PoiDiscovered);
 
 // --- Faction.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Faction_Wild);

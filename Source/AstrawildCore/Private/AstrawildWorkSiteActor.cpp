@@ -11,6 +11,7 @@
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildPowerSubsystem.h"
+#include "AstrawildUtilityRobotActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -39,6 +40,7 @@ void AAstrawildWorkSiteActor::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAstrawildWorkSiteActor, StoredOutput);
+    DOREPLIFETIME(AAstrawildWorkSiteActor, InputBuffer);
 }
 
 void AAstrawildWorkSiteActor::BeginPlay()
@@ -123,19 +125,166 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
         }
     }
 
-    // Final production run: robots work at a flat rate (no needs decay — that is
-    // their entire niche — but the power gate above still applies).
-    if (bRobotPresent)
+    // Final production run + Production V2: robots work at a flat rate (no needs
+    // decay — that is their entire niche — but the power gate above still applies).
+    // Specialist chassis (mining/farming/defense) resolve their per-site rate from
+    // their robot definition; general-purpose frames keep the site's legacy rate.
+    if (const AAstrawildUtilityRobotActor* Robot = AssignedRobot.Get())
     {
-        WorkAccumulator += DeltaTime * RobotWorkRate * PowerMultiplier;
+        const float RobotRate = Robot->GetWorkRateFor(WorkType);
+        WorkAccumulator += DeltaTime * RobotRate * PowerMultiplier;
     }
 
     while (WorkAccumulator >= SecondsPerOutput)
     {
+        // Production V2 (Master Plan §7): consume→produce. Definition-driven sites
+        // burn their inputs per cycle — an empty buffer stalls the accumulator at
+        // the threshold so work resumes the instant inputs arrive (no free cycles).
+        if (!ConsumeCycleInputs())
+        {
+            WorkAccumulator = SecondsPerOutput;
+            break;
+        }
         WorkAccumulator -= SecondsPerOutput;
-        StoredOutput += 1;
+        StoredOutput += FMath::Max(1, OutputQuantity);
         OnWorkProduced.Broadcast(this, OutputItemId, StoredOutput);
     }
+}
+
+bool AAstrawildWorkSiteActor::ConsumeCycleInputs()
+{
+    if (InputItems.IsEmpty())
+    {
+        return true; // Harvest-from-the-land site: no inputs needed.
+    }
+    for (const FAstrawildItemStack& Required : InputItems)
+    {
+        const int32 Have = BufferQuantity(Required.ItemId);
+        if (Have < Required.Quantity)
+        {
+            return false;
+        }
+    }
+    for (const FAstrawildItemStack& Required : InputItems)
+    {
+        RemoveBufferedQuantity(Required.ItemId, Required.Quantity);
+    }
+    return true;
+}
+
+int32 AAstrawildWorkSiteActor::BufferQuantity(const FName ItemId) const
+{
+    for (const FAstrawildItemStack& Stack : InputBuffer)
+    {
+        if (Stack.ItemId == ItemId)
+        {
+            return Stack.Quantity;
+        }
+    }
+    return 0;
+}
+
+void AAstrawildWorkSiteActor::RemoveBufferedQuantity(const FName ItemId, const int32 Quantity)
+{
+    for (FAstrawildItemStack& Stack : InputBuffer)
+    {
+        if (Stack.ItemId == ItemId)
+        {
+            Stack.Quantity = FMath::Max(0, Stack.Quantity - Quantity);
+        }
+    }
+    InputBuffer.RemoveAll([](const FAstrawildItemStack& Stack) { return Stack.Quantity <= 0; });
+}
+
+int32 AAstrawildWorkSiteActor::GetBufferedCycleCount() const
+{
+    if (InputItems.IsEmpty())
+    {
+        return 0;
+    }
+    int32 Cycles = TNumericLimits<int32>::Max();
+    for (const FAstrawildItemStack& Required : InputItems)
+    {
+        const int32 Have = BufferQuantity(Required.ItemId);
+        const int32 Needed = FMath::Max(1, Required.Quantity);
+        Cycles = FMath::Min(Cycles, Have / Needed);
+    }
+    return Cycles == TNumericLimits<int32>::Max() ? 0 : Cycles;
+}
+
+int32 AAstrawildWorkSiteActor::DepositInputsFromInventory(UAstrawildInventoryComponent* Inventory)
+{
+    // Server: transfer as many full-cycle input sets as the player carries (max
+    // 10 cycles staged) — silent add on removal keeps quest credit semantics clean.
+    if (!Inventory || InputItems.IsEmpty())
+    {
+        return 0;
+    }
+    const int32 MaxStagedCycles = 10;
+    const int32 CurrentCycles = GetBufferedCycleCount();
+    int32 DepositedCycles = 0;
+    for (int32 Cycle = CurrentCycles; Cycle < MaxStagedCycles; ++Cycle)
+    {
+        bool bCanAfford = true;
+        for (const FAstrawildItemStack& Required : InputItems)
+        {
+            const int32 Needed = Required.Quantity - BufferQuantity(Required.ItemId);
+            if (Inventory->GetQuantity(Required.ItemId) < Needed)
+            {
+                bCanAfford = false;
+                break;
+            }
+        }
+        if (!bCanAfford)
+        {
+            break;
+        }
+        for (const FAstrawildItemStack& Required : InputItems)
+        {
+            const int32 Needed = Required.Quantity - BufferQuantity(Required.ItemId);
+            if (Needed > 0)
+            {
+                Inventory->RemoveItem(Required.ItemId, Needed);
+                AddBufferedQuantity(Required.ItemId, Needed);
+            }
+        }
+        ++DepositedCycles;
+    }
+    return DepositedCycles;
+}
+
+void AAstrawildWorkSiteActor::AddBufferedQuantity(const FName ItemId, const int32 Quantity)
+{
+    for (FAstrawildItemStack& Stack : InputBuffer)
+    {
+        if (Stack.ItemId == ItemId)
+        {
+            Stack.Quantity += Quantity;
+            return;
+        }
+    }
+    FAstrawildItemStack NewStack;
+    NewStack.ItemId = ItemId;
+    NewStack.Quantity = Quantity;
+    InputBuffer.Add(NewStack);
+}
+
+bool AAstrawildWorkSiteActor::InitializeFromDefinition(UAstrawildWorkSiteDefinition* Definition)
+{
+    // Production V2: definitions are the single source of truth for site stats
+    // (Master Plan §7 — Build→Power→Assign→Work→Consume→Produce is data-driven).
+    if (!IsValid(Definition) || Definition->SiteId.IsNone() || Definition->OutputItemId.IsNone())
+    {
+        return false;
+    }
+    SiteId = Definition->SiteId;
+    WorkType = Definition->WorkType;
+    OutputItemId = Definition->OutputItemId;
+    OutputQuantity = FMath::Max(1, Definition->OutputQuantity);
+    InputItems = Definition->InputItems;
+    SecondsPerOutput = FMath::Max(1.0f, Definition->SecondsPerOutput);
+    bRequiresPower = Definition->bRequiresPower;
+    return true;
 }
 
 int32 AAstrawildWorkSiteActor::CollectOutput()
@@ -212,6 +361,9 @@ FAstrawildWorkSiteSaveData AAstrawildWorkSiteActor::ExportForSave() const
     Data.StoredOutput = StoredOutput;
     Data.AssignedEchoInstanceIds = GetAssignedEchoInstanceIds();
     Data.bHasRobot = AssignedRobot.IsValid();
+    // Production V2 (schema v4): buffer + per-cycle output persist across saves.
+    Data.InputBuffer = InputBuffer;
+    Data.OutputQuantity = FMath::Max(1, OutputQuantity);
     return Data;
 }
 
@@ -227,6 +379,9 @@ void AAstrawildWorkSiteActor::ImportFromSave(const FAstrawildWorkSiteSaveData& D
     OutputItemId = Data.OutputItemId;
     StoredOutput = FMath::Max(0, Data.StoredOutput);
     WorkAccumulator = 0.0f;
+    // Production V2 (schema v4): buffer + per-cycle output restore.
+    InputBuffer = Data.InputBuffer;
+    OutputQuantity = FMath::Max(1, Data.OutputQuantity);
 }
 
 FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
@@ -293,6 +448,25 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
         return;
     }
 
+    // 1.5) Production V2: definition-driven sites take inputs BEFORE worker
+    // assignment — E stages every full input cycle the player carries (max 10).
+    if (RequiresInputs() && Player->InventoryComponent)
+    {
+        const int32 Deposited = DepositInputsFromInventory(Player->InventoryComponent);
+        if (Deposited > 0)
+        {
+            Notify(FText::FromString(FString::Printf(TEXT("Staged %d production cycle%s (%d buffered)."),
+                Deposited, Deposited == 1 ? TEXT("") : TEXT("s"), GetBufferedCycleCount())));
+            return;
+        }
+        if (GetBufferedCycleCount() <= 0)
+        {
+            Notify(FText::FromString(FString::Printf(TEXT("Needs inputs per cycle: %s — bring some and press E."),
+                *FormatInputRequirements())));
+            return;
+        }
+    }
+
     // 2) Assign the nearest idle captured Echo of this player.
     const FName OwnerId = Player->GetFName();
     AAstrawildEchoCharacter* Best = nullptr;
@@ -328,4 +502,19 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
     {
         Notify(FText::FromString(TEXT("No idle Echo nearby — capture one and command it to Work (C).")));
     }
+}
+
+FString AAstrawildWorkSiteActor::FormatInputRequirements() const
+{
+    // "2x Item_RawMeat + 1x Item_Berry" — the prompt contract for input sites.
+    FString Out;
+    for (const FAstrawildItemStack& Required : InputItems)
+    {
+        if (!Out.IsEmpty())
+        {
+            Out += TEXT(" + ");
+        }
+        Out += FString::Printf(TEXT("%dx %s"), FMath::Max(1, Required.Quantity), *Required.ItemId.ToString());
+    }
+    return Out;
 }

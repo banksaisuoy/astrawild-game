@@ -111,6 +111,16 @@ public:
     /** Power grid buffered energy (battery charge finally survives reloads). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     FAstrawildPowerGridSaveData PowerGrid;
+
+    // --- v4 payload (Production V2 — world events, POIs, drone battery) ---
+
+    /** World-event scheduler state (active events + roll clock + cooldowns). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FAstrawildWorldEventScheduleSaveData WorldEvents;
+
+    /** Discovered points of interest. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FName> DiscoveredPOIIds;
 };
 
 UCLASS()
@@ -155,10 +165,13 @@ public:
     static uint32 ComputeChecksum(int32 SchemaVersion, const FDateTime& SavedAtUtc);
 
 private:
-    static constexpr int32 CurrentSchemaVersion = 3;
+    static constexpr int32 CurrentSchemaVersion = 4;
 
     bool MigrateV1ToV2(UAstrawildSaveGame* SaveGame) const;
 
     /** v2 -> v3 is purely additive (new fields default-init) — logged for traceability. */
     void MigrateV2ToV3(UAstrawildSaveGame* SaveGame) const;
+
+    /** v3 -> v4 is purely additive (world events + POIs default-init). */
+    void MigrateV3ToV4(UAstrawildSaveGame* SaveGame) const;
 };

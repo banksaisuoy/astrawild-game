@@ -99,6 +99,15 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> ScanText;
 
+    /** Production V2: active world-event banner (top-center under the zone line). */
+    TObjectPtr<UTextBlock> WorldEventText;
+
+    /** Production V2: power-grid readout (generation/draw/stored). */
+    TObjectPtr<UTextBlock> PowerText;
+
+    /** Production V2: weapon + ammo line (combat readability, Master Plan §8). */
+    TObjectPtr<UTextBlock> WeaponText;
+
 private:
     float RefreshAccumulator = 0.0f;
     float NotificationRemaining = 0.0f;

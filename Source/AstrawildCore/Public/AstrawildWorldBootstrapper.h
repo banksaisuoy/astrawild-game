@@ -91,6 +91,9 @@ private:
     /** Spawns the water planes over the three sea zones. */
     void SpawnWaterPlanes();
 
+    /** Production V2: place POI markers from registry definitions. */
+    void SpawnPOIMarkers();
+
     /** Spawns Dawnstead + Driftwood Landing villages with their NPC rosters. */
     void SpawnVillages();
 

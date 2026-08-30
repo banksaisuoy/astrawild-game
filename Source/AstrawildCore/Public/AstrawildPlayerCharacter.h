@@ -222,6 +222,9 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone")
     AAstrawildUtilityDroneActor* GetActiveDrone() const { return ActiveDrone.Get(); }
 
+    /** Production V2: clear the active-drone handle (battery auto-recall path). */
+    void ClearActiveDrone() { ActiveDrone = nullptr; }
+
     /** Batch 8 — the skiff this player is currently piloting (null = on foot). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff")
     AAstrawildSkiffActor* GetPilotedSkiff() const { return PilotedSkiff.Get(); }
@@ -233,7 +236,10 @@ public:
     AAstrawildUtilityDroneActor* SpawnUtilityDrone();
 
     /** Server: spawn a utility robot and send it to the nearest unmanned site. */
-    bool SpawnUtilityRobot();
+    bool SpawnUtilityRobot(FName RobotDefinitionOverride = NAME_None);
+
+    /** Production V2: robot chassis id carried by a robot item (NAME_None = general). */
+    FName ResolveRobotDefinitionIdForItem(FName RobotItemId) const;
 
     /** Server-side respawn hook used by the game mode. */
     void HandleRespawn(const FTransform& SpawnTransform);

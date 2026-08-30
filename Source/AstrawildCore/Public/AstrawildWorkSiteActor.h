@@ -10,6 +10,7 @@ class AAstrawildWorkSiteActor;
 class AAstrawildEchoCharacter;
 class AAstrawildUtilityRobotActor;
 class UStaticMeshComponent;
+class UAstrawildWorkSiteDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAstrawildWorkProduced, AAstrawildWorkSiteActor*, Site, FName, ItemId, int32, Quantity);
 
@@ -65,6 +66,20 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Work", meta=(ClampMin="0.0", ClampMax="2.0"))
     float RobotWorkRate = 0.8f;
 
+    // --- Production V2 (Master Plan §7): data-driven Consume→Produce loop ---
+
+    /** Inputs consumed per production cycle (empty = harvest-from-the-land site). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Work|Production")
+    TArray<FAstrawildItemStack> InputItems;
+
+    /** Output produced per completed cycle (definition default 1). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Work|Production", meta=(ClampMin="1"))
+    int32 OutputQuantity = 1;
+
+    /** Server: resolve every stat from a registered work-site definition. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
+    bool InitializeFromDefinition(UAstrawildWorkSiteDefinition* Definition);
+
     virtual void Tick(float DeltaTime) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -95,6 +110,20 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
     bool HasRobot() const { return AssignedRobot.IsValid(); }
 
+    // --- Production V2: input buffer queries ---
+
+    /** True when this site consumes inputs per cycle (definition-driven sites). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
+    bool RequiresInputs() const { return !InputItems.IsEmpty(); }
+
+    /** Staged input buffer (server state, saved in schema v4). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
+    const TArray<FAstrawildItemStack>& GetInputBuffer() const { return InputBuffer; }
+
+    /** How many full cycles the current buffer covers (0 when inputs missing). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
+    int32 GetBufferedCycleCount() const;
+
     /** Roster instance ids of the Echoes currently assigned (save snapshot). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
     TArray<FGuid> GetAssignedEchoInstanceIds() const;
@@ -118,6 +147,10 @@ private:
     UPROPERTY(Replicated)
     int32 StoredOutput = 0;
 
+    /** Staged inputs for upcoming cycles (Production V2 consume→produce loop). */
+    UPROPERTY(Replicated)
+    TArray<FAstrawildItemStack> InputBuffer;
+
     float WorkAccumulator = 0.0f;
 
     TArray<TWeakObjectPtr<AAstrawildEchoCharacter>> Workers;
@@ -127,4 +160,16 @@ private:
 
     bool IsPowered() const;
     class UAstrawildPowerSubsystem* GetPower() const;
+
+    /** Consume one cycle's inputs from the buffer (false when insufficient → stall). */
+    bool ConsumeCycleInputs();
+
+    /** Deposit matching inputs from a player inventory into the buffer (server). */
+    int32 DepositInputsFromInventory(class UAstrawildInventoryComponent* Inventory);
+
+    /** Buffer helpers (server state math — deterministic, unit-testable shape). */
+    FString FormatInputRequirements() const;
+    int32 BufferQuantity(FName ItemId) const;
+    void RemoveBufferedQuantity(FName ItemId, int32 Quantity);
+    void AddBufferedQuantity(FName ItemId, int32 Quantity);
 };

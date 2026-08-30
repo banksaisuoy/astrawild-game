@@ -16,7 +16,7 @@
 | V-2 | Full `Development Editor` build | 0 errors, 0 warnings-as-errors | build log |
 | V-3 | Link `ASTRAWILD.exe` / editor target | links clean (watch for the historical C-2 class of LNK2001) | build log |
 | V-4 | PIE boot, zero-asset world | terrain tiles + camp + spawners visible in <30 s | screenshot + log tail |
-| V-5 | Automation tests (`ast.``*`, 27 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
+| V-5 | Automation tests (`ast.``*`, 39 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
 
 Known "may surface on first compile" items (static review already cleaned these once):
 native gameplay tag registration order, `TObjectPtr` BP exposure policy, IMC runtime
@@ -93,6 +93,19 @@ per the production directive PHASE 16.
 | B8-10 | New economy | buy from Borin (armory)/Wren (herbalist)/Nima (isles); sell Sea Pearls/Coral; new materials drop from bestiary species |
 | B8-11 | Save after Batch 8 | NEW GAME (old saves are stale) → play → save → load round-trip ×3 (schema v3, zone discovery n/12 persists) |
 | B8-12 | Perf sanity | 12 terrain tiles + ~70 wildlife + 11 NPCs + 2 villages: `stat unit` target 60 fps mid GPU (tiles ~393k tris total — if below target, lower `TerrainResolution` knob to 96 and re-test) |
+
+| V2-1 | P0 node determinism | harvest several node types → loot ALWAYS matches the definition (wood/stone/fiber/crystal/alloy); rarity shapes differ (cube/sphere/cylinder/cone) | inventory + screenshot |
+| V2-2 | Weapon fire modes | Scrapshot (fast bolt), Arc Caster into a pack (chains 4), Lumen Beam (pierce), Magrail (slow line-wipe), Skysinger (homing track) | short clips / log |
+| V2-3 | Ammo economy | each energy weapon consumes its ammo per shot; out-of-ammo = dry fire | inventory before/after |
+| V2-4 | HUD readouts | weapon line (DMG/interval/AMMO), GRID (+/-/CELL) line, world-event banner appear | screenshot |
+| V2-5 | Split insulation | wear Bastion set in Frostveil (no cold damage) then Ember Ridge (no heat damage); legacy pieces still cover both sides | healthbar timelapse |
+| V2-6 | Scanner tiers | Array Scanner → observation range visibly longer + hidden alloy veins harvestable; Oracle → POIs discover at double radius + signal sources appear | journal + POI toasts |
+| V2-7 | Consume→produce | stage raw meat at Camp Kitchen [E] → output only flows while inputs last; Ridge rig produces only when grid-powered | site output over 2 min |
+| V2-8 | World events | first roll ~09:00 day 1; toasts + HUD banner; night raid spawns 3 hostiles near camp after day 3 | log + screenshot |
+| V2-9 | POI discovery | 12 beacon pillars; walk within radius → discovery toast + rewards; POI quest objectives tick | quest tracker |
+| V2-10 | Robot chassis | deploy Borebot [J] at the Ridge rig → orange light, visibly faster stone output than a general robot | site output compare |
+| V2-11 | Echo auras | capture Mistmender → player + party HP slowly rises; Cindermule near → carry limit +20kg | stat watch |
+| V2-12 | Save v4 | save mid-event with a drone out + kitchen buffer → quit → load → event/battery/buffer all restored | save/load compare |
 
 ---
 

@@ -5,6 +5,7 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildResearchSubsystem.h"
@@ -106,7 +107,10 @@ void UAstrawildJournalSubsystem::ObservePlayer(AAstrawildPlayerCharacter* Player
 
         const FVector ToEcho = Echo->GetActorLocation() - CameraLocation;
         const float Distance = ToEcho.Size();
-        if (Distance > ObservationDistance)
+        // Production V2 (Master Plan §10): scanner tiers extend observation range —
+        // the equipped scanner's multiplier resolves per player (stock = base).
+        const float EffectiveObservationDistance = ObservationDistance * GetScannerRangeMultiplier(Player);
+        if (Distance > EffectiveObservationDistance)
         {
             continue;
         }
@@ -256,4 +260,19 @@ void UAstrawildJournalSubsystem::AddExternalObservation(const AAstrawildEchoChar
         GrantKnowledgeMilestones(Entry, DefinitionId);
         OnJournalUpdated.Broadcast(DefinitionId, Entry);
     }
+}
+
+float UAstrawildJournalSubsystem::GetScannerRangeMultiplier(const AAstrawildPlayerCharacter* Player)
+{
+    // Production V2 (Master Plan §10): scanner tiers extend observation range.
+    // Resolves the equipped scanner item through the inventory component.
+    if (!Player)
+    {
+        return 1.0f;
+    }
+    if (const UAstrawildInventoryComponent* Inventory = Player->FindComponentByClass<UAstrawildInventoryComponent>())
+    {
+        return Inventory->GetEquippedScannerRangeMultiplier();
+    }
+    return 1.0f;
 }
