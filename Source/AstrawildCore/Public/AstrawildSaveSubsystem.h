@@ -25,7 +25,7 @@ public:
 
     /** FNV-1a checksum over schema version + timestamp — corruption tripwire. */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
-    uint32 IntegrityChecksum = 0;
+    int64 IntegrityChecksum = 0;
 
     // --- v1 payload (kept for migration) ---
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")

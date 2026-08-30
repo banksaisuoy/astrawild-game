@@ -25,7 +25,7 @@ class ASTRAWILDCORE_API UAstrawildShopRowWidget : public UUserWidget
 
 public:
     /** Configure the row after construction. bBuyRow=true → buy (×1), false → sell (×1). */
-    void InitializeRow(UAstrawildShopWidget* ParentShop, AAstrawildNPCCharacter* Vendor, FName ItemId, bool bBuyRow);
+    void InitializeRow(UAstrawildShopWidget* InParentShop, AAstrawildNPCCharacter* InVendor, FName ItemId, bool bInBuyRow);
 
 protected:
     virtual void NativeConstruct() override;

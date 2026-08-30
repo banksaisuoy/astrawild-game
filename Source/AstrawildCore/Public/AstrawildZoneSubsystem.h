@@ -9,8 +9,6 @@ class AAstrawildPlayerCharacter;
 class UAstrawildEventBusSubsystem;
 class AActor;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildZoneDiscovered, EAstrawildZone, Zone, const FAstrawildZoneDescriptor&, Descriptor);
-
 /**
  * Static description of one surface zone of the Shattered Vale (Batch 7).
  * Bounds are world-space centimeters on the XY plane and tile the world exactly:
@@ -68,6 +66,8 @@ struct ASTRAWILDCORE_API FAstrawildZoneDescriptor
 
     float GetSizeY() const { return Bounds.Max.Y - Bounds.Min.Y; }
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildZoneDiscovered, EAstrawildZone, Zone, const FAstrawildZoneDescriptor&, Descriptor);
 
 /**
  * The Shattered Vale zone registry (Batch 7 — closes gap M-13).

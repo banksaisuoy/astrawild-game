@@ -467,8 +467,8 @@ bool FAstrawildZoneTableIntegrityTest::RunTest(const FString& Parameters)
 
     // Union must tile the full world rect exactly (4x3 grid of 800m cells — Batch 8).
     const FBox2D World = UAstrawildZoneSubsystem::GetWorldBounds();
-    TestEqual(TEXT("World bounds span 3200m in X"), World.Max.X - World.Min.X, 320000.0f);
-    TestEqual(TEXT("World bounds span 2400m in Y"), World.Max.Y - World.Min.Y, 240000.0f);
+    TestEqual(TEXT("World bounds span 3200m in X"), World.Max.X - World.Min.X, 320000.0);
+    TestEqual(TEXT("World bounds span 2400m in Y"), World.Max.Y - World.Min.Y, 240000.0);
     TestEqual(TEXT("Twelve zones in the table"), Zones.Num(), 12);
 
     // Every zone is a square cell of 800m.

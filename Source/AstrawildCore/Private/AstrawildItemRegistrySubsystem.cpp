@@ -154,7 +154,14 @@ TArray<UAstrawildBuildingDefinition*> UAstrawildItemRegistrySubsystem::GetUnlock
 TArray<UAstrawildRecipeDefinition*> UAstrawildItemRegistrySubsystem::GetAllRecipes() const
 {
     TArray<UAstrawildRecipeDefinition*> Out;
-    Recipes.GenerateValueArray(Out);
+    Out.Reserve(Recipes.Num());
+    for (const auto& Pair : Recipes)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
@@ -163,14 +170,28 @@ TArray<UAstrawildTechnologyDefinition*> UAstrawildItemRegistrySubsystem::GetAllT
     // Audit C-2: research unlock path needs to enumerate the full tech list (auto-grant
     // of root techs + "next unlockable" selection at the Research Desk).
     TArray<UAstrawildTechnologyDefinition*> Out;
-    Technologies.GenerateValueArray(Out);
+    Out.Reserve(Technologies.Num());
+    for (const auto& Pair : Technologies)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
 TArray<UAstrawildEchoDefinition*> UAstrawildItemRegistrySubsystem::GetAllEchoDefinitions() const
 {
     TArray<UAstrawildEchoDefinition*> Out;
-    Echoes.GenerateValueArray(Out);
+    Out.Reserve(Echoes.Num());
+    for (const auto& Pair : Echoes)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 

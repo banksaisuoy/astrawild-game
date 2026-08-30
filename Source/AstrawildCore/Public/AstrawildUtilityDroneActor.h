@@ -87,7 +87,7 @@ public:
     virtual void Tick(float DeltaTime) override;
 
     /** Server: bind the drone to its owner (called right after deploy). */
-    void InitializeForOwner(AAstrawildPlayerCharacter* Owner);
+    void InitializeForOwner(AAstrawildPlayerCharacter* InOwner);
 
     /** Owner player id (save/load re-linking). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone")

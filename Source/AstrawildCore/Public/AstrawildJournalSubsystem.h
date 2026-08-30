@@ -38,7 +38,6 @@ public:
     virtual TStatId GetStatId() const override;
     virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
-    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Journal")
     const FAstrawildJournalEntry* FindEntry(const AAstrawildEchoCharacter* Echo) const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Journal")

@@ -1,5 +1,6 @@
 #include "AstrawildPlayerController.h"
 
+#include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
 #include "AstrawildHudWidget.h"
 #include "AstrawildInventoryScreenWidget.h"
@@ -15,6 +16,7 @@ AAstrawildPlayerController::AAstrawildPlayerController()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+    CheatClass = UAstrawildCheatManager::StaticClass();
     QuestComponent = CreateDefaultSubobject<UAstrawildQuestComponent>(TEXT("Quests"));
 }
 
@@ -29,7 +31,7 @@ void AAstrawildPlayerController::BeginPlay()
 
     // C++-built HUD — no UMG asset dependency (directive §29/§50).
     const TSubclassOf<UAstrawildHudWidget> WidgetClass = HudWidgetClass
-        ? HudWidgetClass.Get()
+        ? HudWidgetClass
         : TSubclassOf<UAstrawildHudWidget>(UAstrawildHudWidget::StaticClass());
 
     HudWidget = CreateWidget<UAstrawildHudWidget>(this, WidgetClass);
@@ -67,7 +69,7 @@ void AAstrawildPlayerController::OpenShop(AAstrawildNPCCharacter* Vendor)
     if (!ShopWidget)
     {
         const TSubclassOf<UAstrawildShopWidget> WidgetClass = ShopWidgetClass
-            ? ShopWidgetClass.Get()
+            ? ShopWidgetClass
             : TSubclassOf<UAstrawildShopWidget>(UAstrawildShopWidget::StaticClass());
         ShopWidget = CreateWidget<UAstrawildShopWidget>(this, WidgetClass);
     }
@@ -129,7 +131,7 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
         if (!InventoryScreen)
         {
             const TSubclassOf<UAstrawildInventoryScreenWidget> WidgetClass = InventoryScreenClass
-                ? InventoryScreenClass.Get()
+                ? InventoryScreenClass
                 : TSubclassOf<UAstrawildInventoryScreenWidget>(UAstrawildInventoryScreenWidget::StaticClass());
             InventoryScreen = CreateWidget<UAstrawildInventoryScreenWidget>(this, WidgetClass);
         }
@@ -183,7 +185,7 @@ void AAstrawildPlayerController::ToggleResearchScreen()
         if (!ResearchScreen)
         {
             const TSubclassOf<UAstrawildResearchScreenWidget> WidgetClass = ResearchScreenClass
-                ? ResearchScreenClass.Get()
+                ? ResearchScreenClass
                 : TSubclassOf<UAstrawildResearchScreenWidget>(UAstrawildResearchScreenWidget::StaticClass());
             ResearchScreen = CreateWidget<UAstrawildResearchScreenWidget>(this, WidgetClass);
         }
@@ -237,17 +239,14 @@ void AAstrawildPlayerController::TogglePauseMenu()
         if (!PauseMenuWidget)
         {
             const TSubclassOf<UAstrawildPauseMenuWidget> WidgetClass = PauseMenuClass
-                ? PauseMenuClass.Get()
+                ? PauseMenuClass
                 : TSubclassOf<UAstrawildPauseMenuWidget>(UAstrawildPauseMenuWidget::StaticClass());
             PauseMenuWidget = CreateWidget<UAstrawildPauseMenuWidget>(this, WidgetClass);
         }
         if (PauseMenuWidget)
         {
             // Pause the world while the menu is up (single-player/listen-server).
-            if (UWorld* World = GetWorld())
-            {
-                World->SetPauserPlayerState(PlayerState);
-            }
+            SetPause(true);
             PauseMenuWidget->AddToViewport(20);
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
@@ -261,10 +260,7 @@ void AAstrawildPlayerController::TogglePauseMenu()
         {
             PauseMenuWidget->RemoveFromParent();
         }
-        if (UWorld* World = GetWorld())
-        {
-            World->SetPauserPlayerState(nullptr);
-        }
+        SetPause(false);
         SetInputMode(FInputModeGameOnly());
         bShowMouseCursor = false;
     }

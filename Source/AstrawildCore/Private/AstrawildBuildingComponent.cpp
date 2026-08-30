@@ -11,6 +11,7 @@
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildResearchSubsystem.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/OverlapResult.h"
 #include "Engine/World.h"
 
 UAstrawildBuildingComponent::UAstrawildBuildingComponent()
@@ -177,9 +178,9 @@ bool UAstrawildBuildingComponent::ValidatePlacementLocation(const FVector& Locat
 
     // Overlap check against existing blocking geometry.
     FCollisionShape Shape = FCollisionShape::MakeBox(FVector(GridSize * 0.45f, GridSize * 0.45f, 50.0f));
-    TArray<FHitResult> Hits;
+    TArray<FOverlapResult> Overlaps;
     const bool bBlocked = World->OverlapMultiByChannel(
-        Hits, Location + FVector(0, 0, 50), FQuat::Identity, ECC_WorldStatic, Shape,
+        Overlaps, Location + FVector(0, 0, 50), FQuat::Identity, ECC_WorldStatic, Shape,
         FCollisionQueryParams::DefaultQueryParam, FCollisionResponseParams::DefaultResponseParam);
 
     return !bBlocked;

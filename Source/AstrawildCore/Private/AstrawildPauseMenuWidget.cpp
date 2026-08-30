@@ -27,7 +27,7 @@ void UAstrawildPauseMenuWidget::NativeConstruct()
 
 void UAstrawildPauseMenuWidget::BuildWidgetTree()
 {
-    if (RootWidget)
+    if (WidgetTree && WidgetTree->RootWidget)
     {
         return;
     }
@@ -63,36 +63,36 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     QuitButton = MakeMenuButton(TEXT("PauseQuit"), TEXT("Quit To Desktop"), FLinearColor(0.5f, 0.2f, 0.16f, 1.0f));
     QuitButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleQuitClicked);
 
-    if (UVerticalBoxSlot* Slot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(ResumeButton)))
+    if (UVerticalBoxSlot* BtnSlot1 = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(ResumeButton)))
     {
-        Slot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
-        Slot->SetPadding(FMargin(0.0f, 6.0f));
+        BtnSlot1->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        BtnSlot1->SetPadding(FMargin(0.0f, 6.0f));
     }
-    if (UVerticalBoxSlot* Slot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SaveButton)))
+    if (UVerticalBoxSlot* BtnSlot2 = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SaveButton)))
     {
-        Slot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
-        Slot->SetPadding(FMargin(0.0f, 6.0f));
+        BtnSlot2->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        BtnSlot2->SetPadding(FMargin(0.0f, 6.0f));
     }
-    if (UVerticalBoxSlot* Slot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(QuitButton)))
+    if (UVerticalBoxSlot* BtnSlot3 = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(QuitButton)))
     {
-        Slot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
-        Slot->SetPadding(FMargin(0.0f, 6.0f));
+        BtnSlot3->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        BtnSlot3->SetPadding(FMargin(0.0f, 6.0f));
     }
 
     if (UCanvasPanelSlot* TitleSlot = Canvas->AddChildToCanvas(TitleText))
     {
-        TitleSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        TitleSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         TitleSlot->SetPosition(FVector2D(-PausePanelWidth * 0.5f, -140.0f));
         TitleSlot->SetSize(FVector2D(PausePanelWidth, 36.0f));
     }
     if (UCanvasPanelSlot* MenuSlot = Canvas->AddChildToCanvas(MenuBox))
     {
-        MenuSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        MenuSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         MenuSlot->SetPosition(FVector2D(-PausePanelWidth * 0.5f, -90.0f));
         MenuSlot->SetSize(FVector2D(PausePanelWidth, (PauseButtonHeight + 12.0f) * 3.0f));
     }
 
-    RootWidget = Canvas;
+    WidgetTree->RootWidget = Canvas;
 }
 
 void UAstrawildPauseMenuWidget::HandleResumeClicked()

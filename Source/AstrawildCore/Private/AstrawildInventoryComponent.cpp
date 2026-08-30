@@ -19,7 +19,6 @@ UAstrawildInventoryComponent::UAstrawildInventoryComponent()
 void UAstrawildInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(UAstrawildInventoryComponent, Items);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedItemId);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedShieldItemId);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedArmorItemId);

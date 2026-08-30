@@ -111,7 +111,7 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     // Audit C-3: broad navmesh generation around the player covers the camp, the
     // arena interior and the dungeon approach in the zero-asset world.
     NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
-    NavInvoker->SetRadii(12000.0f, 16000.0f);
+    NavInvoker->SetGenerationRadii(12000.0f, 16000.0f);
 
     FAstrawildItemStack Wood;
     Wood.ItemId = TEXT("Item_Wood");

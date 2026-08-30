@@ -233,7 +233,7 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Inventory", Replicated)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Inventory")
     TMap<FName, int32> Items;
 
     virtual void BeginPlay() override;

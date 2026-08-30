@@ -46,16 +46,16 @@ namespace
 // ---------------------------------------------------------------------------
 // Row widget
 // ---------------------------------------------------------------------------
-void UAstrawildShopRowWidget::InitializeRow(UAstrawildShopWidget* ParentShop, AAstrawildNPCCharacter* InVendor, const FName ItemId, const bool bInBuyRow)
+void UAstrawildShopRowWidget::InitializeRow(UAstrawildShopWidget* InParentShop, AAstrawildNPCCharacter* InVendor, const FName ItemId, const bool bInBuyRow)
 {
-    ParentShop = ParentShop;
+    ParentShop = InParentShop;
     Vendor = InVendor;
     RowItemId = ItemId;
     bBuyRow = bInBuyRow;
 
     // Rows may be configured before they enter the live tree — build lazily in
     // NativeConstruct; rebuild immediately if we are already live.
-    if (RootWidget && !NameText)
+    if (WidgetTree && WidgetTree->RootWidget && !NameText)
     {
         BuildRowTree();
     }
@@ -69,7 +69,7 @@ void UAstrawildShopRowWidget::NativeConstruct()
 
 void UAstrawildShopRowWidget::BuildRowTree()
 {
-    if (RootWidget)
+    if (WidgetTree && WidgetTree->RootWidget)
     {
         return; // Already built (double construct guard).
     }
@@ -77,7 +77,7 @@ void UAstrawildShopRowWidget::BuildRowTree()
     UWorld* World = GetWorld();
     UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
     const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(RowItemId) : nullptr;
-    if (!ItemDef || !Vendor || !ParentShop.IsValid())
+    if (!ItemDef || !Vendor || !ParentShop)
     {
         return;
     }
@@ -228,11 +228,11 @@ void UAstrawildShopWidget::BuildWidgetTree()
         return Text;
     };
 
-    auto AddVertical = [Layout](UWidget* Widget, const float Padding) -> UVerticalBoxSlot*
+    auto AddVertical = [Layout](UWidget* Widget, const float InPadding) -> UVerticalBoxSlot*
     {
-        auto* Slot = Cast<UVerticalBoxSlot>(Layout->AddChildToVerticalBox(Widget));
-        Slot->SetPadding(FMargin(24.0f, Padding, 24.0f, Padding));
-        return Slot;
+        auto* VSlot = Cast<UVerticalBoxSlot>(Layout->AddChildToVerticalBox(Widget));
+        VSlot->SetPadding(FMargin(24.0f, InPadding, 24.0f, InPadding));
+        return VSlot;
     };
 
     // Header.
@@ -317,8 +317,7 @@ void UAstrawildShopWidget::RefreshShop()
             }
             UAstrawildShopRowWidget* Row = WidgetTree->ConstructWidget<UAstrawildShopRowWidget>(UAstrawildShopRowWidget::StaticClass());
             Row->InitializeRow(this, VendorPtr, Ware.ItemId, true);
-            auto* Slot = Cast<UScrollBoxSlot>(BuyBox->AddChild(Row));
-            Slot->SetSize(FSlateChildSize(FVector2D(ShopPanelWidth - 48.0f, RowHeight)));
+            BuyBox->AddChild(Row);
         }
     }
 
@@ -335,8 +334,7 @@ void UAstrawildShopWidget::RefreshShop()
             }
             UAstrawildShopRowWidget* Row = WidgetTree->ConstructWidget<UAstrawildShopRowWidget>(UAstrawildShopRowWidget::StaticClass());
             Row->InitializeRow(this, VendorPtr, Stack.ItemId, false);
-            auto* Slot = Cast<UScrollBoxSlot>(SellBox->AddChild(Row));
-            Slot->SetSize(FSlateChildSize(FVector2D(ShopPanelWidth - 48.0f, RowHeight)));
+            SellBox->AddChild(Row);
         }
     }
 

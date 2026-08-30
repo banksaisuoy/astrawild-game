@@ -42,8 +42,7 @@ public:
     UFUNCTION(Exec)
     void SetWeather(FName WeatherName);
 
-    UFUNCTION(Exec)
-    void God();
+    virtual void God() override;
 
     UFUNCTION(Exec)
     void HealAll();

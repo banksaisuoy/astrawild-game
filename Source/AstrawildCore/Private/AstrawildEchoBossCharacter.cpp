@@ -124,9 +124,9 @@ float AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
     return 1.0f;
 }
 
-int32 AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(const float HealthFraction, const bool bEnraged)
+int32 AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(const float HealthFraction, const bool bIsEnraged)
 {
-    if (bEnraged)
+    if (bIsEnraged)
     {
         return 3;
     }
@@ -142,9 +142,9 @@ int32 AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(const float Hea
 }
 
 float AAstrawildEchoBossCharacter::ComputeBossAttackDamage(
-    const float Base, const int32 Phase, const bool bEnraged, const float EnrageMultiplier)
+    const float Base, const int32 Phase, const bool bIsEnraged, const float EnrageMultiplier)
 {
-    if (bEnraged)
+    if (bIsEnraged)
     {
         return Base * FMath::Max(1.0f, EnrageMultiplier);
     }

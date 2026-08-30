@@ -1,6 +1,7 @@
 #include "AstrawildEchoAIController.h"
 
 #include "AstrawildCombatComponent.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEcosystemSubsystem.h"
 #include "AstrawildLog.h"
@@ -14,6 +15,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Navigation/PathFollowingComponent.h"
 
 AAstrawildEchoAIController::AAstrawildEchoAIController()
 {
@@ -35,7 +37,7 @@ AAstrawildEchoAIController::AAstrawildEchoAIController()
     {
         Perception->ConfigureSense(*SightConfig);
         Perception->SetDominantSense(SightConfig->GetSenseImplementation());
-        Perception->OnTargetPerceptionUpdated.AddUObject(this, &AAstrawildEchoAIController::HandlePerception);
+        Perception->OnTargetPerceptionUpdated.AddDynamic(this, &AAstrawildEchoAIController::HandlePerception);
     }
 }
 
@@ -161,7 +163,7 @@ void AAstrawildEchoAIController::Think()
     World->GetTimerManager().SetTimer(ThinkTimerHandle, FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think), Interval, false);
 }
 
-EAstrawildEchoAIState AAstrawildEchoAIController::DecideState() const
+EAstrawildEchoAIState AAstrawildEchoAIController::DecideState()
 {
     const AAstrawildEchoCharacter* Echo = GetEcho();
     if (!Echo)
@@ -450,8 +452,8 @@ void AAstrawildEchoAIController::ExecuteProtect()
     }
 
     // Protective behavior: intercept hostiles near the owner, else stay close (directive §5/§10).
-    AActor* Owner = FindNearestPlayer(100000.0f);
-    if (!Owner)
+    AActor* NearestPlayer = FindNearestPlayer(100000.0f);
+    if (!NearestPlayer)
     {
         return;
     }
@@ -469,7 +471,7 @@ void AAstrawildEchoAIController::ExecuteProtect()
             {
                 continue;
             }
-            const float Distance = FVector::Dist(Owner->GetActorLocation(), Other->GetActorLocation());
+            const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
             if (Distance < BestDistance)
             {
                 BestDistance = Distance;
@@ -493,10 +495,10 @@ void AAstrawildEchoAIController::ExecuteProtect()
     }
     else
     {
-        const float Distance = FVector::Dist(Echo->GetActorLocation(), Owner->GetActorLocation());
+        const float Distance = FVector::Dist(Echo->GetActorLocation(), NearestPlayer->GetActorLocation());
         if (Distance > FollowDistance)
         {
-            MoveToActor(Owner, FollowDistance * 0.8f, true, true, true);
+            MoveToActor(NearestPlayer, FollowDistance * 0.8f, true, true, true);
         }
     }
 }

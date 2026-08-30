@@ -130,7 +130,7 @@ public:
     bool IsBlocking() const { return bIsBlocking; }
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat")
-    bool IsDodging() const { return bDodgeInvulnerabilityRemaining > 0.0f; }
+    bool IsDodging() const { return DodgeInvulnerabilityRemaining > 0.0f; }
 
     /** Mitigated damage from an incoming hit while blocking. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat")

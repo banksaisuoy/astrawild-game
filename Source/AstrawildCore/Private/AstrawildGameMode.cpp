@@ -23,7 +23,6 @@ AAstrawildGameMode::AAstrawildGameMode()
     DefaultPawnClass = AAstrawildPlayerCharacter::StaticClass();
     GameStateClass = AAstrawildGameState::StaticClass();
     PlayerControllerClass = AAstrawildPlayerController::StaticClass();
-    CheatClass = UAstrawildCheatManager::StaticClass();
 }
 
 void AAstrawildGameMode::BeginPlay()

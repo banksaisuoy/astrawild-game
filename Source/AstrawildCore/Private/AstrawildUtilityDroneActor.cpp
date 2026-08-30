@@ -47,16 +47,16 @@ void AAstrawildUtilityDroneActor::BeginPlay()
     HarvestAccumulator = FMath::FRandRange(0.0f, HarvestIntervalSeconds * 0.5f);
 }
 
-void AAstrawildUtilityDroneActor::InitializeForOwner(AAstrawildPlayerCharacter* Owner)
+void AAstrawildUtilityDroneActor::InitializeForOwner(AAstrawildPlayerCharacter* InOwner)
 {
-    OwnerPlayer = Owner;
+    OwnerPlayer = InOwner;
     // Player identity follows the codebase convention (roster/capture): GetFName().
-    OwnerPlayerId = Owner ? Owner->GetFName() : NAME_None;
+    OwnerPlayerId = InOwner ? InOwner->GetFName() : NAME_None;
 
-    if (Owner)
+    if (InOwner)
     {
         // Deploy at the owner's shoulder so the first frame looks right.
-        const FVector HoverPoint = Owner->GetActorLocation() + Owner->GetActorRightVector() * FollowDistance + FVector(0.0f, 0.0f, HoverHeight);
+        const FVector HoverPoint = InOwner->GetActorLocation() + InOwner->GetActorRightVector() * FollowDistance + FVector(0.0f, 0.0f, HoverHeight);
         SetActorLocation(HoverPoint);
         // Production V2: fresh deploy = full battery (modules extend capacity).
         BatteryRemainingSeconds = GetEffectiveBatterySeconds();
@@ -104,7 +104,7 @@ void AAstrawildUtilityDroneActor::Tick(const float DeltaTime)
         return;
     }
 
-    if (AAstrawildPlayerCharacter* Owner = GetOwnerPlayer())
+    if (AAstrawildPlayerCharacter* TargetPlayer = GetOwnerPlayer())
     {
         // Production V2: battery drains while deployed; at 0 the drone auto-recalls.
         if (BatteryRemainingSeconds > 0.0f)
@@ -135,8 +135,8 @@ void AAstrawildUtilityDroneActor::Tick(const float DeltaTime)
 
         // Hover target: beside the owner, gently bobbing.
         BobPhase += DeltaTime * 2.2f;
-        const FVector HoverPoint = Owner->GetActorLocation()
-            + Owner->GetActorRightVector() * FollowDistance
+        const FVector HoverPoint = TargetPlayer->GetActorLocation()
+            + TargetPlayer->GetActorRightVector() * FollowDistance
             + FVector(0.0f, 0.0f, HoverHeight + BobAmplitude * FMath::Sin(BobPhase));
         const FVector Current = GetActorLocation();
         const FVector NewLocation = FMath::VInterpTo(Current, HoverPoint, DeltaTime, FollowInterpSpeed);
@@ -184,7 +184,7 @@ void AAstrawildUtilityDroneActor::RunScanPulse()
     for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
     {
         AAstrawildEchoCharacter* Echo = *It;
-        if (!Echo || !IsValid(Echo->EchoDefinition) || Echo->IsDefeated())
+        if (!Echo || !Echo->EchoDefinition || Echo->IsDefeated())
         {
             continue;
         }
@@ -204,8 +204,8 @@ void AAstrawildUtilityDroneActor::RunScanPulse()
 void AAstrawildUtilityDroneActor::RunHarvestPulse()
 {
     UWorld* World = GetWorld();
-    AAstrawildPlayerCharacter* Owner = GetOwnerPlayer();
-    if (!World || !Owner)
+    AAstrawildPlayerCharacter* TargetPlayer = GetOwnerPlayer();
+    if (!World || !TargetPlayer)
     {
         return;
     }

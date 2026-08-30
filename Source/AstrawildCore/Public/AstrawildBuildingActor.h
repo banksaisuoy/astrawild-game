@@ -67,6 +67,9 @@ public:
     float GetHealthFraction() const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
+    bool IsSwitchedOn() const { return bIsSwitchedOn; }
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
     bool IsDestroyed() const { return CurrentHealth <= 0.0f; }
 
     /** IAstrawildInteractable (audit C-2): Research Desk spends points on the next tech. */

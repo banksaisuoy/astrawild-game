@@ -29,7 +29,11 @@
 #include "GameFramework/PlayerStart.h"
 #include "NavigationSystem.h"
 
-// Engine light + post-process classes for the runtime lighting rig.
+// Engine light classes for the runtime lighting rig.
+#include "Components/LightComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Components/SkyLightComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/PointLight.h"
@@ -40,8 +44,8 @@
 namespace
 {
     // Engine basic shape asset paths (zero-asset world).
-    const TCHAR* ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
-    const TCHAR* ShapeSphere = TEXT("/Engine/BasicShapes/Sphere.Sphere");
+    constexpr const TCHAR* ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
+    constexpr const TCHAR* ShapeSphere = TEXT("/Engine/BasicShapes/Sphere.Sphere");
     const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
     const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
 
@@ -303,9 +307,9 @@ void AAstrawildWorldBootstrapper::BuildLighting()
         SkyLightActor = World->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector(0, 0, 3000), FRotator::ZeroRotator, Params);
         if (SkyLightActor)
         {
-            SkyLightActor->SetMobility(EComponentMobility::Movable);
             if (USkyLightComponent* SkyComponent = SkyLightActor->GetLightComponent())
             {
+                SkyComponent->SetMobility(EComponentMobility::Movable);
                 SkyComponent->SetIntensity(1.5f);
             }
         }

@@ -21,8 +21,6 @@ class ASTRAWILDCORE_API UAstrawildHudWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    UAstrawildHudWidget();
-
     virtual void NativeConstruct() override;
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 

@@ -20,6 +20,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -512,7 +513,7 @@ AAstrawildEchoCharacter::AAstrawildEchoCharacter()
     // all MoveTo* pathfinding works (project setting: navigation generation around
     // invokers only).
     NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
-    NavInvoker->SetRadii(5000.0f, 7000.0f);
+    NavInvoker->SetGenerationRadii(5000.0f, 7000.0f);
 
     // Production V2 Batch 2: element identity light — dark until the glow update
     // enables it for party members / nearby wild elementals (light budget stays tiny).
@@ -1177,6 +1178,7 @@ void AAstrawildEchoCharacter::HandleNeedsDecay(const float DeltaSeconds)
         UpdateInterval = UAstrawildEcosystemSubsystem::GetRecommendedUpdateInterval(Ecosystem->GetTierForEcho(this));
     }
 
+    float EffectiveDeltaSeconds = DeltaSeconds;
     if (UpdateInterval > 0.0f)
     {
         NeedsDecayAccumulator += DeltaSeconds;
@@ -1184,7 +1186,7 @@ void AAstrawildEchoCharacter::HandleNeedsDecay(const float DeltaSeconds)
         {
             return;
         }
-        DeltaSeconds = NeedsDecayAccumulator;
+        EffectiveDeltaSeconds = NeedsDecayAccumulator;
         NeedsDecayAccumulator = 0.0f;
     }
 
@@ -1192,7 +1194,7 @@ void AAstrawildEchoCharacter::HandleNeedsDecay(const float DeltaSeconds)
     const UWorld* World = GetWorld();
     const UAstrawildTimeSubsystem* TimeSubsystem = World ? World->GetSubsystem<UAstrawildTimeSubsystem>() : nullptr;
     const float WorldMinutesPerSecond = TimeSubsystem ? FMath::Max(0.001f, TimeSubsystem->MinutesPerRealSecond) : 1.0f;
-    const float InWorldHoursThisTick = (DeltaSeconds * WorldMinutesPerSecond) / 60.0f;
+    const float InWorldHoursThisTick = (EffectiveDeltaSeconds * WorldMinutesPerSecond) / 60.0f;
 
     const float HungerDecay = EchoDefinition->HungerDecayPerHour * InWorldHoursThisTick;
     const float EnergyDecay = EchoDefinition->EnergyDecayPerHour * InWorldHoursThisTick;

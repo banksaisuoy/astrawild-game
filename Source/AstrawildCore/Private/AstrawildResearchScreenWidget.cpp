@@ -30,7 +30,7 @@ void UAstrawildResearchRowWidget::InitializeRow(UAstrawildResearchScreenWidget* 
     ParentScreen = ParentScreenPtr;
     RowTechId = TechId;
 
-    if (RootWidget && !NameText)
+    if (WidgetTree && WidgetTree->RootWidget && !NameText)
     {
         BuildRowTree();
     }
@@ -44,7 +44,7 @@ void UAstrawildResearchRowWidget::NativeConstruct()
 
 void UAstrawildResearchRowWidget::BuildRowTree()
 {
-    if (RootWidget)
+    if (WidgetTree && WidgetTree->RootWidget)
     {
         return;
     }
@@ -54,7 +54,7 @@ void UAstrawildResearchRowWidget::BuildRowTree()
     UAstrawildResearchSubsystem* Research = (World && World->GetGameInstance())
         ? World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>() : nullptr;
     const UAstrawildTechnologyDefinition* TechDef = Registry ? Registry->FindTechnology(RowTechId) : nullptr;
-    if (!TechDef || !Research || !ParentScreen.IsValid())
+    if (!TechDef || !Research || !ParentScreen)
     {
         return;
     }
@@ -137,7 +137,7 @@ void UAstrawildResearchRowWidget::BuildRowTree()
         ButtonSlot->SetVerticalAlignment(VAlign_Center);
     }
 
-    RootWidget = Row;
+    WidgetTree->RootWidget = Row;
 }
 
 void UAstrawildResearchRowWidget::HandleUnlockClicked()
@@ -153,7 +153,7 @@ void UAstrawildResearchRowWidget::HandleUnlockClicked()
         Research->TryUnlockTech(RowTechId);
     }
 
-    if (ParentScreen.IsValid())
+    if (ParentScreen)
     {
         ParentScreen->RefreshResearch();
     }
@@ -172,7 +172,7 @@ void UAstrawildResearchScreenWidget::NativeConstruct()
 
 void UAstrawildResearchScreenWidget::BuildWidgetTree()
 {
-    if (RootWidget)
+    if (WidgetTree && WidgetTree->RootWidget)
     {
         return;
     }
@@ -202,30 +202,30 @@ void UAstrawildResearchScreenWidget::BuildWidgetTree()
 
     if (UCanvasPanelSlot* TitleSlot = Canvas->AddChildToCanvas(TitleText))
     {
-        TitleSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        TitleSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         TitleSlot->SetPosition(FVector2D(-TechPanelWidth * 0.5f, -TechPanelHeight * 0.5f));
         TitleSlot->SetSize(FVector2D(TechPanelWidth, 32.0f));
     }
     if (UCanvasPanelSlot* PointsSlot = Canvas->AddChildToCanvas(PointsText))
     {
-        PointsSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        PointsSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         PointsSlot->SetPosition(FVector2D(-TechPanelWidth * 0.5f, -TechPanelHeight * 0.5f + 36.0f));
         PointsSlot->SetSize(FVector2D(TechPanelWidth, 24.0f));
     }
     if (UCanvasPanelSlot* ListSlot = Canvas->AddChildToCanvas(TechBox))
     {
-        ListSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        ListSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         ListSlot->SetPosition(FVector2D(-TechPanelWidth * 0.5f, -TechPanelHeight * 0.5f + 68.0f));
         ListSlot->SetSize(FVector2D(TechPanelWidth, TechPanelHeight - 120.0f));
     }
     if (UCanvasPanelSlot* CloseSlot = Canvas->AddChildToCanvas(CloseButton))
     {
-        CloseSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        CloseSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         CloseSlot->SetPosition(FVector2D(TechPanelWidth * 0.5f - 130.0f, TechPanelHeight * 0.5f - 38.0f));
         CloseSlot->SetSize(FVector2D(130.0f, 32.0f));
     }
 
-    RootWidget = Canvas;
+    WidgetTree->RootWidget = Canvas;
 }
 
 void UAstrawildResearchScreenWidget::RefreshResearch()

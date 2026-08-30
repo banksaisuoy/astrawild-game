@@ -33,7 +33,7 @@ void UAstrawildInventoryRowWidget::InitializeRow(UAstrawildInventoryScreenWidget
     ParentScreen = ParentScreenPtr;
     RowItemId = ItemId;
 
-    if (RootWidget && !NameText)
+    if (WidgetTree && WidgetTree->RootWidget && !NameText)
     {
         BuildRowTree();
     }
@@ -47,7 +47,7 @@ void UAstrawildInventoryRowWidget::NativeConstruct()
 
 void UAstrawildInventoryRowWidget::BuildRowTree()
 {
-    if (RootWidget)
+    if (WidgetTree && WidgetTree->RootWidget)
     {
         return;
     }
@@ -55,7 +55,7 @@ void UAstrawildInventoryRowWidget::BuildRowTree()
     UWorld* World = GetWorld();
     UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
     const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(RowItemId) : nullptr;
-    if (!ItemDef || !ParentScreen.IsValid())
+    if (!ItemDef || !ParentScreen)
     {
         return;
     }
@@ -117,12 +117,12 @@ void UAstrawildInventoryRowWidget::BuildRowTree()
         ActionButton->OnClicked.AddDynamic(this, &UAstrawildInventoryRowWidget::HandleActionClicked);
     }
 
-    RootWidget = Row;
+    WidgetTree->RootWidget = Row;
 }
 
 void UAstrawildInventoryRowWidget::HandleActionClicked()
 {
-    APawn* OwningPawn = ParentScreen.IsValid() ? ParentScreen->GetOwningPlayerPawn() : nullptr;
+    APawn* OwningPawn = ParentScreen ? ParentScreen->GetOwningPlayerPawn() : nullptr;
     AAstrawildPlayerCharacter* Player = OwningPawn ? Cast<AAstrawildPlayerCharacter>(OwningPawn) : nullptr;
     if (!Player || !Player->InventoryComponent)
     {
@@ -152,7 +152,7 @@ void UAstrawildInventoryRowWidget::HandleActionClicked()
         Player->InventoryComponent->EquipItem(RowItemId);
     }
 
-    if (ParentScreen.IsValid())
+    if (ParentScreen)
     {
         ParentScreen->RefreshInventory();
     }
@@ -171,13 +171,13 @@ void UAstrawildInventoryScreenWidget::NativeConstruct()
 
 AAstrawildPlayerCharacter* UAstrawildInventoryScreenWidget::GetPlayerCharacter() const
 {
-    const APawn* OwningPawn = GetOwningPlayerPawn();
+    APawn* OwningPawn = const_cast<UAstrawildInventoryScreenWidget*>(this)->GetOwningPlayerPawn();
     return OwningPawn ? Cast<AAstrawildPlayerCharacter>(OwningPawn) : nullptr;
 }
 
 void UAstrawildInventoryScreenWidget::BuildWidgetTree()
 {
-    if (RootWidget)
+    if (WidgetTree && WidgetTree->RootWidget)
     {
         return;
     }
@@ -212,36 +212,36 @@ void UAstrawildInventoryScreenWidget::BuildWidgetTree()
     // Layout: centered panel column.
     if (UCanvasPanelSlot* TitleSlot = Canvas->AddChildToCanvas(TitleText))
     {
-        TitleSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        TitleSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         TitleSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f));
         TitleSlot->SetSize(FVector2D(InvPanelWidth, 32.0f));
     }
     if (UCanvasPanelSlot* WeightSlot = Canvas->AddChildToCanvas(WeightText))
     {
-        WeightSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        WeightSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         WeightSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f + 34.0f));
         WeightSlot->SetSize(FVector2D(InvPanelWidth, 24.0f));
     }
     if (UCanvasPanelSlot* LoadoutSlot = Canvas->AddChildToCanvas(LoadoutText))
     {
-        LoadoutSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        LoadoutSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         LoadoutSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f + 62.0f));
         LoadoutSlot->SetSize(FVector2D(InvPanelWidth, 40.0f));
     }
     if (UCanvasPanelSlot* StacksSlot = Canvas->AddChildToCanvas(StackBox))
     {
-        StacksSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        StacksSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         StacksSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f + 108.0f));
         StacksSlot->SetSize(FVector2D(InvPanelWidth, InvPanelHeight - 160.0f));
     }
     if (UCanvasPanelSlot* CloseSlot = Canvas->AddChildToCanvas(CloseButton))
     {
-        CloseSlot->SetAnchors(Anchors(0.5f, 0.5f));
+        CloseSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         CloseSlot->SetPosition(FVector2D(InvPanelWidth * 0.5f - 130.0f, InvPanelHeight * 0.5f - 38.0f));
         CloseSlot->SetSize(FVector2D(130.0f, 32.0f));
     }
 
-    RootWidget = Canvas;
+    WidgetTree->RootWidget = Canvas;
 }
 
 void UAstrawildInventoryScreenWidget::RefreshInventory()

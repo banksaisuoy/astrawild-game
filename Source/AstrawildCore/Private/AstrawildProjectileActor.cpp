@@ -71,7 +71,7 @@ void AAstrawildProjectileActor::BeginPlay()
     Super::BeginPlay();
 
     // Never collide with whoever fired the bolt.
-    if (const AActor* OwnerPtr = OwnerActor.Get())
+    if (AActor* OwnerPtr = OwnerActor.Get())
     {
         CollisionSphere->IgnoreActorWhenMoving(OwnerPtr, true);
     }

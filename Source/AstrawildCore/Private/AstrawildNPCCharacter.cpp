@@ -44,10 +44,10 @@ AAstrawildNPCCharacter::AAstrawildNPCCharacter()
     PlaceholderMesh->SetupAttachment(GetCapsuleComponent());
     PlaceholderMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CapsuleMesh(TEXT("/Engine/BasicShapes/Capsule.Capsule"));
-    if (CapsuleMesh.Succeeded())
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    if (CylinderMesh.Succeeded())
     {
-        PlaceholderMesh->SetStaticMesh(CapsuleMesh.Object);
+        PlaceholderMesh->SetStaticMesh(CylinderMesh.Object);
         PlaceholderMesh->SetWorldScale3D(FVector(0.4f, 0.4f, 0.9f));
     }
 

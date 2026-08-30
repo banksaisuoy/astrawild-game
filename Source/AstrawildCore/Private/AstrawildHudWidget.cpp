@@ -26,11 +26,6 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
-UAstrawildHudWidget::UAstrawildHudWidget()
-{
-    // Default 10Hz refresh in NativeTick.
-}
-
 void UAstrawildHudWidget::NativeConstruct()
 {
     Super::NativeConstruct();
@@ -62,11 +57,11 @@ void UAstrawildHudWidget::BuildWidgetTree()
         return Bar;
     };
 
-    auto AnchorSlot = [](UCanvasPanelSlot* Slot, const FVector2D& AnchorMin, const FVector2D& AnchorMax, const FVector2D& Offset, const FVector2D& Size)
+    auto AnchorSlot = [](UCanvasPanelSlot* InSlot, const FVector2D& AnchorMin, const FVector2D& AnchorMax, const FVector2D& Offset, const FVector2D& Size)
     {
-        Slot->SetAnchors(FAnchors(AnchorMin.X, AnchorMin.Y, AnchorMax.X, AnchorMax.Y));
-        Slot->SetPosition(Offset);
-        Slot->SetSize(Size);
+        InSlot->SetAnchors(FAnchors(AnchorMin.X, AnchorMin.Y, AnchorMax.X, AnchorMax.Y));
+        InSlot->SetPosition(Offset);
+        InSlot->SetSize(Size);
     };
 
     // --- Left-bottom vitals (directive §11) ---

@@ -66,6 +66,7 @@ protected:
     UFUNCTION()
     void Think();
 
+    UFUNCTION()
     void HandlePerception(AActor* Actor, struct FAIStimulus Stimulus);
 
 private:
@@ -80,7 +81,7 @@ private:
     bool bPerceivedThreat = false;
 
     void TransitionTo(EAstrawildEchoAIState NewState);
-    EAstrawildEchoAIState DecideState() const;
+    EAstrawildEchoAIState DecideState();
     void ExecuteState(float DeltaThinkSeconds);
 
     // State executors.

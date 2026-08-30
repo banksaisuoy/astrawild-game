@@ -1,8 +1,10 @@
 #include "AstrawildCheatManager.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
@@ -281,7 +283,7 @@ void UAstrawildCheatManager::CaptureAll()
     for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
     {
         AAstrawildEchoCharacter* Echo = *It;
-        if (Echo && !Echo->bCaptured && !Echo->IsDefeated() && IsValid(Echo->EchoDefinition))
+        if (Echo && !Echo->bCaptured && !Echo->IsDefeated() && Echo->EchoDefinition)
         {
             Echo->OwnerPlayerId = Player->GetFName();
             Echo->Capture(50.0f);

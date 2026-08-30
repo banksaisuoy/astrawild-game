@@ -2,7 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildLog.h"
-#include "Components/ProceduralMeshComponent.h"
+#include "ProceduralMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/Material.h"
 
@@ -42,7 +42,7 @@ AAstrawildTerrainTileActor::AAstrawildTerrainTileActor()
     if (Mesh)
     {
         Mesh->SetupAttachment(RootComponent);
-        Mesh->bUseAsyncCookCreation = false;
+        Mesh->bUseAsyncCooking = false;
         Mesh->SetMobility(EComponentMobility::Movable);
         Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         Mesh->SetCollisionResponseToAllChannels(ECR_Block);

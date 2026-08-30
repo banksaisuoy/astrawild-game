@@ -206,11 +206,11 @@ public:
 
     /** Target phase for a health fraction (enrage always forces 3). Thresholds 0.66/0.33. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
-    static int32 ComputePhaseForHealthFraction(float HealthFraction, bool bEnraged);
+    static int32 ComputePhaseForHealthFraction(float HealthFraction, bool bIsEnraged);
 
     /** Attack damage for a phase: enraged ×multiplier, else phase 2 ×1.15. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
-    static float ComputeBossAttackDamage(float Base, int32 Phase, bool bEnraged, float EnrageMultiplier);
+    static float ComputeBossAttackDamage(float Base, int32 Phase, bool bIsEnraged, float EnrageMultiplier);
 
 private:
     double LastAttackTime = -BIG_NUMBER;
