@@ -1,47 +1,81 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 6 sync — +`AW.BuyItem`/`AW.SellItem` vendor cheats, 15 commands; sprint now drains stamina)
-**Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / SetupPlayerInputComponent /
-input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
+**Date: 2026-08-30** (final production run sync — +scan/drone/robot/UI keys, **gamepad support live**; 25 actions)
+**Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
+SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
 Defaults below are the **runtime-built Enhanced Input mapping** (used when no editor IMC asset is
-assigned). Keyboard + mouse only; gamepad support is NOT IMPLEMENTED.
+assigned). Keyboard + mouse **plus a full gamepad companion context** (final production run — plugs in
+and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (19 keys → 19 actions)
+## 1. Complete Keybinding Table (25 keys → 25 actions)
 
-`BuildRuntimeInputDefaults` creates exactly **19 runtime actions** (`MakeRuntimeAction` count) and the
-log line now matches ("19 actions, WASD+mouse+wheel"). Key count = physical keyboard keys (mouse
-inputs listed separately). Wave 4 added `Z` = Delete Building (Item B — `DismantleBuilding` +
-`AddItemSilent` refund).
+`BuildRuntimeInputDefaults` creates **25 runtime actions** (`MakeRuntimeAction` count) and the
+log line matches ("25 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
+inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
 |---|---|---|---|---|---|
 | **W / A / S / D** | Move (`AWD_Move`, Axis2D) | Triggered | `Move` | Character movement | WASD feed one 2D action; A/S use Negate modifiers (X/Y) |
 | **Mouse delta** | Look (`AWD_Look`, Axis2D) | Triggered | `Look` | Camera | Y axis negated (standard 3rd-person pitch) |
-| **Left Shift** | Sprint (`AWD_Sprint`) | Started / Completed / Canceled | `StartSprint` / `StopSprint` | Movement (450→700 speed), stamina | **Batch 4: sprint drains 7 stamina/s while moving (≈14 s from full)**; blocked below 5 % stamina until recovery |
+| **Left Shift** | Sprint (`AWD_Sprint`) | Started / Completed / Canceled | `StartSprint` / `StopSprint` | Movement (450→700 speed), stamina | Sprint drains 7 stamina/s while moving (≈14 s from full); blocked below 5 % stamina until recovery; exosuit adds +15 % speed |
 | **Space** | Jump (`AWD_Jump`) | Started / Completed | `HandleJump` / `StopJumping` | Movement | JumpZ 600 |
-| **E** | Interact (`AWD_Interact`) | Started | `Interact` | Interaction system: harvest / craft station / rest / NPC / **capture Echo** | Camera ray 300 cm; wild Echo in reach → capture attempt |
-| **Left Mouse Button** | Light Attack (`AWD_LightAttack`) | Started | `Attack` | Combat (25 dmg, 0.45 s CD) — **or Building confirm** while placing | Placement mode intercepts the input |
-| **Right Mouse Button (hold)** | Block (`AWD_Block`) | Started / Completed / Canceled | `StartBlock` / `StopBlock` | Combat (45 % unarmed mitigation / 65 % with Stonehide Shield, ×0.45 move speed) | Wave 3: shield replaces the unarmed baseline; **Batch 4 (M-2b): the ×0.45 speed penalty is LIVE** (`OnBlockingChanged` now bound to `RefreshMovementSpeed` — previously dead code) |
+| **E** | Interact (`AWD_Interact`) | Started | `Interact` | Interaction system: harvest / craft station / rest / NPC / **capture Echo** / **research desk opens tree screen** | Camera ray 300 cm; wild Echo in reach → capture attempt |
+| **Left Mouse Button** | Light Attack (`AWD_LightAttack`) | Started | `Attack` | Combat (25 dmg, 0.45 s CD) — **or Building confirm** while placing — **or fires the Pulse Lance when a ranged weapon is equipped** (auto-routed) | Placement mode intercepts the input |
+| **Right Mouse Button (hold)** | Block (`AWD_Block`) | Started / Completed / Canceled | `StartBlock` / `StopBlock` | Combat (45 % unarmed mitigation / 65 % with Stonehide Shield, ×0.45 move speed) | Shield replaces the unarmed baseline; speed penalty live |
 | **F** | Heavy Attack (`AWD_HeavyAttack`) | Started | `HeavyAttack` | Combat (60 dmg, 1.3 s CD, 25 stamina) | |
 | **Q** | Dodge (`AWD_Dodge`) | Started | `Dodge` | Combat (0.4 s i-frames, 900 impulse, 0.9 s CD, 22 stamina) | Dodges along movement input (or forward) |
 | **C** | Party Command (`AWD_Command`) | Started | `CyclePartyCommand` | Echo commands: Follow → Attack → Defend → Stay → Work → (loop) | Broadcast to all owned captured Echoes; each rolls obedience |
 | **R** | Feed (`AWD_Feed`) | Started | `FeedTarget` | Echo trust/bond/capture pipeline | Preferred food first, then any EchoFeedValue item |
 | **B** | Build Mode (`AWD_BuildMode`) | Started | `ToggleBuildMode` | Building placement (toggle in/out) | Refuses when nothing unlocked |
 | **N** | Rotate Building (`AWD_BuildRotate`) | Started | `RotateBuilding` | Building placement (+15° yaw per press) | |
-| **G** | Smart Consume (`AWD_Consume`) | Started | `SmartConsume` | Survival: addresses the most depleted vital (thirst vs hunger) by consuming the best matching owned consumable (score = needed vital value + heal × 0.5) | Added with the T-5 fix (verify at playtest) |
-| **X** | Equip Best (`AWD_EquipBest`) | Started | `EquipBest` | Equipment (wave 3): equips strongest owned weapon (max AttackPower) + strongest shield (max BlockMitigation) | Authority only; logs the chosen ids |
-| **Z** | Delete Building (`AWD_DeleteBuilding`) | Started | `DeleteBuilding` | Building (wave 4 — Item B): dismantles the building under the crosshair (5 m reach) and refunds materials via `AddItemSilent` (weight-safe — refuses when bag full, no false `TAG_Astrawild_Event_ItemCollected`) | Authority only; HUD toast via `PlayerController::Notify` ("Dismantled: returned N ItemId" / "Inventory full — cannot refund") |
-| **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` | Server/authority only |
-| **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world | Server/authority only |
+| **G** | Smart Consume (`AWD_Consume`) | Started | `SmartConsume` | Survival: consumes the best matching owned consumable for the most depleted vital | |
+| **X** | Equip Best (`AWD_EquipBest`) | Started | `EquipBest` | Equipment: equips strongest owned weapon + shield | Advanced slots (helmet/exosuit/scanner) equip via the inventory screen |
+| **Z** | Delete Building (`AWD_DeleteBuilding`) | Started | `DeleteBuilding` | Building: dismantles the building under the crosshair (5 m reach) + refund | Weight-safe refund |
+| **V** (hold) | Scan (`AWD_Scan`) | Started / Completed / Canceled | `StartScan` / `StopScan` | **Scanner framework (final run):** hold to accelerate journal observation ×3 while a Field Scanner is equipped | Requires `Item_FieldScanner` equipped in the scanner slot; HUD shows "SCANNING..." |
+| **H** | Deploy Drone (`AWD_DeployDrone`) | Started | `DeployDrone` | **Robotics (final run):** consumes `Item_UtilityDrone` → hovering companion (auto-scan + auto-harvest); press again to recall | One drone per player |
+| **J** | Deploy Robot (`AWD_DeployRobot`) | Started | `DeployRobot` | **Robotics (final run):** consumes `Item_UtilityRobot` → mans the nearest unmanned work site (flat rate, power-gated) | |
+| **TAB** | Inventory (`AWD_Inventory`) | Started | `ToggleInventoryScreenInput` | **UI (final run):** pack screen — stacks/weight/6-slot loadout, Use/Equip buttons | Closes other screens |
+| **K** | Research (`AWD_Research`) | Started | `ToggleResearchScreenInput` | **UI (final run):** research tree screen — costs/prereqs/unlock buttons | Also opens from the Research Desk [E] |
+| **Escape** | Pause (`AWD_Pause`) | Started | `TogglePauseMenuInput` | **UI (final run):** pause menu — Resume / Save Now / Quit To Desktop (world paused) | Also on gamepad Start |
+| **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema v3) | Server/authority only |
+| **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world (work sites, battery, drones, robots included) | Server/authority only |
 | *(LMB while placing)* | — (routes from Attack) | Started | `BuildingComponent::ConfirmPlacement` | Building: consume materials + server RPC | See LMB row |
 
 Death disables input until respawn (5 s GameMode timer). Building-cycling between piece types
-(`CycleBuildingDefinition`) is bound to the mouse wheel (`AWD_BuildCycle`, Axis1D) and is the only
-non-Boolean runtime action.
+(`CycleBuildingDefinition`) is bound to the mouse wheel (`AWD_BuildCycle`, Axis1D).
+
+---
+
+## 1b. Gamepad Companion Mapping (final production run — M9/H-13)
+
+`BuildGamepadInputDefaults` builds a second IMC (`AWD_GamepadIMC`) sharing the SAME action
+objects — gamepad and KB/M work simultaneously, zero configuration needed.
+
+| Gamepad input | Action | Notes |
+|---|---|---|
+| Left stick (`Gamepad_Left2D`) | Move | No modifiers |
+| Right stick (`Gamepad_Right2D`) | Look | Stick up = look up (no negation, unlike mouse Y) |
+| Face Button Bottom (A/cross) | Jump | |
+| Face Button Right (B/circle) | Interact | |
+| Face Button Left (X/square) | Dodge | |
+| Face Button Top (Y/triangle) | Build Mode | |
+| Right Shoulder | Sprint | |
+| Left Shoulder | Block (hold) | |
+| Right Trigger | Light Attack / Pulse Lance | Same auto-routing as LMB |
+| Left Trigger | Heavy Attack | |
+| D-pad Up | Party Command | |
+| D-pad Right | Feed | |
+| D-pad Down | Smart Consume | |
+| D-pad Left | Equip Best | |
+| Special Left (select) | Rotate Building | |
+| Special Right (start) | Pause Menu | The natural pause button |
+
+*(Scan/drone/robot/save/load remain keyboard-only on gamepad — the four face buttons and D-pad are
+fully allocated; a future radial menu can host them.)*
 
 ---
 

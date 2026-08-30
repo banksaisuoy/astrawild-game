@@ -2,44 +2,34 @@
 
 ## Status
 
-- Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Wave 10 — Batch 7: The Shattered Vale — six-zone world & terrain)
-- Branch: `main` (latest: Batch 7 — six-zone world; preceded by `21ea71a` Batch 6 dungeon/boss hardening)
-- Latest change: **Wave 10 Batch 7 (world & zones — closes the one-biome gap)** — the flat 160 m arena is
-  replaced by **The Shattered Vale**: a 2.4 km × 1.6 km world of six 800 m zones, each with its own terrain
-  profile (Dawn Fields meadows / Dusk Marsh wetland / Glimmerwood crystal hills / Ember Ridge volcanic
-  ridgeline / Frostveil snow mountains / Hollow Approach ash wilds hosting the dungeon gate). New:
-  `UAstrawildZoneSubsystem` (static zone table, partition-of-unity weight field, server zone sweep publishing
-  `Event.ZoneEntered`/`Event.ZoneLeft`, discovery persistence through the additive
-  `FAstrawildZoneSaveData`), `AAstrawildTerrainTileActor` (ProceduralMeshComponent tiles over one pure
-  global height function — seam-continuous by construction, biome vertex tints, ~196k tris world-wide),
-  per-zone wildlife/resource/landmark tables in the bootstrapper (Auroraling re-seeded deep in the
-  Glimmerwood; dungeon + portals relocated to the Hollow Approach), ~20 tinted zone lights (8 animated
-  flicker), HUD zone banner + region-discovered notifications, and an **optional editor Landscape path**
-  (`Scripts/export_landscape_heightmaps.py` + six committed 505×505 `.r16` heightmaps in
-  `Content/Heightmaps/`). `ProceduralMeshComponent` plugin wired into `.uproject` + `Build.cs`.
-  5 new automation tests (**20 total**); Python exporter self-check PASSES in-sandbox. Previously (Batch 6): (A) **progression
-  gates** — `AAstrawildDungeonGateActor` (new) implements the gate forward-declared since wave 3: gate *i*
-  seals the passage between rooms *i*↔*i*+1 with blocking collision + a crossbar that lifts into the lintel
-  when the previous room clears (`bOpen` replicates; `OnRep` re-applies collision client-side); (B) **dungeon
-  save persistence** — gap **M-7 closed**: `FAstrawildDungeonSaveData` (additive v2 payload) snapshots
-  cleared-room indices per `DungeonId`; `LoadWorld` applies it after generation — cleared rooms lose their
-  freshly-spawned encounters silently (no double loot/events), gates reopen in sync, completion rewards never
-  re-fire. Policy: cleared stays cleared, in-progress rooms respawn fresh; (C) **dungeon portals** —
-  `AAstrawildDungeonPortalActor` (new, interactable): entrance pad at the wilds' edge ↔ exit pad beside the
-  entry room, server-guarded teleports, and the **first publisher of `Event.LocationReached`** —
-  `QuestComponent` now matches `ReachLocation` objectives (the type existed with no producer/matcher since
-  wave 1); (D) **boss hardening** — the Underlight Warden derives stats from the real species definition
-  (`BossDefinitionId` was cosmetic: HP 550 / ATK 32.4 / weakness Light / element Ash from `Echo_Gloomfang`),
-  player attacks route through `ApplyElementalBossDamage` (weakness ×1.5 / same-element ×0.75 — the Echo
-  pipeline vocabulary) and can afflict statuses (bosses take ×0.5 durations, no stacking), defeat publishes
-  `Event.HostileDefeated` with the distinct id `Creature_UnderlightWarden`; three pure statics extracted and
-  unit-tested (`ASTRAWILD.Dungeon.*`, 15 tests total); (E) **Ancient-era reward** — `Tech_AncientResonance`
-  (the reserved era is now used) force-unlocked on first completion (`ResearchSubsystem::ForceUnlockTech`,
-  new), sinking the boss's Ancient Core into the Light-element `Item_AncientResonator` (ATK 18 — the
-  warden's counter). New quest `Quest_HollowUnderlight` chains after quest 6 (ReachLocation + DefeatCreature).
-  Full design doc: **`Docs/ASTRAWILD_DUNGEON_BOSS.md`** (new).
-- Codebase: **98 C++ files (48 `.cpp` + 50 `.h`), ~19,331 LOC** in `Source/AstrawildCore` (single module)
+- Overall: `PARTIAL` — **PLAYABLE BUILD CANDIDATE on the source side** (23/23 gameplay-loop stages
+  implemented; **still never compiled** — the sole remaining blocker is the in-engine build)
+- Last updated: 2026-08-30 (FINAL AUTONOMOUS PRODUCTION RUN — advanced technology framework + loop closure + save v3)
+- Branch: `main` (latest: `249eec7` test batch; preceded by `c417b22` loop closure, `0dfe631` advanced tech, `750f87a` compile-blocker fixes)
+- Latest change: **FINAL PRODUCTION RUN** — (1) **Phase-0 audit** (3 passes) produced
+  `Docs/ASTRAWILD_GL53_SOURCE_AUDIT.md` + `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` and found
+  **2 hard compile blockers**: C-1 `AAstrawildGameMode::Bootstrapper` raw pointer used with `.Get()`
+  and C-2 `ServerRequestCraft`/`ServerRequestCancelCraft` implemented without the UHT-required
+  `_Implementation` suffix (thunk collision + LNK2001) — both fixed (`750f87a`), plus C-3..C-9
+  hardening (missing `Replicated` specifiers, dead `OnRep_bOpen` wiring, Blueprint-exposed weak
+  ptr → TObjectPtr, raw-this lambda timer, unguarded GetGameInstance, FObjectKey includes,
+  idempotent ecosystem population counting). (2) **Advanced technology framework (PHASE 12)** —
+  6-slot equipment (helmet/exosuit/scanner added, replicated), insulation/stamina/carry/speed
+  bonuses wired into survival/inventory/movement, `AAstrawildProjectileActor` + ammo-gated ranged
+  combat path (Pulse Lance), hold-to-scan scanner framework, `AAstrawildUtilityDroneActor`
+  (auto-scan + auto-harvest companion), `AAstrawildUtilityRobotActor` (manned work sites);
+  Tech_AdvancedEnergy dead-end node now unlocks 7 real recipes. (3) **Boss overhaul (PHASE 14)** —
+  telegraphed AoE slam, energy-bolt specials, periodic weak-point vulnerability (×2), phase-2+
+  arena hazards, encounter-FX cleanup, HUD boss bar. (4) **Loop closure** — inventory screen [TAB],
+  research tree screen [K/Research Desk] (player agency restored), pause menu [ESC] (QUIT stage),
+  full gamepad companion IMC (M9/H-13), SurviveTime + VisitZone objective types (H-10) with quest 8
+  "The Vale Beyond", Research-Desk interact opens the tree screen. (5) **Save schema v3 (PHASE 16)** —
+  work-site output + Echo/robot assignments re-link on load (H-6-era gap closed), grid battery
+  charge restored, rest points persisted by SaveWorld, drones re-deploy, advanced equipment saved;
+  v2→v3 additive migration. (6) **Tests** 20→25 (last tautology replaced); QA sweep: 0 TODO/FIXME/MOCK,
+  brace balance across all files, `.generated.h` ordering verified. Reports:
+  `ASTRAWILD_BUILD_READINESS_REPORT.md` + `ASTRAWILD_MILESTONE_REPORT.md` (new).
+- Codebase: **114 C++ files, ~23,690 LOC, 25 automation tests, 57 docs** in/around `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -52,28 +42,36 @@
 
 - Target: `ASTRAWILDEditor Win64 Development` — pending Antigravity (user machine)
 - Result: `NOT_RUN` (unchanged — sandbox has no UE5; honest status per Definition of Done)
-- Errors: **2 latent compile errors found by the audit and fixed in source in the Batch-1 round** —
-  (1) `AstrawildCraftingStationActor.cpp:52` TPair-iteration over `TArray` (C-1);
-  (2) `MakeRuntimeAction` declared 3 required params while all 17 call sites pass 2 (C-1b).
-  Both await engine compile confirmation; more latent errors may surface. Batch-3 changes were
-  read-only reviewed (REVIEW-3) — HIGH RISK: one **pre-existing** compile blocker caught and fixed
-  in `021f93a` (missing `#include "AstrawildInventoryComponent.h"` in `AstrawildHudWidget.cpp` —
-  the file calls inventory-component members while only forward-declaring the type; 3 of 5 offending
-  accesses pre-date Batch 3 from wave 3 `2eeedf8`); MEDIUM RISK: two runtime bugs caught and fixed
-  inline (M-1 Echo stagger expiry never restored `MaxWalkSpeed` — permanent creature freeze after
-  any heavy hit; M-2 `FullRestore`/`SetStatsForRestore` cleared statuses without broadcasting
-  `OnStatusEffectRemoved` — stale half-speed after rest/load); LOW RISK: see audit §23. Batch-4
-  changes were read-only reviewed (REVIEW-4) — verdict **CLEAN**: no HIGH compile blockers and no
-  MEDIUM runtime bugs in the 12-file diff; 5 LOW notes (see the REVIEW-4 table below — note L-1,
-  the missing vendor filter in `FindNearestVendor`, was applied by the lead at commit time,
-  `CheatManager.cpp:72-77`).
+- Errors: **all static-review compile blockers fixed in source** — the final-run audit re-read every
+  file end-to-end and fixed C-1 (GameMode raw-ptr `.Get()`) and C-2 (RPC `_Implementation` naming) at
+  `750f87a`, on top of the earlier Batch-1 fixes (C-1 TPair iteration, C-1b MakeRuntimeAction arity) and
+  the wave-3 missing-include fix. More latent errors may still surface at first compile — fix-forward per
+  `ANTIGRAVITY_BUILD_CHECKLIST.md` Phase B.
 - Warnings: Not measured
 - Build duration: Not measured
 - Validation steps for the target machine: `Docs/ASTRAWILD_TEST_PLAN.md` §4
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Wave 9 Batch 6: Dungeon & boss hardening — Hollow Underlight)
+## Changes in this round (2026-08-30 — FINAL AUTONOMOUS PRODUCTION RUN: advanced technology + loop closure + save v3)
+
+### Commits
+
+| Commit | Type | Subject |
+|---|---|---|
+| `750f87a` | fix | Resolve static-review compile blockers + replication/lifetime hardening (C-1..C-9); adds GL53_SOURCE_AUDIT + ENGINE_VERIFICATION_QUEUE docs |
+| `0dfe631` | feat | Advanced technology framework (PHASE 12): equipment slots, laser, scanner, drone, robot, boss specials (PHASE 14) |
+| `c417b22` | feat | Playable-loop closure: UI screens (inventory/research/pause), gamepad (M9), quest objectives (H-10), save schema v3 (H-6) |
+| `249eec7` | test | 25 automation tests; drone/robot ticks authority-gated |
+
+Full detail: `Docs/ASTRAWILD_MILESTONE_REPORT.md` (this run) and the four commit messages.
+
+## Changes in the previous round (2026-08-30 — Wave 10 Batch 7: The Shattered Vale — six-zone world & terrain)
+
+See git history (`7fef4fe`, `07f97c7`) and `Docs/ASTRAWILD_ZONE_WORLD.md`; superseded header text
+moved to history — the six-zone world remains the live world architecture.
+
+## Changes in the previous round (2026-08-30 — Wave 9 Batch 6: Dungeon & boss hardening — Hollow Underlight)
 
 ### Commits
 
@@ -478,7 +476,8 @@ No `Source/` files were modified by DOCS-1.
 |---|---|---|
 | Open project | NOT_RUN | Awaiting target-machine compile (Test Plan §4) |
 | Compile Development Editor | NOT_RUN | **Blocking step for everything below** |
-| Automation suite (12 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` (Batch 3 added `ASTRAWILD.Equipment.ArmorMath` + `ASTRAWILD.Combat.StatusEffectFactory`; Batch 4 added `ASTRAWILD.Economy.VendorSellValue`) |
+| Automation suite (25 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` (final run added Equipment.SlotRouting / Survival.InsulationBand / Quest.ObjectiveTypes / Save.SchemaV3 / Dungeon.BossSpecialsMath) |
+| 23-stage golden path (NEW GAME → … → VERIFY) | NOT_RUN | `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` §2 |
 | Player movement/camera | NOT_RUN | Manual flow step 4 |
 | Interaction | NOT_RUN | Step 5 |
 | Harvest resource | NOT_RUN | Step 10 |
@@ -488,6 +487,7 @@ No `Source/` files were modified by DOCS-1.
 | Activate rest point | NOT_RUN | Step 17 area |
 | Save snapshot (F5) | NOT_RUN | Steps 14–16 |
 | Load snapshot (F9) | NOT_RUN | Step 16 |
+| Save/load round-trip ×3 (V-25..V-28) | NOT_RUN | Work assignments + battery + drones must survive (schema v3) |
 | Full first-playable flow (17 steps) | NOT_RUN | `ASTRAWILD_TEST_PLAN.md` §2 |
 
 ## Known issues
@@ -501,7 +501,12 @@ No `Source/` files were modified by DOCS-1.
 | Medium | T-5 consume keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press **G** | **Fix in code** (G = `SmartConsume`) — verify at playtest |
 | Medium | T-6 journal per-frame iteration | `AstrawildJournalSubsystem.cpp` | Insights capture | **Fix in code** (throttled observation sweep) — verify via Insights |
 | Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (still present) |
-| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "19 actions" / "23 items, 13 recipes, … 2 loot tables, 2 NPCs" and matches the code |
+| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved: log says "25 actions" / "35 items, 26 recipes, … 8 quests" and matches the code (final-run counts) |
+| ~~High~~ Closed | H-6 grid-level battery persistence | `PowerSubsystem` / `SaveSubsystem` | Save with charge, reload | **CLOSED in final run (`c417b22`)** — schema v3 stores `PowerGrid.StoredEnergy`; `SetStoredEnergy` clamps to live capacity on restore. Compile pending |
+| ~~High~~ Closed | H-9 ecosystem population counting | `EcosystemSubsystem` / `EchoCharacter` | Spawn + capture/defeat; observe WildCount | **CLOSED in final run (`750f87a`)** — actor-keyed idempotent counting; capture/defeat/destroy release exactly once; re-registration after InitializeFromDefinition no longer double-counts. Compile pending |
+| ~~High~~ Closed | H-10 SurviveTime/ReachLocation objectives | `QuestComponent` | ReachLocation closed Batch 6 (portals); SurviveTime + VisitZone **closed in final run** — 1 s accrual tick + Event.ZoneEntered matcher; quest 8 uses both. Compile pending |
+| ~~High~~ Closed | H-13 gamepad input | `PlayerCharacter` | Plug a controller | **CLOSED in final run (`c417b22`)** — full companion IMC coexisting with KB/M. Verify at playtest (V-31) |
+| Medium | H-11 craft output validation ignores AddItem result | `CraftingComponent::CompleteActiveCraft` | Craft while over-encumbered | Open — outputs can be lost when AddItem refuses; weight gate + refund paths documented; fix-forward at first compile round |
 | ~~Low~~ Closed | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | **CLOSED in Batch 4 (`c16fecd`)** — `TryPurchase`/`TrySell` server-authoritative transaction flow live (450 cm trade range, Dawn Shard currency, wares listed in an Interact HUD toast; buy/sell via `AW.BuyItem`/`AW.SellItem`). The shop **UMG screen** remains open (future round). Compile pending on target machine |
 | Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending — MP batch.** Single-player only at present — Item B `DismantleBuilding` and the Batch-4 vendor transactions both use direct method calls gated on `GetLocalRole() == ROLE_Authority` (fine for SP/listen-server; a future shop UI for remote clients must route through a Server RPC — noted in `NPCCharacter.cpp:132-134`) |
 | ~~Medium~~ Closed | Weapon element override (player attack element hardcoded Ash) | `CombatComponent.h` `GetResolvedAttackElement` | Hit a creature with a Crystal Blade | **CLOSED in Batch 3 (`021f93a`)** — weapon `Element` overrides the tunable; Dawn Crystal Blade = Pulse → Shock. Compile pending on target machine |
@@ -510,19 +515,20 @@ No `Source/` files were modified by DOCS-1.
 
 ## Handoff to Antigravity
 
-The C++ core (single module `AstrawildCore`, **~16.0k LOC, 88 source files**), the zero-asset playability
-layer (procedural world + runtime input + C++ HUD), save schema v2 (with wave 3 equipment persistence +
-wave 4 building power persistence + wave 5 armor-slot persistence), the combat-depth layer (status
-effects + stagger + armor), the survival-feel layer (sprint stamina drain + live block penalty +
-aligned thirst rate), the vendor economy layer (Dawn Shard currency + buy/sell transactions + cheats),
-the CODE_DEFAULT content set (23 items / 13 recipes / 7 species /
-10 buildings / 6 techs / 6 quests / 2 loot tables / 2 NPCs), the documentation suite, the test plan, and
+The C++ core (single module `AstrawildCore`, **~23.7k LOC, 114 source files**), the zero-asset playability
+layer (six-zone procedural world + runtime input incl. gamepad + C++ HUD/shop/inventory/research/pause
+screens), save schema v3 (full coverage: vitals, party, buildings+power+charge, research, quests, journal,
+dungeon, zones, work sites, robots, drones, rest points, 6 equipment slots), the combat-depth layer (status
+effects + stagger + armor + ranged projectile path), the advanced-technology framework (scanner, helmet,
+exosuit, Pulse Lance, utility drone, utility robot), the survival-feel layer (stamina drain + block penalty +
+insulation), the vendor economy layer, the CODE_DEFAULT content set (35 items / 26 recipes / 10 species /
+13 buildings / 10 techs / 8 quests / 2 loot tables / 2 NPCs), the documentation suite, the test plan, and
 the asset manifest/replacement pipeline are all in the repository. Antigravity must: **pull, generate
-project files, compile `ASTRAWILDEditor Win64 Development`, run the 12 automation tests, execute the
-17-step first-playable checklist, and fill this report with real results.** Do not mark `COMPLETE` until
-Compile, the automation suite, the core-loop Playtest, and Save/Load have all passed (see
-`Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
+project files, compile `ASTRAWILDEditor Win64 Development`, run the 25 automation tests, execute the
+verification queue (§1 compile gate → §2 23-stage golden path → §3 systems → §4 packaging), and fill
+this report with real results.** Do not mark `COMPLETE` until Compile, the automation suite, the core-loop
+Playtest, and Save/Load have all passed (see `Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
 
-**Handoff tally:** 88 C++ files / 15,990 LOC / 49 docs / 12 automation tests / 28 replicated props across
-9 classes / 19 input actions / 15 console cheats. Compile status: `NOT RUN (sandbox has no UE engine —
-must be verified on UE 5.8 + Antigravity target machine).`
+**Handoff tally:** 114 C++ files / ~23,690 LOC / 57 docs / 25 automation tests / 25 input actions + gamepad
+context / 15 console cheats / 23/23 gameplay-loop stages implemented. Compile status: `NOT_RUN (sandbox
+has no UE engine — must be verified on UE 5.8 + Antigravity target machine).`
