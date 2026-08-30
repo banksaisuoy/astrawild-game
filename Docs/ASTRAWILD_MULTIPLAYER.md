@@ -3,7 +3,7 @@
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — server-authoritative rules
 and replication are in code; **multiplayer has NOT been play-tested** (no second client / no netcode test
 run in this round). Single player & listen-server host paths are the validated-by-design targets.**
-**Date: 2026-08-30** (wave 3 sync — `EquippedShieldItemId` replication)
+**Date: 2026-08-30** (wave 4 sync — `AAstrawildBuildingActor::bIsPowered` replication; +1 prop / 9 classes)
 **Primary sources:** every `GetLifetimeReplicatedProps` + `UFUNCTION(Server)` in `Source/AstrawildCore`
 (grep `DOREPLIFETIME`, `UFUNCTION(Server)`), `AstrawildGameMode.cpp`, subsystem authority guards
 
@@ -33,12 +33,13 @@ requests; ghost placement math; HUD reads of replicated state; dodge direction n
 
 ## 2. Replication Inventory (every replicated property, per class)
 
-Grep-verified against `DOREPLIFETIME(...)` calls — **25 replicated properties across 9 classes**.
+Grep-verified against `DOREPLIFETIME(...)` calls — **26 replicated properties across 9 classes**.
 
 > **Count reconciliation (2026-08-30):** this table previously said "20 properties / 7 classes". The
 > dungeon/boss round added 4 properties (`AAstrawildEchoBossCharacter` ×3,
 > `AAstrawildDungeonRoomActor` ×1) that were never synced into this doc, and wave 3 adds
-> `EquippedShieldItemId`. Both gaps are corrected here — 20 + 4 + 1 = 25 across 9 classes.
+> `EquippedShieldItemId`. Wave 4 adds `AAstrawildBuildingActor::bIsPowered` (Item C — `d5d23c2`).
+> All four gaps are corrected here — 20 + 4 + 1 + 1 = 26 across 9 classes.
 
 ### `AAstrawildGameState` (GameStateBase — replicated by default; `bReplicates` engine-managed)
 | Property | Mode |
@@ -64,6 +65,7 @@ Grep-verified against `DOREPLIFETIME(...)` calls — **25 replicated properties 
 | `bIsSwitchedOn` | Replicated |
 | `CurrentHealth` | Replicated |
 | `StoredCharge` | Replicated |
+| `bIsPowered` | Replicated (wave 4 — Item C / `d5d23c2`; written by `UAstrawildPowerSubsystem::ResolveGrid` every 2 s tick; UE net driver short-circuits unchanged values — no extra bandwidth unless a consumer's power state actually changes) |
 
 ### `AAstrawildWorkSiteActor` (`bReplicates = true`)
 | Property | Mode |
@@ -163,8 +165,25 @@ Ordered by priority for the co-op milestone:
 
 ## 6. Honest Status Summary
 
-- **Implemented in code:** authority guards everywhere, 25 replicated properties across 9 classes, 5 server
+- **Implemented in code:** authority guards everywhere, 26 replicated properties across 9 classes, 5 server
   RPCs, shared research pool, replicated world state.
 - **Not implemented:** client-side prediction of results (only request-gating), per-player quest/save/roster,
   dedicated-server routing, any actual multiplayer test session.
 - Single player and listen-server-host flows are the current first-class citizens.
+
+> **Wave 4 note (Item B — `DismantleBuilding`):** single-player only at present. The dismantle path uses
+> direct method calls gated on `GetLocalRole() == ROLE_Authority` (mirrors the existing placement path's
+> authority rule). For a remote client to dismantle, the player intent must be carried to the server via
+> a Server RPC (e.g. `ServerDismantleBuilding(AActor*)` with overlap re-validation); the multiplayer
+> client→server RPC layer (H-12) remains pending in Batch 3 / MP batch.
+>
+> **Wave 4 note (Item A — `HostileSpawnerSubsystem`):** server-only tick (`World->GetNetMode() == NM_Client`
+> early-return at `.cpp:52`). Clients never run the spawn sweep — they see populated hostiles only via
+> the existing `AAstrawildEchoCharacter` replication (movement + 6 props), which is already correct for
+> listen-server co-op. A dedicated-server build (no `.Target.cs` yet — L-3) is the prerequisite for true
+> dedicated-host testing.
+>
+> **Wave 4 note (Item C — power persistence):** `ResolveGridNow()` is server-only. Clients receive correct
+> state via the new `bIsPowered` replicated UPROPERTY — `ResolveGrid`'s server-only early return
+> (`World->GetNetMode() == NM_Client`) at `PowerSubsystem.cpp:55` guards the path; the property-write happens
+> only on the server, the net driver replicates the value to clients.

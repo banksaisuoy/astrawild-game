@@ -1,9 +1,10 @@
 # ASTRAWILD — Save System (Schema v2)
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 3 sync — equipped weapon/shield persistence, still schema v2)
+**Date: 2026-08-30** (wave 4 sync — building power-state persistence, still schema v2)
 **Primary sources:** `AstrawildSaveSubsystem.h/.cpp`, `AstrawildTypes.h` (save structs),
-`AstrawildGameMode.cpp` (autosave), `AstrawildPlayerCharacter.cpp` (F5/F9)
+`AstrawildGameMode.cpp` (autosave), `AstrawildPlayerCharacter.cpp` (F5/F9),
+`AstrawildPowerSubsystem.cpp` (`ResolveGridNow`), `AstrawildBuildingActor.cpp` (ToSaveData/FromSaveData)
 
 `UAstrawildSaveSubsystem` (GameInstance subsystem) + `UAstrawildSaveGame` (USaveGame payload). Server-only
 orchestration (`SaveWorld`/`LoadWorld` reject `NM_Client`). Everything persistent resolves through stable
@@ -31,7 +32,7 @@ ids — never object references.
 | `PlayerSurvival` | `FAstrawildSurvivalStats` | HP/stamina/hunger/thirst/temperature/dead |
 | `PlayerTransform` | FTransform | Player world transform |
 | `EchoRosterV2` | `TArray<FAstrawildEchoInstanceV2>` | Captured Echoes: instance id, definition id, personality, level, XP, trust, bond, needs, transform, in-party |
-| `Buildings` | `TArray<FAstrawildBuildingSaveData>` | id, definition id, transform, health, charge, switch state, owner |
+| `Buildings` | `TArray<FAstrawildBuildingSaveData>` | id, definition id, transform, health, charge, switch state, **`bIsPowered` (wave 4 — Item C)**, owner |
 | `Research` | `FAstrawildResearchSaveData` | unlocked tech ids + research points |
 | `Quests` | `TArray<FAstrawildQuestSaveData>` | quest states incl. per-objective runtime progress |
 | `Journal` | `TArray<FAstrawildJournalEntry>` | observation progress + knowledge flags per species |
@@ -43,6 +44,14 @@ ids — never object references.
 > are plain `FName` UPROPERTYs defaulting to `NAME_None`, so **older v2 saves load unchanged** (fields
 > deserialize to defaults) and `SaveSchemaVersion` stays **2**. This follows the additive-fields policy in
 > §3/§7: only a payload change a legacy loader cannot digest would justify a v3 bump + migration step.
+>
+> **Wave 4 schema decision — additive field added in wave 4 (Item C / `d5d23c2`): `bool bIsPowered` on
+> `FAstrawildBuildingSaveData`.** No schema version bump required — old saves deserialize with the
+> `false` default and re-resolve on the first `UAstrawildPowerSubsystem::ResolveGridNow()` call during
+> `LoadWorld`. Captured via `Power->IsBuildingPowered(this)` at save time (`AAstrawildBuildingActor::ToSaveData`).
+> Restored as a hint in `FromSaveData()` BEFORE the same-frame `ResolveGridNow()` overwrites with the fresh
+> value (so even with the legacy `false` default, the first frame after load is correct — no 2 s brownout
+> flicker). Grid-level `StoredEnergy` (battery state) is NOT saved — H-6 remainder pending Batch 3.
 
 ---
 
@@ -104,9 +113,15 @@ old payloads destructively.
    granting a ghost equip); despawn current party Echoes and re-import roster data.
 6. **Quests** import (restores active/completed + objective progress).
 7. **Buildings**: destroy all placed `AAstrawildBuildingActor`s, respawn each from save data
-   (`FromSaveData` re-initializes definition, health, power registration).
+   (`FromSaveData` re-initializes definition, health, power registration, **and the `bIsPowered`
+   hint — overwritten on the same frame by `ResolveGridNow()`**).
 8. **Journal** import.
-9. Log summary (day, building count).
+9. **Wave 4 (Item C) — `UAstrawildPowerSubsystem::ResolveGridNow()` call**: immediately after the
+   building spawn loop, `LoadWorld` calls `Power->ResolveGridNow()` so the first frame the player
+   sees after load reflects the correct per-building power state (no 2 s brownout flicker while
+   waiting for the natural Tick cadence). Buildings auto-registered with the power subsystem
+   through `BeginPlay` during the spawn loop above, so `ResolveGridNow` sees them.
+10. Log summary (day, building count).
 
 Slots: **`ASTRAWILD_Main`** (manual/quick save) and **`ASTRAWILD_Auto`** (autosave), `UserIndex = 0`.
 
@@ -141,4 +156,5 @@ slot utilities.
 | Multiple character profiles | NOT IMPLEMENTED — fixed slot names |
 | Co-op: saving non-host players | NOT IMPLEMENTED (first player only) |
 | Save-file versioning UI ("save is from an older version") | NOT IMPLEMENTED (silent migration) |
+| Grid-level `StoredEnergy` (battery state) save record | NOT IMPLEMENTED — per-actor `bIsPowered` saved in wave 4; grid-level charge (H-6) pending Batch 3 |
 | Migration policy going forward | Every schema bump must ship a `MigrateVxToVy` + additive structs only; v1 payload stays until two released versions pass, then may be dropped (policy decision recorded in Assumptions) |

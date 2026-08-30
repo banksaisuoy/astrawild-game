@@ -50,14 +50,14 @@
 - **Priority:** **CRITICAL — Batch 1, item 4.**
 
 ### GAP-F5 — Save/continue loop defects (6 issues bundled)
-- **Current State:** Vitals saved-not-restored; party not respawned on load; roster double-import; autosave slot never loaded; no load-on-boot; building health resets.
-- **Required State:** Save → quit → reload → world matches (player, vitals, party, buildings, research, quests, journal); continue path exists.
-- **Missing Implementation:** `LoadWorld` restore-vitals; party respawn from roster; single import; `LoadLatest()` helper (autosave-if-newer logic); load-on-boot or main-menu continue hook; `FromSaveData` health preservation.
+- **Current State:** Vitals saved-not-restored; party not respawned on load; roster double-import; autosave slot never loaded; no load-on-boot; building health resets. **Wave 4 status: Batch 1 (`7e2d0b4`) closed vitals-restore, party respawn, single-roster-import, `LoadLatest()` (autosave-loadable "continue"), building-health preservation. Batch 2 (`d5d23c2`) closed per-building power-state persistence (`bIsPowered` replicated UPROPERTY + `ResolveGridNow()` called from `LoadWorld`); grid-level `StoredEnergy` (battery state) is NOT saved — H-6 remainder pending Batch 3.** All items compile-status: NOT RUN.
+- **Required State:** Save → quit → reload → world matches (player, vitals, party, buildings, research, quests, journal); continue path exists. Per-building power state restored first frame.
+- **Missing Implementation:** (Closed: vitals restore, party respawn, single import, LoadLatest, building health, per-actor power state.) **Still missing:** grid-level battery state (`StoredEnergy`) save record; dungeon state preservation (or documented regeneration policy); load-on-boot setting (`bAutoLoadLatestOnBeginPlay` default off).
 - **Dependencies:** GAP-F1.
-- **Files likely affected:** `AstrawildSaveSubsystem.cpp` (primary), `AstrawildBuildingActor.cpp`, `AstrawildEchoRosterSubsystem.cpp`, `AstrawildGameMode.cpp`.
-- **Acceptance Criteria:** F5 save with damaged vitals + captured party + damaged building → F9 → vitals/party/building state match pre-save.
+- **Files likely affected:** `AstrawildSaveSubsystem.cpp` (primary), `AstrawildBuildingActor.cpp`, `AstrawildEchoRosterSubsystem.cpp`, `AstrawildGameMode.cpp`, `AstrawildPowerSubsystem.cpp`, `AstrawildTypes.h`.
+- **Acceptance Criteria:** F5 save with damaged vitals + captured party + damaged building + (post-Batch 2) a powered lamp → F9 → vitals/party/building state + lamp on/off state match pre-save.
 - **Test Method:** PIE scripted sequence + future automation save round-trip test.
-- **Priority:** **CRITICAL — Batch 1, item 9.**
+- **Priority:** **~~CRITICAL — Batch 1, item 9~~ → Closed (Batch 1) for vitals/party/continue/health; ~~Batch 2 for per-actor power state~~ → Closed (Batch 2). Grid-level H-6 remainder pending Batch 3.**
 
 ## 2. HIGH PRIORITY GAPS
 
@@ -159,15 +159,17 @@
 
 ## 7. BASE/AUTOMATION GAPS (P7-P8 vs Roadmap §14-15)
 
+> **Status (post-`d5d23c2` — Wave 4 Batch 2):** partially closed. `UAstrawildHostileSpawnerSubsystem` landed (Item A — refills `Echo_Gloomfang`/`Echo_Emberfang` around the player every 25 s; closes the Quest 5 hostile-respawn leg). `UAstrawildBuildingComponent::DismantleBuilding` landed (Item B — weight-safe refund via `AddItemSilent`). Per-actor power state persistence landed (Item C — `bIsPowered` replicated UPROPERTY + `ResolveGridNow()` called by `LoadWorld`). See "Batch 2 Closing Note" at the bottom of this file for the full summary.
+
 | Gap | Current State | Required | Missing | Dependencies | Files | Acceptance | Test | Priority |
 |---|---|---|---|---|---|---|---|---|
-| Piece cycling | Never callable | Cycle unlocked pieces | Input + HUD (Batch 1 item 5) | F4 | BuildingComponent | Cycle visible in HUD | PIE | **CRITICAL (Batch 1)** |
-| Delete/refund | None | Delete placed piece, partial refund | Delete mode + refund + server authority | H2 | BuildingComponent | Delete returns 50% mats | PIE + inventory assert | HIGH (Batch 2) |
+| Piece cycling | **Closed (Batch 1)** — mouse-wheel + HUD readout landed; runtime-unverified | Cycle unlocked pieces | — | F4 | BuildingComponent | Cycle visible in HUD | PIE | ~~CRITICAL (Batch 1)~~ → Closed |
+| Delete/refund | **Closed (Batch 2 — `d5d23c2`)** — `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` is server-authoritative + weight-safe (`CanAddItem` gate) + refunds via `UAstrawildInventoryComponent::AddItemSilent` (no false `TAG_Astrawild_Event_ItemCollected`); bound to `EKeys::Z`, 5 m crosshair trace, HUD toast via `PlayerController::Notify`. Runtime-unverified. | Delete placed piece, partial refund | Server-side material deduction for MP (H-6) | H2 | BuildingComponent | Delete returns materials to inventory (no false quest advancement) | PIE + inventory assert | ~~HIGH (Batch 2)~~ → Closed (source level) |
 | Storage building | None | Storage container building with deposit/withdraw | Storage definition + container component + interact UI-lite | Inventory transfer API (missing) | New `StorageBuildingActor` | Store/retrieve stacks; save/load | PIE + save | MEDIUM (Batch 3) |
 | Power connectivity | Global grid | 1200cm proximity networks | Graph clustering in ResolveGrid | Power (exists) | `PowerSubsystem.cpp` | Two distant bases have independent grids | Log assert | MEDIUM |
-| Power persistence | StoredEnergy lost | Grid charge saved | Save record for grid(s) | Save schema bump | `SaveSubsystem`, `PowerSubsystem` | Battery charge survives reload | Save round-trip | HIGH (Batch 2) |
+| Power persistence | **Closed (Batch 2 — `bIsPowered` + `ResolveGridNow()`)** — `FAstrawildBuildingSaveData.bIsPowered` additive field captures `Power->IsBuildingPowered(this)` at save time; `AAstrawildBuildingActor::bIsPowered` replicated UPROPERTY + `DOREPLIFETIME`; `UAstrawildSaveSubsystem::LoadWorld` calls `UAstrawildPowerSubsystem::ResolveGridNow()` after the building spawn loop so the first frame after load is correct (no brownout flicker). Grid-level `StoredEnergy` (battery state) NOT saved (H-6 remainder). Runtime-unverified. | Grid charge saved | Save record for grid(s) | Save schema bump | `SaveSubsystem`, `PowerSubsystem` | Battery charge survives reload | Save round-trip | ~~HIGH (Batch 2)~~ → Per-building closed; grid-level H-6 remains |
 | Lamp consumer behavior | Draws power, no light logic | Powered lamp emits light (intensity toggle) | Point-light child + on/off by power state | Power events (exist) | `BuildingActor.cpp` | Lamp lights when powered, dark in brownout | PIE night | MEDIUM (Batch 3) |
-| Automation loop | Dead sites | Echo works site → storage fills → robot hauls (full loop later) | H3 fix first; robot later | H3 | WorkSite | Batch 1 item 6 | — | **CRITICAL (Batch 1) → LOW (robot)** |
+| Automation loop | **Closed (Batch 1 C-7) + hostile respawn (Batch 2 Item A)** — work sites now interactable; `UAstrawildHostileSpawnerSubsystem` refills hostile population around the player every 25 s. Runtime-unverified. | Echo works site → storage fills → robot hauls (full loop later) | H3 fix first; robot later | H3 | WorkSite | ~~Batch 1 item 6~~ → Closed (source level) | — | ~~CRITICAL (Batch 1)~~ → Closed; LOW (robot) |
 | Farming | FarmPlot/feed-trough definitions only | Crops grow in plots, trough feeds party automatically | Growth component + trough feeding trigger | Time (exists) | New `FarmPlotActor` logic | Berry plot yields in X in-world hours | Timed PIE | LOW (Batch 4) |
 
 ## 8. COMBAT GAPS (P4 vs Roadmap §5, §20-21)
@@ -248,3 +250,58 @@
 **Multiplayer batch (parallel after Batch 2):** client registry, RPC layer, creature replication, building server-side deduction, node replication, join/leave.
 
 **Rule reminder:** No batch starts while the previous batch has unresolved Critical defects. Content expansion waits for architecture pass. Compile → Test → Runtime → Save/Load → Checklist → Document → Commit after every batch.
+
+---
+
+## BATCH 2 CLOSING NOTE — Wave 4 commit `d5d23c2`
+
+Wave 4 Batch 2 ("Integrity") closed three HIGH items at source level (compile status: `NOT RUN`).
+RESEARCH-2 scoped the work; REVIEW-2 surfaced a MEDIUM-risk runtime bug in Item A (population-clamp
+race condition — caught and fixed inline in the same commit; see
+`ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §22 for the full root-cause + one-line fix record).
+
+### What landed
+
+| Item | Class / symbol | Files |
+|---|---|---|
+| **A — Hostile respawn** | `UAstrawildHostileSpawnerSubsystem` (NEW `UTickableWorldSubsystem`, server-only Tick @ 25 s, `SpawnRadius=1800 cm` ring-biased outward 30–100 %, `FRandomStream` seeded from `WorldSeed`, `TargetGloomfangPopulation=4`, `TargetEmberfangPopulation=2`, `RespawnIntervalSeconds=25.0f`) | `Source/AstrawildCore/Public/AstrawildHostileSpawnerSubsystem.h` + `Source/AstrawildCore/Private/AstrawildHostileSpawnerSubsystem.cpp` (NEW files) |
+| **B — Building dismantle** | `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` (server-authoritative, weight-safe `CanAddItem` gate, refunds via `UAstrawildInventoryComponent::AddItemSilent` — no false `TAG_Astrawild_Event_ItemCollected`); `AAstrawildPlayerCharacter::DeleteBuildingAction` bound to `EKeys::Z`, 5 m crosshair trace, HUD toast via `AAstrawildPlayerController::Notify` | `AstrawildBuildingComponent.{h,cpp}` + `AstrawildInventoryComponent.{h,cpp}` + `AstrawildPlayerCharacter.{h,cpp}` |
+| **C — Power persistence** | `FAstrawildBuildingSaveData.bIsPowered` (additive — no schema bump, old saves deserialize false); `AAstrawildBuildingActor::bIsPowered` (UPROPERTY Replicated + `DOREPLIFETIME`); `UAstrawildPowerSubsystem::ResolveGridNow()` public wrapper for private `ResolveGrid()`; `ResolveGrid()` writes back `Consumer->bIsPowered = bPowered`; `UAstrawildSaveSubsystem::LoadWorld` calls `ResolveGridNow()` right after the building spawn loop | `AstrawildTypes.h` + `AstrawildBuildingActor.{h,cpp}` + `AstrawildPowerSubsystem.{h,cpp}` + `AstrawildSaveSubsystem.cpp` |
+
+### Gap rows closed / partially closed in this analysis
+
+| Section | Row | Status |
+|---|---|---|
+| §1 GAP-F5 | Save/continue loop defects | **Partially closed (Batch 1 + Batch 2)** — vitals/party/continue/health closed in Batch 1; per-actor power-state persistence closed in Batch 2; grid-level battery state (`StoredEnergy`) still pending (H-6 remainder, Batch 3) |
+| §2 GAP-H2 | Base building UX incompleteness | **Partially closed (Batch 1 cycling + Batch 2 delete/refund)** — piece cycling closed in Batch 1, delete/refund closed in Batch 2; ownership foundation still pending; full inventory transfer API for storage buildings pending Batch 3 |
+| §2 GAP-H5 | Quest chain integrity | **Partially closed (Batch 2 Item A)** — Quest 5 "Defeat 3 Gloomfang" chain-completes via hostile respawn + existing death pipeline; `ReachLocation`/`SurviveTime` objective types still unimplemented (Batch 3) |
+| §7 BASE-AUTOMATION | Automation loop | **Partially closed (Batch 1 C-7 work-site interactable + Batch 2 Item A hostile respawn)** — full Echo→site→items→collect loop wired; hostile respawn closes the Quest 5 leg; storage-hauling robot still pending (Batch 5+) |
+| §7 BASE-AUTOMATION | Delete/refund | **Closed (Batch 2)** — `DismantleBuilding` is weight-safe + AddItemSilent (no false ItemCollected event); server-side MP material deduction still pending (H-6, MP batch) |
+| §7 BASE-AUTOMATION | Power persistence | **Per-building closed (Batch 2 — `bIsPowered` + `ResolveGridNow()`)**; grid-level `StoredEnergy` (battery state) still pending (H-6, Batch 3) |
+| (implicit SAVE-SYSTEM) | Building power persistence | **Closed (Batch 2)** — see GAP-F5 row above |
+
+### Compile-risk review (REVIEW-2 — read-only)
+
+- **HIGH RISK (compile blockers):** NONE. Every UCLASS/GENERATED_BODY/Tick override/DOREPLIFETIME/
+  UPROPERTY/UFUNCTION pattern is well-formed; every cross-class symbol has a verified-visible
+  declaration with matching signature; every include chain that the new code depends on is either
+  explicitly added (`AstrawildPowerSubsystem.h` in `SaveSubsystem.cpp:12`) or already present from
+  Batch 1.
+- **MEDIUM RISK (latent runtime bug in Item A — population clamp silently broken):** caught and fixed
+  inline in `d5d23c2` (re-`RegisterEcho` after `InitializeFromDefinition`). See audit §22.
+- **LOW RISK / nits:** see audit §22 "Residual LOW-risk items" (log-category mismatch, uncapped
+  `RespawnAccumulator`, `-1` Amount convention for building-removed events, 5 m reach usability).
+
+### Related commit landing in the same wave
+
+- `6f14520` — `fix(bootstrapper): add missing Engine/StaticMeshActor.h include` (the REVIEW-1
+  HIGH-RISK compile blocker for `SpawnActor<AStaticMeshActor>` in the Batch-1 bootstrapper code).
+  Batch 2 code transitively depends on this fix being present.
+
+### Honest compile status
+
+`NOT RUN (sandbox has no UE engine — must be verified on target machine)`. All "closed" marks in
+this analysis mean "closed at source level — implementation exists with real logic and correct
+integration, verifiable by inspection." They do **not** mean compiled-and-run. The user must run
+the engine build on the target machine (Windows + UE 5.8 + Antigravity) to flip these to runtime
+verified status.

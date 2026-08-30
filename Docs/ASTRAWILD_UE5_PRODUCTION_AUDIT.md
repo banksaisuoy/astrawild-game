@@ -183,9 +183,9 @@ Implementation: `UAstrawildBuildingComponent` (`.cpp` 293), `AAstrawildBuildingA
 | Placement preview | [x] | Ghost actor + validity silhouette + ground trace (`BuildingComponent.cpp:59-97, 125-171, 211-219`). |
 | Snap | [~] | 200cm grid snap (`cpp:125-153`); no piece-to-piece socket snapping. |
 | Collision validation | [x] | Box overlap vs WorldStatic, client + server re-validation (`cpp:155-171, 258-266`). |
-| Delete | [ ] | No delete/demolish path. |
+| Delete | [x] | **VERIFIED AT SOURCE (Batch 2 / `d5d23c2`).** `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` is server-authoritative (`GetOwnerRole() == ROLE_Authority`), weight-safe (`CanAddItem` gate refuses when the bag is full), and refunds via `UAstrawildInventoryComponent::AddItemSilent` (structurally identical to `AddItem` minus the EventBus publish — dismantling materials do NOT advance `CollectItem` quest objectives). Bound to `EKeys::Z` on `AAstrawildPlayerCharacter` (`DeleteBuildingAction` + `DeleteBuilding` handler, 5 m crosshair trace via `FollowCamera + LineTraceSingleByChannel ECC_Visibility`). HUD toast routed through `AAstrawildPlayerController::Notify`. **Compile/playtest still pending on target machine.** |
 | Repair | [ ] | None. |
-| Save/load | [~] | Saved with transform/health/charge/switch (`SaveSubsystem.cpp:105-108`) — but **`FromSaveData` restores health then `InitializeFromDefinition` resets it to max** (`BuildingActor.cpp:178-187`) → damaged buildings always load at full health. |
+| Save/load | [~] | Saved with transform/health/charge/switch (`SaveSubsystem.cpp:105-108`). **Building-health-reset bug (H-5) closed in Batch 1** — `FromSaveData` now restores health AFTER `InitializeFromDefinition` re-init. **Per-building power state (Item C) closed in Batch 2** — `FAstrawildBuildingSaveData.bIsPowered` captures `Power->IsBuildingPowered(this)` at save time; `FromSaveData` restores the hint; `UAstrawildSaveSubsystem::LoadWorld` then calls `UAstrawildPowerSubsystem::ResolveGridNow()` on the same frame so the first frame after load is correct. Grid-level `StoredEnergy` (battery state) still NOT saved (H-6 remainder, pending Batch 3). Compile/playtest still pending on target machine. |
 | Ownership foundation | [!] | `OwnerPlayerId` never written by any code path. |
 
 **Build mode blocker:** `CycleBuildingDefinition()` (`BuildingComponent.cpp:99`) is **never called** — the player can only place whichever unlocked building happens to be index 0 of a TMap iteration. **MP dupe vector:** materials are consumed client-side before the server RPC (`cpp:237`); the server only refunds on failure, never deducts.
@@ -204,7 +204,7 @@ Implementation: `UAstrawildPowerSubsystem` (`.cpp` 218), building definitions wi
 | Power failure | [x] | Brownout detection + `OnPowerStateChanged` broadcast (`cpp:137-174`). |
 | Energy UI | [ ] | None. |
 | First automation loop | [!] | **Unreachable** — work sites have no input path; the entire automation loop cannot run. |
-| Persistence | [!] | Grid `StoredEnergy` never saved; per-building `StoredCharge` is dead data (written, never read). |
+| Persistence | [~] | **PARTIAL — Batch 2 Item C closed building power persistence:** `AAstrawildBuildingActor::bIsPowered` (UPROPERTY Replicated + DOREPLIFETIME) is written by `ResolveGrid` every 2 s tick and captured into `FAstrawildBuildingSaveData::bIsPowered` at save time. `UAstrawildSaveSubsystem::LoadWorld` calls `UAstrawildPowerSubsystem::ResolveGridNow()` after the building spawn loop so the first frame after load is correct (no brownout flicker). **Grid-level `StoredEnergy` (battery state) still NOT saved** — `H-6` remainder pending in Batch 3. `StoredCharge` per-building is still written-never-read (dead data). **Compile/playtest still pending on target machine.** |
 
 **Cascade note:** Generator/Battery/LampPost all require `Tech_Electrical` (`ContentLibrary.cpp:370-371`) — with the research dead-end (P9), **the power system is unreachable in normal play**.
 
@@ -230,7 +230,7 @@ Implementation: `AAstrawildWorldBootstrapper` (`.cpp` 348), `UAstrawildTimeSubsy
 | Weather | [x] | 8 states, 90-in-world-min transitions, weighted + repeat penalty, temperature + capture effects real (`WeatherSubsystem.cpp:68-168`). **Dangling-ref UB** at `GetProfile` (`cpp:87` — `FindRef` by-value bound to `const&` return). Visibility multiplier has zero consumers. |
 | Biome definition | [~] | 5 biome tags; one flat arena; no zones in code. |
 | Resource spawning | [x] | 26 nodes, 3 charges each, 30s respawn (`Bootstrapper.cpp:155-172`, `ResourceNode.cpp:37-87`). **Not replicated** (`ResourceNode.cpp:13`) — MP clients see nothing. |
-| Creature population | [!] | Counters exist but **broken for spawned Echoes**: registration happens in `BeginPlay` before `InitializeFromDefinition` → `WildCount` stays 0 for all runtime-spawned creatures; `UnregisterEcho` never decrements (`EcosystemSubsystem.cpp:180-199, 328-343`). No respawn. |
+| Creature population | [~] | **PARTIAL — Batch 2 Item A closed the runtime-spawn population-clamp bug.** `UAstrawildHostileSpawnerSubsystem` (NEW `UTickableWorldSubsystem`, 25 s sweep, server-only) refills `Echo_Gloomfang` to `TargetGloomfangPopulation=4` and `Echo_Emberfang` to `TargetEmberfangPopulation=2` around the player pawn every 25 s. REVIEW-2 caught an init-ordering race (BeginPlay's `RegisterWithEcosystem` ran before `EchoDefinition` was set, so `WildCount` was never bumped — see §21); fixed inline by re-`RegisterEcho` after `InitializeFromDefinition`. `UnregisterEcho` still does not decrement `WildCount` (MEDIUM gap, pending Batch 3+). `Bootstrapper.cpp:227-243` still spawns the initial population once at world boot. **Compile/playtest still pending on target machine.** |
 | Ecosystem tiers | [~] | Tier map + distance sweep + interval contract real (`cpp:201-236, 295-310`); Tier2/3 semantics (movement-disable, world model) not implemented — only interval stretching. |
 | Migration foundation | [ ] | None. |
 | Dynamic events | [ ] | EventBus exists with 11 event tags; zero world-event publishers. |
@@ -250,11 +250,11 @@ Implementation: `AAstrawildWorldBootstrapper` (`.cpp` 348), `UAstrawildTimeSubsy
 | Advanced technology unlock | [!] | Unreachable (P9). |
 | Dungeon | [~] | Generator + 5-room linear chain + encounters + clear rewards real (`DungeonGeneratorActor.cpp:70-135`) — **never completes**: entry room has no encounters and empty-encounter rooms early-out of the clear check (`DungeonRoomActor.cpp:118`) → `RoomsCleared` maxes at N−1 → `OnDungeonCompleted` unreachable (`Generator.cpp:142-146`). No gates (forward-declared only, `DungeonRoomActor.h:9`); dungeon state not saved. |
 | Boss | [!] | `AAstrawildEchoBossCharacter` — 3 phases, enrage, adds, phase damage scaling, defeat cleanup — **fully coded but never spawned anywhere** (zero `SpawnActor<AAstrawildEchoBossCharacter>` in Source). The dungeon "boss" is a plain Gloomfang (`DungeonRoomActor.cpp:91-92`). Boss damage also bypasses player mitigation (`EchoBossCharacter.cpp:218-223`). |
-| Main quest slice | [~] | 6-quest chain with 7 implemented objective types, event-driven tracking, auto-chaining, rewards (`QuestComponent.cpp:135-211, 236-289`) — **chain halts at quest 4** (`Quest_Spark` requires `UnlockTechnology:Tech_Electrical` → blocked by P9). `ReachLocation`/`SurviveTime` objective types unimplemented. |
+| Main quest slice | [~] | 6-quest chain with 7 implemented objective types, event-driven tracking, auto-chaining, rewards (`QuestComponent.cpp:135-211, 236-289`) — chain code-reachable end-to-end after Batch 1 (C-2 unlock path). **Quest 5 "Defeat 3 Gloomfang" (`Quest_DawnGuard`) chain-completes organically after Batch 2 Item A landed:** `UAstrawildHostileSpawnerSubsystem` keeps `Echo_Gloomfang` population at 4 around the player; the existing death pipeline (`EchoCharacter::OnDefeated → EventBus TAG_Astrawild_Event_HostileDefeated → QuestComponent::ApplyEventToQuest`) auto-increments the kill counter — no new quest wiring was required. `ReachLocation`/`SurviveTime` objective types still unimplemented. Compile/playtest still pending on target machine. |
 | Weather | [x] | See P10. |
 | Day/night | [x] | See P10. |
-| Save/load | [~] | Broad coverage (12 record types) — but: vitals saved-not-restored (`SaveSubsystem.cpp:74` vs `215`), party not respawned, dungeon resets, building health resets, autosave slot `ASTRAWILD_Auto` never loaded by any path, no load-on-boot ("continue" doesn't exist). |
-| Full gameplay loop | [!] | **BLOCKED.** End-to-end completion requires cheats (`AW.ResearchPoints`, `AW.UnlockTech`). |
+| Save/load | [~] | Broad coverage (12 record types). **H-1/H-2/H-3/H-5 closed in Batch 1** — vitals restored on load, party respawns around the player, autosave-loadable "continue" path via `LoadLatest()`, building health preserved after `InitializeFromDefinition` re-init. **Item C closed in Batch 2** — building power state (per-actor) persists via `bIsPowered` and is re-resolved on the first frame after load. Gaps remaining: dungeon state still resets on load (M-7), autosave slot `ASTRAWILD_Auto` reachable via `LoadLatest()` but no load-on-boot setting on by default (`bAutoLoadLatestOnBeginPlay` default off). Compile/playtest still pending on target machine. |
+| Full gameplay loop | [~] | **Code-reachable end-to-end without cheats after Batch 1 + Batch 2** (pending target-machine compile). The chain Start → gather → craft → build → research → power → work → dungeon → boss → save → reload → continue is wired; Quest 5 "Defeat 3 Gloomfang" completes via hostile respawn (Item A); base dismantle/refund (Item B); per-building power state persistence (Item C). Compile + runtime + save round-trip verification still required on the target machine before this flips to `[x]`. |
 
 ## 15. P12 — NPC / Story
 
@@ -330,3 +330,121 @@ Implementation: `AAstrawildWorldBootstrapper` (`.cpp` 348), `UAstrawildTimeSubsy
 - **Compile status: NOT RUN (no engine in this sandbox).** One confirmed compile error found by inspection; the codebase must be compiled on the target machine (Windows + UE 5.8) after fixing `CraftingStationActor.cpp:52` — additional latent errors are possible.
 - **Runtime status: NOT RUN.** Runtime blockers identified by inspection: no navmesh (all AI movement), respawn input loss, research dead-end, dungeon completion, boss spawn, build-mode cycling.
 - Nothing in this audit claims runtime verification. All `[x]` marks above mean "implementation exists with real logic and correct integration, verifiable by inspection" — they do **not** mean compiled-and-run.
+
+---
+
+## 21. Wave 4 Batch 2 status update (post-`d5d23c2`)
+
+This audit was originally written at commit `0402472` (pre-Batch-1). Batch 1 (`7e2d0b4`) closed the 8
+Critical gaps and the 6 listed High gaps (H-1, H-2, H-3, H-4, H-5, H-7, H-8) at source level — the audit
+rows above were updated inline to reflect that where applicable, and the new compile-blocker include
+(`Engine/StaticMeshActor.h` in `AstrawildWorldBootstrapper.cpp`) from REVIEW-1 was committed as `6f14520`.
+
+Wave 4 Batch 2 (`d5d23c2`) closes three additional HIGH items at source level. None are runtime-verified
+yet — the compile status remains `NOT RUN (sandbox has no UE engine — must be verified on target
+machine)` per the strict rule that no system may be claimed complete or verified without in-engine
+evidence.
+
+| Item | Brief | Status | Note |
+|---|---|---|---|
+| **A — Hostile respawn** | `UAstrawildHostileSpawnerSubsystem` — `UTickableWorldSubsystem`, server-only Tick @ 25 s, `SpawnRadius=1800 cm` ring-biased outward 30–100 %, `FRandomStream` seeded from `WorldSeed` (deterministic SP), targets `Echo_Gloomfang=4` / `Echo_Emberfang=2` | `[x] VERIFIED AT SOURCE` | Implemented in commit `d5d23c2`. REVIEW-2 caught an init-ordering race (population clamp silently broken — see §22 below) and the fix landed inline. Quest 5 "Defeat 3 Gloomfang" chain-completes via the existing death pipeline (`OnDefeated → TAG_Astrawild_Event_HostileDefeated → QuestComponent::ApplyEventToQuest`) — no new quest wiring required. **Compile/playtest still pending on target machine.** |
+| **B — Building dismantle** | `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` — server-authoritative, weight-safe (refuses if `CanAddItem` fails), refunds via `UAstrawildInventoryComponent::AddItemSilent` (no false `TAG_Astrawild_Event_ItemCollected`); `AAstrawildPlayerCharacter::DeleteBuildingAction` bound to `EKeys::Z`, 5 m crosshair trace; HUD toast via `AAstrawildPlayerController::Notify` | `[x] VERIFIED AT SOURCE` | Implemented in commit `d5d23c2`. Input log line now reads "19 actions, WASD+mouse+wheel" (was 17). **Compile/playtest still pending on target machine.** |
+| **C — Power persistence** | `FAstrawildBuildingSaveData.bIsPowered` (additive — no schema bump), `AAstrawildBuildingActor::bIsPowered` (`UPROPERTY Replicated` + `DOREPLIFETIME`), `UAstrawildPowerSubsystem::ResolveGridNow()` public wrapper for private `ResolveGrid()`, called by `UAstrawildSaveSubsystem::LoadWorld` right after the building spawn loop | `[x] VERIFIED AT SOURCE` | Implemented in commit `d5d23c2`. Old saves deserialize with `bIsPowered=false` and re-resolve within ≤2 s on the first `ResolveGridNow()` call (in practice the same frame, because `LoadWorld` calls it). Grid-level `StoredEnergy` (battery state) is NOT saved — `H-6` remainder pending in Batch 3. **Compile/playtest still pending on target machine.** |
+
+### Batch 1 already-closed H-* items (verified at source)
+
+These were closed at source level in commit `7e2d0b4`; their corresponding audit rows above were
+updated inline to reflect the closure. They remain `compile-status: NOT RUN` until the target
+machine verifies the build.
+
+- `H-1` Survival vitals restored on load (`SetStatsForRestore`, clamp-safe)
+- `H-2` Captured party respawns around the player on load (`SpawnPartyActors`); redundant double-roster import removed
+- `H-3` `LoadLatest()` — F9 / cheat / optional boot-continue now load the NEWEST slot
+- `H-4` Weather `GetProfile` dangling-reference UB → returns by value
+- `H-5` Building damage persists across load (health applied AFTER definition re-init)
+- `H-7` Captured "Attack" command can no longer target the owner (owner exclusion in target acquisition)
+- `H-8` `OnAIStateChanged` now actually broadcasts (public `SetAIState`, controller routes through it)
+
+---
+
+## 22. REVIEW-2 finding — hostile-spawner registration race (caught and fixed inline)
+
+REVIEW-2 (read-only compile-risk review of Batch 2) surfaced a **MEDIUM-risk runtime bug** in Item A
+that the implementation brief did not anticipate. The fix landed in the same commit (`d5d23c2`) so
+the production code carries the corrected version; this subsection is the historical record for
+future audit pass reviewers.
+
+### Symptom (would have manifested without the fix)
+
+`UAstrawildHostileSpawnerSubsystem::Tick` would have called `Ecosystem->GetWildPopulation(GloomfangId)`
+and `GetWildPopulation(EmberfangId)` every 25 s. Both would have returned 0 forever, even with hostile
+Echoes visibly roaming the world — because of an init-ordering race between
+`AAstrawildEchoCharacter::BeginPlay` and `UAstrawildHostileSpawnerSubsystem::SpawnOneHostile`'s call to
+`Echo->InitializeFromDefinition(Definition)`.
+
+### Root cause (init-ordering race)
+
+1. `World->SpawnActor<AAstrawildEchoCharacter>(...)` triggers `BeginPlay` (`EchoCharacter.cpp:64-78`).
+2. `BeginPlay` calls `RegisterWithEcosystem()` at line 68 BEFORE the actor's `EchoDefinition`
+   UPROPERTY is set (`EchoCharacter.cpp:70-73` only re-runs `InitializeFromDefinition` if
+   `EchoDefinition` was already externally assigned pre-spawn, which is not the case here).
+3. `UAstrawildEcosystemSubsystem::RegisterEcho` (`EcosystemSubsystem.cpp:167-188`) at this point sees
+   `Echo->EchoDefinition` as null → skips the `Population.WildCount += 1` block at lines 180-187
+   (it still adds to `RegisteredEchoes` array + `EchoTiers`, so the actor is visible to the
+   ecosystem — but its species population counter is not incremented).
+4. `UAstrawildHostileSpawnerSubsystem::SpawnOneHostile` then calls
+   `Echo->InitializeFromDefinition(Definition)` (line 132), which sets
+   `EchoDefinition = InDefinition` (`EchoCharacter.cpp:133`) — but `InitializeFromDefinition` does
+   NOT re-call `RegisterWithEcosystem`.
+5. Net effect: spawned hostiles are tracked in `RegisteredEchoes` but their species `WildCount` is
+   never incremented. `GetWildPopulation` returns 0 every Tick.
+6. `Deficit = TargetGloomfangPopulation - 0 = 4` → spawns 4 Gloomfangs every
+   `RespawnIntervalSeconds` (25 s). Same for Emberfang (+2 every 25 s). Indefinite population leak.
+7. Quest 5 still completes (the death pipeline publishes `TAG_Astrawild_Event_HostileDefeated`
+   based on `EchoDefinition->bHostileToPlayers`, independent of `WildCount` bookkeeping), but the
+   world floods with hostile Echoes — performance degradation + stale AI actors piling up around
+   the player's base camp.
+
+### Fix (one-line, additive, scope-limited to Batch 2 only)
+
+In `Source/AstrawildCore/Private/AstrawildHostileSpawnerSubsystem.cpp::SpawnOneHostile`, immediately
+after line 132 (`Echo->InitializeFromDefinition(Definition);`), re-register the spawned Echo with the
+ecosystem so the species `WildCount` bumps (now that `EchoDefinition` is set):
+
+```cpp
+if (UAstrawildEcosystemSubsystem* Eco = World->GetSubsystem<UAstrawildEcosystemSubsystem>())
+{
+    Eco->RegisterEcho(Echo);
+}
+```
+
+The second `RegisterEcho` call hits the predicate check at `EcosystemSubsystem.cpp:174` (skips the
+redundant `RegisteredEchoes.Add`), but the `WildCount` bump at lines 180-187 is OUTSIDE that
+predicate check, so it now fires correctly. This fix is committed in `d5d23c2` — the production
+code carries the corrected version.
+
+### Note on `WorldBootstrapper.cpp:251`
+
+`Echo->InitializeFromDefinition(HostileDef)` in the bootstrapper has the SAME timing pattern but is
+unaffected because the bootstrapper only spawns ONCE in `BeginPlay` (no respawn cadence, no
+`GetWildPopulation` clamp). The bug only manifested for the new tick-driven `HostileSpawner`.
+
+### Residual LOW-risk items (REVIEW-2 nits — non-blocking)
+
+- `AstrawildHostileSpawnerSubsystem.cpp:42,133` use `UE_LOG(LogAstrawildBuilding, ...)` for spawner
+  logging — semantically odd (a spawner isn't a building). Consider `LogAstrawildAI` (already
+  declared in `AstrawildLog.h:9`). No functional impact.
+- `AstrawildHostileSpawnerSubsystem.cpp:39` — fallback `SpawnStream.Initialize(FMath::Rand())`
+  when no GameState — non-deterministic across reloads (loses world-seed reproducibility). Defensive
+  only; latent only if subsystem init order changes.
+- `AstrawildHostileSpawnerSubsystem.cpp:57-62` — `RespawnAccumulator += DeltaTime` with no upper
+  cap. If the game pauses (tab-out for hours), the accumulator grows large; the spawn sweep resets
+  to 0 after the first fire, so no infinite loop, just one early double-spawn after a long pause. Fine.
+- `AstrawildBuildingComponent.cpp:354-358` — `PublishEvent(TAG_Astrawild_Event_BuildingPlaced, Player,
+  Def->DefinitionId, -1, ...)` uses `Amount=-1` to signal "building removed".
+  `QuestComponent::ApplyEventToQuest` does not currently subscribe to `BuildingPlaced` for negative
+  counts (only positive `Amount` for `PlaceBuilding` advancement), so no false quest advancement.
+  The `-1` convention is documented in a comment for future quest authors.
+- `AstrawildPlayerCharacter.cpp:763` — `FollowCamera->GetForwardVector() * 500.0f` reaches 5 m
+  (500 cm = 5 m). Compile-clean as-is; consider bumping to 800-1000 cm for usability in a future
+  round (out of scope for Batch 2).

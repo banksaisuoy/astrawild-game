@@ -3,13 +3,16 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Production Audit + Batch 1 "Core Loop Unblocked")
-- Branch: `main` (latest: evidence-based production audit → Batch 1 loop-unblock fixes)
-- Latest change: **Production audit + First Implementation Batch** — 3 audit reports
-  (`ASTRAWILD_UE5_PRODUCTION_AUDIT.md`, `ASTRAWILD_IMPLEMENTATION_GAP_REPORT.md`,
-  `ASTRAWILD_ULTIMATE_GAP_ANALYSIS.md`) followed by dependency-ordered fixes for every
-  Critical gap that severed the vertical-slice loop (details below)
-- Codebase: **86 C++ files (42 `.cpp` + 44 `.h`), ~13.5k LOC** in `Source/AstrawildCore` (single module)
+- Last updated: 2026-08-30 (Wave 4 — Batch 2: Hostile respawn + Building dismantle + Power persistence)
+- Branch: `main` (latest: `d5d23c2` — Batch 2 hostile-spawner / dismantle / power-persistence; preceded by `6f14520` compile-blocker include fix from REVIEW-1)
+- Latest change: **Wave 4 Batch 2** — three HIGH integrity items closed in source: hostile respawn
+  (`UAstrawildHostileSpawnerSubsystem`), building dismantle + weight-safe refund
+  (`UAstrawildBuildingComponent::DismantleBuilding` + `UAstrawildInventoryComponent::AddItemSilent`,
+  bound to **Z**), power-state persistence (`FAstrawildBuildingSaveData.bIsPowered` + replicated
+  `AAstrawildBuildingActor::bIsPowered` + `UAstrawildPowerSubsystem::ResolveGridNow` called by
+  `UAstrawildSaveSubsystem::LoadWorld`). REVIEW-2 medium-risk population-clamp bug fixed inline
+  (re-`RegisterEcho` after `InitializeFromDefinition`).
+- Codebase: **88 C++ files (43 `.cpp` + 45 `.h`), ~14,648 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -25,14 +28,62 @@
 - Errors: **2 latent compile errors found by the audit and fixed in source this round** —
   (1) `AstrawildCraftingStationActor.cpp:52` TPair-iteration over `TArray` (C-1);
   (2) `MakeRuntimeAction` declared 3 required params while all 17 call sites pass 2 (C-1b).
-  Both await engine compile confirmation; more latent errors may surface.
+  Both await engine compile confirmation; more latent errors may surface. Batch-2 changes
+  were read-only reviewed (REVIEW-2) — HIGH RISK: none; MEDIUM RISK: one runtime
+  population-clamp bug caught and fixed inline (re-`RegisterEcho` after `InitializeFromDefinition`
+  so `EcosystemSubsystem::WildCount` bumps for the new hostiles); LOW RISK: log category
+  mismatch (`LogAstrawildBuilding` reused for the spawner), uncapped `RespawnAccumulator`
+  (double-spawn after long pause — fine).
 - Warnings: Not measured
 - Build duration: Not measured
 - Validation steps for the target machine: `Docs/ASTRAWILD_TEST_PLAN.md` §4
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Production Audit + Batch 1: Core Loop Unblocked)
+## Changes in this round (2026-08-30 — Wave 4 Batch 2: Hostile respawn + Building dismantle + Power persistence)
+
+### Commits
+
+| Commit | Type | Subject |
+|---|---|---|
+| `6f14520` | fix(bootstrapper) | Add missing `Engine/StaticMeshActor.h` include — REVIEW-1 compile blocker for `SpawnActor<AStaticMeshActor>` |
+| `d5d23c2` | feat(batch-2) | Hostile respawn + building dismantle + power persistence |
+
+### Repository totals (verified with shell commands on `d5d23c2`)
+
+| Metric | Value | Command |
+|---|---|---|
+| C++ source files | **88** | `find Source -name '*.cpp' -o -name '*.h' \| wc -l` |
+| C++ LOC | **14,648** | `find Source -name '*.cpp' -o -name '*.h' \| xargs wc -l \| tail -1` |
+| Docs (`*.md`) | **49** | `ls Docs/*.md \| wc -l` |
+| DOREPLIFETIME props | **26 across 9 classes** | `grep -c DOREPLIFETIME Source/AstrawildCore/Private/*.cpp` |
+| Input actions | **19** | `MakeRuntimeAction` call sites in `AstrawildPlayerCharacter.cpp::BuildRuntimeInputDefaults` |
+| Cheat commands | **13** | `UFUNCTION(Exec)` methods on `UAstrawildCheatManager` |
+| Automation tests | **9** | `ASTRAWILD.Equipment.ProgressionMath` + 8 prior |
+
+DOREPLIFETIME breakdown by class (verified by grep): `AAstrawildBuildingActor` 4 (was 3 — `bIsPowered` added in Batch 2), `AAstrawildEchoCharacter` 6, `AAstrawildGameState` 4, `AAstrawildEchoBossCharacter` 3, `UAstrawildInventoryComponent` 3, `UAstrawildCombatComponent` 2, `UAstrawildSurvivalComponent` 2, `AAstrawildDungeonRoomActor` 1, `AAstrawildWorkSiteActor` 1.
+
+### Systems added / changed in Batch 2
+
+| System | Class / symbol | Status | Files |
+|---|---|---|---|
+| Hostile respawn (server-only `UTickableWorldSubsystem`, 25 s sweep, ring-biased outward 30–100 % of `SpawnRadius=1800 cm`, `FRandomStream` seeded from `WorldSeed`) | `UAstrawildHostileSpawnerSubsystem` (Tick / `OnWorldBeginPlay` / `SpawnOneHostile`) | NEW | `Source/AstrawildCore/Public/AstrawildHostileSpawnerSubsystem.h`, `Source/AstrawildCore/Private/AstrawildHostileSpawnerSubsystem.cpp` |
+| Building dismantle (server-authoritative, weight-safe — refuses if `CanAddItem` fails, refunds via `AddItemSilent` then `Destroy()`) | `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` | NEW | `AstrawildBuildingComponent.h/.cpp` |
+| Silent refund (structurally identical to `AddItem` minus the EventBus publish block — dismantling materials do NOT advance `CollectItem` quest objectives) | `UAstrawildInventoryComponent::AddItemSilent(FName, int32)` | NEW | `AstrawildInventoryComponent.h/.cpp` |
+| Delete-building input action (mirrors `EquipBest` wiring; 5 m crosshair trace via `FollowCamera + LineTraceSingleByChannel ECC_Visibility`) | `AAstrawildPlayerCharacter::DeleteBuildingAction` (TObjectPtr<UInputAction>) bound to `EKeys::Z`, handler `DeleteBuilding` | NEW | `AstrawildPlayerCharacter.h/.cpp` |
+| Building power-state field (replicated, BlueprintReadOnly) | `AAstrawildBuildingActor::bIsPowered` (UPROPERTY Replicated + `DOREPLIFETIME` line) | NEW field | `AstrawildBuildingActor.h/.cpp` |
+| Save-data additive power flag (default `false` → old saves deserialize fine; re-resolved on first `ResolveGridNow()` call during `LoadWorld`) | `FAstrawildBuildingSaveData::bIsPowered` (Types.h:465) | NEW field | `AstrawildTypes.h` |
+| Public wrapper for private `ResolveGrid()` — called once during `LoadWorld` after the building spawn loop so the first frame after load is correct (no 2 s brownout flicker) | `UAstrawildPowerSubsystem::ResolveGridNow()` (UFUNCTION BlueprintCallable) | NEW | `AstrawildPowerSubsystem.h/.cpp` |
+| Save/load integration — `LoadWorld` calls `Power->ResolveGridNow()` right after the building spawn loop (buildings have BeginPlay'd + RegisterPower'd via `FromSaveData → InitializeFromDefinition`) | `UAstrawildSaveSubsystem::LoadWorld` | UPDATE | `AstrawildSaveSubsystem.cpp` |
+| `ResolveGrid` writes back `Consumer->bIsPowered = bPowered` every 2 s tick (UE net driver short-circuits unchanged values → no extra bandwidth) | `UAstrawildPowerSubsystem::ResolveGrid` | UPDATE | `AstrawildPowerSubsystem.cpp` |
+| `ToSaveData` captures `Power->IsBuildingPowered(this)` at save time; `FromSaveData` restores the hint value (overwritten on next `ResolveGrid`) | `AAstrawildBuildingActor::ToSaveData` / `FromSaveData` | UPDATE | `AstrawildBuildingActor.cpp` |
+| REVIEW-2 fix — re-`RegisterEcho` immediately after `Echo->InitializeFromDefinition(Definition)` so the species `WildCount` bumps (BeginPlay registered before `EchoDefinition` was set → WildCount bump was being skipped) | `UAstrawildHostileSpawnerSubsystem::SpawnOneHostile` (line 137-140) | FIX INLINE | `AstrawildHostileSpawnerSubsystem.cpp` |
+
+### Quest chain impact
+
+Quest 5 ("Defeat 3 Gloomfang", `Quest_DawnGuard` objective `DefeatCreature TargetId=Echo_Gloomfang RequiredCount=3`) now chain-completes organically: the spawner keeps `Echo_Gloomfang` population at `TargetGloomfangPopulation=4` around the player pawn every 25 s; the existing death pipeline (`EchoCharacter::ApplyElementalDamage → OnDefeated → EventBus TAG_Astrawild_Event_HostileDefeated → QuestComponent::ApplyEventToQuest`) auto-increments the kill counter. No new quest wiring was required.
+
+## Changes in the previous round (2026-08-30 — Production Audit + Batch 1: Core Loop Unblocked)
 
 ### Audit deliverables (evidence-based, line-cited)
 
@@ -227,16 +278,25 @@ No `Source/` files were modified by DOCS-1.
 | Medium | T-5 consume keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press **G** | **Fix in code** (G = `SmartConsume`) — verify at playtest |
 | Medium | T-6 journal per-frame iteration | `AstrawildJournalSubsystem.cpp` | Insights capture | **Fix in code** (throttled observation sweep) — verify via Insights |
 | Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (still present) |
-| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "17 actions" / "19 items, … 2 loot tables, 2 NPCs" and matches the code |
+| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "19 actions" / "19 items, … 2 loot tables, 2 NPCs" and matches the code |
 | Low | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | `ShopLootTableId` is a definition-level hook only — purchase flow NOT IMPLEMENTED (future round) |
+| Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending** — Batch 3 / MP batch. Single-player only at present — Item B `DismantleBuilding` uses direct method calls gated on `GetLocalRole() == ROLE_Authority` |
+| Medium | Weapon element override (player attack element hardcoded Ash) | `CombatComponent.h:53-55` | Hit a creature with a Crystal Blade | **Pending** — Batch 3 |
+| Low | `HostileSpawnerSubsystem::Tick` requires server world | `AstrawildHostileSpawnerSubsystem.cpp:52` | Clients never run the spawn sweep | Clients see populated hostiles via replication only — server authoritative; matches the rest of the simulation |
+| Low | `PowerSubsystem::ResolveGridNow` is server-only | `AstrawildPowerSubsystem.cpp:28-33` | Clients never run `ResolveGrid` | Clients receive correct state via the new `bIsPowered` replicated UPROPERTY on `AAstrawildBuildingActor` — `ResolveGrid`'s server-only early return (`World->GetNetMode() == NM_Client`) at `.cpp:55` guards the path |
 
 ## Handoff to Antigravity
 
-The C++ core (single module `AstrawildCore`, **~13.4k LOC, 86 source files**), the zero-asset playability
-layer (procedural world + runtime input + C++ HUD), save schema v2 (with wave 3 equipment persistence),
-the CODE_DEFAULT content set (19 items / 10 recipes / 7 species / 10 buildings / 6 techs / 6 quests /
-2 loot tables / 2 NPCs), the documentation suite, the test plan, and the asset manifest/replacement
-pipeline are all in the repository. Antigravity must: **pull, generate project files, compile
-`ASTRAWILDEditor Win64 Development`, run the 9 automation tests, execute the 17-step first-playable
-checklist, and fill this report with real results.** Do not mark `COMPLETE` until Compile, the automation
-suite, the core-loop Playtest, and Save/Load have all passed (see `Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
+The C++ core (single module `AstrawildCore`, **~14.6k LOC, 88 source files**), the zero-asset playability
+layer (procedural world + runtime input + C++ HUD), save schema v2 (with wave 3 equipment persistence +
+wave 4 building power persistence), the CODE_DEFAULT content set (19 items / 10 recipes / 7 species /
+10 buildings / 6 techs / 6 quests / 2 loot tables / 2 NPCs), the documentation suite, the test plan, and
+the asset manifest/replacement pipeline are all in the repository. Antigravity must: **pull, generate
+project files, compile `ASTRAWILDEditor Win64 Development`, run the 9 automation tests, execute the
+17-step first-playable checklist, and fill this report with real results.** Do not mark `COMPLETE` until
+Compile, the automation suite, the core-loop Playtest, and Save/Load have all passed (see
+`Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
+
+**Handoff tally:** 88 C++ files / 14,648 LOC / 49 docs / 9 automation tests / 26 replicated props across
+9 classes / 19 input actions / 13 console cheats. Compile status: `NOT RUN (sandbox has no UE engine —
+must be verified on target machine).`

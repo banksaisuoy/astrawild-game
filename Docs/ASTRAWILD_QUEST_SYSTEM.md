@@ -177,9 +177,34 @@ Bodies still use the engine capsule placeholder (see Asset Manifest §8/§9).
 
 | Feature | Status |
 |---|---|
-| Event publishers for ReachLocation / ObserveEcho / SurviveTime | NOT IMPLEMENTED (see §2) |
+| Event publishers for ReachLocation / SurviveTime | NOT IMPLEMENTED (see §2). `ObserveEcho` is wired via journal milestones. |
 | Quest selection/abandonment UI | NOT IMPLEMENTED (single auto-chained active quest) |
 | Multiple simultaneous active quests | NOT IMPLEMENTED (single `ActiveQuestId`) |
 | Quest text presentation beyond the HUD tracker | NOT IMPLEMENTED (no dialogue UI) |
 | Per-player quest replication for co-op clients | NOT IMPLEMENTED — component is not replicated; host/SP only today |
 | NPC dialogue/schedule screens, vendor purchase flow | NOT IMPLEMENTED — 2 CODE_DEFAULT NPCs exist (Warden Maren, Trader Tam); interaction is quest-start only; shop table is a data hook |
+
+---
+
+## 8. Quest 5 chain completion (wave 4)
+
+Quest 5 "Defeat 3 Gloomfang" (`Quest_DawnGuard` — §3 above) now **chain-completes organically** after
+Batch 2 / commit `d5d23c2`:
+
+- `UAstrawildHostileSpawnerSubsystem` (NEW `UTickableWorldSubsystem`, server-only Tick @ 25 s)
+  refills `Echo_Gloomfang` population around the player pawn every 25 s up to
+  `TargetGloomfangPopulation = 4` (and `Echo_Emberfang` up to `TargetEmberfangPopulation = 2`).
+- Spawn placement: ring biased outward — minimum 30 % of `SpawnRadius = 1800 cm`, max 100 %, so
+  hostiles never spawn directly on top of the player; angle is uniform-random; the spawn stream is
+  `FRandomStream` seeded from `AAstrawildGameState::WorldSeed` for deterministic SP placement.
+- The hostile death pipeline already existed pre-Batch-2 — `AAstrawildEchoCharacter::ApplyElementalDamage → OnDefeated → EventBus TAG_Astrawild_Event_HostileDefeated` (published when `EchoDefinition->bHostileToPlayers == true`) — so kills auto-increment the quest counter via `UAstrawildQuestComponent::ApplyEventToQuest` matching the `DefeatCreature` objective's `TargetId = Echo_Gloomfang`.
+- **No new quest wiring was required** — the spawn subsystem is purely additive; the existing
+  `DefeatCreature` event path is the integration point.
+- REVIEW-2 caught a MEDIUM-risk population-clamp race (BeginPlay's `RegisterWithEcosystem` ran
+  before `EchoDefinition` was set, so the species `WildCount` bump was being skipped →
+  `GetWildPopulation` would have returned 0 forever → indefinite population leak). The one-line
+  fix landed inline in `d5d23c2`: re-`RegisterEcho` immediately after `Echo->InitializeFromDefinition(Definition)` so the species `WildCount` bumps on the second call
+  (the predicate check skips the redundant `RegisteredEchoes.Add` but the bump block is outside
+  that predicate). See `ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §22 for the full root-cause analysis.
+
+Compile + runtime verification still required on the target machine.

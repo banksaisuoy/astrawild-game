@@ -142,8 +142,76 @@ gating are spawned by the WorldBootstrapper at camp — the placed variants are 
 | Feature | Status |
 |---|---|
 | Structural integrity / snapping to other pieces | NOT IMPLEMENTED (free grid placement only) |
-| Deconstruct / move / refund of placed buildings | NOT IMPLEMENTED |
+| Deconstruct / move / refund of placed buildings | **CLOSED IN WAVE 4 (Item B / `d5d23c2`)** — `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` is server-authoritative, weight-safe, and refunds via `AddItemSilent` (see §9 below). MP server-side material deduction still pending. |
 | Ghost validity color (red/green) | NOT IMPLEMENTED (`IsPlacementValid()` API exists) |
-| Dedicated cycle-piece keybind | NOT IMPLEMENTED (cycle API exists, not bound) |
+| Dedicated cycle-piece keybind | **CLOSED IN BATCH 1** — mouse-wheel (`AWD_BuildCycle` Axis1D) cycles through unlocked pieces |
 | Per-player building permissions in co-op | PLANNED |
 | Real meshes / materials | PLACEHOLDER engine cubes |
+
+---
+
+## 9. Dismantle + Refund (wave 4 — Item B)
+
+Added in commit `d5d23c2`. Closes the "Deconstruct / refund of placed buildings" row above at the
+single-player level (MP server-side material deduction remains pending — see H-6 in the gap report).
+
+### Trigger
+
+- **Key**: `EKeys::Z` — `DeleteBuildingAction` (a `TObjectPtr<UInputAction>`, EditDefaultsOnly /
+  BlueprintReadOnly — same pattern as every other runtime action in `AstrawildPlayerCharacter.h`).
+- **Handler**: `AAstrawildPlayerCharacter::DeleteBuilding(const FInputActionValue&)` (Bound via
+  `EnhancedInput->BindAction(DeleteBuildingAction, ETriggerEvent::Started, this,
+  &AAstrawildPlayerCharacter::DeleteBuilding)` — mirrors the `EquipBest` wiring exactly).
+- Log line in `BuildRuntimeInputDefaults` now reads **"19 actions, WASD+mouse+wheel"** (was 17 before
+  wave 3's `X` and Batch 1's mouse-wheel `BuildCycle`).
+
+### Reach
+
+5 m crosshair trace (`FollowCamera->GetComponentLocation()` as `Start`, `Start +
+FollowCamera->GetForwardVector() * 500.0f` as `End`, `LineTraceSingleByChannel` on `ECC_Visibility`,
+`SCENE_QUERY_STAT(ASTRAWILDDismantle)` query params with `this` as the ignored actor). The first hit
+actor is `Cast<AAstrawildBuildingActor>` — anything else aborts silently.
+
+### Authority
+
+Server-authoritative — `UAstrawildBuildingComponent::DismantleBuilding(AActor* TargetBuilding)`
+early-returns `false` if `GetOwnerRole() != ROLE_Authority`. The same gate is used by
+`ServerPlaceBuilding_Implementation`, so the dismantle path matches the placement path's authority
+rules. In SP this is always satisfied; in MP a client→server RPC layer is still required (H-12 / MP
+batch).
+
+### Weight-safe refund policy
+
+1. Resolve the building definition (`Building->GetBuildingDefinition()` — null-safe).
+2. Resolve the player (`GetPlayer()` — null-safe).
+3. **`InventoryComponent->CanAddItem(Def->RequiredItemId, Def->RequiredItemCount)` gate** — if the
+   bag cannot accept the refund (over the 120 kg weight cap), the dismantle **refuses and logs
+   `"Dismantle refused: bag cannot accept N x ItemId."`** — no material is lost into the void.
+4. **`InventoryComponent->AddItemSilent(Def->RequiredItemId, Def->RequiredItemCount)`** — structurally
+   identical to `AddItem` minus the EventBus publish block. This is intentional: the refund must
+   NOT publish `TAG_Astrawild_Event_ItemCollected`, otherwise dismantling a Foundation (Wood ×4)
+   would falsely advance any `CollectItem` quest objective. `OnInventoryChanged` and
+   `BroadcastWeight()` still fire so the HUD weight readout updates.
+5. EventBus publishes `TAG_Astrawild_Event_BuildingPlaced` with `Amount = -1` (signals "building
+   removed") — `QuestComponent::ApplyEventToQuest` does not currently subscribe to `BuildingPlaced`
+   for negative counts, so no false quest advancement.
+6. `Building->Destroy()` (server-side; the actor is GC'd and unregisters from the Power subsystem
+   via its `EndPlay` hook).
+
+### HUD toast format
+
+Routed through the existing `AAstrawildPlayerController::Notify(const FText&)` (no new widget):
+
+- On success: `"Dismantled: returned {RequiredItemCount} {RequiredItemId}"` (e.g.
+  `"Dismantled: returned 4 Item_Wood"`).
+- On weight-gate refusal: `"Inventory full — cannot refund"`.
+- On non-building hit: silent (no toast).
+
+The toast uses the same `PushNotification` path as research-unlock / work-site-collect results, so
+the existing HUD notification line TTL (4.0 s) applies.
+
+### Preview ghost safeguard
+
+`if (Building == PreviewActor) return false;` — the dismantle path refuses to dismantle the live
+preview ghost (that's already handled by `CancelPlacement`). This is important because the
+crosshair trace can hit the preview ghost while it is overlapping a real building.

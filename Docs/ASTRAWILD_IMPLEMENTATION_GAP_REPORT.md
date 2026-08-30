@@ -7,6 +7,19 @@
 
 ---
 
+## Current tally (post-`d5d23c2` — Wave 4 Batch 2)
+
+| Priority | Total | Closed Batch 1 | Closed Batch 2 | Outstanding |
+|---|---|---|---|---|
+| **CRITICAL** | 9 (C-1..C-8 + C-1b discovered during impl) | 9 | 0 | **0** |
+| **HIGH** | 14 | 8 (H-1, H-2, H-3, H-4, H-5, H-7, H-8, H-14) | 3 (B2-A hostile respawn / B2-B building dismantle / B2-C power persistence — closes hostile respawn + delete/refund + per-building power state) | **3 fully + 3 partial** (H-6 MP dupe vector, H-11 crafting output validation, H-12 MP RPC layer, H-13 gamepad, plus partial: H-9 UnregisterEcho decrement, H-10 ReachLocation/SurviveTime objective types, Ultimate Gap "Power persistence" grid-level StoredEnergy) |
+| **MEDIUM** | 14 | 2 (M-4 HUD temp, M-12 missing tags) | 0 | 12 |
+| **LOW** | 9 | 0 | 0 | 9 |
+
+**Honest compile status:** `NOT RUN (sandbox has no UE engine — must be verified on target machine)`. All "closed" marks above mean "closed at source level — implementation exists with real logic and correct integration, verifiable by inspection". They do **not** mean compiled-and-run.
+
+---
+
 ## CRITICAL — blocks compilation or the vertical-slice loop entirely
 
 | ID | Gap | Evidence | Impact | Fix direction |
@@ -93,3 +106,46 @@ The Checklist V2 priority ladder is Foundation → Player → Survival → Inven
 Batch 1 intentionally excludes: new content (species/quests/biomes), multiplayer RPC work (H-12), armor/weapon/drone frameworks (P9), and visual polish — those follow only after the loop runs.
 
 **After each item: Compile (on target machine) → Runtime test → Save/load test → Update Checklist → Document → Commit.** In this sandbox (no UE engine), compile verification is impossible; commits will carry honest `compile-status: NOT RUN` notes and the batch must be engine-verified by the user before Batch 2 proceeds.
+
+---
+
+## SECOND IMPLEMENTATION BATCH — Wave 4 Batch 2 ("Integrity")
+
+The three Batch-2 work items below were scoped during RESEARCH-2 (read-only research pass) and
+code-reviewed during REVIEW-2 (read-only compile-risk review) before landing in commit `d5d23c2`.
+REVIEW-2 found one MEDIUM-risk runtime bug in Item A (population clamp silently broken — see
+`ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §22 for the one-line fix that landed inline). All three items
+are now **closed at source level** — compile/runtime verification still required on the target
+machine (Windows + UE 5.8 + Antigravity).
+
+### Closed in Batch 2 — HIGH priority
+
+| ID | Brief | Files | What's closed | What remains |
+|---|---|---|---|---|
+| **B2-A — Hostile respawn** | `UAstrawildHostileSpawnerSubsystem` (NEW `UTickableWorldSubsystem`, server-only Tick @ 25 s, `SpawnRadius=1800 cm` ring-biased outward 30–100 %, `FRandomStream` seeded from `WorldSeed` for deterministic SP). Tunables: `TargetGloomfangPopulation=4`, `TargetEmberfangPopulation=2`, `RespawnIntervalSeconds=25.0f`. REVIEW-2 fix: re-`RegisterEcho` after `Echo->InitializeFromDefinition(Definition)` so the species `WildCount` bumps (BeginPlay's `RegisterWithEcosystem` ran before `EchoDefinition` was set). Quest integration: Quest 5 "Defeat 3 Gloomfang" chain-completes via the existing death pipeline (`EchoCharacter::OnDefeated → EventBus TAG_Astrawild_Event_HostileDefeated → QuestComponent::ApplyEventToQuest`) — no new quest wiring required. | `Source/AstrawildCore/Public/AstrawildHostileSpawnerSubsystem.h` (NEW), `Source/AstrawildCore/Private/AstrawildHostileSpawnerSubsystem.cpp` (NEW) | The hostile-respawn piece of H-9; the Quest 5 chain-completion piece of H-10; the runtime-spawn `WildCount` race (REVIEW-2 fix) | `UnregisterEcho` still does not decrement `WildCount` (MEDIUM, pending Batch 3+); `ReachLocation` / `SurviveTime` objective types still unimplemented (H-10 remainder, pending Batch 3); `LogAstrawildBuilding` reused for spawner logging (LOW nit, non-blocking) |
+| **B2-B — Building dismantle + refund** | `UAstrawildBuildingComponent::DismantleBuilding(AActor*)` — server-authoritative (`GetOwnerRole() == ROLE_Authority` gate), weight-safe (`CanAddItem` refuses if bag full — dismantle aborts, no material loss into the void), refunds via `UAstrawildInventoryComponent::AddItemSilent(FName, int32)` (structurally identical to `AddItem` minus the EventBus publish block — dismantling materials do NOT advance `CollectItem` quest objectives). `AAstrawildPlayerCharacter::DeleteBuildingAction` bound to `EKeys::Z`, 5 m crosshair trace via `FollowCamera + LineTraceSingleByChannel ECC_Visibility`. HUD toast via existing `AAstrawildPlayerController::Notify` (no new widget). 19 actions / 19 keys now (was 17 after Batch 1's X = EquipBest). | `Source/AstrawildCore/Public/AstrawildBuildingComponent.h`, `Source/AstrawildCore/Private/AstrawildBuildingComponent.cpp`, `Source/AstrawildCore/Public/AstrawildInventoryComponent.h`, `Source/AstrawildCore/Private/AstrawildInventoryComponent.cpp`, `Source/AstrawildCore/Public/AstrawildPlayerCharacter.h`, `Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp` | The Ultimate Gap's "Delete/refund" HIGH row (full close — weight-safe refund policy with no false quest advancement). The piece of H-2 (base building UX incompleteness) that called for delete-with-refund | Server-side material deduction for MP (H-6 / MP dupe vector) still pending — `DismantleBuilding` uses direct method calls gated on `GetLocalRole() == ROLE_Authority`, fine for SP but not yet MP-safe; full inventory transfer API for storage buildings still missing (Batch 3) |
+| **B2-C — Power persistence** | `FAstrawildBuildingSaveData` gains `bool bIsPowered = false` (additive — old saves deserialize `false` default, re-resolve within ≤2 s — actually same-frame because `LoadWorld` calls `ResolveGridNow`). `AAstrawildBuildingActor` gains `UPROPERTY(Replicated) bool bIsPowered = false` + `DOREPLIFETIME` line. `ToSaveData()` captures `Power->IsBuildingPowered(this)` at save time. `FromSaveData()` restores the hint value (overwritten on next `ResolveGrid`). `UAstrawildPowerSubsystem::ResolveGridNow()` — public `UFUNCTION BlueprintCallable` wrapper for private `ResolveGrid()`. `ResolveGrid()` now writes back `Consumer->bIsPowered = bPowered` for replication sync (UE net driver short-circuits unchanged values — no extra bandwidth). `UAstrawildSaveSubsystem::LoadWorld` calls `Power->ResolveGridNow()` right after the building spawn loop — first frame after load is correct (no 2 s brownout flicker). | `Source/AstrawildCore/Public/AstrawildTypes.h`, `Source/AstrawildCore/Public/AstrawildBuildingActor.h`, `Source/AstrawildCore/Private/AstrawildBuildingActor.cpp`, `Source/AstrawildCore/Public/AstrawildPowerSubsystem.h`, `Source/AstrawildCore/Private/AstrawildPowerSubsystem.cpp`, `Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp` | The Ultimate Gap's "Power persistence" HIGH row **partially** — per-actor power state persists across save/load and is replicated to clients; first-frame correctness after load | Grid-level `StoredEnergy` (battery state) is NOT saved (H-6 / Ultimate Gap "Power persistence" remainder); `StoredCharge` per-building still written-never-read (dead data); power connectivity still one global grid contradicting the documented 1200 cm radius (M-6, pending Batch 3+); lamp posts draw power with no light logic (M-6, pending Batch 3) |
+
+### Compile-risk review (REVIEW-2 — read-only, done before user runs on target machine)
+
+- **HIGH RISK (compile blockers):** NONE. Every UCLASS/GENERATED_BODY/Tick override/DOREPLIFETIME/
+  UPROPERTY/UFUNCTION pattern in the diff is well-formed; every cross-class symbol
+  (`FindEcho`, `GetWildPopulation`, `IsBuildingPowered`, `PublishEvent`, `Notify`, `AddItemSilent`,
+  `CanAddItem`, `DismantleBuilding`, `ResolveGridNow`, `MakeRuntimeAction`, `BindAction`, `MapKey`,
+  `SpawnActor`, `InitializeFromDefinition`) has a verified-visible declaration with matching signature;
+  every include chain that the new code depends on is either explicitly added
+  (`AstrawildPowerSubsystem.h` in `SaveSubsystem.cpp:12`) or already present from Batch 1
+  (`AstrawildBuildingActor.h` in `BuildingComponent.cpp:3`, `AstrawildDataAssets.h:5`,
+  `AstrawildPlayerController.h` in `PlayerCharacter.cpp:20`). No forward-declared class used as complete.
+- **MEDIUM RISK (latent runtime bug in Item A — population clamp silently broken):** caught and fixed
+  inline in `d5d23c2`. See `ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §22 for the full root-cause analysis
+  and the one-line fix.
+- **LOW RISK / nits:** see `ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §22 "Residual LOW-risk items".
+
+### Related commit (not part of Batch 2 scope but lands in the same wave)
+
+- `6f14520` — `fix(bootstrapper): add missing Engine/StaticMeshActor.h include — compile blocker for SpawnActor<AStaticMeshActor>`. This is the only HIGH-RISK compile blocker surfaced by REVIEW-1 for Batch 1; the fix landed just before Batch 2's commit. Batch 2 code depends transitively on this fix being present.
+
+### Next batch (Batch 3 — "Depth")
+
+Batch 3 (Depth) — status effects + hit reactions + armor + laser weapon + gamepad + real tests + vendor UI + biome 2 prep. Scope per Ultimate Gap Analysis §3 (gameplay feel) + §5 (technology framework) + §6 (world biomes) + §11 (QA real tests). The MP batch (parallel after Batch 2): client registry, RPC layer, creature replication, building server-side deduction, node replication, join/leave.

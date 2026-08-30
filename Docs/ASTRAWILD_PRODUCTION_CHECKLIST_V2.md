@@ -133,9 +133,9 @@ Legend:
 - [ ] Placement preview
 - [ ] Snap
 - [ ] Collision validation
-- [ ] Delete
+- [~] Delete — code-complete in d5d23c2 (Batch 2 — `UAstrawildBuildingComponent::DismantleBuilding` + EKeys::Z handler); compile pending on target machine
 - [ ] Repair
-- [ ] Save/load
+- [~] Save/load — building-health reset bug (H-5) closed in Batch 1; per-building power-state persistence (Item C) closed in Batch 2 (`bIsPowered` + `ResolveGridNow()`); compile pending on target machine
 - [ ] Ownership foundation
 
 ## P8 Power / Automation
@@ -146,8 +146,8 @@ Legend:
 - [~] Power priority
 - [~] Power failure
 - [ ] Energy UI
-- [~] First automation loop — work-site interact implemented (Batch 1 C-7); runtime-unverified
-- [ ] Persistence
+- [~] First automation loop — work-site interact implemented (Batch 1 C-7); hostile respawn closed in Batch 2 (Item A — `UAstrawildHostileSpawnerSubsystem`); compile pending on target machine
+- [~] Persistence — code-complete in d5d23c2 (Batch 2 Item C — `bIsPowered` replicated UPROPERTY + `ResolveGridNow()` called from `LoadWorld`); grid-level `StoredEnergy` (battery state) still pending (H-6 remainder); compile pending on target machine
 
 ## P9 Advanced Technology
 - [~] Technology tree — unlock path implemented (Batch 1 C-2: root auto-grant + Research Desk interact); runtime-unverified
@@ -182,7 +182,7 @@ Legend:
 - [ ] Weather
 - [ ] Biome definition
 - [ ] Resource spawning
-- [ ] Creature population
+- [~] Creature population — code-complete in d5d23c2 (Batch 2 Item A — `UAstrawildHostileSpawnerSubsystem` refills `Echo_Gloomfang` to 4 + `Echo_Emberfang` to 2 every 25 s; REVIEW-2 fix re-registers spawned hostiles so WildCount bumps); `UnregisterEcho` decrement still pending; compile pending on target machine
 - [ ] Ecosystem tiers
 - [ ] Migration foundation
 - [ ] Dynamic events
@@ -199,11 +199,11 @@ Legend:
 - [~] Advanced technology unlock
 - [~] Dungeon — completion logic fixed (Batch 1 C-4); runtime-unverified
 - [~] Boss — phased boss now spawns in the boss room (Batch 1 C-5); runtime-unverified
-- [~] Main quest slice — chain code-reachable end-to-end after C-2; hostile respawn still missing (gap H-5 in gap report)
+- [~] Main quest slice — chain code-reachable end-to-end after Batch 1 (C-2 unlock path); Quest 5 "Defeat 3 Gloomfang" chain-completes after Batch 2 (Item A — hostile respawn via `UAstrawildHostileSpawnerSubsystem`); `ReachLocation`/`SurviveTime` objective types still unimplemented; compile pending on target machine
 - [~] Weather
 - [~] Day/night
-- [~] Save/load — vitals/party/building-health restore + LoadLatest (Batch 1 H-1/H-2/H-3/H-5); runtime-unverified
-- [~] Full gameplay loop — code-reachable end-to-end without cheats after Batch 1; compile + runtime test pending
+- [~] Save/load — vitals/party/building-health restore + LoadLatest (Batch 1 H-1/H-2/H-3/H-5); per-actor power-state persistence (Batch 2 Item C — `bIsPowered` + `ResolveGridNow()`); compile pending on target machine
+- [~] Full gameplay loop — code-reachable end-to-end without cheats after Batch 1 + Batch 2 (hostile respawn + building dismantle + power persistence); compile + runtime + save round-trip test pending on target machine
 
 ## P12 NPC / Story
 - [ ] NPC framework
@@ -266,11 +266,11 @@ Legend:
 - [ ] Definition of Done satisfied
 
 ## GLOBAL QUALITY GATE
-- [!] No Critical issues — all 8 Critical gaps fixed in source (Batch 1); engine verification pending
-- [!] No unresolved High issues affecting core loop — 7 of 14 High fixed; see gap report
+- [!] No Critical issues — all 9 Critical gaps (C-1..C-8 + C-1b discovered during impl) fixed in source (Batch 1); engine verification pending on target machine
+- [!] No unresolved High issues affecting core loop — 8 of 14 High closed in Batch 1 + 3 more in Batch 2 (B2-A/B2-B/B2-C); H-6 (grid-level battery state) + H-9 (UnregisterEcho decrement) + H-10 (ReachLocation/SurviveTime) + H-11 (crafting output validation) + H-12 (MP RPCs) + H-13 (gamepad) still pending; see gap report
 - [!] Build passes — never compiled
 - [ ] Game launches — unverified
-- [~] Core loop playable — code-reachable end-to-end; runtime-unverified
-- [~] Save/load reliable — 6 defects fixed; runtime-unverified
-- [~] Documentation matches implementation — audit docs added; per-system docs one wave stale in places
+- [~] Core loop playable — code-reachable end-to-end after Batch 1 + Batch 2 (hostile respawn + building dismantle + power persistence); compile + runtime + save round-trip test pending on target machine
+- [~] Save/load reliable — 6 defects fixed in Batch 1; per-building power-state persistence added in Batch 2; grid-level battery state (H-6) still pending; compile pending on target machine
+- [~] Documentation matches implementation — audit docs + this checklist updated for Batch 2; per-system docs synced in this wave
 - [ ] Git working tree clean after commit

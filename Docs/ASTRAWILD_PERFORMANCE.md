@@ -108,6 +108,14 @@ because the policy is "no per-frame allocations, no hidden per-frame loops".
 - Mitigations available when profiling demands: property condition flags (`COND_SkipOwner`), push-model
   replication, coarser needs quantization. NOT APPLIED yet — measure first.
 
+> **Wave 4 update (`d5d23c2`):** `UAstrawildPowerSubsystem::ResolveGrid` now writes back
+> `Consumer->bIsPowered = bPowered` every 2 s tick. UE's net driver short-circuits unchanged values
+> (no flag-dirty if the bit didn't flip), so the network cost is negligible unless a consumer's
+> power state actually changes. `UAstrawildSaveSubsystem::LoadWorld` calls `ResolveGridNow()` once
+> on load — one extra O(N) sweep where N = registered buildings, typically < 100 in the Dawn
+> Fields slice. The new `AAstrawildBuildingActor::bIsPowered` replicated UPROPERTY adds 1 bit to the
+> building actor's net blob; total replicated props is now **26 across 9 classes** (was 25/9).
+
 ---
 
 ## 6. Profiling Plan (target machine, after first compile)

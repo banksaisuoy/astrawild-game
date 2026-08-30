@@ -1,7 +1,7 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 3 sync — X = equip-best, `AW.EquipItem` cheat)
+**Date: 2026-08-30** (wave 4 sync — X = equip-best (wave 3) + Z = delete building (wave 4))
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / SetupPlayerInputComponent /
 input handlers), `AstrawildCheatManager.h/.cpp`
 
@@ -10,11 +10,12 @@ assigned). Keyboard + mouse only; gamepad support is NOT IMPLEMENTED.
 
 ---
 
-## 1. Complete Keybinding Table (17 keys → 17 actions)
+## 1. Complete Keybinding Table (19 keys → 19 actions)
 
-`BuildRuntimeInputDefaults` creates exactly **17 runtime actions** (`MakeRuntimeAction` count) and the
-log line now matches ("17 actions, WASD+mouse"). Key count = physical keyboard keys (mouse inputs
-listed separately).
+`BuildRuntimeInputDefaults` creates exactly **19 runtime actions** (`MakeRuntimeAction` count) and the
+log line now matches ("19 actions, WASD+mouse+wheel"). Key count = physical keyboard keys (mouse
+inputs listed separately). Wave 4 added `Z` = Delete Building (Item B — `DismantleBuilding` +
+`AddItemSilent` refund).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
 |---|---|---|---|---|---|
@@ -33,12 +34,14 @@ listed separately).
 | **N** | Rotate Building (`AWD_BuildRotate`) | Started | `RotateBuilding` | Building placement (+15° yaw per press) | |
 | **G** | Smart Consume (`AWD_Consume`) | Started | `SmartConsume` | Survival: addresses the most depleted vital (thirst vs hunger) by consuming the best matching owned consumable (score = needed vital value + heal × 0.5) | Added with the T-5 fix (verify at playtest) |
 | **X** | Equip Best (`AWD_EquipBest`) | Started | `EquipBest` | Equipment (wave 3): equips strongest owned weapon (max AttackPower) + strongest shield (max BlockMitigation) | Authority only; logs the chosen ids |
+| **Z** | Delete Building (`AWD_DeleteBuilding`) | Started | `DeleteBuilding` | Building (wave 4 — Item B): dismantles the building under the crosshair (5 m reach) and refunds materials via `AddItemSilent` (weight-safe — refuses when bag full, no false `TAG_Astrawild_Event_ItemCollected`) | Authority only; HUD toast via `PlayerController::Notify` ("Dismantled: returned N ItemId" / "Inventory full — cannot refund") |
 | **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` | Server/authority only |
 | **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world | Server/authority only |
 | *(LMB while placing)* | — (routes from Attack) | Started | `BuildingComponent::ConfirmPlacement` | Building: consume materials + server RPC | See LMB row |
 
 Death disables input until respawn (5 s GameMode timer). Building-cycling between piece types
-(`CycleBuildingDefinition`) is a component API **without a keybind** yet.
+(`CycleBuildingDefinition`) is bound to the mouse wheel (`AWD_BuildCycle`, Axis1D) and is the only
+non-Boolean runtime action.
 
 ---
 
@@ -51,7 +54,7 @@ Death disables input until respawn (5 s GameMode timer). Building-cycling betwee
 | Interaction (harvest/craft/rest/talk) | E |
 | Capture | E (on wild Echo) + R (feed, trust path) |
 | Echo commands / party | C |
-| Building | B, N, LMB |
+| Building | B, N, mouse wheel, LMB (place), **Z (delete — wave 4)** |
 | Survival (smart consume) | G |
 | Equipment (equip best) | X |
 | Save / Load | F5, F9 |

@@ -1,7 +1,7 @@
 # ASTRAWILD — Gameplay Systems Overview
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 3 sync — equipment progression, loot tables, camp NPCs)
+**Date: 2026-08-30** (wave 4 sync — hostile respawn subsystem, building dismantle, power-state persistence)
 
 This is the system map of the V2 foundation round: every gameplay system, where it lives, and how it feeds
 the core loop. Deep dives live in the per-system documents referenced in each row.
@@ -62,20 +62,20 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 | 7 | Capture pipeline | `UAstrawildCaptureComponent` | Creature doc §5 | Resonator + weaken/trust/observe/track/weather → chance roll |
 | 8 | Field journal | `UAstrawildJournalSubsystem` | Creature doc §6 | Observation progress, knowledge milestones, research points |
 | 9 | Echo roster & party | `UAstrawildEchoRosterSubsystem` | Creature doc §7 | Captured roster (party cap 3), save round-trip |
-| 10 | Inventory | `UAstrawildInventoryComponent` | — | Stacks + weight gate (120 kg) + equipment slots (weapon + shield, wave 3) |
+| 10 | Inventory | `UAstrawildInventoryComponent` | — | Stacks + weight gate (120 kg) + equipment slots (weapon + shield, wave 3) + **`AddItemSilent` for dismantle refunds (wave 4)** |
 | 11 | Item registry & content library | `UAstrawildItemRegistrySubsystem`, `UAstrawildContentLibrary` | `ASTRAWILD_ASSET_PIPELINE.md` | Id→definition resolution; CODE_DEFAULT content (items/recipes/species/buildings/techs/quests/loot tables/NPCs) |
 | 12 | Crafting | `UAstrawildCraftingComponent`, `AAstrawildCraftingStationActor` | `ASTRAWILD_CRAFTING_SYSTEM.md` | Timed queue, station/tech/ingredient gates |
-| 13 | Building placement | `UAstrawildBuildingComponent`, `AAstrawildBuildingActor` | `ASTRAWILD_BUILDING_SYSTEM.md` | Preview/snap/rotate/validate + server-authoritative placement |
-| 14 | Power grid | `UAstrawildPowerSubsystem` | Building doc §7 | Generation/draw/battery, brownout shedding, 2 s re-solve |
+| 13 | Building placement | `UAstrawildBuildingComponent`, `AAstrawildBuildingActor` | `ASTRAWILD_BUILDING_SYSTEM.md` | Preview/snap/rotate/validate + server-authoritative placement + **dismantle/refund via `AddItemSilent` (wave 4 — Z)** |
+| 14 | Power grid | `UAstrawildPowerSubsystem` | Building doc §7 | Generation/draw/battery, brownout shedding, 2 s re-solve, **per-actor `bIsPowered` replication + `ResolveGridNow()` called from `LoadWorld` (wave 4)** |
 | 15 | Echo work | `AAstrawildWorkSiteActor` | Creature doc §8 | Affinity/personality/mood/energy-scaled production |
 | 16 | Research / tech tree | `UAstrawildResearchSubsystem` | `ASTRAWILD_RESEARCH_SYSTEM.md` | Points, prerequisites, unlock gates (6 techs incl. Armory) |
-| 17 | Quests | `UAstrawildQuestComponent` | `ASTRAWILD_QUEST_SYSTEM.md` | Event-driven objectives, 6-quest First Dawn chain |
+| 17 | Quests | `UAstrawildQuestComponent` | `ASTRAWILD_QUEST_SYSTEM.md` | Event-driven objectives, 6-quest First Dawn chain (Quest 5 chain-completes via hostile respawn — wave 4) |
 | 18 | World state (time/weather) | `AAstrawildGameState`, `UAstrawildTimeSubsystem`, `UAstrawildWeatherSubsystem` | `ASTRAWILD_WORLD_SYSTEM.md` | 24-min days, 8 weather states, replicated |
 | 19 | Event bus | `UAstrawildEventBusSubsystem` | Architecture V2 §6 | Decoupled gameplay event pub/sub |
 | 20 | Procedural world | `AAstrawildWorldBootstrapper` | World doc §5 | Zero-asset Dawn Fields arena + camp NPCs |
-| 21 | Save/load | `UAstrawildSaveSubsystem` | `ASTRAWILD_SAVE_SYSTEM.md` | Schema v2, checksum, migration, autosave, equipment persistence |
+| 21 | Save/load | `UAstrawildSaveSubsystem` | `ASTRAWILD_SAVE_SYSTEM.md` | Schema v2, checksum, migration, autosave, equipment persistence, **per-building power-state persistence (wave 4)** |
 | 22 | HUD | `UAstrawildHudWidget` | `ASTRAWILD_UI_ARCHITECTURE.md` | Pure-C++ HUD (12 widgets incl. equipment readout) |
-| 23 | Input | runtime Enhanced Input (in PlayerCharacter) | `ASTRAWILD_INPUT_REFERENCE.md` | 17 runtime actions, full default keymap |
+| 23 | Input | runtime Enhanced Input (in PlayerCharacter) | `ASTRAWILD_INPUT_REFERENCE.md` | **19 runtime actions** (wave 4: +Z = Delete Building), full default keymap |
 | 24 | Gameplay tags | `AstrawildGameplayTags.h/.cpp` | `ASTRAWILD_GAMEPLAY_TAGS.md` | 77 native tags |
 | 25 | Debug/cheats | `UAstrawildCheatManager` | Input Reference §3 | 13 console commands |
 | 26 | NPCs | `AAstrawildNPCCharacter` | Quest doc §6 | Camp NPCs (Warden Maren, Trader Tam — wave 3); schedule/dialogue screens PLANNED |
@@ -83,6 +83,7 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 | 28 | Tests | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` | 9 automation tests |
 | 29 | Equipment progression | `UAstrawildInventoryComponent` (slots) + `UAstrawildCombatComponent` (math) | Combat doc §2.3/§4 | Weapon ATK + shield mitigation routing, equip-best (X), save persistence |
 | 30 | Loot tables | `UAstrawildLootTableDefinition` + registry | Asset Manifest §7 | Guaranteed drops + bonus roll; dungeon clear rewards, vendor stock |
+| 31 | Hostile respawn (wave 4) | `UAstrawildHostileSpawnerSubsystem` | World doc / Building doc / Quest doc §5 | `UTickableWorldSubsystem` (server-only, 25 s sweep) that refills `Echo_Gloomfang` (target 4) + `Echo_Emberfang` (target 2) around the player pawn — closes the Quest 5 chain |
 
 ---
 
@@ -140,7 +141,7 @@ The current content deliberately walks a new player through one complete loop:
    (weaken it or feed Glimmer Berries first) → +10 Berries, +10 RP.
 3. **Quest: Homeground** — place a Foundation and a Workbench → +10 RP.
 4. **Quest: The Spark** — unlock Electrical Foundations (15 RP) and build an Echo Dynamo → +15 RP.
-5. **Quest: Dawn Guard** — defeat 3 Gloomfangs (night hostiles) → Ancient Core + 20 RP.
+5. **Quest: Dawn Guard** — defeat 3 Gloomfangs (night hostiles) → Ancient Core + 20 RP. **Wave 4: hostile respawn (`UAstrawildHostileSpawnerSubsystem`) keeps `Echo_Gloomfang` population at 4 around the player every 25 s — Quest 5 chain-completes organically via the existing death pipeline (`EchoCharacter::OnDefeated → EventBus TAG_Astrawild_Event_HostileDefeated → QuestComponent::ApplyEventToQuest`). No new quest wiring required.**
 6. **Quest: Shepherd's Dawn** (wave 2) — unlock Echo Husbandry, capture a Sprigling, place a Feed Trough,
    craft 3 Feed Mix → +5 Feed Mix, +2 Salves, +20 RP. Chain ends here.
 
@@ -168,7 +169,8 @@ auto-equip the best owned gear at any time.
 
 - All systems above are **implemented in C++ but not yet compiled** (sandbox has no UE5 toolchain). Compile
   validation happens on the target Windows machine — see `ASTRAWILD_TEST_PLAN.md` §4.
-- Quest objective types `ReachLocation`, `ObserveEcho`, `SurviveTime` exist in the enum and quest data but
-  **have no event wiring yet** (see `ASTRAWILD_QUEST_SYSTEM.md` §5).
-- Work-site output accumulates on the site (`StoredOutput`) but a player "collect output" interact is
-  **not yet wired** — `CollectOutput()` exists as an API.
+- Quest objective types `ReachLocation`, `SurviveTime` exist in the enum and quest data but **have no event
+  wiring yet** (see `ASTRAWILD_QUEST_SYSTEM.md` §5). `ObserveEcho` is wired via journal milestones.
+- Work-site output accumulates on the site (`StoredOutput`) — `CollectOutput()` is wired to the **E** interact
+  (Batch 1 C-7). Hostile respawn (`UAstrawildHostileSpawnerSubsystem`) refills the wild population around
+  the player every 25 s (wave 4).
