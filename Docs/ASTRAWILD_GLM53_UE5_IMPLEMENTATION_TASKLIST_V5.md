@@ -244,17 +244,21 @@ Minimum playable advanced technology:
 
 Do not hardcode each technology item into unrelated systems.
 
-# PHASE 11 — WORLD / DAWN FIELDS
+# PHASE 11 — WORLD / THE SHATTERED VALE
 
-- [ ] World Partition compatibility
+> Batch 7 (`7fef4fe`) already shipped the runtime world framework — see
+> `Docs/ASTRAWILD_ZONE_WORLD.md` before doing anything here. Verify/compile first;
+> the remaining boxes are the editor-tier upgrades.
+
+- [ ] World Partition compatibility (runtime world is PMC tiles — WP is the editor upgrade; optional .r16 landscape imports ready in `Content/Heightmaps/`)
 - [ ] Data Layers where needed
 - [ ] PCG where appropriate
-- [ ] Day/night
-- [ ] Weather
-- [ ] Biome framework
-- [ ] Resource spawning
-- [ ] Creature habitat/population
-- [ ] Landmarks
+- [x] Day/night (TimeSubsystem + sun tracking — verify at playtest)
+- [x] Weather (WeatherSubsystem, global states replicate — verify at playtest)
+- [x] Biome framework (Batch 7: `UAstrawildZoneSubsystem` — 6 zones, weight field, events, discovery; compile pending)
+- [x] Resource spawning (per-zone signature tables + camp ring — compile pending)
+- [x] Creature habitat/population (per-zone species placement, EcosystemSubsystem LOD sweep — compile pending)
+- [x] Landmarks (per-zone silhouettes + ~20 tinted lights, 8 animated — compile pending)
 - [ ] Technology-gated exploration
 - [ ] Scanner discoveries
 - [ ] Hidden location
