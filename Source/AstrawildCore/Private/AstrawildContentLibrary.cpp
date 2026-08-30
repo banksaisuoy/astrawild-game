@@ -245,6 +245,64 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     AncientResonator->Description = FText::FromString(TEXT("A resonance blade humming with First Dawn light. The Underlight warden's bane."));
     AncientResonator->VendorPrice = 8; // Batch 6: dungeon-economy sellable.
     Registry->RegisterItem(AncientResonator);
+
+    // --- Advanced technology framework (final production run — PHASE 12): scanner,
+    //     energy cells, laser weapon, helmet, exosuit, robotics. Every piece feeds
+    //     a real system slot — no cosmetic content. ---
+
+    UAstrawildItemDefinition* EnergyCell = MakeItem(Outer, TEXT("Item_EnergyCell"), TEXT("Pulse Cell"), EAstrawildItemCategory::Material, 0.15f, 60);
+    EnergyCell->Description = FText::FromString(TEXT("Compressed pulse energy. Ammunition for resonance weaponry."));
+    EnergyCell->VendorPrice = 1;
+    Registry->RegisterItem(EnergyCell);
+
+    UAstrawildItemDefinition* FieldScanner = MakeItem(Outer, TEXT("Item_FieldScanner"), TEXT("Field Scanner"), EAstrawildItemCategory::Equipment, 1.5f, 1);
+    FieldScanner->EquipmentSlot = EAstrawildEquipmentSlot::Scanner;
+    FieldScanner->ScannerSpeedMultiplier = 3.0f;
+    FieldScanner->Description = FText::FromString(TEXT("Hold [V] to scan — observation knowledge accrues three times faster."));
+    FieldScanner->VendorPrice = 10;
+    Registry->RegisterItem(FieldScanner);
+
+    UAstrawildItemDefinition* ResonanceHelm = MakeItem(Outer, TEXT("Item_ResonanceHelm"), TEXT("Resonance Helm"), EAstrawildItemCategory::Equipment, 2.5f, 1);
+    ResonanceHelm->EquipmentSlot = EAstrawildEquipmentSlot::Helmet;
+    ResonanceHelm->ArmorRating = 35.0f;
+    ResonanceHelm->InsulationRating = 6.0f;
+    ResonanceHelm->Description = FText::FromString(TEXT("Crystal-weave helm: armor plus six degrees of thermal tolerance."));
+    ResonanceHelm->VendorPrice = 12;
+    Registry->RegisterItem(ResonanceHelm);
+
+    UAstrawildItemDefinition* Exosuit = MakeItem(Outer, TEXT("Item_DawnstriderExosuit"), TEXT("Dawnstrider Exosuit"), EAstrawildItemCategory::Equipment, 9.0f, 1);
+    Exosuit->EquipmentSlot = EAstrawildEquipmentSlot::Exosuit;
+    Exosuit->InsulationRating = 8.0f;
+    Exosuit->StaminaRegenBonus = 6.0f;
+    Exosuit->CarryWeightBonus = 40.0f;
+    Exosuit->MoveSpeedBonus = 0.15f;
+    Exosuit->Description = FText::FromString(TEXT("A resonance-frame exosuit: +40 kg carry, +15% speed, faster stamina, thermal lining."));
+    Exosuit->VendorPrice = 18;
+    Registry->RegisterItem(Exosuit);
+
+    UAstrawildItemDefinition* PulseLance = MakeItem(Outer, TEXT("Item_PulseLance"), TEXT("Pulse Lance"), EAstrawildItemCategory::Equipment, 4.0f, 1);
+    PulseLance->AttackPower = 16.0f;
+    PulseLance->Element = EAstrawildElementType::Pulse;
+    PulseLance->EquipmentSlot = EAstrawildEquipmentSlot::Weapon;
+    PulseLance->bIsRangedWeapon = true;
+    PulseLance->AmmoItemId = TEXT("Item_EnergyCell");
+    PulseLance->Description = FText::FromString(TEXT("A resonance lance firing pulse bolts [LMB]. Shock status on every hit."));
+    PulseLance->VendorPrice = 20;
+    Registry->RegisterItem(PulseLance);
+
+    UAstrawildItemDefinition* UtilityDrone = MakeItem(Outer, TEXT("Item_UtilityDrone"), TEXT("Utility Drone"), EAstrawildItemCategory::Equipment, 6.0f, 1);
+    UtilityDrone->EquipmentSlot = EAstrawildEquipmentSlot::Auto; // Deployable — not a worn slot.
+    UtilityDrone->bDeploysDrone = true;
+    UtilityDrone->Description = FText::FromString(TEXT("Deploy [H]: a hovering companion that scans creatures and auto-harvests nearby nodes."));
+    UtilityDrone->VendorPrice = 22;
+    Registry->RegisterItem(UtilityDrone);
+
+    UAstrawildItemDefinition* UtilityRobot = MakeItem(Outer, TEXT("Item_UtilityRobot"), TEXT("Utility Robot"), EAstrawildItemCategory::Equipment, 10.0f, 1);
+    UtilityRobot->EquipmentSlot = EAstrawildEquipmentSlot::Auto; // Deployable — not a worn slot.
+    UtilityRobot->bDeploysRobot = true;
+    UtilityRobot->Description = FText::FromString(TEXT("Deploy [J]: mans the nearest unmanned work site — steady output, no feeding, power-gated."));
+    UtilityRobot->VendorPrice = 26;
+    Registry->RegisterItem(UtilityRobot);
 }
 
 // ---------------------------------------------------------------------------
@@ -337,6 +395,39 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_AncientResonator"), TEXT("Ancient Resonator"),
         { Stack(TEXT("Item_AncientCore"), 1), Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_Resonator"), 1) },
         { Stack(TEXT("Item_AncientResonator"), 1) }, 10.0f, TEXT("Tech_AncientResonance"), TEXT("Station_Workbench")));
+
+    // --- Advanced technology recipes (final production run — PHASE 12): every
+    //     recipe gates behind Tech_AdvancedEnergy, which previously unlocked
+    //     NOTHING — the tech tree now pays out across four new systems
+    //     (scanner, laser, armor progression, robotics). ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_EnergyCell"), TEXT("Pulse Cells"),
+        { Stack(TEXT("Item_VoltCore"), 2), Stack(TEXT("Item_CrystalShard"), 1) },
+        { Stack(TEXT("Item_EnergyCell"), 4) }, 4.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldScanner"), TEXT("Field Scanner"),
+        { Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_VoltCore"), 1), Stack(TEXT("Item_Fiber"), 2) },
+        { Stack(TEXT("Item_FieldScanner"), 1) }, 6.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_ResonanceHelm"), TEXT("Resonance Helm"),
+        { Stack(TEXT("Item_CrystalShard"), 3), Stack(TEXT("Item_EmberAsh"), 2), Stack(TEXT("Item_Fiber"), 2) },
+        { Stack(TEXT("Item_ResonanceHelm"), 1) }, 7.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_DawnstriderExosuit"), TEXT("Dawnstrider Exosuit"),
+        { Stack(TEXT("Item_VoltCore"), 4), Stack(TEXT("Item_CrystalShard"), 3), Stack(TEXT("Item_EmberAsh"), 4) },
+        { Stack(TEXT("Item_DawnstriderExosuit"), 1) }, 12.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_PulseLance"), TEXT("Pulse Lance"),
+        { Stack(TEXT("Item_VoltCore"), 3), Stack(TEXT("Item_CrystalShard"), 3), Stack(TEXT("Item_DawnShard"), 3) },
+        { Stack(TEXT("Item_PulseLance"), 1) }, 10.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_UtilityDrone"), TEXT("Utility Drone"),
+        { Stack(TEXT("Item_VoltCore"), 4), Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_DawnShard"), 3) },
+        { Stack(TEXT("Item_UtilityDrone"), 1) }, 12.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_UtilityRobot"), TEXT("Utility Robot"),
+        { Stack(TEXT("Item_VoltCore"), 6), Stack(TEXT("Item_CrystalShard"), 4), Stack(TEXT("Item_DawnShard"), 5) },
+        { Stack(TEXT("Item_UtilityRobot"), 1) }, 15.0f, TEXT("Tech_AdvancedEnergy"), TEXT("Station_Workbench")));
 }
 
 // ---------------------------------------------------------------------------
@@ -531,7 +622,8 @@ void UAstrawildContentLibrary::BuildTechnologies(UAstrawildItemRegistrySubsystem
         { TEXT("Tech_BasicCrafting") }, {}, { TEXT("Building_Generator"), TEXT("Building_Battery"), TEXT("Building_LampPost") }));
 
     Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_AdvancedEnergy"), TEXT("Advanced Energy"), EAstrawildTechEra::AdvancedEnergy, 30,
-        { TEXT("Tech_Electrical") }, {}, {}));
+        { TEXT("Tech_Electrical") }, { TEXT("Recipe_EnergyCell"), TEXT("Recipe_FieldScanner"), TEXT("Recipe_ResonanceHelm"),
+        TEXT("Recipe_DawnstriderExosuit"), TEXT("Recipe_PulseLance"), TEXT("Recipe_UtilityDrone"), TEXT("Recipe_UtilityRobot") }, {}));
 
     // --- Content expansion (CODE_DEFAULT wave 2): the husbandry branch. ---
 
@@ -732,8 +824,40 @@ void UAstrawildContentLibrary::BuildQuests(UAstrawildItemRegistrySubsystem* Regi
     Quest7->RewardItems.Add(Stack(TEXT("Item_HerbalSalve"), 2));
     Quest7->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 5));
     Quest7->RewardResearchPoints = 15;
-    Quest7->NextQuestId = NAME_None;
+    Quest7->NextQuestId = TEXT("Quest_ValeBeyond");
     Registry->RegisterQuest(Quest7);
+
+    // --- Post-dungeon epilogue (final production run — PHASE 15): exercises the
+    //     two previously-dead objective types — VisitZone (Event.ZoneEntered) and
+    //     SurviveTime (per-second accrual) — plus the laser weapon payoff. ---
+
+    UAstrawildQuestDefinition* Quest8 = NewObject<UAstrawildQuestDefinition>(Outer);
+    Quest8->QuestId = TEXT("Quest_ValeBeyond");
+    Quest8->Title = FText::FromString(TEXT("The Vale Beyond"));
+    Quest8->Summary = FText::FromString(TEXT("The warden's fall resonates across the Vale. Prove the resonance technology in Ember Ridge's heat — and live there for three minutes."));
+    FAstrawildQuestObjective ObjEmber;
+    ObjEmber.Type = EAstrawildQuestObjectiveType::VisitZone;
+    ObjEmber.TargetId = TEXT("Zone_EmberRidge");
+    ObjEmber.RequiredCount = 1;
+    ObjEmber.ObjectiveText = FText::FromString(TEXT("Travel to Ember Ridge"));
+    Quest8->Objectives.Add(ObjEmber);
+    FAstrawildQuestObjective ObjSurvive;
+    ObjSurvive.Type = EAstrawildQuestObjectiveType::SurviveTime;
+    ObjSurvive.TargetId = NAME_None;
+    ObjSurvive.RequiredCount = 180; // Seconds.
+    ObjSurvive.ObjectiveText = FText::FromString(TEXT("Survive for 3 minutes"));
+    Quest8->Objectives.Add(ObjSurvive);
+    FAstrawildQuestObjective ObjLance;
+    ObjLance.Type = EAstrawildQuestObjectiveType::CraftRecipe;
+    ObjLance.TargetId = TEXT("Recipe_PulseLance");
+    ObjLance.RequiredCount = 1;
+    ObjLance.ObjectiveText = FText::FromString(TEXT("Craft the Pulse Lance"));
+    Quest8->Objectives.Add(ObjLance);
+    Quest8->RewardItems.Add(Stack(TEXT("Item_EnergyCell"), 8));
+    Quest8->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 8));
+    Quest8->RewardResearchPoints = 20;
+    Quest8->NextQuestId = NAME_None;
+    Registry->RegisterQuest(Quest8);
 }
 
 // ---------------------------------------------------------------------------
@@ -795,5 +919,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 28 items, 18 recipes, 10 Echo species, 13 buildings, 10 technologies, 7 quests, 2 loot tables, 2 NPCs."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 35 items, 26 recipes, 10 Echo species, 13 buildings, 10 technologies, 8 quests, 2 loot tables, 2 NPCs."));
 }

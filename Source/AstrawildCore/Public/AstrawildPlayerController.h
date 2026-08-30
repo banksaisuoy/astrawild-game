@@ -7,6 +7,9 @@
 class AAstrawildNPCCharacter;
 class UAstrawildQuestComponent;
 class UAstrawildHudWidget;
+class UAstrawildInventoryScreenWidget;
+class UAstrawildPauseMenuWidget;
+class UAstrawildResearchScreenWidget;
 class UAstrawildShopWidget;
 
 /**
@@ -54,6 +57,42 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Vendor|UI")
     bool IsShopOpen() const;
 
+    // --- Final production run: inventory / research / pause screens ---
+
+    /** Inventory screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildInventoryScreenWidget> InventoryScreenClass;
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleInventoryScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsInventoryOpen() const;
+
+    /** Research screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildResearchScreenWidget> ResearchScreenClass;
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleResearchScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsResearchOpen() const;
+
+    /** Pause menu class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildPauseMenuWidget> PauseMenuClass;
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void TogglePauseMenu();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsPauseMenuOpen() const;
+
+    /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsAnyScreenOpen() const;
+
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
 
@@ -63,4 +102,13 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildShopWidget> ShopWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildInventoryScreenWidget> InventoryScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildResearchScreenWidget> ResearchScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildPauseMenuWidget> PauseMenuWidget;
 };

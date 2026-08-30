@@ -14,7 +14,10 @@
 
 UAstrawildQuestComponent::UAstrawildQuestComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;
+    // Final production run: SurviveTime objectives need a per-second accrual tick
+    // (early-outs instantly when no such objective is active — see TickComponent).
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickInterval = 1.0f;
 }
 
 void UAstrawildQuestComponent::BeginPlay()
@@ -132,6 +135,72 @@ void UAstrawildQuestComponent::HandleGameplayEvent(const FAstrawildGameplayEvent
     ApplyEventToQuest(Event);
 }
 
+void UAstrawildQuestComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    // Server-side only; 1s cadence set in the constructor — negligible cost, and the
+    // early-return below keeps idle quests at zero work.
+    if (GetOwnerRole() != ROLE_Authority || ActiveQuestId.IsNone())
+    {
+        return;
+    }
+
+    TickSurviveTimeObjectives(DeltaTime);
+}
+
+void UAstrawildQuestComponent::TickSurviveTimeObjectives(const float DeltaTime)
+{
+    // Final production run: SurviveTime objectives accrue REAL seconds while the
+    // owning player is alive (dying pauses the clock — survival means surviving).
+    AAstrawildPlayerCharacter* Player = GetPlayerCharacter();
+    if (!Player || !Player->IsAlive())
+    {
+        return;
+    }
+
+    FAstrawildQuestSaveData* State = QuestStates.FindByPredicate(
+        [this](const FAstrawildQuestSaveData& Item) { return Item.QuestId == ActiveQuestId && Item.bActive; });
+    if (!State)
+    {
+        return;
+    }
+
+    bool bAnyProgress = false;
+    bool bAllComplete = true;
+    for (int32 i = 0; i < State->Objectives.Num(); ++i)
+    {
+        FAstrawildQuestObjective& Objective = State->Objectives[i];
+        if (Objective.IsComplete())
+        {
+            continue;
+        }
+
+        if (Objective.Type == EAstrawildQuestObjectiveType::SurviveTime)
+        {
+            // RequiredCount is the number of SECONDS to survive.
+            Objective.ProgressCount = FMath::Min(Objective.RequiredCount, Objective.ProgressCount + FMath::Max(1, FMath::RoundToInt(DeltaTime)));
+            bAnyProgress = true;
+            OnObjectiveProgress.Broadcast(State->QuestId, i, Objective.ProgressCount, Objective.RequiredCount);
+        }
+
+        if (!Objective.IsComplete())
+        {
+            bAllComplete = false;
+        }
+    }
+
+    if (bAnyProgress)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("Quest %s survive-time ticking."), *State->QuestId.ToString());
+    }
+
+    if (bAllComplete)
+    {
+        CompleteQuest(State->QuestId);
+    }
+}
+
 void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& Event)
 {
     if (ActiveQuestId.IsNone())
@@ -186,6 +255,14 @@ void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& 
             break;
         case EAstrawildQuestObjectiveType::ObserveEcho:
             bMatches = Event.EventTag == TAG_Astrawild_Event_EchoObserved && Event.TargetId == Objective.TargetId;
+            break;
+        case EAstrawildQuestObjectiveType::VisitZone:
+            // Final production run: consumes Event.ZoneEntered (published by the zone
+            // subsystem since Batch 7 with the zone name as TargetId).
+            bMatches = Event.EventTag == TAG_Astrawild_Event_ZoneEntered && Event.TargetId == Objective.TargetId;
+            break;
+        case EAstrawildQuestObjectiveType::SurviveTime:
+            // Time-based — accrued by TickSurviveTimeObjectives, not by events.
             break;
         default:
             break;

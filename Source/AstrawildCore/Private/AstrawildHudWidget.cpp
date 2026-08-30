@@ -4,11 +4,13 @@
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInteractable.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildJournalSubsystem.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
@@ -19,6 +21,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
 UAstrawildHudWidget::UAstrawildHudWidget()
@@ -124,6 +127,17 @@ void UAstrawildHudWidget::BuildWidgetTree()
     // --- Notification line ---
     NotificationText = MakeText(TEXT("NotificationText"), FLinearColor(0.95f, 0.95f, 0.85f, 1.0f), 15);
     AnchorSlot(RootCanvas->AddChildToCanvas(NotificationText), FVector2D(0.5f, 0.14f), FVector2D(0.5f, 0.14f), FVector2D(-320.0f, 0.0f), FVector2D(640.0f, 24.0f));
+
+    // --- Final production run (PHASE 14): boss health bar (top-center) + name/phase. ---
+    BossHealthBar = MakeBar(TEXT("BossHealthBar"), FLinearColor(0.72f, 0.12f, 0.28f, 1.0f));
+    AnchorSlot(RootCanvas->AddChildToCanvas(BossHealthBar), FVector2D(0.5f, 0.20f), FVector2D(0.5f, 0.20f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 16.0f));
+
+    BossText = MakeText(TEXT("BossText"), FLinearColor(0.98f, 0.75f, 0.78f, 1.0f), 14);
+    AnchorSlot(RootCanvas->AddChildToCanvas(BossText), FVector2D(0.5f, 0.225f), FVector2D(0.5f, 0.225f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 20.0f));
+
+    // --- Final production run: scanner + drone companion readout (under capture). ---
+    ScanText = MakeText(TEXT("ScanText"), FLinearColor(0.62f, 0.88f, 0.98f, 1.0f), 14);
+    AnchorSlot(RootCanvas->AddChildToCanvas(ScanText), FVector2D(0.5f, 0.885f), FVector2D(0.5f, 0.885f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 20.0f));
 }
 
 AAstrawildPlayerCharacter* UAstrawildHudWidget::GetAstrawildPawn() const
@@ -371,5 +385,65 @@ void UAstrawildHudWidget::RefreshState()
             }
         }
         QuestText->SetText(FText::FromString(Tracker));
+    }
+
+    // Final production run (PHASE 14): boss encounter bar — the nearest alive boss
+    // owns the bar (dungeon slice has one; robust to any future second boss).
+    if (BossHealthBar && BossText)
+    {
+        UWorld* World = GetWorld();
+        AAstrawildEchoBossCharacter* Boss = CachedBoss.Get();
+        if (!Boss && World)
+        {
+            for (TActorIterator<AAstrawildEchoBossCharacter> It(World); It; ++It)
+            {
+                if (!It->IsDefeated())
+                {
+                    Boss = *It;
+                    CachedBoss = Boss;
+                    break;
+                }
+            }
+        }
+
+        if (Boss && !Boss->IsDefeated())
+        {
+            BossHealthBar->SetVisibility(ESlateVisibility::Visible);
+            BossText->SetVisibility(ESlateVisibility::Visible);
+            BossHealthBar->SetPercent(Boss->GetHealthFraction());
+            BossText->SetText(FText::FromString(FString::Printf(TEXT("Underlight Warden — Phase %d%s%s"),
+                Boss->CurrentPhase,
+                Boss->bEnraged ? TEXT(" ENRAGED") : TEXT(""),
+                Boss->bWeakPointExposed ? TEXT(" | WEAK POINT EXPOSED!") : TEXT(""))));
+        }
+        else
+        {
+            Boss = nullptr;
+            CachedBoss = nullptr;
+            BossHealthBar->SetVisibility(ESlateVisibility::Hidden);
+            BossText->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+
+    // Final production run: scanner + drone companion readout.
+    if (ScanText)
+    {
+        FString ScanLine;
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            if (const UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+            {
+                if (Journal->IsScanActiveFor(Pawn))
+                {
+                    ScanLine += TEXT("SCANNING... ");
+                }
+            }
+        }
+        if (Pawn->GetActiveDrone())
+        {
+            ScanLine += TEXT("[Drone active]");
+        }
+        ScanText->SetText(FText::FromString(ScanLine));
     }
 }

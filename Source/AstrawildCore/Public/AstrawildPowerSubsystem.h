@@ -70,6 +70,13 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Power")
     void ResolveGridNow();
 
+    /**
+     * Final production run (save v3): restore the buffered battery charge after a
+     * load — the grid previously reset to zero every reload.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Power")
+    void SetStoredEnergy(float InStoredEnergy);
+
 protected:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 

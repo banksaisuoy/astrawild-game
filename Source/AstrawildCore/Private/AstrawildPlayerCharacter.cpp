@@ -16,10 +16,14 @@
 #include "AstrawildInteractable.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
+#include "AstrawildUtilityDroneActor.h"
+#include "AstrawildUtilityRobotActor.h"
+#include "AstrawildWorkSiteActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
@@ -27,6 +31,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerController.h"
@@ -188,6 +193,18 @@ void AAstrawildPlayerCharacter::ApplyMappingContext()
         // Idempotent: remove first so repeated possession never stacks the context.
         InputSubsystem->RemoveMappingContext(DefaultMappingContext);
         InputSubsystem->AddMappingContext(DefaultMappingContext, 0);
+
+        // Final production run (M9): the gamepad context coexists with KB/M so a
+        // controller works the moment it is plugged in — no settings screen needed.
+        if (!GamepadMappingContext)
+        {
+            BuildGamepadInputDefaults();
+        }
+        if (GamepadMappingContext)
+        {
+            InputSubsystem->RemoveMappingContext(GamepadMappingContext);
+            InputSubsystem->AddMappingContext(GamepadMappingContext, 0);
+        }
     }
     else if (GetNetMode() != NM_DedicatedServer)
     {
@@ -246,6 +263,13 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     LoadAction = MakeRuntimeAction(TEXT("AWD_Load"), static_cast<uint8>(EInputActionValueType::Boolean));
     // Audit C-6: mouse-wheel piece cycling while in build mode.
     BuildCycleAction = MakeRuntimeAction(TEXT("AWD_BuildCycle"), static_cast<uint8>(EInputActionValueType::Axis1D));
+    // Final production run: scanner (hold), robotics, UI screens.
+    ScanAction = MakeRuntimeAction(TEXT("AWD_Scan"), static_cast<uint8>(EInputActionValueType::Boolean));
+    DeployDroneAction = MakeRuntimeAction(TEXT("AWD_DeployDrone"), static_cast<uint8>(EInputActionValueType::Boolean));
+    DeployRobotAction = MakeRuntimeAction(TEXT("AWD_DeployRobot"), static_cast<uint8>(EInputActionValueType::Boolean));
+    InventoryAction = MakeRuntimeAction(TEXT("AWD_Inventory"), static_cast<uint8>(EInputActionValueType::Boolean));
+    ResearchAction = MakeRuntimeAction(TEXT("AWD_Research"), static_cast<uint8>(EInputActionValueType::Boolean));
+    PauseAction = MakeRuntimeAction(TEXT("AWD_Pause"), static_cast<uint8>(EInputActionValueType::Boolean));
 
     RuntimeMappingContext = NewObject<UInputMappingContext>(this, TEXT("AWD_DefaultIMC"));
     UInputMappingContext* Context = RuntimeMappingContext;
@@ -303,9 +327,59 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(DeleteBuildingAction, EKeys::Z);
     Context->MapKey(SaveAction, EKeys::F5);
     Context->MapKey(LoadAction, EKeys::F9);
+    // Final production run: V = hold-to-scan, H = drone, J = robot, TAB = pack,
+    // K = research, ESC = pause (documented in ASTRAWILD_INPUT_REFERENCE.md).
+    Context->MapKey(ScanAction, EKeys::V);
+    Context->MapKey(DeployDroneAction, EKeys::H);
+    Context->MapKey(DeployRobotAction, EKeys::J);
+    Context->MapKey(InventoryAction, EKeys::Tab);
+    Context->MapKey(ResearchAction, EKeys::K);
+    Context->MapKey(PauseAction, EKeys::Escape);
 
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (19 actions, WASD+mouse+wheel)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (25 actions, WASD+mouse+wheel+UI)."));
+}
+
+void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
+{
+    // Final production run (M9): full gamepad companion context. Shares the SAME
+    // action objects as KB/M (actions are input-agnostic) — only the keys differ.
+    if (!MoveAction || !LookAction)
+    {
+        return; // KB/M defaults build first; nothing to map onto yet.
+    }
+
+    RuntimeGamepadContext = NewObject<UInputMappingContext>(this, TEXT("AWD_GamepadIMC"));
+    UInputMappingContext* Context = RuntimeGamepadContext;
+
+    // Sticks: left = move, right = look (paired 2D axes — no modifiers needed).
+    Context->MapKey(MoveAction, EKeys::Gamepad_Left2D);
+    Context->MapKey(LookAction, EKeys::Gamepad_Right2D);
+
+    // Face buttons: A jump, B interact, X dodge, Y build mode.
+    Context->MapKey(JumpAction, EKeys::Gamepad_FaceButton_Bottom);
+    Context->MapKey(InteractAction, EKeys::Gamepad_FaceButton_Right);
+    Context->MapKey(DodgeAction, EKeys::Gamepad_FaceButton_Left);
+    Context->MapKey(BuildModeAction, EKeys::Gamepad_FaceButton_Top);
+
+    // Shoulders/triggers: RB sprint, LB block, RT attack, LT heavy attack.
+    Context->MapKey(SprintAction, EKeys::Gamepad_RightShoulder);
+    Context->MapKey(BlockAction, EKeys::Gamepad_LeftShoulder);
+    Context->MapKey(AttackAction, EKeys::Gamepad_RightTrigger);
+    Context->MapKey(HeavyAttackAction, EKeys::Gamepad_LeftTrigger);
+
+    // D-pad: up command, right feed, down consume, left equip-best.
+    Context->MapKey(CommandAction, EKeys::Gamepad_DPad_Up);
+    Context->MapKey(FeedAction, EKeys::Gamepad_DPad_Right);
+    Context->MapKey(ConsumeAction, EKeys::Gamepad_DPad_Down);
+    Context->MapKey(EquipBestAction, EKeys::Gamepad_DPad_Left);
+
+    // Select = rotate building, Start = pause.
+    Context->MapKey(BuildRotateAction, EKeys::Gamepad_Special_Left);
+    Context->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
+
+    GamepadMappingContext = Context;
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (16 mappings)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -400,6 +474,33 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         EnhancedInput->BindAction(DeleteBuildingAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::DeleteBuilding);
     }
+    // Final production run: scanner (hold), robotics, UI toggles.
+    if (ScanAction)
+    {
+        EnhancedInput->BindAction(ScanAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::StartScan);
+        EnhancedInput->BindAction(ScanAction, ETriggerEvent::Completed, this, &AAstrawildPlayerCharacter::StopScan);
+        EnhancedInput->BindAction(ScanAction, ETriggerEvent::Canceled, this, &AAstrawildPlayerCharacter::StopScan);
+    }
+    if (DeployDroneAction)
+    {
+        EnhancedInput->BindAction(DeployDroneAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::DeployDrone);
+    }
+    if (DeployRobotAction)
+    {
+        EnhancedInput->BindAction(DeployRobotAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::DeployRobot);
+    }
+    if (InventoryAction)
+    {
+        EnhancedInput->BindAction(InventoryAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleInventoryScreenInput);
+    }
+    if (ResearchAction)
+    {
+        EnhancedInput->BindAction(ResearchAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleResearchScreenInput);
+    }
+    if (PauseAction)
+    {
+        EnhancedInput->BindAction(PauseAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::TogglePauseMenuInput);
+    }
 }
 
 void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
@@ -489,6 +590,12 @@ void AAstrawildPlayerCharacter::RefreshMovementSpeed()
     if (SurvivalComponent)
     {
         TargetSpeed *= SurvivalComponent->GetStatusSpeedMultiplier();
+    }
+
+    // Final production run (PHASE 12): the exosuit adds its fractional speed bonus.
+    if (InventoryComponent)
+    {
+        TargetSpeed *= (1.0f + InventoryComponent->GetEquippedMoveSpeedBonus());
     }
 
     SetMovementSpeed(TargetSpeed);
@@ -984,4 +1091,233 @@ AActor* AAstrawildPlayerCharacter::FindInteractableActor() const
     }
 
     return bHit ? HitResult.GetActor() : nullptr;
+}
+
+// --- Final production run: scanner, robotics, UI input handlers ---
+
+void AAstrawildPlayerCharacter::StartScan(const FInputActionValue& Value)
+{
+    // Hold-to-scan: only works with a scanner equipped (PHASE 12 framework).
+    if (!InventoryComponent || InventoryComponent->EquippedScannerItemId.IsNone())
+    {
+        return;
+    }
+
+    UWorld* World = GetWorld();
+    UAstrawildJournalSubsystem* Journal = World ? World->GetSubsystem<UAstrawildJournalSubsystem>() : nullptr;
+    if (!Journal || !InventoryComponent)
+    {
+        return;
+    }
+
+    float Multiplier = 2.0f; // Fallback if the definition cannot resolve.
+    if (const UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>())
+    {
+        if (const UAstrawildItemDefinition* ScannerDef = Registry->FindItem(InventoryComponent->EquippedScannerItemId))
+        {
+            Multiplier = ScannerDef->ScannerSpeedMultiplier;
+        }
+    }
+
+    bScanKeyHeld = true;
+    Journal->BeginActiveScan(this, Multiplier);
+}
+
+void AAstrawildPlayerCharacter::StopScan(const FInputActionValue& Value)
+{
+    if (!bScanKeyHeld)
+    {
+        return;
+    }
+    bScanKeyHeld = false;
+
+    if (UWorld* World = GetWorld())
+    {
+        if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+        {
+            Journal->EndActiveScan();
+        }
+    }
+}
+
+AAstrawildUtilityDroneActor* AAstrawildPlayerCharacter::SpawnUtilityDrone()
+{
+    UWorld* World = GetWorld();
+    if (!World || GetLocalRole() != ROLE_Authority)
+    {
+        return nullptr;
+    }
+
+    // Recall path: one drone per player — pressing H again recalls it (refund item? no —
+    // the drone is re-deployable for free within the session; the save system tracks it).
+    if (AAstrawildUtilityDroneActor* Existing = ActiveDrone.Get())
+    {
+        Existing->Destroy();
+        ActiveDrone = nullptr;
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(TEXT("Drone recalled.")));
+        }
+        return nullptr;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    AAstrawildUtilityDroneActor* Drone = World->SpawnActor<AAstrawildUtilityDroneActor>(
+        AAstrawildUtilityDroneActor::StaticClass(), GetActorLocation(), GetActorRotation(), Params);
+    if (Drone)
+    {
+        Drone->InitializeForOwner(this);
+        ActiveDrone = Drone;
+
+        if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+        {
+            EventBus->PublishEvent(TAG_Astrawild_Event_DroneDeployed, this, GetFName(), 1, GetActorLocation());
+        }
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(TEXT("Utility drone online — it scans and harvests for you.")));
+        }
+    }
+    return Drone;
+}
+
+bool AAstrawildPlayerCharacter::SpawnUtilityRobot()
+{
+    UWorld* World = GetWorld();
+    if (!World || GetLocalRole() != ROLE_Authority)
+    {
+        return false;
+    }
+
+    // Find the nearest work site without a robot.
+    AAstrawildWorkSiteActor* Best = nullptr;
+    float BestDistance = 8000.0f;
+    for (TActorIterator<AAstrawildWorkSiteActor> It(World); It; ++It)
+    {
+        AAstrawildWorkSiteActor* Site = *It;
+        if (!Site || Site->HasRobot())
+        {
+            continue;
+        }
+        const float Distance = FVector::Dist(GetActorLocation(), Site->GetActorLocation());
+        if (Distance < BestDistance)
+        {
+            BestDistance = Distance;
+            Best = Site;
+        }
+    }
+
+    if (!Best)
+    {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(TEXT("No unmanned work site nearby.")));
+        }
+        return false;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    AAstrawildUtilityRobotActor* Robot = World->SpawnActor<AAstrawildUtilityRobotActor>(
+        AAstrawildUtilityRobotActor::StaticClass(), GetActorLocation(), GetActorRotation(), Params);
+    if (!Robot)
+    {
+        return false;
+    }
+
+    Robot->SetOwnerPlayerId(GetFName());
+    Robot->AssignToSite(Best);
+
+    if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+    {
+        EventBus->PublishEvent(TAG_Astrawild_Event_RobotDeployed, this, Best->SiteId, 1, GetActorLocation());
+    }
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->Notify(FText::FromString(FString::Printf(TEXT("Utility robot assigned to %s."),
+            *UEnum::GetDisplayValueAsText(Best->WorkType).ToString())));
+    }
+    return true;
+}
+
+void AAstrawildPlayerCharacter::DeployDrone(const FInputActionValue& Value)
+{
+    if (!IsAlive() || !InventoryComponent)
+    {
+        return;
+    }
+
+    // Recall is free; a fresh deploy consumes the drone item.
+    if (ActiveDrone.IsValid())
+    {
+        SpawnUtilityDrone();
+        return;
+    }
+
+    if (!InventoryComponent->HasItem(TEXT("Item_UtilityDrone"), 1))
+    {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(TEXT("No utility drone in the pack (craft one at the Auto-Forge).")));
+        }
+        return;
+    }
+
+    FAstrawildItemStack Cost;
+    Cost.ItemId = TEXT("Item_UtilityDrone");
+    Cost.Quantity = 1;
+    if (InventoryComponent->ConsumeItems(TArray<FAstrawildItemStack>{Cost}))
+    {
+        SpawnUtilityDrone();
+    }
+}
+
+void AAstrawildPlayerCharacter::DeployRobot(const FInputActionValue& Value)
+{
+    if (!IsAlive() || !InventoryComponent)
+    {
+        return;
+    }
+
+    if (!InventoryComponent->HasItem(TEXT("Item_UtilityRobot"), 1))
+    {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(TEXT("No utility robot in the pack (craft one at the Auto-Forge).")));
+        }
+        return;
+    }
+
+    FAstrawildItemStack Cost;
+    Cost.ItemId = TEXT("Item_UtilityRobot");
+    Cost.Quantity = 1;
+    if (InventoryComponent->ConsumeItems(TArray<FAstrawildItemStack>{Cost}))
+    {
+        SpawnUtilityRobot();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleInventoryScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleInventoryScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleResearchScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleResearchScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::TogglePauseMenuInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->TogglePauseMenu();
+    }
 }

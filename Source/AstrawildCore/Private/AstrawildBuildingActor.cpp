@@ -161,6 +161,8 @@ FText AAstrawildBuildingActor::GetInteractionPrompt_Implementation() const
     }
 
     // Audit C-2: the Research Desk is the in-world research entry point.
+    // Final production run: interacting now OPENS the research screen (player
+    // agency over the tree) — the prompt still previews the cheapest unlock.
     if (Def->Category == EAstrawildBuildingCategory::Research)
     {
         if (UWorld* World = GetWorld())
@@ -173,8 +175,8 @@ FText AAstrawildBuildingActor::GetInteractionPrompt_Implementation() const
                     FText DisplayName;
                     if (Research->GetNextUnlockableTechId(Cost, DisplayName) != NAME_None)
                     {
-                        return FText::FromString(FString::Printf(TEXT("Study: unlock %s (%d RP) [E]"),
-                            *DisplayName.ToString(), Cost));
+                        return FText::FromString(FString::Printf(TEXT("Open research (%d RP, next: %s) [E]"),
+                            Research->GetResearchPoints(), *DisplayName.ToString()));
                     }
                     return FText::FromString(FString::Printf(TEXT("Research Desk — %d RP (nothing unlockable) [E]"),
                         Research->GetResearchPoints()));
@@ -188,53 +190,26 @@ FText AAstrawildBuildingActor::GetInteractionPrompt_Implementation() const
 
 void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
 {
-    // Audit C-2: Research Desk interaction — spend pooled research points on the
-    // cheapest unlockable technology. Authority-gated like every other mutation.
+    // Final production run: Research Desk interaction opens the research TREE screen —
+    // the player picks the branch (the old auto-buy-cheapest behavior removed player
+    // agency entirely). Runs wherever the interacting player's controller is local;
+    // the unlock itself remains server-authoritative through TryUnlockTech.
     const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
     UWorld* World = GetWorld();
-    if (!Def || Def->Category != EAstrawildBuildingCategory::Research || !World || GetLocalRole() != ROLE_Authority)
+    if (!Def || Def->Category != EAstrawildBuildingCategory::Research || !World)
     {
         return;
     }
 
-    UAstrawildResearchSubsystem* Research = World->GetGameInstance()
-        ? World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>()
-        : nullptr;
-    if (!Research)
+    AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(InteractingActor);
+    if (!Player)
     {
         return;
     }
 
-    auto Notify = [World](const FText& Message)
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
     {
-        if (APlayerController* PC = World->GetFirstPlayerController())
-        {
-            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
-            {
-                AstrawildPC->Notify(Message);
-            }
-        }
-    };
-
-    int32 Cost = 0;
-    FText DisplayName;
-    const FName NextTech = Research->GetNextUnlockableTechId(Cost, DisplayName);
-    if (NextTech.IsNone())
-    {
-        Notify(FText::FromString(FString::Printf(TEXT("Research: %d RP — observe Echoes and complete quests to earn more."),
-            Research->GetResearchPoints())));
-        return;
-    }
-
-    if (Research->TryUnlockTech(NextTech))
-    {
-        Notify(FText::FromString(FString::Printf(TEXT("Research unlocked: %s (-%d RP)"),
-            *DisplayName.ToString(), Cost)));
-    }
-    else
-    {
-        Notify(FText::FromString(FString::Printf(TEXT("Research needs %d RP (have %d)."),
-            Cost, Research->GetResearchPoints())));
+        PC->ToggleResearchScreen();
     }
 }
 

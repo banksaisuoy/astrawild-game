@@ -5,6 +5,7 @@
 #include "AstrawildTypes.h"
 #include "AstrawildHudWidget.generated.h"
 
+class AAstrawildEchoBossCharacter;
 class UCanvasPanel;
 class UProgressBar;
 class UTextBlock;
@@ -85,9 +86,25 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> ZoneSubText;
 
+    // --- Final production run: boss bar + scanner/drone readout ---
+
+    /** PHASE 14: boss encounter health bar (top-center, hidden while no boss lives). */
+    UPROPERTY()
+    TObjectPtr<UProgressBar> BossHealthBar;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> BossText;
+
+    /** Scanner + drone companion status line (under the capture chance). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> ScanText;
+
 private:
     float RefreshAccumulator = 0.0f;
     float NotificationRemaining = 0.0f;
+
+    /** Cached boss actor for the encounter bar (weak — defeat/destroy clears it). */
+    TWeakObjectPtr<AAstrawildEchoBossCharacter> CachedBoss;
 
     /** Zone banner state (client-local lookup via the pure static zone table). */
     EAstrawildZone CurrentZone = EAstrawildZone::None;

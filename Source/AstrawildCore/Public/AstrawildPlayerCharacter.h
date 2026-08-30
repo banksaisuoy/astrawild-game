@@ -7,6 +7,7 @@
 
 class AAstrawildDamageTarget;
 class AAstrawildEchoCharacter;
+class AAstrawildUtilityDroneActor;
 class UAstrawildBuildingComponent;
 class UAstrawildCaptureComponent;
 class UAstrawildCombatComponent;
@@ -147,6 +148,36 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> LoadAction;
 
+    // --- Final production run inputs ---
+
+    /** Hold-to-scan (equipped scanner accelerates journal observation). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> ScanAction;
+
+    /** Deploy / recall the utility drone (consumes the drone item). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> DeployDroneAction;
+
+    /** Deploy the utility robot (consumes the robot item, it mans the nearest site). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> DeployRobotAction;
+
+    /** Toggle the inventory screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> InventoryAction;
+
+    /** Toggle the research screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> ResearchAction;
+
+    /** Toggle the pause menu (loop stage QUIT). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> PauseAction;
+
+    /** Gamepad mapping context (coexists with the KB/M context — M9). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputMappingContext> GamepadMappingContext;
+
     // --- Tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat", meta=(ClampMin="0.0"))
     float AttackDamage = 25.0f;
@@ -182,6 +213,16 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Interaction")
     AActor* FindInteractableActor() const;
 
+    /** The player's active utility drone (null when recalled/never deployed). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone")
+    AAstrawildUtilityDroneActor* GetActiveDrone() const { return ActiveDrone.Get(); }
+
+    /** Server: spawn a drone bound to this player (deploy key / save-load). */
+    AAstrawildUtilityDroneActor* SpawnUtilityDrone();
+
+    /** Server: spawn a utility robot and send it to the nearest unmanned site. */
+    bool SpawnUtilityRobot();
+
     /** Server-side respawn hook used by the game mode. */
     void HandleRespawn(const FTransform& SpawnTransform);
 
@@ -207,6 +248,15 @@ protected:
     void CycleBuildingPiece(const FInputActionValue& Value);
     void SmartConsume(const FInputActionValue& Value);
 
+    // Final production run: new input handlers.
+    void StartScan(const FInputActionValue& Value);
+    void StopScan(const FInputActionValue& Value);
+    void DeployDrone(const FInputActionValue& Value);
+    void DeployRobot(const FInputActionValue& Value);
+    void ToggleInventoryScreenInput(const FInputActionValue& Value);
+    void ToggleResearchScreenInput(const FInputActionValue& Value);
+    void TogglePauseMenuInput(const FInputActionValue& Value);
+
     /** Wave 3: equip the strongest owned weapon + shield. */
     void EquipBest(const FInputActionValue& Value);
 
@@ -219,6 +269,9 @@ protected:
 
     /** Builds a complete default Enhanced Input setup in code (zero-asset playability). */
     void BuildRuntimeInputDefaults();
+
+    /** Final production run: gamepad companion mappings (coexist with KB/M — M9). */
+    void BuildGamepadInputDefaults();
     // Audit C-1b (latent compile error): every existing call passes 2 arguments while the
     // declaration demanded 3 — default bNegateY so the file compiles (value is unused).
     class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY = false);
@@ -257,5 +310,15 @@ private:
     TObjectPtr<UInputMappingContext> RuntimeMappingContext;
 
     UPROPERTY()
+    TObjectPtr<UInputMappingContext> RuntimeGamepadContext;
+
+    UPROPERTY()
     TArray<TObjectPtr<UInputAction>> RuntimeActions;
+
+    /** Active utility drone (one per player; deploy key recalls). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Drone")
+    TWeakObjectPtr<AAstrawildUtilityDroneActor> ActiveDrone;
+
+    /** True while the scanner key is held (journal acceleration active). */
+    bool bScanKeyHeld = false;
 };

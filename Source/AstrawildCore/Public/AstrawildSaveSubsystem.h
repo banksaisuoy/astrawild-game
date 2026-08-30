@@ -83,6 +83,34 @@ public:
     /** Batch 7 — The Shattered Vale: zone discovery (additive, no schema bump). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     FAstrawildZoneSaveData Zones;
+
+    // --- v3 payload (final production run — closes the last save gaps) ---
+
+    /** Advanced equipment slots (additive v3). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EquippedHelmetId = NAME_None;
+
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EquippedExosuitId = NAME_None;
+
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EquippedScannerId = NAME_None;
+
+    /** Work sites: stored output + worker assignments (the automation loop persists). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildWorkSiteSaveData> WorkSites;
+
+    /** Deployed utility drones. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildDroneSaveData> Drones;
+
+    /** Deployed utility robots + their site assignments. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildRobotSaveData> Robots;
+
+    /** Power grid buffered energy (battery charge finally survives reloads). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FAstrawildPowerGridSaveData PowerGrid;
 };
 
 UCLASS()
@@ -127,7 +155,10 @@ public:
     static uint32 ComputeChecksum(int32 SchemaVersion, const FDateTime& SavedAtUtc);
 
 private:
-    static constexpr int32 CurrentSchemaVersion = 2;
+    static constexpr int32 CurrentSchemaVersion = 3;
 
     bool MigrateV1ToV2(UAstrawildSaveGame* SaveGame) const;
+
+    /** v2 -> v3 is purely additive (new fields default-init) — logged for traceability. */
+    void MigrateV2ToV3(UAstrawildSaveGame* SaveGame) const;
 };

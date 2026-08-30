@@ -2,9 +2,12 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildHudWidget.h"
+#include "AstrawildInventoryScreenWidget.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
+#include "AstrawildPauseMenuWidget.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildResearchScreenWidget.h"
 #include "AstrawildShopWidget.h"
 #include "Blueprint/UserWidget.h"
 
@@ -97,4 +100,182 @@ void AAstrawildPlayerController::CloseShop()
 bool AAstrawildPlayerController::IsShopOpen() const
 {
     return ShopWidget && ShopWidget->IsInViewport();
+}
+
+// --- Final production run: inventory / research / pause screens ---
+
+void AAstrawildPlayerController::ToggleInventoryScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsInventoryOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!InventoryScreen)
+        {
+            const TSubclassOf<UAstrawildInventoryScreenWidget> WidgetClass = InventoryScreenClass
+                ? InventoryScreenClass.Get()
+                : TSubclassOf<UAstrawildInventoryScreenWidget>(UAstrawildInventoryScreenWidget::StaticClass());
+            InventoryScreen = CreateWidget<UAstrawildInventoryScreenWidget>(this, WidgetClass);
+        }
+        if (InventoryScreen)
+        {
+            InventoryScreen->RefreshInventory();
+            InventoryScreen->AddToViewport(10);
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (InventoryScreen)
+        {
+            InventoryScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsInventoryOpen() const
+{
+    return InventoryScreen && InventoryScreen->IsInViewport();
+}
+
+void AAstrawildPlayerController::ToggleResearchScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsResearchOpen();
+
+    CloseShop();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!ResearchScreen)
+        {
+            const TSubclassOf<UAstrawildResearchScreenWidget> WidgetClass = ResearchScreenClass
+                ? ResearchScreenClass.Get()
+                : TSubclassOf<UAstrawildResearchScreenWidget>(UAstrawildResearchScreenWidget::StaticClass());
+            ResearchScreen = CreateWidget<UAstrawildResearchScreenWidget>(this, WidgetClass);
+        }
+        if (ResearchScreen)
+        {
+            ResearchScreen->RefreshResearch();
+            ResearchScreen->AddToViewport(10);
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (ResearchScreen)
+        {
+            ResearchScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsResearchOpen() const
+{
+    return ResearchScreen && ResearchScreen->IsInViewport();
+}
+
+void AAstrawildPlayerController::TogglePauseMenu()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsPauseMenuOpen();
+
+    CloseShop();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+
+    if (bOpen)
+    {
+        if (!PauseMenuWidget)
+        {
+            const TSubclassOf<UAstrawildPauseMenuWidget> WidgetClass = PauseMenuClass
+                ? PauseMenuClass.Get()
+                : TSubclassOf<UAstrawildPauseMenuWidget>(UAstrawildPauseMenuWidget::StaticClass());
+            PauseMenuWidget = CreateWidget<UAstrawildPauseMenuWidget>(this, WidgetClass);
+        }
+        if (PauseMenuWidget)
+        {
+            // Pause the world while the menu is up (single-player/listen-server).
+            if (UWorld* World = GetWorld())
+            {
+                World->SetPauserPlayerState(PlayerState);
+            }
+            PauseMenuWidget->AddToViewport(20);
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (PauseMenuWidget)
+        {
+            PauseMenuWidget->RemoveFromParent();
+        }
+        if (UWorld* World = GetWorld())
+        {
+            World->SetPauserPlayerState(nullptr);
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsPauseMenuOpen() const
+{
+    return PauseMenuWidget && PauseMenuWidget->IsInViewport();
+}
+
+bool AAstrawildPlayerController::IsAnyScreenOpen() const
+{
+    return IsShopOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen();
 }

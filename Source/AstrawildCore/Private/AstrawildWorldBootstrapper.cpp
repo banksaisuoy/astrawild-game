@@ -527,8 +527,10 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
     }
 
     // Work sites for captured Echoes (directive §18): gathering + farming.
+    // Final production run: stable SiteIds so save/load can re-link workers.
     if (AAstrawildWorkSiteActor* GatheringSite = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), CampLocation(-CampRadius, 0.0f), FRotator::ZeroRotator, Params))
     {
+        GatheringSite->SiteId = TEXT("Site_CampGathering");
         GatheringSite->WorkType = EAstrawildWorkType::Gathering;
         GatheringSite->OutputItemId = TEXT("Item_Fiber");
         GatheringSite->SecondsPerOutput = 10.0f;
@@ -537,6 +539,7 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
 
     if (AAstrawildWorkSiteActor* FarmSite = World->SpawnActor<AAstrawildWorkSiteActor>(AAstrawildWorkSiteActor::StaticClass(), CampLocation(-CampRadius * 0.7f, CampRadius * 0.7f), FRotator::ZeroRotator, Params))
     {
+        FarmSite->SiteId = TEXT("Site_CampFarm");
         FarmSite->WorkType = EAstrawildWorkType::Farming;
         FarmSite->OutputItemId = TEXT("Item_Berry");
         FarmSite->SecondsPerOutput = 14.0f;

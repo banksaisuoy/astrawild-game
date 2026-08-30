@@ -32,6 +32,13 @@ void UAstrawildPowerSubsystem::ResolveGridNow()
     ResolveGrid();
 }
 
+void UAstrawildPowerSubsystem::SetStoredEnergy(const float InStoredEnergy)
+{
+    // Final production run (save v3): clamp to the currently-connected battery
+    // capacity so a save made with more batteries than the reloaded world stays sane.
+    StoredEnergy = FMath::Clamp(InStoredEnergy, 0.0f, FMath::Max(0.0f, TotalBatteryCapacity));
+}
+
 void UAstrawildPowerSubsystem::RegisterBuilding(AAstrawildBuildingActor* Building)
 {
     if (!IsValid(Building))

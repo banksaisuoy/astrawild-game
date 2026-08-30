@@ -35,6 +35,7 @@ public:
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Quest")
     bool StartQuest(FName QuestId);
@@ -71,6 +72,9 @@ private:
     void ApplyEventToQuest(const FAstrawildGameplayEvent& Event);
     void CompleteQuest(FName QuestId);
     void GrantRewards(const UAstrawildQuestDefinition* Definition);
+
+    /** Final production run: SurviveTime objectives accrue real seconds while the owner is alive. */
+    void TickSurviveTimeObjectives(float DeltaTime);
 
     class UAstrawildItemRegistrySubsystem* GetRegistry() const;
     class UAstrawildEventBusSubsystem* GetEventBus() const;

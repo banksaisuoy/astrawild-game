@@ -7,15 +7,20 @@
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameState.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPowerSubsystem.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
+#include "AstrawildRestPoint.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
+#include "AstrawildUtilityDroneActor.h"
+#include "AstrawildUtilityRobotActor.h"
 #include "AstrawildWeatherSubsystem.h"
+#include "AstrawildWorkSiteActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -83,6 +88,20 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
                 SaveGame->EquippedShieldId = Player->InventoryComponent->EquippedShieldItemId;
                 // Batch 3 — Item C: persist the torso armor slot.
                 SaveGame->EquippedArmorId = Player->InventoryComponent->EquippedArmorItemId;
+                // Final production run (v3): the advanced slots ride along.
+                SaveGame->EquippedHelmetId = Player->InventoryComponent->EquippedHelmetItemId;
+                SaveGame->EquippedExosuitId = Player->InventoryComponent->EquippedExosuitItemId;
+                SaveGame->EquippedScannerId = Player->InventoryComponent->EquippedScannerItemId;
+            }
+
+            // Final production run (v3): the deployed drone companion.
+            if (AAstrawildUtilityDroneActor* Drone = Player->GetActiveDrone())
+            {
+                FAstrawildDroneSaveData DroneData;
+                DroneData.OwnerPlayerId = Drone->GetOwnerPlayerId();
+                DroneData.Transform = Drone->GetActorTransform();
+                DroneData.bDeployed = true;
+                SaveGame->Drones.Add(DroneData);
             }
         }
 
@@ -112,6 +131,40 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         SaveGame->Buildings.Add(It->ToSaveData());
     }
 
+    // --- Final production run (v3): rest points (previously only the legacy
+    //     SaveSnapshot API ever persisted these). ---
+    for (TActorIterator<AAstrawildRestPoint> RestIt(World); RestIt; ++RestIt)
+    {
+        SaveGame->RestPoints.Add(RestIt->ToSaveData());
+        if (RestIt->bActive)
+        {
+            SaveGame->ActiveRestPointId = RestIt->WorldObjectId;
+        }
+    }
+
+    // --- Final production run (v3): work sites — stored output + assignments so the
+    //     automation loop survives a reload (previously transient). ---
+    for (TActorIterator<AAstrawildWorkSiteActor> SiteIt(World); SiteIt; ++SiteIt)
+    {
+        SaveGame->WorkSites.Add(SiteIt->ExportForSave());
+    }
+
+    // --- Final production run (v3): utility robots + their site assignments. ---
+    for (TActorIterator<AAstrawildUtilityRobotActor> RobotIt(World); RobotIt; ++RobotIt)
+    {
+        FAstrawildRobotSaveData RobotData;
+        RobotData.OwnerPlayerId = RobotIt->GetOwnerPlayerId();
+        RobotData.Transform = RobotIt->GetActorTransform();
+        RobotData.AssignedSiteId = RobotIt->GetAssignedSiteId();
+        SaveGame->Robots.Add(RobotData);
+    }
+
+    // --- Final production run (v3): power grid buffered charge. ---
+    if (const UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
+    {
+        SaveGame->PowerGrid.StoredEnergy = Power->GetStoredEnergy();
+    }
+
     // --- Dungeons (Batch 6 — gap M-7): cleared-room progression so reloads stop
     //     resurrecting encounters. In-progress rooms respawn fresh by policy.
     for (TActorIterator<AAstrawildDungeonGeneratorActor> DungeonIt(World); DungeonIt; ++DungeonIt)
@@ -134,8 +187,9 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
     const bool bSaved = UGameplayStatics::SaveGameToSlot(SaveGame, SlotName, UserIndex);
     if (bSaved)
     {
-        UE_LOG(LogAstrawildSave, Log, TEXT("World saved to slot %s (schema %d, %d buildings, roster %d, %d dungeons, %d zones)."),
-            *SlotName, CurrentSchemaVersion, SaveGame->Buildings.Num(), SaveGame->EchoRosterV2.Num(), SaveGame->Dungeons.Num(), SaveGame->Zones.DiscoveredZones.Num());
+        UE_LOG(LogAstrawildSave, Log, TEXT("World saved to slot %s (schema %d, %d buildings, roster %d, %d dungeons, %d zones, %d work sites, %d robots, %d drones, grid %.0f)."),
+            *SlotName, CurrentSchemaVersion, SaveGame->Buildings.Num(), SaveGame->EchoRosterV2.Num(), SaveGame->Dungeons.Num(), SaveGame->Zones.DiscoveredZones.Num(),
+            SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->Drones.Num(), SaveGame->PowerGrid.StoredEnergy);
     }
     else
     {
@@ -170,6 +224,20 @@ bool UAstrawildSaveSubsystem::MigrateV1ToV2(UAstrawildSaveGame* SaveGame) const
     return true;
 }
 
+void UAstrawildSaveSubsystem::MigrateV2ToV3(UAstrawildSaveGame* SaveGame) const
+{
+    if (!SaveGame || SaveGame->SaveSchemaVersion != 2)
+    {
+        return;
+    }
+
+    // v2 -> v3: purely additive — the new payload (advanced equipment ids, work
+    // sites, drones, robots, grid charge) default-initializes. Stamping the version
+    // keeps future migrations honest about which payloads a save carries.
+    SaveGame->SaveSchemaVersion = 3;
+    UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v2 to v3 (additive)."));
+}
+
 bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, const int32 UserIndex)
 {
     if (!World || World->GetNetMode() == NM_Client || !DoesSaveExist(SlotName, UserIndex))
@@ -195,6 +263,7 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (SaveGame->SaveSchemaVersion < CurrentSchemaVersion)
     {
         MigrateV1ToV2(SaveGame);
+        MigrateV2ToV3(SaveGame);
     }
 
     // --- World state ---
@@ -252,6 +321,19 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                 {
                     Player->InventoryComponent->EquipItem(SaveGame->EquippedArmorId);
                 }
+                // Final production run (v3): the advanced slots, same HasItem guard.
+                if (!SaveGame->EquippedHelmetId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedHelmetId, 1))
+                {
+                    Player->InventoryComponent->EquipItem(SaveGame->EquippedHelmetId);
+                }
+                if (!SaveGame->EquippedExosuitId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedExosuitId, 1))
+                {
+                    Player->InventoryComponent->EquipItem(SaveGame->EquippedExosuitId);
+                }
+                if (!SaveGame->EquippedScannerId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedScannerId, 1))
+                {
+                    Player->InventoryComponent->EquipItem(SaveGame->EquippedScannerId);
+                }
             }
 
             // Audit H-2: respawn the captured party AROUND the player — the roster was
@@ -271,6 +353,13 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                     }
                     Roster->SpawnPartyActors(PC);
                 }
+            }
+
+            // Final production run (v3): recall any live drone before (possibly)
+            // re-deploying from the save payload below.
+            if (AAstrawildUtilityDroneActor* ExistingDrone = Player->GetActiveDrone())
+            {
+                ExistingDrone->Destroy();
             }
         }
 
@@ -295,6 +384,100 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         if (Building)
         {
             Building->FromSaveData(Data);
+        }
+    }
+
+    // --- Final production run (v3): rest points — restore activation flags by id. ---
+    for (TActorIterator<AAstrawildRestPoint> RestIt(World); RestIt; ++RestIt)
+    {
+        const FAstrawildRestPointSaveData* Found = SaveGame->RestPoints.FindByPredicate(
+            [RestIt](const FAstrawildRestPointSaveData& Record) { return Record.WorldObjectId == RestIt->WorldObjectId; });
+        if (Found)
+        {
+            RestIt->bActive = Found->bActive;
+        }
+    }
+
+    // --- Final production run (v3): work sites — restore identity/output by site id,
+    //     then re-link Echo assignments (party actors were spawned above; robots
+    //     respawn below and re-attach by site id). ---
+    for (TActorIterator<AAstrawildWorkSiteActor> SiteIt(World); SiteIt; ++SiteIt)
+    {
+        const FAstrawildWorkSiteSaveData* Found = SaveGame->WorkSites.FindByPredicate(
+            [SiteIt](const FAstrawildWorkSiteSaveData& Record) { return Record.SiteId == SiteIt->SiteId; });
+        if (!Found)
+        {
+            continue;
+        }
+
+        SiteIt->ImportFromSave(*Found);
+
+        if (World->GetGameInstance())
+        {
+            if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+            {
+                for (const FGuid& InstanceId : Found->AssignedEchoInstanceIds)
+                {
+                    for (AAstrawildEchoCharacter* Echo : Roster->GetSpawnedParty())
+                    {
+                        if (IsValid(Echo) && Echo->InstanceId == InstanceId)
+                        {
+                            SiteIt->AssignWorker(Echo);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Final production run (v3): utility robots — respawn and re-attach by site id. ---
+    for (TActorIterator<AAstrawildUtilityRobotActor> RobotIt(World); RobotIt; ++RobotIt)
+    {
+        RobotIt->Destroy();
+    }
+    for (const FAstrawildRobotSaveData& RobotData : SaveGame->Robots)
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        AAstrawildUtilityRobotActor* Robot = World->SpawnActor<AAstrawildUtilityRobotActor>(
+            AAstrawildUtilityRobotActor::StaticClass(), RobotData.Transform.GetLocation(), RobotData.Transform.Rotator(), Params);
+        if (!Robot)
+        {
+            continue;
+        }
+        Robot->SetOwnerPlayerId(RobotData.OwnerPlayerId);
+
+        if (!RobotData.AssignedSiteId.IsNone())
+        {
+            for (TActorIterator<AAstrawildWorkSiteActor> SiteIt(World); SiteIt; ++SiteIt)
+            {
+                if (SiteIt->SiteId == RobotData.AssignedSiteId && !SiteIt->HasRobot())
+                {
+                    Robot->AssignToSite(*SiteIt);
+                    break;
+                }
+            }
+        }
+    }
+
+    // --- Final production run (v3): drones — re-deploy the saved companion. ---
+    for (const FAstrawildDroneSaveData& DroneData : SaveGame->Drones)
+    {
+        if (!DroneData.bDeployed)
+        {
+            continue;
+        }
+
+        if (APlayerController* PC = World->GetFirstPlayerController())
+        {
+            if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
+            {
+                if (AAstrawildUtilityDroneActor* Drone = Player->SpawnUtilityDrone())
+                {
+                    Drone->SetActorTransform(DroneData.Transform, false, nullptr, ETeleportType::TeleportPhysics);
+                }
+            }
         }
     }
 
@@ -332,11 +515,14 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     // through BeginPlay during the spawn loop above, so ResolveGridNow sees them.
     if (UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
     {
+        // Final production run (v3): restore buffered charge AFTER the grid totals
+        // are known (SetStoredEnergy clamps to live battery capacity).
         Power->ResolveGridNow();
+        Power->SetStoredEnergy(SaveGame->PowerGrid.StoredEnergy);
     }
 
-    UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings)."),
-        *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num());
+    UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings, %d work sites, %d robots, grid %.0f)."),
+        *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num(), SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->PowerGrid.StoredEnergy);
     return true;
 }
 
