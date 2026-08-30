@@ -1,7 +1,7 @@
 # ASTRAWILD — Gameplay Systems Overview
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 4 sync — hostile respawn subsystem, building dismantle, power-state persistence)
+**Date: 2026-08-30** (wave 6 sync — sprint stamina drain, live block penalty, vendor economy / Dawn Shard currency)
 
 This is the system map of the V2 foundation round: every gameplay system, where it lives, and how it feeds
 the core loop. Deep dives live in the per-system documents referenced in each row.
@@ -34,7 +34,7 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 | Stage | Player action | Systems involved | Loop payoff |
 |---|---|---|---|
 | **Prepare** | Craft a Resonator/bandage at the campfire/workbench, eat/drink, feed party Echoes (R) | Crafting, Survival, Echo needs | Consumables + capture devices in inventory |
-| **Explore** | WASD + sprint (stamina), day/night lighting, weather states | Time, Weather, Survival, HUD | Time pressure (nocturnal Gloomfangs at night), weather capture bonuses |
+| **Explore** | WASD + sprint (drains 7 stamina/s while moving since Batch 4), day/night lighting, weather states | Time, Weather, Survival, HUD | Time pressure (nocturnal Gloomfangs at night), weather capture bonuses |
 | **Discover** | Approach creatures / resource nodes; journal fills by looking at Echoes | Journal (observation cone), Ecosystem (population), HUD prompt | Knowledge milestones → research points |
 | **Interact** | E on nodes/stations/rest points/NPCs; B/N/LMB building placement | Interaction interface, ResourceNode, CraftingStation, RestPoint, Building | Materials, crafting, rest, base growth |
 | **Fight** | LMB light / F heavy / Q dodge / RMB block (weapon adds flat ATK, shield replaces unarmed block) | Combat, Survival (stamina), Echo AI (flee/aggro), Equipment (wave 3) | Weakened Echo = higher capture chance; loot on defeat |
@@ -54,7 +54,7 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 | # | System | Core class(es) | Doc | One-line responsibility |
 |---|---|---|---|---|
 | 1 | Player controller & camera | `AAstrawildPlayerCharacter`, `AAstrawildPlayerController` | UI/Input docs | Third-person movement, sprint/jump, interaction trace, component host |
-| 2 | Survival vitals | `UAstrawildSurvivalComponent` | `ASTRAWILD_SURVIVAL_SYSTEM.md` | HP/stamina/hunger/thirst/temperature + status effects + death |
+| 2 | Survival vitals | `UAstrawildSurvivalComponent` | `ASTRAWILD_SURVIVAL_SYSTEM.md` | HP/stamina/hunger/thirst/temperature + status effects + death + **sprint stamina drain (Batch 4)** |
 | 3 | Combat | `UAstrawildCombatComponent` | `ASTRAWILD_COMBAT_SYSTEM.md` | Light/heavy/dodge/block + elemental damage pipeline (weapon ATK + shield mitigation feed in) |
 | 4 | Echo creatures | `AAstrawildEchoCharacter` | `ASTRAWILD_CREATURE_SYSTEM.md` | Definition-driven instances: personality, needs, trust, bond, growth, commands |
 | 5 | Echo AI | `AAstrawildEchoAIController` | `ASTRAWILD_AI_ARCHITECTURE.md` | Sight perception + 16-state machine, LOD think rates |
@@ -77,13 +77,14 @@ the core loop. Deep dives live in the per-system documents referenced in each ro
 | 22 | HUD | `UAstrawildHudWidget` | `ASTRAWILD_UI_ARCHITECTURE.md` | Pure-C++ HUD (12 widgets incl. equipment readout) |
 | 23 | Input | runtime Enhanced Input (in PlayerCharacter) | `ASTRAWILD_INPUT_REFERENCE.md` | **19 runtime actions** (wave 4: +Z = Delete Building), full default keymap |
 | 24 | Gameplay tags | `AstrawildGameplayTags.h/.cpp` | `ASTRAWILD_GAMEPLAY_TAGS.md` | 77 native tags |
-| 25 | Debug/cheats | `UAstrawildCheatManager` | Input Reference §3 | 13 console commands |
-| 26 | NPCs | `AAstrawildNPCCharacter` | Quest doc §6 | Camp NPCs (Warden Maren, Trader Tam — wave 3); schedule/dialogue screens PLANNED |
+| 25 | Debug/cheats | `UAstrawildCheatManager` | Input Reference §3 | **15 console commands** (Batch 4: +`AW.BuyItem`/`AW.SellItem`) |
+| 26 | NPCs | `AAstrawildNPCCharacter` | Quest doc §6 | Camp NPCs (Warden Maren, Trader Tam — wave 3); **Trader Tam is a live vendor since Batch 4** (wares + buy/sell transactions, see row 32); schedule/dialogue screens PLANNED |
 | 27 | Game mode / session | `AAstrawildGameMode` | — | Bootstrapper spawn, respawn (5 s), autosave (300 s) |
-| 28 | Tests | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` | 9 automation tests |
+| 28 | Tests | `AstrawildAutomationTests.cpp` | `ASTRAWILD_TEST_PLAN.md` | **12 automation tests** (Batch 3 +2 armor/status; Batch 4 +1 vendor economy — 5 call production statics) |
 | 29 | Equipment progression | `UAstrawildInventoryComponent` (slots) + `UAstrawildCombatComponent` (math) | Combat doc §2.3/§4 | Weapon ATK + shield mitigation routing, equip-best (X), save persistence |
 | 30 | Loot tables | `UAstrawildLootTableDefinition` + registry | Asset Manifest §7 | Guaranteed drops + bonus roll; dungeon clear rewards, vendor stock |
 | 31 | Hostile respawn (wave 4) | `UAstrawildHostileSpawnerSubsystem` | World doc / Building doc / Quest doc §5 | `UTickableWorldSubsystem` (server-only, 25 s sweep) that refills `Echo_Gloomfang` (target 4) + `Echo_Emberfang` (target 2) around the player pawn — closes the Quest 5 chain |
+| 32 | Vendor economy (wave 6 — Batch 4) | `AAstrawildNPCCharacter::TryPurchase/TrySell` + `UAstrawildItemDefinition::VendorPrice` + `UAstrawildNPCDefinition::CurrencyItemId` | Quest doc §6 / Input Reference §3 | Server-authoritative buy/sell at Trader Tam in **Dawn Shards** (`Item_DawnShard`): 5 wares (Berry 2 / Dew Flask 2 / Bandage 3 / Salve 4 / Resonator 6), sell = half price floored at 1, 450 cm trade range, no partial transactions; Interact toast lists stock + balance; cheats `AW.BuyItem`/`AW.SellItem`. **Shop UMG screen: future round** |
 
 ---
 
@@ -152,6 +153,15 @@ no tech) early, then unlock the Armory (8 RP) for the Stonehide Shield and Dawn 
 room of Hollow Underlight drops the blade ingredients (Dawn Crystal Shards, Ember Ash) — press **X** to
 auto-equip the best owned gear at any time.
 
+**Vendor economy (wave 6 — Batch 4)** runs on top of the chain: **Dawn Shards** (`Item_DawnShard`, the
+vendor currency) come from 3 sources — the Hollow Underlight boss loot table (×3), the Dawn Guard quest
+reward (×5) and the prototype starter kit (×10) — and are spent at **Trader Tam** on 5 wares: Glimmer
+Berry 2 / Dew Flask 2 / Sunfiber Bandage 3 / Dawnbloom Salve 4 / Echo Resonator 6. Selling pays half the
+buy price (floor 1), so there is no buy-low/sell-high loop; junk and the currency itself are not
+sellable. Interacting with Tam lists stock + prices + your balance (HUD toast); transactions run through
+the server-authoritative `TryPurchase`/`TrySell` API (today via `AW.BuyItem`/`AW.SellItem` — a shop UMG
+screen is a future round).
+
 ---
 
 ## 5. Feedback Surfaces
@@ -174,3 +184,8 @@ auto-equip the best owned gear at any time.
 - Work-site output accumulates on the site (`StoredOutput`) — `CollectOutput()` is wired to the **E** interact
   (Batch 1 C-7). Hostile respawn (`UAstrawildHostileSpawnerSubsystem`) refills the wild population around
   the player every 25 s (wave 4).
+- Sprint drains stamina since Batch 4 (7/s while moving, ≈14 s from full) and the block movement penalty
+  (×0.45) is live since Batch 4 — both previously documented as dead/gate-only (see Survival doc §1.1–§1.2).
+- The vendor **transaction flow** is live (Batch 4) but the **shop UMG screen is NOT IMPLEMENTED** — trading
+  today uses the Interact toast (stock/prices/balance) + `AW.BuyItem`/`AW.SellItem` console cheats. Shop
+  stock never depletes in v1 (the loot-table `GuaranteedDrops` list doubles as a static stock list).

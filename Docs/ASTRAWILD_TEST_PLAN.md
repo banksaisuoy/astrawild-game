@@ -1,15 +1,15 @@
 # ASTRAWILD — Test Plan
 
-**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 9 automation tests are
+**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 12 automation tests are
 written; **none have been executed** (no UE toolchain in the sandbox). Execution happens on the target
 Windows machine.**
-**Date: 2026-08-30** (wave 3 sync — `ASTRAWILD.Equipment.ProgressionMath` added)
+**Date: 2026-08-30** (wave 6 sync — counts refreshed through Batch 4: +2 armor/status tests in Batch 3, +1 vendor economy test in Batch 4; 5 of 12 now call production statics)
 **Primary sources:** `AstrawildAutomationTests.cpp`, `Scripts/validate_repository.sh`,
 directive §39 (automation) + §50 (first-playable flow)
 
 ---
 
-## 1. Automation Tests (9)
+## 1. Automation Tests (12)
 
 All tests are `IMPLEMENT_SIMPLE_AUTOMATION_TEST` under the `ASTRAWILD.` namespace,
 flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter`, compiled behind
@@ -27,6 +27,9 @@ from the Session Frontend or CLI without a map.
 | 7 | `ASTRAWILD.Echo.PersonalityModifiers` | Personality contract surface: enum covers all 10 archetypes (`Social == 9`); Timid ≠ Brave (flee-ordering invariant hook) |
 | 8 | `ASTRAWILD.Power.BrownoutMath` | Grid math: draw 9 > generation 8 → brownout; shedding the lowest-priority consumer (4.0) restores draw 5 ≤ 8 |
 | 9 | `ASTRAWILD.Equipment.ProgressionMath` | Wave 3 equipment contract: unarmed light stays 25; Dawnwood Club light 25+6=31; Dawn Crystal Blade heavy 60+14=74; unarmed block (0.45) passes 55 % of 100; shielded block (0.65) passes 35 %; shield strictly improves block |
+| 10 | `ASTRAWILD.Equipment.ArmorMath` | Batch 3 armor contract — calls the REAL production static `UAstrawildCombatComponent::ComputeArmorFraction`: tier ratings 20/45/80 → 16.7/31.0/44.4 % reduction with diminishing-returns ordering; 1,000,000-rating clamps to `ArmorMaxFraction 0.6`; K=0 degenerate case → 0; block+cuirass ≈ 19.4 of a 100 hit |
+| 11 | `ASTRAWILD.Combat.StatusEffectFactory` | Batch 3 status contract — calls the REAL production factory `UAstrawildCombatComponent::MakeElementalStatusEffect`: Ember→Burn (4 s, DPS 2+5 %×40), Frost→Chill (3 s, ×0.5), Flora→Poison (6 s, 2 DPS), Pulse→Shock (0.8 s, ×0.3); None/Light/Ash → no status |
+| 12 | `ASTRAWILD.Economy.VendorSellValue` | Batch 4 vendor contract — calls the REAL production static `AAstrawildNPCCharacter::ComputeVendorSellValue`: price 2→1, 3→1 (floor), 4→2, 6→3; unpriced (0) → 0 (junk not sellable); sell value strictly below buy price for every priced ware (no arbitrage) |
 
 Run on the target machine: **Tools → Session Frontend → Automation** (filter `ASTRAWILD`), or:
 `UnrealEditor-Cmd.exe ASTRAWILD.uproject -ExecCmds="Automation RunTests ASTRAWILD" -unattended -nopause -testexit="Automation Test Queue Empty"`
@@ -77,6 +80,7 @@ First Echo quests unaided. That is the vertical-slice bar for this round.
 | Combat survivability | `AW.God`, `AW.HealAll` |
 | Tech/quest fast-path | `AW.ResearchPoints 100`, `AW.UnlockTech Tech_Electrical` |
 | Equipment progression | `AW.GiveItem Item_CrystalBlade 1`, `AW.EquipItem Item_CrystalBlade` (then X to equip-best; check the HUD equipment readout + block damage change) |
+| Vendor economy (Batch 4) | Stand within 6 m of Trader Tam: E (Interact — wares + prices + Dawn Shard balance toast), `AW.BuyItem Item_Bandage 2`, `AW.SellItem Item_Berry 5`; verify funds/weight refusals (NotEnoughCurrency / TooHeavy) and that the currency itself is not sellable |
 | Save edge cases | `AW.SaveNow`, `AW.LoadNow`, `AW.CaptureAll`, `AW.TeleportForward 5000` |
 
 ---

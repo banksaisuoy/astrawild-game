@@ -1,10 +1,11 @@
 # ASTRAWILD — Survival System
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-29**
-**Primary sources:** `AstrawildSurvivalComponent.h/.cpp`, `AstrawildWeatherSubsystem.cpp` (temperature
+**Date: 2026-08-30** (wave 6 sync — sprint stamina drain + thirst rate fix + block penalty live, Batch 4)
+**Primary sources:** `AstrawildSurvivalComponent.h/.cpp`, `AstrawildPlayerCharacter.cpp` (sprint wiring,
+movement-speed modifiers), `AstrawildWeatherSubsystem.cpp` (temperature
 profiles), `AstrawildGameMode.cpp` (respawn), `AstrawildContentLibrary.cpp` (food/water items),
-`AstrawildRestPoint.cpp`
+`AstrawildRestPoint.cpp`, `AstrawildCombatComponent.h` (BlockSpeedMultiplier)
 
 `UAstrawildSurvivalComponent` owns the player's vitals. It ticks **server-side only**; clients observe the
 replicated `Stats` struct via `OnRep_Stats` → `OnStatsChanged`.
@@ -22,14 +23,50 @@ Thirst 100, Temperature 20 °C, `bIsDead`.
 | Vital | Rate (server tick) | Property |
 |---|---|---|
 | Hunger decay | **0.083 /s** (≈5/min → 100→0 in ~20.1 min) | `HungerDecayPerSecond` |
-| Thirst decay | **0.14 /s** (≈8.4/min → 100→0 in ~11.9 min) | `ThirstDecayPerSecond` |
-| Stamina regen | **+14 /s** passive (always, when alive) | `StaminaRegenPerSecond` |
+| Thirst decay | **0.0833 /s** (≈5/min → 100→0 in ~20.0 min) — **Batch 4 (L-2)**: was 0.14/s (~11.9 min), contradicting the documented ~20-min goal; header comment records the fix | `ThirstDecayPerSecond` |
+| Stamina regen | **+14 /s** passive — suspended while the sprint drain is active (see §1.1) | `StaminaRegenPerSecond` |
+| Sprint stamina drain | **−7 /s** while sprint-drain is armed AND the owner is actually moving (Batch 4 — M-2a, see §1.1) | `SprintStaminaDrainPerSecond` |
 | Starvation damage | **1.5 /s per depleted vital** (both empty = 3.0 /s) | `StarvationHealthDamagePerSecond` |
 | Cold exposure damage | 1.0 /s while `Temperature ≤ 4 °C` | `ExposureHealthDamagePerSecond` |
 | Heat exposure damage | 1.0 /s while `Temperature ≥ 36 °C` | `ExposureHealthDamagePerSecond` |
 
-Stamina drains (see Combat doc): heavy attack 25, dodge 22, sprint gate (sprint disabled below 5 %
-stamina — stamina is not continuously drained by sprinting in v2; only gated).
+Action stamina costs (see Combat doc): heavy attack 25, dodge 22 — plus the continuous sprint drain
+below.
+
+### 1.1 Sprint stamina drain (Batch 4 — M-2a)
+
+Sprinting was previously gate-only (speed switch + "cannot sprint below 5 % stamina"), which made the
+exhaustion rule unreachable in normal play — sprinting itself never spent stamina. Batch 4 adds a real
+drain economy:
+
+- **Drain rate:** `SprintStaminaDrainPerSecond = 7.0` (tunable) → **≈14 s** of sprinting from full
+  100 stamina (100 / 7 ≈ 14.3 s).
+- **Moving-only drain:** the drain ticks only while `bSprintDrainActive` is armed AND
+  `IsOwnerMoving()` reports real movement (velocity² > 25² cm/s — walk 450 / sprint 700 both
+  qualify). Holding the sprint key while standing still drains nothing.
+- **Drain INSTEAD of regen:** while draining, the passive regen (+14/s) is suspended — otherwise regen
+  would out-pace the drain (14 > 7) and sprinting would be free. Regen resumes the tick after the
+  drain ends.
+- **Exhaustion behavior:** when stamina hits the floor, the component clears the drain flag and
+  broadcasts `OnSprintExhausted` **once**; the player character drops `bSprinting`, clears the drain
+  request and calls `RefreshMovementSpeed()` — the existing >0.05 stamina-fraction gate keeps
+  re-sprint suppressed until stamina recovers.
+- **Wiring:** `StartSprint` arms the drain (`SetSprintDrainActive(true)`), `StopSprint` clears it;
+  `OnPlayerDied` clears both (respawn `FullRestore` refills stamina — a stale drain request would
+  immediately drain it again).
+- **Server-side only:** `bSprintDrainActive` is not replicated — it feeds the server stamina economy;
+  sprint SPEED is applied locally by `RefreshMovementSpeed` on each client.
+
+### 1.2 Movement-speed modifiers applied by `RefreshMovementSpeed`
+
+| Modifier | Value | Live since |
+|---|---|---|
+| Walk / Sprint base | 450 / 700 cm/s | foundation |
+| Sprint gate | disabled at ≤ 5 % stamina fraction | foundation |
+| Sprint drain (stamina economy) | −7 /s while moving (§1.1) | **Batch 4** |
+| Block penalty | **×0.45** (`CombatComponent.h:83 BlockSpeedMultiplier`) — applied to the walk/sprint target while `IsBlocking()`; previously DEAD CODE (`OnBlockingChanged` had no listener), now bound via `BeginPlay → OnBlockingChanged(bool) → RefreshMovementSpeed()` | **Batch 4 (M-2b)** — live |
+| Stagger | 0 while staggering | Batch 3 |
+| Status slows (Chill ×0.5 / Shock ×0.3, multiplicative) | ×multiplier | Batch 3 |
 
 ---
 
@@ -68,9 +105,13 @@ or harsher profiles are the intended future tuning (PLANNED — see Assumptions 
 - `HasStatusEffect(StatusId)` query; `FullRestore` clears all effects.
 - Native tags `Status.Poisoned/Burning/Frozen/Wet/Soaked/Rested/Hungry/Thirsty/Cold/Overheated` exist for
   future identification.
-- **Honest note:** `SpeedMultiplier` is stored in the struct but is **not yet applied to movement** — no
-  runtime consumer (movement-integration PLANNED). Nothing in CODE_DEFAULT content applies status effects
-  yet; the system is a working data + tick pipeline awaiting content.
+- **Live since Batch 3:** `SpeedMultiplier` IS consumed — `GetStatusSpeedMultiplier()` multiplies the
+  player's movement speed inside `RefreshMovementSpeed`; element statuses are applied by real combat
+  hooks (player weapon hits via `EchoCharacter::ApplyElementalDamage`; creature attacks via
+  `EchoAIController::TryAttackTarget`). Expiry broadcasts `OnStatusEffectRemoved` → speed refresh
+  (incl. the rest/load/cheat restore paths — REVIEW-3 M-2 fix).
+- **Honest note:** statuses are transient combat state and are NOT persisted to save data; a
+  save/load or full restore clears them.
 
 ---
 

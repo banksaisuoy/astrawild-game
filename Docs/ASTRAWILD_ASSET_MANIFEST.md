@@ -1,25 +1,26 @@
 # ASTRAWILD — Asset Manifest
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 3 sync — equipment progression, loot tables, NPCs)
+**Date: 2026-08-30** (wave 6 sync — Dawn Shard currency + vendor prices; wave 5 armor items/recipes added retroactively)
 
 Every piece of CODE_DEFAULT content in the game, with its replacement requirement. This is the
 **REPLACE_BEFORE_RELEASE checklist** for the art/data pass (see `ASTRAWILD_ASSET_PIPELINE.md` for the
 override mechanism: register a data asset with the **same id**).
 
-Totals: **19 items · 10 recipes · 7 Echo species · 10 buildings · 6 technologies · 6 quests ·
+Totals: **23 items · 13 recipes · 7 Echo species · 10 buildings · 6 technologies · 6 quests ·
 2 loot tables · 2 NPCs** — all `Status = CODE_DEFAULT`, all `Replacement = REQUIRED` (data asset +
 art where noted).
 
 > **Count note:** the original directive and the early ContentLibrary log line said "10 items", but
 > `BuildItems()` registered **12 item definitions** (verified by counting `RegisterItem` calls); the
-> content wave 2 expansion (2026-08-30) added 4 more (16 total) and wave 3 adds 3 equipment items
-> (19 total). The log string now matches the code.
+> content wave 2 expansion (2026-08-30) added 4 more (16 total), wave 3 added 3 equipment items (19),
+> wave 5 Batch 3 added 3 armor items (22 — previously missing from this manifest, added by the wave-6
+> sync), and wave 6 Batch 4 adds the Dawn Shard currency (23). The log string now matches the code.
 > (Same class of off-by-N as the "16 actions" log — see Assumptions #21.)
 
 ---
 
-## 1. Items (19)
+## 1. Items (23)
 
 | Item | Id | Category | Weight | Stack | Key values | Art requirement |
 |---|---|---|---|---|---|---|
@@ -28,24 +29,28 @@ art where noted).
 | Sunfiber | `Item_Fiber` | Material | 0.1 | 200 | — | Icon |
 | Dawnwood Plank | `Item_WoodPlank` | Material | 1.0 | 100 | — | Icon |
 | Dawn Crystal Shard | `Item_CrystalShard` | Material | 0.3 | 100 | — | Icon |
-| Glimmer Berry | `Item_Berry` | Consumable | 0.2 | 50 | Food 15, Water 5, EchoFeed 6 | Icon |
+| Glimmer Berry | `Item_Berry` | Consumable | 0.2 | 50 | Food 15, Water 5, EchoFeed 6; **vendor price 2** | Icon |
 | Raw Echo Meat | `Item_RawMeat` | Consumable | 0.7 | 30 | Food 8, EchoFeed 5 | Icon |
 | Seared Meat | `Item_CookedMeat` | Consumable | 0.6 | 30 | Food 30 | Icon |
-| Dew Flask | `Item_WaterFlask` | Consumable | 0.9 | 20 | Water 40 | Icon |
-| Sunfiber Bandage | `Item_Bandage` | Consumable | 0.2 | 30 | Heal 40 | Icon |
-| Echo Resonator | `Item_Resonator` | CreatureItem | 0.4 | 20 | consumed per capture attempt | Icon + (optionally) world model |
+| Dew Flask | `Item_WaterFlask` | Consumable | 0.9 | 20 | Water 40; **vendor price 2** | Icon |
+| Sunfiber Bandage | `Item_Bandage` | Consumable | 0.2 | 30 | Heal 40; **vendor price 3** | Icon |
+| Echo Resonator | `Item_Resonator` | CreatureItem | 0.4 | 20 | consumed per capture attempt; **vendor price 6** | Icon + (optionally) world model |
 | Ancient Core | `Item_AncientCore` | QuestItem | 1.0 | 10 | quest reward (Dawn Guard) | Icon |
 | Dawnbloom Petal | `Item_Dawnbloom` | Material | 0.1 | 100 | Sprigling loot; salve ingredient | Icon |
 | Ember Ash | `Item_EmberAsh` | Material | 0.2 | 50 | Emberfang loot | Icon |
 | Echo Feed Mix | `Item_FeedMix` | Consumable | 0.3 | 40 | Food 5, EchoFeed 14 (husbandry) | Icon |
-| Dawnbloom Salve | `Item_HerbalSalve` | Consumable | 0.25 | 20 | Heal 70 | Icon |
+| Dawnbloom Salve | `Item_HerbalSalve` | Consumable | 0.25 | 20 | Heal 70; **vendor price 4** | Icon |
 | Dawnwood Club | `Item_DawnwoodClub` | Equipment | 2.5 | 1 | AttackPower +6 (wave 3) | Icon + (optionally) world model |
 | Stonehide Shield | `Item_StonehideShield` | Equipment | 4.0 | 1 | BlockMitigation 0.65 (wave 3) | Icon + (optionally) world model |
 | Dawn Crystal Blade | `Item_CrystalBlade` | Equipment | 3.0 | 1 | AttackPower +14 (wave 3) | Icon + (optionally) world model |
+| Fiberweave Vest | `Item_FiberWeaveVest` | Equipment | 3.0 | 1 | ArmorRating 20 → ≈16.7 % reduction (wave 5 — Batch 3) | Icon + (optionally) world model |
+| Emberhide Jacket | `Item_EmberhideJacket` | Equipment | 5.0 | 1 | ArmorRating 45 → ≈31.0 % reduction (wave 5 — Batch 3) | Icon + (optionally) world model |
+| Crystalplate Cuirass | `Item_CrystalplateCuirass` | Equipment | 8.0 | 1 | ArmorRating 80 → ≈44.4 % reduction (wave 5 — Batch 3) | Icon + (optionally) world model |
+| Dawn Shard | `Item_DawnShard` | Material | 0.1 | 200 | **Vendor currency** (wave 6 — Batch 4); `VendorPrice 0` — cannot be bought/sold with itself | Icon |
 
 ---
 
-## 2. Recipes (10)
+## 2. Recipes (13)
 
 | Recipe | Id | Inputs | Output | Time | Tech | Station | Replacement |
 |---|---|---|---|---|---|---|---|
@@ -59,6 +64,9 @@ art where noted).
 | Dawnwood Club | `Recipe_DawnwoodClub` | Wood ×3, Fiber ×1 | Club ×1 | 3 s | — | `Station_Workbench` | Data asset |
 | Stonehide Shield | `Recipe_StonehideShield` | Stone ×3, Wood ×2, Fiber ×1 | Shield ×1 | 5 s | `Tech_Armory` | `Station_Workbench` | Data asset |
 | Dawn Crystal Blade | `Recipe_CrystalBlade` | Crystal Shard ×2, Wood Plank ×2, Ember Ash ×1 | Blade ×1 | 8 s | `Tech_Armory` | `Station_Workbench` | Data asset |
+| Fiberweave Vest | `Recipe_FiberWeaveVest` | Fiber ×4, Wood ×1 | Vest ×1 | 4 s | `Tech_Armory` | `Station_Workbench` | Data asset (wave 5 — Batch 3) |
+| Emberhide Jacket | `Recipe_EmberhideJacket` | Ember Ash ×2, Wood Plank ×2, Fiber ×2 | Jacket ×1 | 6 s | `Tech_Armory` | `Station_Workbench` | Data asset (wave 5 — Batch 3) |
+| Crystalplate Cuirass | `Recipe_CrystalplateCuirass` | Crystal Shard ×3, Wood Plank ×3, Ember Ash ×2 | Cuirass ×1 | 9 s | `Tech_Armory` | `Station_Workbench` | Data asset (wave 5 — Batch 3) |
 
 ---
 
@@ -121,28 +129,30 @@ asset + **mesh** (category silhouettes are scaled cubes today).
 | A Friend in the Fields | `Quest_FirstEcho` | Observe Lumewisp, Capture Lumewisp | 10 Berries, 10 RP | Data asset |
 | Homeground | `Quest_Homeground` | Foundation, Workbench | 10 RP | Data asset |
 | The Spark | `Quest_Spark` | Tech_Electrical, Generator | 15 RP | Data asset |
-| Dawn Guard | `Quest_DawnGuard` | Defeat 3 Gloomfangs | Ancient Core, 20 RP | Data asset |
+| Dawn Guard | `Quest_DawnGuard` | Defeat 3 Gloomfangs | Ancient Core, **Dawn Shard ×5 (Batch 4)**, 20 RP | Data asset |
 | Shepherd's Dawn | `Quest_ShepherdsDawn` | Tech_Husbandry, Capture Sprigling, Feed Trough, 3 Feed Mix | 5 Feed Mix, 2 Salve, 20 RP | Data asset |
 
 ---
 
-## 7. Loot Tables (2) — wave 3
+## 7. Loot Tables (2) — wave 3, extended wave 6
 
 Registered through `UAstrawildItemRegistrySubsystem::RegisterLootTable`; resolved by
 `FindLootTable`. Granted by `AAstrawildDungeonRoomActor::GrantClearReward` when a room template
 carries `ClearLootTableId` (all guaranteed drops + one bonus roll when `FRand() < BonusRollChance`).
+Since Batch 4, a vendor's `ShopLootTableId` table ALSO doubles as its shop stock list (prices live on
+each item's `VendorPrice`).
 
 | Loot table | Id | Guaranteed drops | BonusRollChance | Used by | Replacement |
 |---|---|---|---|---|---|
-| Dungeon Boss | `Loot_DungeonBoss` | Ancient Core ×1, Dawn Crystal Shard ×2, Ember Ash ×2 | 0.75 | Hollow Underlight boss room (`ClearLootTableId`) | Data asset (drop tuning) |
-| Vendor Starter | `Loot_VendorStarter` | Glimmer Berry ×3, Dew Flask ×1, Sunfiber Bandage ×2 | 0.0 | Trader Tam shop stock (`ShopLootTableId`) | Data asset |
+| Dungeon Boss | `Loot_DungeonBoss` | Ancient Core ×1, Dawn Crystal Shard ×2, Ember Ash ×2, **Dawn Shard ×3 (Batch 4)** | 0.75 | Hollow Underlight boss room (`ClearLootTableId`) | Data asset (drop tuning) |
+| Vendor Starter | `Loot_VendorStarter` | Glimmer Berry ×3, Dew Flask ×1, Sunfiber Bandage ×2, **Dawnbloom Salve ×1 + Echo Resonator ×1 (Batch 4)** | 0.0 | Trader Tam shop stock (`ShopLootTableId`) — never depletes in v1 | Data asset |
 
 > **Bonus roll:** the extra roll picks one stack uniformly from `GuaranteedDrops` and grants it a
 > second time. `BonusRollChance = 0` disables it.
 
 ---
 
-## 8. NPCs (2) — wave 3
+## 8. NPCs (2) — wave 3; vendor flow live wave 6
 
 Registered through `RegisterNPC`; resolved by `FindNPCDefinition`. Both are spawned at the starting
 camp by `AAstrawildWorldBootstrapper::SpawnPointsOfInterest` (±`CampRadius * 0.7` = ±630 cm south
@@ -151,10 +161,31 @@ side, z = 100).
 | NPC | Id | Hooks | Spawn (camp) | Replacement |
 |---|---|---|---|---|
 | Warden Maren | `NPC_WardenMaren` | offers `Quest_FirstLight` | (630, −630, 100) | Data asset (dialogue/schedule) + real mesh |
-| Trader Tam | `NPC_VendorTam` | `ShopLootTableId = Loot_VendorStarter` | (−630, −630, 100) | Data asset + real mesh |
+| Trader Tam | `NPC_VendorTam` | `ShopLootTableId = Loot_VendorStarter` + `CurrencyItemId = Item_DawnShard` (live vendor since Batch 4) | (−630, −630, 100) | Data asset + real mesh |
 
-> NPC bodies still use the engine capsule placeholder (`AAstrawildNPCCharacter`, section 9). Vendor
-> **purchase logic is NOT IMPLEMENTED** — the shop table is a definition-level hook only.
+> NPC bodies still use the engine capsule placeholder (`AAstrawildNPCCharacter`, section 9). The
+> vendor **transaction flow is LIVE since Batch 4 (`c16fecd`)** — `TryPurchase`/`TrySell`
+> (server-authoritative, 450 cm trade range); Interact lists wares + prices + Dawn Shard balance as a
+> HUD toast; console `AW.BuyItem`/`AW.SellItem`. The **shop UMG screen** (visual shop UI) and
+> NPC dialogue/schedule screens remain NOT IMPLEMENTED (future round).
+
+### 8.1 Vendor economy quick reference (Batch 4 — M-11)
+
+- **Currency:** Dawn Shard (`Item_DawnShard`, 0.1 kg, stack 200, `VendorPrice 0` — cannot be bought
+  or sold with itself). Sources: Hollow Underlight boss loot (×3), Dawn Guard quest reward (×5),
+  prototype starter kit (×10).
+- **Wares at Trader Tam:** Glimmer Berry 2 · Dew Flask 2 · Sunfiber Bandage 3 · Dawnbloom Salve 4 ·
+  Echo Resonator 6 (prices are each item's `VendorPrice` in Dawn Shards).
+- **Sell rule:** half the buy price floored at 1 per unit (`ComputeVendorSellValue`); unpriced items
+  (junk) and the currency itself are not sellable — no arbitrage loop by construction.
+- **Transaction API:** `AAstrawildNPCCharacter::TryPurchase/TrySell` — server-authoritative
+  (`GetLocalRole() == ROLE_Authority`), quantity 1–99, validates vendor → 450 cm range → registry →
+  price > 0 → ware membership → funds → weight BEFORE transferring anything (no partial
+  transactions); returns `EAstrawildVendorResult` (7 values).
+- **Cheat usage:** `AW.BuyItem Item_Bandage 2` / `AW.SellItem Item_Berry 5` — route through the same
+  API via `FindNearestVendor` (600 cm search, skips non-vendor NPCs — REVIEW-4 L-1 fix).
+- **Honest status:** VERIFIED AT SOURCE (`c16fecd` — compile pending on target machine); shop stock
+  never depletes in v1; shop UMG screen pending a future round.
 
 ---
 

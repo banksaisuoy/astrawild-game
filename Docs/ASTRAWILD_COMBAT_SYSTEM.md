@@ -50,7 +50,8 @@ Input (LMB / F)
 `ExecuteAttack`:
 1. Re-checks alive + cooldown (never trust the client).
 2. **Heavy only**: consumes 25 stamina (`Survival->TryConsumeStamina`); fails if exhausted. Light attacks
-   are stamina-free.
+   are stamina-free. (Sprinting also drains stamina — 7/s while moving — since Batch 4; see the Survival
+   doc §1.1.)
 3. Records attack time (per-type cooldown clocks).
 4. **Hit resolution sweep**: `SweepMultiByChannel` on `ECC_Pawn`, sphere radius **90 cm**, from the player
    location to `location + forward × AttackRange (320 cm)`, ignoring self.
@@ -133,7 +134,9 @@ Input (RMB hold) ─► RequestSetBlocking(true/false)   [client]
   - With the **Stonehide Shield** equipped (`BlockMitigation 0.65`): the shield value **replaces** the
     unarmed baseline (never stacks with it) → 35 % passes. Shield values are clamped to 0..0.8.
 - **Speed**: `PlayerCharacter::RefreshMovementSpeed` multiplies walk/sprint speed by
-  `BlockSpeedMultiplier (0.45)` while blocking — unchanged.
+  `BlockSpeedMultiplier (0.45)` while blocking. **LIVE since Batch 4 (`c16fecd` — M-2b)** — previously
+  dead code (`OnBlockingChanged` broadcast had no listener, so the penalty neither applied nor lifted);
+  `BeginPlay` now binds `OnBlockingChanged(bool) → RefreshMovementSpeed()` (`PlayerCharacter.cpp:150, 923-929`).
 - Block applies to all incoming AI melee damage routed through the combat component (both Echo-on-player
   paths in the AI controller use `GetMitigatedIncomingDamage`).
 

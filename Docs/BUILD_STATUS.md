@@ -3,19 +3,19 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Wave 5 — Batch 3: Status effects + Hit reactions (stagger) + Armor framework)
-- Branch: `main` (latest: `021f93a` — Batch 3 combat depth; preceded by `c2bfc44` wave-4 docs sync / `d5d23c2` Batch 2 source)
-- Latest change: **Wave 5 Batch 3** — three combat-depth systems closed in source: element-driven
-  status effects (`UAstrawildCombatComponent::MakeElementalStatusEffect` shared factory + replicated
-  `AAstrawildEchoCharacter::StatusEffects` + `UAstrawildSurvivalComponent::GetStatusSpeedMultiplier`),
-  hit reactions/stagger (Echo `EAstrawildEchoAIState::Staggered` + `ApplyStagger` clamped ≤ 2 s +
-  player stagger via `UAstrawildCombatComponent`), and the armor framework (3rd equipment slot
-  `EquippedArmorItemId` + `ComputeArmorFraction` diminishing-returns formula + 3 CODE_DEFAULT
-  tiers). Weapon-element override (`GetResolvedAttackElement`) CLOSED — Dawn Crystal Blade carries
-  Pulse → Shock. REVIEW-3 caught + fixed 1 HIGH (missing `AstrawildInventoryComponent.h` include in
-  `AstrawildHudWidget.cpp` — pre-existing since wave 3) and 2 MEDIUM runtime bugs (M-1 stagger
-  freeze, M-2 stale slow) before commit.
-- Codebase: **88 C++ files (43 `.cpp` + 45 `.h`), ~15,413 LOC** in `Source/AstrawildCore` (single module)
+- Last updated: 2026-08-30 (Wave 6 — Batch 4: Survival feel + vendor economy)
+- Branch: `main` (latest: `c16fecd` — Batch 4 survival feel + vendor economy; preceded by `5dd69cd` wave-5 docs sync / `021f93a` Batch 3 source)
+- Latest change: **Wave 6 Batch 4** — four work items closed in source: (M-2a) sprint stamina
+  drain (`SprintStaminaDrainPerSecond = 7` tunable + moving-only drain + `OnSprintExhausted`
+  broadcast — ≈14 s sprint from full stamina), (M-2b) the block movement penalty is now LIVE
+  (`BlockSpeedMultiplier = 0.45` was dead code — nothing listened to `OnBlockingChanged`; now bound
+  to `RefreshMovementSpeed`), (L-2) thirst decay 0.14 → **0.0833/s** (~12 → ~20 min, matches the
+  documented design goal), and (M-11) the full vendor economy — `EAstrawildVendorResult` enum +
+  `VendorPrice`/`CurrencyItemId` fields + server-authoritative `TryPurchase`/`TrySell` on
+  `AAstrawildNPCCharacter` (450 cm trade range, no partial transactions) + Dawn Shard currency +
+  5 wares at Trader Tam + `AW.BuyItem`/`AW.SellItem` cheats + `ASTRAWILD.Economy.VendorSellValue`
+  test. REVIEW-4 verdict: CLEAN (no HIGH/MEDIUM); its L-1 vendor-filter cheat fix applied at commit.
+- Codebase: **88 C++ files (43 `.cpp` + 45 `.h`), ~15,990 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -38,14 +38,82 @@
   accesses pre-date Batch 3 from wave 3 `2eeedf8`); MEDIUM RISK: two runtime bugs caught and fixed
   inline (M-1 Echo stagger expiry never restored `MaxWalkSpeed` — permanent creature freeze after
   any heavy hit; M-2 `FullRestore`/`SetStatsForRestore` cleared statuses without broadcasting
-  `OnStatusEffectRemoved` — stale half-speed after rest/load); LOW RISK: see audit §23.
+  `OnStatusEffectRemoved` — stale half-speed after rest/load); LOW RISK: see audit §23. Batch-4
+  changes were read-only reviewed (REVIEW-4) — verdict **CLEAN**: no HIGH compile blockers and no
+  MEDIUM runtime bugs in the 12-file diff; 5 LOW notes (see the REVIEW-4 table below — note L-1,
+  the missing vendor filter in `FindNearestVendor`, was applied by the lead at commit time,
+  `CheatManager.cpp:72-77`).
 - Warnings: Not measured
 - Build duration: Not measured
 - Validation steps for the target machine: `Docs/ASTRAWILD_TEST_PLAN.md` §4
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Wave 5 Batch 3: Status effects + Hit reactions (stagger) + Armor framework)
+## Changes in this round (2026-08-30 — Wave 6 Batch 4: Sprint stamina drain + Live block penalty + Thirst rate fix + Vendor economy)
+
+### Commits
+
+| Commit | Type | Subject |
+|---|---|---|
+| `c16fecd` | feat(batch-4) | Survival feel + vendor economy — sprint stamina drain, live block penalty, thirst doc-alignment, Trader Tam purchase/sell flow with Dawn Shard currency (12 files, +584/−7) |
+
+### Repository totals (verified with shell commands on `c16fecd`)
+
+| Metric | Value | Command |
+|---|---|---|
+| C++ source files | **88** (43 `.cpp` + 45 `.h`) — unchanged from Batch 3 | `find Source -name '*.cpp' -o -name '*.h' \| wc -l` |
+| C++ LOC | **15,990** | `find Source -name '*.cpp' -o -name '*.h' \| xargs wc -l \| tail -1` |
+| Docs (`*.md`) | **49** — unchanged | `ls Docs/*.md \| wc -l` |
+| DOREPLIFETIME props | **28 across 9 classes** — unchanged from Batch 3 (no new replicated props in Batch 4; the sprint-drain flag is deliberately server-side only) | `grep -c DOREPLIFETIME Source/AstrawildCore/Private/*.cpp` |
+| Input actions | **19** — unchanged (no new keys in Batch 4) | `MakeRuntimeAction` call sites in `AstrawildPlayerCharacter.cpp::BuildRuntimeInputDefaults` |
+| Cheat commands | **15** | `UFUNCTION(Exec)` methods on `UAstrawildCheatManager` (+`AW.BuyItem`/`AW.SellItem`) |
+| Automation tests | **12** | `IMPLEMENT_SIMPLE_AUTOMATION_TEST` count (+`ASTRAWILD.Economy.VendorSellValue` — **5 of 12 now call production statics**) |
+| Content totals | **23 items · 13 recipes · 7 species · 10 buildings · 6 techs · 6 quests · 2 loot tables · 2 NPCs** | `ContentLibrary.cpp:636` log line: "23 items, 13 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs" |
+
+> **LOC reconciliation note:** REVIEW-4 counted 15,984 LOC on the pre-commit working tree
+> (5dd69cd + 12 modified files, +578/−7). The lead then applied REVIEW-4's L-1 vendor-filter fix
+> (+6 lines in `CheatManager.cpp`) before committing, so `c16fecd` lands at +584/−7 and
+> **15,990 LOC** (15,413 at `5dd69cd` + 584 − 7 = 15,990 — arithmetic confirms).
+
+### Systems added / changed in Batch 4
+
+| System | Class / symbol | Status | Files |
+|---|---|---|---|
+| Sprint stamina drain (M-2a) — tunable `SprintStaminaDrainPerSecond = 7.0` (100 stamina / 7 per s ≈ **14 s** sprint); `TickComponent` drains stamina INSTEAD of regenerating while the drain is armed AND the owner actually moves (regen 14/s would out-pace drain 7/s → free sprint); exhaustion at the floor clears the flag and broadcasts `OnSprintExhausted` **once** | `UAstrawildSurvivalComponent::SetSprintDrainActive(bool)` + private `bSprintDrainActive` (server-side only, NOT replicated) + `IsOwnerMoving()` (velocity² > 25² cm/s — walk 450/sprint 700 both qualify; holding sprint while standing still drains nothing) | NEW | `AstrawildSurvivalComponent.h/.cpp` |
+| Sprint wiring (M-2a) — `StartSprint` arms the drain, `StopSprint` clears it; `OnSprintExhausted` handler drops `bSprinting` + clears the drain + `RefreshMovementSpeed()` (the existing >0.05 stamina-fraction gate keeps re-sprint suppressed until recovery); `OnPlayerDied` clears both so respawn (which `FullRestore`s stamina) never re-drains instantly | `AAstrawildPlayerCharacter::StartSprint/StopSprint/OnSprintExhausted/OnPlayerDied` (bindings at `cpp:141`, handlers at `cpp:434-459, 884-942`) | NEW | `AstrawildPlayerCharacter.h/.cpp` |
+| Block movement penalty LIVE (M-2b) — `BlockSpeedMultiplier = 0.45` (`CombatComponent.h:83`) existed since the foundation but was **dead code**: `OnBlockingChanged` broadcast had no listener, so the penalty never applied (and never lifted). `BeginPlay` now binds `CombatComponent->OnBlockingChanged → OnBlockingChanged(bool) → RefreshMovementSpeed()`; the penalty multiplies the walk/sprint target inside `RefreshMovementSpeed` (`cpp:476-479`) | `AAstrawildPlayerCharacter::OnBlockingChanged` (`cpp:923-929`, binding at `cpp:150`) | NEW wiring (existing tunable) | `AstrawildPlayerCharacter.h/.cpp` (tunable in `AstrawildCombatComponent.h`) |
+| Thirst decay alignment (L-2) — 0.14/s (~11.9 min) → **0.0833/s** (~20.0 min), matching the documented "~20 real minutes" design goal; header comment records the fix | `UAstrawildSurvivalComponent::ThirstDecayPerSecond` (`.h:51-56`) | CHANGED value | `AstrawildSurvivalComponent.h` |
+| Vendor transaction API (M-11) — `EAstrawildVendorResult` UENUM (**7 values**: Success / NotAVendor / NotAWare / NotEnoughCurrency / TooHeavy / TooFarAway / InvalidRequest); `TryPurchase`/`TrySell` are **server-authoritative** (`GetLocalRole() == ROLE_Authority` gate) with constant `VendorTradeRangeCm = 450`; validation order (all BEFORE anything moves — no partial transactions): role → player/inventory/quantity 1–99 → vendor definition (ShopLootTableId + CurrencyItemId) → range → registry → item def + `VendorPrice > 0` → ware membership (shop loot table `GuaranteedDrops`) → funds (`HasItem`) → weight (`CanAddItem`) → then `RemoveItem` currency + `AddItemSilent` ware; sell = `ComputeVendorSellValue(price) = max(1, price/2)` per unit — junk (`VendorPrice 0`) and the currency itself are **not sellable** (no arbitrage loop by construction) | `AAstrawildNPCCharacter::TryPurchase/TrySell/ComputeVendorSellValue` (static BlueprintPure — unit-testable without a world) | NEW | `AstrawildNPCCharacter.h/.cpp`, `AstrawildTypes.h` |
+| Economy data fields (M-11) — `VendorPrice` (int32, 0 = not tradeable) on `UAstrawildItemDefinition`; `CurrencyItemId` (FName, NAME_None = shop closed) on `UAstrawildNPCDefinition` | `AstrawildDataAssets.h:88-95, 435-441` | NEW fields | `AstrawildDataAssets.h` |
+| Vendor session UX (M-11) — interacting with a vendor now lists wares + prices + the player's currency balance as a HUD toast ("Trader Tam's wares: Glimmer Berry [2] · … · You carry 10 Dawn Shard.") via `AAstrawildPlayerController::Notify`; no new widget — the shop **UMG screen remains a future round** | `AAstrawildNPCCharacter::Interact_Implementation` (`cpp:78-120`) | NEW | `AstrawildNPCCharacter.cpp` |
+| Vendor cheats (M-11) — `AW.BuyItem <ItemId> [Qty]` / `AW.SellItem <ItemId> [Qty]` route through the same server-authoritative API a future shop UMG screen will use; `FindNearestVendor` scans within 600 cm **and skips non-vendor NPCs** (REVIEW-4 L-1 fix — Warden Maren can never shadow Tam); `VendorResultMessage` maps each result to an actionable HUD message | `UAstrawildCheatManager::BuyItem/SellItem` + file-local `FindNearestVendor`/`VendorResultMessage` (`cpp:57-110`) | NEW — **15 exec cheats total** | `AstrawildCheatManager.h/.cpp` |
+| Economy content (M-11) — currency **Item_DawnShard** (Dawn Shard, Material, 0.1 kg, stack 200, `VendorPrice 0` — cannot be bought or sold with itself); Trader Tam wares: Glimmer Berry 2 / Dew Flask 2 / Sunfiber Bandage 3 / Dawnbloom Salve 4 / Echo Resonator 6; `Loot_VendorStarter` extended to 5 wares (+Salve ×1, +Resonator ×1); `Loot_DungeonBoss` + Dawn Shard ×3; `Quest_DawnGuard` reward + Dawn Shard ×5; prototype starter kit + Dawn Shard ×10 — **23 items total** | `AstrawildContentLibrary.cpp:124-179, 535, 586, 594`, `AstrawildPlayerCharacter.cpp:108-114` | NEW content | `AstrawildContentLibrary.cpp`, `AstrawildPlayerCharacter.cpp` |
+| Vendor economy test — sell-value rule (half price floored at 1, junk = 0, strictly-below-buy-price for every priced ware); calls the REAL production static `ComputeVendorSellValue` | `FAstrawildVendorEconomyTest` = `ASTRAWILD.Economy.VendorSellValue` (`AutomationTests.cpp:308-332`) — **12 tests total** | NEW | `AstrawildAutomationTests.cpp` |
+
+### REVIEW-4 findings (verdict CLEAN — read-only review of the pre-commit working tree at `5dd69cd`)
+
+| Severity | Finding | Resolution in `c16fecd` |
+|---|---|---|
+| **HIGH / MEDIUM** | — none found — | Verdict CLEAN: all UHT signatures, delegate bindings, include closures, transaction atomicity and totals verified. Compile still must run on the UE 5.8 target machine |
+| LOW (L-1) | `FindNearestVendor` ignored vendor status (nearest NPC could be Warden Maren → "not a vendor" while Tam is in range) and searched 600 cm vs the 450 cm trade range | **Applied at commit** — the loop now skips NPCs without `ShopLootTableId` + `CurrencyItemId` (`CheatManager.cpp:72-77`); the 600 cm search intentionally stays a grace margin wider than the 450 cm trade range |
+| LOW (L-2) | NotEnoughCurrency cheat message names the currency | Committed `VendorResultMessage` is already currency-agnostic ("Not enough vendor currency for %d × %s.") — nothing hardcoded remains; genericize further only when a 2nd currency exists |
+| LOW (L-3) | MP-scope note: `OnSprintExhausted`/`OnBlockingChanged` broadcast server-side only; `Stats`/`bIsBlocking` have no OnRep speed-refresh → remote clients keep a stale `MaxWalkSpeed` (rubber-band) until the next local refresh | **Accepted** (same class as REVIEW-3's accepted stagger note) — SP/listen-server target unaffected; folds into the H-12 MP RPC layer batch |
+| LOW (L-4) | Doc drift outside the diff: SURVIVAL_SYSTEM.md:25 + PRODUCTION_AUDIT.md:75 still said thirst 0.14/s (~12 min) | **Fixed by this wave-6 docs sync** (both now read 0.0833/s ≈ 20 min) |
+| LOW (L-5) | Pre-existing `AutomationTests.cpp:95` float `TestEqual` (`100×(1−0.65f) == 35.0f`) | Verified HARMLESS by IEEE-754 analysis (1.0f−0.65f exact via Sterbenz; ×100 lands 0.625 ULP above 35 → tie-rounds-to-even 35.0f) — no action |
+
+### Not persisted / server-only (documented decisions)
+
+- `bSprintDrainActive` is **server-side only** (not replicated) — it feeds the server stamina economy;
+  the sprint SPEED itself is handled locally by `RefreshMovementSpeed` on each client.
+- Vendor state is content, not world state: wares/stock/currency are registry definitions (shop stock =
+  the `GuaranteedDrops` list of the NPC's `ShopLootTableId` — it never depletes in v1); only the player's
+  owned items (including Dawn Shards in inventory stacks) persist through the existing save schema.
+  Zero `Vendor`/`DawnShard` references in `SaveSubsystem` (grep-verified) — no schema bump.
+- Dawn Shard keeps `VendorPrice = 0` by design: the currency can never be bought with itself or sold
+  back — the only sources are the dungeon boss (×3), the Dawn Guard quest reward (×5) and the
+  prototype starter kit (×10).
+
+## Changes in the previous round (2026-08-30 — Wave 5 Batch 3: Status effects + Hit reactions (stagger) + Armor framework)
 
 ### Commits
 
@@ -321,7 +389,7 @@ No `Source/` files were modified by DOCS-1.
 |---|---|---|
 | Open project | NOT_RUN | Awaiting target-machine compile (Test Plan §4) |
 | Compile Development Editor | NOT_RUN | **Blocking step for everything below** |
-| Automation suite (11 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` (Batch 3 added `ASTRAWILD.Equipment.ArmorMath` + `ASTRAWILD.Combat.StatusEffectFactory`) |
+| Automation suite (12 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` (Batch 3 added `ASTRAWILD.Equipment.ArmorMath` + `ASTRAWILD.Combat.StatusEffectFactory`; Batch 4 added `ASTRAWILD.Economy.VendorSellValue`) |
 | Player movement/camera | NOT_RUN | Manual flow step 4 |
 | Interaction | NOT_RUN | Step 5 |
 | Harvest resource | NOT_RUN | Step 10 |
@@ -344,26 +412,28 @@ No `Source/` files were modified by DOCS-1.
 | Medium | T-5 consume keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press **G** | **Fix in code** (G = `SmartConsume`) — verify at playtest |
 | Medium | T-6 journal per-frame iteration | `AstrawildJournalSubsystem.cpp` | Insights capture | **Fix in code** (throttled observation sweep) — verify via Insights |
 | Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (still present) |
-| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "19 actions" / "22 items, 13 recipes, … 2 loot tables, 2 NPCs" and matches the code |
-| Low | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | `ShopLootTableId` is a definition-level hook only — purchase flow NOT IMPLEMENTED (future round) |
-| Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending** — Batch 4 / MP batch. Single-player only at present — Item B `DismantleBuilding` uses direct method calls gated on `GetLocalRole() == ROLE_Authority` |
+| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "19 actions" / "23 items, 13 recipes, … 2 loot tables, 2 NPCs" and matches the code |
+| ~~Low~~ Closed | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | **CLOSED in Batch 4 (`c16fecd`)** — `TryPurchase`/`TrySell` server-authoritative transaction flow live (450 cm trade range, Dawn Shard currency, wares listed in an Interact HUD toast; buy/sell via `AW.BuyItem`/`AW.SellItem`). The shop **UMG screen** remains open (future round). Compile pending on target machine |
+| Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending — MP batch.** Single-player only at present — Item B `DismantleBuilding` and the Batch-4 vendor transactions both use direct method calls gated on `GetLocalRole() == ROLE_Authority` (fine for SP/listen-server; a future shop UI for remote clients must route through a Server RPC — noted in `NPCCharacter.cpp:132-134`) |
 | ~~Medium~~ Closed | Weapon element override (player attack element hardcoded Ash) | `CombatComponent.h` `GetResolvedAttackElement` | Hit a creature with a Crystal Blade | **CLOSED in Batch 3 (`021f93a`)** — weapon `Element` overrides the tunable; Dawn Crystal Blade = Pulse → Shock. Compile pending on target machine |
 | Low | `HostileSpawnerSubsystem::Tick` requires server world | `AstrawildHostileSpawnerSubsystem.cpp:52` | Clients never run the spawn sweep | Clients see populated hostiles via replication only — server authoritative; matches the rest of the simulation |
 | Low | `PowerSubsystem::ResolveGridNow` is server-only | `AstrawildPowerSubsystem.cpp:28-33` | Clients never run `ResolveGrid` | Clients receive correct state via the new `bIsPowered` replicated UPROPERTY on `AAstrawildBuildingActor` — `ResolveGrid`'s server-only early return (`World->GetNetMode() == NM_Client`) at `.cpp:55` guards the path |
 
 ## Handoff to Antigravity
 
-The C++ core (single module `AstrawildCore`, **~15.4k LOC, 88 source files**), the zero-asset playability
+The C++ core (single module `AstrawildCore`, **~16.0k LOC, 88 source files**), the zero-asset playability
 layer (procedural world + runtime input + C++ HUD), save schema v2 (with wave 3 equipment persistence +
 wave 4 building power persistence + wave 5 armor-slot persistence), the combat-depth layer (status
-effects + stagger + armor), the CODE_DEFAULT content set (22 items / 13 recipes / 7 species /
+effects + stagger + armor), the survival-feel layer (sprint stamina drain + live block penalty +
+aligned thirst rate), the vendor economy layer (Dawn Shard currency + buy/sell transactions + cheats),
+the CODE_DEFAULT content set (23 items / 13 recipes / 7 species /
 10 buildings / 6 techs / 6 quests / 2 loot tables / 2 NPCs), the documentation suite, the test plan, and
 the asset manifest/replacement pipeline are all in the repository. Antigravity must: **pull, generate
-project files, compile `ASTRAWILDEditor Win64 Development`, run the 11 automation tests, execute the
+project files, compile `ASTRAWILDEditor Win64 Development`, run the 12 automation tests, execute the
 17-step first-playable checklist, and fill this report with real results.** Do not mark `COMPLETE` until
 Compile, the automation suite, the core-loop Playtest, and Save/Load have all passed (see
 `Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
 
-**Handoff tally:** 88 C++ files / 15,413 LOC / 49 docs / 11 automation tests / 28 replicated props across
-9 classes / 19 input actions / 13 console cheats. Compile status: `NOT RUN (sandbox has no UE engine —
+**Handoff tally:** 88 C++ files / 15,990 LOC / 49 docs / 12 automation tests / 28 replicated props across
+9 classes / 19 input actions / 15 console cheats. Compile status: `NOT RUN (sandbox has no UE engine —
 must be verified on UE 5.8 + Antigravity target machine).`

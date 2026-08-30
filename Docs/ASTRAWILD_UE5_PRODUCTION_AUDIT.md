@@ -41,7 +41,7 @@ ASTRAWILD is a **source-complete, never-compiled** code-first vertical slice. Th
 | Data Asset conventions established | [x] | 8 `UPrimaryDataAsset` classes with `GetPrimaryAssetId` overrides (`AstrawildDataAssets.h:23-415`). Instances are C++-built defaults in `ContentLibrary` (no .uasset yet — by design for zero-asset slice). |
 | Stable ID strategy established | [~] | `FAstrawildStableId` + FGuid InstanceIds (`AstrawildTypes.h:28-44`). Gaps: no `GetTypeHash` (unusable as TMap key); `OwnerPlayerId` on buildings never populated (`Types.h:460`, no writer). |
 | Enhanced Input architecture established | [x] | Runtime-built IMC with 17 actions when no assets assigned (`AstrawildPlayerCharacter.cpp:177-254`); GC-safe via `RuntimeActions` UPROPERTYs (`.h:211-216`). |
-| Automated test foundation established | [!] | 9 tests exist (`AstrawildAutomationTests.cpp`) but **7 of 9 are tautological** (assert arithmetic on local constants; `Capture.DesignRuleBounds` literally asserts `true` at line 77). Only checksum determinism (l105) and quest objective progress (l125) exercise real code. No save round-trip, no world test. |
+| Automated test foundation established | [~] | **12 tests as of Batch 4** (`AstrawildAutomationTests.cpp`) — 5 now exercise real production code (checksum determinism, quest objective `IsComplete()`, `ComputeArmorFraction` armor math, `MakeElementalStatusEffect` factory, `ComputeVendorSellValue` sell-value rule); 7 remain tautological (gap-report L-1 partial). No save round-trip, no world test. Wave-5/Batch-3 additions + Batch 4's `ASTRAWILD.Economy.VendorSellValue`; count updated by the wave-6 docs sync (this row previously described the 9-test pre-Batch-3 state). |
 
 ## 3. P2 — Player
 
@@ -52,7 +52,7 @@ Implementation: `AAstrawildPlayerCharacter` (`.h` 217 ln / `.cpp` 786 ln), `AAst
 | Third-person character | [x] | SpringArm 360cm + camera (`cpp:57-64`), orient-to-movement (`cpp:49-52`). Placeholder cylinder mesh (`cpp:66-76`). |
 | Camera | [x] | As above; no lag/offset customization. |
 | Movement | [~] | Walk 450 / Sprint 700 (`cpp:55`, `RefreshMovementSpeed` `cpp:388-408`). **No crouch, no climb, no swim handling.** |
-| Sprint | [~] | Speed switch real; stamina-gated (`cpp:395`) but **sprinting drains no stamina** — gate only bites after dodge/heavy attacks. |
+| Sprint | [x] | Speed switch real; stamina-gated (`cpp:469`). **Batch 4 (`c16fecd` — compile pending): sprint now DRAINS stamina** — `SprintStaminaDrainPerSecond = 7` while armed + actually moving (`IsOwnerMoving()` > 25 cm/s), ≈14 s sprint from full 100 stamina; exhaustion broadcasts `OnSprintExhausted` once → drops sprint speed until the >0.05 fraction gate reopens. **VERIFIED AT SOURCE (c16fecd — compile pending).** |
 | Jump | [x] | JumpZ 600, AirControl 0.35 (`cpp:53-54`); input bound `cpp:284`. |
 | Dodge | [x] | `Q` → `RequestDodge` (`cpp:479-493`); server RPC + i-frames handled in CombatComponent. |
 | Interaction | [x] | 300cm camera trace, `IAstrawildInteractable` dispatch (`cpp:418-452`, `766-785`). |
@@ -61,7 +61,7 @@ Implementation: `AAstrawildPlayerCharacter` (`.h` 217 ln / `.cpp` 786 ln), `AAst
 | Traversal foundation | [ ] | None. |
 | Animation architecture | [ ] | Zero animations; attacks/dodge are pure logic on static meshes. |
 
-**Additional player bugs:** (a) respawned pawn never re-adds the IMC — `BeginPlay` early-returns before input setup when controller is null during `RestartPlayer` spawn (`cpp:122-133`) → **input death after respawn**; (b) block movement penalty is dead code — `RefreshMovementSpeed` never called on block toggle (`cpp:402-405` has no caller from `StartBlock/StopBlock cpp:495-509`); (c) dead fields `AttackDamage/AttackDistance/AttackCooldownSeconds/LastAttackTimeSeconds` (`.h:135-208`) never referenced.
+**Additional player bugs:** (a) respawned pawn never re-adds the IMC — `BeginPlay` early-returns before input setup when controller is null during `RestartPlayer` spawn (`cpp:122-133`) → **input death after respawn**; (b) ~~block movement penalty is dead code — `RefreshMovementSpeed` never called on block toggle~~ **CLOSED in Batch 4 (`c16fecd`)** — `BeginPlay` now binds `OnBlockingChanged → RefreshMovementSpeed` (`PlayerCharacter.cpp:150, 923-929`), so `BlockSpeedMultiplier = 0.45` applies and lifts; (c) dead fields `AttackDamage/AttackDistance/AttackCooldownSeconds/LastAttackTimeSeconds` (`.h:135-208`) never referenced.
 
 ## 4. P3 — Survival
 
@@ -70,9 +70,9 @@ Implementation: `UAstrawildSurvivalComponent` (`.h` 120 / `.cpp` 238).
 | Item | Status | Evidence |
 |---|---|---|
 | Health | [x] | 100/100, authority-gated `ApplyDamage` (`cpp:114-137`), god mode (`cpp:215-219`). |
-| Stamina | [~] | Regen 14/s (`cpp:42`); consumed by dodge(22)/heavy(25). No sprint drain (see P2). |
+| Stamina | [x] | Regen 14/s; consumed by dodge(22)/heavy(25). **Batch 4: sprint drains 7/s while moving** (see P2 Sprint row — M-2a). |
 | Hunger | [x] | Decay 0.083/s ≈ 20 min (`cpp:36-40`); starvation damage `cpp:45-49`. |
-| Thirst | [x] | Decay 0.14/s ≈ 12 min (header comment claiming ~20 min is wrong, `.h:14-15`). |
+| Thirst | [x] | Decay **0.0833/s ≈ 20 min** — **L-2 fixed in Batch 4 (`c16fecd`)**: was 0.14/s ≈ 12 min contradicting the header comment; the value now matches the documented ~20-minute goal (`SurvivalComponent.h:51-56`, comment records the fix). **VERIFIED AT SOURCE (c16fecd — compile pending).** |
 | Temperature | [~] | 20°C base + weather offset (`cpp:66-72`); exposure damage outside 4–36°C (`cpp:53-56`). No time-of-day/shelter/biome factors. |
 | Status effects | [x] | **Batch 3 (`021f93a` — compile pending): NOW LIVE.** `MakeElementalStatusEffect` factory feeds `AddStatusEffect` from real combat hooks (player weapon hits via `EchoCharacter::ApplyElementalDamage`; creature attacks via `EchoAIController::TryAttackTarget` player branch). DoT ticks + expiry in `Tick`; `GetStatusSpeedMultiplier` consumed by `RefreshMovementSpeed`; `FullRestore`/`SetStatsForRestore` broadcast removals (REVIEW-3 M-2). **VERIFIED AT SOURCE (021f93a — compile pending).** |
 | Food | [x] | `ApplyConsumption` (`cpp:139-150`) via `SmartConsume` (`PlayerCharacter.cpp:608-649`). |
@@ -86,7 +86,7 @@ Implementation: `UAstrawildInventoryComponent` (`.h` 114 / `.cpp` 282).
 
 | Item | Status | Evidence |
 |---|---|---|
-| Item Definition | [x] | `UAstrawildItemDefinition` + 22 C++-registered items (`ContentLibrary.cpp` — 19 through wave 3, +3 armor in Batch 3); `Element` + `ArmorRating` fields added in Batch 3. |
+| Item Definition | [x] | `UAstrawildItemDefinition` + **23** C++-registered items (`ContentLibrary.cpp` — 19 through wave 3, +3 armor in Batch 3, +1 currency `Item_DawnShard` in Batch 4); `Element` + `ArmorRating` (Batch 3) + **`VendorPrice`** (Batch 4, 0 = not tradeable) fields. |
 | Item Instance | [ ] | Storage is `TMap<FName,int32>` (`.h:105`) — no per-instance items, no durability/quality. |
 | Stack | [~] | Quantity-only; `MaxStackSize` field exists but **never enforced** (`AddItem cpp:92-119` has no cap logic). |
 | Weight | [x] | 120kg cap, 1kg unknown-item fallback, divide-by-zero guarded (`cpp:58-86`). |
@@ -260,7 +260,7 @@ Implementation: `AAstrawildWorldBootstrapper` (`.cpp` 348), `UAstrawildTimeSubsy
 
 | Item | Status | Evidence |
 |---|---|---|
-| NPC framework | [~] | `AAstrawildNPCCharacter` — definition-driven, interact starts offered quest (`NPCCharacter.cpp:47-67`). No AI, no schedule, no replication. |
+| NPC framework | [~] | `AAstrawildNPCCharacter` — definition-driven, interact starts offered quest (`NPCCharacter.cpp:47-67`). **Batch 4 (`c16fecd` — compile pending): vendors are LIVE** — NPCs with `ShopLootTableId` + `CurrencyItemId` (Trader Tam) list wares + prices + balance in an Interact HUD toast and transact through server-authoritative `TryPurchase`/`TrySell` (450 cm trade range, `EAstrawildVendorResult`, Dawn Shard currency, sell = half price floored at 1 — see §24). **VERIFIED AT SOURCE.** Still no AI, no schedule, no dialogue, no replication. |
 | Dialogue | [ ] | None. |
 | Schedule | [ ] | None. |
 | Faction foundation | [ ] | 3 faction tags exist; no system. |
@@ -502,3 +502,45 @@ ordering, 1,000,000-rating clamp to 0.6, K=0 degenerate case, block+cuirass ≈ 
 the REAL production static functions — replacing tautological assertions. A pre-existing float-unsafe
 `TestEqual` was converted to a tolerance-based `TestTrue`. **11 automation tests total** — 4 call
 production code, 7 remain tautological (gap-report L-1 remainder → Batch 4).
+
+---
+
+## 24. Wave 6 Batch 4 status update (post-`c16fecd`)
+
+Batch 4 ("Survival feel + vendor economy") closed the four work items scoped for this wave. RESEARCH
+scoped the batch, and REVIEW-4 (read-only compile-risk review of the pre-commit working tree at
+`5dd69cd`) returned verdict **CLEAN — no HIGH compile blockers and no MEDIUM runtime bugs** in the
+12-file diff (+584/−7 as committed; REVIEW-4's L-1 vendor-filter fix applied by the lead at commit
+time). None are runtime-verified — compile status remains `NOT RUN (sandbox has no UE engine — must
+be verified on UE 5.8 + Antigravity target machine)`.
+
+| Item | Brief | Status | Note |
+|---|---|---|---|
+| **M-2a — Sprint stamina drain** | `UAstrawildSurvivalComponent`: tunable `SprintStaminaDrainPerSecond = 7.0` (≈14 s sprint from 100 stamina); `SetSprintDrainActive(bool)` + private server-side `bSprintDrainActive` (NOT replicated); `TickComponent` drains INSTEAD of regenerating while armed AND `IsOwnerMoving()` (velocity² > 25² cm/s — standing still is free; walk 450/sprint 700 both qualify); exhaustion at the stamina floor clears the flag and broadcasts `OnSprintExhausted` once. PlayerCharacter: `StartSprint` arms / `StopSprint` clears; `OnSprintExhausted` handler drops `bSprinting` + `RefreshMovementSpeed` (re-sprint suppressed by the existing >0.05 fraction gate); `OnPlayerDied` clears both (respawn `FullRestore` never re-drains). Closes gap-report M-2 (sprint half) | `[x] VERIFIED AT SOURCE (c16fecd — compile pending)` | REVIEW-4 verified the broadcast-from-tick handler is read-only reentrancy-safe; the drain-vs-regen branches are exclusive so regen 14/s can never mask drain 7/s |
+| **M-2b — Block movement penalty LIVE** | `BlockSpeedMultiplier = 0.45` (`CombatComponent.h:83`) existed since the foundation but was dead code — `OnBlockingChanged` (broadcast server-side from `ServerSetBlocking`) had no listener, so the ×0.45 penalty never applied and never lifted. `BeginPlay` now binds `CombatComponent->OnBlockingChanged → OnBlockingChanged(bool) → RefreshMovementSpeed()` (`PlayerCharacter.cpp:150, 923-929`); the multiplier applies to the walk/sprint target inside `RefreshMovementSpeed`. Closes gap-report M-2 (block half) | `[x] VERIFIED AT SOURCE (c16fecd — compile pending)` | The unused `bIsBlocking` handler parameter follows the same accepted pattern as `OnStatusSpeedChanged(FName)` (UBT disables C4100) |
+| **L-2 — Thirst decay alignment** | `ThirstDecayPerSecond` 0.14/s (≈11.9 min) → **0.0833/s** (≈20.0 min) — the header comment documents the fix; the value now matches the "~20 real minutes" design goal that the doc header always claimed. Doc drift flagged by REVIEW-4 (L-4) is fixed by this wave-6 docs sync (SURVIVAL_SYSTEM.md §1 + §4 Thirst row above) | `[x] VERIFIED AT SOURCE (c16fecd — compile pending)` | Closes gap-report L-2. Hunger stays 0.083/s ≈ 20.1 min — both needs now share the ~20-minute exploration-friendly window |
+| **M-11 — Vendor economy (transaction flow)** | `EAstrawildVendorResult` UENUM (7 values) + `VendorPrice` int32 on `UAstrawildItemDefinition` (0 = not tradeable) + `CurrencyItemId` FName on `UAstrawildNPCDefinition`. `AAstrawildNPCCharacter::TryPurchase/TrySell` — server-authoritative (`GetLocalRole() == ROLE_Authority`), `VendorTradeRangeCm = 450`; validation BEFORE any transfer (no partial transactions): role → player/inventory/qty 1–99 → vendor def → range → registry → item def + price>0 → ware membership (shop table `GuaranteedDrops`) → funds (`HasItem`) → weight (`CanAddItem`); executes `RemoveItem` currency + `AddItemSilent` ware. Sell = `ComputeVendorSellValue(price) = max(1, price/2)` (static BlueprintPure, unit-tested); junk (price 0) and the currency itself are NOT sellable — no arbitrage by construction. Interact lists wares + prices + balance as a HUD toast (`PlayerController::Notify`). Currency **Item_DawnShard** (Material, 0.1 kg, stack 200, VendorPrice 0); wares: Berry 2 / Dew Flask 2 / Bandage 3 / Salve 4 / Resonator 6; `Loot_VendorStarter` extended (+Salve ×1, +Resonator ×1); `Loot_DungeonBoss` +DawnShard ×3; `Quest_DawnGuard` +DawnShard ×5; starter kit +DawnShard ×10; cheats `AW.BuyItem`/`AW.SellItem` (15 exec cheats total; `FindNearestVendor` 600 cm + REVIEW-4 L-1 vendor filter); test `ASTRAWILD.Economy.VendorSellValue` (12 total, 5 call production statics) | `[x] VERIFIED AT SOURCE (c16fecd — compile pending)` | **What is closed:** the TRANSACTION FLOW (buy/sell with real validation, currency, pricing, cheats, toast UX). **What remains open:** the shop **UMG screen** (future round — today the player reads the Interact toast and uses `AW.BuyItem`/`AW.SellItem`); shop stock never depletes (v1 uses the loot-table `GuaranteedDrops` as a static stock list — documented decision) |
+
+### 24.1 REVIEW-4 summary (verdict CLEAN — 5 LOW notes)
+
+- **No HIGH/MEDIUM findings.** All UHT signatures (enum as UFUNCTION return, exec functions without
+  default params, delegate/UFUNCTION signature matches), include closures, transaction atomicity
+  (single-threaded `HasItem → RemoveItem` is TOCTOU-free), and shell-verified totals checked out.
+- **L-1 (applied at commit):** `FindNearestVendor` skipped no vendor-status filter and searched
+  600 cm vs the 450 cm trade range — the nearest NPC could be Warden Maren ("not a vendor") while Tam
+  was in range. The lead applied the filter at commit (`CheatManager.cpp:72-77` — skip NPCs without
+  `ShopLootTableId` + `CurrencyItemId`); the 600 cm search stays a deliberate grace margin.
+- **L-2 (moot at commit):** the committed `VendorResultMessage` is currency-agnostic
+  ("Not enough vendor currency for %d × %s.") — nothing hardcoded remains; genericize further only
+  when a 2nd currency exists.
+- **L-3 (accepted MP-scope note):** `OnSprintExhausted`/`OnBlockingChanged` broadcast server-side
+  only and `Stats`/`bIsBlocking` have no OnRep speed-refresh — remote clients keep a stale
+  `MaxWalkSpeed` (rubber-band) until the next local refresh. SP/listen-server target unaffected —
+  same accepted class as REVIEW-3's stagger note; folds into the H-12 MP RPC batch.
+- **L-4 (fixed by this docs sync):** thirst 0.14/s doc drift — see §4 Thirst row and
+  `ASTRAWILD_SURVIVAL_SYSTEM.md` §1, now 0.0833/s ≈ 20 min.
+- **L-5 (harmless, pre-existing):** `AutomationTests.cpp:95` float `TestEqual`
+  (`100×(1−0.65f) == 35.0f`) verified exact by IEEE-754 analysis (Sterbenz-exact subtraction;
+  tie-rounds-to-even) — no action.
+- LOC reconciliation: REVIEW-4 counted 15,984 on the pre-commit tree (+578/−7); with the L-1 fix
+  (+6 lines) the commit `c16fecd` is +584/−7 = **15,990 LOC** (15,413 at `5dd69cd` + 584 − 7).

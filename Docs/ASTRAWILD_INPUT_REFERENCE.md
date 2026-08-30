@@ -1,9 +1,9 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 4 sync — X = equip-best (wave 3) + Z = delete building (wave 4))
+**Date: 2026-08-30** (wave 6 sync — +`AW.BuyItem`/`AW.SellItem` vendor cheats, 15 commands; sprint now drains stamina)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / SetupPlayerInputComponent /
-input handlers), `AstrawildCheatManager.h/.cpp`
+input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
 Defaults below are the **runtime-built Enhanced Input mapping** (used when no editor IMC asset is
 assigned). Keyboard + mouse only; gamepad support is NOT IMPLEMENTED.
@@ -21,11 +21,11 @@ inputs listed separately). Wave 4 added `Z` = Delete Building (Item B — `Disma
 |---|---|---|---|---|---|
 | **W / A / S / D** | Move (`AWD_Move`, Axis2D) | Triggered | `Move` | Character movement | WASD feed one 2D action; A/S use Negate modifiers (X/Y) |
 | **Mouse delta** | Look (`AWD_Look`, Axis2D) | Triggered | `Look` | Camera | Y axis negated (standard 3rd-person pitch) |
-| **Left Shift** | Sprint (`AWD_Sprint`) | Started / Completed / Canceled | `StartSprint` / `StopSprint` | Movement (450→700 speed), stamina | Sprint blocked below 5 % stamina |
+| **Left Shift** | Sprint (`AWD_Sprint`) | Started / Completed / Canceled | `StartSprint` / `StopSprint` | Movement (450→700 speed), stamina | **Batch 4: sprint drains 7 stamina/s while moving (≈14 s from full)**; blocked below 5 % stamina until recovery |
 | **Space** | Jump (`AWD_Jump`) | Started / Completed | `HandleJump` / `StopJumping` | Movement | JumpZ 600 |
 | **E** | Interact (`AWD_Interact`) | Started | `Interact` | Interaction system: harvest / craft station / rest / NPC / **capture Echo** | Camera ray 300 cm; wild Echo in reach → capture attempt |
 | **Left Mouse Button** | Light Attack (`AWD_LightAttack`) | Started | `Attack` | Combat (25 dmg, 0.45 s CD) — **or Building confirm** while placing | Placement mode intercepts the input |
-| **Right Mouse Button (hold)** | Block (`AWD_Block`) | Started / Completed / Canceled | `StartBlock` / `StopBlock` | Combat (45 % unarmed mitigation / 65 % with Stonehide Shield, ×0.45 move speed) | Wave 3: shield replaces the unarmed baseline |
+| **Right Mouse Button (hold)** | Block (`AWD_Block`) | Started / Completed / Canceled | `StartBlock` / `StopBlock` | Combat (45 % unarmed mitigation / 65 % with Stonehide Shield, ×0.45 move speed) | Wave 3: shield replaces the unarmed baseline; **Batch 4 (M-2b): the ×0.45 speed penalty is LIVE** (`OnBlockingChanged` now bound to `RefreshMovementSpeed` — previously dead code) |
 | **F** | Heavy Attack (`AWD_HeavyAttack`) | Started | `HeavyAttack` | Combat (60 dmg, 1.3 s CD, 25 stamina) | |
 | **Q** | Dodge (`AWD_Dodge`) | Started | `Dodge` | Combat (0.4 s i-frames, 900 impulse, 0.9 s CD, 22 stamina) | Dodges along movement input (or forward) |
 | **C** | Party Command (`AWD_Command`) | Started | `CyclePartyCommand` | Echo commands: Follow → Attack → Defend → Stay → Work → (loop) | Broadcast to all owned captured Echoes; each rolls obedience |
@@ -57,6 +57,7 @@ non-Boolean runtime action.
 | Building | B, N, mouse wheel, LMB (place), **Z (delete — wave 4)** |
 | Survival (smart consume) | G |
 | Equipment (equip best) | X |
+| Economy (vendor buy/sell) | — console only: `AW.BuyItem` / `AW.SellItem` while within 6 m of Trader Tam (no keybind — shop UMG screen is a future round) |
 | Save / Load | F5, F9 |
 
 ---
@@ -64,12 +65,14 @@ non-Boolean runtime action.
 ## 3. Console Cheat Reference (`UAstrawildCheatManager`)
 
 Active in non-Shipping builds (engine strips CheatManagers in Shipping). Open the console with `~` and
-prefix commands with `AW.`. All IDs are the registry ids from the Asset Manifest. **13 commands.**
+prefix commands with `AW.`. All IDs are the registry ids from the Asset Manifest. **15 commands.**
 
 | Command | Arguments | Effect |
 |---|---|---|
 | `AW.SpawnEcho` | `<EchoDefinitionId>` | Spawns that Echo 400 cm in front of the player (e.g. `AW.SpawnEcho Echo_Lumewisp`) |
 | `AW.GiveItem` | `<ItemId> [Quantity]` | Adds items to the player inventory (e.g. `AW.GiveItem Item_Wood 50`) |
+| `AW.BuyItem` | `<ItemId> [Quantity]` | **Batch 4 (M-11):** buys a ware from the nearest vendor NPC within 6 m in its currency (Dawn Shards at Trader Tam) — e.g. `AW.BuyItem Item_Bandage 2`. Server-authoritative: validates vendor → 450 cm trade range → ware membership + price → funds → weight before transferring anything (no partial transactions); result toast via `PlayerController::Notify` |
+| `AW.SellItem` | `<ItemId> [Quantity]` | **Batch 4 (M-11):** sells a priced item to the nearest vendor for half its buy price (floor 1) per unit — e.g. `AW.SellItem Item_Berry 5`. Junk (`VendorPrice 0`) and the currency itself are not sellable (no arbitrage) |
 | `AW.EquipItem` | `<ItemId>` | Equips an owned equipment item by id — routes to the weapon slot (`AttackPower > 0`) or shield slot (`BlockMitigation > 0`); warns when the item is missing or not equipment (wave 3) |
 | `AW.SetTime` | `<Hour> <Minute>` | Jumps the world clock (0–23 / 0–59); e.g. `AW.SetTime 22 0` for night |
 | `AW.SetWeather` | `<clear\|cloudy\|rain\|heavyrain\|storm\|fog\|heat\|cold>` | Forces a weather state (server) |

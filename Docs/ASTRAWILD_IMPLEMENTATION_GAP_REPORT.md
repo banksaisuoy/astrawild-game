@@ -7,14 +7,14 @@
 
 ---
 
-## Current tally (post-`021f93a` — Wave 5 Batch 3)
+## Current tally (post-`c16fecd` — Wave 6 Batch 4)
 
-| Priority | Total | Closed Batch 1 | Closed Batch 2 | Closed Batch 3 | Outstanding |
-|---|---|---|---|---|---|
-| **CRITICAL** | 9 (C-1..C-8 + C-1b discovered during impl) | 9 | 0 | 0 | **0** |
-| **HIGH** | 14 | 8 (H-1, H-2, H-3, H-4, H-5, H-7, H-8, H-14) | 3 (B2-A hostile respawn / B2-B building dismantle / B2-C power persistence) | 0 | **3 fully + 3 partial** (H-6 MP dupe vector, H-11 crafting output validation, H-12 MP RPC layer, H-13 gamepad, plus partial: H-9 UnregisterEcho decrement, H-10 ReachLocation/SurviveTime objective types, Ultimate Gap "Power persistence" grid-level StoredEnergy) |
-| **MEDIUM** | 14 | 2 (M-4 HUD temp, M-12 missing tags) | 0 | 1 (M-1 status system dormant — now live via the element-driven factory + combat hooks) | 11 |
-| **LOW** | 9 | 0 | 0 | 0 (1 partial: L-1 — 2 real tests added of the tautological set) | 9 |
+| Priority | Total | Closed Batch 1 | Closed Batch 2 | Closed Batch 3 | Closed Batch 4 | Outstanding |
+|---|---|---|---|---|---|---|
+| **CRITICAL** | 9 (C-1..C-8 + C-1b discovered during impl) | 9 | 0 | 0 | 0 | **0** |
+| **HIGH** | 14 | 8 (H-1, H-2, H-3, H-4, H-5, H-7, H-8, H-14) | 3 (B2-A hostile respawn / B2-B building dismantle / B2-C power persistence) | 0 | 0 | **3 fully + 3 partial** (H-6 MP dupe vector, H-11 crafting output validation, H-12 MP RPC layer, H-13 gamepad, plus partial: H-9 UnregisterEcho decrement, H-10 ReachLocation/SurviveTime objective types, Ultimate Gap "Power persistence" grid-level StoredEnergy) |
+| **MEDIUM** | 14 | 2 (M-4 HUD temp, M-12 missing tags) | 0 | 1 (M-1 status system dormant — now live via the element-driven factory + combat hooks) | 1 (M-2 sprint stamina drain + block movement penalty — both live) | 10 |
+| **LOW** | 9 | 0 | 0 | 0 (1 partial: L-1 — 2 real tests added of the tautological set) | 1 (L-2 thirst decay aligned to ~20 min) | 8 (L-1 still partial — 5 of 12 tests call production code; save round-trip + content sanity pending) |
 
 **Honest compile status:** `NOT RUN (sandbox has no UE engine — must be verified on target machine)`. All "closed" marks above mean "closed at source level — implementation exists with real logic and correct integration, verifiable by inspection". They do **not** mean compiled-and-run.
 
@@ -57,7 +57,7 @@
 | ID | Gap | Evidence |
 |---|---|---|
 | M-1 | ~~Status-effect system fully implemented but dormant — zero callers; `SpeedMultiplier` unconsumed~~ **CLOSED in Batch 3 (`021f93a`)** — `MakeElementalStatusEffect` factory + player-weapon and creature-attack application hooks + `GetStatusSpeedMultiplier` consumed by `RefreshMovementSpeed` (see THIRD IMPLEMENTATION BATCH below) | `SurvivalComponent.cpp:189-213` |
-| M-2 | Sprint drains no stamina (gate-only); block movement penalty dead (never refreshed on toggle) | `PlayerCharacter.cpp:395, 402-405` vs `495-509` |
+| M-2 | ~~Sprint drains no stamina (gate-only); block movement penalty dead (never refreshed on toggle)~~ **CLOSED in Batch 4 (`c16fecd`)** — sprint drains 7/s while armed + moving (`SprintStaminaDrainPerSecond`, ≈14 s from full stamina, `OnSprintExhausted` broadcast at the floor); `OnBlockingChanged` now bound to `RefreshMovementSpeed` so `BlockSpeedMultiplier = 0.45` actually applies and lifts (see FOURTH IMPLEMENTATION BATCH below) | `SurvivalComponent.h/.cpp` (M-2a), `PlayerCharacter.cpp:141,150,434-459,923-942` (M-2b) |
 | M-3 | Dead code: player `AttackDamage/AttackDistance/AttackCooldownSeconds/LastAttackTimeSeconds`; `bReplicatedDodgeTimer`; `MaxStackSize` unenforced; `PendingOutputTarget`; `GetResearch()`; `IsLocationPowered` dead loop; `StoredCharge` written-never-read; `SetSwitchedOn` unreachable; `AbilityIds` unused; ~~`AttackElement` equipment override unimplemented~~ (**that piece closed in Batch 3** — `GetResolvedAttackElement()` + weapon `Element` field, `021f93a`) | various |
 | M-4 | HUD hardcodes 20°C; `PushNotification` has zero callers; refresh does a camera trace every 0.15s (duplicated cost); party command not replicated (stale on clients) | `HudWidget.cpp:174-176, 135-142, 119, 182` |
 | M-5 | Capture UX: cooldown starts before resonator check; `OnCaptureResult` has no UI subscriber; resonator consumed on failed rolls (design decision needed) | `CaptureComponent.cpp:78-87, 102` |
@@ -75,8 +75,8 @@
 
 | ID | Gap |
 |---|---|
-| L-1 | 7 of 9 automation tests are tautological (assert local arithmetic / literal `true`); no save round-trip test; no ContentLibrary sanity test — **PARTIAL as of Batch 3 (`021f93a`)**: `FAstrawildArmorMathTest` + `FAstrawildStatusEffectFactoryTest` call the production statics (11 tests total, 4 real); the remaining 7 tautological tests + save round-trip + content sanity still pending |
-| L-2 | Thirst decay ≈12 min contradicts documented ~20 min (header comment) |
+| L-1 | 7 of 9 automation tests are tautological (assert local arithmetic / literal `true`); no save round-trip test; no ContentLibrary sanity test — **PARTIAL as of Batch 4 (`c16fecd`)**: `FAstrawildArmorMathTest` + `FAstrawildStatusEffectFactoryTest` + `FAstrawildVendorEconomyTest` call the production statics (**12 tests total, 5 real**); the remaining 7 tautological tests + save round-trip + content sanity still pending |
+| L-2 | ~~Thirst decay ≈12 min contradicts documented ~20 min (header comment)~~ **CLOSED in Batch 4 (`c16fecd`)** — `ThirstDecayPerSecond` 0.14 → 0.0833/s (~20.0 min); header comment documents the fix and now matches the value |
 | L-3 | No dedicated server target file despite MP config (IpNetDriver, MaxPlayers=4) |
 | L-4 | `GameDefaultMap` points at `/Engine/Maps/Entry` — no project map exists (packaging risk) |
 | L-5 | `GetUnlockedBuildings(PlayerId)` dead parameter (research is global) |
@@ -149,3 +149,46 @@ machine (Windows + UE 5.8 + Antigravity).
 ### Next batch (Batch 3 — "Depth")
 
 Batch 3 (Depth) — status effects + hit reactions + armor + laser weapon + gamepad + real tests + vendor UI + biome 2 prep. Scope per Ultimate Gap Analysis §3 (gameplay feel) + §5 (technology framework) + §6 (world biomes) + §11 (QA real tests). The MP batch (parallel after Batch 2): client registry, RPC layer, creature replication, building server-side deduction, node replication, join/leave.
+
+---
+
+## THIRD IMPLEMENTATION BATCH — Wave 5 Batch 3 ("Depth")
+
+Status effects + hit reactions (stagger) + armor framework + weapon-element override closed in commit
+`021f93a` (gap rows M-1 and the `AttackElement` piece of M-3 struck through above; REVIEW-3 caught
+1 HIGH + 2 MEDIUM, all fixed inline). Full evidence table: `ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §23.
+
+---
+
+## FOURTH IMPLEMENTATION BATCH — Wave 6 Batch 4 ("Survival feel + vendor economy")
+
+The four Batch-4 work items below were scoped during RESEARCH and code-reviewed by REVIEW-4
+(read-only compile-risk review of the pre-commit working tree at `5dd69cd`) before landing in commit
+`c16fecd` (12 files, +584/−7). REVIEW-4 verdict: **CLEAN — no HIGH compile blockers and no MEDIUM
+runtime bugs**; 5 LOW notes, of which L-1 (the missing vendor filter in `FindNearestVendor`) was
+applied by the lead at commit time (`CheatManager.cpp:72-77`). All closures are **closed at source
+level** — compile/runtime verification still required on the target machine (Windows + UE 5.8 +
+Antigravity). Full evidence table: `ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §24.
+
+### Closed in Batch 4
+
+| ID | Brief | Files | What's closed | What remains |
+|---|---|---|---|---|
+| **M-2a — Sprint stamina drain** | `UAstrawildSurvivalComponent`: tunable `SprintStaminaDrainPerSecond = 7.0` (≈14 s sprint from 100 stamina); `SetSprintDrainActive(bool)` + private server-side-only `bSprintDrainActive`; `TickComponent` drains INSTEAD of regenerating while armed AND `IsOwnerMoving()` (>25 cm/s — standing still is free); exhaustion broadcasts `OnSprintExhausted` once. PlayerCharacter arms/clears the drain in `StartSprint`/`StopSprint`, drops sprint on exhaustion, clears everything on death | `AstrawildSurvivalComponent.h/.cpp`, `AstrawildPlayerCharacter.h/.cpp` | The sprint half of gap M-2 — sprinting is no longer free; the exhaustion rule in `RefreshMovementSpeed` is reachable in normal play | MP polish: remote clients see rubber-band until next local speed refresh (REVIEW-4 L-3, accepted — same class as the Batch-3 stagger note, folds into H-12) |
+| **M-2b — Block movement penalty** | `BlockSpeedMultiplier = 0.45` (`CombatComponent.h:83`) was dead code — `OnBlockingChanged` broadcast had no listener. `BeginPlay` now binds it to `RefreshMovementSpeed` so the ×0.45 penalty applies when blocking starts AND lifts when it stops | `AstrawildPlayerCharacter.h/.cpp` | The block half of gap M-2 | Same MP note as above (`bIsBlocking` replicated without an OnRep speed refresh) |
+| **L-2 — Thirst decay alignment** | `ThirstDecayPerSecond` 0.14 → **0.0833/s** (≈11.9 → ≈20.0 min), matching the header's documented "~20 real minutes" design goal; header comment records the fix | `AstrawildSurvivalComponent.h` | Gap L-2 in full | — |
+| **M-11 (lead's work-item id) — Vendor economy: TRANSACTION FLOW** | `EAstrawildVendorResult` UENUM (7 values, `Types.h:215`) + `VendorPrice` on `UAstrawildItemDefinition` + `CurrencyItemId` on `UAstrawildNPCDefinition`; `AAstrawildNPCCharacter::TryPurchase/TrySell` server-authoritative (`GetLocalRole() == ROLE_Authority`, `VendorTradeRangeCm = 450`, full validation before any transfer — no partial transactions); `ComputeVendorSellValue = max(1, price/2)`; Interact toast lists wares + prices + balance; currency `Item_DawnShard` + 5 priced wares at Trader Tam (Berry 2 / WaterFlask 2 / Bandage 3 / Salve 4 / Resonator 6) + Dawn Shard sources (boss ×3, Quest_DawnGuard ×5, starter kit ×10); cheats `AW.BuyItem`/`AW.SellItem` (15 total) with REVIEW-4-L-1-filtered `FindNearestVendor` (600 cm); test `ASTRAWILD.Economy.VendorSellValue` | `AstrawildTypes.h`, `AstrawildDataAssets.h`, `AstrawildNPCCharacter.h/.cpp`, `AstrawildContentLibrary.cpp`, `AstrawildCheatManager.h/.cpp`, `AstrawildAutomationTests.cpp`, `AstrawildPlayerCharacter.cpp` | The vendor **transaction flow** tracked by Ultimate Gap §12 "NPCs" row ("inert vendor") and Roadmap V2 M11's "vendor purchase flow" piece — buying/selling now works end-to-end with real validation, currency and pricing | The **shop UMG screen** (visual shop UI for interacting/remote clients) — deliberately future round: today the player reads the Interact HUD toast and transacts via `AW.BuyItem`/`AW.SellItem`; a remote-client shop UI must also route through a Server RPC before calling the authority-gated API (H-12). Shop stock never depletes in v1 (loot-table `GuaranteedDrops` doubles as a static stock list — documented decision) |
+
+### Note on work-item numbering
+
+"M-11" in Batch 4 refers to the lead's wave-6 work-item id (vendor economy, from Ultimate Gap §12 /
+Roadmap M11), **not** the gap-report's own M-11 row (journal line-of-sight — still OPEN above). The
+gap-report rows closed by this batch are M-2 (both halves) and L-2; the vendor transaction flow had
+no numbered gap-report row of its own and is tracked through the Ultimate Gap §12 "NPCs" row instead.
+
+### Next batch candidates
+
+Remaining from the trackers: H-11 crafting output validation, H-6/H-12 MP batch (RPC layer, server-side
+material deduction, client registries, OnRep speed refreshes), H-13 gamepad bindings, M-3 dead-code
+sweep, shop UMG screen + dialogue-lite, biome 2 prep — plus the never-compiled blocker: first target
+machine compile + 12-test automation run + 17-step playtest.

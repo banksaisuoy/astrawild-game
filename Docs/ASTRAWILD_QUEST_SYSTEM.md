@@ -159,7 +159,8 @@ HUD integration: `GetActiveObjectives()` renders the top-left tracker (`[ ] Coll
 
 `AAstrawildNPCCharacter` (interactable): E → `Quests->StartQuest(NpcDefinition->OfferedQuestId)` when the
 definition carries a quest. Prompt shows the NPC display name. NPC definitions (`UAstrawildNPCDefinition`)
-support `ShopLootTableId`. Schedule/dialogue/faction behavior is PLANNED.
+support `ShopLootTableId` + `CurrencyItemId` (vendor hook — live since Batch 4, see the vendor note
+below). Schedule/dialogue/faction behavior is PLANNED.
 
 **Wave 3:** two CODE_DEFAULT NPCs are registered by the content library and spawned at the starting camp
 by `AAstrawildWorldBootstrapper::SpawnPointsOfInterest`:
@@ -167,9 +168,16 @@ by `AAstrawildWorldBootstrapper::SpawnPointsOfInterest`:
 | NPC | Id | Definition hook | Spawn |
 |---|---|---|---|
 | Warden Maren | `NPC_WardenMaren` | `OfferedQuestId = Quest_FirstLight` (talk to (re-)start the first quest) | (630, −630, 100) |
-| Trader Tam | `NPC_VendorTam` | `ShopLootTableId = Loot_VendorStarter` (definition-level stock; purchase logic NOT IMPLEMENTED) | (−630, −630, 100) |
+| Trader Tam | `NPC_VendorTam` | `ShopLootTableId = Loot_VendorStarter` + `CurrencyItemId = Item_DawnShard` — **live vendor since Batch 4** (transaction flow live; shop UMG screen future round) | (−630, −630, 100) |
 
 Bodies still use the engine capsule placeholder (see Asset Manifest §8/§9).
+
+**Vendor (wave 6 — Batch 4, `c16fecd` — compile pending):** interacting with Trader Tam now ALSO lists
+his wares + prices + the player's Dawn Shard balance as a HUD toast, and the transaction flow is live:
+server-authoritative `AAstrawildNPCCharacter::TryPurchase/TrySell` (450 cm trade range, quantity 1–99,
+no partial transactions; sell = half price floored at 1; junk + the currency itself not sellable). Today
+the player transacts via the `AW.BuyItem`/`AW.SellItem` console cheats — the shop **UMG screen is a
+future round**. Full economy reference: Asset Manifest §8.1 + Gameplay Systems §2 row 32.
 
 ---
 
@@ -182,7 +190,8 @@ Bodies still use the engine capsule placeholder (see Asset Manifest §8/§9).
 | Multiple simultaneous active quests | NOT IMPLEMENTED (single `ActiveQuestId`) |
 | Quest text presentation beyond the HUD tracker | NOT IMPLEMENTED (no dialogue UI) |
 | Per-player quest replication for co-op clients | NOT IMPLEMENTED — component is not replicated; host/SP only today |
-| NPC dialogue/schedule screens, vendor purchase flow | NOT IMPLEMENTED — 2 CODE_DEFAULT NPCs exist (Warden Maren, Trader Tam); interaction is quest-start only; shop table is a data hook |
+| NPC dialogue/schedule screens | NOT IMPLEMENTED — 2 CODE_DEFAULT NPCs exist (Warden Maren, Trader Tam); interaction is quest-start + vendor toast |
+| ~~Vendor purchase flow~~ | **CLOSED in Batch 4 (`c16fecd`)** — `TryPurchase`/`TrySell` transaction flow live at Trader Tam (Dawn Shard currency, wares + prices + balance toast, `AW.BuyItem`/`AW.SellItem` cheats). The **shop UMG screen** (visual shop UI) remains NOT IMPLEMENTED — future round |
 
 ---
 

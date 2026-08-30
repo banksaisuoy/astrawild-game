@@ -1,6 +1,6 @@
 # ASTRAWILD — ULTIMATE GAP ANALYSIS
 
-**Date:** 2026-08-30
+**Date:** 2026-08-30 (wave 6 sync — Batch 4 rows updated: vendor economy live, content counts refreshed)
 **Compared against:** `ASTRAWILD_ULTIMATE_PRODUCTION_ROADMAP_V3.md` (long-term), `ASTRAWILD_PRODUCTION_MASTER_PLAN_V2.md` + `ASTRAWILD_PRODUCTION_CHECKLIST_V2.md` (source of truth)
 **Evidence base:** `ASTRAWILD_UE5_PRODUCTION_AUDIT.md`, `ASTRAWILD_IMPLEMENTATION_GAP_REPORT.md`
 **Constraint honored:** "ห้ามสร้าง content จำนวนมากก่อน architecture ผ่าน" — this analysis prioritizes architecture and loop integrity over content volume. Vertical Slice A (Roadmap §39) is the target shape.
@@ -231,8 +231,8 @@
 | Dungeons | 1 linear code dungeon | Slice A: 1 (fix completion first) | Batch 1-2 |
 | Bosses | 1 coded (unspawned) | Slice A: 1 | Batch 1 |
 | Quests | 6 (halts at 4) | Slice A: main chain complete | Batch 2 |
-| NPCs | 2 (quest-giver + inert vendor) | Vendor functional (buy/sell with Loot_VendorStarter); dialogue-lite | Batch 3 |
-| Items/recipes | 19 items / 10 recipes | Sufficient for slice; extend with armor/energy content as tech framework lands | Follow tech batches |
+| NPCs | 2 (quest-giver + **live vendor** — buy/sell transactions live since Batch 4 `c16fecd`) | Vendor functional ✓ (transaction flow closed in Batch 4 — TryPurchase/TrySell + Dawn Shard currency + Interact toast); remaining: shop UMG screen + dialogue-lite | Batch 4 (transaction flow) / future round (shop UI, dialogue) |
+| Items/recipes | 23 items / 13 recipes | Sufficient for slice; extend with armor/energy content as tech framework lands (armor wave 5 + currency wave 6 landed) | Follow tech batches |
 | Story/lore | Journal + CODE_DEFAULT descriptions | Environmental terminals (ancient recordings) — 3-5 lore entries | Batch 4+ |
 
 ---
@@ -305,3 +305,28 @@ this analysis mean "closed at source level — implementation exists with real l
 integration, verifiable by inspection." They do **not** mean compiled-and-run. The user must run
 the engine build on the target machine (Windows + UE 5.8 + Antigravity) to flip these to runtime
 verified status.
+
+---
+
+## BATCH 4 CLOSING NOTE — Wave 6 commit `c16fecd`
+
+Wave 6 Batch 4 ("Survival feel + vendor economy") closed four work items at source level
+(compile status: `NOT RUN` — sandbox has no UE engine). REVIEW-4 (read-only compile-risk review
+of the pre-commit tree at `5dd69cd`) verdict: **CLEAN — no HIGH/MEDIUM findings**; its L-1
+vendor-filter cheat fix was applied by the lead at commit time. Full evidence:
+`ASTRAWILD_UE5_PRODUCTION_AUDIT.md` §24 + `ASTRAWILD_IMPLEMENTATION_GAP_REPORT.md` (FOURTH
+IMPLEMENTATION BATCH).
+
+### Gap rows closed / partially closed in this analysis
+
+| Section | Row | Status |
+|---|---|---|
+| §12 CONTENT GAPS | NPCs — vendor functional | **Transaction flow CLOSED (Batch 4)** — `TryPurchase`/`TrySell` server-authoritative (450 cm range, no partial transactions), Dawn Shard currency (`Item_DawnShard`), 5 priced wares at Trader Tam, sell = half price floored at 1, Interact toast lists stock + balance, `AW.BuyItem`/`AW.SellItem` cheats. **Shop UMG screen remains OPEN** (future round — today trading uses the toast + cheats) |
+| §3 GAMEPLAY FEEL | Sprint stamina economy (see Combat/Survival docs) | **CLOSED (Batch 4 — M-2a)** — sprint drains 7/s while moving (≈14 s from full); block movement penalty ×0.45 live (M-2b — previously dead code) |
+| §11 QA GAPS | Tautological tests | **Further reduced (Batch 4)** — 12 tests total, 5 now call production statics (`+ASTRAWILD.Economy.VendorSellValue`); 7 tautological + save round-trip + content sanity still pending |
+
+### Honest compile status
+
+`NOT RUN (sandbox has no UE engine — must be verified on target machine)`. All "closed" marks mean
+"closed at source level — implementation exists with real logic and correct integration, verifiable
+by inspection." They do **not** mean compiled-and-run.
