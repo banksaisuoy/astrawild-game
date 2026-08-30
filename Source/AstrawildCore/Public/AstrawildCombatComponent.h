@@ -8,6 +8,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildAttackExecuted, bool, bWasHeavy, float, DamageDealt);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildDodgeStateChanged, bool, bIsDodging, float, RemainingInvulnerabilitySeconds);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildBlockingChanged, bool, bIsBlocking);
+// Batch 3 — Item B: player stagger (heavy hits briefly stop movement input effect).
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildStaggerStateChanged, bool, bIsStaggered, float, RemainingSeconds);
 
 /**
  * Third-person action combat (directive §9): light/heavy attacks, dodge with
@@ -30,6 +32,10 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Combat")
     FAstrawildBlockingChanged OnBlockingChanged;
+
+    /** Batch 3 — Item B: fired when the player enters/leaves stagger. */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Combat")
+    FAstrawildStaggerStateChanged OnStaggerStateChanged;
 
     // --- Attack tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Attack", meta=(ClampMin="1.0"))
@@ -76,6 +82,28 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Block", meta=(ClampMin="0.0", ClampMax="0.5"))
     float BlockSpeedMultiplier = 0.45f;
 
+    // --- Armor tunables (Batch 3 — Item C) ---
+    /**
+     * Diminishing-returns constant for the armor formula:
+     * ArmorFraction = ArmorRating / (ArmorRating + ArmorConstantK), clamped to 0..ArmorMaxFraction.
+     * K=100 means rating 100 → exactly 50% reduction (before the clamp).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Armor", meta=(ClampMin="1.0"))
+    float ArmorConstantK = 100.0f;
+
+    /** Hard cap on armor damage reduction — damage is never fully nullified (design sanity). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Armor", meta=(ClampMin="0.0", ClampMax="0.8"))
+    float ArmorMaxFraction = 0.6f;
+
+    // --- Stagger tunables (Batch 3 — Item B) ---
+    /** Incoming hits at or above this (post-mitigation) stagger the player. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Stagger", meta=(ClampMin="0.0"))
+    float StaggerDamageThreshold = 35.0f;
+
+    /** How long the player staggers when the threshold triggers. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Stagger", meta=(ClampMin="0.0"))
+    float PlayerStaggerSeconds = 0.6f;
+
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     // --- Client-side intent entry points (called by input) ---
@@ -98,6 +126,41 @@ public:
     /** Effective block mitigation: shield value when a shield is equipped, unarmed baseline otherwise (wave 3). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Block")
     float GetEffectiveBlockMitigation() const;
+
+    // --- Batch 3 — Item A: element-driven status effects ---
+
+    /**
+     * Pure factory: maps an element to its status effect (Ember→Burn DoT,
+     * Frost→Chill slow, Flora→Poison DoT, Pulse→Shock hard-slow; others → invalid).
+     * One mapping shared by player weapons, Echo attacks and boss hits so the
+     * status vocabulary never fragments.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Status")
+    static FAstrawildStatusEffect MakeElementalStatusEffect(EAstrawildElementType Element, float SourceDamage);
+
+    /** Resolved outgoing element: equipped weapon Element overrides the tunable when set (Item A). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Attack")
+    EAstrawildElementType GetResolvedAttackElement() const;
+
+    // --- Batch 3 — Item C: armor ---
+
+    /** Pure diminishing-returns formula: Rating / (Rating + K), clamped to 0..MaxFraction. Testable. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Armor")
+    static float ComputeArmorFraction(float ArmorRating, float K, float MaxFraction);
+
+    /** Current armor damage-reduction fraction from the equipped torso armor (0 when none). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Armor")
+    float GetEquippedArmorFraction() const;
+
+    // --- Batch 3 — Item B: player stagger ---
+
+    /** True while the player is staggered (movement zeroed by the character). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Stagger")
+    bool IsStaggering() const { return StaggerRemainingSeconds > 0.0f; }
+
+    /** Server-side stagger entry point (clamped to a sane maximum). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Combat|Stagger")
+    void ApplyStagger(float Seconds);
 
     /** Attack bonus granted by the equipped weapon (wave 3). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat|Attack")
@@ -126,6 +189,8 @@ private:
     double LastHeavyAttackTime = -BIG_NUMBER;
     double LastDodgeTime = -BIG_NUMBER;
     float DodgeInvulnerabilityRemaining = 0.0f;
+    // Batch 3 — Item B: server-side stagger countdown (client feedback via OnStaggerStateChanged).
+    float StaggerRemainingSeconds = 0.0f;
 
     UFUNCTION(Server, Reliable)
     void ServerLightAttack();

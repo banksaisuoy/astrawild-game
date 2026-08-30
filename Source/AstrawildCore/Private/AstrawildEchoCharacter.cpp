@@ -1,6 +1,7 @@
 #include "AstrawildEchoCharacter.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEcosystemSubsystem.h"
@@ -59,6 +60,7 @@ void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(AAstrawildEchoCharacter, CurrentAIState);
     DOREPLIFETIME(AAstrawildEchoCharacter, ActiveCommand);
     DOREPLIFETIME(AAstrawildEchoCharacter, OwnerPlayerId);
+    DOREPLIFETIME(AAstrawildEchoCharacter, StatusEffects);
 }
 
 void AAstrawildEchoCharacter::BeginPlay()
@@ -91,6 +93,41 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
     if (GetLocalRole() == ROLE_Authority && !IsDefeated())
     {
         HandleNeedsDecay(DeltaTime);
+
+        // Batch 3 — Item A: status ticks (DoT + expiry + speed multiplier).
+        const float PreviousSpeedMultiplier = GetStatusSpeedMultiplier();
+        ApplyStatusTicks(DeltaTime);
+
+        // Batch 3 — Item B: stagger countdown → restore speed + AI state on expiry.
+        if (StaggerRemainingSeconds > 0.0f)
+        {
+            StaggerRemainingSeconds = FMath::Max(0.0f, StaggerRemainingSeconds - DeltaTime);
+            if (StaggerRemainingSeconds <= 0.0f)
+            {
+                if (CurrentAIState == EAstrawildEchoAIState::Staggered)
+                {
+                    SetAIState(EAstrawildEchoAIState::Idle);
+                }
+                // REVIEW-3 (M-1): explicitly restore walk speed here — the status
+                // multiplier below only recomputes when IT changes, and stagger does
+                // not affect it. Without this, a staggered creature stayed at 0 speed.
+                if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+                {
+                    Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetStatusSpeedMultiplier());
+                }
+            }
+        }
+
+        // Recompute walk speed when the combined status multiplier changed (Chill/Shock).
+        const float NewSpeedMultiplier = GetStatusSpeedMultiplier();
+        if (!FMath::IsNearlyEqual(PreviousSpeedMultiplier, NewSpeedMultiplier))
+        {
+            if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+            {
+                Movement->MaxWalkSpeed = FMath::Max(0.0f,
+                    CachedStats.MoveSpeed * (IsStaggered() ? 0.0f : NewSpeedMultiplier));
+            }
+        }
     }
 }
 
@@ -181,6 +218,122 @@ void AAstrawildEchoCharacter::SetAIState(const EAstrawildEchoAIState NewState)
     }
 }
 
+// --- Batch 3 — Item A: status effects ---
+
+void AAstrawildEchoCharacter::AddStatusEffect(const FAstrawildStatusEffect& Effect)
+{
+    if (GetLocalRole() != ROLE_Authority || Effect.StatusId.IsNone() || Effect.RemainingSeconds <= 0.0f)
+    {
+        return;
+    }
+
+    // Refresh if already applied, otherwise append (mirrors SurvivalComponent).
+    if (FAstrawildStatusEffect* Existing = StatusEffects.FindByPredicate(
+        [&Effect](const FAstrawildStatusEffect& Item) { return Item.StatusId == Effect.StatusId; }))
+    {
+        *Existing = Effect;
+    }
+    else
+    {
+        StatusEffects.Add(Effect);
+    }
+}
+
+bool AAstrawildEchoCharacter::HasStatusEffect(const FName StatusId) const
+{
+    return StatusEffects.ContainsByPredicate(
+        [&StatusId](const FAstrawildStatusEffect& Item) { return Item.StatusId == StatusId; });
+}
+
+float AAstrawildEchoCharacter::GetStatusSpeedMultiplier() const
+{
+    // Combined multiplicative slow from active statuses (Chill 0.5, Shock 0.3).
+    float Multiplier = 1.0f;
+    for (const FAstrawildStatusEffect& Effect : StatusEffects)
+    {
+        if (Effect.SpeedMultiplier > 0.0f && Effect.SpeedMultiplier < 1.0f)
+        {
+            Multiplier *= Effect.SpeedMultiplier;
+        }
+    }
+    return Multiplier;
+}
+
+void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
+{
+    if (StatusEffects.IsEmpty())
+    {
+        return;
+    }
+
+    bool bAnyExpired = false;
+    for (int32 i = StatusEffects.Num() - 1; i >= 0; --i)
+    {
+        FAstrawildStatusEffect& Effect = StatusEffects[i];
+        Effect.RemainingSeconds -= DeltaTime;
+        if (Effect.DamagePerSecond > 0.0f)
+        {
+            CurrentHealth = FMath::Max(0.0f, CurrentHealth - Effect.DamagePerSecond * DeltaTime);
+        }
+        if (Effect.RemainingSeconds <= 0.0f)
+        {
+            StatusEffects.RemoveAt(i);
+            bAnyExpired = true;
+        }
+    }
+
+    if (bAnyExpired)
+    {
+        OnDamaged.Broadcast(this, CurrentHealth);
+        if (IsDefeated())
+        {
+            // DoT can finish a creature — route through the standard defeat pipeline
+            // (loot, events, quest credit) exactly like a direct hit.
+            OnDefeated.Broadcast(this);
+            if (IsValid(EchoDefinition))
+            {
+                if (UAstrawildEcosystemSubsystem* Ecosystem = GetEcosystem())
+                {
+                    Ecosystem->NotifyDefeated(EchoDefinition->DefinitionId);
+                }
+                if (UWorld* World = GetWorld())
+                {
+                    if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+                    {
+                        const bool bWasHostile = EchoDefinition->bHostileToPlayers;
+                        EventBus->PublishEvent(
+                            bWasHostile ? TAG_Astrawild_Event_HostileDefeated : TAG_Astrawild_Event_EchoDefeated,
+                            GetInstigator(),
+                            EchoDefinition->DefinitionId,
+                            1,
+                            GetActorLocation());
+                    }
+                }
+            }
+        }
+    }
+}
+
+// --- Batch 3 — Item B: stagger ---
+
+void AAstrawildEchoCharacter::ApplyStagger(const float Seconds)
+{
+    if (GetLocalRole() != ROLE_Authority || Seconds <= 0.0f || IsDefeated())
+    {
+        return;
+    }
+
+    // Clamp so stacked sources can never perma-lock a creature.
+    StaggerRemainingSeconds = FMath::Max(StaggerRemainingSeconds, FMath::Min(Seconds, 2.0f));
+    SetAIState(EAstrawildEchoAIState::Staggered);
+
+    // Zero movement immediately (restored by Tick when the countdown expires).
+    if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+    {
+        Movement->MaxWalkSpeed = 0.0f;
+    }
+}
+
 bool AAstrawildEchoCharacter::ApplyDamage(const float DamageAmount)
 {
     return ApplyElementalDamage(DamageAmount, EAstrawildElementType::None) > 0.0f;
@@ -216,6 +369,24 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
 
     CurrentHealth = FMath::Max(0.0f, CurrentHealth - MitigatedDamage);
     OnDamaged.Broadcast(this, CurrentHealth);
+
+    // Batch 3 — Item A: apply the element's status effect (Burn/Chill/Poison/Shock)
+    // through the shared factory. One vocabulary for player weapons and Echo attacks.
+    if (InElement != EAstrawildElementType::None)
+    {
+        const FAstrawildStatusEffect StatusEffect = UAstrawildCombatComponent::MakeElementalStatusEffect(InElement, MitigatedDamage);
+        if (!StatusEffect.StatusId.IsNone())
+        {
+            AddStatusEffect(StatusEffect);
+        }
+    }
+
+    // Batch 3 — Item B: heavy hits stagger — a single hit at or above 20% of max
+    // health interrupts AI and zeroes movement briefly (hit reaction, zero-asset).
+    if (MitigatedDamage >= GetMaxHealth() * 0.2f)
+    {
+        ApplyStagger(0.8f);
+    }
 
     // Aggressive/Brave personalities fight back harder; the AI controller listens to OnDamaged.
     if (IsDefeated())

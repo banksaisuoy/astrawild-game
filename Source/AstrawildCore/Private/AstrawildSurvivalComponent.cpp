@@ -94,7 +94,10 @@ void UAstrawildSurvivalComponent::ApplyStatusTicks(const float DeltaTime)
         }
         if (Effect.RemainingSeconds <= 0.0f)
         {
+            // Batch 3 — Item A: broadcast expiry so listeners (movement speed) refresh.
+            const FName ExpiredId = Effect.StatusId;
             StatusEffects.RemoveAt(i);
+            OnStatusEffectRemoved.Broadcast(ExpiredId);
         }
     }
 }
@@ -182,6 +185,12 @@ void UAstrawildSurvivalComponent::FullRestore()
     Stats.Hunger = 100.0f;
     Stats.Thirst = 100.0f;
     Stats.bIsDead = false;
+    // REVIEW-3 (M-2): broadcast removal before clearing so listeners (movement speed)
+    // refresh — a Chilled/Shocked player used to keep the stale slow after a full rest.
+    for (const FAstrawildStatusEffect& Effect : StatusEffects)
+    {
+        OnStatusEffectRemoved.Broadcast(Effect.StatusId);
+    }
     StatusEffects.Reset();
     OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
 }
@@ -206,6 +215,12 @@ void UAstrawildSurvivalComponent::SetStatsForRestore(const FAstrawildSurvivalSta
     if (Stats.Health <= 0.0f)
     {
         Stats.Health = 1.0f;
+    }
+    // REVIEW-3 (M-2): same removal-broadcast-before-clear as FullRestore — loading a
+    // save while Chilled/Shocked must not leave a permanent stale slow.
+    for (const FAstrawildStatusEffect& Effect : StatusEffects)
+    {
+        OnStatusEffectRemoved.Broadcast(Effect.StatusId);
     }
     StatusEffects.Reset();
     OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
@@ -235,6 +250,21 @@ bool UAstrawildSurvivalComponent::HasStatusEffect(const FName StatusId) const
 {
     return StatusEffects.ContainsByPredicate(
         [&StatusId](const FAstrawildStatusEffect& Item) { return Item.StatusId == StatusId; });
+}
+
+float UAstrawildSurvivalComponent::GetStatusSpeedMultiplier() const
+{
+    // Batch 3 — Item A: combine every active speed-affecting status multiplicatively
+    // (e.g. Chill 0.5 alone → 0.5; Chill + Shock would be 0.15 — rare but consistent).
+    float Multiplier = 1.0f;
+    for (const FAstrawildStatusEffect& Effect : StatusEffects)
+    {
+        if (Effect.SpeedMultiplier > 0.0f && Effect.SpeedMultiplier < 1.0f)
+        {
+            Multiplier *= Effect.SpeedMultiplier;
+        }
+    }
+    return Multiplier;
 }
 
 void UAstrawildSurvivalComponent::SetGodMode(const bool bEnabled)

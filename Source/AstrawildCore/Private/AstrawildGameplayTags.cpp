@@ -18,6 +18,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_ReturnHome, "State.Creature.
 // Audit M-12: previously missing states.
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Injured, "State.Creature.Injured");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Dead, "State.Creature.Dead");
+// Batch 3 — Item B: staggered reaction state.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Creature_Staggered, "State.Creature.Staggered");
 
 // --- State.Player.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_State_Player_Dead, "State.Player.Dead");
@@ -36,6 +38,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Hungry, "Status.Hungry");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Thirsty, "Status.Thirsty");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Cold, "Status.Cold");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Overheated, "Status.Overheated");
+// Batch 3 — Item A: element-driven statuses + Item B stagger.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Chilled, "Status.Chilled");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Shocked, "Status.Shocked");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Status_Staggered, "Status.Staggered");
 
 // --- Element.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Element_None, "Element.None");

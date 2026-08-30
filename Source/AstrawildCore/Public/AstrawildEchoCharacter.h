@@ -99,6 +99,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
     FName OwnerPlayerId = NAME_None;
 
+    /**
+     * Batch 3 — Item A: active status effects (Burn/Chill/Poison/Shock). Server ticks
+     * (DoT + expiry + speed multiplier), replicated so clients can render feedback.
+     * Deliberately NOT persisted — transient combat state (restores clear it).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
+    TArray<FAstrawildStatusEffect> StatusEffects;
+
     /** Assigned work site for base jobs (directive §18). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TWeakObjectPtr<AAstrawildWorkSiteActor> AssignedWorkSite;
@@ -190,6 +198,28 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     void SetAIState(EAstrawildEchoAIState NewState);
 
+    // --- Batch 3 — Item A: status effects (server-authoritative) ---
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Status")
+    void AddStatusEffect(const FAstrawildStatusEffect& Effect);
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Status")
+    bool HasStatusEffect(FName StatusId) const;
+
+    /** Combined speed multiplier from active statuses (1.0 when unaffected). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Status")
+    float GetStatusSpeedMultiplier() const;
+
+    // --- Batch 3 — Item B: stagger (heavy-hit reaction) ---
+
+    /** True while staggered — AI pauses and movement zeroes. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Stagger")
+    bool IsStaggered() const { return StaggerRemainingSeconds > 0.0f; }
+
+    /** Server-side stagger entry point (clamped; zeroes speed, sets the AI state). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Stagger")
+    void ApplyStagger(float Seconds);
+
     // --- Save/load v2 (schema v2, directive §27) ---
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
@@ -214,6 +244,9 @@ protected:
 private:
     FAstrawildEchoStats CachedStats;
 
+    /** Batch 3 — Item B: server-side stagger countdown (client feedback via replicated CurrentAIState). */
+    float StaggerRemainingSeconds = 0.0f;
+
     /** Needs simulate at a throttled cadence based on ecosystem LOD tier (directive §34). */
     float NeedsDecayAccumulator = 0.0f;
 
@@ -221,6 +254,8 @@ private:
     void RegisterWithEcosystem();
     void UnregisterFromEcosystem();
     class UAstrawildEcosystemSubsystem* GetEcosystem() const;
+    /** Batch 3 — Item A: server tick of DoT/expiry/speed for StatusEffects. */
+    void ApplyStatusTicks(float DeltaTime);
 
     /**
      * Navigation invoker (audit C-3): the zero-asset world has no authored navmesh —

@@ -125,6 +125,16 @@ void AAstrawildPlayerCharacter::BeginPlay()
     if (SurvivalComponent)
     {
         SurvivalComponent->OnDied.AddDynamic(this, &AAstrawildPlayerCharacter::OnPlayerDied);
+        // Batch 3 — Item A: refresh speed when a status effect applies/expires
+        // (Chill/Shock change the combined multiplier).
+        SurvivalComponent->OnStatusEffectApplied.AddDynamic(this, &AAstrawildPlayerCharacter::OnStatusSpeedChanged);
+        SurvivalComponent->OnStatusEffectRemoved.AddDynamic(this, &AAstrawildPlayerCharacter::OnStatusSpeedChanged);
+    }
+
+    // Batch 3 — Item B: refresh speed when the stagger state changes.
+    if (CombatComponent)
+    {
+        CombatComponent->OnStaggerStateChanged.AddDynamic(this, &AAstrawildPlayerCharacter::OnStaggerChanged);
     }
 
     // Input context binding also runs here for the initial spawn; PossessedBy covers
@@ -444,6 +454,19 @@ void AAstrawildPlayerCharacter::RefreshMovementSpeed()
         TargetSpeed *= CombatComponent->BlockSpeedMultiplier;
     }
 
+    // Batch 3 — Item B: stagger zeroes movement until it expires.
+    if (CombatComponent && CombatComponent->IsStaggering())
+    {
+        SetMovementSpeed(0.0f);
+        return;
+    }
+
+    // Batch 3 — Item A: combined status slow (Chill 0.5, Shock 0.3) multiplies speed.
+    if (SurvivalComponent)
+    {
+        TargetSpeed *= SurvivalComponent->GetStatusSpeedMultiplier();
+    }
+
     SetMovementSpeed(TargetSpeed);
 }
 
@@ -718,8 +741,10 @@ void AAstrawildPlayerCharacter::EquipBest(const FInputActionValue& Value)
     }
 
     // Equip-best (wave 3): strongest owned weapon by AttackPower + strongest shield by BlockMitigation.
+    // Batch 3 — Item C: also picks the strongest torso armor by ArmorRating.
     const UAstrawildItemDefinition* BestWeapon = nullptr;
     const UAstrawildItemDefinition* BestShield = nullptr;
+    const UAstrawildItemDefinition* BestArmor = nullptr;
     for (const FAstrawildItemStack& Stack : InventoryComponent->GetItemStacks())
     {
         const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Stack.ItemId);
@@ -735,6 +760,10 @@ void AAstrawildPlayerCharacter::EquipBest(const FInputActionValue& Value)
         {
             BestShield = ItemDef;
         }
+        if (ItemDef->ArmorRating > 0.0f && (!BestArmor || ItemDef->ArmorRating > BestArmor->ArmorRating))
+        {
+            BestArmor = ItemDef;
+        }
     }
 
     if (BestWeapon)
@@ -745,9 +774,14 @@ void AAstrawildPlayerCharacter::EquipBest(const FInputActionValue& Value)
     {
         InventoryComponent->EquipItem(BestShield->ItemId);
     }
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Equip-best: weapon=%s shield=%s."),
+    if (BestArmor)
+    {
+        InventoryComponent->EquipItem(BestArmor->ItemId);
+    }
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Equip-best: weapon=%s shield=%s armor=%s."),
         BestWeapon ? *BestWeapon->ItemId.ToString() : TEXT("none"),
-        BestShield ? *BestShield->ItemId.ToString() : TEXT("none"));
+        BestShield ? *BestShield->ItemId.ToString() : TEXT("none"),
+        BestArmor ? *BestArmor->ItemId.ToString() : TEXT("none"));
 }
 
 void AAstrawildPlayerCharacter::DeleteBuilding(const FInputActionValue& Value)
@@ -840,6 +874,18 @@ void AAstrawildPlayerCharacter::OnPlayerDied()
             GameMode->RequestPlayerRespawn(GetController(), 5.0f);
         }
     }
+}
+
+void AAstrawildPlayerCharacter::OnStatusSpeedChanged(FName StatusId)
+{
+    // Batch 3 — Item A: Chill/Shock application or expiry changes the combined multiplier.
+    RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::OnStaggerChanged(bool bIsStaggered, float RemainingSeconds)
+{
+    // Batch 3 — Item B: entering stagger zeroes speed; leaving restores it.
+    RefreshMovementSpeed();
 }
 
 void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)

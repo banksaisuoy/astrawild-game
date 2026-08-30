@@ -202,7 +202,9 @@ enum class EAstrawildEchoAIState : uint8
     Work UMETA(DisplayName="Work"),
     ReturnHome UMETA(DisplayName="Return Home"),
     Injured UMETA(DisplayName="Injured"),
-    Dead UMETA(DisplayName="Dead")
+    Dead UMETA(DisplayName="Dead"),
+    // Batch 3 — Item B: appended-only (serialization-safe for existing saves).
+    Staggered UMETA(DisplayName="Staggered")
 };
 
 /** Base work types for Echoes (directive §18). */

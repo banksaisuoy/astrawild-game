@@ -67,6 +67,20 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0", ClampMax="0.8"))
     float BlockMitigation = 0.0f;
 
+    /**
+     * Batch 3 — Item A: element carried by equipment (weapons). None = fall back to
+     * the combat component's AttackElement tunable (legacy behaviour).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    EAstrawildElementType Element = EAstrawildElementType::None;
+
+    /**
+     * Batch 3 — Item C: armor rating for torso armor. Feeds the diminishing-returns
+     * damage-reduction formula ComputeArmorFraction(Rating, K) on the combat component.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0"))
+    float ArmorRating = 0.0f;
+
     /** Echo food preference bonus multiplier when fed this item (directive §8). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food", meta=(ClampMin="0.0", ClampMax="3.0"))
     float EchoFeedValue = 0.0f;

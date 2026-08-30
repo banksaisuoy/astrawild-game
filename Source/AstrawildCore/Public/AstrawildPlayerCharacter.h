@@ -229,6 +229,14 @@ protected:
     UFUNCTION()
     void OnPlayerDied();
 
+    /** Batch 3 — Item A: status applied/ expired → recompute movement speed. */
+    UFUNCTION()
+    void OnStatusSpeedChanged(FName StatusId);
+
+    /** Batch 3 — Item B: stagger entered/ left → recompute movement speed. */
+    UFUNCTION()
+    void OnStaggerChanged(bool bIsStaggered, float RemainingSeconds);
+
 private:
     void SetMovementSpeed(float NewSpeed);
     double LastAttackTimeSeconds = -BIG_NUMBER;

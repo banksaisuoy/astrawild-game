@@ -8,6 +8,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAstrawildPlayerDied);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildSurvivalStatsChanged, float, Health, float, Stamina);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildStatusEffectApplied, FName, StatusId);
+// Batch 3 — Item A: fired when a status effect expires so speed can refresh.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildStatusEffectRemoved, FName, StatusId);
 
 /**
  * Player survival vitals — server-authoritative (directive §11/§28).
@@ -30,6 +32,10 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Survival")
     FAstrawildStatusEffectApplied OnStatusEffectApplied;
+
+    /** Batch 3 — Item A: fired when a status effect expires (speed refresh trigger). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Survival")
+    FAstrawildStatusEffectRemoved OnStatusEffectRemoved;
 
     // --- Tunables (migrate to data asset later) ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Rates", meta=(ClampMin="0.0"))
@@ -96,6 +102,13 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
     bool HasStatusEffect(FName StatusId) const;
+
+    /**
+     * Batch 3 — Item A: combined movement multiplier from every active speed-affecting
+     * status (Chill 0.5, Shock 0.3, ...). 1.0 when nothing slows the player.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
+    float GetStatusSpeedMultiplier() const;
 
     /** Debug/cheat. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")

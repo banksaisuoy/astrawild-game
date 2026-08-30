@@ -225,6 +225,14 @@ void AAstrawildEchoBossCharacter::ExecuteAttack(const float DeltaTime)
                 ? Player->CombatComponent->GetMitigatedIncomingDamage(RawDamage)
                 : RawDamage;
             Survival->ApplyDamage(Mitigated);
+
+            // Batch 3 — Item B: boss hits are heavy by design — always stagger the
+            // player when the swing actually lands (dodged hits never reach here).
+            if (Player->CombatComponent)
+            {
+                Player->CombatComponent->ApplyStagger(Player->CombatComponent->PlayerStaggerSeconds);
+            }
+
             UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss hit player for %.1f (phase %d%s)."),
                 Mitigated, CurrentPhase, bEnraged ? TEXT(" ENRAGED") : TEXT(""));
         }

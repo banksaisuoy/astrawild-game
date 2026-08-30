@@ -51,6 +51,10 @@ public:
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     FName EquippedShieldId = NAME_None;
 
+    /** Batch 3 — Item C: equipped torso armor persists (additive, no schema bump). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName EquippedArmorId = NAME_None;
+
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     FAstrawildSurvivalStats PlayerSurvival;
 

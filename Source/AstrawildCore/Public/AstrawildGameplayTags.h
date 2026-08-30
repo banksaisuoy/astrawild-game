@@ -24,6 +24,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_ReturnHome);
 // Audit M-12: enum states previously missing their tags (dead/injured had no representation).
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Injured);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Dead);
+// Batch 3 — Item B: staggered reaction state (heavy hits / Pulse shock).
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Creature_Staggered);
 
 // --- State.Player.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_State_Player_Dead);
@@ -42,6 +44,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Hungry);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Thirsty);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Cold);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Overheated);
+// Batch 3 — Item A: element-driven status effects (Frost→Chilled, Pulse→Shocked)
+// and Item B stagger. Burning/Poisoned above already map to Ember/Flora.
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Chilled);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Shocked);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Status_Staggered);
 
 // --- Element.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Element_None);

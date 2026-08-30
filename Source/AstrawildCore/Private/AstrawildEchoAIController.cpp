@@ -130,9 +130,17 @@ void AAstrawildEchoAIController::Think()
         return;
     }
 
-    const float DeltaThink = ThinkIntervalSeconds;
-    TransitionTo(DecideState());
-    ExecuteState(DeltaThink);
+    // Batch 3 — Item B: while staggered, skip decisions/actions but STILL re-arm the
+    // think timer below (a naive early-return here would permanently kill the AI loop).
+    if (Echo->IsStaggered())
+    {
+        StopMovement();
+    }
+    else
+    {
+        TransitionTo(DecideState());
+        ExecuteState(ThinkIntervalSeconds);
+    }
 
     // LOD-aware think rate (directive §34): far creatures think slower.
     float Interval = ThinkIntervalSeconds;
@@ -600,6 +608,24 @@ bool AAstrawildEchoAIController::TryAttackTarget(AActor* Target, const float Del
             if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
             {
                 Survival->ApplyDamage(Mitigated);
+
+                // Batch 3 — Item A: the attacker's element applies its status effect to
+                // the PLAYER too (Ember burn, Frost chill, Flora poison, Pulse shock).
+                if (Element != EAstrawildElementType::None)
+                {
+                    const FAstrawildStatusEffect StatusEffect =
+                        UAstrawildCombatComponent::MakeElementalStatusEffect(Element, Mitigated);
+                    if (!StatusEffect.StatusId.IsNone())
+                    {
+                        Survival->AddStatusEffect(StatusEffect);
+                    }
+                }
+
+                // Batch 3 — Item B: heavy incoming hits stagger the player.
+                if (Mitigated >= Combat->StaggerDamageThreshold)
+                {
+                    Combat->ApplyStagger(Combat->PlayerStaggerSeconds);
+                }
                 return true;
             }
         }

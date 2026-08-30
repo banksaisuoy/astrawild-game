@@ -21,6 +21,7 @@ void UAstrawildInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePr
     DOREPLIFETIME(UAstrawildInventoryComponent, Items);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedItemId);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedShieldItemId);
+    DOREPLIFETIME(UAstrawildInventoryComponent, EquippedArmorItemId);
 }
 
 void UAstrawildInventoryComponent::BeginPlay()
@@ -247,6 +248,17 @@ bool UAstrawildInventoryComponent::EquipItem(const FName ItemId)
             {
                 EquippedShieldItemId = ItemId;
             }
+            // Batch 3 — Item C: torso armor routes to its own slot (must come before
+            // the statless legacy fallback below).
+            else if (ItemDef->ArmorRating > 0.0f)
+            {
+                const FName Previous = EquippedArmorItemId;
+                EquippedArmorItemId = ItemId;
+                if (Previous != ItemId)
+                {
+                    OnArmorChanged.Broadcast(EquippedArmorItemId);
+                }
+            }
             else
             {
                 // Statless equipment keeps the legacy weapon slot behaviour.
@@ -263,6 +275,12 @@ void UAstrawildInventoryComponent::Unequip()
 {
     EquippedItemId = NAME_None;
     EquippedShieldItemId = NAME_None;
+    // Batch 3 — Item C: clear the armor slot too.
+    if (!EquippedArmorItemId.IsNone())
+    {
+        EquippedArmorItemId = NAME_None;
+        OnArmorChanged.Broadcast(NAME_None);
+    }
     OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
 }
 
@@ -296,6 +314,40 @@ float UAstrawildInventoryComponent::GetEquippedShieldMitigation() const
         }
     }
     return 0.0f;
+}
+
+float UAstrawildInventoryComponent::GetEquippedArmorRating() const
+{
+    // Batch 3 — Item C: armor rating for the combat component's damage-reduction formula.
+    if (EquippedArmorItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedArmorItemId))
+        {
+            return ItemDef->ArmorRating;
+        }
+    }
+    return 0.0f;
+}
+
+EAstrawildElementType UAstrawildInventoryComponent::GetEquippedWeaponElement() const
+{
+    // Batch 3 — Item A: the equipped weapon's element overrides the combat tunable.
+    if (EquippedItemId.IsNone())
+    {
+        return EAstrawildElementType::None;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedItemId))
+        {
+            return ItemDef->Element;
+        }
+    }
+    return EAstrawildElementType::None;
 }
 
 void UAstrawildInventoryComponent::BroadcastWeight()

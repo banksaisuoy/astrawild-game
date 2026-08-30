@@ -79,6 +79,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
                 SaveGame->PlayerInventory = Player->InventoryComponent->GetItemStacks();
                 SaveGame->EquippedWeaponId = Player->InventoryComponent->EquippedItemId;
                 SaveGame->EquippedShieldId = Player->InventoryComponent->EquippedShieldItemId;
+                // Batch 3 — Item C: persist the torso armor slot.
+                SaveGame->EquippedArmorId = Player->InventoryComponent->EquippedArmorItemId;
             }
         }
 
@@ -228,6 +230,12 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                 if (!SaveGame->EquippedShieldId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedShieldId, 1))
                 {
                     Player->InventoryComponent->EquipItem(SaveGame->EquippedShieldId);
+                }
+                // Batch 3 — Item C: restore the torso armor slot (HasItem-guarded, same
+                // pattern as weapon/shield — stale ids from removed items are skipped).
+                if (!SaveGame->EquippedArmorId.IsNone() && Player->InventoryComponent->HasItem(SaveGame->EquippedArmorId, 1))
+                {
+                    Player->InventoryComponent->EquipItem(SaveGame->EquippedArmorId);
                 }
             }
 

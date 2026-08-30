@@ -201,9 +201,102 @@ bool FAstrawildEquipmentProgressionTest::RunTest(const FString& Parameters)
     const float Unarmed = 0.45f;
     const float Shield = 0.65f;
     const float Incoming = 100.0f;
-    TestEqual(TEXT("Unarmed block passes 55%"), Incoming * (1.0f - Unarmed), 55.0f);
-    TestEqual(TEXT("Shielded block passes 35%"), Incoming * (1.0f - Shield), 35.0f);
+    // REVIEW-3: float-safe assertions (100*(1-0.65f) is off from 35.0f by ~3.8e-6 —
+    // exact TestEqual could false-fail depending on platform float semantics).
+    TestTrue(TEXT("Unarmed block passes ~55%"), FMath::Abs(Incoming * (1.0f - Unarmed) - 55.0f) < KINDA_SMALL_NUMBER);
+    TestTrue(TEXT("Shielded block passes ~35%"), FMath::Abs(Incoming * (1.0f - Shield) - 35.0f) < KINDA_SMALL_NUMBER);
     TestTrue(TEXT("Shield strictly improves block"), Shield > Unarmed);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Armor framework (Batch 3 — Item C): diminishing-returns damage reduction.
+// Exercises the REAL production formula (UAstrawildCombatComponent::ComputeArmorFraction),
+// not a re-derivation — closing the "tautological tests" gap one test at a time.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildArmorMathTest,
+    "ASTRAWILD.Equipment.ArmorMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildArmorMathTest::RunTest(const FString& Parameters)
+{
+    const float K = 100.0f;
+    const float MaxFraction = 0.6f;
+
+    // Tier pieces (CODE_DEFAULT wave 5): Fiberweave Vest 20, Emberhide Jacket 45, Crystalplate Cuirass 80.
+    const float VestFraction = UAstrawildCombatComponent::ComputeArmorFraction(20.0f, K, MaxFraction);
+    const float JacketFraction = UAstrawildCombatComponent::ComputeArmorFraction(45.0f, K, MaxFraction);
+    const float CuirassFraction = UAstrawildCombatComponent::ComputeArmorFraction(80.0f, K, MaxFraction);
+
+    // Bounds: no armor → 0%, all tiers strictly improve, diminishing returns ordering.
+    TestEqual(TEXT("No armor reduces nothing"), UAstrawildCombatComponent::ComputeArmorFraction(0.0f, K, MaxFraction), 0.0f);
+    TestTrue(TEXT("Vest (20) reduces ~16.7%"), FMath::Abs(VestFraction - 20.0f / 120.0f) < KINDA_SMALL_NUMBER);
+    TestTrue(TEXT("Jacket (45) reduces ~31%"), FMath::Abs(JacketFraction - 45.0f / 145.0f) < KINDA_SMALL_NUMBER);
+    TestTrue(TEXT("Cuirass (80) reduces ~44%"), FMath::Abs(CuirassFraction - 80.0f / 180.0f) < KINDA_SMALL_NUMBER);
+    TestTrue(TEXT("Tier ordering strictly improves"), VestFraction < JacketFraction && JacketFraction < CuirassFraction);
+
+    // Diminishing returns: doubling rating less than doubles the fraction.
+    const double FractionRatio = static_cast<double>(JacketFraction / VestFraction);
+    TestTrue(TEXT("Doubling rating < doubles reduction (diminishing)"), FractionRatio < 2.0);
+
+    // Clamp: absurd ratings never exceed the hard cap (damage never nullified).
+    TestEqual(TEXT("Rating 1,000,000 clamps to the cap"),
+        UAstrawildCombatComponent::ComputeArmorFraction(1000000.0f, K, MaxFraction), MaxFraction);
+    TestEqual(TEXT("K=0 is degenerate-safe (no reduction)"),
+        UAstrawildCombatComponent::ComputeArmorFraction(80.0f, 0.0f, MaxFraction), 0.0f);
+
+    // Incoming-damage math a player would feel (100 raw hit, blocked, cuirass equipped):
+    // block 65% → 35, then armor 44.4% → 35 * (1 - 0.4444) ≈ 19.4.
+    const float Incoming = 100.0f;
+    const float BlockedThenArmored = Incoming * (1.0f - 0.65f) * (1.0f - CuirassFraction);
+    TestTrue(TEXT("Block + cuirass leaves ~19.4 of a 100 hit"), BlockedThenArmored < 20.0f && BlockedThenArmored > 19.0f);
+    TestTrue(TEXT("Armor never INCREASES damage"), BlockedThenArmored <= Incoming * (1.0f - 0.65f));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Status effects (Batch 3 — Item A): element→effect mapping vocabulary.
+// Exercises the REAL production factory (MakeElementalStatusEffect).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildStatusEffectFactoryTest,
+    "ASTRAWILD.Combat.StatusEffectFactory",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildStatusEffectFactoryTest::RunTest(const FString& Parameters)
+{
+    // Ember → Burn: 4s DoT whose DPS scales with the applying hit.
+    const FAstrawildStatusEffect Burn = UAstrawildCombatComponent::MakeElementalStatusEffect(EAstrawildElementType::Ember, 40.0f);
+    TestTrue(TEXT("Ember maps to Burn"), Burn.StatusId == TEXT("Status.Burning"));
+    TestEqual(TEXT("Burn lasts 4s"), Burn.RemainingSeconds, 4.0f);
+    TestEqual(TEXT("Burn DPS = 2 + 40*0.05 = 4"), Burn.DamagePerSecond, 4.0f);
+    TestEqual(TEXT("Burn does not slow"), Burn.SpeedMultiplier, 1.0f);
+
+    // Frost → Chill: pure slow, no damage.
+    const FAstrawildStatusEffect Chill = UAstrawildCombatComponent::MakeElementalStatusEffect(EAstrawildElementType::Frost, 40.0f);
+    TestTrue(TEXT("Frost maps to Chilled"), Chill.StatusId == TEXT("Status.Chilled"));
+    TestEqual(TEXT("Chill lasts 3s"), Chill.RemainingSeconds, 3.0f);
+    TestEqual(TEXT("Chill does no damage"), Chill.DamagePerSecond, 0.0f);
+    TestEqual(TEXT("Chill halves speed"), Chill.SpeedMultiplier, 0.5f);
+
+    // Flora → Poison: flat DoT.
+    const FAstrawildStatusEffect Poison = UAstrawildCombatComponent::MakeElementalStatusEffect(EAstrawildElementType::Flora, 40.0f);
+    TestTrue(TEXT("Flora maps to Poisoned"), Poison.StatusId == TEXT("Status.Poisoned"));
+    TestEqual(TEXT("Poison lasts 6s"), Poison.RemainingSeconds, 6.0f);
+    TestEqual(TEXT("Poison DPS flat 2"), Poison.DamagePerSecond, 2.0f);
+
+    // Pulse → Shock: brief hard slow.
+    const FAstrawildStatusEffect Shock = UAstrawildCombatComponent::MakeElementalStatusEffect(EAstrawildElementType::Pulse, 40.0f);
+    TestTrue(TEXT("Pulse maps to Shocked"), Shock.StatusId == TEXT("Status.Shocked"));
+    TestEqual(TEXT("Shock lasts 0.8s"), Shock.RemainingSeconds, 0.8f);
+    TestEqual(TEXT("Shock slows to 30%"), Shock.SpeedMultiplier, 0.3f);
+
+    // None/Light/Ash → no status (invalid id → callers skip).
+    for (const EAstrawildElementType NoStatus : { EAstrawildElementType::None, EAstrawildElementType::Light, EAstrawildElementType::Ash })
+    {
+        const FAstrawildStatusEffect Nothing = UAstrawildCombatComponent::MakeElementalStatusEffect(NoStatus, 40.0f);
+        TestTrue(TEXT("Non-elemental attacks apply no status"), Nothing.StatusId.IsNone());
+        TestEqual(TEXT("Invalid status has zero duration"), Nothing.RemainingSeconds, 0.0f);
+    }
     return true;
 }
 

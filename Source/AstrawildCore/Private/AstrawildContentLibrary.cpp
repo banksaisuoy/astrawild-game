@@ -174,7 +174,24 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* CrystalBlade = MakeItem(Outer, TEXT("Item_CrystalBlade"), TEXT("Dawn Crystal Blade"), EAstrawildItemCategory::Equipment, 3.0f, 1);
     CrystalBlade->AttackPower = 14.0f;
+    // Batch 3 — Item A: tier-3 weapon carries the Pulse element → attacks apply Shock.
+    CrystalBlade->Element = EAstrawildElementType::Pulse;
     Registry->RegisterItem(CrystalBlade);
+
+    // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): torso progression. ---
+    // Rating feeds ComputeArmorFraction(Rating, K=100) → 17% / 31% / 44% reduction.
+
+    UAstrawildItemDefinition* FiberWeaveVest = MakeItem(Outer, TEXT("Item_FiberWeaveVest"), TEXT("Fiberweave Vest"), EAstrawildItemCategory::Equipment, 3.0f, 1);
+    FiberWeaveVest->ArmorRating = 20.0f;
+    Registry->RegisterItem(FiberWeaveVest);
+
+    UAstrawildItemDefinition* EmberhideJacket = MakeItem(Outer, TEXT("Item_EmberhideJacket"), TEXT("Emberhide Jacket"), EAstrawildItemCategory::Equipment, 5.0f, 1);
+    EmberhideJacket->ArmorRating = 45.0f;
+    Registry->RegisterItem(EmberhideJacket);
+
+    UAstrawildItemDefinition* CrystalplateCuirass = MakeItem(Outer, TEXT("Item_CrystalplateCuirass"), TEXT("Crystalplate Cuirass"), EAstrawildItemCategory::Equipment, 8.0f, 1);
+    CrystalplateCuirass->ArmorRating = 80.0f;
+    Registry->RegisterItem(CrystalplateCuirass);
 }
 
 // ---------------------------------------------------------------------------
@@ -227,6 +244,20 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CrystalBlade"), TEXT("Dawn Crystal Blade"),
         { Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_WoodPlank"), 2), Stack(TEXT("Item_EmberAsh"), 1) },
         { Stack(TEXT("Item_CrystalBlade"), 1) }, 8.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
+
+    // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): armory progression. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FiberWeaveVest"), TEXT("Fiberweave Vest"),
+        { Stack(TEXT("Item_Fiber"), 4), Stack(TEXT("Item_Wood"), 1) },
+        { Stack(TEXT("Item_FiberWeaveVest"), 1) }, 4.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_EmberhideJacket"), TEXT("Emberhide Jacket"),
+        { Stack(TEXT("Item_EmberAsh"), 2), Stack(TEXT("Item_WoodPlank"), 2), Stack(TEXT("Item_Fiber"), 2) },
+        { Stack(TEXT("Item_EmberhideJacket"), 1) }, 6.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CrystalplateCuirass"), TEXT("Crystalplate Cuirass"),
+        { Stack(TEXT("Item_CrystalShard"), 3), Stack(TEXT("Item_WoodPlank"), 3), Stack(TEXT("Item_EmberAsh"), 2) },
+        { Stack(TEXT("Item_CrystalplateCuirass"), 1) }, 9.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
 }
 
 // ---------------------------------------------------------------------------
@@ -381,7 +412,8 @@ void UAstrawildContentLibrary::BuildTechnologies(UAstrawildItemRegistrySubsystem
     // --- Content expansion (CODE_DEFAULT wave 3): the armory branch. ---
 
     Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Armory"), TEXT("Armory"), EAstrawildTechEra::Primitive, 8,
-        { TEXT("Tech_BasicCrafting") }, { TEXT("Recipe_StonehideShield"), TEXT("Recipe_CrystalBlade") }, {}));
+        { TEXT("Tech_BasicCrafting") }, { TEXT("Recipe_StonehideShield"), TEXT("Recipe_CrystalBlade"),
+        TEXT("Recipe_FiberWeaveVest"), TEXT("Recipe_EmberhideJacket"), TEXT("Recipe_CrystalplateCuirass") }, {}));
 }
 
 // ---------------------------------------------------------------------------
@@ -581,5 +613,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 19 items, 10 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 22 items, 13 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs."));
 }

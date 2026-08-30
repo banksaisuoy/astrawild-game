@@ -8,6 +8,9 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildInventoryChanged, FName, ItemId, int32, NewQuantity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildWeightChanged, float, CurrentWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEquipmentChanged, FName, WeaponItemId, FName, ShieldItemId);
+// Batch 3 — Item C: armor slot has its own additive delegate so the existing
+// two-param OnEquipmentChanged signature stays stable for Blueprint consumers.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildArmorChanged, FName, ArmorItemId);
 
 /**
  * Data-driven inventory (directive §14): stacks + weight + capacity + equipment
@@ -96,6 +99,17 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment")
     FName EquippedShieldItemId = NAME_None;
 
+    /**
+     * Batch 3 — Item C: torso armor slot. Feeds the diminishing-returns damage
+     * reduction on the combat component (armor rating, not a block multiplier).
+     */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
+    FName EquippedArmorItemId = NAME_None;
+
+    /** Fired whenever the armor slot changes (Batch 3 — additive delegate). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Inventory|Equipment")
+    FAstrawildArmorChanged OnArmorChanged;
+
     /** Fired whenever either equipment slot changes (UI hook). */
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Inventory|Equipment")
     FAstrawildEquipmentChanged OnEquipmentChanged;
@@ -107,6 +121,14 @@ public:
     /** Block mitigation of the equipped shield (0 when none) — resolves via registry. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
     float GetEquippedShieldMitigation() const;
+
+    /** Armor rating of the equipped torso armor (0 when none) — resolves via registry (Batch 3 — Item C). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedArmorRating() const;
+
+    /** Element carried by the equipped weapon (None when unarmed/no element) — Batch 3 — Item A. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    EAstrawildElementType GetEquippedWeaponElement() const;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

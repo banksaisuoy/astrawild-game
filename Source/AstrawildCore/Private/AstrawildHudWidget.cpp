@@ -7,6 +7,7 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInteractable.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
@@ -279,10 +280,12 @@ void UAstrawildHudWidget::RefreshState()
             const UAstrawildItemDefinition* Def = Registry->FindItem(ItemId);
             return Def ? Def->DisplayName.ToString() : ItemId.ToString();
         };
-        EquipmentText->SetText(FText::FromString(FString::Printf(TEXT("Weapon: %s (+%.0f) | Shield: %s"),
+        EquipmentText->SetText(FText::FromString(FString::Printf(TEXT("Weapon: %s (+%.0f) | Shield: %s | Armor: %s (%.0f)"),
             *ResolveName(Pawn->InventoryComponent->EquippedItemId),
             Pawn->InventoryComponent->GetEquippedWeaponAttackPower(),
-            *ResolveName(Pawn->InventoryComponent->EquippedShieldItemId))));
+            *ResolveName(Pawn->InventoryComponent->EquippedShieldItemId),
+            *ResolveName(Pawn->InventoryComponent->EquippedArmorItemId),
+            Pawn->InventoryComponent->GetEquippedArmorRating())));
     }
 
     // Quest tracker.
