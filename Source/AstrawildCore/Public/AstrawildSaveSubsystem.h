@@ -75,6 +75,10 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TArray<FAstrawildJournalEntry> Journal;
+
+    /** Batch 6 — gap M-7: dungeon room-clear progression (additive, no schema bump). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildDungeonSaveData> Dungeons;
 };
 
 UCLASS()

@@ -492,6 +492,35 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
     FName OwnerPlayerId = NAME_None;
 };
 
+/**
+ * Dungeon progression snapshot (Batch 6 — gap M-7): reloads previously resurrected
+ * cleared encounters. Cleared rooms stay cleared; in-progress rooms respawn fresh
+ * (documented regeneration policy — see Docs/ASTRAWILD_DUNGEON_BOSS.md).
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildDungeonSaveData
+{
+    GENERATED_BODY()
+
+    /** Stable dungeon id (matches the generator's DungeonId). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName DungeonId = NAME_None;
+
+    /** Cleared room indices (the entry room is always index 0). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<int32> ClearedRoomIndices;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 RoomsCleared = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 TotalRooms = 0;
+
+    /** True when every room (including the boss room) is cleared. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bCompleted = false;
+};
+
 /** World state saved with the game (directive §27). */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildWorldSaveData

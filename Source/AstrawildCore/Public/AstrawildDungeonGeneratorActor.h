@@ -5,6 +5,8 @@
 #include "AstrawildDungeonRoomActor.h"
 #include "AstrawildDungeonGeneratorActor.generated.h"
 
+class AAstrawildDungeonGateActor;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildDungeonCompleted, class AAstrawildDungeonGeneratorActor*, Dungeon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildDungeonProgress, int32, RoomsCleared, int32, TotalRooms);
 
@@ -12,7 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildDungeonProgress, int32, R
  * Hand-authored modular dungeon generator (directive §23): a linear chain of
  * rooms — Entry → Combat → (Puzzle) → Elite → Boss → Exit — built procedurally
  * from room templates so no .umap is required. Gates stay sealed until the
- * previous room clears.
+ * previous room clears (Batch 6 implements the gate actor for real).
  *
  * Server-authoritative: generation and progression run on the server only.
  */
@@ -29,6 +31,10 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Dungeon")
     FAstrawildDungeonProgress OnDungeonProgress;
+
+    /** Stable dungeon id — the save system maps records to generators through it. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName DungeonId = TEXT("Dungeon_HollowUnderlight");
 
     /** Total rooms including entry and boss. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", meta=(ClampMin="3", ClampMax="12"))
@@ -50,6 +56,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", meta=(ClampMin="0"))
     int32 DungeonCompletionResearchPoints = 10;
 
+    /**
+     * Batch 6: unique technology granted (cost-free, prereq-free) on first
+     * completion — roadmap V3 §21 "bosses drop a unique technology reward".
+     * The Ancient era opens ONLY through the Hollow Underlight.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName RewardTechnologyId = TEXT("Tech_AncientResonance");
+
     virtual void BeginPlay() override;
 
     /** Build the room chain (server). Deterministic given the world seed. */
@@ -62,9 +76,21 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dungeon")
     TArray<AAstrawildDungeonRoomActor*> GetRooms() const { return Rooms; }
 
+    /** Batch 6 — gap M-7: snapshot for the save subsystem. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dungeon")
+    FAstrawildDungeonSaveData ExportForSave() const;
+
+    /** Batch 6 — gap M-7: apply a save record onto the generated rooms (server). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Dungeon")
+    void ApplySavedState(const FAstrawildDungeonSaveData& Data);
+
 private:
     UPROPERTY()
     TArray<TObjectPtr<AAstrawildDungeonRoomActor>> Rooms;
+
+    /** Gates[i] seals the passage between room i and room i+1; opens when room i clears. */
+    UPROPERTY()
+    TArray<TObjectPtr<AAstrawildDungeonGateActor>> Gates;
 
     int32 RoomsCleared = 0;
     FRandomStream RandomStream;

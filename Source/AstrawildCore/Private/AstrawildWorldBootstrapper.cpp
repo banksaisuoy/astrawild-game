@@ -4,6 +4,7 @@
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDungeonGeneratorActor.h"
+#include "AstrawildDungeonPortalActor.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -344,13 +345,34 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
     }
 
     // First dungeon (directive §21/§23): the Hollow Underlight — placed beyond the eastern wilds.
+    const FVector DungeonLocation(ArenaSize * 1.4f, 0.0f, 100.0f);
     AAstrawildDungeonGeneratorActor* Dungeon = World->SpawnActor<AAstrawildDungeonGeneratorActor>(
-        AAstrawildDungeonGeneratorActor::StaticClass(), FVector(ArenaSize * 1.4f, 0.0f, 100.0f), FRotator::ZeroRotator, Params);
+        AAstrawildDungeonGeneratorActor::StaticClass(), DungeonLocation, FRotator::ZeroRotator, Params);
     if (Dungeon)
     {
+        Dungeon->DungeonId = TEXT("Dungeon_HollowUnderlight"); // Batch 6: stable id for the save system.
         Dungeon->RoomCount = 5;
         Dungeon->BossDefinitionId = TEXT("Echo_Gloomfang");
         // Generate() runs in BeginPlay on the server.
+    }
+
+    // Batch 6 — Item C: portal pair. The entrance pad sits at the wilds' edge
+    // (walkable from camp); the exit pad waits beside the dungeon's entry room.
+    // Both publish Event.LocationReached so ReachLocation objectives can fire.
+    const FVector EntranceLocation(ArenaSize * 1.05f, 0.0f, 100.0f);
+    if (AAstrawildDungeonPortalActor* Entrance = World->SpawnActor<AAstrawildDungeonPortalActor>(
+        AAstrawildDungeonPortalActor::StaticClass(), EntranceLocation, FRotator::ZeroRotator, Params))
+    {
+        Entrance->PortalId = TEXT("Location_HollowUnderlight");
+        Entrance->PromptText = FText::FromString(TEXT("Enter the Hollow Underlight [E]"));
+        Entrance->Destination = DungeonLocation + FVector(0.0f, 0.0f, 150.0f);
+    }
+    if (AAstrawildDungeonPortalActor* Exit = World->SpawnActor<AAstrawildDungeonPortalActor>(
+        AAstrawildDungeonPortalActor::StaticClass(), DungeonLocation + FVector(0.0f, 900.0f, 0.0f), FRotator::ZeroRotator, Params))
+    {
+        Exit->PortalId = TEXT("Location_DawnCamp");
+        Exit->PromptText = FText::FromString(TEXT("Return to the Dawn Camp [E]"));
+        Exit->Destination = EntranceLocation + FVector(-300.0f, 0.0f, 0.0f);
     }
 }
 

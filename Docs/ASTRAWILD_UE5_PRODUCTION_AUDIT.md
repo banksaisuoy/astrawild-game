@@ -544,3 +544,35 @@ be verified on UE 5.8 + Antigravity target machine)`.
   tie-rounds-to-even) — no action.
 - LOC reconciliation: REVIEW-4 counted 15,984 on the pre-commit tree (+578/−7); with the L-1 fix
   (+6 lines) the commit `c16fecd` is +584/−7 = **15,990 LOC** (15,413 at `5dd69cd` + 584 − 7).
+
+## 25. Wave 9 Batch 6 status update (dungeon & boss hardening — STEP 22 extension)
+
+Batch 6 ("Hollow Underlight — sealed & remembered") closed the five work items scoped from the
+STEP 22 gap list (gaps M-7 + GAP-H1 remainder + roadmap V3 §21/§22 items). All source-level
+verified; none runtime-verified — compile status remains `NOT RUN (sandbox has no UE engine —
+must be verified on UE 5.8 + Antigravity target machine)`. Design doc:
+**`Docs/ASTRAWILD_DUNGEON_BOSS.md`**.
+
+| Item | Brief | Status | Note |
+|---|---|---|---|
+| **A — Progression gates** | `AAstrawildDungeonGateActor` (NEW; implements the fwd-decl from wave 3): box collision (120×1040×840) + 2 pillars + crossbar (sealed Z=60 → open Z=520); gate *i* between rooms *i*↔*i*+1 opens via `HandleRoomCleared → Gates[i]->OpenGate()`; `bOpen` DOREPLIFETIME + `OnRep_bOpen` re-applies collision (enabled-state does NOT replicate by itself — server + client both call `ApplyGateState`) | `[x] VERIFIED AT SOURCE (compile pending)` | Generator collects room centers during the spawn loop, spawns N−1 gates at midpoints, destroys them on regeneration, reopens from save records |
+| **B — Dungeon save persistence (M-7)** | `FAstrawildDungeonSaveData` (Types.h; additive v2 payload, no schema bump — `EquippedArmorId` precedent): DungeonId/ClearedRoomIndices/RoomsCleared/TotalRooms/bCompleted. `SaveWorld` exports every generator (`ExportForSave`); `LoadWorld` — which runs AFTER the bootstrapper generated the dungeon — applies per DungeonId (`ApplySavedState`): cleared rooms call `RestoreClearedState()` (silent `Destroy()` of regenerated encounters — no defeat events, no loot, no quest double-credit), counters restored from the record, gates reopened, `OnRoomCleared` deliberately NOT rebroadcast so completion rewards never double-fire | `[x] VERIFIED AT SOURCE (compile pending)` | Policy documented: cleared stays cleared; in-progress rooms respawn fresh |
+| **C — Portals + ReachLocation objective** | `AAstrawildDungeonPortalActor` (NEW): interactable pads (IAstrawildInteractable, NPC pattern), entrance `Location_HollowUnderlight` at ArenaSize×1.05 ↔ exit `Location_DawnCamp` beside the entry room; server-guarded teleport (600 cm radius anti-cheat) + publishes `Event.LocationReached` (the tag existed since wave 1 with NO publisher). `QuestComponent` gains the missing `ReachLocation` matcher case | `[x] VERIFIED AT SOURCE (compile pending)` | Dedicated-client routing deferred to H-9 (same policy as `OpenShop` — authority guard + comment) |
+| **D — Boss hardening** | `InitializeFromBossDefinition` (HP ×`BossHealthScale` 5.0 = 550, ATK ×`BossDamageScale` 1.8 = 32.4, weakness/element from data — `BossDefinitionId` was cosmetic with hardcoded 600/30). `ApplyElementalBossDamage(dmg, element)`: `ComputeBossElementalMultiplier` (weakness ×1.5 / own-element ×0.75 / None ×1.0 — the Echo pipeline vocabulary) then the phase pipeline, then `ApplyBossStatus` (shared `MakeElementalStatusEffect` factory; durations ×`BossStatusDurationMultiplier` 0.5; same-id refresh, never stack; DoT rides `ApplyBossDamage` so burn kills fire the full defeat chain; `PhaseWalkSpeed × GetStatusSpeedMultiplier` recomposed each tick). Defeat publishes `Event.HostileDefeated` with distinct `DefeatEventTargetId = Creature_UnderlightWarden` (wild Gloomfang kills can't complete the boss quest). Combat cast-ladder routes through the elemental path. Three pure statics extracted — unit-tested by 3 NEW tests `ASTRAWILD.Dungeon.BossElementalMultiplier/BossPhaseThresholds/BossAttackDamage` (15 total; 8 call production statics) | `[x] VERIFIED AT SOURCE (compile pending)` | Enrage still forces phase 3 directly (skipping phase-2 adds) — preserved wave-3 behavior; health stepping goes one phase at a time so adds always spawn |
+| **E — Ancient-era unique reward** | `Tech_AncientResonance` (Ancient era — the reserved enum value is now used; 25 RP, prereq AdvancedEnergy if researched normally) + `Recipe_AncientResonator` (Ancient Core ×1 + Crystal Shard ×2 + Echo Resonator ×1 → `Item_AncientResonator`: Light element, ATK 18, VendorPrice 8 — the warden's counter) + `ResearchSubsystem::ForceUnlockTech` (NEW: cost/prereq-free, broadcasts OnTechUnlocked + EventBus TechUnlocked, idempotent) granted on first completion + `Quest_HollowUnderlight` (ReachLocation + DefeatCreature the distinct warden id; rewards 2 Salve + 5 DawnShard + 15 RP) chained after Quest 6. Tree totals: 10 techs / 18 recipes / 28 items / 7 quests — log line updated | `[x] VERIFIED AT SOURCE (compile pending)` | The dungeon→loot→craft loop is closed: warden drops the Core that forges the weapon that counters the warden's weakness on the NEXT run |
+
+### 25.1 Batch-6 verification notes (lead self-review, shell-verified)
+
+- Repository validation `Scripts/validate_repository.sh` PASS (v2 ruleset).
+- Brace balance checked on all 6 new/rewritten files; DOREPLIFETIME now **30 across 11 classes**
+  (+gate `bOpen`); automation tests 12 → **15**; C++ files 90 → **94**; LOC 16,698 → **17,730**
+  (+1,032: 740 modified-file insertions + ~380 in the 4 new files + docs).
+- Compile-risk review (self): UHT signatures follow existing patterns (struct-by-value UFUNCTION
+  return `ExportForSave`, const-ref UFUNCTION param `ApplySavedState`, `UFUNCTION()` bare OnRep,
+  forward-declared `AAstrawildDungeonGateActor` in TObjectPtr UPROPERTY — same as the wave-3
+  fwd-decl it replaces); `TArray::Pop()` + `Contains(int32)` + `FindByPredicate` with iterator
+  capture are all plain UE5 API; float `TestEqual` uses the tolerance overload (34.5f = 30×1.15f
+  is within KINDA_SMALL_NUMBER).
+- Known accepted simplifications: gate crossbar/collision snap on OnRep (no animation — art pass);
+  portals authority-guarded like OpenShop; first-player-only room loot unchanged (MP batch);
+  boss AI controller still pending (direct AddMovementInput as before).

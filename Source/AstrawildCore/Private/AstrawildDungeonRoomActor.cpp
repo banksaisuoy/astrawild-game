@@ -78,6 +78,8 @@ void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDef
 
     // Audit C-5: boss rooms spawn the phased boss character (previously a plain Echo
     // spawned here and the whole 3-phase boss class was unreachable dead code).
+    // Batch 6: the boss now derives its stats from the real species definition
+    // (BossDefinitionId was cosmetic before — HP/damage/weakness come from data).
     if (Template.bIsBossRoom)
     {
         FActorSpawnParameters Params;
@@ -87,6 +89,13 @@ void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDef
             AAstrawildEchoBossCharacter::StaticClass(), SpawnLocation, FRotator::ZeroRotator, Params);
         if (Boss)
         {
+            if (CreatureDefinitionIds.Num() > 0)
+            {
+                if (const UAstrawildEchoDefinition* BossDefinition = Registry->FindEcho(CreatureDefinitionIds[0]))
+                {
+                    Boss->InitializeFromBossDefinition(BossDefinition);
+                }
+            }
             BossCreature = Boss;
             UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon boss room %d: phased boss spawned."), RoomIndex);
         }
@@ -169,6 +178,43 @@ void AAstrawildDungeonRoomActor::MarkCleared()
     GrantClearReward();
     OnRoomCleared.Broadcast(this, RoomIndex);
     UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon room %d cleared."), RoomIndex);
+}
+
+void AAstrawildDungeonRoomActor::RestoreClearedState()
+{
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    // Already cleared (e.g. the entry room clears at generation time) — nothing to do.
+    if (bCleared)
+    {
+        return;
+    }
+
+    // Silent teardown: Destroy() bypasses the defeat pipeline entirely, so no
+    // HostileDefeated events, no ecosystem notifications, no loot — all of that
+    // already happened when the room legitimately cleared before the save.
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : EncounterCreatures)
+    {
+        if (AAstrawildEchoCharacter* Creature = Weak.Get())
+        {
+            Creature->Destroy();
+        }
+    }
+    EncounterCreatures.Reset();
+
+    if (AAstrawildEchoBossCharacter* Boss = BossCreature.Get())
+    {
+        Boss->Destroy();
+        BossCreature = nullptr;
+    }
+
+    bCleared = true;
+    // NOTE: no OnRoomCleared broadcast — the generator counts restored rooms itself
+    // (ApplySavedState) so completion rewards never double-fire on load.
+    UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon room %d restored as cleared from save (encounter despawned)."), RoomIndex);
 }
 
 void AAstrawildDungeonRoomActor::GrantClearReward()

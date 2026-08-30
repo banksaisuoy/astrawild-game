@@ -2,6 +2,7 @@
 
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
+#include "AstrawildDungeonGeneratorActor.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -110,6 +111,13 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         SaveGame->Buildings.Add(It->ToSaveData());
     }
 
+    // --- Dungeons (Batch 6 — gap M-7): cleared-room progression so reloads stop
+    //     resurrecting encounters. In-progress rooms respawn fresh by policy.
+    for (TActorIterator<AAstrawildDungeonGeneratorActor> DungeonIt(World); DungeonIt; ++DungeonIt)
+    {
+        SaveGame->Dungeons.Add(DungeonIt->ExportForSave());
+    }
+
     // --- Journal ---
     if (const UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
     {
@@ -119,8 +127,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
     const bool bSaved = UGameplayStatics::SaveGameToSlot(SaveGame, SlotName, UserIndex);
     if (bSaved)
     {
-        UE_LOG(LogAstrawildSave, Log, TEXT("World saved to slot %s (schema %d, %d buildings, roster %d)."),
-            *SlotName, CurrentSchemaVersion, SaveGame->Buildings.Num(), SaveGame->EchoRosterV2.Num());
+        UE_LOG(LogAstrawildSave, Log, TEXT("World saved to slot %s (schema %d, %d buildings, roster %d, %d dungeons)."),
+            *SlotName, CurrentSchemaVersion, SaveGame->Buildings.Num(), SaveGame->EchoRosterV2.Num(), SaveGame->Dungeons.Num());
     }
     else
     {
@@ -287,6 +295,22 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
     {
         Journal->ImportFromSave(SaveGame->Journal);
+    }
+
+    // --- Dungeons (Batch 6 — gap M-7): generators already built their rooms during
+    //     bootstrapper BeginPlay; apply the cleared-room snapshot on top. Cleared
+    //     rooms lose their freshly-spawned encounters; gates reopen in sync.
+    for (TActorIterator<AAstrawildDungeonGeneratorActor> DungeonIt(World); DungeonIt; ++DungeonIt)
+    {
+        const FAstrawildDungeonSaveData* Found = SaveGame->Dungeons.FindByPredicate(
+            [&DungeonIt](const FAstrawildDungeonSaveData& Record)
+            {
+                return Record.DungeonId == DungeonIt->DungeonId;
+            });
+        if (Found)
+        {
+            DungeonIt->ApplySavedState(*Found);
+        }
     }
 
     // Batch 2 — Item C: re-resolve the power grid immediately so the first frame the

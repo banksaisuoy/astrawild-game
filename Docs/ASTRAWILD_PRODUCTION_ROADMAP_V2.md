@@ -36,7 +36,7 @@ Legend: **DONE (code)** = implemented in C++, compile pending · **PARTIAL** = c
 | 19 | Weather System | **DONE (code)** | 8 states, weighted 90-world-min transitions, profiles |
 | 20 | Day/Night Cycle | **DONE (code)** | 1 s = 1 world min, 24-min day, sun arc, activity windows |
 | 21 | Procedural Dawn Fields | **DONE (code)** | WorldBootstrapper: 160 m arena, 26 nodes, wild species rotation, camp + 2 NPCs (wave 3) |
-| 22 | Dungeon & Boss Encounter | **DONE (code)** | Hollow Underlight: deterministic linear chain, room templates + encounters, 3-phase Echo boss, clear-reward loot table (wave 3) — commit `a0634f6` |
+| 22 | Dungeon & Boss Encounter | **DONE (code)** | Hollow Underlight: deterministic linear chain, room templates + encounters, 3-phase Echo boss, clear-reward loot table (wave 3) — commit `a0634f6`. **Hardened in Batch 6**: progression gates (sealed-until-clear), portal pair + ReachLocation publisher, definition-driven elemental boss combat + statuses, dungeon save persistence (M-7), Ancient-era unique tech reward + quest 7 — see `ASTRAWILD_DUNGEON_BOSS.md` |
 | 23 | Save Schema v2 | **DONE (code)** | Schema v2 + FNV-1a + v1 migration + autosave 300 s; additive equipment fields stay v2 (wave 3) |
 | 24 | Vertical Slice Integration | **DONE (code)** — pending playtest | Full loop playable in code; §50 checklist awaits compile |
 | 25 | Multiplayer Architecture Prep | **DONE (code)** | Authority guards, 25 replicated props, 5 server RPCs; co-op playtest PLANNED (Multiplayer doc §5) |

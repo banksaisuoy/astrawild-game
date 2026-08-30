@@ -1,13 +1,13 @@
 # ASTRAWILD — Asset Manifest
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (wave 6 sync — Dawn Shard currency + vendor prices; wave 5 armor items/recipes added retroactively)
+**Date: 2026-08-30** (wave 9 sync — Batch 5 ecosystem/tech content + Batch 6 dungeon/boss content; previously synced at wave 6)
 
 Every piece of CODE_DEFAULT content in the game, with its replacement requirement. This is the
 **REPLACE_BEFORE_RELEASE checklist** for the art/data pass (see `ASTRAWILD_ASSET_PIPELINE.md` for the
 override mechanism: register a data asset with the **same id**).
 
-Totals: **23 items · 13 recipes · 7 Echo species · 10 buildings · 6 technologies · 6 quests ·
+Totals: **28 items · 18 recipes · 10 Echo species · 13 buildings · 10 technologies · 7 quests ·
 2 loot tables · 2 NPCs** — all `Status = CODE_DEFAULT`, all `Replacement = REQUIRED` (data asset +
 art where noted).
 
@@ -20,7 +20,7 @@ art where noted).
 
 ---
 
-## 1. Items (23)
+## 1. Items (28)
 
 | Item | Id | Category | Weight | Stack | Key values | Art requirement |
 |---|---|---|---|---|---|---|
@@ -47,10 +47,15 @@ art where noted).
 | Emberhide Jacket | `Item_EmberhideJacket` | Equipment | 5.0 | 1 | ArmorRating 45 → ≈31.0 % reduction (wave 5 — Batch 3) | Icon + (optionally) world model |
 | Crystalplate Cuirass | `Item_CrystalplateCuirass` | Equipment | 8.0 | 1 | ArmorRating 80 → ≈44.4 % reduction (wave 5 — Batch 3) | Icon + (optionally) world model |
 | Dawn Shard | `Item_DawnShard` | Material | 0.1 | 200 | **Vendor currency** (wave 6 — Batch 4); `VendorPrice 0` — cannot be bought/sold with itself | Icon |
+| Frostbloom | `Item_Frostbloom` | Material | 0.2 | 50 | Rimefang loot; **vendor price 3** (wave 8 — Batch 5) | Icon |
+| Volt Core | `Item_VoltCore` | Material | 0.4 | 30 | Voltmaw loot; **vendor price 4** (wave 8 — Batch 5) | Icon |
+| Hearth Broth | `Item_WarmBroth` | Consumable | 0.6 | 20 | Food 18, Water 12, Heal 10; **vendor price 3** (wave 8 — Batch 5) | Icon |
+| Dawnfield Fertilizer | `Item_Fertilizer` | Material | 0.3 | 50 | Agriculture crafted good; **vendor price 2** (wave 8 — Batch 5) | Icon |
+| Ancient Resonator | `Item_AncientResonator` | Equipment | 3.0 | 1 | AttackPower +18, **Light element** (the Underlight Warden's counter); **vendor price 8** (wave 9 — Batch 6) | Icon + (optionally) world model |
 
 ---
 
-## 2. Recipes (13)
+## 2. Recipes (18)
 
 | Recipe | Id | Inputs | Output | Time | Tech | Station | Replacement |
 |---|---|---|---|---|---|---|---|
@@ -67,10 +72,15 @@ art where noted).
 | Fiberweave Vest | `Recipe_FiberWeaveVest` | Fiber ×4, Wood ×1 | Vest ×1 | 4 s | `Tech_Armory` | `Station_Workbench` | Data asset (wave 5 — Batch 3) |
 | Emberhide Jacket | `Recipe_EmberhideJacket` | Ember Ash ×2, Wood Plank ×2, Fiber ×2 | Jacket ×1 | 6 s | `Tech_Armory` | `Station_Workbench` | Data asset (wave 5 — Batch 3) |
 | Crystalplate Cuirass | `Recipe_CrystalplateCuirass` | Crystal Shard ×3, Wood Plank ×3, Ember Ash ×2 | Cuirass ×1 | 9 s | `Tech_Armory` | `Station_Workbench` | Data asset (wave 5 — Batch 3) |
+| Bulk Dawnwood Planks | `Recipe_PlankBatch` | Wood ×10 | Plank ×6 | 6 s | `Tech_Mechanics` | `Station_Workbench` | Data asset (wave 8 — Batch 5) |
+| Resonator Batch | `Recipe_ResonatorBatch` | Crystal Shard ×2, Volt Core ×1, Fiber ×2 | Resonator ×3 | 8 s | `Tech_Mechanics` | `Station_Workbench` | Data asset (wave 8 — Batch 5) |
+| Hearth Broth | `Recipe_WarmBroth` | Raw Meat ×1, Frostbloom ×1, Berry ×1 | Hearth Broth ×2 | 5 s | `Tech_Thermal` | `Station_Campfire` | Data asset (wave 8 — Batch 5) |
+| Dawnfield Fertilizer | `Recipe_Fertilizer` | Dawnbloom ×2, Fiber ×1, Raw Meat ×1 | Fertilizer ×3 | 4 s | `Tech_Agriculture` | `Station_Campfire` | Data asset (wave 8 — Batch 5) |
+| Ancient Resonator | `Recipe_AncientResonator` | Ancient Core ×1, Crystal Shard ×2, Resonator ×1 | Ancient Resonator ×1 | 10 s | `Tech_AncientResonance` | `Station_Workbench` | Data asset (wave 9 — Batch 6) |
 
 ---
 
-## 3. Echo Species (7)
+## 3. Echo Species (10)
 
 Stats table in `ASTRAWILD_CREATURE_SYSTEM.md` §2. Art: **skeletal mesh + icon per species** (weakness/
 element should read visually). Replacement = `UAstrawildEchoDefinition` data asset with the same id +
@@ -85,10 +95,13 @@ mesh/icon wiring.
 | Gloomfang | `Echo_Gloomfang` | Engine sphere ×0.8 | night-stalker predator silhouette |
 | Sprigling | `Echo_Sprigling` | Engine sphere ×0.8 | herding flora lamb with petal mane |
 | Emberfang | `Echo_Emberfang` | Engine sphere ×0.8 | crepuscular ember predator, ash-trail glow |
+| Rimefang | `Echo_Rimefang` | Engine sphere ×0.8 | frost hostile, Gloomfang's cold rival (wave 8 — Batch 5) |
+| Voltmaw | `Echo_Voltmaw` | Engine sphere ×0.8 | pulse glass-cannon, fastest + highest ATK (wave 8 — Batch 5) |
+| Auroraling | `Echo_Auroraling` | Engine sphere ×0.8 | Ancient-rare light spirit, one per world (wave 8 — Batch 5) |
 
 ---
 
-## 4. Buildings (10)
+## 4. Buildings (13)
 
 Full stat table in `ASTRAWILD_BUILDING_SYSTEM.md` §5. Replacement = `UAstrawildBuildingDefinition` data
 asset + **mesh** (category silhouettes are scaled cubes today).
@@ -105,10 +118,13 @@ asset + **mesh** (category silhouettes are scaled cubes today).
 | Farm Plot | `Building_FarmPlot` | cube 1.2×1.2×1 | tilled soil plot |
 | Research Desk | `Building_ResearchDesk` | cube 1.2×1.2×1 | research desk prop |
 | Echo Feed Trough | `Building_FeedTrough` | cube 1.2×1.2×1 | feed trough prop (husbandry) |
+| Sawmill | `Building_Sawmill` | cube 1.4×1.4×1.2 | sawmill prop — bulk planks (wave 8 — Batch 5) |
+| Hearth Coil | `Building_Heater` | cube 1.2×1.2×1 | heater prop — warmth auras (wave 8 — Batch 5) |
+| Dawn Composter | `Building_Composter` | cube 1.4×1.4×1 | composter prop — fertilizer (wave 8 — Batch 5) |
 
 ---
 
-## 5. Technologies (6)
+## 5. Technologies (10)
 
 | Tech | Id | Cost | Prereqs | Unlocks | Replacement |
 |---|---|---|---|---|---|
@@ -118,10 +134,14 @@ asset + **mesh** (category silhouettes are scaled cubes today).
 | Advanced Energy | `Tech_AdvancedEnergy` | 30 | Electrical | — (future) | Data asset + tree icon |
 | Echo Husbandry | `Tech_Husbandry` | 10 | Cooking | Feed Mix + Salve recipes, Feed Trough | Data asset + tree icon |
 | Armory | `Tech_Armory` | 8 | Basic Crafting | Stonehide Shield + Dawn Crystal Blade recipes (wave 3) | Data asset + tree icon |
+| Mechanical Workshop | `Tech_Mechanics` | 12 | Basic Crafting | Bulk Planks + Resonator Batch recipes, Sawmill (wave 8 — Batch 5) | Data asset + tree icon |
+| Thermal Engineering | `Tech_Thermal` | 18 | Electrical | Hearth Broth recipe, Hearth Coil (wave 8 — Batch 5) | Data asset + tree icon |
+| Agriculture | `Tech_Agriculture` | 20 | Echo Husbandry | Fertilizer recipe, Dawn Composter (wave 8 — Batch 5) | Data asset + tree icon |
+| Ancient Resonance | `Tech_AncientResonance` | 25 | Advanced Energy | Ancient Resonator recipe (wave 9 — Batch 6) — **force-unlocked by the Hollow Underlight** | Data asset + tree icon |
 
 ---
 
-## 6. Quests (6)
+## 6. Quests (7)
 
 | Quest | Id | Objectives | Rewards | Replacement |
 |---|---|---|---|---|
@@ -131,6 +151,7 @@ asset + **mesh** (category silhouettes are scaled cubes today).
 | The Spark | `Quest_Spark` | Tech_Electrical, Generator | 15 RP | Data asset |
 | Dawn Guard | `Quest_DawnGuard` | Defeat 3 Gloomfangs | Ancient Core, **Dawn Shard ×5 (Batch 4)**, 20 RP | Data asset |
 | Shepherd's Dawn | `Quest_ShepherdsDawn` | Tech_Husbandry, Capture Sprigling, Feed Trough, 3 Feed Mix | 5 Feed Mix, 2 Salve, 20 RP | Data asset |
+| The Hollow Underlight | `Quest_HollowUnderlight` | **ReachLocation** Hollow Underlight, DefeatCreature Underlight Warden (wave 9 — Batch 6) | 2 Salve, 5 Dawn Shards, 15 RP | Data asset |
 
 ---
 
@@ -197,6 +218,10 @@ side, z = 100).
 | Echo mesh (engine sphere) | EchoCharacter (all species) | PLACEHOLDER / REPLACE_BEFORE_RELEASE |
 | NPC mesh (engine capsule) | NPCCharacter | PLACEHOLDER / REPLACE_BEFORE_RELEASE |
 | Resource node (cube), rest point (cylinder), crafting station (cylinder), work site (cube) | respective actors | PLACEHOLDER / REPLACE_BEFORE_RELEASE |
+| Boss mesh (engine cone ×2.4) | EchoBossCharacter — Underlight Warden | PLACEHOLDER / REPLACE_BEFORE_RELEASE |
+| Dungeon room shells (cube floor plates) | DungeonRoomActor | PLACEHOLDER — walls arrive with the asset pass |
+| Dungeon gate (cylinder pillars + cube crossbar) | DungeonGateActor (wave 9 — Batch 6) | PLACEHOLDER — resonance-arch meshes |
+| Dungeon portal (squashed cylinder pad) | DungeonPortalActor (wave 9 — Batch 6) | PLACEHOLDER — portal frame + VFX |
 | Ground plane (engine plane ×80) + spawned lighting rig | WorldBootstrapper | PLACEHOLDER — replaced by a real Dawn Fields map (M9) |
 | HUD Roboto engine font | HudWidget | acceptable for slice; themed font later |
 | Interaction prompts (2 Thai NSLOCTEXT strings from v1) | ResourceNode / RestPoint | localize to LOCTEXT tables with the UI pass |

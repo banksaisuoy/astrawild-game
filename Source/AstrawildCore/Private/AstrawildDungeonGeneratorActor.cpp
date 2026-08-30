@@ -1,6 +1,7 @@
 #include "AstrawildDungeonGeneratorActor.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildDungeonGateActor.h"
 #include "AstrawildGameState.h"
 #include "AstrawildLog.h"
 #include "AstrawildResearchSubsystem.h"
@@ -97,6 +98,17 @@ void AAstrawildDungeonGeneratorActor::Generate()
     Rooms.Reset();
     RoomsCleared = 0;
 
+    for (AAstrawildDungeonGateActor* Gate : Gates)
+    {
+        if (IsValid(Gate))
+        {
+            Gate->Destroy();
+        }
+    }
+    Gates.Reset();
+
+    TArray<FVector> RoomCenters;
+
     const int32 Count = FMath::Clamp(RoomCount, 3, 12);
     for (int32 i = 0; i < Count; ++i)
     {
@@ -105,6 +117,7 @@ void AAstrawildDungeonGeneratorActor::Generate()
         // Slight lateral offset per room so the chain feels like a real layout, not a corridor.
         const float Lateral = (i % 2 == 0 ? 1.0f : -1.0f) * RandomStream.FRandRange(0.0f, 400.0f);
         const FVector RoomCenter = GetActorLocation() + FVector(i * RoomSpacing, Lateral, 0.0f);
+        RoomCenters.Add(RoomCenter);
 
         FActorSpawnParameters Params;
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -112,6 +125,7 @@ void AAstrawildDungeonGeneratorActor::Generate()
             AAstrawildDungeonRoomActor::StaticClass(), RoomCenter, FRotator::ZeroRotator, Params);
         if (!Room)
         {
+            RoomCenters.Pop();
             continue;
         }
 
@@ -140,7 +154,29 @@ void AAstrawildDungeonGeneratorActor::Generate()
         }
     }
 
-    UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon generated: %d rooms (entry->combat->puzzle->elite->boss)."), Rooms.Num());
+    // Gates (Batch 6 — Item A): gate i seals the passage between room i and room i+1;
+    // it opens when room i clears. Sealed by default — progression is now physical.
+    for (int32 i = 0; i < Rooms.Num() - 1; ++i)
+    {
+        if (!Rooms[i] || !Rooms[i + 1] || RoomCenters.Num() <= i + 1)
+        {
+            continue;
+        }
+
+        const FVector Midpoint = (RoomCenters[i] + RoomCenters[i + 1]) * 0.5f;
+        FActorSpawnParameters GateParams;
+        GateParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        AAstrawildDungeonGateActor* Gate = World->SpawnActor<AAstrawildDungeonGateActor>(
+            AAstrawildDungeonGateActor::StaticClass(), Midpoint, FRotator::ZeroRotator, GateParams);
+        if (Gate)
+        {
+            Gate->SealGate();
+            Gates.Add(Gate);
+        }
+    }
+
+    UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon generated: %d rooms, %d gates (entry->combat->puzzle->elite->boss)."),
+        Rooms.Num(), Gates.Num());
     OnDungeonProgress.Broadcast(RoomsCleared, Rooms.Num());
 }
 
@@ -148,6 +184,12 @@ void AAstrawildDungeonGeneratorActor::HandleRoomCleared(AAstrawildDungeonRoomAct
 {
     ++RoomsCleared;
     OnDungeonProgress.Broadcast(RoomsCleared, Rooms.Num());
+
+    // Batch 6 — Item A: clearing room i unseals the gate into room i+1.
+    if (ClearedRoomIndex >= 0 && ClearedRoomIndex < Gates.Num() && Gates[ClearedRoomIndex])
+    {
+        Gates[ClearedRoomIndex]->OpenGate();
+    }
 
     if (RoomsCleared >= Rooms.Num())
     {
@@ -161,9 +203,74 @@ void AAstrawildDungeonGeneratorActor::HandleRoomCleared(AAstrawildDungeonRoomAct
             if (UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
             {
                 Research->AddResearchPoints(DungeonCompletionResearchPoints);
+
+                // Batch 6: the unique Ancient-era technology — force-unlocked, bypassing
+                // cost and prerequisites (roadmap V3 §21 unique boss technology reward).
+                // Idempotent: already-unlocked (e.g. researched normally) is a no-op.
+                if (!RewardTechnologyId.IsNone() && !Research->IsTechUnlocked(RewardTechnologyId))
+                {
+                    Research->ForceUnlockTech(RewardTechnologyId);
+                }
             }
         }
 
         OnDungeonCompleted.Broadcast(this);
     }
+}
+
+FAstrawildDungeonSaveData AAstrawildDungeonGeneratorActor::ExportForSave() const
+{
+    FAstrawildDungeonSaveData Data;
+    Data.DungeonId = DungeonId;
+    Data.TotalRooms = Rooms.Num();
+    for (const AAstrawildDungeonRoomActor* Room : Rooms)
+    {
+        if (Room && Room->bCleared)
+        {
+            Data.ClearedRoomIndices.Add(Room->RoomIndex);
+        }
+    }
+    Data.RoomsCleared = Data.ClearedRoomIndices.Num();
+    Data.bCompleted = Rooms.Num() > 0 && Data.RoomsCleared >= Rooms.Num();
+    return Data;
+}
+
+void AAstrawildDungeonGeneratorActor::ApplySavedState(const FAstrawildDungeonSaveData& Data)
+{
+    if (GetLocalRole() != ROLE_Authority || Data.DungeonId != DungeonId)
+    {
+        return;
+    }
+
+    int32 Restored = 0;
+    for (AAstrawildDungeonRoomActor* Room : Rooms)
+    {
+        if (Room && Data.ClearedRoomIndices.Contains(Room->RoomIndex))
+        {
+            const bool bWasCleared = Room->bCleared;
+            Room->RestoreClearedState();
+            if (!bWasCleared)
+            {
+                ++Restored;
+            }
+        }
+    }
+
+    // Generator-level counter comes from the record — restored rooms deliberately
+    // skip the OnRoomCleared broadcast so completion rewards never double-fire.
+    RoomsCleared = FMath::Clamp(Data.RoomsCleared, 0, Rooms.Num());
+
+    // Reopen gates whose controlling room is cleared (matches live HandleRoomCleared).
+    for (int32 i = 0; i < Gates.Num(); ++i)
+    {
+        if (Gates[i] && Data.ClearedRoomIndices.Contains(i))
+        {
+            Gates[i]->OpenGate();
+        }
+    }
+
+    OnDungeonProgress.Broadcast(RoomsCleared, Rooms.Num());
+    UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon %s restored from save: %d/%d rooms cleared (%d freshly restored, %d gates reopened)."),
+        *DungeonId.ToString(), RoomsCleared, Rooms.Num(), Restored,
+        static_cast<int32>(Data.ClearedRoomIndices.Num()));
 }

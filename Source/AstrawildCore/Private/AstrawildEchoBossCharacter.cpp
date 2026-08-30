@@ -2,7 +2,10 @@
 
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
+#include "AstrawildEventBusSubsystem.h"
+#include "AstrawildGameplayTags.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
@@ -60,16 +63,161 @@ float AAstrawildEchoBossCharacter::GetHealthFraction() const
 
 float AAstrawildEchoBossCharacter::GetAttackDamage() const
 {
-    float Damage = BaseDamage;
+    return ComputeBossAttackDamage(BaseDamage, CurrentPhase, bEnraged, EnrageDamageMultiplier);
+}
+
+// --- Batch 6: pure statics (shared with the automation tests) ---
+
+float AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+    const EAstrawildElementType AttackElement,
+    const EAstrawildElementType Weakness,
+    const EAstrawildElementType OwnElement)
+{
+    // Same vocabulary as the Echo pipeline (EchoCharacter::ApplyElementalDamage):
+    // weakness ×1.5, own-element resist ×0.75, everything else neutral. The None
+    // element never triggers either branch.
+    if (AttackElement == EAstrawildElementType::None)
+    {
+        return 1.0f;
+    }
+    if (AttackElement == Weakness)
+    {
+        return 1.5f;
+    }
+    if (AttackElement == OwnElement)
+    {
+        return 0.75f;
+    }
+    return 1.0f;
+}
+
+int32 AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(const float HealthFraction, const bool bEnraged)
+{
     if (bEnraged)
     {
-        Damage *= EnrageDamageMultiplier;
+        return 3;
     }
-    else if (CurrentPhase == 2)
+    if (HealthFraction <= 0.33f)
     {
-        Damage *= 1.15f;
+        return 3;
     }
-    return Damage;
+    if (HealthFraction <= 0.66f)
+    {
+        return 2;
+    }
+    return 1;
+}
+
+float AAstrawildEchoBossCharacter::ComputeBossAttackDamage(
+    const float Base, const int32 Phase, const bool bEnraged, const float EnrageMultiplier)
+{
+    if (bEnraged)
+    {
+        return Base * FMath::Max(1.0f, EnrageMultiplier);
+    }
+    if (Phase == 2)
+    {
+        return Base * 1.15f;
+    }
+    return Base;
+}
+
+// --- Batch 6: definition-driven stats ---
+
+void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildEchoDefinition* Definition)
+{
+    if (!Definition)
+    {
+        return;
+    }
+
+    BossSpeciesId = Definition->DefinitionId;
+    WeaknessElement = Definition->WeaknessElement;
+    BossElement = Definition->Element;
+
+    // Boss scale on top of the species baseline (directive §24 — the PHASE design
+    // carries the difficulty; the scale just makes it a boss-sized encounter).
+    MaxHealth = FMath::Max(100.0f, Definition->BaseStats.MaxHealth * BossHealthScale);
+    BaseDamage = FMath::Max(5.0f, Definition->BaseStats.AttackPower * BossDamageScale);
+    CurrentHealth = MaxHealth;
+
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss initialized from %s: HP %.0f, ATK %.0f, weakness %d, element %d."),
+        *BossSpeciesId.ToString(), MaxHealth, BaseDamage,
+        static_cast<int32>(WeaknessElement), static_cast<int32>(BossElement));
+}
+
+// --- Batch 6: status effects on the boss ---
+
+void AAstrawildEchoBossCharacter::ApplyBossStatus(const FAstrawildStatusEffect& Effect)
+{
+    if (GetLocalRole() != ROLE_Authority || Effect.StatusId.IsNone() || IsDefeated())
+    {
+        return;
+    }
+
+    FAstrawildStatusEffect Scaled = Effect;
+    Scaled.RemainingSeconds *= FMath::Clamp(BossStatusDurationMultiplier, 0.05f, 1.0f);
+
+    // Refresh an existing stack of the same status instead of stacking (bosses
+    // can't be chain-frozen — directive §24 "never solve difficulty with CC").
+    for (FAstrawildStatusEffect& Existing : ActiveStatusEffects)
+    {
+        if (Existing.StatusId == Scaled.StatusId)
+        {
+            Existing = Scaled;
+            RefreshWalkSpeed();
+            return;
+        }
+    }
+
+    ActiveStatusEffects.Add(Scaled);
+    RefreshWalkSpeed();
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss afflicted by %s (%.1fs)."), *Scaled.StatusId.ToString(), Scaled.RemainingSeconds);
+}
+
+float AAstrawildEchoBossCharacter::GetStatusSpeedMultiplier() const
+{
+    float Multiplier = 1.0f;
+    for (const FAstrawildStatusEffect& Effect : ActiveStatusEffects)
+    {
+        Multiplier = FMath::Min(Multiplier, FMath::Max(0.1f, Effect.SpeedMultiplier));
+    }
+    return Multiplier;
+}
+
+void AAstrawildEchoBossCharacter::RefreshWalkSpeed()
+{
+    if (GetCharacterMovement())
+    {
+        GetCharacterMovement()->MaxWalkSpeed = PhaseWalkSpeed * GetStatusSpeedMultiplier();
+    }
+}
+
+void AAstrawildEchoBossCharacter::TickStatusEffects(const float DeltaTime)
+{
+    if (ActiveStatusEffects.IsEmpty() || IsDefeated())
+    {
+        return;
+    }
+
+    for (int32 i = ActiveStatusEffects.Num() - 1; i >= 0; --i)
+    {
+        FAstrawildStatusEffect& Effect = ActiveStatusEffects[i];
+        Effect.RemainingSeconds -= DeltaTime;
+
+        if (Effect.DamagePerSecond > 0.0f && !IsDefeated())
+        {
+            // DoT rides the normal damage pipeline so a burning boss can die to
+            // its burn and fire the full defeat event chain.
+            ApplyBossDamage(Effect.DamagePerSecond * DeltaTime);
+        }
+
+        if (Effect.RemainingSeconds <= 0.0f || IsDefeated())
+        {
+            ActiveStatusEffects.RemoveAt(i);
+        }
+    }
+    RefreshWalkSpeed();
 }
 
 AAstrawildPlayerCharacter* AAstrawildEchoBossCharacter::FindNearestPlayer() const
@@ -118,17 +266,15 @@ void AAstrawildEchoBossCharacter::Tick(const float DeltaTime)
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss ENRAGED by timer at %.0f%% health."), GetHealthFraction() * 100.0f);
     }
 
-    // --- Phase transitions by health (server-authoritative). ---
-    const float Fraction = GetHealthFraction();
-    if (CurrentPhase == 1 && Fraction <= 0.66f)
+    // --- Phase transitions by health (server-authoritative). Steps one phase at a
+    //     time so phase 2 always spawns its adds even when chunked below 33%.
+    const int32 TargetPhase = ComputePhaseForHealthFraction(GetHealthFraction(), false);
+    if (TargetPhase > CurrentPhase)
     {
-        TransitionToPhase(2);
-    }
-    else if (CurrentPhase == 2 && Fraction <= 0.33f)
-    {
-        TransitionToPhase(3);
+        TransitionToPhase(CurrentPhase + 1);
     }
 
+    TickStatusEffects(DeltaTime);
     ExecuteAttack(DeltaTime);
 }
 
@@ -146,15 +292,16 @@ void AAstrawildEchoBossCharacter::TransitionToPhase(const int32 NewPhase)
     // Phase behavior changes (directive §24 — pattern change, not just HP):
     if (NewPhase == 2)
     {
-        GetCharacterMovement()->MaxWalkSpeed = 440.0f;   // Faster pursuit.
+        PhaseWalkSpeed = 440.0f;   // Faster pursuit.
         AttackCooldownSeconds = 1.6f;                     // Faster swings.
         SpawnSummons();
     }
     else if (NewPhase == 3)
     {
-        GetCharacterMovement()->MaxWalkSpeed = 560.0f;   // Enrage speed.
+        PhaseWalkSpeed = 560.0f;   // Enrage speed.
         AttackCooldownSeconds = 1.0f;                     // Enrage tempo.
     }
+    RefreshWalkSpeed();
 
     UE_LOG(LogAstrawildCombat, Log, TEXT("Boss phase -> %d (%.0f%% HP)."), NewPhase, FractionAtTransition * 100.0f);
 }
@@ -239,6 +386,31 @@ void AAstrawildEchoBossCharacter::ExecuteAttack(const float DeltaTime)
     }
 }
 
+float AAstrawildEchoBossCharacter::ApplyElementalBossDamage(const float DamageAmount, const EAstrawildElementType Element)
+{
+    if (GetLocalRole() != ROLE_Authority || DamageAmount <= 0.0f || IsDefeated())
+    {
+        return 0.0f;
+    }
+
+    // Batch 6: resolve the element against the boss's weakness/own element (same
+    // multiplier vocabulary as the Echo pipeline) before the phase pipeline.
+    const float Multiplier = ComputeBossElementalMultiplier(Element, WeaknessElement, BossElement);
+    const float Applied = ApplyBossDamage(DamageAmount * Multiplier);
+
+    if (Applied > 0.0f)
+    {
+        // Shared element→status factory (Batch 3 vocabulary): Ember burns, Frost
+        // chills, Flora poisons, Pulse shocks — bosses just shed them faster.
+        const FAstrawildStatusEffect Status = UAstrawildCombatComponent::MakeElementalStatusEffect(Element, DamageAmount);
+        if (!Status.StatusId.IsNone())
+        {
+            ApplyBossStatus(Status);
+        }
+    }
+    return Applied;
+}
+
 float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
 {
     if (GetLocalRole() != ROLE_Authority || DamageAmount <= 0.0f || IsDefeated())
@@ -259,6 +431,18 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
                 Add->ApplyDamage(999999.0f);
             }
         }
+
+        // Batch 6: publish the defeat to the event bus so quests/journal credit the
+        // kill (previously OnBossDefeated had no subscribers at all — the delegate
+        // broadcast below remains for future UMG/boss-health-bar consumers).
+        if (UWorld* World = GetWorld())
+        {
+            if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+            {
+                EventBus->PublishEvent(TAG_Astrawild_Event_HostileDefeated, this, DefeatEventTargetId, 1, GetActorLocation());
+            }
+        }
+
         OnBossDefeated.Broadcast(this);
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss DEFEATED."));
     }

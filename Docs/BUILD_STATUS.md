@@ -3,24 +3,30 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Wave 8 — Batch 5: Ecosystem breadth + tech eras + shop UMG)
-- Branch: `main` (latest: Batch 5 — ecosystem + shop screen; preceded by `d2c28fd` wave-6 docs sync / `c16fecd` Batch 4 source)
-- Latest change: **Wave 8 Batch 5** — three work items closed in source: (A) ecosystem breadth — 3 new
-  Echo species (`Echo_Rimefang` Frost hostile · `Echo_Voltmaw` Pulse glass-cannon hostile ·
-  `Echo_Auroraling` Ancient-rare one-per-world capture prize) with element coverage now complete
-  (Light/Ash/Flora/Frost/Pulse/Ember all have ≥ 1 species), hostile spawner targets 4/2/3/1 and
-  the bootstrapper rotating 3 hostile species + seeding exactly one Auroraling per world; (B) the
-  tech tree grows 6 → **9 nodes** using two previously-unused eras (`Tech_Mechanics` Mechanical ·
-  `Tech_Thermal` Electrical · `Tech_Agriculture` Eco) with 4 new recipes (Bulk Planks, Resonator
-  Batch, Hearth Broth, Fertilizer), 3 new buildings (Sawmill, Hearth Coil, Dawn Composter) and 4
-  new items (Frostbloom, Volt Core, Hearth Broth, Fertilizer) — Voltmaw/Rimefang loot sinks into
-  Mechanics/Thermal so hostile hunting feeds progression; (C) the **vendor shop UMG screen**
-  (`UAstrawildShopWidget` + row widgets, pure-C++ UMG — no asset dependency) replacing the Batch-4
-  toast listing: interacting with Trader Tam now opens a real buy/sell screen with balance
-  readout, per-ware Buy ×1 buttons, per-inventory-item Sell ×1 buttons and a close flow that
-  restores game input — all transactions still route through the server-authoritative
-  TryPurchase/TrySell pipeline (`AW.BuyItem`/`AW.SellItem` cheats unchanged).
-- Codebase: **90 C++ files (44 `.cpp` + 46 `.h`), ~16,700 LOC** in `Source/AstrawildCore` (single module)
+- Last updated: 2026-08-30 (Wave 9 — Batch 6: Dungeon & boss hardening — the Hollow Underlight sealed & remembered)
+- Branch: `main` (latest: Batch 6 — dungeon gates/portals/save + elemental boss; preceded by `f946b92` Batch 5 source)
+- Latest change: **Wave 9 Batch 6 (STEP 22 extension)** — five work items closed in source: (A) **progression
+  gates** — `AAstrawildDungeonGateActor` (new) implements the gate forward-declared since wave 3: gate *i*
+  seals the passage between rooms *i*↔*i*+1 with blocking collision + a crossbar that lifts into the lintel
+  when the previous room clears (`bOpen` replicates; `OnRep` re-applies collision client-side); (B) **dungeon
+  save persistence** — gap **M-7 closed**: `FAstrawildDungeonSaveData` (additive v2 payload) snapshots
+  cleared-room indices per `DungeonId`; `LoadWorld` applies it after generation — cleared rooms lose their
+  freshly-spawned encounters silently (no double loot/events), gates reopen in sync, completion rewards never
+  re-fire. Policy: cleared stays cleared, in-progress rooms respawn fresh; (C) **dungeon portals** —
+  `AAstrawildDungeonPortalActor` (new, interactable): entrance pad at the wilds' edge ↔ exit pad beside the
+  entry room, server-guarded teleports, and the **first publisher of `Event.LocationReached`** —
+  `QuestComponent` now matches `ReachLocation` objectives (the type existed with no producer/matcher since
+  wave 1); (D) **boss hardening** — the Underlight Warden derives stats from the real species definition
+  (`BossDefinitionId` was cosmetic: HP 550 / ATK 32.4 / weakness Light / element Ash from `Echo_Gloomfang`),
+  player attacks route through `ApplyElementalBossDamage` (weakness ×1.5 / same-element ×0.75 — the Echo
+  pipeline vocabulary) and can afflict statuses (bosses take ×0.5 durations, no stacking), defeat publishes
+  `Event.HostileDefeated` with the distinct id `Creature_UnderlightWarden`; three pure statics extracted and
+  unit-tested (`ASTRAWILD.Dungeon.*`, 15 tests total); (E) **Ancient-era reward** — `Tech_AncientResonance`
+  (the reserved era is now used) force-unlocked on first completion (`ResearchSubsystem::ForceUnlockTech`,
+  new), sinking the boss's Ancient Core into the Light-element `Item_AncientResonator` (ATK 18 — the
+  warden's counter). New quest `Quest_HollowUnderlight` chains after quest 6 (ReachLocation + DefeatCreature).
+  Full design doc: **`Docs/ASTRAWILD_DUNGEON_BOSS.md`** (new).
+- Codebase: **94 C++ files (46 `.cpp` + 48 `.h`), ~17,730 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -54,7 +60,43 @@
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Wave 8 Batch 5: Ecosystem breadth + Tech eras + Shop UMG screen)
+## Changes in this round (2026-08-30 — Wave 9 Batch 6: Dungeon & boss hardening — Hollow Underlight)
+
+### Commits
+
+| Commit | Type | Subject |
+|---|---|---|
+| (this round) | feat(batch-6) | Dungeon & boss hardening (STEP 22 ext.) — progression gates, dungeon save persistence (M-7), portal pair + ReachLocation publisher/matcher, definition-driven elemental boss combat + statuses, Ancient-era unique reward + quest 7 |
+
+### Batch-6 work items
+
+| Item | Status | Notes |
+|---|---|---|
+| A — Progression gates | **DONE (source)** | `AAstrawildDungeonGateActor` (NEW): blocking volume + crossbar (sealed Z=60 → open Z=520 lintel); gate *i* opens when room *i* clears; replicates via `bOpen` + `OnRep_bOpen` (collision re-applied client-side). Generator spawns N−1 gates between room centers, destroys them on regeneration, reopens from save. |
+| B — Dungeon save persistence (M-7) | **DONE (source)** | `FAstrawildDungeonSaveData` in `AstrawildTypes.h` (additive v2 payload, no schema bump — `EquippedArmorId` precedent); `SaveWorld` exports via `ExportForSave()`; `LoadWorld` applies per `DungeonId` via `ApplySavedState()` — `RestoreClearedState()` destroys regenerated encounters silently (no events/loot), restores counters + gate states. |
+| C — Portals + ReachLocation | **DONE (source)** | `AAstrawildDungeonPortalActor` (NEW): interactable pads (entrance `Location_HollowUnderlight` ↔ exit `Location_DawnCamp`), server-guarded teleports (600 cm radius), publish `Event.LocationReached`; `QuestComponent` gains the missing `ReachLocation` matcher. |
+| D — Boss hardening | **DONE (source)** | `InitializeFromBossDefinition` (HP×5.0 / ATK×1.8 / weakness / element from data), `ApplyElementalBossDamage` (×1.5/×0.75/×1.0) + `ApplyBossStatus` (×0.5 duration, no stacking, DoT rides the defeat pipeline), defeat publishes `HostileDefeated` with `Creature_UnderlightWarden`; `ComputeBossElementalMultiplier` / `ComputePhaseForHealthFraction` / `ComputeBossAttackDamage` extracted as tested statics; combat cast-ladder routes through the elemental path. |
+| E — Ancient-era reward | **DONE (source)** | `Tech_AncientResonance` (Ancient era, 25 RP — the reserved enum is now used), `Recipe_AncientResonator` (Ancient Core + 2 Crystal Shard + Echo Resonator → `Item_AncientResonator`, Light, ATK 18), `ResearchSubsystem::ForceUnlockTech` (cost/prereq-free, event-broadcasting, idempotent), `Quest_HollowUnderlight` (ReachLocation + DefeatCreature) chained after quest 6. |
+
+### Changed files (Batch 6)
+
+| File | Change |
+|---|---|
+| `AstrawildDungeonGateActor.h/.cpp` | NEW — sealed-gate actor (collision + crossbar + replication) |
+| `AstrawildDungeonPortalActor.h/.cpp` | NEW — interactable portal pair (teleport + LocationReached) |
+| `AstrawildDungeonGeneratorActor.h/.cpp` | +DungeonId, +RewardTechnologyId, +gates spawn/open, +ExportForSave/ApplySavedState, completion force-unlock |
+| `AstrawildDungeonRoomActor.h/.cpp` | definition-driven boss spawn, +RestoreClearedState (silent teardown) |
+| `AstrawildEchoBossCharacter.h/.cpp` | elemental path, status effects, definition stats, defeat event, 3 pure statics, PhaseWalkSpeed×status composition |
+| `AstrawildCombatComponent.cpp` | boss branch → `ApplyElementalBossDamage` |
+| `AstrawildSaveSubsystem.h/.cpp` | +`Dungeons` payload + save/load wiring (TActorIterator per generator) |
+| `AstrawildResearchSubsystem.h/.cpp` | +`ForceUnlockTech` |
+| `AstrawildQuestComponent.cpp` | +`ReachLocation` matcher |
+| `AstrawildContentLibrary.cpp` | +Ancient Resonator item/recipe, +Tech_AncientResonance, +Quest 7 + chain, log line 28/18/10/13/10/7 |
+| `AstrawildWorldBootstrapper.cpp` | +DungeonId, +portal pair at ArenaSize×1.05 / dungeon entry |
+| `AstrawildAutomationTests.cpp` | +3 tests: BossElementalMultiplier / BossPhaseThresholds / BossAttackDamage (15 total) |
+| `Docs/ASTRAWILD_DUNGEON_BOSS.md` | NEW — dedicated dungeon & boss design doc |
+
+## Changes in the previous round (2026-08-30 — Wave 8 Batch 5: Ecosystem breadth + Tech eras + Shop UMG screen)
 
 ### Commits
 

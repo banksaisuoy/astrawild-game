@@ -62,15 +62,14 @@
 ## 2. HIGH PRIORITY GAPS
 
 ### GAP-H1 — Dungeon completion + boss integration
-- **Current State:** Generator + rooms + encounters + clear rewards real; entry room can never clear → completion event unreachable; phased boss class fully coded but never spawned; boss damage bypasses player mitigation; completion event has no consumers; dungeon state not saved.
-- **Required State:** Full dungeon run: enter → clear rooms → phased boss → completion event → rewards; state persists.
-- **Missing Implementation:** Empty-room auto-clear; boss room spawns `AAstrawildEchoBossCharacter`; damage routed through mitigation; `OnDungeonCompleted` consumer (quest objective/loot/RP); dungeon save record (or documented regeneration policy).
-- **Dependencies:** GAP-F1, GAP-F2 (boss uses movement), combat component (exists).
-- **Files likely affected:** `AstrawildDungeonGeneratorActor.cpp`, `AstrawildDungeonRoomActor.cpp`, `AstrawildEchoBossCharacter.cpp`, `AstrawildQuestComponent.cpp`, `AstrawildSaveSubsystem.cpp`.
-- **Acceptance Criteria:** PIE: walk dungeon, all rooms clearable, boss fight transitions phases at 66%/33%, defeat → completion event fires → reward granted.
-- **Test Method:** PIE run with combat logging; verify phase transitions + completion event + loot.
-- **Priority:** **HIGH — Batch 1, items 7-8.**
-
+- **Current State:** CLOSED across waves 3–6: generator + rooms + encounters + clear rewards + empty-room auto-clear live since wave 3 (audit C-4/C-5); Batch 6 adds progression gates, portal entrance/exit, definition-driven elemental boss combat (weakness ×1.5 / resist ×0.75 / statuses), defeat event publishing, dungeon save persistence, and the Ancient-era unique technology reward + quest 7. Remaining: boss AI controller, telegraphs/arena hazards, first-player-only room loot (MP batch).
+- **Required State:** Full dungeon run: enter → clear gated rooms → phased boss → completion event → rewards; state persists.
+- **Missing Implementation:** Boss AI controller (asset-pass hook-in), in-engine playtest of the full run.
+- **Dependencies:** GAP-F1, GAP-F2 (boss uses movement) — satisfied.
+- **Files likely affected:** `AstrawildEchoBossCharacter.cpp` (AI controller hookup).
+- **Acceptance Criteria:** PIE: walk dungeon through gates, all rooms clearable, boss fight transitions phases at 66%/33%, defeat → completion event fires → rewards granted; reload keeps cleared rooms cleared.
+- **Test Method:** PIE run with combat logging; verify phase transitions + completion event + loot; save/load roundtrip.
+- **Priority:** **HIGH — Batch 1, items 7-8 (closed in Batch 6).**
 ### GAP-H2 — Base building UX incompleteness
 - **Current State:** Placement/preview/validation/snap(save)/server-RPC all real; but piece cycling never callable (only 1 arbitrary placeable), no delete, no repair, materials deducted client-side (MP dupe), ownership never populated.
 - **Required State:** Player selects among unlocked pieces; can delete (with partial refund); ownership recorded (foundation for MP permissions).
@@ -102,14 +101,14 @@
 - **Priority:** HIGH — Batch 2.
 
 ### GAP-H5 — Quest chain integrity
-- **Current State:** 6 quests, 7/9 objective types implemented, event-driven; chain halts at quest 4 until GAP-F4; `ReachLocation`/`SurviveTime` unimplemented + their events never published; hostile respawn absent (quest 5 "defeat 3 Gloomfang" strained: 1 wild + dungeon pool).
-- **Required State:** All 6 quests completable without cheats; all objective types in content implemented; hostiles respawn (ecosystem or timer).
-- **Missing Implementation:** After F4: publish `Event.LocationReached` (dungeon entry trigger), implement SurviveTime objective or remove from content; hostile respawn (simple timer-based world respawn respecting ecosystem counts).
-- **Dependencies:** GAP-F4 (chain), GAP-H1 (dungeon objectives).
-- **Files likely affected:** `AstrawildQuestComponent.cpp`, `AstrawildEcosystemSubsystem.cpp`, `AstrawildWorldBootstrapper.cpp`, `AstrawildGameplayTags.cpp` (if new tags).
-- **Acceptance Criteria:** Full chain FirstLight→ShepherdsDawn completes in one PIE session without cheats.
+- **Current State:** 7 quests (Batch 6 chains `Quest_HollowUnderlight` after `Quest_EchoHusbandry`), 8/9 objective types implemented, event-driven; `ReachLocation` implemented in Batch 6 (portal publisher + QuestComponent matcher — previously the type existed with no producer and no matcher); `SurviveTime` remains the only unimplemented objective type; hostile respawn live since the spawner subsystem (targets 4/2/3/1).
+- **Required State:** All 7 quests completable without cheats; all objective types in content implemented.
+- **Missing Implementation:** SurviveTime objective (not used by any current quest — implement or formally retire); in-engine playtest of the full chain.
+- **Dependencies:** GAP-H1 (dungeon objectives — closed in Batch 6).
+- **Files likely affected:** `AstrawildQuestComponent.cpp` (SurviveTime), `AstrawildContentLibrary.cpp`.
+- **Acceptance Criteria:** Full chain FirstLight → HollowUnderlight completes in one PIE session without cheats.
 - **Test Method:** PIE full-chain run; quest logs at each completion.
-- **Priority:** HIGH — Batch 2.
+- **Priority:** HIGH — Batch 2 (ReachLocation half closed in Batch 6).
 
 ## 3. GAMEPLAY GAPS (loop-feel systems)
 

@@ -252,11 +252,14 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
         else if (AAstrawildEchoBossCharacter* Boss = Cast<AAstrawildEchoBossCharacter>(HitActor))
         {
             // Boss encounters have their own phase pipeline (directive §24).
+            // Batch 6: attacks now resolve their element against the boss's
+            // weakness/own element and can inflict status effects — previously
+            // bosses skipped the entire elemental layer.
             if (Boss->IsDefeated())
             {
                 continue;
             }
-            TotalDamageDealt += Boss->ApplyBossDamage(BaseDamage);
+            TotalDamageDealt += Boss->ApplyElementalBossDamage(BaseDamage, ResolvedElement);
         }
         else if (AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(HitActor))
         {

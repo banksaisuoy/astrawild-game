@@ -234,6 +234,17 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     Fertilizer->Description = FText::FromString(TEXT("Composted dawn-field matter. Farm plots thrive on it."));
     Fertilizer->VendorPrice = 2; // Batch 5: Tech_Agriculture crafted good.
     Registry->RegisterItem(Fertilizer);
+
+    // --- Dungeon reward (CODE_DEFAULT wave 8, Batch 6): the Ancient-era weapon
+    //     forged from the Hollow Underlight warden's Ancient Core. Light element
+    //     — it counters the Ash-element warden (weakness ×1.5).
+
+    UAstrawildItemDefinition* AncientResonator = MakeItem(Outer, TEXT("Item_AncientResonator"), TEXT("Ancient Resonator"), EAstrawildItemCategory::Equipment, 3.0f, 1);
+    AncientResonator->AttackPower = 18.0f;
+    AncientResonator->Element = EAstrawildElementType::Light;
+    AncientResonator->Description = FText::FromString(TEXT("A resonance blade humming with First Dawn light. The Underlight warden's bane."));
+    AncientResonator->VendorPrice = 8; // Batch 6: dungeon-economy sellable.
+    Registry->RegisterItem(AncientResonator);
 }
 
 // ---------------------------------------------------------------------------
@@ -319,6 +330,13 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_Fertilizer"), TEXT("Dawnfield Fertilizer"),
         { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Fiber"), 1), Stack(TEXT("Item_RawMeat"), 1) },
         { Stack(TEXT("Item_Fertilizer"), 3) }, 4.0f, TEXT("Tech_Agriculture"), TEXT("Station_Campfire")));
+
+    // --- Dungeon reward (CODE_DEFAULT wave 8, Batch 6): the warden's Ancient
+    //     Core sinks into the strongest weapon in the vertical slice. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_AncientResonator"), TEXT("Ancient Resonator"),
+        { Stack(TEXT("Item_AncientCore"), 1), Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_Resonator"), 1) },
+        { Stack(TEXT("Item_AncientResonator"), 1) }, 10.0f, TEXT("Tech_AncientResonance"), TEXT("Station_Workbench")));
 }
 
 // ---------------------------------------------------------------------------
@@ -539,6 +557,14 @@ void UAstrawildContentLibrary::BuildTechnologies(UAstrawildItemRegistrySubsystem
 
     Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Agriculture"), TEXT("Agriculture"), EAstrawildTechEra::Eco, 20,
         { TEXT("Tech_Husbandry") }, { TEXT("Recipe_Fertilizer") }, { TEXT("Building_Composter") }));
+
+    // --- Dungeon reward (CODE_DEFAULT wave 8, Batch 6): the Ancient era opens
+    //     ONLY through the Hollow Underlight (roadmap V3 §21 unique technology
+    //     reward) — the generator force-unlocks this node on completion. The
+    //     era enum is now fully used. ---
+
+    Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_AncientResonance"), TEXT("Ancient Resonance"), EAstrawildTechEra::Ancient, 25,
+        { TEXT("Tech_AdvancedEnergy") }, { TEXT("Recipe_AncientResonator") }, {}));
 }
 
 // ---------------------------------------------------------------------------
@@ -679,8 +705,35 @@ void UAstrawildContentLibrary::BuildQuests(UAstrawildItemRegistrySubsystem* Regi
     Quest6->RewardItems.Add(Stack(TEXT("Item_FeedMix"), 5));
     Quest6->RewardItems.Add(Stack(TEXT("Item_HerbalSalve"), 2));
     Quest6->RewardResearchPoints = 20;
-    Quest6->NextQuestId = NAME_None;
+    Quest6->NextQuestId = TEXT("Quest_HollowUnderlight"); // Batch 6: the chain now descends.
     Registry->RegisterQuest(Quest6);
+
+    // --- Dungeon quest (CODE_DEFAULT wave 8, Batch 6 — directive §23/§25): the
+    //     Hollow Underlight finale. ReachLocation finally has a publisher (the
+    //     dungeon portals); DefeatCreature targets the warden's distinct event id
+    //     so wild Gloomfang kills don't complete the objective. ---
+
+    UAstrawildQuestDefinition* Quest7 = NewObject<UAstrawildQuestDefinition>(Outer);
+    Quest7->QuestId = TEXT("Quest_HollowUnderlight");
+    Quest7->Title = FText::FromString(TEXT("The Hollow Underlight"));
+    Quest7->Summary = FText::FromString(TEXT("A sealed resonance gate hums beyond the eastern wilds. Whatever wards it has been waiting since the First Dawn."));
+    FAstrawildQuestObjective ObjEnter;
+    ObjEnter.Type = EAstrawildQuestObjectiveType::ReachLocation;
+    ObjEnter.TargetId = TEXT("Location_HollowUnderlight");
+    ObjEnter.RequiredCount = 1;
+    ObjEnter.ObjectiveText = FText::FromString(TEXT("Enter the Hollow Underlight"));
+    Quest7->Objectives.Add(ObjEnter);
+    FAstrawildQuestObjective ObjWarden;
+    ObjWarden.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+    ObjWarden.TargetId = TEXT("Creature_UnderlightWarden");
+    ObjWarden.RequiredCount = 1;
+    ObjWarden.ObjectiveText = FText::FromString(TEXT("Defeat the Underlight Warden"));
+    Quest7->Objectives.Add(ObjWarden);
+    Quest7->RewardItems.Add(Stack(TEXT("Item_HerbalSalve"), 2));
+    Quest7->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 5));
+    Quest7->RewardResearchPoints = 15;
+    Quest7->NextQuestId = NAME_None;
+    Registry->RegisterQuest(Quest7);
 }
 
 // ---------------------------------------------------------------------------
@@ -742,5 +795,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 27 items, 17 recipes, 10 Echo species, 13 buildings, 9 technologies, 6 quests, 2 loot tables, 2 NPCs."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 28 items, 18 recipes, 10 Echo species, 13 buildings, 10 technologies, 7 quests, 2 loot tables, 2 NPCs."));
 }

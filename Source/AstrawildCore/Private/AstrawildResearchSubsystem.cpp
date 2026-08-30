@@ -99,6 +99,37 @@ bool UAstrawildResearchSubsystem::TryUnlockTech(const FName TechId)
     return true;
 }
 
+bool UAstrawildResearchSubsystem::ForceUnlockTech(const FName TechId)
+{
+    if (TechId.IsNone() || IsTechUnlocked(TechId))
+    {
+        return false;
+    }
+
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistryFromWorld();
+    UAstrawildTechnologyDefinition* Tech = Registry ? Registry->FindTechnology(TechId) : nullptr;
+    if (!Tech)
+    {
+        return false;
+    }
+
+    UnlockedTechIds.Add(TechId);
+    OnTechUnlocked.Broadcast(TechId, Tech);
+    OnResearchPointsChanged.Broadcast(ResearchPoints);
+
+    // Publish the same quest-facing event as TryUnlockTech (directive §25).
+    if (UWorld* World = GetWorld())
+    {
+        if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+        {
+            EventBus->PublishEvent(TAG_Astrawild_Event_TechUnlocked, nullptr, TechId, 1, FVector::ZeroVector);
+        }
+    }
+
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Technology force-unlocked (dungeon reward): %s."), *TechId.ToString());
+    return true;
+}
+
 TArray<FName> UAstrawildResearchSubsystem::GetUnlockedTechIds() const
 {
     return UnlockedTechIds;

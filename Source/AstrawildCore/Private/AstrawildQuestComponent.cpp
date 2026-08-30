@@ -160,6 +160,11 @@ void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& 
         bool bMatches = false;
         switch (Objective.Type)
         {
+        case EAstrawildQuestObjectiveType::ReachLocation:
+            // Batch 6: the dungeon portals are the first publishers of
+            // Event.LocationReached — this matcher existed for neither until now.
+            bMatches = Event.EventTag == TAG_Astrawild_Event_LocationReached && Event.TargetId == Objective.TargetId;
+            break;
         case EAstrawildQuestObjectiveType::CollectItem:
             bMatches = Event.EventTag == TAG_Astrawild_Event_ItemCollected && Event.TargetId == Objective.TargetId;
             break;

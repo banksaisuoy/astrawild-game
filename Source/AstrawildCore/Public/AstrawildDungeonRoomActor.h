@@ -79,6 +79,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Dungeon")
     void MarkCleared();
 
+    /**
+     * Batch 6 — gap M-7: restore a previously-cleared room from save. Destroys
+     * the freshly-generated encounter WITHOUT the defeat pipeline (no events, no
+     * loot — both already happened the first time) and marks the room cleared.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Dungeon")
+    void RestoreClearedState();
+
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildRoomCleared, AAstrawildDungeonRoomActor*, Room, int32, RoomIndex);
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Dungeon")
     FAstrawildRoomCleared OnRoomCleared;

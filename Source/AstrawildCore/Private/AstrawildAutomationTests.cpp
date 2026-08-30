@@ -6,6 +6,7 @@
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildSaveSubsystem.h"
@@ -328,6 +329,85 @@ bool FAstrawildVendorEconomyTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Sell value is strictly below the buy price"),
             AAstrawildNPCCharacter::ComputeVendorSellValue(Price) < Price);
     }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Dungeon & boss hardening (Batch 6 — STEP 22 extension): elemental multiplier,
+// phase thresholds and attack scaling — exercising the REAL production statics
+// on AAstrawildEchoBossCharacter (same anti-tautology policy as Batch 3/4).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBossElementalMultiplierTest,
+    "ASTRAWILD.Dungeon.BossElementalMultiplier",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBossElementalMultiplierTest::RunTest(const FString& Parameters)
+{
+    using EEl = EAstrawildElementType;
+
+    // The Underlight Warden: Ash element, Light weakness (from Echo_Gloomfang).
+    const EEl Weakness = EEl::Light;
+    const EEl Own = EEl::Ash;
+
+    TestEqual(TEXT("Attacking the weakness deals x1.5"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Weakness, Weakness, Own), 1.5f);
+    TestEqual(TEXT("Same-element attacks are resisted x0.75"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Own, Weakness, Own), 0.75f);
+    TestEqual(TEXT("Neutral elements deal x1.0"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(EEl::Frost, Weakness, Own), 1.0f);
+    TestEqual(TEXT("The None element never triggers a multiplier"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(EEl::None, Weakness, Own), 1.0f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBossPhaseThresholdTest,
+    "ASTRAWILD.Dungeon.BossPhaseThresholds",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBossPhaseThresholdTest::RunTest(const FString& Parameters)
+{
+    // Directive §24 thresholds: phase 2 at <=66%, phase 3 at <=33%.
+    TestEqual(TEXT("Full health is phase 1"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(1.0f, false), 1);
+    TestEqual(TEXT("67% is still phase 1"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.67f, false), 1);
+    TestEqual(TEXT("66% crosses into phase 2"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.66f, false), 2);
+    TestEqual(TEXT("50% is phase 2"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.5f, false), 2);
+    TestEqual(TEXT("33% crosses into phase 3"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.33f, false), 3);
+    TestEqual(TEXT("Near-death is phase 3"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.05f, false), 3);
+
+    // Enrage forces phase 3 regardless of health (directive §24 — no stalling).
+    TestEqual(TEXT("Enrage at full health is still phase 3"),
+        AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(1.0f, true), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBossAttackScalingTest,
+    "ASTRAWILD.Dungeon.BossAttackDamage",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBossAttackScalingTest::RunTest(const FString& Parameters)
+{
+    // Directive §24 — "never solve difficulty by only increasing HP": the damage
+    // curve must actually escalate across phases.
+    const float Base = 30.0f;
+    const float EnrageMult = 1.4f;
+
+    const float Phase1 = AAstrawildEchoBossCharacter::ComputeBossAttackDamage(Base, 1, false, EnrageMult);
+    const float Phase2 = AAstrawildEchoBossCharacter::ComputeBossAttackDamage(Base, 2, false, EnrageMult);
+    const float Phase3 = AAstrawildEchoBossCharacter::ComputeBossAttackDamage(Base, 3, false, EnrageMult);
+    const float Enraged = AAstrawildEchoBossCharacter::ComputeBossAttackDamage(Base, 3, true, EnrageMult);
+
+    TestEqual(TEXT("Phase 1 deals base damage"), Phase1, 30.0f);
+    TestEqual(TEXT("Phase 2 deals x1.15"), Phase2, 34.5f);
+    TestEqual(TEXT("Phase 3 without enrage stays base"), Phase3, 30.0f);
+    TestEqual(TEXT("Enrage multiplies by 1.4"), Enraged, 42.0f);
+    TestTrue(TEXT("Damage strictly escalates 1 -> 2"), Phase2 > Phase1);
+    TestTrue(TEXT("Enraged beats every non-enraged phase"), Enraged > Phase2 && Enraged > Phase3);
     return true;
 }
 

@@ -49,6 +49,15 @@ public:
     bool TryUnlockTech(FName TechId);
 
     /**
+     * Batch 6: unlock without cost or prerequisites — the dungeon's unique
+     * technology reward path (roadmap V3 §21). Broadcasts the same events as
+     * TryUnlockTech so quests/journal/UI react normally. No-op when already
+     * unlocked. Returns true when this call performed the unlock.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Research")
+    bool ForceUnlockTech(FName TechId);
+
+    /**
      * Audit C-2: auto-grant every cost-0 root technology so crafting gates open from
      * session start (previously no legitimate path unlocked ANY tech — the tree was
      * cosmetic and quests 4-6 were impossible without cheats).
