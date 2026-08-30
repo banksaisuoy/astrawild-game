@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "AstrawildTypes.h"
 #include "AstrawildHudWidget.generated.h"
 
 class UCanvasPanel;
@@ -77,12 +78,25 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> NotificationText;
 
+    /** Batch 7 — Shattered Vale: zone banner (title + flavor line under the world info). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> ZoneBannerText;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> ZoneSubText;
+
 private:
     float RefreshAccumulator = 0.0f;
     float NotificationRemaining = 0.0f;
 
+    /** Zone banner state (client-local lookup via the pure static zone table). */
+    EAstrawildZone CurrentZone = EAstrawildZone::None;
+    TArray<EAstrawildZone> LocallyDiscoveredZones;
+    float ZoneSweepAccumulator = 0.3f;
+
     void BuildWidgetTree();
     void RefreshState();
+    void RefreshZoneBanner();
 
     class AAstrawildPlayerCharacter* GetAstrawildPawn() const;
 };

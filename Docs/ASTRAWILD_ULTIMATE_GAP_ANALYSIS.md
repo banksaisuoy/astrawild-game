@@ -150,7 +150,7 @@
 | Gap | Current State | Required State | Missing | Dependencies | Files | Acceptance | Test | Priority |
 |---|---|---|---|---|---|---|---|---|
 | World Partition/HLOD | Flat plane, comment REPLACE_BEFORE_RELEASE | WP-enabled map with streaming for Dawn Fields at minimum | Project map + WP setup (editor-authored, target machine) | Engine access (user machine) | New Content map, `DefaultEngine.ini` | Map opens, streams cells, bootstrapper still applies | PIE travel | HIGH (requires target machine) |
-| Biome/zoning | One flat arena | Dawn Fields zones (meadow/lakeshore/ruin edge) with distinct spawn tables | Zone struct + per-zone spawn tables in bootstrapper | None (can stay procedural) | `WorldBootstrapper.cpp`, zone data | Different zones spawn different species mixes | Log assert per zone | MEDIUM (Batch 3) |
+| ~~Biome/zoning~~ | ~~One flat arena~~ **CLOSED in Batch 7** — six 800 m zones (Dawn Fields / Dusk Marsh / Glimmerwood / Ember Ridge / Frostveil / Hollow Approach) with distinct terrain profiles, per-zone spawn tables, landmarks + signature lighting | Zone struct + per-zone spawn tables in bootstrapper | Shipped: `AstrawildZoneSubsystem` (static table + weight field), `AstrawildTerrainTileActor` (height field), bootstrapper zone tables | — | `WorldBootstrapper.cpp`, `AstrawildZoneSubsystem.cpp`, `AstrawildTerrainTileActor.cpp` | Different zones spawn different species mixes | `ASTRAWILD.Zones.*` + `ASTRAWILD.Terrain.*` (5 tests) + per-zone log lines | ~~MEDIUM~~ DONE
 | Weather visibility effect | Multiplier computed, zero consumers | Fog/storm reduces AI sight + journal range | Perception range scaling + journal range scaling by multiplier | Weather (exists) | `EchoAIController.cpp`, `JournalSubsystem.cpp` | Fog halves perception distance | PIE stat | MEDIUM |
 | World events | EventBus + 11 tags, no world publishers | ≥1 dynamic event (migration/Storm/anomaly) observable | Event scheduler + publisher + HUD notice | Time/Weather (exist) | New `AstrawildWorldEventScheduler` or in TimeSubsystem | Storm event changes weather + spawns anomaly echo | Timed PIE | LOW (Batch 4) |
 | Ecosystem Tier 2/3 semantics | Interval-stretch only | Tier2 movement-simplified; Tier3 statistical population model | Distant Echo despawn-to-record + respawn-on-approach | Population model fix (H) | `EcosystemSubsystem` | 200m+ Echo stop rendering but population persists | PIE + log | MEDIUM (Batch 4) |
@@ -226,7 +226,7 @@
 | Gap | Current State | Required (launch scope) | Priority |
 |---|---|---|---|
 | Echo species count | 7 | Vertical Slice A: 3-5 complete (have 7 shallow-complete; deepen first: traits/abilities/utility) | First deepen existing (Creature gaps) before adding |
-| Biomes | 1 flat Dawn Fields | Slice A: Dawn Fields only — polish; Slice C+: Rainforest, Salt Plains, Snowline, Veldara | Post-slice (WP required first) |
+| Biomes | ~~1 flat Dawn Fields~~ **6 code zones (Batch 7)** — Dawn Fields, Dusk Marsh, Glimmerwood, Ember Ridge, Frostveil Expanse, Hollow Approach | Slice A: Dawn Fields only — polish; Slice C+: Rainforest, Salt Plains, Snowline, Veldara (art-tier biomes need the editor asset pass) | Runtime zones DONE; art-tier biomes post-slice |
 | Dungeons | 1 linear code dungeon | Slice A: 1 (fix completion first) | Batch 1-2 |
 | Bosses | 1 coded (unspawned) | Slice A: 1 | Batch 1 |
 | Quests | 6 (halts at 4) | Slice A: main chain complete | Batch 2 |

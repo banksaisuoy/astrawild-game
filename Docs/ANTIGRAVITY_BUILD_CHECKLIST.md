@@ -61,6 +61,24 @@ Test the following in order:
 9. Save through `UAstrawildSaveSubsystem`.
 10. Stop Play-in-Editor, start again, load, and verify inventory/Echo/rest point data.
 
+## Phase F2: Shattered Vale zone tour (Batch 7 — after Phase F)
+
+1. **First frame**: rolling meadow terrain (not a flat plane), camp on the ground, six distinct
+   horizon silhouettes; HUD banner reads `Dawn Fields · Threat 1` under the clock.
+2. **Zone transition**: walk ~1.2 km east → banner flips to `Hollow Approach · Threat 4`, a
+   `Region discovered: Hollow Approach (2/6)` notification fires once; ash spires + dim red light.
+3. **Ember Ridge**: orange lava-mound lights visibly flicker; obsidian spires on ridgelines.
+4. **Frostveil Expanse**: terrain climbs ~23 m to the zone center; ice pillars + cool blue light;
+   crests read snow-pale (if the vertex-color material loaded — plain gray otherwise, see ZONE_WORLD §8).
+5. **Glimmerwood**: pulsing violet crystal light; the single Ancient-rare Auroraling should be
+   findable (deep zone, spawn ≥ 200 m from center).
+6. **Dusk Marsh**: dips below Z 0 render as dark muck pools; teal wisps flicker over them.
+7. **Zone persistence**: save → stop PIE → play → load — the discovered-zone count is restored.
+8. **Perf pass**: `Stat Unit` across at least three zones; flag if the ~196k-tri terrain or the
+   ~20 point lights push frame time over budget on the target GPU.
+9. **Optional (editor-only)**: import `Content/Heightmaps/Zone_DawnFields_505.r16` per
+   `Content/Heightmaps/README.md` to compare the editor Landscape against the runtime tiles.
+
 ## Phase G: Handoff report
 
 Create or update `Docs/BUILD_STATUS.md` with:

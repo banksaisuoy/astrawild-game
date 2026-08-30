@@ -103,6 +103,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_QuestObjectiveCompleted, "Event.Quest
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_RecipeCrafted, "Event.RecipeCrafted");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoFed, "Event.EchoFed");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoObserved, "Event.EchoObserved");
+// Batch 7 — The Shattered Vale: zone transitions.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_ZoneEntered, "Event.ZoneEntered");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_ZoneLeft, "Event.ZoneLeft");
 
 // --- Faction.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Faction_Wild, "Faction.Wild");

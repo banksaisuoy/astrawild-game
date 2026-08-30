@@ -11,7 +11,9 @@
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
+#include "AstrawildTerrainTileActor.h"
 #include "AstrawildTypes.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Misc/AutomationTest.h"
 
 // ---------------------------------------------------------------------------
@@ -408,6 +410,193 @@ bool FAstrawildBossAttackScalingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Enrage multiplies by 1.4"), Enraged, 42.0f);
     TestTrue(TEXT("Damage strictly escalates 1 -> 2"), Phase2 > Phase1);
     TestTrue(TEXT("Enraged beats every non-enraged phase"), Enraged > Phase2 && Enraged > Phase3);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Zones (Batch 7 — The Shattered Vale): table integrity + lookup + weight field.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildZoneTableIntegrityTest,
+    "ASTRAWILD.Zones.TableIntegrity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildZoneTableIntegrityTest::RunTest(const FString& Parameters)
+{
+    const TArray<FAstrawildZoneDescriptor>& Zones = UAstrawildZoneSubsystem::GetAllZones();
+
+    TestEqual(TEXT("Six surface zones"), Zones.Num(), 6);
+
+    // Unique ids + unique enum values.
+    TSet<FName> Ids;
+    TSet<EAstrawildZone> Enums;
+    for (const FAstrawildZoneDescriptor& Desc : Zones)
+    {
+        TestFalse(TEXT("Zone id must not be None"), Desc.ZoneId.IsNone());
+        Ids.Add(Desc.ZoneId);
+        Enums.Add(Desc.Zone);
+    }
+    TestEqual(TEXT("Unique zone ids"), Ids.Num(), Zones.Num());
+    TestEqual(TEXT("Unique zone enums"), Enums.Num(), Zones.Num());
+
+    // Rects must not overlap (80% inset check keeps interior sampling unambiguous).
+    for (int32 A = 0; A < Zones.Num(); ++A)
+    {
+        for (int32 B = A + 1; B < Zones.Num(); ++B)
+        {
+            const FBox2D& RA = Zones[A].Bounds;
+            const FBox2D& RB = Zones[B].Bounds;
+            const bool bOverlaps = RA.Min.X < RB.Max.X && RB.Min.X < RA.Max.X &&
+                RA.Min.Y < RB.Max.Y && RB.Min.Y < RA.Max.Y;
+            TestFalse(TEXT("Zone rects must not overlap"), bOverlaps);
+        }
+    }
+
+    // Union must tile the full world rect exactly (3x2 grid of 800m cells).
+    const FBox2D World = UAstrawildZoneSubsystem::GetWorldBounds();
+    TestEqual(TEXT("World bounds span 2400m in X"), World.Max.X - World.Min.X, 240000.0f);
+    TestEqual(TEXT("World bounds span 1600m in Y"), World.Max.Y - World.Min.Y, 160000.0f);
+
+    // Every zone is a square cell of 800m.
+    for (const FAstrawildZoneDescriptor& Desc : Zones)
+    {
+        TestEqual(TEXT("Zone width is 800m"), Desc.GetSizeX(), 80000.0f);
+        TestEqual(TEXT("Zone height is 800m"), Desc.GetSizeY(), 80000.0f);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildZoneLookupCorrectnessTest,
+    "ASTRAWILD.Zones.LookupCorrectness",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildZoneLookupCorrectnessTest::RunTest(const FString& Parameters)
+{
+    struct FRow { EAstrawildZone Zone; float X; float Y; };
+    const FRow Rows[] = {
+        { EAstrawildZone::DawnFields, 0.0f, -40000.0f },
+        { EAstrawildZone::DuskMarsh, -80000.0f, -40000.0f },
+        { EAstrawildZone::HollowApproach, 80000.0f, -40000.0f },
+        { EAstrawildZone::FrostveilExpanse, -80000.0f, 40000.0f },
+        { EAstrawildZone::Glimmerwood, 0.0f, 40000.0f },
+        { EAstrawildZone::EmberRidge, 80000.0f, 40000.0f },
+    };
+
+    for (const FRow& Row : Rows)
+    {
+        TestTrue(TEXT("Zone center resolves to its own zone"),
+            UAstrawildZoneSubsystem::GetZoneAt(FVector(Row.X, Row.Y, 0.0f)) == Row.Zone);
+    }
+
+    // Off-camp point inside Dawn Fields still resolves correctly.
+    TestTrue(TEXT("Camp outskirts are Dawn Fields"),
+        UAstrawildZoneSubsystem::GetZoneAt(FVector(30000.0f, -70000.0f, 0.0f)) == EAstrawildZone::DawnFields);
+
+    // Outside the world rect is wilderness (None).
+    TestTrue(TEXT("Far outside the world is None"),
+        UAstrawildZoneSubsystem::GetZoneAt(FVector(500000.0f, 500000.0f, 0.0f)) == EAstrawildZone::None);
+
+    // The dungeon portal site sits inside Hollow Approach.
+    TestTrue(TEXT("Dungeon approach portal is in Hollow Approach"),
+        UAstrawildZoneSubsystem::GetZoneAt(FVector(52000.0f, -40000.0f, 0.0f)) == EAstrawildZone::HollowApproach);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildZoneBlendPartitionTest,
+    "ASTRAWILD.Zones.BlendPartitionOfUnity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildZoneBlendPartitionTest::RunTest(const FString& Parameters)
+{
+    const FVector2D Samples[] = {
+        FVector2D(0.0f, -40000.0f),      // Dawn Fields center (camp)
+        FVector2D(40000.0f, 0.0f),       // Four-corner meet point
+        FVector2D(-120000.0f, 80000.0f), // World corner
+        FVector2D(58000.0f, -40000.0f),  // Hollow Approach (portal path)
+        FVector2D(400000.0f, 400000.0f), // Far outside the world
+        FVector2D(-60000.0f, 20000.0f),  // Frostveil / Dusk Marsh border blend
+    };
+
+    for (const FVector2D& Sample : Samples)
+    {
+        float Weights[(int32)EAstrawildZone::Count];
+        UAstrawildZoneSubsystem::ComputeZoneWeights(Sample, Weights);
+
+        float Sum = 0.0f;
+        for (int32 i = 0; i < (int32)EAstrawildZone::Count; ++i)
+        {
+            TestTrue(TEXT("Weights stay non-negative"), Weights[i] >= 0.0f);
+            Sum += Weights[i];
+        }
+        TestTrue(TEXT("Weights sum to a partition of unity (±0.001)"),
+            FMath::Abs(Sum - 1.0f) < 0.001f);
+    }
+
+    // Inside a zone far from any border, that zone dominates the blend.
+    float CampWeights[(int32)EAstrawildZone::Count];
+    UAstrawildZoneSubsystem::ComputeZoneWeights(FVector2D(0.0f, -40000.0f), CampWeights);
+    TestTrue(TEXT("Dawn Fields dominates at the camp"),
+        CampWeights[(int32)EAstrawildZone::DawnFields] > 0.9f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildTerrainHeightDeterminismTest,
+    "ASTRAWILD.Terrain.HeightDeterministic",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildTerrainHeightDeterminismTest::RunTest(const FString& Parameters)
+{
+    const FVector2D P(33750.0f, -12250.0f);
+
+    const float H1 = AAstrawildTerrainTileActor::EvalWorldHeight(P, 1337);
+    const float H2 = AAstrawildTerrainTileActor::EvalWorldHeight(P, 1337);
+    TestEqual(TEXT("Same seed + point -> identical height"), H1, H2);
+
+    const float H3 = AAstrawildTerrainTileActor::EvalWorldHeight(P, 2024);
+    TestFalse(TEXT("Different seed -> different height"), FMath::IsNearlyEqual(H1, H3));
+
+    // Sanity: the six zones produce heights in a plausible band (marsh dips low,
+    // Frostveil/Ember Ridge rise high) — catches parameter regressions.
+    const FAstrawildZoneDescriptor* Marsh = UAstrawildZoneSubsystem::FindZone(EAstrawildZone::DuskMarsh);
+    const FAstrawildZoneDescriptor* Frost = UAstrawildZoneSubsystem::FindZone(EAstrawildZone::FrostveilExpanse);
+    if (Marsh && Frost)
+    {
+        const float MarshH = AAstrawildTerrainTileActor::EvalWorldHeight(Marsh->GetCenter(), 1337);
+        const float FrostH = AAstrawildTerrainTileActor::EvalWorldHeight(Frost->GetCenter(), 1337);
+        TestTrue(TEXT("Marsh center stays low (below 600cm)"), MarshH < 600.0f);
+        TestTrue(TEXT("Frostveil center rises above the marsh"), FrostH > MarshH);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildTerrainSeamContinuityTest,
+    "ASTRAWILD.Terrain.SeamContinuity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildTerrainSeamContinuityTest::RunTest(const FString& Parameters)
+{
+    // Walk the Dawn Fields / Hollow Approach shared border (X = 40000) plus the
+    // four-corner meet (40000, 0): heights 1cm either side of the seam must match
+    // closely because the height field is one continuous global function.
+    const float BorderX = 40000.0f;
+    const float Ys[] = { -60000.0f, -40000.0f, -20000.0f, 0.0f, 20000.0f };
+
+    for (const float Y : Ys)
+    {
+        const float HWest = AAstrawildTerrainTileActor::EvalWorldHeight(FVector2D(BorderX - 1.0f, Y), 1337);
+        const float HEast = AAstrawildTerrainTileActor::EvalWorldHeight(FVector2D(BorderX + 1.0f, Y), 1337);
+        TestTrue(TEXT("No seam jump across zone borders (<50cm over 2cm)"),
+            FMath::Abs(HEast - HWest) < 50.0f);
+    }
+
+    // Row seam (Dawn Fields / Glimmerwood, Y = 0) also continuous.
+    const float Xs[] = { -20000.0f, 0.0f, 20000.0f };
+    for (const float X : Xs)
+    {
+        const float HSouth = AAstrawildTerrainTileActor::EvalWorldHeight(FVector2D(X, -1.0f), 1337);
+        const float HNorth = AAstrawildTerrainTileActor::EvalWorldHeight(FVector2D(X, 1.0f), 1337);
+        TestTrue(TEXT("No seam jump across row borders"),
+            FMath::Abs(HNorth - HSouth) < 50.0f);
+    }
     return true;
 }
 

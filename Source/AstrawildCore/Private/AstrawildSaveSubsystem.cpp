@@ -16,6 +16,7 @@
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
 #include "AstrawildWeatherSubsystem.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
@@ -124,11 +125,17 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         Journal->ExportForSave(SaveGame->Journal);
     }
 
+    // --- Zones (Batch 7 — The Shattered Vale): discovery list ---
+    if (const UAstrawildZoneSubsystem* ZoneSub = World->GetSubsystem<UAstrawildZoneSubsystem>())
+    {
+        ZoneSub->ExportForSave(SaveGame->Zones.DiscoveredZones);
+    }
+
     const bool bSaved = UGameplayStatics::SaveGameToSlot(SaveGame, SlotName, UserIndex);
     if (bSaved)
     {
-        UE_LOG(LogAstrawildSave, Log, TEXT("World saved to slot %s (schema %d, %d buildings, roster %d, %d dungeons)."),
-            *SlotName, CurrentSchemaVersion, SaveGame->Buildings.Num(), SaveGame->EchoRosterV2.Num(), SaveGame->Dungeons.Num());
+        UE_LOG(LogAstrawildSave, Log, TEXT("World saved to slot %s (schema %d, %d buildings, roster %d, %d dungeons, %d zones)."),
+            *SlotName, CurrentSchemaVersion, SaveGame->Buildings.Num(), SaveGame->EchoRosterV2.Num(), SaveGame->Dungeons.Num(), SaveGame->Zones.DiscoveredZones.Num());
     }
     else
     {
@@ -295,6 +302,12 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
     {
         Journal->ImportFromSave(SaveGame->Journal);
+    }
+
+    // --- Zones (Batch 7 — The Shattered Vale): restore the discovered-zone list.
+    if (UAstrawildZoneSubsystem* ZoneSub = World->GetSubsystem<UAstrawildZoneSubsystem>())
+    {
+        ZoneSub->ImportFromSave(SaveGame->Zones.DiscoveredZones);
     }
 
     // --- Dungeons (Batch 6 — gap M-7): generators already built their rooms during

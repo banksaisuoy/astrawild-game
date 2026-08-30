@@ -110,6 +110,9 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_QuestObjectiveCompleted);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_RecipeCrafted);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_EchoFed);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_EchoObserved);
+// Batch 7 — The Shattered Vale: zone transitions (server-published, zone id as TargetId).
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_ZoneEntered);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_ZoneLeft);
 
 // --- Faction.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Faction_Wild);

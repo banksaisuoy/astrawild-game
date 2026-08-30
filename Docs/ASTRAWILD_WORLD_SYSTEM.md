@@ -98,29 +98,41 @@ ecosystem, future UI/audio can subscribe). See Architecture V2 §6 for the publi
 
 ---
 
-## 6. WorldBootstrapper — Procedural Dawn Fields
+## 6. WorldBootstrapper — The Shattered Vale (six zones, Batch 7)
 
 `AAstrawildWorldBootstrapper` (spawned by the GameMode at world begin, server only). Deterministic via
 `FRandomStream(GameState->WorldSeed)`.
 
 | Parameter | Default | Note |
 |---|---|---|
-| `ArenaSize` | **8000 cm** (half-size → 160 m × 160 m arena) | ground plane scale 80× |
-| `ResourceNodeCount` | **26** | cycled Wood/Stone/Fiber; 2 per harvest, 3 harvests, respawn timer |
-| `WildEchoCount` | **9** | round-robin Lumewisp / Stonehide / Duskmoth |
-| `HostileCount` | **2** | Gloomfangs |
+| `TerrainResolution` | **128** quads/side (≈ 6.25 m spacing per 800 m tile) | 16–256, ~196k tris world-wide |
+| `ResourceNodeCount` | **21** | Dawn Fields camp ring: Wood/Stone/Fiber; outer zones use the per-zone table |
+| `WildEchoCount` | **8** | Dawn Fields camp ring round-robin; outer zones use the per-zone table |
+| `HostileCount` | **2** | Gloomfangs in the Dawn Fields wilds; Hollow Approach adds its own |
 
-Build order (`BeginPlay`): `BuildLighting` → `BuildGround` → `ScatterResourceNodes` → `SpawnWildEchoes` →
-`SpawnHostiles` → `SpawnPointsOfInterest`.
+Build order (`BeginPlay`): `BuildLighting` → `BuildTerrain` (six zone tiles + camp `APlayerStart`) →
+`ScatterResourceNodes` (camp ring + per-zone signature materials) → `SpawnWildEchoes` / `SpawnHostiles`
+(camp ring + per-zone species) → `SpawnPointsOfInterest` (camp at Dawn Fields center; dungeon in the
+Hollow Approach) → `BuildZoneLandmarks` (per-zone silhouettes + tinted flicker lights).
+
+**Batch 7 — The Shattered Vale**: the world is now 2.4 km × 1.6 km split into six 800 m zones
+(Dawn Fields / Dusk Marsh / Glimmerwood / Ember Ridge / Frostveil Expanse / Hollow Approach), each with
+its own terrain profile (`AAstrawildTerrainTileActor` height field), wildlife, resources, landmarks and
+signature colored light. See **`Docs/ASTRAWILD_ZONE_WORLD.md`** (the canonical zone doc) and
+`UAstrawildZoneSubsystem` for the zone table, events and discovery persistence.
 
 - **Lighting rig** (spawned engine actors): DirectionalLight (sun) at pitch −50°, yaw 30°, intensity 8 lux,
   movable; SkyLight intensity 1.5; SkyAtmosphere; ExponentialHeightFog.
-- **Ground**: engine `/Engine/BasicShapes/Plane` scaled 80×, QueryAndPhysics collision, at origin; plus a
-  fallback `APlayerStart` at (0, 0, 120).
-- **Resource nodes**: seeded scatter within ±0.85 × ArenaSize, Z 100.
-- **Wild Echoes**: scatter within ±0.8 × ArenaSize, Z 150, `InitializeFromDefinition` per species.
-- **Hostiles**: scatter within ±0.9 × ArenaSize.
-- **Camp layout** (radius 900 cm):
+- **Terrain**: six `AAstrawildTerrainTileActor` tiles (ProceduralMeshComponent, analytic normals,
+  biome vertex tints, complex collision) built from the pure global height field
+  `EvalWorldHeight(XY, Seed)`; zone weights (~60 m falloff) keep borders seam-continuous.
+- **Camp PlayerStart** at the Dawn Fields center (0, −40000, GroundZ+120).
+- **Resource nodes**: camp ring 1.6–6.8 km radius + per-zone signature table (marsh fiber/wood,
+  Glimmerwood wood/crystal, ridge stone/ember-ash/crystal, snow stone/crystal, Hollow stone/crystal).
+- **Wild Echoes**: camp ring + per-zone species (see ZONE_WORLD §2.3); Auroraling seeds deep in
+  the Glimmerwood.
+- **Hostiles**: Gloomfang camp wilds + 2 more in the Hollow Approach.
+- **Camp layout** (radius 900 cm around the Dawn Fields center):
 
 | Object | Position | Configuration |
 |---|---|---|
@@ -142,6 +154,8 @@ Build order (`BeginPlay`): `BuildLighting` → `BuildGround` → `ScatterResourc
 |---|---|
 | Weather visibility → perception scaling | API exists (`GetVisibilityMultiplier`), NOT yet applied to sight radii |
 | Weather-driven VFX/audio | NOT IMPLEMENTED (state replicates; presentation hook is a no-op OnRep) |
-| Landscape / World Partition / real biomes | NOT IMPLEMENTED (bootstrapper arena) |
+| Per-zone weather states | Global weather only — e.g. permanent Fog in the marsh is future work (Batch 7 closed the biome/terrain gap: six-zone procedural world, see `ASTRAWILD_ZONE_WORLD.md`) |
+| Zone-conditional quest objectives (`VisitZone`) | Zone events publish on the bus; no objective type consumes them yet |
+| Landscape / World Partition editor assets | OPTIONAL editor path provided: `Content/Heightmaps/*.r16` + import guide (runtime world needs none) |
 | Rest points persisted through LoadWorld (v2 path) | v1 payload keeps rest-point data; `LoadWorld` (v2 orchestration) does not respawn rest points — bootstrapper recreates them per session |
 | Dynamic spawn/despawn from population simulation | NOT IMPLEMENTED (fixed bootstrapper population) |

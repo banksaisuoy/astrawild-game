@@ -170,6 +170,24 @@ enum class EAstrawildWeatherState : uint8
     Cold UMETA(DisplayName="Cold")
 };
 
+/**
+ * World zones of the Shattered Vale (Batch 7 — directive §21/M-13): six rectangular
+ * regions tiling the 2.4km x 1.6km surface world. Zone lookup is a pure static
+ * (see UAstrawildZoneSubsystem) so HUD clients resolve locally without replication.
+ */
+UENUM(BlueprintType)
+enum class EAstrawildZone : uint8
+{
+    None UMETA(DisplayName="Wilderness"),
+    DawnFields UMETA(DisplayName="Dawn Fields"),
+    DuskMarsh UMETA(DisplayName="Dusk Marsh"),
+    EmberRidge UMETA(DisplayName="Ember Ridge"),
+    FrostveilExpanse UMETA(DisplayName="Frostveil Expanse"),
+    Glimmerwood UMETA(DisplayName="Glimmerwood"),
+    HollowApproach UMETA(DisplayName="Hollow Approach"),
+    Count UMETA(Hidden)
+};
+
 /** Player-issued Echo commands (directive §10). */
 UENUM(BlueprintType)
 enum class EAstrawildEchoCommand : uint8
@@ -519,6 +537,17 @@ struct ASTRAWILDCORE_API FAstrawildDungeonSaveData
     /** True when every room (including the boss room) is cleared. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     bool bCompleted = false;
+};
+
+/** Zone discovery state (Batch 7 — The Shattered Vale, additive like the dungeon payload). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildZoneSaveData
+{
+    GENERATED_BODY()
+
+    /** Zones the players have set foot in — drives the HUD discovery counter. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<EAstrawildZone> DiscoveredZones;
 };
 
 /** World state saved with the game (directive §27). */

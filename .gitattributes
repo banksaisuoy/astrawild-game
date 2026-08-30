@@ -15,3 +15,6 @@
 *.mov filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.pak filter=lfs diff=lfs merge=lfs -text
+
+# Batch 7 heightmap exports (plain binary, no LFS needed at ~510KB each)
+*.r16 -text

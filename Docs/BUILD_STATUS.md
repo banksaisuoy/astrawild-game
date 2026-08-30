@@ -3,9 +3,22 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Wave 9 — Batch 6: Dungeon & boss hardening — the Hollow Underlight sealed & remembered)
-- Branch: `main` (latest: Batch 6 — dungeon gates/portals/save + elemental boss; preceded by `f946b92` Batch 5 source)
-- Latest change: **Wave 9 Batch 6 (STEP 22 extension)** — five work items closed in source: (A) **progression
+- Last updated: 2026-08-30 (Wave 10 — Batch 7: The Shattered Vale — six-zone world & terrain)
+- Branch: `main` (latest: Batch 7 — six-zone world; preceded by `21ea71a` Batch 6 dungeon/boss hardening)
+- Latest change: **Wave 10 Batch 7 (world & zones — closes the one-biome gap)** — the flat 160 m arena is
+  replaced by **The Shattered Vale**: a 2.4 km × 1.6 km world of six 800 m zones, each with its own terrain
+  profile (Dawn Fields meadows / Dusk Marsh wetland / Glimmerwood crystal hills / Ember Ridge volcanic
+  ridgeline / Frostveil snow mountains / Hollow Approach ash wilds hosting the dungeon gate). New:
+  `UAstrawildZoneSubsystem` (static zone table, partition-of-unity weight field, server zone sweep publishing
+  `Event.ZoneEntered`/`Event.ZoneLeft`, discovery persistence through the additive
+  `FAstrawildZoneSaveData`), `AAstrawildTerrainTileActor` (ProceduralMeshComponent tiles over one pure
+  global height function — seam-continuous by construction, biome vertex tints, ~196k tris world-wide),
+  per-zone wildlife/resource/landmark tables in the bootstrapper (Auroraling re-seeded deep in the
+  Glimmerwood; dungeon + portals relocated to the Hollow Approach), ~20 tinted zone lights (8 animated
+  flicker), HUD zone banner + region-discovered notifications, and an **optional editor Landscape path**
+  (`Scripts/export_landscape_heightmaps.py` + six committed 505×505 `.r16` heightmaps in
+  `Content/Heightmaps/`). `ProceduralMeshComponent` plugin wired into `.uproject` + `Build.cs`.
+  5 new automation tests (**20 total**); Python exporter self-check PASSES in-sandbox. Previously (Batch 6): (A) **progression
   gates** — `AAstrawildDungeonGateActor` (new) implements the gate forward-declared since wave 3: gate *i*
   seals the passage between rooms *i*↔*i*+1 with blocking collision + a crossbar that lifts into the lintel
   when the previous room clears (`bOpen` replicates; `OnRep` re-applies collision client-side); (B) **dungeon
@@ -26,7 +39,7 @@
   new), sinking the boss's Ancient Core into the Light-element `Item_AncientResonator` (ATK 18 — the
   warden's counter). New quest `Quest_HollowUnderlight` chains after quest 6 (ReachLocation + DefeatCreature).
   Full design doc: **`Docs/ASTRAWILD_DUNGEON_BOSS.md`** (new).
-- Codebase: **94 C++ files (46 `.cpp` + 48 `.h`), ~17,730 LOC** in `Source/AstrawildCore` (single module)
+- Codebase: **98 C++ files (48 `.cpp` + 50 `.h`), ~19,331 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 

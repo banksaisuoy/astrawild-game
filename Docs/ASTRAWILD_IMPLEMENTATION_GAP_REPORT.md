@@ -192,3 +192,17 @@ Remaining from the trackers: H-11 crafting output validation, H-6/H-12 MP batch 
 material deduction, client registries, OnRep speed refreshes), H-13 gamepad bindings, M-3 dead-code
 sweep, shop UMG screen + dialogue-lite, biome 2 prep — plus the never-compiled blocker: first target
 machine compile + 12-test automation run + 17-step playtest.
+
+
+## Batch 7 — zone world closure (post-`pending-commit`)
+
+- **Biome/terrain gap (ULTIMATE `Biome/zoning`, GAP-ANALYSIS `Biomes` row) — CLOSED**: the world
+  is now six 800 m zones with distinct terrain profiles, spawn tables, landmarks and lighting
+  (`Docs/ASTRAWILD_ZONE_WORLD.md`). The per-zone spawn-table mechanism the original row asked for
+  ("zone struct + per-zone spawn tables in bootstrapper") is exactly what shipped.
+- **M-13 (log-string drift / dead-end tech / station registry) remains open** — unrelated to
+  biome zoning despite the adjacent numbering; log line updated for the new world (zone counts),
+  dead-end tech and station registry untouched.
+- **New follow-ups (honest)**: `VisitZone` quest objective type (zone events currently have no
+  consumer), per-zone weather, dungeon-approach terrain flattening, PMC→Landscape editor swap
+  (optional path committed as `.r16` heightmaps).

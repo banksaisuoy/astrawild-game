@@ -1,15 +1,17 @@
 # ASTRAWILD — Test Plan
 
-**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 12 automation tests are
+**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 20 automation tests are
 written; **none have been executed** (no UE toolchain in the sandbox). Execution happens on the target
 Windows machine.**
-**Date: 2026-08-30** (wave 6 sync — counts refreshed through Batch 4: +2 armor/status tests in Batch 3, +1 vendor economy test in Batch 4; 5 of 12 now call production statics)
+**Date: 2026-08-30** (wave 10 sync — +5 zone/terrain tests in Batch 7: `Zones.TableIntegrity`,
+`Zones.LookupCorrectness`, `Zones.BlendPartitionOfUnity`, `Terrain.HeightDeterministic`,
+`Terrain.SeamContinuity`; 10 of 20 now call production statics)
 **Primary sources:** `AstrawildAutomationTests.cpp`, `Scripts/validate_repository.sh`,
 directive §39 (automation) + §50 (first-playable flow)
 
 ---
 
-## 1. Automation Tests (12)
+## 1. Automation Tests (20)
 
 All tests are `IMPLEMENT_SIMPLE_AUTOMATION_TEST` under the `ASTRAWILD.` namespace,
 flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter`, compiled behind
@@ -30,6 +32,14 @@ from the Session Frontend or CLI without a map.
 | 10 | `ASTRAWILD.Equipment.ArmorMath` | Batch 3 armor contract — calls the REAL production static `UAstrawildCombatComponent::ComputeArmorFraction`: tier ratings 20/45/80 → 16.7/31.0/44.4 % reduction with diminishing-returns ordering; 1,000,000-rating clamps to `ArmorMaxFraction 0.6`; K=0 degenerate case → 0; block+cuirass ≈ 19.4 of a 100 hit |
 | 11 | `ASTRAWILD.Combat.StatusEffectFactory` | Batch 3 status contract — calls the REAL production factory `UAstrawildCombatComponent::MakeElementalStatusEffect`: Ember→Burn (4 s, DPS 2+5 %×40), Frost→Chill (3 s, ×0.5), Flora→Poison (6 s, 2 DPS), Pulse→Shock (0.8 s, ×0.3); None/Light/Ash → no status |
 | 12 | `ASTRAWILD.Economy.VendorSellValue` | Batch 4 vendor contract — calls the REAL production static `AAstrawildNPCCharacter::ComputeVendorSellValue`: price 2→1, 3→1 (floor), 4→2, 6→3; unpriced (0) → 0 (junk not sellable); sell value strictly below buy price for every priced ware (no arbitrage) |
+| 13 | `ASTRAWILD.Dungeon.BossElementalMultiplier` | Batch 6 boss contract — weakness ×1.5, same-element ×0.75, None/neutral ×1.0 (`ComputeBossElementalMultiplier`) |
+| 14 | `ASTRAWILD.Dungeon.BossPhaseThresholds` | Batch 6 phase gates — 100→1, 67→1, 66→2, 50→2, 33→3; enrage forces 3 (`ComputePhaseForHealthFraction`) |
+| 15 | `ASTRAWILD.Dungeon.BossAttackDamage` | Batch 6 damage curve — phase 2 ×1.15, enrage ×1.4, strict escalation (`ComputeBossAttackDamage`) |
+| 16 | `ASTRAWILD.Zones.TableIntegrity` | Batch 7 world contract — 6 zones, unique ids/enums, non-overlapping 800 m squares tiling the 2400×1600 m world rect exactly |
+| 17 | `ASTRAWILD.Zones.LookupCorrectness` | Batch 7 lookup — every zone center resolves to itself; camp outskirts = Dawn Fields; far outside = None; dungeon portal site = Hollow Approach |
+| 18 | `ASTRAWILD.Zones.BlendPartitionOfUnity` | Batch 7 weight field — weights ≥ 0, Σ = 1 ±0.001 at camp / four-corner meet / world corner / far outside; Dawn Fields > 0.9 at camp |
+| 19 | `ASTRAWILD.Terrain.HeightDeterministic` | Batch 7 height field — same seed+point → identical height; different seed → different; marsh stays low, Frostveil rises above it |
+| 20 | `ASTRAWILD.Terrain.SeamContinuity` | Batch 7 seams — <50 cm height delta 1 cm either side of the X=40000 and Y=0 zone borders at multiple sample points |
 
 Run on the target machine: **Tools → Session Frontend → Automation** (filter `ASTRAWILD`), or:
 `UnrealEditor-Cmd.exe ASTRAWILD.uproject -ExecCmds="Automation RunTests ASTRAWILD" -unattended -nopause -testexit="Automation Test Queue Empty"`

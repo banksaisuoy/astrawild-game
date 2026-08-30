@@ -84,7 +84,9 @@ scanning, refactor-safe in C++. Variable names follow `TAG_Astrawild_<Group>_<Le
 | `Event.HostileDefeated` | same (hostile species variant) | quests (DefeatCreature) |
 | `Event.BuildingPlaced` | `BuildingComponent::ServerPlaceBuilding` | quests (PlaceBuilding) |
 | `Event.TechUnlocked` | `ResearchSubsystem::TryUnlockTech` | quests (UnlockTechnology) |
-| `Event.LocationReached` | **no publisher yet** | reserved (ReachLocation quests) |
+| `Event.LocationReached` | Dungeon portal pair (`AstrawildDungeonPortalActor`, Batch 6) | ReachLocation quests |
+| `Event.ZoneEntered` | Zone subsystem sweep (Batch 7) — TargetId = zone id | future VisitZone objectives / discovery UX |
+| `Event.ZoneLeft` | Zone subsystem sweep (Batch 7) — TargetId = zone id | symmetric leave events |
 | `Event.QuestObjectiveCompleted` | **no publisher yet** | reserved (analytics/audio) |
 | `Event.RecipeCrafted` | `CraftingComponent` (instant + timed completion) | quests (CraftRecipe) |
 | `Event.EchoFed` | `EchoCharacter::Feed` | reserved (journal/audio) |

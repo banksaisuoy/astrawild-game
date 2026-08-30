@@ -1,5 +1,7 @@
 # ASTRAWILD — Echoes of the First Dawn
 
+**Current world (Batch 7): The Shattered Vale** — six 800 m zones (Dawn Fields, Dusk Marsh, Glimmerwood, Ember Ridge, Frostveil Expanse, Hollow Approach) over a 2.4 km × 1.6 km procedural terrain, each zone with its own wildlife, resources, landmarks and signature light. Runtime world needs zero assets; an optional editor Landscape path ships in `Content/Heightmaps/`.
+
 ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal Engine. The first milestone is a playable Vertical Slice: one small region, three prototype Echo creatures, exploration, combat, capture, crafting, a small base, and reliable save/load.
 
 ## Current repository status

@@ -13,6 +13,7 @@
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -88,6 +89,14 @@ void UAstrawildHudWidget::BuildWidgetTree()
     ResearchText = MakeText(TEXT("ResearchText"), FLinearColor(0.70f, 0.90f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(ResearchText), FVector2D(0.5f, 0.085f), FVector2D(0.5f, 0.085f), FVector2D(-110.0f, 0.0f), FVector2D(220.0f, 20.0f));
 
+    // --- Batch 7: Shattered Vale zone banner (title + flavor + discovery count) ---
+    ZoneBannerText = MakeText(TEXT("ZoneBannerText"), FLinearColor(0.95f, 0.92f, 0.80f, 1.0f), 19);
+    AnchorSlot(RootCanvas->AddChildToCanvas(ZoneBannerText), FVector2D(0.5f, 0.125f), FVector2D(0.5f, 0.125f), FVector2D(-160.0f, 0.0f), FVector2D(320.0f, 24.0f));
+
+    ZoneSubText = MakeText(TEXT("ZoneSubText"), FLinearColor(0.62f, 0.70f, 0.72f, 1.0f), 12);
+    ZoneSubText->SetAutoWrapText(true);
+    AnchorSlot(RootCanvas->AddChildToCanvas(ZoneSubText), FVector2D(0.5f, 0.155f), FVector2D(0.5f, 0.155f), FVector2D(-170.0f, 0.0f), FVector2D(340.0f, 30.0f));
+
     // Audit C-6: build-mode readout — current piece + piece index/total + controls.
     BuildText = MakeText(TEXT("BuildText"), FLinearColor(0.90f, 0.88f, 0.60f, 1.0f), 15);
     AnchorSlot(RootCanvas->AddChildToCanvas(BuildText), FVector2D(0.5f, 0.72f), FVector2D(0.5f, 0.72f), FVector2D(-260.0f, 0.0f), FVector2D(520.0f, 22.0f));
@@ -134,6 +143,13 @@ void UAstrawildHudWidget::NativeTick(const FGeometry& MyGeometry, const float In
         RefreshState();
     }
 
+    ZoneSweepAccumulator += InDeltaTime;
+    if (ZoneSweepAccumulator >= 0.3f)
+    {
+        ZoneSweepAccumulator = 0.0f;
+        RefreshZoneBanner();
+    }
+
     if (NotificationRemaining > 0.0f)
     {
         NotificationRemaining -= InDeltaTime;
@@ -150,6 +166,57 @@ void UAstrawildHudWidget::PushNotification(const FText& Message)
     {
         NotificationText->SetText(Message);
         NotificationRemaining = 4.0f;
+    }
+}
+
+void UAstrawildHudWidget::RefreshZoneBanner()
+{
+    AAstrawildPlayerCharacter* Pawn = GetAstrawildPawn();
+    if (!Pawn)
+    {
+        return;
+    }
+
+    // Pure static lookup — no replication needed (Batch 7 zone table).
+    const EAstrawildZone NewZone = UAstrawildZoneSubsystem::GetZoneAt(Pawn->GetActorLocation());
+    if (NewZone == CurrentZone)
+    {
+        return;
+    }
+    CurrentZone = NewZone;
+
+    const FAstrawildZoneDescriptor* Desc = UAstrawildZoneSubsystem::FindZone(NewZone);
+    if (!Desc)
+    {
+        if (ZoneBannerText)
+        {
+            ZoneBannerText->SetText(FText::FromString(TEXT("The Untamed Wilds")));
+        }
+        if (ZoneSubText)
+        {
+            ZoneSubText->SetText(FText::FromString(FString::Printf(TEXT("Zones discovered: %d/%d"),
+                LocallyDiscoveredZones.Num(), UAstrawildZoneSubsystem::GetZoneCount())));
+        }
+        return;
+    }
+
+    // First visit this session? Celebrate it.
+    if (!LocallyDiscoveredZones.Contains(NewZone))
+    {
+        LocallyDiscoveredZones.Add(NewZone);
+        PushNotification(FText::FromString(FString::Printf(TEXT("Region discovered: %s  (%d/%d)"),
+            *Desc->DisplayName.ToString(), LocallyDiscoveredZones.Num(), UAstrawildZoneSubsystem::GetZoneCount())));
+    }
+
+    if (ZoneBannerText)
+    {
+        ZoneBannerText->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  Threat %d"),
+            *Desc->DisplayName.ToString(), Desc->ThreatLevel)));
+    }
+    if (ZoneSubText)
+    {
+        ZoneSubText->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  Zones discovered: %d/%d"),
+            *Desc->Subtitle.ToString(), LocallyDiscoveredZones.Num(), UAstrawildZoneSubsystem::GetZoneCount())));
     }
 }
 

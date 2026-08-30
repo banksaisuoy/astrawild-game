@@ -222,7 +222,10 @@ side, z = 100).
 | Dungeon room shells (cube floor plates) | DungeonRoomActor | PLACEHOLDER — walls arrive with the asset pass |
 | Dungeon gate (cylinder pillars + cube crossbar) | DungeonGateActor (wave 9 — Batch 6) | PLACEHOLDER — resonance-arch meshes |
 | Dungeon portal (squashed cylinder pad) | DungeonPortalActor (wave 9 — Batch 6) | PLACEHOLDER — portal frame + VFX |
-| Ground plane (engine plane ×80) + spawned lighting rig | WorldBootstrapper | PLACEHOLDER — replaced by a real Dawn Fields map (M9) |
+| Six-zone procedural terrain (PMC tiles, biome vertex tints) | `AstrawildTerrainTileActor` ×6 (Batch 7) | PLACEHOLDER — optional editor Landscape swap: `Content/Heightmaps/*.r16` + import guide |
+| Zone landmarks (obsidian spires, ice pillars, crystal cones, dead trees, dawnwoods, ash spires, muck pools, reeds, lava mounds, snow drifts, glowcaps) | WorldBootstrapper `BuildZoneLandmarks` (Batch 7) | PLACEHOLDER — biome prop sets |
+| ~20 tinted zone point lights (8 animated flicker) | WorldBootstrapper (Batch 7) | acceptable for slice; swap for emissive props + baked lighting later |
+| Ground plane (engine plane ×80) + spawned lighting rig | WorldBootstrapper | SUPERSEDED by terrain tiles (Batch 7); rig kept (sun/sky/atmosphere/fog) |
 | HUD Roboto engine font | HudWidget | acceptable for slice; themed font later |
 | Interaction prompts (2 Thai NSLOCTEXT strings from v1) | ResourceNode / RestPoint | localize to LOCTEXT tables with the UI pass |
 
@@ -231,4 +234,4 @@ side, z = 100).
 ## 10. Not Yet Content (reserved, no CODE_DEFAULT entries)
 
 - Ability definitions (`AbilityIds` on Echo definitions) — array exists, empty.
-- Biomes beyond Dawn Fields — tags exist (`Biome.*`), no content.
+- Biome art tiers beyond the six code zones — Rainforest, Salt Plains, Snowline, Veldara (see roadmap; runtime zones shipped in Batch 7).

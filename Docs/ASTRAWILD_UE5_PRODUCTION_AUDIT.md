@@ -576,3 +576,43 @@ must be verified on UE 5.8 + Antigravity target machine)`. Design doc:
 - Known accepted simplifications: gate crossbar/collision snap on OnRep (no animation — art pass);
   portals authority-guarded like OpenShop; first-player-only room loot unchanged (MP batch);
   boss AI controller still pending (direct AddMovementInput as before).
+
+
+## 26. Wave 10 Batch 7 status update (The Shattered Vale — world & zones)
+
+**Scope**: replace the single flat 160 m arena with a six-zone 2.4 km × 1.6 km procedural world —
+closing the ULTIMATE GAP `Biome/zoning` / GAP-ANALYSIS `Biomes` row (one-biome world) that survived
+every prior batch.
+
+**Evidence (per the 9-point audit chain):**
+
+1. **New files**: `AstrawildZoneSubsystem.h/.cpp` (static zone table + partition-of-unity weight
+   field + server zone sweep + discovery persistence), `AstrawildTerrainTileActor.h/.cpp`
+   (PMC terrain tiles, pure global height function, biome vertex tints),
+   `Scripts/export_landscape_heightmaps.py` + 6 committed `.r16` heightmaps
+   (`Content/Heightmaps/`), `Docs/ASTRAWILD_ZONE_WORLD.md` (canonical doc).
+2. **Module wiring**: `ProceduralMeshComponent` plugin enabled in `ASTRAWILD.uproject` +
+   `AstrawildCore.Build.cs` (was missing — compile blocker if forgotten).
+3. **Zone table**: 6 × 800 m squares tiling X[−120k,120k] × Y[−80k,80k] exactly; ids
+   `Zone_DawnFields/DuskMarsh/Glimmerwood/EmberRidge/Frostveil/HollowApproach`; threat 1–4.
+4. **Height field**: `EvalWorldHeight` = Σ(zone weights × (base + amp·ridgeBlend(FBM))) + micro
+   ripple; weights ~60 m falloff partition of unity → **seam continuity by construction**
+   (test-verified). Blend tightened 180 m → 60 m after the Python port self-check showed
+   personality bleed (camp Dawn-weight 0.59 → 0.92).
+5. **Population**: per-zone wildlife table (9 rows) + per-zone resource table (11 rows) + camp
+   ring keeps legacy knobs; Auroraling re-seeded deep in the Glimmerwood; dungeon + portal pair
+   relocated to the Hollow Approach (entrance pad 1.2 km east of camp, (52000, −40000)).
+6. **Events**: `Event.ZoneEntered` / `Event.ZoneLeft` gameplay tags; ZoneSubsystem sweep
+   (0.5 s) publishes with zone id as TargetId — first publishers ever for zone transitions.
+7. **HUD**: zone banner (title + threat + flavor + `n/6 discovered`) + region-discovered
+   notification; pure static lookup → zero replication cost.
+8. **Save**: additive `FAstrawildZoneSaveData.DiscoveredZones` (schema stays v2), exported in
+   `SaveWorld`, re-imported + re-broadcast in `LoadWorld` — same pattern as the Batch-6 payload.
+9. **Tests**: 5 new (Zones.TableIntegrity / LookupCorrectness / BlendPartitionOfUnity /
+   Terrain.HeightDeterministic / Terrain.SeamContinuity) — **20 total**; the Python exporter's
+   self-check (determinism / unity / seams / personality) PASSES in-sandbox:
+   `camp h=85cm, marsh h=117cm, frost h=2347cm`.
+
+**Honest status**: compile NOT_RUN (no UE in sandbox). Perf watch-list: ~196k terrain tris
+world-wide (single LOD, no Nanite on PMC), ~20 point lights (8 animated), complex collision on
+PMC vs invoker-driven navmesh. Landmark material limits documented in ZONE_WORLD §8.

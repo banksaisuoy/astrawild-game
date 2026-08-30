@@ -20,7 +20,9 @@ public class AstrawildCore : ModuleRules
                 // V2 architecture (audit §F): AI, navigation, UI foundation.
                 "AIModule",
                 "NavigationSystem",
-                "UMG"
+                "UMG",
+                // Batch 7 — The Shattered Vale: runtime procedural terrain tiles.
+                "ProceduralMeshComponent"
             }
         );
 
