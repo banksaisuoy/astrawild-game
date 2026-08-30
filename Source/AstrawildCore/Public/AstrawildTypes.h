@@ -171,9 +171,11 @@ enum class EAstrawildWeatherState : uint8
 };
 
 /**
- * World zones of the Shattered Vale (Batch 7 — directive §21/M-13): six rectangular
- * regions tiling the 2.4km x 1.6km surface world. Zone lookup is a pure static
- * (see UAstrawildZoneSubsystem) so HUD clients resolve locally without replication.
+ * World zones of the Shattered Vale (Batch 7 — directive §21/M-13; Batch 8 expands
+ * the grid from 3x2 to 4x3): twelve rectangular regions tiling the 3.2km x 2.4km
+ * surface world. Zone lookup is a pure static (see UAstrawildZoneSubsystem) so HUD
+ * clients resolve locally without replication. Entries are appended-only —
+ * existing saves serialize zone discovery by enum value.
  */
 UENUM(BlueprintType)
 enum class EAstrawildZone : uint8
@@ -185,7 +187,73 @@ enum class EAstrawildZone : uint8
     FrostveilExpanse UMETA(DisplayName="Frostveil Expanse"),
     Glimmerwood UMETA(DisplayName="Glimmerwood"),
     HollowApproach UMETA(DisplayName="Hollow Approach"),
+    // --- Batch 8 "The Grand Expanse" (appended-only, save-safe) ---
+    AzureShallows UMETA(DisplayName="Azure Shallows"),
+    TidebreakerIsles UMETA(DisplayName="Tidebreaker Isles"),
+    SunscarDesert UMETA(DisplayName="Sunscar Desert"),
+    StormcrestHighlands UMETA(DisplayName="Stormcrest Highlands"),
+    VerdantReach UMETA(DisplayName="Verdant Reach"),
+    PearlseaReef UMETA(DisplayName="Pearlsea Reef"),
     Count UMETA(Hidden)
+};
+
+/**
+ * Batch 8 — bestiary family: the broad creature lineage a species belongs to.
+ * Drives silhouette family, loot flavor and work affinities across the 200+
+ * species roster (Docs/ASTRAWILD_BESTIARY_CODEX.md).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildEchoFamily : uint8
+{
+    Beast UMETA(DisplayName="Beast"),
+    Dragon UMETA(DisplayName="Dragon"),
+    Construct UMETA(DisplayName="Construct"),
+    Spirit UMETA(DisplayName="Spirit"),
+    Elemental UMETA(DisplayName="Elemental"),
+    Aquatic UMETA(DisplayName="Aquatic"),
+    Insectoid UMETA(DisplayName="Insectoid"),
+    Flora UMETA(DisplayName="Flora Kindred"),
+    Avian UMETA(DisplayName="Avian"),
+    Ancient UMETA(DisplayName="Ancient")
+};
+
+/**
+ * Batch 8 — body plan: which procedural silhouette kit the runtime body builder
+ * assembles for the species (AAstrawildEchoCharacter::BuildProceduralBody).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildBodyPlan : uint8
+{
+    Quadruped UMETA(DisplayName="Quadruped"),
+    Biped UMETA(DisplayName="Biped"),
+    Serpent UMETA(DisplayName="Serpent"),
+    Floating UMETA(DisplayName="Floating"),
+    Insectoid UMETA(DisplayName="Insectoid"),
+    Avian UMETA(DisplayName="Avian"),
+    Crystalline UMETA(DisplayName="Crystalline"),
+    Amorphous UMETA(DisplayName="Amorphous")
+};
+
+/** Batch 8 — size class: scales the procedural body and the base stat budget. */
+UENUM(BlueprintType)
+enum class EAstrawildSizeClass : uint8
+{
+    Tiny UMETA(DisplayName="Tiny"),
+    Small UMETA(DisplayName="Small"),
+    Medium UMETA(DisplayName="Medium"),
+    Large UMETA(DisplayName="Large"),
+    Huge UMETA(DisplayName="Huge")
+};
+
+/** Batch 8 — NPC role: drives village behaviour (patrol, shop, guard duty, quests). */
+UENUM(BlueprintType)
+enum class EAstrawildNPCRole : uint8
+{
+    Villager UMETA(DisplayName="Villager"),
+    Vendor UMETA(DisplayName="Vendor"),
+    Guard UMETA(DisplayName="Guard"),
+    QuestGiver UMETA(DisplayName="Quest Giver"),
+    Elder UMETA(DisplayName="Elder")
 };
 
 /** Player-issued Echo commands (directive §10). */

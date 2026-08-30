@@ -53,7 +53,7 @@ void AAstrawildDungeonPortalActor::Interact_Implementation(AActor* InteractingAc
 
 void AAstrawildDungeonPortalActor::TeleportPlayer(AAstrawildPlayerCharacter* Player)
 {
-    if (!Player || Destination.IsNearlyZero())
+    if (!Player)
     {
         return;
     }
@@ -61,6 +61,25 @@ void AAstrawildDungeonPortalActor::TeleportPlayer(AAstrawildPlayerCharacter* Pla
     // Server-side range guard: the interaction trace allows ~300cm, the pad is
     // generous with 600cm, but a teleport from across the arena is rejected.
     if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) > UseRadius)
+    {
+        return;
+    }
+
+    // Batch 8 — publish-only survey markers never move the player.
+    if (bPublishOnly)
+    {
+        if (UWorld* World = GetWorld())
+        {
+            if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+            {
+                EventBus->PublishEvent(TAG_Astrawild_Event_LocationReached, Player, PortalId, 1, GetActorLocation());
+            }
+        }
+        UE_LOG(LogAstrawildAI, Log, TEXT("Survey marker %s charted."), *PortalId.ToString());
+        return;
+    }
+
+    if (Destination.IsNearlyZero())
     {
         return;
     }

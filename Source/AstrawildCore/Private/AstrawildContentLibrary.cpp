@@ -1,8 +1,10 @@
 #include "AstrawildContentLibrary.h"
 
+#include "AstrawildBestiaryData.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Engine/World.h"
 
 // ---------------------------------------------------------------------------
@@ -178,20 +180,48 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     DawnShard->Description = FText::FromString(TEXT("A humming sliver of dawnlight. Vendors in the fields accept it as currency."));
     Registry->RegisterItem(DawnShard);
 
+    // --- Batch 8 — Grand Expanse signature materials (new-zone resources). ---
+
+    UAstrawildItemDefinition* SeaPearl = MakeItem(Outer, TEXT("Item_SeaPearl"), TEXT("Sea Pearl"), EAstrawildItemCategory::Material, 0.2f, 100);
+    SeaPearl->Description = FText::FromString(TEXT("Nacre roundel trawled from the Azure Shallows. Driftwood traders prize them."));
+    SeaPearl->VendorPrice = 5; // Batch 8 — Fisher Nima ware.
+    Registry->RegisterItem(SeaPearl);
+
+    UAstrawildItemDefinition* CoralShard = MakeItem(Outer, TEXT("Item_CoralShard"), TEXT("Coral Shard"), EAstrawildItemCategory::Material, 0.4f, 100);
+    CoralShard->Description = FText::FromString(TEXT("A branch of singing coral from the Pearlsea Reef."));
+    CoralShard->VendorPrice = 4; // Batch 8 — Fisher Nima ware.
+    Registry->RegisterItem(CoralShard);
+
+    UAstrawildItemDefinition* DuneGlass = MakeItem(Outer, TEXT("Item_DuneGlass"), TEXT("Dune Glass"), EAstrawildItemCategory::Material, 0.3f, 100);
+    DuneGlass->Description = FText::FromString(TEXT("Sun-fused sand crystal from the Sunscar Desert."));
+    Registry->RegisterItem(DuneGlass);
+
+    UAstrawildItemDefinition* StormSilver = MakeItem(Outer, TEXT("Item_StormSilver"), TEXT("Storm Silver"), EAstrawildItemCategory::Material, 0.6f, 100);
+    StormSilver->Description = FText::FromString(TEXT("Lightning-tempered ore only the Stormcrest peaks yield."));
+    StormSilver->VendorPrice = 6; // Batch 8 — Blacksmith Borin ware.
+    Registry->RegisterItem(StormSilver);
+
+    UAstrawildItemDefinition* ChitinPlate = MakeItem(Outer, TEXT("Item_ChitinPlate"), TEXT("Chitin Plate"), EAstrawildItemCategory::Material, 0.5f, 100);
+    ChitinPlate->Description = FText::FromString(TEXT("Shed shell of an insectoid Echo. Light, tough, workable."));
+    Registry->RegisterItem(ChitinPlate);
+
     // --- Equipment (CODE_DEFAULT wave 3): weapon + shield progression. ---
 
     UAstrawildItemDefinition* DawnwoodClub = MakeItem(Outer, TEXT("Item_DawnwoodClub"), TEXT("Dawnwood Club"), EAstrawildItemCategory::Equipment, 2.5f, 1);
     DawnwoodClub->AttackPower = 6.0f;
+    DawnwoodClub->VendorPrice = 5; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(DawnwoodClub);
 
     UAstrawildItemDefinition* StonehideShield = MakeItem(Outer, TEXT("Item_StonehideShield"), TEXT("Stonehide Shield"), EAstrawildItemCategory::Equipment, 4.0f, 1);
     StonehideShield->BlockMitigation = 0.65f;
+    StonehideShield->VendorPrice = 7; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(StonehideShield);
 
     UAstrawildItemDefinition* CrystalBlade = MakeItem(Outer, TEXT("Item_CrystalBlade"), TEXT("Dawn Crystal Blade"), EAstrawildItemCategory::Equipment, 3.0f, 1);
     CrystalBlade->AttackPower = 14.0f;
     // Batch 3 — Item A: tier-3 weapon carries the Pulse element → attacks apply Shock.
     CrystalBlade->Element = EAstrawildElementType::Pulse;
+    CrystalBlade->VendorPrice = 14; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(CrystalBlade);
 
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): torso progression. ---
@@ -199,6 +229,7 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* FiberWeaveVest = MakeItem(Outer, TEXT("Item_FiberWeaveVest"), TEXT("Fiberweave Vest"), EAstrawildItemCategory::Equipment, 3.0f, 1);
     FiberWeaveVest->ArmorRating = 20.0f;
+    FiberWeaveVest->VendorPrice = 9; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(FiberWeaveVest);
 
     UAstrawildItemDefinition* EmberhideJacket = MakeItem(Outer, TEXT("Item_EmberhideJacket"), TEXT("Emberhide Jacket"), EAstrawildItemCategory::Equipment, 5.0f, 1);
@@ -551,6 +582,57 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Auroraling->DefeatLoot.Add(Stack(TEXT("Item_DawnShard"), 2));
     Auroraling->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 1));
     Registry->RegisterEcho(Auroraling);
+
+    // --- Batch 8 — appearance retrofit for the hand-authored ten (codex 1-10).
+    //     Each gets the full silhouette contract so EVERY species renders a
+    //     procedural body (Docs/ASTRAWILD_BESTIARY_CODEX.md). ---
+    struct FAppearanceRow
+    {
+        FName Id;
+        EAstrawildEchoFamily Family;
+        EAstrawildBodyPlan BodyPlan;
+        EAstrawildSizeClass SizeClass;
+        EAstrawildZone HomeZone;
+        float PR, PG, PB; // primary tint
+        float SR, SG, SB; // secondary tint
+    };
+    const FAppearanceRow Appearance[] = {
+        { TEXT("Echo_Lumewisp"),  EAstrawildEchoFamily::Spirit,     EAstrawildBodyPlan::Floating,    EAstrawildSizeClass::Tiny,   EAstrawildZone::DawnFields,       0.95f, 0.92f, 0.60f, 0.75f, 0.70f, 0.35f },
+        { TEXT("Echo_Stonehide"), EAstrawildEchoFamily::Construct,   EAstrawildBodyPlan::Quadruped,   EAstrawildSizeClass::Medium, EAstrawildZone::EmberRidge,       0.55f, 0.52f, 0.50f, 0.38f, 0.36f, 0.34f },
+        { TEXT("Echo_Voltling"),  EAstrawildEchoFamily::Elemental,   EAstrawildBodyPlan::Floating,    EAstrawildSizeClass::Tiny,   EAstrawildZone::DawnFields,       0.55f, 0.75f, 1.00f, 0.35f, 0.50f, 0.85f },
+        { TEXT("Echo_Duskmoth"),  EAstrawildEchoFamily::Insectoid,   EAstrawildBodyPlan::Insectoid,   EAstrawildSizeClass::Small,  EAstrawildZone::DuskMarsh,        0.62f, 0.48f, 0.72f, 0.40f, 0.30f, 0.55f },
+        { TEXT("Echo_Gloomfang"), EAstrawildEchoFamily::Beast,       EAstrawildBodyPlan::Quadruped,   EAstrawildSizeClass::Medium, EAstrawildZone::HollowApproach,   0.35f, 0.32f, 0.38f, 0.20f, 0.18f, 0.24f },
+        { TEXT("Echo_Sprigling"), EAstrawildEchoFamily::Flora,       EAstrawildBodyPlan::Biped,       EAstrawildSizeClass::Small,  EAstrawildZone::DawnFields,       0.45f, 0.80f, 0.40f, 0.28f, 0.60f, 0.30f },
+        { TEXT("Echo_Emberfang"), EAstrawildEchoFamily::Dragon,      EAstrawildBodyPlan::Quadruped,   EAstrawildSizeClass::Large,  EAstrawildZone::EmberRidge,       0.88f, 0.35f, 0.20f, 0.60f, 0.20f, 0.12f },
+        { TEXT("Echo_Rimefang"),  EAstrawildEchoFamily::Dragon,      EAstrawildBodyPlan::Quadruped,   EAstrawildSizeClass::Large,  EAstrawildZone::FrostveilExpanse, 0.55f, 0.78f, 0.95f, 0.35f, 0.55f, 0.80f },
+        { TEXT("Echo_Voltmaw"),   EAstrawildEchoFamily::Elemental,   EAstrawildBodyPlan::Serpent,     EAstrawildSizeClass::Medium, EAstrawildZone::Glimmerwood,      0.60f, 0.55f, 1.00f, 0.40f, 0.35f, 0.85f },
+        { TEXT("Echo_Auroraling"),EAstrawildEchoFamily::Ancient,     EAstrawildBodyPlan::Floating,    EAstrawildSizeClass::Small,  EAstrawildZone::Glimmerwood,      0.90f, 0.70f, 1.00f, 0.70f, 0.45f, 0.90f },
+    };
+    int32 CodexIndex = 1;
+    for (const FAppearanceRow& Row : Appearance)
+    {
+        if (UAstrawildEchoDefinition* Definition = Registry->FindEcho(Row.Id))
+        {
+            Definition->Family = Row.Family;
+            Definition->BodyPlan = Row.BodyPlan;
+            Definition->SizeClass = Row.SizeClass;
+            Definition->HomeZone = Row.HomeZone;
+            Definition->PrimaryTint = FLinearColor(Row.PR, Row.PG, Row.PB, 1.0f);
+            Definition->SecondaryTint = FLinearColor(Row.SR, Row.SG, Row.SB, 1.0f);
+            Definition->CodexIndex = CodexIndex;
+            if (Definition->HabitatBiomeIds.IsEmpty())
+            {
+                Definition->HabitatBiomeIds.Add(UAstrawildZoneSubsystem::FindZone(Row.HomeZone)
+                    ? UAstrawildZoneSubsystem::FindZone(Row.HomeZone)->ZoneId
+                    : FName(TEXT("Zone_DawnFields")));
+            }
+        }
+        ++CodexIndex;
+    }
+
+    // --- Batch 8 — The Grand Menagerie: the generated 204-species table
+    //     (Scripts/generate_bestiary.py -> AstrawildBestiaryData.cpp). ---
+    AstrawildBestiary::RegisterAll(Registry);
 }
 
 // ---------------------------------------------------------------------------
@@ -856,8 +938,60 @@ void UAstrawildContentLibrary::BuildQuests(UAstrawildItemRegistrySubsystem* Regi
     Quest8->RewardItems.Add(Stack(TEXT("Item_EnergyCell"), 8));
     Quest8->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 8));
     Quest8->RewardResearchPoints = 20;
-    Quest8->NextQuestId = NAME_None;
+    Quest8->NextQuestId = TEXT("Quest_WingsOverTheVale"); // Batch 8: the chain takes to the sky.
     Registry->RegisterQuest(Quest8);
+
+    // --- Batch 8 — "Wings over the Vale": the skiff pays off. Elder Rowan sends
+    //     the player across the sea to Driftwood Landing (charting the survey
+    //     marker completes ReachLocation; the zone sweep covers VisitZone). ---
+
+    UAstrawildQuestDefinition* Quest9 = NewObject<UAstrawildQuestDefinition>(Outer);
+    Quest9->QuestId = TEXT("Quest_WingsOverTheVale");
+    Quest9->Title = FText::FromString(TEXT("Wings over the Vale"));
+    Quest9->Summary = FText::FromString(TEXT("Elder Rowan speaks of fisherfolk on the Tidebreaker Isles — and of the Dawn Skiff that can carry you there. Board it, cross the sea, and chart their landing."));
+    FAstrawildQuestObjective ObjVisitIsles;
+    ObjVisitIsles.Type = EAstrawildQuestObjectiveType::VisitZone;
+    ObjVisitIsles.TargetId = TEXT("Zone_TidebreakerIsles");
+    ObjVisitIsles.RequiredCount = 1;
+    ObjVisitIsles.ObjectiveText = FText::FromString(TEXT("Reach the Tidebreaker Isles"));
+    Quest9->Objectives.Add(ObjVisitIsles);
+    FAstrawildQuestObjective ObjChartLanding;
+    ObjChartLanding.Type = EAstrawildQuestObjectiveType::ReachLocation;
+    ObjChartLanding.TargetId = TEXT("Location_DriftwoodLanding");
+    ObjChartLanding.RequiredCount = 1;
+    ObjChartLanding.ObjectiveText = FText::FromString(TEXT("Chart Driftwood Landing"));
+    Quest9->Objectives.Add(ObjChartLanding);
+    Quest9->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 6));
+    Quest9->RewardItems.Add(Stack(TEXT("Item_SeaPearl"), 2));
+    Quest9->RewardResearchPoints = 20;
+    Quest9->NextQuestId = TEXT("Quest_SunkenVault");
+    Registry->RegisterQuest(Quest9);
+
+    // --- Batch 8 — "The Sunken Vault": dungeon #2. Kael's vault quest targets
+    //     the Dawnfang sea-dragon via its distinct defeat event id. ---
+
+    UAstrawildQuestDefinition* Quest10 = NewObject<UAstrawildQuestDefinition>(Outer);
+    Quest10->QuestId = TEXT("Quest_SunkenVault");
+    Quest10->Title = FText::FromString(TEXT("The Sunken Vault"));
+    Quest10->Summary = FText::FromString(TEXT("Beneath the isles sleeps a vault the tide never forgot — and the Dawnfang coils at its heart. Skiff Warden Kael asks you to end its long watch."));
+    FAstrawildQuestObjective ObjEnterVault;
+    ObjEnterVault.Type = EAstrawildQuestObjectiveType::ReachLocation;
+    ObjEnterVault.TargetId = TEXT("Location_SunkenVault");
+    ObjEnterVault.RequiredCount = 1;
+    ObjEnterVault.ObjectiveText = FText::FromString(TEXT("Descend into the Sunken Vault"));
+    Quest10->Objectives.Add(ObjEnterVault);
+    FAstrawildQuestObjective ObjVaultBoss;
+    ObjVaultBoss.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+    ObjVaultBoss.TargetId = TEXT("Creature_VaultColossus");
+    ObjVaultBoss.RequiredCount = 1;
+    ObjVaultBoss.ObjectiveText = FText::FromString(TEXT("Defeat the Dawnfang"));
+    Quest10->Objectives.Add(ObjVaultBoss);
+    Quest10->RewardItems.Add(Stack(TEXT("Item_SeaPearl"), 3));
+    Quest10->RewardItems.Add(Stack(TEXT("Item_CoralShard"), 4));
+    Quest10->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 8));
+    Quest10->RewardResearchPoints = 25;
+    Quest10->NextQuestId = NAME_None; // The Grand Expanse chain closes — free hunt begins.
+    Registry->RegisterQuest(Quest10);
 }
 
 // ---------------------------------------------------------------------------
@@ -880,19 +1014,49 @@ void UAstrawildContentLibrary::BuildLootTables(UAstrawildItemRegistrySubsystem* 
     VendorStarter->GuaranteedDrops = { Stack(TEXT("Item_Berry"), 3), Stack(TEXT("Item_WaterFlask"), 1), Stack(TEXT("Item_Bandage"), 2), Stack(TEXT("Item_HerbalSalve"), 1), Stack(TEXT("Item_Resonator"), 1) };
     VendorStarter->BonusRollChance = 0.0f;
     Registry->RegisterLootTable(VendorStarter);
+
+    // --- Batch 8 — village vendor stock (living villages economy). ---
+
+    // Herbalist Wren: consumables + husbandry supplies.
+    UAstrawildLootTableDefinition* VendorHerbalist = NewObject<UAstrawildLootTableDefinition>(Outer);
+    VendorHerbalist->LootTableId = TEXT("Loot_VendorHerbalist");
+    VendorHerbalist->GuaranteedDrops = { Stack(TEXT("Item_HerbalSalve"), 2), Stack(TEXT("Item_Bandage"), 2), Stack(TEXT("Item_WarmBroth"), 1), Stack(TEXT("Item_Fertilizer"), 2), Stack(TEXT("Item_Dawnbloom"), 2) };
+    VendorHerbalist->BonusRollChance = 0.0f;
+    Registry->RegisterLootTable(VendorHerbalist);
+
+    // Blacksmith Borin: the armory line.
+    UAstrawildLootTableDefinition* VendorArmory = NewObject<UAstrawildLootTableDefinition>(Outer);
+    VendorArmory->LootTableId = TEXT("Loot_VendorArmory");
+    VendorArmory->GuaranteedDrops = { Stack(TEXT("Item_DawnwoodClub"), 1), Stack(TEXT("Item_StonehideShield"), 1), Stack(TEXT("Item_FiberWeaveVest"), 1), Stack(TEXT("Item_CrystalBlade"), 1), Stack(TEXT("Item_StormSilver"), 2) };
+    VendorArmory->BonusRollChance = 0.0f;
+    Registry->RegisterLootTable(VendorArmory);
+
+    // Fisher Nima: island provisions + the sea-material sink.
+    UAstrawildLootTableDefinition* VendorDriftwood = NewObject<UAstrawildLootTableDefinition>(Outer);
+    VendorDriftwood->LootTableId = TEXT("Loot_VendorDriftwood");
+    VendorDriftwood->GuaranteedDrops = { Stack(TEXT("Item_CookedMeat"), 2), Stack(TEXT("Item_WaterFlask"), 1), Stack(TEXT("Item_SeaPearl"), 1), Stack(TEXT("Item_CoralShard"), 2), Stack(TEXT("Item_Bandage"), 1) };
+    VendorDriftwood->BonusRollChance = 0.0f;
+    Registry->RegisterLootTable(VendorDriftwood);
 }
 
 // ---------------------------------------------------------------------------
-// NPCs (CODE_DEFAULT wave 3 — directive §26 quest hooks + vendor)
+// NPCs (CODE_DEFAULT wave 3 — directive §26 quest hooks + vendor;
+// Batch 8 — living villages: 12 villagers across Dawnstead + Driftwood Landing)
 // ---------------------------------------------------------------------------
 void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Registry)
 {
     UObject* Outer = Registry;
 
+    // --- Dawnstead (the main village, Dawn Fields) ---
+
     UAstrawildNPCDefinition* WardenMaren = NewObject<UAstrawildNPCDefinition>(Outer);
     WardenMaren->NpcId = TEXT("NPC_WardenMaren");
     WardenMaren->DisplayName = FText::FromString(TEXT("Warden Maren"));
     WardenMaren->OfferedQuestId = TEXT("Quest_FirstLight");
+    WardenMaren->Role = EAstrawildNPCRole::QuestGiver;
+    WardenMaren->VillageId = TEXT("Village_Dawnstead");
+    WardenMaren->PrimaryTint = FLinearColor(0.40f, 0.85f, 0.65f);
+    WardenMaren->Greeting = FText::FromString(TEXT("The fields are calm — for now."));
     Registry->RegisterNPC(WardenMaren);
 
     UAstrawildNPCDefinition* VendorTam = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -900,7 +1064,102 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     VendorTam->DisplayName = FText::FromString(TEXT("Trader Tam"));
     VendorTam->ShopLootTableId = TEXT("Loot_VendorStarter");
     VendorTam->CurrencyItemId = TEXT("Item_DawnShard"); // Batch 4 — M-11: live shop.
+    VendorTam->Role = EAstrawildNPCRole::Vendor;
+    VendorTam->VillageId = TEXT("Village_Dawnstead");
+    VendorTam->PrimaryTint = FLinearColor(0.90f, 0.75f, 0.35f);
+    VendorTam->Greeting = FText::FromString(TEXT("Shards, friend. Shards for everything."));
     Registry->RegisterNPC(VendorTam);
+
+    UAstrawildNPCDefinition* HerbalistWren = NewObject<UAstrawildNPCDefinition>(Outer);
+    HerbalistWren->NpcId = TEXT("NPC_HerbalistWren");
+    HerbalistWren->DisplayName = FText::FromString(TEXT("Herbalist Wren"));
+    HerbalistWren->ShopLootTableId = TEXT("Loot_VendorHerbalist");
+    HerbalistWren->CurrencyItemId = TEXT("Item_DawnShard");
+    HerbalistWren->Role = EAstrawildNPCRole::Vendor;
+    HerbalistWren->VillageId = TEXT("Village_Dawnstead");
+    HerbalistWren->PrimaryTint = FLinearColor(0.45f, 0.80f, 0.45f);
+    HerbalistWren->Greeting = FText::FromString(TEXT("Bark, root, bloom — the marsh provides."));
+    Registry->RegisterNPC(HerbalistWren);
+
+    UAstrawildNPCDefinition* BlacksmithBorin = NewObject<UAstrawildNPCDefinition>(Outer);
+    BlacksmithBorin->NpcId = TEXT("NPC_BlacksmithBorin");
+    BlacksmithBorin->DisplayName = FText::FromString(TEXT("Blacksmith Borin"));
+    BlacksmithBorin->ShopLootTableId = TEXT("Loot_VendorArmory");
+    BlacksmithBorin->CurrencyItemId = TEXT("Item_DawnShard");
+    BlacksmithBorin->Role = EAstrawildNPCRole::Vendor;
+    BlacksmithBorin->VillageId = TEXT("Village_Dawnstead");
+    BlacksmithBorin->PrimaryTint = FLinearColor(0.55f, 0.40f, 0.30f);
+    BlacksmithBorin->Greeting = FText::FromString(TEXT("Steel today, story tomorrow."));
+    Registry->RegisterNPC(BlacksmithBorin);
+
+    UAstrawildNPCDefinition* ElderRowan = NewObject<UAstrawildNPCDefinition>(Outer);
+    ElderRowan->NpcId = TEXT("NPC_ElderRowan");
+    ElderRowan->DisplayName = FText::FromString(TEXT("Elder Rowan"));
+    ElderRowan->OfferedQuestId = TEXT("Quest_WingsOverTheVale");
+    ElderRowan->Role = EAstrawildNPCRole::Elder;
+    ElderRowan->VillageId = TEXT("Village_Dawnstead");
+    ElderRowan->PrimaryTint = FLinearColor(0.70f, 0.55f, 0.90f);
+    ElderRowan->Greeting = FText::FromString(TEXT("Sit. The Vale has grown wider while you slept."));
+    Registry->RegisterNPC(ElderRowan);
+
+    UAstrawildNPCDefinition* GuardSela = NewObject<UAstrawildNPCDefinition>(Outer);
+    GuardSela->NpcId = TEXT("NPC_GuardSela");
+    GuardSela->DisplayName = FText::FromString(TEXT("Guard Captain Sela"));
+    GuardSela->Role = EAstrawildNPCRole::Guard;
+    GuardSela->VillageId = TEXT("Village_Dawnstead");
+    GuardSela->PrimaryTint = FLinearColor(0.45f, 0.65f, 0.95f);
+    GuardSela->Greeting = FText::FromString(TEXT("Keep the fire behind you and the dark ahead."));
+    Registry->RegisterNPC(GuardSela);
+
+    UAstrawildNPCDefinition* GuardBram = NewObject<UAstrawildNPCDefinition>(Outer);
+    GuardBram->NpcId = TEXT("NPC_GuardBram");
+    GuardBram->DisplayName = FText::FromString(TEXT("Guard Bram"));
+    GuardBram->Role = EAstrawildNPCRole::Guard;
+    GuardBram->VillageId = TEXT("Village_Dawnstead");
+    GuardBram->PrimaryTint = FLinearColor(0.50f, 0.60f, 0.90f);
+    GuardBram->Greeting = FText::FromString(TEXT("Gloomfangs again. Always Gloomfangs."));
+    Registry->RegisterNPC(GuardBram);
+
+    UAstrawildNPCDefinition* FarmerJori = NewObject<UAstrawildNPCDefinition>(Outer);
+    FarmerJori->NpcId = TEXT("NPC_FarmerJori");
+    FarmerJori->DisplayName = FText::FromString(TEXT("Farmer Jori"));
+    FarmerJori->Role = EAstrawildNPCRole::Villager;
+    FarmerJori->VillageId = TEXT("Village_Dawnstead");
+    FarmerJori->PrimaryTint = FLinearColor(0.80f, 0.70f, 0.40f);
+    FarmerJori->Greeting = FText::FromString(TEXT("Spriglings turn the soil better than any hoe."));
+    Registry->RegisterNPC(FarmerJori);
+
+    // --- Driftwood Landing (the island fishing hamlet, Tidebreaker Isles) ---
+
+    UAstrawildNPCDefinition* SkiffWardenKael = NewObject<UAstrawildNPCDefinition>(Outer);
+    SkiffWardenKael->NpcId = TEXT("NPC_SkiffWardenKael");
+    SkiffWardenKael->DisplayName = FText::FromString(TEXT("Skiff Warden Kael"));
+    SkiffWardenKael->OfferedQuestId = TEXT("Quest_SunkenVault");
+    SkiffWardenKael->Role = EAstrawildNPCRole::QuestGiver;
+    SkiffWardenKael->VillageId = TEXT("Village_DriftwoodLanding");
+    SkiffWardenKael->PrimaryTint = FLinearColor(0.35f, 0.85f, 0.85f);
+    SkiffWardenKael->Greeting = FText::FromString(TEXT("Skiff's fueled. The isles are yours now."));
+    Registry->RegisterNPC(SkiffWardenKael);
+
+    UAstrawildNPCDefinition* FisherNima = NewObject<UAstrawildNPCDefinition>(Outer);
+    FisherNima->NpcId = TEXT("NPC_FisherNima");
+    FisherNima->DisplayName = FText::FromString(TEXT("Fisher Nima"));
+    FisherNima->ShopLootTableId = TEXT("Loot_VendorDriftwood");
+    FisherNima->CurrencyItemId = TEXT("Item_DawnShard");
+    FisherNima->Role = EAstrawildNPCRole::Vendor;
+    FisherNima->VillageId = TEXT("Village_DriftwoodLanding");
+    FisherNima->PrimaryTint = FLinearColor(0.40f, 0.75f, 0.90f);
+    FisherNima->Greeting = FText::FromString(TEXT("Fresh catch, sea pearls, and gossip — cheap."));
+    Registry->RegisterNPC(FisherNima);
+
+    UAstrawildNPCDefinition* OldSaltPerry = NewObject<UAstrawildNPCDefinition>(Outer);
+    OldSaltPerry->NpcId = TEXT("NPC_OldSaltPerry");
+    OldSaltPerry->DisplayName = FText::FromString(TEXT("Old Salt Perry"));
+    OldSaltPerry->Role = EAstrawildNPCRole::Villager;
+    OldSaltPerry->VillageId = TEXT("Village_DriftwoodLanding");
+    OldSaltPerry->PrimaryTint = FLinearColor(0.55f, 0.55f, 0.60f);
+    OldSaltPerry->Greeting = FText::FromString(TEXT("The tide took the old world. It can wait for you too."));
+    Registry->RegisterNPC(OldSaltPerry);
 }
 
 void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Registry)
@@ -919,5 +1178,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 35 items, 26 recipes, 10 Echo species, 13 buildings, 10 technologies, 8 quests, 2 loot tables, 2 NPCs."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 40 items, 26 recipes, 214 Echo species (10 authored + 204 bestiary), 13 buildings, 10 technologies, 10 quests, 5 loot tables, 12 NPCs."));
 }

@@ -77,6 +77,23 @@ per the production directive PHASE 16.
 | V-39 | Death/respawn | die to hostile → 5 s respawn at PlayerStart with input restored (no stuck movement) |
 | V-40 | Boss edge cases | kill during telegraph; die to hazard; leave arena mid-fight (leash/hazard cleanup); adds (Gloomfang ×2) spawn phase 2 |
 
+### Batch 8 — The Grand Expanse + Grand Menagerie (NEW)
+
+| # | Area | Check |
+|---|------|-------|
+| B8-1 | Bestiary bodies | walk the Vale: wild Echoes render 8 distinct body plans (quadruped/biped/serpent/floating/insectoid/avian/crystalline/amorphous), 5 size scales, per-species tints — not gray spheres |
+| B8-2 | 12 zones | visit all 12 zones → HUD banner + discovery n/12; sea zones show the blue water plane; islands poke above water with beach tint |
+| B8-3 | Villages | Dawnstead (7 huts + 8 NPCs) around the camp; villagers walk the waypoint circuit; talk → they stop and face you |
+| B8-4 | Village nights | wait for 21:00 → all villagers gather at the campfire; 06:00 → resume patrol |
+| B8-5 | Village guards | drag a hostile Echo near Dawnstead (cheat or aggro) → Sela/Bram sprint over, attack through the damage pipeline, return to patrol |
+| B8-6 | Skiff flight | board [E] at the camp pad → WASD/SPACE/CTRL/SHIFT fly; ceiling ~120 m above ground; hull stops on cliffs; [E] dismount restores walking |
+| B8-7 | Sea crossing | fly Dawnstead → Tidebreaker Isles across Azure Shallows → zone banner fires; land at Driftwood Landing (3 huts + dock + 3 NPCs) |
+| B8-8 | Quest 9 | Elder Rowan offers "Wings over the Vale" → VisitZone + chart marker both complete → rewards |
+| B8-9 | Dungeon #2 | Driftwood vault portal → Sunken Vault: 4 rooms + gates + Dawnfang boss (3 phases, telegraphs, weak point) → defeat publishes Creature_VaultColossus → quest 10 completes |
+| B8-10 | New economy | buy from Borin (armory)/Wren (herbalist)/Nima (isles); sell Sea Pearls/Coral; new materials drop from bestiary species |
+| B8-11 | Save after Batch 8 | NEW GAME (old saves are stale) → play → save → load round-trip ×3 (schema v3, zone discovery n/12 persists) |
+| B8-12 | Perf sanity | 12 terrain tiles + ~70 wildlife + 11 NPCs + 2 villages: `stat unit` target 60 fps mid GPU (tiles ~393k tris total — if below target, lower `TerrainResolution` knob to 96 and re-test) |
+
 ---
 
 ## §4 Packaging (stretch — after §1–§3 green)

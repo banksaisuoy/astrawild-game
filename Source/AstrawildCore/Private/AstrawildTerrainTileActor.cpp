@@ -200,6 +200,29 @@ FLinearColor AAstrawildTerrainTileActor::EvalGroundTint(const FVector2D& WorldXY
         Tint = FMath::Lerp(Tint, MuckWater, FMath::Clamp(-Height / 180.0f, 0.0f, 0.85f));
     }
 
+    // Batch 8 — the sea waterline: a pale sand ring hugging SeaLevel, then a
+    // deepening blue shelf as the shelf falls away below it. Applies wherever
+    // terrain dips under the global sea line, so islands read as beaches +
+    // cliffs and reef spires get turquoise shallows for free.
+    {
+        const float SeaLevel = UAstrawildZoneSubsystem::GetSeaLevelZ();
+        if (Height > SeaLevel && Height < SeaLevel + 350.0f)
+        {
+            // Beach band above the waterline.
+            const float BeachBlend = 1.0f - (Height - SeaLevel) / 350.0f;
+            Tint = FMath::Lerp(Tint, FLinearColor(0.85f, 0.80f, 0.62f), 0.7f * BeachBlend);
+        }
+        else if (Height <= SeaLevel)
+        {
+            // Underwater shelf: sand near the line, deep blue far below.
+            const float Depth = SeaLevel - Height;
+            const FLinearColor ShelfSand(0.78f, 0.74f, 0.58f);
+            const FLinearColor DeepSea(0.05f, 0.16f, 0.30f);
+            const float ShelfBlend = FMath::Clamp(Depth / 900.0f, 0.0f, 1.0f);
+            Tint = FMath::Lerp(FMath::Lerp(Tint, ShelfSand, 0.75f), DeepSea, ShelfBlend);
+        }
+    }
+
     return Tint;
 }
 

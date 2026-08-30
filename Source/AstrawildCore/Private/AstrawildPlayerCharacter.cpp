@@ -19,6 +19,7 @@
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerController.h"
+#include "AstrawildSkiffActor.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildUtilityDroneActor.h"
@@ -335,9 +336,12 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(InventoryAction, EKeys::Tab);
     Context->MapKey(ResearchAction, EKeys::K);
     Context->MapKey(PauseAction, EKeys::Escape);
+    // Batch 8 — skiff descend: CTRL held (SPACE climbs through JumpAction).
+    DescendAction = MakeRuntimeAction(TEXT("AWD_Descend"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(DescendAction, EKeys::LeftControl);
 
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (25 actions, WASD+mouse+wheel+UI)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (26 actions, WASD+mouse+wheel+UI+skiff)."));
 }
 
 void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
@@ -370,6 +374,11 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
 
     // D-pad: up command, right feed, down consume, left equip-best.
     Context->MapKey(CommandAction, EKeys::Gamepad_DPad_Up);
+    // Batch 8 — LS click = skiff descend (A button climbs through JumpAction).
+    if (DescendAction)
+    {
+        Context->MapKey(DescendAction, EKeys::Gamepad_LeftThumbstick);
+    }
     Context->MapKey(FeedAction, EKeys::Gamepad_DPad_Right);
     Context->MapKey(ConsumeAction, EKeys::Gamepad_DPad_Down);
     Context->MapKey(EquipBestAction, EKeys::Gamepad_DPad_Left);
@@ -409,8 +418,9 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     }
     if (JumpAction)
     {
-        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::HandleJump);
-        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::OnJumpPressed);
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &AAstrawildPlayerCharacter::OnJumpReleased);
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Canceled, this, &AAstrawildPlayerCharacter::OnJumpReleased);
     }
     if (InteractAction)
     {
@@ -481,6 +491,13 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
         EnhancedInput->BindAction(ScanAction, ETriggerEvent::Completed, this, &AAstrawildPlayerCharacter::StopScan);
         EnhancedInput->BindAction(ScanAction, ETriggerEvent::Canceled, this, &AAstrawildPlayerCharacter::StopScan);
     }
+    if (DescendAction)
+    {
+        // Batch 8 — skiff descend (CTRL / LS click).
+        EnhancedInput->BindAction(DescendAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::StartDescend);
+        EnhancedInput->BindAction(DescendAction, ETriggerEvent::Completed, this, &AAstrawildPlayerCharacter::StopDescend);
+        EnhancedInput->BindAction(DescendAction, ETriggerEvent::Canceled, this, &AAstrawildPlayerCharacter::StopDescend);
+    }
     if (DeployDroneAction)
     {
         EnhancedInput->BindAction(DeployDroneAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::DeployDrone);
@@ -511,6 +528,14 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
     }
 
     const FVector2D MovementVector = Value.Get<FVector2D>();
+
+    // Batch 8 — piloting a skiff: WASD drives the aircraft instead of the pawn.
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotMove(MovementVector.Y, MovementVector.X);
+        return;
+    }
+
     if (!Controller || MovementVector.IsNearlyZero())
     {
         return;
@@ -539,6 +564,13 @@ void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
         return;
     }
 
+    // Batch 8 — SHIFT while piloting = resonance boost.
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotBoost(true);
+        return;
+    }
+
     bSprinting = true;
     // Batch 4 — M-2a: arm the server-side stamina drain (ticks only while moving;
     // RefreshMovementSpeed still gates on the >0.05 stamina fraction).
@@ -551,6 +583,13 @@ void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
 
 void AAstrawildPlayerCharacter::StopSprint(const FInputActionValue& Value)
 {
+    // Batch 8 — boost release routes to the skiff even mid-flight.
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotBoost(false);
+        return;
+    }
+
     bSprinting = false;
     // Batch 4 — M-2a: sprint released — stop draining, regen resumes next tick.
     if (SurvivalComponent)
@@ -603,9 +642,52 @@ void AAstrawildPlayerCharacter::RefreshMovementSpeed()
 
 void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
 {
-    if (IsAlive())
+    if (!IsAlive())
     {
-        Jump();
+        return;
+    }
+
+    // Batch 8 — SPACE while piloting = climb.
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotVertical(1.0f);
+        return;
+    }
+
+    Jump();
+}
+
+void AAstrawildPlayerCharacter::OnJumpPressed(const FInputActionValue& Value)
+{
+    HandleJump(Value);
+}
+
+void AAstrawildPlayerCharacter::OnJumpReleased(const FInputActionValue& Value)
+{
+    // Batch 8 — climb release (only meaningful while piloting).
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotVertical(0.0f);
+        return;
+    }
+
+    StopJumping();
+}
+
+void AAstrawildPlayerCharacter::StartDescend(const FInputActionValue& Value)
+{
+    // Batch 8 — CTRL while piloting = descend (no-op on foot).
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotVertical(-1.0f);
+    }
+}
+
+void AAstrawildPlayerCharacter::StopDescend(const FInputActionValue& Value)
+{
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotVertical(0.0f);
     }
 }
 
@@ -613,6 +695,13 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
 {
     if (!IsAlive())
     {
+        return;
+    }
+
+    // Batch 8 — E while piloting = dismount (before any trace).
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->DismountPilot();
         return;
     }
 

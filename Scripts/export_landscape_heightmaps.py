@@ -32,17 +32,26 @@ from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Zone table — MUST match UAstrawildZoneSubsystem::GetAllZones() exactly.
-# Bounds in cm on the XY plane: 3 columns x 2 rows of 800m cells.
+# Bounds in cm on the XY plane: 4 columns x 3 rows of 800m cells (Batch 8).
 # ---------------------------------------------------------------------------
 
 ZONES = [
     # (enum, id, name, minX, minY, maxX, maxY, base, amp, ridge, threat)
-    ("FrostveilExpanse", "Zone_Frostveil", "Frostveil Expanse", -120000, 0, -40000, 80000, 900.0, 2200.0, 0.8, 3),
-    ("Glimmerwood", "Zone_Glimmerwood", "Glimmerwood", -40000, 0, 40000, 80000, 300.0, 900.0, 0.15, 2),
-    ("EmberRidge", "Zone_EmberRidge", "Ember Ridge", 40000, 0, 120000, 80000, 500.0, 2600.0, 0.9, 3),
-    ("DuskMarsh", "Zone_DuskMarsh", "Dusk Marsh", -120000, -80000, -40000, 0, -60.0, 260.0, 0.0, 2),
-    ("DawnFields", "Zone_DawnFields", "Dawn Fields", -40000, -80000, 40000, 0, 220.0, 520.0, 0.0, 1),
-    ("HollowApproach", "Zone_HollowApproach", "Hollow Approach", 40000, -80000, 120000, 0, 260.0, 1300.0, 0.5, 4),
+    # North row.
+    ("FrostveilExpanse", "Zone_Frostveil", "Frostveil Expanse", -160000, 40000, -80000, 120000, 900.0, 2200.0, 0.8, 3),
+    ("Glimmerwood", "Zone_Glimmerwood", "Glimmerwood", -80000, 40000, 0, 120000, 300.0, 900.0, 0.15, 2),
+    ("EmberRidge", "Zone_EmberRidge", "Ember Ridge", 0, 40000, 80000, 120000, 500.0, 2600.0, 0.9, 3),
+    ("SunscarDesert", "Zone_Sunscar", "Sunscar Desert", 80000, 40000, 160000, 120000, 150.0, 900.0, 0.25, 3),
+    # Middle row.
+    ("DuskMarsh", "Zone_DuskMarsh", "Dusk Marsh", -160000, -40000, -80000, 40000, -60.0, 260.0, 0.0, 2),
+    ("DawnFields", "Zone_DawnFields", "Dawn Fields", -80000, -40000, 0, 40000, 220.0, 520.0, 0.0, 1),
+    ("HollowApproach", "Zone_HollowApproach", "Hollow Approach", 0, -40000, 80000, 40000, 260.0, 1300.0, 0.5, 4),
+    ("AzureShallows", "Zone_AzureShallows", "Azure Shallows", 80000, -40000, 160000, 40000, -1400.0, 700.0, 0.05, 2),
+    # South row.
+    ("TidebreakerIsles", "Zone_TidebreakerIsles", "Tidebreaker Isles", -160000, -120000, -80000, -40000, -1600.0, 3400.0, 0.55, 3),
+    ("StormcrestHighlands", "Zone_Stormcrest", "Stormcrest Highlands", -80000, -120000, 0, -40000, 600.0, 3200.0, 0.85, 3),
+    ("VerdantReach", "Zone_VerdantReach", "Verdant Reach", 0, -120000, 80000, -40000, 350.0, 1100.0, 0.1, 2),
+    ("PearlseaReef", "Zone_PearlseaReef", "Pearlsea Reef", 80000, -120000, 160000, -40000, -1500.0, 2400.0, 0.35, 4),
 ]
 
 BASE_NOISE_WAVELENGTH = 51200.0
@@ -178,26 +187,26 @@ def selfcheck(seed: int) -> bool:
         print(f"FAIL determinism: {h1} != {h2}")
         ok = False
 
-    # Partition of unity at tricky points.
-    for (x, y) in [(0.0, -40000.0), (40000.0, 0.0), (-120000.0, 80000.0), (400000.0, 400000.0)]:
+    # Partition of unity at tricky points (Batch 8 4x3 grid).
+    for (x, y) in [(-40000.0, 0.0), (0.0, 0.0), (-120000.0, 80000.0), (400000.0, 400000.0)]:
         w = zone_weights(x, y)
         if any(v < 0.0 for v in w) or abs(sum(w) - 1.0) > 0.001:
             print(f"FAIL partition of unity at ({x},{y}): sum={sum(w)}")
             ok = False
 
-    # Dawn Fields dominates at camp.
-    w = zone_weights(0.0, -40000.0)
-    dawn_w = w[4]  # ZONES[4] is DawnFields
-    if dawn_w <= 0.9:
+    # Dawn Fields dominates at camp (-40000, 0).
+    w = zone_weights(-40000.0, 0.0)
+    dawn_w = w[5]  # ZONES[5] is DawnFields
+    if dawn_w <= 0.85:
         print(f"FAIL Dawn Fields dominance at camp: {dawn_w}")
         ok = False
 
-    # Seam continuity across the X=40000 border and Y=0 border.
-    for y in (-60000.0, -40000.0, 0.0, 20000.0):
-        hw = eval_world_height(39999.0, y, seed)
-        he = eval_world_height(40001.0, y, seed)
+    # Seam continuity across the X=0 border (Dawn Fields / Hollow Approach) and Y=40000 border.
+    for y in (-20000.0, 0.0, 20000.0):
+        hw = eval_world_height(-1.0, y, seed)
+        he = eval_world_height(1.0, y, seed)
         if abs(he - hw) >= 50.0:
-            print(f"FAIL seam jump at (40000,{y}): {hw} -> {he}")
+            print(f"FAIL seam jump at (0,{y}): {hw} -> {he}")
             ok = False
     for x in (-20000.0, 0.0, 20000.0):
         hs = eval_world_height(x, -1.0, seed)
@@ -206,9 +215,9 @@ def selfcheck(seed: int) -> bool:
             print(f"FAIL row seam jump at ({x},0): {hs} -> {hn}")
             ok = False
 
-    # Zone personality: marsh low, frostveil high.
-    marsh_h = eval_world_height(-80000.0, -40000.0, seed)
-    frost_h = eval_world_height(-80000.0, 40000.0, seed)
+    # Zone personality: marsh low, frostveil high (Batch 8 centers).
+    marsh_h = eval_world_height(-120000.0, 0.0, seed)
+    frost_h = eval_world_height(-120000.0, 80000.0, seed)
     if marsh_h >= 600.0:
         print(f"FAIL marsh too high: {marsh_h}")
         ok = False
@@ -217,7 +226,7 @@ def selfcheck(seed: int) -> bool:
         ok = False
 
     print(f"Self-check (seed {seed}): {'PASS' if ok else 'FAIL'} "
-          f"(camp h={eval_world_height(0.0, -40000.0, seed):.0f}cm, "
+          f"(camp h={eval_world_height(-40000.0, 0.0, seed):.0f}cm, "
           f"marsh h={marsh_h:.0f}cm, frost h={frost_h:.0f}cm)")
     return ok
 

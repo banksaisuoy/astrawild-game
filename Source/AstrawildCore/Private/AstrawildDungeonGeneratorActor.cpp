@@ -139,6 +139,7 @@ void AAstrawildDungeonGeneratorActor::Generate()
         // Boss room uses the boss id; other rooms cycle the pool (entry spawns nothing).
         if (Template.bIsBossRoom)
         {
+            Room->BossDefeatEventId = BossDefeatEventId; // Batch 8: per-dungeon quest target.
             Room->SpawnEncounter({ BossDefinitionId });
         }
         else if (!Template.CreatureSpawnOffsets.IsEmpty())

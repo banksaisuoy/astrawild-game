@@ -100,8 +100,20 @@ public:
      */
     static void ComputeZoneWeights(const FVector2D& Point, float OutWeights[(int32)EAstrawildZone::Count]);
 
-    /** World rect covered by the zone grid (2.4km x 1.6km). */
+    /** World rect covered by the zone grid (Batch 8: 3.2km x 2.4km). */
     static FBox2D GetWorldBounds();
+
+    /**
+     * Batch 8 — global sea level (world Z, centimeters). The three sea zones
+     * (Azure Shallows, Tidebreaker Isles, Pearlsea Reef) sit with their floors
+     * below this line; the runtime water planes spawn at this height. Kept as a
+     * pure static so terrain tint (waterline shading) and the water actors can
+     * never disagree.
+     */
+    static float GetSeaLevelZ() { return -450.0f; }
+
+    /** Batch 8 — true when the zone's lowest possible terrain dips below sea level. */
+    static bool IsSeaZone(const EAstrawildZone Zone);
 
     /** Number of real zones (excludes None/Count). */
     static int32 GetZoneCount() { return (int32)EAstrawildZone::Count - 1; }

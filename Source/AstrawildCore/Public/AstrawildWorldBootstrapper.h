@@ -15,11 +15,14 @@ class AStaticMeshActor;
 
 /**
  * Zero-asset world bootstrapper (directive §21/§50): on the server, builds the
- * Shattered Vale — six 800m x 800m terrain zones (Batch 7, closes gap M-13),
- * the Dawn Fields starting camp, per-zone wildlife/resources/landmarks with
- * signature colored lighting, and the Hollow Underlight dungeon approach.
- * Everything uses engine basic shapes so the project plays immediately after
- * compile, with no .umap/.uasset content.
+ * Shattered Vale — twelve 800m x 800m terrain zones (Batch 8 "The Grand
+ * Expanse", was six in Batch 7), the Dawnstead village + camp in the Dawn
+ * Fields, the Driftwood Landing fishing hamlet in the Tidebreaker Isles, sea
+ * water planes over the three sea zones, per-zone wildlife/resources/landmarks
+ * with signature colored lighting (204-species bestiary seeding), the Hollow
+ * Underlight dungeon and the Sunken Vault dungeon, plus the two Dawn Skiff
+ * aircraft. Everything uses engine basic shapes so the project plays
+ * immediately after compile, with no .umap/.uasset content.
  *
  * Deterministic: all spawns derive from the GameState WorldSeed through the
  * terrain height field (AAstrawildTerrainTileActor::EvalWorldHeight).
@@ -68,6 +71,12 @@ public:
     /** Hollow Underlight dungeon center in the Hollow Approach. */
     static FVector2D GetDungeonCenterXY();
 
+    /** Batch 8 — Sunken Vault dungeon center in the Tidebreaker Isles. */
+    static FVector2D GetSunkenVaultCenterXY();
+
+    /** Batch 8 — Driftwood Landing village center in the Tidebreaker Isles. */
+    static FVector2D GetDriftwoodLandingXY();
+
 private:
     void BuildLighting();
     void BuildTerrain();
@@ -76,6 +85,20 @@ private:
     void SpawnHostiles();
     void SpawnPointsOfInterest();
     void BuildZoneLandmarks();
+
+    // --- Batch 8: living villages, sea, aircraft ---
+
+    /** Spawns the water planes over the three sea zones. */
+    void SpawnWaterPlanes();
+
+    /** Spawns Dawnstead + Driftwood Landing villages with their NPC rosters. */
+    void SpawnVillages();
+
+    /** Spawns the two Dawn Skiff aircraft (one per settlement). */
+    void SpawnSkiffs();
+
+    /** Highest ground spot near a center (island-safe placement). */
+    FVector FindDrySpotNear(const FVector2D& Center, float SearchRadius) const;
 
     /** Spawn an engine basic shape prop. Returns the actor (nullptr-safe). */
     AStaticMeshActor* SpawnShape(const TCHAR* MeshPath, const FVector& Location, const FVector& Scale, const FRotator& Rotation);

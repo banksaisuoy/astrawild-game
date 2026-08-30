@@ -4,12 +4,14 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "AstrawildCaptureComponent.h"
+#include "AstrawildBestiaryData.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildSaveSubsystem.h"
+#include "AstrawildSkiffActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTerrainTileActor.h"
 #include "AstrawildTypes.h"
@@ -458,10 +460,11 @@ bool FAstrawildZoneTableIntegrityTest::RunTest(const FString& Parameters)
         }
     }
 
-    // Union must tile the full world rect exactly (3x2 grid of 800m cells).
+    // Union must tile the full world rect exactly (4x3 grid of 800m cells — Batch 8).
     const FBox2D World = UAstrawildZoneSubsystem::GetWorldBounds();
-    TestEqual(TEXT("World bounds span 2400m in X"), World.Max.X - World.Min.X, 240000.0f);
-    TestEqual(TEXT("World bounds span 1600m in Y"), World.Max.Y - World.Min.Y, 160000.0f);
+    TestEqual(TEXT("World bounds span 3200m in X"), World.Max.X - World.Min.X, 320000.0f);
+    TestEqual(TEXT("World bounds span 2400m in Y"), World.Max.Y - World.Min.Y, 240000.0f);
+    TestEqual(TEXT("Twelve zones in the table"), Zones.Num(), 12);
 
     // Every zone is a square cell of 800m.
     for (const FAstrawildZoneDescriptor& Desc : Zones)
@@ -480,12 +483,18 @@ bool FAstrawildZoneLookupCorrectnessTest::RunTest(const FString& Parameters)
 {
     struct FRow { EAstrawildZone Zone; float X; float Y; };
     const FRow Rows[] = {
-        { EAstrawildZone::DawnFields, 0.0f, -40000.0f },
-        { EAstrawildZone::DuskMarsh, -80000.0f, -40000.0f },
-        { EAstrawildZone::HollowApproach, 80000.0f, -40000.0f },
-        { EAstrawildZone::FrostveilExpanse, -80000.0f, 40000.0f },
-        { EAstrawildZone::Glimmerwood, 0.0f, 40000.0f },
-        { EAstrawildZone::EmberRidge, 80000.0f, 40000.0f },
+        { EAstrawildZone::DawnFields, -40000.0f, 0.0f },
+        { EAstrawildZone::DuskMarsh, -120000.0f, 0.0f },
+        { EAstrawildZone::HollowApproach, 40000.0f, 0.0f },
+        { EAstrawildZone::AzureShallows, 120000.0f, 0.0f },
+        { EAstrawildZone::FrostveilExpanse, -120000.0f, 80000.0f },
+        { EAstrawildZone::Glimmerwood, -40000.0f, 80000.0f },
+        { EAstrawildZone::EmberRidge, 40000.0f, 80000.0f },
+        { EAstrawildZone::SunscarDesert, 120000.0f, 80000.0f },
+        { EAstrawildZone::TidebreakerIsles, -120000.0f, -80000.0f },
+        { EAstrawildZone::StormcrestHighlands, -40000.0f, -80000.0f },
+        { EAstrawildZone::VerdantReach, 40000.0f, -80000.0f },
+        { EAstrawildZone::PearlseaReef, 120000.0f, -80000.0f },
     };
 
     for (const FRow& Row : Rows)
@@ -496,15 +505,15 @@ bool FAstrawildZoneLookupCorrectnessTest::RunTest(const FString& Parameters)
 
     // Off-camp point inside Dawn Fields still resolves correctly.
     TestTrue(TEXT("Camp outskirts are Dawn Fields"),
-        UAstrawildZoneSubsystem::GetZoneAt(FVector(30000.0f, -70000.0f, 0.0f)) == EAstrawildZone::DawnFields);
+        UAstrawildZoneSubsystem::GetZoneAt(FVector(-60000.0f, 10000.0f, 0.0f)) == EAstrawildZone::DawnFields);
 
     // Outside the world rect is wilderness (None).
     TestTrue(TEXT("Far outside the world is None"),
         UAstrawildZoneSubsystem::GetZoneAt(FVector(500000.0f, 500000.0f, 0.0f)) == EAstrawildZone::None);
 
-    // The dungeon portal site sits inside Hollow Approach.
+    // The dungeon portal site sits inside Hollow Approach (Batch 8 position).
     TestTrue(TEXT("Dungeon approach portal is in Hollow Approach"),
-        UAstrawildZoneSubsystem::GetZoneAt(FVector(52000.0f, -40000.0f, 0.0f)) == EAstrawildZone::HollowApproach);
+        UAstrawildZoneSubsystem::GetZoneAt(FVector(10000.0f, 0.0f, 0.0f)) == EAstrawildZone::HollowApproach);
     return true;
 }
 
@@ -515,12 +524,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildZoneBlendPartitionTest,
 bool FAstrawildZoneBlendPartitionTest::RunTest(const FString& Parameters)
 {
     const FVector2D Samples[] = {
-        FVector2D(0.0f, -40000.0f),      // Dawn Fields center (camp)
-        FVector2D(40000.0f, 0.0f),       // Four-corner meet point
-        FVector2D(-120000.0f, 80000.0f), // World corner
-        FVector2D(58000.0f, -40000.0f),  // Hollow Approach (portal path)
-        FVector2D(400000.0f, 400000.0f), // Far outside the world
-        FVector2D(-60000.0f, 20000.0f),  // Frostveil / Dusk Marsh border blend
+        FVector2D(-40000.0f, 0.0f),     // Dawn Fields center (camp — Batch 8 grid)
+        FVector2D(0.0f, 0.0f),          // Four-corner meet point
+        FVector2D(-120000.0f, 80000.0f),// Frostveil center
+        FVector2D(10000.0f, 0.0f),      // Hollow Approach (portal path)
+        FVector2D(400000.0f, 400000.0f),// Far outside the world
+        FVector2D(-120000.0f, 40000.0f),// Frostveil / Dusk Marsh border blend
     };
 
     for (const FVector2D& Sample : Samples)
@@ -540,9 +549,9 @@ bool FAstrawildZoneBlendPartitionTest::RunTest(const FString& Parameters)
 
     // Inside a zone far from any border, that zone dominates the blend.
     float CampWeights[(int32)EAstrawildZone::Count];
-    UAstrawildZoneSubsystem::ComputeZoneWeights(FVector2D(0.0f, -40000.0f), CampWeights);
-    TestTrue(TEXT("Dawn Fields dominates at the camp"),
-        CampWeights[(int32)EAstrawildZone::DawnFields] > 0.9f);
+    UAstrawildZoneSubsystem::ComputeZoneWeights(FVector2D(-40000.0f, 0.0f), CampWeights);
+    TestTrue(TEXT("Dawn Fields dominates at the camp (middle cell has 8 neighbors — 0.85 floor)"),
+        CampWeights[(int32)EAstrawildZone::DawnFields] > 0.85f);
     return true;
 }
 
@@ -758,6 +767,74 @@ bool FAstrawildBossSpecialsMathTest::RunTest(const FString& Parameters)
     // Enrage cadence: phase 3 halves the special cooldown (documented behavior).
     const float Cooldown = 7.0f;
     TestEqual(TEXT("Phase 3 special cooldown halved"), Cooldown * 0.5f, 3.5f);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Batch 8 — The Grand Menagerie / Grand Expanse (bestiary, sea, skiff)
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBestiaryTableIntegrityTest,
+    "ASTRAWILD.Bestiary.TableIntegrity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBestiaryTableIntegrityTest::RunTest(const FString& Parameters)
+{
+    // The generated table must clear its own validator and cover the roster ask.
+    TArray<FString> Problems;
+    AstrawildBestiary::ValidateTable(Problems);
+    for (const FString& Problem : Problems)
+    {
+        AddError(FString::Printf(TEXT("Bestiary problem: %s"), *Problem));
+    }
+    TestEqual(TEXT("Bestiary validator reports no problems"), Problems.Num(), 0);
+    TestTrue(TEXT("At least 200 generated species"),
+        AstrawildBestiary::GetRowCount() >= 200);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSeaZoneClassificationTest,
+    "ASTRAWILD.Zones.SeaClassification",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSeaZoneClassificationTest::RunTest(const FString& Parameters)
+{
+    // The three sea zones dip below the waterline; home zones stay dry.
+    TestTrue(TEXT("Azure Shallows is a sea zone"), UAstrawildZoneSubsystem::IsSeaZone(EAstrawildZone::AzureShallows));
+    TestTrue(TEXT("Tidebreaker Isles is a sea zone"), UAstrawildZoneSubsystem::IsSeaZone(EAstrawildZone::TidebreakerIsles));
+    TestTrue(TEXT("Pearlsea Reef is a sea zone"), UAstrawildZoneSubsystem::IsSeaZone(EAstrawildZone::PearlseaReef));
+    TestFalse(TEXT("Dawn Fields stays dry"), UAstrawildZoneSubsystem::IsSeaZone(EAstrawildZone::DawnFields));
+    TestFalse(TEXT("Sunscar Desert stays dry"), UAstrawildZoneSubsystem::IsSeaZone(EAstrawildZone::SunscarDesert));
+
+    // Islands must break the surface: the Isles' highest point clears sea level.
+    const FAstrawildZoneDescriptor* Isles = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_TidebreakerIsles"));
+    TestTrue(TEXT("Isles ceiling clears the waterline"),
+        Isles && (Isles->BaseHeight + Isles->HeightAmplitude) > UAstrawildZoneSubsystem::GetSeaLevelZ() + 500.0f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSkiffFlightMathTest,
+    "ASTRAWILD.Skiff.FlightMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSkiffFlightMathTest::RunTest(const FString& Parameters)
+{
+    const FVector Forward(1.0f, 0.0f, 0.0f);
+
+    // Full cruise thrust, level flight.
+    const FVector Cruise = AAstrawildSkiffActor::ComputeSkiffVelocity(Forward, 1.0f, 0.0f, false, 1400.0f, 2600.0f, 700.0f);
+    TestEqual(TEXT("Cruise thrust is forward at cruise speed"), Cruise, FVector(1400.0f, 0.0f, 0.0f));
+
+    // Boost multiplies horizontal speed only.
+    const FVector Boost = AAstrawildSkiffActor::ComputeSkiffVelocity(Forward, 1.0f, 0.5f, true, 1400.0f, 2600.0f, 700.0f);
+    TestEqual(TEXT("Boost thrust with climb"), Boost, FVector(2600.0f, 0.0f, 350.0f));
+
+    // Reverse thrust descends.
+    const FVector Reverse = AAstrawildSkiffActor::ComputeSkiffVelocity(Forward, -0.5f, -1.0f, false, 1400.0f, 2600.0f, 700.0f);
+    TestEqual(TEXT("Half reverse with full descent"), Reverse, FVector(-700.0f, 0.0f, -700.0f));
+
+    // Clamped axes never exceed their envelope.
+    const FVector Clamped = AAstrawildSkiffActor::ComputeSkiffVelocity(Forward, 5.0f, -5.0f, false, 1400.0f, 2600.0f, 700.0f);
+    TestEqual(TEXT("Axes clamp to [-1, 1]"), Clamped, FVector(1400.0f, 0.0f, -700.0f));
     return true;
 }
 

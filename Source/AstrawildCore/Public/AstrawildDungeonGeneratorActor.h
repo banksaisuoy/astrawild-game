@@ -52,6 +52,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FName BossDefinitionId = TEXT("Echo_Gloomfang");
 
+    /**
+     * Batch 8: event id the boss publishes on defeat (quest matcher target).
+     * Distinct per dungeon so the Sunken Vault warden completes its own quest,
+     * not the Underlight one.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName BossDefeatEventId = TEXT("Creature_UnderlightWarden");
+
     /** Audit C-4: research points granted to the shared pool when the dungeon is completed. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", meta=(ClampMin="0"))
     int32 DungeonCompletionResearchPoints = 10;

@@ -17,7 +17,349 @@
 #include "Engine/World.h"
 #include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "ProceduralMeshComponent.h"
+#include "Materials/Material.h"
 #include "UObject/ConstructorHelpers.h"
+
+// ---------------------------------------------------------------------------
+// Batch 8 — procedural body construction (The Grand Menagerie).
+// Vertex-colored ProceduralMesh sections + DebugMeshMaterial (same guaranteed
+// color-rendering path as the terrain tiles). Zero art assets required.
+// ---------------------------------------------------------------------------
+namespace
+{
+    struct FAstrawildBodyPart
+    {
+        TArray<FVector> Vertices;
+        TArray<int32> Triangles;
+        TArray<FVector> Normals;
+        TArray<FVector2D> UVs;
+        TArray<FColor> Colors;
+    };
+
+    void PushQuad(FAstrawildBodyPart& Part, const int32 A, const int32 B, const int32 C, const int32 D)
+    {
+        Part.Triangles.Append({ A, B, C, A, C, D });
+    }
+
+    void AddBoxPart(FAstrawildBodyPart& Part, const FVector& Center, const FVector& HalfSize, const FColor& Color)
+    {
+        const int32 Base = Part.Vertices.Num();
+        const FVector Corners[8] = {
+            Center + FVector(-HalfSize.X, -HalfSize.Y, -HalfSize.Z),
+            Center + FVector( HalfSize.X, -HalfSize.Y, -HalfSize.Z),
+            Center + FVector( HalfSize.X,  HalfSize.Y, -HalfSize.Z),
+            Center + FVector(-HalfSize.X,  HalfSize.Y, -HalfSize.Z),
+            Center + FVector(-HalfSize.X, -HalfSize.Y,  HalfSize.Z),
+            Center + FVector( HalfSize.X, -HalfSize.Y,  HalfSize.Z),
+            Center + FVector( HalfSize.X,  HalfSize.Y,  HalfSize.Z),
+            Center + FVector(-HalfSize.X,  HalfSize.Y,  HalfSize.Z),
+        };
+        for (const FVector& Corner : Corners)
+        {
+            Part.Vertices.Add(Corner);
+            Part.Normals.Add((Corner - Center).GetSafeNormal());
+            Part.UVs.Add(FVector2D(0.0f, 0.0f));
+            Part.Colors.Add(Color);
+        }
+        PushQuad(Part, Base + 0, Base + 1, Base + 2, Base + 3); // bottom
+        PushQuad(Part, Base + 4, Base + 7, Base + 6, Base + 5); // top
+        PushQuad(Part, Base + 0, Base + 4, Base + 5, Base + 1); // front
+        PushQuad(Part, Base + 3, Base + 2, Base + 6, Base + 7); // back
+        PushQuad(Part, Base + 1, Base + 5, Base + 6, Base + 2); // right
+        PushQuad(Part, Base + 0, Base + 3, Base + 7, Base + 4); // left
+    }
+
+    void AddSpherePart(FAstrawildBodyPart& Part, const FVector& Center, const float Radius, const FColor& Color, const int32 Segments = 10)
+    {
+        const int32 Rings = FMath::Max(4, Segments);
+        const int32 Slices = FMath::Max(4, Segments);
+        const int32 Base = Part.Vertices.Num();
+
+        for (int32 Ring = 0; Ring <= Rings; ++Ring)
+        {
+            const float Phi = PI * static_cast<float>(Ring) / static_cast<float>(Rings);
+            for (int32 Slice = 0; Slice <= Slices; ++Slice)
+            {
+                const float Theta = 2.0f * PI * static_cast<float>(Slice) / static_cast<float>(Slices);
+                const FVector Normal(
+                    FMath::Sin(Phi) * FMath::Cos(Theta),
+                    FMath::Sin(Phi) * FMath::Sin(Theta),
+                    FMath::Cos(Phi));
+                Part.Vertices.Add(Center + Normal * Radius);
+                Part.Normals.Add(Normal);
+                Part.UVs.Add(FVector2D(static_cast<float>(Slice) / Slices, static_cast<float>(Ring) / Rings));
+                Part.Colors.Add(Color);
+            }
+        }
+
+        const auto VertexIndex = [Slices](const int32 Ring, const int32 Slice) -> int32
+        {
+            return Ring * (Slices + 1) + Slice;
+        };
+
+        for (int32 Ring = 0; Ring < Rings; ++Ring)
+        {
+            for (int32 Slice = 0; Slice < Slices; ++Slice)
+            {
+                const int32 A = Base + VertexIndex(Ring, Slice);
+                const int32 B = Base + VertexIndex(Ring + 1, Slice);
+                const int32 C = Base + VertexIndex(Ring + 1, Slice + 1);
+                const int32 D = Base + VertexIndex(Ring, Slice + 1);
+                Part.Triangles.Append({ A, B, C, A, C, D });
+            }
+        }
+    }
+
+    void AddConePart(FAstrawildBodyPart& Part, const FVector& BaseCenter, const FVector& Tip, const float BaseRadius, const FColor& Color, const int32 Segments = 8)
+    {
+        const int32 Slices = FMath::Max(3, Segments);
+        const FVector Axis = (Tip - BaseCenter).GetSafeNormal();
+        const FVector AnyPerp = FMath::Abs(Axis.Z) < 0.95f ? FVector::UpVector : FVector::ForwardVector;
+        const FVector Perp1 = FVector::CrossProduct(Axis, AnyPerp).GetSafeNormal();
+        const FVector Perp2 = FVector::CrossProduct(Axis, Perp1).GetSafeNormal();
+
+        const int32 Base = Part.Vertices.Num();
+        // Base ring.
+        for (int32 Slice = 0; Slice < Slices; ++Slice)
+        {
+            const float Theta = 2.0f * PI * static_cast<float>(Slice) / static_cast<float>(Slices);
+            const FVector Dir = Perp1 * FMath::Cos(Theta) + Perp2 * FMath::Sin(Theta);
+            Part.Vertices.Add(BaseCenter + Dir * BaseRadius);
+            Part.Normals.Add(-Axis);
+            Part.UVs.Add(FVector2D(0.0f, 0.0f));
+            Part.Colors.Add(Color);
+        }
+        // Tip.
+        const int32 TipIndex = Part.Vertices.Num();
+        Part.Vertices.Add(Tip);
+        Part.Normals.Add(Axis);
+        Part.UVs.Add(FVector2D(0.5f, 0.5f));
+        Part.Colors.Add(Color);
+        // Base cap center.
+        const int32 CapIndex = Part.Vertices.Num();
+        Part.Vertices.Add(BaseCenter);
+        Part.Normals.Add(-Axis);
+        Part.UVs.Add(FVector2D(0.5f, 0.5f));
+        Part.Colors.Add(Color);
+
+        for (int32 Slice = 0; Slice < Slices; ++Slice)
+        {
+            const int32 A = Base + Slice;
+            const int32 B = Base + (Slice + 1) % Slices;
+            Part.Triangles.Append({ A, TipIndex, B });
+            Part.Triangles.Append({ CapIndex, B, A });
+        }
+    }
+
+    void AddCylinderPart(FAstrawildBodyPart& Part, const FVector& BottomCenter, const FVector& TopCenter, const float Radius, const FColor& Color, const int32 Segments = 8)
+    {
+        const int32 Slices = FMath::Max(3, Segments);
+        const FVector Axis = (TopCenter - BottomCenter).GetSafeNormal();
+        const FVector AnyPerp = FMath::Abs(Axis.Z) < 0.95f ? FVector::UpVector : FVector::ForwardVector;
+        const FVector Perp1 = FVector::CrossProduct(Axis, AnyPerp).GetSafeNormal();
+        const FVector Perp2 = FVector::CrossProduct(Axis, Perp1).GetSafeNormal();
+
+        const int32 Base = Part.Vertices.Num();
+        for (int32 Side = 0; Side < 2; ++Side)
+        {
+            const FVector RingCenter = Side == 0 ? BottomCenter : TopCenter;
+            for (int32 Slice = 0; Slice < Slices; ++Slice)
+            {
+                const float Theta = 2.0f * PI * static_cast<float>(Slice) / static_cast<float>(Slices);
+                const FVector Dir = Perp1 * FMath::Cos(Theta) + Perp2 * FMath::Sin(Theta);
+                Part.Vertices.Add(RingCenter + Dir * Radius);
+                Part.Normals.Add(Dir);
+                Part.UVs.Add(FVector2D(0.0f, 0.0f));
+                Part.Colors.Add(Color);
+            }
+        }
+        for (int32 Slice = 0; Slice < Slices; ++Slice)
+        {
+            const int32 A0 = Base + Slice;
+            const int32 B0 = Base + (Slice + 1) % Slices;
+            const int32 A1 = Base + Slices + Slice;
+            const int32 B1 = Base + Slices + (Slice + 1) % Slices;
+            Part.Triangles.Append({ A0, B0, B1, A0, B1, A1 });
+        }
+    }
+
+    float BodyScaleForSize(const EAstrawildSizeClass SizeClass)
+    {
+        switch (SizeClass)
+        {
+        case EAstrawildSizeClass::Tiny:   return 0.45f;
+        case EAstrawildSizeClass::Small:  return 0.7f;
+        case EAstrawildSizeClass::Large:  return 1.4f;
+        case EAstrawildSizeClass::Huge:   return 1.9f;
+        default:                          return 1.0f;
+        }
+    }
+}
+
+void AAstrawildEchoCharacter::BuildProceduralBody()
+{
+    if (!IsValid(EchoDefinition))
+    {
+        return;
+    }
+
+    if (!BodyMesh)
+    {
+        BodyMesh = NewObject<UProceduralMeshComponent>(this, TEXT("BodyMesh"));
+        BodyMesh->SetupAttachment(GetCapsuleComponent());
+        BodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        BodyMesh->SetRelativeLocation(FVector::ZeroVector);
+        BodyMesh->RegisterComponent();
+    }
+
+    BodyMesh->ClearAllMeshSections();
+
+    const FColor Primary = EchoDefinition->PrimaryTint.ToFColor(true);
+    const FColor Secondary = EchoDefinition->SecondaryTint.ToFColor(true);
+    const FColor Accent(
+        FMath::Min(255, Primary.R + 60),
+        FMath::Min(255, Primary.G + 60),
+        FMath::Min(255, Primary.B + 60),
+        255);
+    const float S = BodyScaleForSize(EchoDefinition->SizeClass);
+
+    FAstrawildBodyPart Body;
+
+    switch (EchoDefinition->BodyPlan)
+    {
+    case EAstrawildBodyPlan::Quadruped:
+    {
+        // Torso + head + four legs + tail cone.
+        AddSpherePart(Body, FVector(0, 0, 55 * S), 42 * S, Primary, 8);
+        AddSpherePart(Body, FVector(52 * S, 0, 78 * S), 24 * S, Secondary, 8);
+        AddConePart(Body, FVector(52 * S, 0, 78 * S), FVector(80 * S, 0, 92 * S), 9 * S, Accent, 6); // snout/horn
+        const float LegX = 30 * S;
+        const float LegY = 26 * S;
+        for (const FVector2D Corner : { FVector2D(LegX, LegY), FVector2D(LegX, -LegY), FVector2D(-LegX, LegY), FVector2D(-LegX, -LegY) })
+        {
+            AddCylinderPart(Body, FVector(Corner.X, Corner.Y, 40 * S), FVector(Corner.X, Corner.Y, 2 * S), 9 * S, Secondary, 6);
+        }
+        AddConePart(Body, FVector(-44 * S, 0, 62 * S), FVector(-92 * S, 0, 74 * S), 10 * S, Secondary, 6);
+        break;
+    }
+    case EAstrawildBodyPlan::Biped:
+    {
+        AddSpherePart(Body, FVector(0, 0, 72 * S), 38 * S, Primary, 8);
+        AddSpherePart(Body, FVector(0, 0, 122 * S), 22 * S, Secondary, 8);
+        AddConePart(Body, FVector(0, 0, 138 * S), FVector(0, 0, 172 * S), 10 * S, Accent, 6); // crest
+        AddCylinderPart(Body, FVector(16 * S, 0, 58 * S), FVector(30 * S, 0, 96 * S), 8 * S, Secondary, 6); // arms
+        AddCylinderPart(Body, FVector(-16 * S, 0, 58 * S), FVector(-30 * S, 0, 96 * S), 8 * S, Secondary, 6);
+        AddCylinderPart(Body, FVector(14 * S, 0, 36 * S), FVector(14 * S, 0, 2 * S), 10 * S, Secondary, 6); // legs
+        AddCylinderPart(Body, FVector(-14 * S, 0, 36 * S), FVector(-14 * S, 0, 2 * S), 10 * S, Secondary, 6);
+        break;
+    }
+    case EAstrawildBodyPlan::Serpent:
+    {
+        // Rising S-curve of segments + wedge head.
+        const float SegX[6] = { -80, -44, -12, 20, 48, 66 };
+        const float SegZ[6] = { 6, 26, 48, 68, 82, 90 };
+        const float SegR[6] = { 9, 15, 21, 25, 22, 17 };
+        for (int32 i = 0; i < 6; ++i)
+        {
+            AddSpherePart(Body, FVector(SegX[i] * S, 0, SegZ[i] * S), SegR[i] * S, i % 2 == 0 ? Primary : Secondary, 8);
+        }
+        AddConePart(Body, FVector(66 * S, 0, 96 * S), FVector(112 * S, 0, 108 * S), 14 * S, Accent, 6); // head wedge
+        break;
+    }
+    case EAstrawildBodyPlan::Floating:
+    {
+        AddSpherePart(Body, FVector(0, 0, 95 * S), 34 * S, Primary, 10);
+        AddSpherePart(Body, FVector(30 * S, 22 * S, 108 * S), 12 * S, Secondary, 6);
+        AddSpherePart(Body, FVector(-28 * S, 24 * S, 88 * S), 10 * S, Secondary, 6);
+        AddSpherePart(Body, FVector(-24 * S, -26 * S, 112 * S), 11 * S, Secondary, 6);
+        AddConePart(Body, FVector(0, 0, 62 * S), FVector(0, 0, 18 * S), 20 * S, Accent, 6); // energy tail
+        break;
+    }
+    case EAstrawildBodyPlan::Insectoid:
+    {
+        AddSpherePart(Body, FVector(34 * S, 0, 55 * S), 17 * S, Secondary, 8); // head
+        AddSpherePart(Body, FVector(6 * S, 0, 52 * S), 24 * S, Primary, 8); // thorax
+        AddSpherePart(Body, FVector(-34 * S, 0, 48 * S), 28 * S, Primary, 8); // abdomen
+        AddCylinderPart(Body, FVector(34 * S, 10 * S, 66 * S), FVector(50 * S, 16 * S, 92 * S), 3 * S, Secondary, 5); // antennae
+        AddCylinderPart(Body, FVector(34 * S, -10 * S, 66 * S), FVector(50 * S, -16 * S, 92 * S), 3 * S, Secondary, 5);
+        const float LegX[4] = { 24, 8, -16, -34 };
+        for (int32 i = 0; i < 4; ++i)
+        {
+            AddCylinderPart(Body, FVector(LegX[i] * S, 14 * S, 44 * S), FVector(LegX[i] * S, 30 * S, 4 * S), 4 * S, Secondary, 5);
+            AddCylinderPart(Body, FVector(LegX[i] * S, -14 * S, 44 * S), FVector(LegX[i] * S, -30 * S, 4 * S), 4 * S, Secondary, 5);
+        }
+        break;
+    }
+    case EAstrawildBodyPlan::Avian:
+    {
+        AddSpherePart(Body, FVector(0, 0, 62 * S), 30 * S, Primary, 8); // keeled body
+        AddSpherePart(Body, FVector(30 * S, 0, 86 * S), 16 * S, Primary, 8); // head
+        AddConePart(Body, FVector(42 * S, 0, 84 * S), FVector(64 * S, 0, 88 * S), 6 * S, Accent, 5); // beak
+        // Folded wings (flattened boxes).
+        AddBoxPart(Body, FVector(-6 * S, 34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S), Secondary);
+        AddBoxPart(Body, FVector(-6 * S, -34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S), Secondary);
+        AddBoxPart(Body, FVector(-34 * S, 0, 58 * S), FVector(14 * S, 16 * S, 4 * S), Secondary); // tail fan
+        AddCylinderPart(Body, FVector(6 * S, 8 * S, 34 * S), FVector(8 * S, 8 * S, 6 * S), 4 * S, Secondary, 5); // legs
+        AddCylinderPart(Body, FVector(6 * S, -8 * S, 34 * S), FVector(8 * S, -8 * S, 6 * S), 4 * S, Secondary, 5);
+        break;
+    }
+    case EAstrawildBodyPlan::Crystalline:
+    {
+        // Faceted shard crown: big center + orbiting shards.
+        AddConePart(Body, FVector(0, 0, 4 * S), FVector(0, 0, 120 * S), 34 * S, Primary, 4);
+        AddConePart(Body, FVector(28 * S, 0, 4 * S), FVector(34 * S, 0, 78 * S), 14 * S, Secondary, 4);
+        AddConePart(Body, FVector(-26 * S, 10 * S, 4 * S), FVector(-32 * S, 14 * S, 64 * S), 12 * S, Secondary, 4);
+        AddConePart(Body, FVector(-20 * S, -18 * S, 4 * S), FVector(-24 * S, -24 * S, 52 * S), 10 * S, Secondary, 4);
+        break;
+    }
+    case EAstrawildBodyPlan::Amorphous:
+    {
+        AddSpherePart(Body, FVector(0, 0, 48 * S), 34 * S, Primary, 8);
+        AddSpherePart(Body, FVector(24 * S, 14 * S, 62 * S), 22 * S, Primary, 8);
+        AddSpherePart(Body, FVector(-22 * S, 18 * S, 54 * S), 18 * S, Primary, 8);
+        AddSpherePart(Body, FVector(-14 * S, -22 * S, 66 * S), 20 * S, Primary, 8);
+        AddSpherePart(Body, FVector(18 * S, -20 * S, 44 * S), 16 * S, Primary, 8);
+        AddSpherePart(Body, FVector(0, 0, 58 * S), 12 * S, Accent, 8); // inner glow core
+        break;
+    }
+    default:
+    {
+        AddSpherePart(Body, FVector(0, 0, 55 * S), 36 * S, Primary, 8);
+        break;
+    }
+    }
+
+    if (Body.Vertices.Num() > 0)
+    {
+        BodyMesh->CreateMeshSection(0, Body.Vertices, Body.Triangles, Body.Normals, Body.UVs, Body.Colors, TArray<FProcMeshTangent>(), false);
+
+        // Same guaranteed vertex-color material path as the terrain tiles.
+        UMaterial* BodyMaterial = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        if (BodyMaterial)
+        {
+            BodyMesh->SetMaterial(0, BodyMaterial);
+        }
+
+        // Hide the legacy placeholder sphere — the silhouette takes over.
+        if (PlaceholderMesh)
+        {
+            PlaceholderMesh->SetVisibility(false);
+            PlaceholderMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
+
+        // Scale the capsule so Huge creatures actually feel huge and Tiny ones
+        // can hide in the grass (gameplay collision matches the silhouette).
+        const float CapsuleRadius = 34.0f * S;
+        const float CapsuleHalfHeight = FMath::Max(CapsuleRadius + 10.0f, 60.0f * S);
+        GetCapsuleComponent()->SetCapsuleSize(CapsuleRadius, CapsuleHalfHeight);
+    }
+
+    UE_LOG(LogAstrawildAI, Verbose, TEXT("Built procedural body for %s (plan %d, size %d)."),
+        *EchoDefinition->DefinitionId.ToString(),
+        static_cast<int32>(EchoDefinition->BodyPlan),
+        static_cast<int32>(EchoDefinition->SizeClass));
+}
 
 AAstrawildEchoCharacter::AAstrawildEchoCharacter()
 {
@@ -184,6 +526,10 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
     // registered this Echo before the definition existed, so the population count
     // missed it (the subsystem counts idempotently by actor key).
     RegisterWithEcosystem();
+
+    // Batch 8: assemble the species silhouette (no-op for definitions without
+    // appearance data — the legacy placeholder sphere stays visible).
+    BuildProceduralBody();
     return true;
 }
 

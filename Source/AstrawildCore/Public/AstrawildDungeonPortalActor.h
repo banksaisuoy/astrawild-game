@@ -45,6 +45,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", meta=(ClampMin="100.0"))
     float UseRadius = 600.0f;
 
+    /**
+     * Batch 8 — publish-only markers: interacting fires Event.LocationReached but
+     * never teleports (survey beacons for the ReachLocation objective, e.g. the
+     * Driftwood Landing discovery marker for "Wings over the Vale").
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    bool bPublishOnly = false;
+
     virtual void Interact_Implementation(AActor* InteractingActor) override;
     virtual FText GetInteractionPrompt_Implementation() const override;
 

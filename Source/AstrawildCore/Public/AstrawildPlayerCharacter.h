@@ -7,6 +7,7 @@
 
 class AAstrawildDamageTarget;
 class AAstrawildEchoCharacter;
+class AAstrawildSkiffActor;
 class AAstrawildUtilityDroneActor;
 class UAstrawildBuildingComponent;
 class UAstrawildCaptureComponent;
@@ -178,6 +179,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputMappingContext> GamepadMappingContext;
 
+    /** Batch 8 — skiff descend (CTRL held; SPACE climbs through JumpAction). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> DescendAction;
+
     // --- Tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat", meta=(ClampMin="0.0"))
     float AttackDamage = 25.0f;
@@ -216,6 +221,13 @@ public:
     /** The player's active utility drone (null when recalled/never deployed). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone")
     AAstrawildUtilityDroneActor* GetActiveDrone() const { return ActiveDrone.Get(); }
+
+    /** Batch 8 — the skiff this player is currently piloting (null = on foot). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff")
+    AAstrawildSkiffActor* GetPilotedSkiff() const { return PilotedSkiff.Get(); }
+
+    /** Called by the skiff on mount/dismount (input routing switches over). */
+    void SetPilotedSkiff(AAstrawildSkiffActor* Skiff) { PilotedSkiff = Skiff; }
 
     /** Server: spawn a drone bound to this player (deploy key / save-load). */
     AAstrawildUtilityDroneActor* SpawnUtilityDrone();
@@ -256,6 +268,12 @@ protected:
     void ToggleInventoryScreenInput(const FInputActionValue& Value);
     void ToggleResearchScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
+
+    // Batch 8 — skiff flight inputs (routed to the piloted skiff).
+    void OnJumpPressed(const FInputActionValue& Value);
+    void OnJumpReleased(const FInputActionValue& Value);
+    void StartDescend(const FInputActionValue& Value);
+    void StopDescend(const FInputActionValue& Value);
 
     /** Wave 3: equip the strongest owned weapon + shield. */
     void EquipBest(const FInputActionValue& Value);
@@ -321,4 +339,8 @@ private:
 
     /** True while the scanner key is held (journal acceleration active). */
     bool bScanKeyHeld = false;
+
+    /** Batch 8 — piloted skiff (weak so a destroyed skiff can't dangle input). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Skiff")
+    TWeakObjectPtr<AAstrawildSkiffActor> PilotedSkiff;
 };

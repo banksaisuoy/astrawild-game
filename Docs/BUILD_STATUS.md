@@ -3,33 +3,34 @@
 ## Status
 
 - Overall: `PARTIAL` — **PLAYABLE BUILD CANDIDATE on the source side** (23/23 gameplay-loop stages
-  implemented; **still never compiled** — the sole remaining blocker is the in-engine build)
-- Last updated: 2026-08-30 (FINAL AUTONOMOUS PRODUCTION RUN — advanced technology framework + loop closure + save v3)
-- Branch: `main` (latest: `249eec7` test batch; preceded by `c417b22` loop closure, `0dfe631` advanced tech, `750f87a` compile-blocker fixes)
-- Latest change: **FINAL PRODUCTION RUN** — (1) **Phase-0 audit** (3 passes) produced
-  `Docs/ASTRAWILD_GL53_SOURCE_AUDIT.md` + `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` and found
-  **2 hard compile blockers**: C-1 `AAstrawildGameMode::Bootstrapper` raw pointer used with `.Get()`
-  and C-2 `ServerRequestCraft`/`ServerRequestCancelCraft` implemented without the UHT-required
-  `_Implementation` suffix (thunk collision + LNK2001) — both fixed (`750f87a`), plus C-3..C-9
-  hardening (missing `Replicated` specifiers, dead `OnRep_bOpen` wiring, Blueprint-exposed weak
-  ptr → TObjectPtr, raw-this lambda timer, unguarded GetGameInstance, FObjectKey includes,
-  idempotent ecosystem population counting). (2) **Advanced technology framework (PHASE 12)** —
-  6-slot equipment (helmet/exosuit/scanner added, replicated), insulation/stamina/carry/speed
-  bonuses wired into survival/inventory/movement, `AAstrawildProjectileActor` + ammo-gated ranged
-  combat path (Pulse Lance), hold-to-scan scanner framework, `AAstrawildUtilityDroneActor`
-  (auto-scan + auto-harvest companion), `AAstrawildUtilityRobotActor` (manned work sites);
-  Tech_AdvancedEnergy dead-end node now unlocks 7 real recipes. (3) **Boss overhaul (PHASE 14)** —
-  telegraphed AoE slam, energy-bolt specials, periodic weak-point vulnerability (×2), phase-2+
-  arena hazards, encounter-FX cleanup, HUD boss bar. (4) **Loop closure** — inventory screen [TAB],
-  research tree screen [K/Research Desk] (player agency restored), pause menu [ESC] (QUIT stage),
-  full gamepad companion IMC (M9/H-13), SurviveTime + VisitZone objective types (H-10) with quest 8
-  "The Vale Beyond", Research-Desk interact opens the tree screen. (5) **Save schema v3 (PHASE 16)** —
-  work-site output + Echo/robot assignments re-link on load (H-6-era gap closed), grid battery
-  charge restored, rest points persisted by SaveWorld, drones re-deploy, advanced equipment saved;
-  v2→v3 additive migration. (6) **Tests** 20→25 (last tautology replaced); QA sweep: 0 TODO/FIXME/MOCK,
-  brace balance across all files, `.generated.h` ordering verified. Reports:
-  `ASTRAWILD_BUILD_READINESS_REPORT.md` + `ASTRAWILD_MILESTONE_REPORT.md` (new).
-- Codebase: **114 C++ files, ~23,690 LOC, 25 automation tests, 57 docs** in/around `Source/AstrawildCore` (single module)
+  implemented + **Batch 8 "The Grand Expanse/Grand Menagerie"**; **still never compiled** — the sole
+  remaining blocker is the in-engine build on the target machine)
+- Last updated: 2026-08-30 (Batch 8 — 214-species bestiary, 12-zone world with sea/islands/desert,
+  living villages + NPC AI, Dawn Skiff aircraft, dungeon #2, quests 9-10)
+- Branch: `main` (latest: Batch 8; preceded by `eceabd3` final production run, `249eec7` tests,
+  `c417b22` loop closure, `0dfe631` advanced tech, `750f87a` compile-blocker fixes)
+- Latest change: **BATCH 8 "THE GRAND EXPANSE + GRAND MENAGERIE"** — (1) **Bestiary 10→214 species**
+  (`Scripts/generate_bestiary.py` → `AstrawildBestiaryData.cpp` + `Docs/ASTRAWILD_BESTIARY_CODEX.md`):
+  10 families (Beast/Dragon/Construct/Spirit/Elemental/Aquatic/Insectoid/Flora/Avian/Ancient),
+  every species carries family/body-plan/size-class/two-tints/element/weakness/personality/activity/
+  diet/loot/work-affinities/capture-difficulty/home-zone — and **`AAstrawildEchoCharacter::BuildProceduralBody()`
+  renders all 8 body plans as distinct vertex-colored silhouettes** (zero assets, DebugMeshMaterial path).
+  (2) **World 6→12 zones** (3.2×2.4 km, 4×3 grid): Azure Shallows (sea), Tidebreaker Isles (islands),
+  Sunscar Desert, Stormcrest Highlands, Verdant Reach, Pearlsea Reef + walkable **water planes** +
+  beach/deep-sea terrain tint + `GetSeaLevelZ()` contract. (3) **Living villages** — Dawnstead (8 NPCs,
+  7 huts) + Driftwood Landing (3 NPCs, dock): `AAstrawildVillageActor` (procedural hamlet + waypoint
+  circuit) + `AAstrawildNPCAIController` (patrol walk/run, campfire nights 21:00-06:00, guards fight
+  hostile Echoes, conversation pause) + 12 NPC definitions with roles/greetings. (4) **Dawn Skiff
+  aircraft** — board [E], fly WASD + SPACE/CTRL + SHIFT boost, altitude clamps, sweep-safe
+  (`AAstrawildSkiffActor` + input routing through the player character, CTRL descend action,
+  gamepad LS-click). (5) **Dungeon #2 "The Sunken Vault"** in the Isles — Dawnfang sea-dragon boss
+  (distinct `Creature_VaultColossus` defeat id via per-dungeon `BossDefeatEventId`), portal pair +
+  publish-only survey markers (bPublishOnly). (6) **Quests 9-10** ("Wings over the Vale", "The Sunken
+  Vault") close the chain; 5 new materials (Sea Pearl/Coral Shard/Dune Glass/Storm Silver/Chitin
+  Plate) + 3 new vendor loot tables + armory/herbalist/driftwood shops. (7) Heightmap exporter +
+  self-check updated to 12 zones; 3 new automation tests (Bestiary integrity, sea classification,
+  skiff flight math) → **28 total**; zone tests re-based on the 4×3 grid.
+- Codebase: **124 C++ files, ~28,600 LOC, 28 automation tests, 61 docs** in/around `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -53,7 +54,44 @@
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — FINAL AUTONOMOUS PRODUCTION RUN: advanced technology + loop closure + save v3)
+## Changes in this round (2026-08-30 — Batch 8 "The Grand Expanse + Grand Menagerie")
+
+**User directive:** ตัวละคร 200+ (มังกร/หุ่นยนต์/วิญญาณ/NPC เดินวิ่งสู้เก่ง + AI), หมู่บ้าน, ดันเจียน,
+แมพหลายโซน (ทะเล/เกาะ/ภูเขา/ทะเลทราย), เครื่องบิน, แต่ละตัวมีดีไซน์รูปร่าง-ถิ่นที่อยู่ + สคริปต์สั่งงาน
+Antigravity.
+
+- **New files (9)**: `AstrawildBestiaryData.h/.cpp` (generated 204-species table + RegisterAll +
+  ValidateTable), `AstrawildSkiffActor.h/.cpp`, `AstrawildVillageActor.h/.cpp`,
+  `AstrawildWaterPlaneActor.h/.cpp`, `AstrawildNPCAIController.h/.cpp`, plus
+  `Scripts/generate_bestiary.py`, `Docs/ASTRAWILD_BESTIARY_CODEX.md`,
+  `Docs/ASTRAWILD_VILLAGES_SKIFF.md`, `Docs/ASTRAWILD_ANTIGRAVITY_PROMPTS.md`,
+  `Docs/ENGINE_LOGS/` protocol, 12 heightmaps (.r16 505², new grid).
+- **Types.h**: +`EAstrawildEchoFamily/BodyPlan/SizeClass/NPCRole` enums, +6 zone enum entries
+  (appended-only, save-safe).
+- **DataAssets.h**: EchoDefinition +Family/BodyPlan/SizeClass/PrimaryTint/SecondaryTint/HomeZone/
+  CodexIndex; NPCDefinition +Role/VillageId/PrimaryTint/Greeting (additive).
+- **ZoneSubsystem**: 12-zone table (4×3 grid), `GetSeaLevelZ()`, `IsSeaZone()`.
+- **TerrainTileActor**: beach band + deep-sea shelf tint below the waterline.
+- **EchoCharacter**: `BuildProceduralBody()` — sphere/box/cone/cylinder PMC builders × 8 body
+  plans × 5 size scales, capsule resize to match, placeholder sphere retired.
+- **NPCCharacter**: AIControllerClass + NavInvoker + head/hat/role-lantern appearance +
+  conversation bookkeeping + village link + patrol cursor.
+- **PlayerCharacter**: skiff input routing (Move/Jump/Sprint/Interact + new CTRL DescendAction,
+  gamepad LS-click), PilotedSkiff tracking.
+- **DungeonGenerator/Room**: per-dungeon `BossDefeatEventId` pass-through.
+- **DungeonPortal**: `bPublishOnly` survey markers.
+- **WorldBootstrapper**: dynamic camp/dungeon lookups, dry-spot island placement, water planes,
+  villages + rosters, skiffs ×2, dungeon #2 + portals + survey marker, wildlife/resources tables
+  for the 6 new zones (bestiary signature species).
+- **ContentLibrary**: bestiary registration + appearance retrofit for the authored ten, 5 new
+  materials with vendor prices, 12 NPCs, 3 vendor loot tables, quests 9-10.
+- **AutomationTests**: zone tests re-based to the 4×3 grid; +Bestiary.TableIntegrity,
+  +Zones.SeaClassification, +Skiff.FlightMath → 28 total.
+- **BREAKING (dev saves)**: world layout changed (camp moved to Dawn Fields center-west,
+  12 zones) — old save files will restore actors at stale world positions; start a NEW GAME
+  after Batch 8 (documented in ENGINE_LOGS/README).
+
+## Changes in the previous round (2026-08-30 — FINAL AUTONOMOUS PRODUCTION RUN: advanced technology + loop closure + save v3)
 
 ### Commits
 

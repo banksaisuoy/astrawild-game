@@ -10,10 +10,11 @@
 
 namespace
 {
-    // Zone cell size: every zone is an 800m x 800m square, 3 columns x 2 rows.
+    // Zone cell size: every zone is an 800m x 800m square, 4 columns x 3 rows
+    // (Batch 8 "The Grand Expanse" — was 3x2 in Batch 7).
     constexpr float ZoneHalfSize = 40000.0f;
-    constexpr float ColumnX[3] = { -80000.0f, 0.0f, 80000.0f };
-    constexpr float RowY[2] = { 40000.0f, -40000.0f };
+    constexpr float ColumnX[4] = { -120000.0f, -40000.0f, 40000.0f, 120000.0f };
+    constexpr float RowY[3] = { 80000.0f, 0.0f, -80000.0f };
 
     // Smooth blend distance for the zone weight field (~60m past each rect): sharp,
     // dramatic biome fronts while the height field stays seam-continuous.
@@ -47,7 +48,14 @@ const TArray<FAstrawildZoneDescriptor>& UAstrawildZoneSubsystem::GetAllZones()
     static TArray<FAstrawildZoneDescriptor> Zones;
     if (Zones.IsEmpty())
     {
-        // North row: Frostveil Expanse / Glimmerwood / Ember Ridge.
+        // Grid (Batch 8, 4x3):
+        //   North row: Frostveil / Glimmerwood / Ember Ridge / Sunscar Desert
+        //   Middle:    Dusk Marsh / Dawn Fields / Hollow Approach / Azure Shallows
+        //   South row: Tidebreaker Isles / Stormcrest / Verdant Reach / Pearlsea Reef
+        // Sea zones (floor below SeaLevelZ): Azure Shallows, Tidebreaker Isles,
+        // Pearlsea Reef — the runtime water planes cover those rects.
+
+        // North row.
         Zones.Add(MakeZone(EAstrawildZone::FrostveilExpanse, TEXT("Zone_Frostveil"), TEXT("Frostveil Expanse"),
             TEXT("Wind-scoured snowfields above the treeline."),
             ColumnX[0], RowY[0], FLinearColor(0.68f, 0.78f, 0.92f), FLinearColor(0.55f, 0.75f, 1.0f),
@@ -63,14 +71,19 @@ const TArray<FAstrawildZoneDescriptor>& UAstrawildZoneSubsystem::GetAllZones()
             ColumnX[2], RowY[0], FLinearColor(0.82f, 0.45f, 0.30f), FLinearColor(1.0f, 0.50f, 0.20f),
             500.0f, 2600.0f, 0.9f, 3));
 
-        // South row: Dusk Marsh / Dawn Fields / Hollow Approach.
+        Zones.Add(MakeZone(EAstrawildZone::SunscarDesert, TEXT("Zone_Sunscar"), TEXT("Sunscar Desert"),
+            TEXT("Dune seas where the sun was buried."),
+            ColumnX[3], RowY[0], FLinearColor(0.87f, 0.78f, 0.55f), FLinearColor(1.0f, 0.85f, 0.50f),
+            150.0f, 900.0f, 0.25f, 3));
+
+        // Middle row.
         Zones.Add(MakeZone(EAstrawildZone::DuskMarsh, TEXT("Zone_DuskMarsh"), TEXT("Dusk Marsh"),
             TEXT("Muck pools and reeds that remember the flood."),
             ColumnX[0], RowY[1], FLinearColor(0.37f, 0.55f, 0.43f), FLinearColor(0.30f, 0.90f, 0.70f),
             -60.0f, 260.0f, 0.0f, 2));
 
         Zones.Add(MakeZone(EAstrawildZone::DawnFields, TEXT("Zone_DawnFields"), TEXT("Dawn Fields"),
-            TEXT("Home. Soft hills, first light, the camp."),
+            TEXT("Home. Soft hills, first light, Dawnstead village."),
             ColumnX[1], RowY[1], FLinearColor(0.61f, 0.80f, 0.42f), FLinearColor(1.0f, 0.90f, 0.60f),
             220.0f, 520.0f, 0.0f, 1));
 
@@ -78,6 +91,32 @@ const TArray<FAstrawildZoneDescriptor>& UAstrawildZoneSubsystem::GetAllZones()
             TEXT("Ash-choked wilds before the Underlight gate."),
             ColumnX[2], RowY[1], FLinearColor(0.54f, 0.50f, 0.57f), FLinearColor(0.90f, 0.40f, 0.35f),
             260.0f, 1300.0f, 0.5f, 4));
+
+        Zones.Add(MakeZone(EAstrawildZone::AzureShallows, TEXT("Zone_AzureShallows"), TEXT("Azure Shallows"),
+            TEXT("A patient sea hiding its drowned bells."),
+            ColumnX[3], RowY[1], FLinearColor(0.35f, 0.62f, 0.72f), FLinearColor(0.30f, 0.80f, 1.0f),
+            -1400.0f, 700.0f, 0.05f, 2));
+
+        // South row.
+        Zones.Add(MakeZone(EAstrawildZone::TidebreakerIsles, TEXT("Zone_TidebreakerIsles"), TEXT("Tidebreaker Isles"),
+            TEXT("Broken crowns of a drowned mountain range."),
+            ColumnX[0], RowY[2], FLinearColor(0.62f, 0.70f, 0.66f), FLinearColor(0.40f, 0.95f, 0.85f),
+            -1600.0f, 3400.0f, 0.55f, 3));
+
+        Zones.Add(MakeZone(EAstrawildZone::StormcrestHighlands, TEXT("Zone_Stormcrest"), TEXT("Stormcrest Highlands"),
+            TEXT("Thunder herds graze above the cloudline."),
+            ColumnX[1], RowY[2], FLinearColor(0.55f, 0.52f, 0.48f), FLinearColor(0.85f, 0.90f, 1.0f),
+            600.0f, 3200.0f, 0.85f, 3));
+
+        Zones.Add(MakeZone(EAstrawildZone::VerdantReach, TEXT("Zone_VerdantReach"), TEXT("Verdant Reach"),
+            TEXT("A jungle that grows toward yesterday."),
+            ColumnX[2], RowY[2], FLinearColor(0.34f, 0.66f, 0.36f), FLinearColor(0.55f, 1.0f, 0.45f),
+            350.0f, 1100.0f, 0.1f, 2));
+
+        Zones.Add(MakeZone(EAstrawildZone::PearlseaReef, TEXT("Zone_PearlseaReef"), TEXT("Pearlsea Reef"),
+            TEXT("Coral cathedrals the tide never forgets."),
+            ColumnX[3], RowY[2], FLinearColor(0.42f, 0.72f, 0.80f), FLinearColor(0.55f, 0.95f, 1.0f),
+            -1500.0f, 2400.0f, 0.35f, 4));
     }
     return Zones;
 }
@@ -173,6 +212,12 @@ FBox2D UAstrawildZoneSubsystem::GetWorldBounds()
         Bounds += Desc.Bounds;
     }
     return Bounds;
+}
+
+bool UAstrawildZoneSubsystem::IsSeaZone(const EAstrawildZone Zone)
+{
+    const FAstrawildZoneDescriptor* Desc = FindZone(Zone);
+    return Desc && (Desc->BaseHeight - Desc->HeightAmplitude) < GetSeaLevelZ();
 }
 
 bool UAstrawildZoneSubsystem::HasDiscoveredZone(const EAstrawildZone Zone) const

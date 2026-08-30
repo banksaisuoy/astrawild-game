@@ -12,7 +12,10 @@
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildResourceNode.h"
 #include "AstrawildRestPoint.h"
+#include "AstrawildSkiffActor.h"
 #include "AstrawildTerrainTileActor.h"
+#include "AstrawildVillageActor.h"
+#include "AstrawildWaterPlaneActor.h"
 #include "AstrawildWorkSiteActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Components/StaticMeshComponent.h"
@@ -38,8 +41,10 @@ namespace
     const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
     const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
 
-    // Per-zone wildlife table (Batch 7): species placement that makes the six
-    // regions read differently — herd critters near camp, element lines at home.
+    // Per-zone wildlife table (Batch 7 + Batch 8): species placement that makes
+    // the twelve regions read differently — herd critters near camp, element
+    // lines at home. Batch 8 rows pull from the generated bestiary
+    // (Docs/ASTRAWILD_BESTIARY_CODEX.md) — signature species per new zone.
     struct FZoneWildlifeRow
     {
         EAstrawildZone Zone;
@@ -57,6 +62,29 @@ namespace
         { EAstrawildZone::FrostveilExpanse, TEXT("Echo_Rimefang"), 2 },
         { EAstrawildZone::FrostveilExpanse, TEXT("Echo_Stonehide"), 1 },
         { EAstrawildZone::HollowApproach, TEXT("Echo_Gloomfang"), 2 },
+        // --- Batch 8 zones: bestiary signature lines ---
+        { EAstrawildZone::AzureShallows, TEXT("Echo_Brinefin"), 2 },
+        { EAstrawildZone::AzureShallows, TEXT("Echo_Saltcrest"), 2 },
+        { EAstrawildZone::AzureShallows, TEXT("Echo_Undertowray"), 1 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Echo_Wavecrest"), 2 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Echo_Mistwing"), 2 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Echo_Voidwing"), 1 },
+        { EAstrawildZone::SunscarDesert, TEXT("Echo_Sunhide"), 2 },
+        { EAstrawildZone::SunscarDesert, TEXT("Echo_Glimmerhornet"), 2 },
+        { EAstrawildZone::SunscarDesert, TEXT("Echo_Pyreblaze"), 1 },
+        { EAstrawildZone::SunscarDesert, TEXT("Echo_Pistongolem"), 1 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Echo_Sunhorn"), 2 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Echo_Magmawing"), 1 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Echo_Geargolem"), 1 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Echo_Frostblaze"), 1 },
+        { EAstrawildZone::VerdantReach, TEXT("Echo_Verdantbloom"), 2 },
+        { EAstrawildZone::VerdantReach, TEXT("Echo_Fernthorn"), 2 },
+        { EAstrawildZone::VerdantReach, TEXT("Echo_Ghostshade"), 1 },
+        { EAstrawildZone::VerdantReach, TEXT("Echo_Sunpaw"), 1 },
+        { EAstrawildZone::PearlseaReef, TEXT("Echo_Coralray"), 2 },
+        { EAstrawildZone::PearlseaReef, TEXT("Echo_Pearlcrest"), 2 },
+        { EAstrawildZone::PearlseaReef, TEXT("Echo_Abyssjelly"), 1 },
+        { EAstrawildZone::PearlseaReef, TEXT("Echo_Embershade"), 1 },
     };
 
     // Per-zone resource nodes: signature materials per region.
@@ -79,6 +107,19 @@ namespace
         { EAstrawildZone::FrostveilExpanse, TEXT("Item_CrystalShard"), 3 },
         { EAstrawildZone::HollowApproach, TEXT("Item_Stone"), 4 },
         { EAstrawildZone::HollowApproach, TEXT("Item_CrystalShard"), 4 },
+        // --- Batch 8 zones: signature materials ---
+        { EAstrawildZone::SunscarDesert, TEXT("Item_DuneGlass"), 6 },
+        { EAstrawildZone::SunscarDesert, TEXT("Item_Stone"), 4 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Item_StormSilver"), 5 },
+        { EAstrawildZone::StormcrestHighlands, TEXT("Item_Stone"), 4 },
+        { EAstrawildZone::VerdantReach, TEXT("Item_Fiber"), 6 },
+        { EAstrawildZone::VerdantReach, TEXT("Item_Wood"), 4 },
+        { EAstrawildZone::AzureShallows, TEXT("Item_SeaPearl"), 4 },
+        { EAstrawildZone::AzureShallows, TEXT("Item_Stone"), 2 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Item_SeaPearl"), 3 },
+        { EAstrawildZone::TidebreakerIsles, TEXT("Item_Wood"), 3 },
+        { EAstrawildZone::PearlseaReef, TEXT("Item_CoralShard"), 5 },
+        { EAstrawildZone::PearlseaReef, TEXT("Item_SeaPearl"), 2 },
     };
 }
 
@@ -98,14 +139,45 @@ AAstrawildGameState* AAstrawildWorldBootstrapper::GetGameState() const
 
 FVector2D AAstrawildWorldBootstrapper::GetCampCenterXY()
 {
-    // Dawn Fields zone center (see UAstrawildZoneSubsystem zone table).
+    // Dawn Fields zone center — resolved from the zone table so the camp follows
+    // the grid (Batch 8 moved Dawn Fields to the middle-west cell).
+    if (const FAstrawildZoneDescriptor* Zone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_DawnFields")))
+    {
+        return Zone->GetCenter();
+    }
     return FVector2D(0.0f, -40000.0f);
 }
 
 FVector2D AAstrawildWorldBootstrapper::GetDungeonCenterXY()
 {
     // Hollow Approach zone center — the wilds before the Underlight gate.
+    if (const FAstrawildZoneDescriptor* Zone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_HollowApproach")))
+    {
+        return Zone->GetCenter();
+    }
     return FVector2D(80000.0f, -40000.0f);
+}
+
+FVector2D AAstrawildWorldBootstrapper::GetSunkenVaultCenterXY()
+{
+    // Batch 8: the Sunken Vault hides deep in the Tidebreaker Isles, offset from
+    // the Driftwood Landing so the portal walk reads as a journey.
+    if (const FAstrawildZoneDescriptor* Zone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_TidebreakerIsles")))
+    {
+        return Zone->GetCenter() + FVector2D(-14000.0f, 12000.0f);
+    }
+    return FVector2D(-120000.0f, -80000.0f);
+}
+
+FVector2D AAstrawildWorldBootstrapper::GetDriftwoodLandingXY()
+{
+    // Batch 8: the fishing hamlet sits on the Isles' biggest island (dry-spot
+    // search runs at spawn; this is the search anchor).
+    if (const FAstrawildZoneDescriptor* Zone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_TidebreakerIsles")))
+    {
+        return Zone->GetCenter() + FVector2D(8000.0f, -6000.0f);
+    }
+    return FVector2D(-112000.0f, -86000.0f);
 }
 
 float AAstrawildWorldBootstrapper::GroundZ(const FVector2D& WorldXY) const
@@ -152,6 +224,11 @@ void AAstrawildWorldBootstrapper::BeginPlay()
     }
 
     SpawnPointsOfInterest();
+
+    // Batch 8 — the Grand Expanse: sea, living villages, aircraft.
+    SpawnWaterPlanes();
+    SpawnVillages();
+    SpawnSkiffs();
 
     if (bBuildLandmarks)
     {
@@ -546,37 +623,29 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         FarmSite->bRequiresPower = false;
     }
 
-    // NPCs (wave 3, directive §26): the warden offering the first quest + a trader.
-    UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
-    if (Registry)
-    {
-        if (AAstrawildNPCCharacter* Warden = World->SpawnActor<AAstrawildNPCCharacter>(AAstrawildNPCCharacter::StaticClass(), CampLocation(CampRadius * 0.7f, -CampRadius * 0.7f), FRotator::ZeroRotator, Params))
-        {
-            Warden->NpcDefinition = Registry->FindNPCDefinition(TEXT("NPC_WardenMaren"));
-        }
-        if (AAstrawildNPCCharacter* Trader = World->SpawnActor<AAstrawildNPCCharacter>(AAstrawildNPCCharacter::StaticClass(), CampLocation(-CampRadius * 0.7f, -CampRadius * 0.7f), FRotator::ZeroRotator, Params))
-        {
-            Trader->NpcDefinition = Registry->FindNPCDefinition(TEXT("NPC_VendorTam"));
-        }
-    }
+    // NPCs: Batch 8 — the full village rosters now spawn through SpawnVillages()
+    // (Dawnstead around this camp + Driftwood Landing on the isles); the old
+    // inline warden/trader pair was folded into the Dawnstead roster.
 
     // First dungeon (directive §21/§23): the Hollow Underlight, at the heart of
     // the Hollow Approach — the ash wilds east of the Dawn Fields.
-    const FVector2D DungeonXY = GetDungeonCenterXY();
-    const FVector DungeonLocation(DungeonXY.X, DungeonXY.Y, GroundZ(DungeonXY) + 300.0f);
+    // Batch 8: dry-spot search — the Approach has pools below sea level now.
+    const FVector DungeonLocation = FindDrySpotNear(GetDungeonCenterXY(), 14000.0f) + FVector(0.0f, 0.0f, 300.0f);
     if (AAstrawildDungeonGeneratorActor* Dungeon = World->SpawnActor<AAstrawildDungeonGeneratorActor>(
         AAstrawildDungeonGeneratorActor::StaticClass(), DungeonLocation, FRotator::ZeroRotator, Params))
     {
         Dungeon->DungeonId = TEXT("Dungeon_HollowUnderlight"); // Batch 6: stable id for the save system.
         Dungeon->RoomCount = 5;
         Dungeon->BossDefinitionId = TEXT("Echo_Gloomfang");
+        Dungeon->BossDefeatEventId = TEXT("Creature_UnderlightWarden"); // Batch 8: explicit per-dungeon quest target.
         // Generate() runs in BeginPlay on the server.
     }
 
     // Batch 6 — Item C: portal pair. The entrance pad sits at the Hollow Approach
     // border, walkable from the camp; the exit pad waits beside the dungeon's
     // entry room. Both publish Event.LocationReached so ReachLocation objectives fire.
-    const FVector2D EntranceXY(52000.0f, -40000.0f);
+    // Batch 8: coordinates follow the new 4x3 grid (camp = Dawn Fields center-west).
+    const FVector2D EntranceXY(10000.0f, 0.0f);
     const FVector EntranceLocation(EntranceXY.X, EntranceXY.Y, GroundZ(EntranceXY) + 100.0f);
     if (AAstrawildDungeonPortalActor* Entrance = World->SpawnActor<AAstrawildDungeonPortalActor>(
         AAstrawildDungeonPortalActor::StaticClass(), EntranceLocation, FRotator::ZeroRotator, Params))
@@ -591,6 +660,217 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         Exit->PortalId = TEXT("Location_DawnCamp");
         Exit->PromptText = FText::FromString(TEXT("Return to the Dawn Camp [E]"));
         Exit->Destination = EntranceLocation + FVector(-300.0f, 0.0f, 0.0f);
+    }
+
+    // --- Batch 8: the Sunken Vault — dungeon #2 in the Tidebreaker Isles. ---
+    // The Dawnfang sea-dragon (bestiary Dragon/Serpent/Large) wards the vault;
+    // its defeat publishes Creature_VaultColossus for "The Sunken Vault" quest.
+    const FVector VaultLocation = FindDrySpotNear(GetSunkenVaultCenterXY(), 12000.0f) + FVector(0.0f, 0.0f, 300.0f);
+    if (AAstrawildDungeonGeneratorActor* Vault = World->SpawnActor<AAstrawildDungeonGeneratorActor>(
+        AAstrawildDungeonGeneratorActor::StaticClass(), VaultLocation, FRotator::ZeroRotator, Params))
+    {
+        Vault->DungeonId = TEXT("Dungeon_SunkenVault");
+        Vault->RoomCount = 4;
+        Vault->BossDefinitionId = TEXT("Echo_Dawnfang");
+        Vault->BossDefeatEventId = TEXT("Creature_VaultColossus");
+        Vault->CreaturePoolIds = { TEXT("Echo_Wavecrest"), TEXT("Echo_Lagoonfin"), TEXT("Echo_Saltray") };
+        Vault->RewardTechnologyId = NAME_None; // research points only — the Ancient era stays Underlight-exclusive.
+        Vault->DungeonCompletionResearchPoints = 20;
+    }
+
+    // Vault portal pair: entrance at the Driftwood Landing dock, exit beside the vault entry.
+    const FVector DriftwoodLocation = FindDrySpotNear(GetDriftwoodLandingXY(), 10000.0f);
+    if (AAstrawildDungeonPortalActor* VaultEntrance = World->SpawnActor<AAstrawildDungeonPortalActor>(
+        AAstrawildDungeonPortalActor::StaticClass(), DriftwoodLocation + FVector(0.0f, 2600.0f, 100.0f), FRotator::ZeroRotator, Params))
+    {
+        VaultEntrance->PortalId = TEXT("Location_SunkenVault");
+        VaultEntrance->PromptText = FText::FromString(TEXT("Descend into the Sunken Vault [E]"));
+        VaultEntrance->Destination = VaultLocation + FVector(0.0f, 0.0f, 150.0f);
+    }
+    if (AAstrawildDungeonPortalActor* VaultExit = World->SpawnActor<AAstrawildDungeonPortalActor>(
+        AAstrawildDungeonPortalActor::StaticClass(), VaultLocation + FVector(0.0f, 900.0f, 0.0f), FRotator::ZeroRotator, Params))
+    {
+        VaultExit->PortalId = TEXT("Location_DriftwoodLanding");
+        VaultExit->PromptText = FText::FromString(TEXT("Surface at Driftwood Landing [E]"));
+        VaultExit->Destination = DriftwoodLocation + FVector(0.0f, 2200.0f, 0.0f);
+    }
+
+    // Batch 8 — survey marker: charting Driftwood Landing completes the
+    // ReachLocation objective of "Wings over the Vale" (publish-only pad).
+    if (AAstrawildDungeonPortalActor* LandingMarker = World->SpawnActor<AAstrawildDungeonPortalActor>(
+        AAstrawildDungeonPortalActor::StaticClass(), DriftwoodLocation + FVector(1200.0f, 0.0f, 100.0f), FRotator::ZeroRotator, Params))
+    {
+        LandingMarker->PortalId = TEXT("Location_DriftwoodLanding");
+        LandingMarker->PromptText = FText::FromString(TEXT("Chart Driftwood Landing [E]"));
+        LandingMarker->bPublishOnly = true;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Batch 8 — the Grand Expanse: sea, living villages, aircraft.
+// ---------------------------------------------------------------------------
+
+FVector AAstrawildWorldBootstrapper::FindDrySpotNear(const FVector2D& Center, const float SearchRadius) const
+{
+    // Sample a 5x5 grid inside the search radius; return the highest ground —
+    // islands stay dry, dungeon floors land on ridge tops.
+    FVector Best(Center.X, Center.Y, GroundZ(Center));
+    float BestZ = Best.Z;
+    for (int32 StepX = -2; StepX <= 2; ++StepX)
+    {
+        for (int32 StepY = -2; StepY <= 2; ++StepY)
+        {
+            const FVector2D Sample(
+                Center.X + StepX * SearchRadius * 0.25f,
+                Center.Y + StepY * SearchRadius * 0.25f);
+            const float Z = GroundZ(Sample);
+            if (Z > BestZ)
+            {
+                BestZ = Z;
+                Best = FVector(Sample.X, Sample.Y, Z);
+            }
+        }
+    }
+    return Best;
+}
+
+void AAstrawildWorldBootstrapper::SpawnWaterPlanes()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    // One plane per sea zone, padded 8km past the rect to swallow the blend band.
+    const FName SeaZoneIds[] = { TEXT("Zone_AzureShallows"), TEXT("Zone_TidebreakerIsles"), TEXT("Zone_PearlseaReef") };
+    for (const FName ZoneId : SeaZoneIds)
+    {
+        const FAstrawildZoneDescriptor* ZoneDesc = UAstrawildZoneSubsystem::FindZoneById(ZoneId);
+        if (!ZoneDesc)
+        {
+            continue;
+        }
+
+        const FBox2D Rect(
+            ZoneDesc->Bounds.Min - FVector2D(8000.0f, 8000.0f),
+            ZoneDesc->Bounds.Max + FVector2D(8000.0f, 8000.0f));
+
+        if (AAstrawildWaterPlaneActor* Water = World->SpawnActor<AAstrawildWaterPlaneActor>(
+            AAstrawildWaterPlaneActor::StaticClass(), FVector(Rect.GetCenter(), 0.0f), FRotator::ZeroRotator, Params))
+        {
+            Water->BuildPlane(Rect);
+        }
+    }
+}
+
+void AAstrawildWorldBootstrapper::SpawnVillages()
+{
+    UWorld* World = GetWorld();
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (!World || !Registry)
+    {
+        return;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    // --- Dawnstead: the main village around the camp (Dawn Fields center). ---
+    const FVector2D CampXY = GetCampCenterXY();
+    AAstrawildVillageActor* Dawnstead = World->SpawnActor<AAstrawildVillageActor>(
+        AAstrawildVillageActor::StaticClass(), FVector(CampXY.X + 2800.0f, CampXY.Y + 2800.0f, GroundZ(CampXY + FVector2D(2800.0f, 2800.0f))), FRotator::ZeroRotator, Params);
+    if (Dawnstead)
+    {
+        Dawnstead->VillageId = TEXT("Village_Dawnstead");
+        Dawnstead->VillageName = FText::FromString(TEXT("Dawnstead"));
+        Dawnstead->HutCount = 7;
+        Dawnstead->VillageRadius = 1800.0f;
+
+        // Roster: warden (quest), two traders, blacksmith, elder, two guards, farmer.
+        const FName DawnsteadRoster[] = {
+            TEXT("NPC_WardenMaren"), TEXT("NPC_VendorTam"), TEXT("NPC_HerbalistWren"),
+            TEXT("NPC_BlacksmithBorin"), TEXT("NPC_ElderRowan"), TEXT("NPC_GuardSela"),
+            TEXT("NPC_GuardBram"), TEXT("NPC_FarmerJori")
+        };
+        int32 Slot = 0;
+        for (const FName NpcId : DawnsteadRoster)
+        {
+            const float Angle = 2.0f * PI * (Slot + 0.5f) / 8;
+            const FVector SpawnPoint = Dawnstead->GetActorLocation() + FVector(
+                FMath::Cos(Angle) * 2400.0f, FMath::Sin(Angle) * 2400.0f, 100.0f);
+            if (AAstrawildNPCCharacter* Npc = World->SpawnActor<AAstrawildNPCCharacter>(
+                AAstrawildNPCCharacter::StaticClass(), SpawnPoint, FRotator::ZeroRotator, Params))
+            {
+                Npc->NpcDefinition = Registry->FindNPCDefinition(NpcId);
+                Npc->RefreshAppearanceFromDefinition(); // BeginPlay ran before the assignment.
+                Npc->SetHomeVillage(Dawnstead);
+            }
+            ++Slot;
+        }
+    }
+
+    // --- Driftwood Landing: the island fishing hamlet (Tidebreaker Isles). ---
+    const FVector DriftwoodLocation = FindDrySpotNear(GetDriftwoodLandingXY(), 10000.0f);
+    AAstrawildVillageActor* Driftwood = World->SpawnActor<AAstrawildVillageActor>(
+        AAstrawildVillageActor::StaticClass(), DriftwoodLocation, FRotator::ZeroRotator, Params);
+    if (Driftwood)
+    {
+        Driftwood->VillageId = TEXT("Village_DriftwoodLanding");
+        Driftwood->VillageName = FText::FromString(TEXT("Driftwood Landing"));
+        Driftwood->HutCount = 3;
+        Driftwood->VillageRadius = 1200.0f;
+        Driftwood->bCoastal = true;
+
+        // Roster: skiff warden (quest), fisher-trader, old salt.
+        const FName DriftwoodRoster[] = { TEXT("NPC_SkiffWardenKael"), TEXT("NPC_FisherNima"), TEXT("NPC_OldSaltPerry") };
+        int32 Slot = 0;
+        for (const FName NpcId : DriftwoodRoster)
+        {
+            const float Angle = 2.0f * PI * (Slot + 0.5f) / 3;
+            const FVector SpawnPoint = DriftwoodLocation + FVector(
+                FMath::Cos(Angle) * 1700.0f, FMath::Sin(Angle) * 1700.0f, 100.0f);
+            if (AAstrawildNPCCharacter* Npc = World->SpawnActor<AAstrawildNPCCharacter>(
+                AAstrawildNPCCharacter::StaticClass(), SpawnPoint, FRotator::ZeroRotator, Params))
+            {
+                Npc->NpcDefinition = Registry->FindNPCDefinition(NpcId);
+                Npc->RefreshAppearanceFromDefinition(); // BeginPlay ran before the assignment.
+                Npc->SetHomeVillage(Driftwood);
+            }
+            ++Slot;
+        }
+    }
+}
+
+void AAstrawildWorldBootstrapper::SpawnSkiffs()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    // Dawnstead pad: beside the camp, pointed east toward the Hollow Approach.
+    const FVector2D CampXY = GetCampCenterXY();
+    const FVector2D PadXY = CampXY + FVector2D(-2800.0f, 3600.0f);
+    if (AAstrawildSkiffActor* Skiff = World->SpawnActor<AAstrawildSkiffActor>(
+        AAstrawildSkiffActor::StaticClass(), FVector(PadXY.X, PadXY.Y, GroundZ(PadXY) + 400.0f), FRotator(0.0f, 0.0f, 0.0f), Params))
+    {
+        Skiff->SkiffId = TEXT("Skiff_Dawnstead");
+    }
+
+    // Driftwood pad: at the landing, pointed out to sea.
+    const FVector DriftwoodLocation = FindDrySpotNear(GetDriftwoodLandingXY(), 10000.0f);
+    if (AAstrawildSkiffActor* Skiff = World->SpawnActor<AAstrawildSkiffActor>(
+        AAstrawildSkiffActor::StaticClass(), DriftwoodLocation + FVector(-2200.0f, -1500.0f, 400.0f), FRotator(0.0f, -35.0f, 0.0f), Params))
+    {
+        Skiff->SkiffId = TEXT("Skiff_Driftwood");
     }
 }
 

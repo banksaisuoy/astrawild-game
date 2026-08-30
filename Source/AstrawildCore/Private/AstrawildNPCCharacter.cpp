@@ -5,14 +5,18 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildNPCAIController.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildVillageActor.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "NavigationInvokerComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
 namespace
@@ -28,6 +32,14 @@ AAstrawildNPCCharacter::AAstrawildNPCCharacter()
 
     GetCapsuleComponent()->InitCapsuleSize(40.0f, 90.0f);
 
+    // Batch 8 — living villages: the NPC brain (patrol / guard duty / campfire nights).
+    AIControllerClass = AAstrawildNPCAIController::StaticClass();
+    AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+    // Navmesh anchor — runtime tiles generate around each villager (audit C-3 pattern).
+    UNavigationInvokerComponent* NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
+    NavInvoker->SetRadii(4000.0f, 6000.0f);
+
     PlaceholderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderMesh"));
     PlaceholderMesh->SetupAttachment(GetCapsuleComponent());
     PlaceholderMesh->SetCollisionProfileName(TEXT("NoCollision"));
@@ -38,11 +50,105 @@ AAstrawildNPCCharacter::AAstrawildNPCCharacter()
         PlaceholderMesh->SetStaticMesh(CapsuleMesh.Object);
         PlaceholderMesh->SetWorldScale3D(FVector(0.4f, 0.4f, 0.9f));
     }
+
+    // Batch 8 — head + role hat silhouette pieces.
+    HeadMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeadMesh"));
+    HeadMesh->SetupAttachment(GetCapsuleComponent());
+    HeadMesh->SetCollisionProfileName(TEXT("NoCollision"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    if (SphereMesh.Succeeded())
+    {
+        HeadMesh->SetStaticMesh(SphereMesh.Object);
+        HeadMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 78.0f));
+        HeadMesh->SetRelativeScale3D(FVector(0.22f));
+    }
+
+    HatMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HatMesh"));
+    HatMesh->SetupAttachment(HeadMesh);
+    HatMesh->SetCollisionProfileName(TEXT("NoCollision"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> ConeMesh(TEXT("/Engine/BasicShapes/Cone.Cone"));
+    if (ConeMesh.Succeeded())
+    {
+        HatMesh->SetStaticMesh(ConeMesh.Object);
+        HatMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 26.0f));
+        HatMesh->SetRelativeScale3D(FVector(0.16f, 0.16f, 0.22f));
+    }
+
+    // Batch 8 — role-colored lantern (subtle, short radius — identity, not a lamp post).
+    RoleLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("RoleLight"));
+    RoleLight->SetupAttachment(GetCapsuleComponent());
+    RoleLight->SetRelativeLocation(FVector(0.0f, 0.0f, 60.0f));
+    RoleLight->SetIntensity(0.8f);
+    RoleLight->SetAttenuationRadius(420.0f);
+    RoleLight->SetLightColor(FLinearColor(1.0f, 0.85f, 0.6f));
 }
 
 void AAstrawildNPCCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    // Editor-placed NPCs may already carry a definition; runtime spawns refresh
+    // explicitly after the bootstrapper assigns NpcDefinition.
+    RefreshAppearanceFromDefinition();
+}
+
+bool AAstrawildNPCCharacter::IsGuard() const
+{
+    return IsValid(NpcDefinition) && NpcDefinition->Role == EAstrawildNPCRole::Guard;
+}
+
+int32 AAstrawildNPCCharacter::AdvancePatrolIndex()
+{
+    const int32 Modulus = (HomeVillage && HomeVillage->GetWaypointCount() > 0) ? HomeVillage->GetWaypointCount() : 6;
+    PatrolIndex = ((PatrolIndex + 1) % Modulus + Modulus) % Modulus;
+    return PatrolIndex;
+}
+
+void AAstrawildNPCCharacter::RefreshAppearanceFromDefinition()
+{
+    if (!IsValid(NpcDefinition))
+    {
+        return;
+    }
+
+    // Role identity: lantern color + silhouette proportions.
+    FLinearColor RoleColor(1.0f, 0.85f, 0.6f);
+    FVector BodyScale(0.4f, 0.4f, 0.9f);
+    switch (NpcDefinition->Role)
+    {
+    case EAstrawildNPCRole::Guard:
+        RoleColor = FLinearColor(0.45f, 0.75f, 1.0f);
+        BodyScale = FVector(0.48f, 0.48f, 1.0f); // bulkier
+        break;
+    case EAstrawildNPCRole::Vendor:
+        RoleColor = FLinearColor(1.0f, 0.8f, 0.3f);
+        BodyScale = FVector(0.44f, 0.44f, 0.85f);
+        break;
+    case EAstrawildNPCRole::Elder:
+        RoleColor = FLinearColor(0.8f, 0.55f, 1.0f);
+        BodyScale = FVector(0.36f, 0.36f, 1.05f); // taller, thinner
+        break;
+    case EAstrawildNPCRole::QuestGiver:
+        RoleColor = FLinearColor(0.4f, 1.0f, 0.7f);
+        break;
+    default:
+        // Blend the definition tint into the lantern so villagers still differ.
+        RoleColor = FMath::Lerp(RoleColor, NpcDefinition->PrimaryTint, 0.5f);
+        break;
+    }
+
+    if (RoleLight)
+    {
+        RoleLight->SetLightColor(RoleColor);
+    }
+    if (PlaceholderMesh)
+    {
+        PlaceholderMesh->SetRelativeScale3D(BodyScale);
+    }
+    if (NpcDefinition->Role == EAstrawildNPCRole::Guard && HatMesh)
+    {
+        HatMesh->SetRelativeScale3D(FVector(0.2f, 0.2f, 0.28f)); // guard helm crest
+    }
 }
 
 FText AAstrawildNPCCharacter::GetInteractionPrompt_Implementation() const
@@ -61,6 +167,13 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     {
         return;
     }
+
+    // Batch 8 — conversation bookkeeping: the AI pauses and faces the player.
+    if (UWorld* World = GetWorld())
+    {
+        LastInteractedTime = World->GetTimeSeconds();
+    }
+    LastInteractedActor = Player;
 
     // Offer the quest attached to this NPC (directive §25/§26).
     if (NpcDefinition && !NpcDefinition->OfferedQuestId.IsNone())

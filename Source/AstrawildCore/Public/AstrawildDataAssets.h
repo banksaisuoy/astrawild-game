@@ -283,6 +283,36 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|AI", meta=(ClampMin="100.0"))
     float LoseSightRadius = 2200.0f;
 
+    // --- Batch 8 fields (additive) — the Grand Menagerie roster (200+ species) ---
+
+    /** Creature lineage — drives silhouette family, loot flavor and work affinities. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
+    EAstrawildEchoFamily Family = EAstrawildEchoFamily::Beast;
+
+    /** Procedural silhouette kit used by the runtime body builder. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
+    EAstrawildBodyPlan BodyPlan = EAstrawildBodyPlan::Quadruped;
+
+    /** Overall size class — scales the procedural body and the stat budget. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
+    EAstrawildSizeClass SizeClass = EAstrawildSizeClass::Medium;
+
+    /** Primary body tint (procedural body material). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
+    FLinearColor PrimaryTint = FLinearColor(0.7f, 0.7f, 0.7f);
+
+    /** Secondary tint — limbs, wings, crest accents. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
+    FLinearColor SecondaryTint = FLinearColor(0.45f, 0.45f, 0.45f);
+
+    /** Home zone — wildlife seeding picks habitat rows from this. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Habitat")
+    EAstrawildZone HomeZone = EAstrawildZone::DawnFields;
+
+    /** Codex number (1-based) shown in the journal bestiary UI. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo", meta=(ClampMin="0"))
+    int32 CodexIndex = 0;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("Echo")), DefinitionId);
@@ -485,6 +515,24 @@ public:
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     FName CurrencyItemId = NAME_None;
+
+    // --- Batch 8 fields (additive) — living villages (Docs/ASTRAWILD_VILLAGES_SKIFF.md) ---
+
+    /** Village behaviour archetype — guards patrol and fight, vendors tend a stall. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
+    EAstrawildNPCRole Role = EAstrawildNPCRole::Villager;
+
+    /** Village this NPC calls home (waypoint provider id, e.g. Village_Dawnstead). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
+    FName VillageId = NAME_None;
+
+    /** Robe/body tint — procedural villager appearance. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
+    FLinearColor PrimaryTint = FLinearColor(0.65f, 0.55f, 0.45f);
+
+    /** One-line greeting shown with the interaction prompt. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
+    FText Greeting;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {

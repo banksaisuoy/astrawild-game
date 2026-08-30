@@ -30,6 +30,10 @@ struct ASTRAWILDCORE_API FAstrawildDungeonRoomTemplate
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FName ClearLootTableId = NAME_None;
 
+    /** Batch 8: defeat event id published by this room's boss (per-dungeon quest target). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName BossDefeatEventId = TEXT("Creature_UnderlightWarden");
+
     /** Boss room spawns the boss definition instead of creatures. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     bool bIsBossRoom = false;

@@ -10,6 +10,7 @@ class AAstrawildEchoCharacter;
 class AAstrawildWorkSiteActor;
 class UStaticMeshComponent;
 class UNavigationInvokerComponent;
+class UProceduralMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
@@ -34,6 +35,19 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TObjectPtr<UStaticMeshComponent> PlaceholderMesh;
+
+    /**
+     * Batch 8 — procedural species body (The Grand Menagerie). Assembles a
+     * vertex-colored ProceduralMesh silhouette from the definition's body plan /
+     * size class / tints (same DebugMeshMaterial trick as the terrain tiles), so
+     * all 210+ species read as distinct creatures with zero art assets. The
+     * legacy placeholder sphere is hidden once a body is built.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
+    TObjectPtr<UProceduralMeshComponent> BodyMesh;
+
+    /** Builds BodyMesh from EchoDefinition appearance fields (safe no-op without a definition). */
+    void BuildProceduralBody();
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoCaptured OnCaptured;
