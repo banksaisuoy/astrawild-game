@@ -60,6 +60,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
     void CancelPlacement();
 
+    /**
+     * Batch 2 — Item B: Dismantle a placed building and refund its construction
+     * materials to the player inventory. Server-authoritative: client calls invoke
+     * this directly when running listen-server single-player. Weight-safe — refuses
+     * the dismantle (returns false) when the inventory cannot accept the refund,
+     * keeping the building intact so the player can clear bag space first.
+     * Returns true on success (building destroyed, items added).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
+    bool DismantleBuilding(AActor* TargetBuilding);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
     bool IsPlacing() const { return bPlacementMode && PreviewActor != nullptr; }
 

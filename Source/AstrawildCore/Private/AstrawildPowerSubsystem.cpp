@@ -25,6 +25,13 @@ void UAstrawildPowerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     UE_LOG(LogAstrawildBuilding, Log, TEXT("Power subsystem online (connectivity %.0f cm, resolve every %.1fs)."), ConnectivityRadius, ResolveIntervalSeconds);
 }
 
+void UAstrawildPowerSubsystem::ResolveGridNow()
+{
+    // Batch 2 — Item C: save-load path calls this so the first frame the player sees
+    // already reflects the correct power state (no brownout flicker on load).
+    ResolveGrid();
+}
+
 void UAstrawildPowerSubsystem::RegisterBuilding(AAstrawildBuildingActor* Building)
 {
     if (!IsValid(Building))
@@ -150,6 +157,10 @@ void UAstrawildPowerSubsystem::ResolveGrid()
         const bool bCanPower = Available >= Draw;
         const bool bPowered = bCanPower || Draw <= 0.0f;
         BuildingPowerState.Add(FObjectKey(Consumer), bPowered);
+
+        // Batch 2 — Item C: sync the actor's replicated bIsPowered field so the
+        // saved state matches the grid and clients see correct lamp visuals.
+        Consumer->bIsPowered = bPowered;
 
         if (bPowered)
         {

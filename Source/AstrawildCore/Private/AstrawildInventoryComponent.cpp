@@ -120,6 +120,28 @@ bool UAstrawildInventoryComponent::AddItem(const FName ItemId, const int32 Quant
     return true;
 }
 
+bool UAstrawildInventoryComponent::AddItemSilent(const FName ItemId, const int32 Quantity)
+{
+    if (!IsValidQuantityRequest(ItemId, Quantity))
+    {
+        return false;
+    }
+
+    if (GetOwnerRole() == ROLE_Authority && !CanAddItem(ItemId, Quantity))
+    {
+        UE_LOG(LogAstrawildEconomy, Verbose, TEXT("AddItemSilent rejected (over weight): %s x%d"), *ItemId.ToString(), Quantity);
+        return false;
+    }
+
+    int32& Count = Items.FindOrAdd(ItemId);
+    Count += Quantity;
+    OnInventoryChanged.Broadcast(ItemId, Count);
+    BroadcastWeight();
+    // Intentionally NOT publishing TAG_Astrawild_Event_ItemCollected — refunds
+    // should not advance CollectItem quest objectives (Batch 2 — Item B).
+    return true;
+}
+
 bool UAstrawildInventoryComponent::RemoveItem(const FName ItemId, const int32 Quantity)
 {
     if (!HasItem(ItemId, Quantity))

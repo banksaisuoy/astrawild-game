@@ -9,6 +9,7 @@
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPowerSubsystem.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
@@ -278,6 +279,15 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
     {
         Journal->ImportFromSave(SaveGame->Journal);
+    }
+
+    // Batch 2 — Item C: re-resolve the power grid immediately so the first frame the
+    // player sees after load is correct (no 2s brownout flicker while waiting for the
+    // natural Tick cadence). Buildings auto-registered with the power subsystem
+    // through BeginPlay during the spawn loop above, so ResolveGridNow sees them.
+    if (UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
+    {
+        Power->ResolveGridNow();
     }
 
     UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings)."),

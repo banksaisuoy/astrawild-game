@@ -130,6 +130,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> EquipBestAction;
 
+    /** Batch 2 — Item B: dismantle the building under the crosshair, refund materials. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> DeleteBuildingAction;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> BuildRotateAction;
 
@@ -205,6 +209,9 @@ protected:
 
     /** Wave 3: equip the strongest owned weapon + shield. */
     void EquipBest(const FInputActionValue& Value);
+
+    /** Batch 2 — Item B: dismantle the building under the crosshair, refund materials. */
+    void DeleteBuilding(const FInputActionValue& Value);
     void QuickSave(const FInputActionValue& Value);
     void QuickLoad(const FInputActionValue& Value);
 

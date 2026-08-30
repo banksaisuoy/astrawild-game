@@ -39,6 +39,15 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building", Replicated)
     bool bIsSwitchedOn = true;
 
+    /**
+     * Batch 2 — Item C: most-recent resolved power state for this building. Written
+     * by PowerSubsystem::ResolveGrid (server) and replicated so clients see correct
+     * lamp/visual state. Captured at save time in ToSaveData and restored at load
+     * time in FromSaveData before the first natural Tick re-resolves it.
+     */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building", Replicated)
+    bool bIsPowered = false;
+
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building")
     FName OwnerPlayerId = NAME_None;
 

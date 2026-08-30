@@ -35,6 +35,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Inventory")
     bool AddItem(FName ItemId, int32 Quantity);
 
+    /**
+     * Batch 2 — Item B: add items WITHOUT publishing TAG_Astrawild_Event_ItemCollected.
+     * Used for refund flows (dismantle buildings, failed-craft returns) where the items
+     * are not "freshly gathered" and should not advance CollectItem quest objectives.
+     * Same weight gate + delegate broadcast as AddItem — only the event-bus publish is suppressed.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Inventory")
+    bool AddItemSilent(FName ItemId, int32 Quantity);
+
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Inventory")
     bool RemoveItem(FName ItemId, int32 Quantity);
 

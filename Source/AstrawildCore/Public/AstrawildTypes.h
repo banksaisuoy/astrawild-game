@@ -456,6 +456,14 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     bool bIsSwitchedOn = true;
 
+    /**
+     * Batch 2 — Item C: snapshot of the building's last resolved power state at save
+     * time. Additive — older saves deserialize with false and re-resolve on the first
+     * power grid tick (≤2s), so missing data does not corrupt a save.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bIsPowered = false;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     FName OwnerPlayerId = NAME_None;
 };

@@ -306,3 +306,62 @@ void UAstrawildBuildingComponent::CancelPlacement()
     bPlacementMode = false;
     OnPlacementModeChanged.Broadcast(false);
 }
+
+bool UAstrawildBuildingComponent::DismantleBuilding(AActor* TargetBuilding)
+{
+    // Authority gate — placement is already server-authoritative, dismantle follows the same rule.
+    if (GetOwnerRole() != ROLE_Authority)
+    {
+        return false;
+    }
+
+    AAstrawildBuildingActor* Building = Cast<AAstrawildBuildingActor>(TargetBuilding);
+    if (!Building)
+    {
+        return false;
+    }
+
+    // Don't dismantle the live preview ghost — that's already handled by CancelPlacement.
+    if (Building == PreviewActor)
+    {
+        return false;
+    }
+
+    const UAstrawildBuildingDefinition* Def = Building->GetBuildingDefinition();
+    AAstrawildPlayerCharacter* Player = GetPlayer();
+    if (!Def || !Player || !Player->InventoryComponent)
+    {
+        return false;
+    }
+
+    // Weight-safe refund: try to add materials FIRST. If the bag is full, refuse the
+    // dismantle so the player never loses materials into the void.
+    if (!Player->InventoryComponent->CanAddItem(Def->RequiredItemId, Def->RequiredItemCount))
+    {
+        UE_LOG(LogAstrawildBuilding, Log,
+            TEXT("Dismantle refused: bag cannot accept %d x %s."),
+            Def->RequiredItemCount, *Def->RequiredItemId.ToString());
+        return false;
+    }
+
+    // Silent refund (AddItemSilent) — does NOT publish TAG_Astrawild_Event_ItemCollected
+    // so dismantling a Foundation does not falsely advance any "gather Item_Wood" quest.
+    Player->InventoryComponent->AddItemSilent(Def->RequiredItemId, Def->RequiredItemCount);
+
+    UWorld* World = GetWorld();
+    if (World)
+    {
+        if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
+        {
+            EventBus->PublishEvent(TAG_Astrawild_Event_BuildingPlaced, Player,
+                Def->DefinitionId, -1, Building->GetActorLocation());
+        }
+    }
+
+    UE_LOG(LogAstrawildBuilding, Log,
+        TEXT("Dismantled building %s — refunded %d x %s."),
+        *Def->DefinitionId.ToString(), Def->RequiredItemCount, *Def->RequiredItemId.ToString());
+
+    Building->Destroy();
+    return true;
+}

@@ -36,6 +36,7 @@ void AAstrawildBuildingActor::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAstrawildBuildingActor, bIsSwitchedOn);
+    DOREPLIFETIME(AAstrawildBuildingActor, bIsPowered);
     DOREPLIFETIME(AAstrawildBuildingActor, CurrentHealth);
     DOREPLIFETIME(AAstrawildBuildingActor, StoredCharge);
 }
@@ -251,6 +252,16 @@ FAstrawildBuildingSaveData AAstrawildBuildingActor::ToSaveData() const
     Data.CurrentHealth = CurrentHealth;
     Data.StoredCharge = StoredCharge;
     Data.bIsSwitchedOn = bIsSwitchedOn;
+    // Batch 2 — Item C: capture last resolved power state for save-load continuity.
+    // Falls back to bIsPowered (which defaults to false) if the power subsystem is gone.
+    Data.bIsPowered = bIsPowered;
+    if (UWorld* World = GetWorld())
+    {
+        if (UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
+        {
+            Data.bIsPowered = Power->IsBuildingPowered(this);
+        }
+    }
     Data.OwnerPlayerId = OwnerPlayerId;
     return Data;
 }
@@ -267,6 +278,10 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
     SetActorTransform(Data.Transform);
     StoredCharge = Data.StoredCharge;
     bIsSwitchedOn = Data.bIsSwitchedOn;
+    // Batch 2 — Item C: restore hint power state — the PowerSubsystem's ResolveGridNow()
+    // (called by SaveSubsystem::LoadWorld right after the building spawn loop) will
+    // overwrite this with the freshly-resolved value on the same frame.
+    bIsPowered = Data.bIsPowered;
     OwnerPlayerId = Data.OwnerPlayerId;
 
     const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();

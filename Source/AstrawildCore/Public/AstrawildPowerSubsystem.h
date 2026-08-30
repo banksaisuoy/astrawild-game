@@ -61,6 +61,14 @@ public:
 
     bool IsBuildingPowered(const AAstrawildBuildingActor* Building) const;
 
+    /**
+     * Batch 2 — Item C: force an immediate grid re-solve outside the natural tick
+     * cadence. Used by SaveSubsystem::LoadWorld so the first frame the player sees
+     * after loading is already correctly powered (no 2s lamp-flicker window).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Power")
+    void ResolveGridNow();
+
 protected:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 

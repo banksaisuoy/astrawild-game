@@ -1,5 +1,6 @@
 #include "AstrawildPlayerCharacter.h"
 
+#include "AstrawildBuildingActor.h"
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCombatComponent.h"
@@ -16,6 +17,7 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Camera/CameraComponent.h"
@@ -215,6 +217,8 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     BuildRotateAction = MakeRuntimeAction(TEXT("AWD_BuildRotate"), static_cast<uint8>(EInputActionValueType::Boolean));
     ConsumeAction = MakeRuntimeAction(TEXT("AWD_Consume"), static_cast<uint8>(EInputActionValueType::Boolean));
     EquipBestAction = MakeRuntimeAction(TEXT("AWD_EquipBest"), static_cast<uint8>(EInputActionValueType::Boolean));
+    // Batch 2 — Item B: dismantle building under the crosshair.
+    DeleteBuildingAction = MakeRuntimeAction(TEXT("AWD_DeleteBuilding"), static_cast<uint8>(EInputActionValueType::Boolean));
     SaveAction = MakeRuntimeAction(TEXT("AWD_Save"), static_cast<uint8>(EInputActionValueType::Boolean));
     LoadAction = MakeRuntimeAction(TEXT("AWD_Load"), static_cast<uint8>(EInputActionValueType::Boolean));
     // Audit C-6: mouse-wheel piece cycling while in build mode.
@@ -272,11 +276,13 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(BuildCycleAction, EKeys::MouseWheelAxis);
     Context->MapKey(ConsumeAction, EKeys::G);
     Context->MapKey(EquipBestAction, EKeys::X);
+    // Batch 2 — Item B: Z = dismantle building under the crosshair (refunds materials).
+    Context->MapKey(DeleteBuildingAction, EKeys::Z);
     Context->MapKey(SaveAction, EKeys::F5);
     Context->MapKey(LoadAction, EKeys::F9);
 
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (18 actions, WASD+mouse+wheel)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (19 actions, WASD+mouse+wheel)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -366,6 +372,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (EquipBestAction)
     {
         EnhancedInput->BindAction(EquipBestAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::EquipBest);
+    }
+    if (DeleteBuildingAction)
+    {
+        EnhancedInput->BindAction(DeleteBuildingAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::DeleteBuilding);
     }
 }
 
@@ -738,6 +748,52 @@ void AAstrawildPlayerCharacter::EquipBest(const FInputActionValue& Value)
     UE_LOG(LogAstrawildEconomy, Log, TEXT("Equip-best: weapon=%s shield=%s."),
         BestWeapon ? *BestWeapon->ItemId.ToString() : TEXT("none"),
         BestShield ? *BestShield->ItemId.ToString() : TEXT("none"));
+}
+
+void AAstrawildPlayerCharacter::DeleteBuilding(const FInputActionValue& Value)
+{
+    // Batch 2 — Item B: dismantle the building under the crosshair (5m reach) and
+    // refund its construction materials via AddItemSilent (no false ItemCollected event).
+    if (!IsAlive() || !BuildingComponent || !FollowCamera || !GetWorld())
+    {
+        return;
+    }
+
+    const FVector Start = FollowCamera->GetComponentLocation();
+    const FVector End = Start + FollowCamera->GetForwardVector() * 500.0f; // 5m reach
+    FHitResult Hit;
+    FCollisionQueryParams Q(SCENE_QUERY_STAT(ASTRAWILDDismantle), false, this);
+    if (!GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Q))
+    {
+        return;
+    }
+
+    AAstrawildBuildingActor* Building = Cast<AAstrawildBuildingActor>(Hit.GetActor());
+    if (!Building)
+    {
+        return;
+    }
+
+    const UAstrawildBuildingDefinition* Def = Building->GetBuildingDefinition();
+    const bool bOk = BuildingComponent->DismantleBuilding(Building);
+
+    // HUD toast routed through the owning player controller.
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+        {
+            if (bOk && Def)
+            {
+                AstrawildPC->Notify(FText::FromString(FString::Printf(
+                    TEXT("Dismantled: returned %d %s"),
+                    Def->RequiredItemCount, *Def->RequiredItemId.ToString())));
+            }
+            else if (Def)
+            {
+                AstrawildPC->Notify(FText::FromString(TEXT("Inventory full — cannot refund")));
+            }
+        }
+    }
 }
 
 void AAstrawildPlayerCharacter::QuickSave(const FInputActionValue& Value)
