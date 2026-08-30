@@ -39,6 +39,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Spawner", meta=(ClampMin="0"))
     int32 TargetEmberfangPopulation = 2;
 
+    /** Batch 5: target wild population for Echo_Rimefang (Frost predator). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Spawner", meta=(ClampMin="0"))
+    int32 TargetRimefangPopulation = 3;
+
+    /** Batch 5: target wild population for Echo_Voltmaw (Pulse glass-cannon — kept low). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Spawner", meta=(ClampMin="0"))
+    int32 TargetVoltmawPopulation = 1;
+
     /** Seconds between spawn sweeps. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Spawner", meta=(ClampMin="1.0"))
     float RespawnIntervalSeconds = 25.0f;
@@ -60,6 +68,8 @@ private:
     /** Cache of hostile species ids to track. */
     static constexpr const TCHAR* GloomfangId = TEXT("Echo_Gloomfang");
     static constexpr const TCHAR* EmberfangId  = TEXT("Echo_Emberfang");
+    static constexpr const TCHAR* RimefangId   = TEXT("Echo_Rimefang");   // Batch 5 — Frost line.
+    static constexpr const TCHAR* VoltmawId    = TEXT("Echo_Voltmaw");    // Batch 5 — Pulse line.
 
     /** Spawn one hostile of the given species around the player pawn. */
     void SpawnOneHostile(UAstrawildEchoDefinition* Definition, const FVector& Origin);

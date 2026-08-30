@@ -216,6 +216,24 @@ void AAstrawildWorldBootstrapper::SpawnWildEchoes()
             Echo->InitializeFromDefinition(Definition);
         }
     }
+
+    // Batch 5 — the Ancient-rare: exactly ONE Auroraling per world, placed far
+    // from the spawn camp so encountering it feels earned (hardest capture 0.95).
+    if (UAstrawildEchoDefinition* Aurora = Registry->FindEcho(TEXT("Echo_Auroraling")))
+    {
+        const FVector AuroraLocation(
+            RandomStream.FRandRange(-ArenaSize, ArenaSize),
+            RandomStream.FRandRange(-ArenaSize, ArenaSize),
+            150.0f);
+
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        if (AAstrawildEchoCharacter* Echo = World->SpawnActor<AAstrawildEchoCharacter>(AAstrawildEchoCharacter::StaticClass(), AuroraLocation, FRotator::ZeroRotator, Params))
+        {
+            Echo->InitializeFromDefinition(Aurora);
+            UE_LOG(LogAstrawild, Log, TEXT("Ancient-rare Auroraling seeded at %s."), *AuroraLocation.ToCompactString());
+        }
+    }
 }
 
 void AAstrawildWorldBootstrapper::SpawnHostiles()
@@ -229,6 +247,7 @@ void AAstrawildWorldBootstrapper::SpawnHostiles()
 
     UAstrawildEchoDefinition* Gloomfang = Registry->FindEcho(TEXT("Echo_Gloomfang"));
     UAstrawildEchoDefinition* Emberfang = Registry->FindEcho(TEXT("Echo_Emberfang"));
+    UAstrawildEchoDefinition* Rimefang = Registry->FindEcho(TEXT("Echo_Rimefang")); // Batch 5 — Frost line.
     if (!Gloomfang)
     {
         return;
@@ -236,8 +255,16 @@ void AAstrawildWorldBootstrapper::SpawnHostiles()
 
     for (int32 i = 0; i < HostileCount; ++i)
     {
-        // Alternate night stalker and ember predator (content wave 2).
-        UAstrawildEchoDefinition* HostileDef = (Emberfang && (i % 2 == 1)) ? Emberfang : Gloomfang;
+        // Rotate night stalker / ember predator / frost stalker (content waves 2 + 5).
+        UAstrawildEchoDefinition* HostileDef = Gloomfang;
+        if (i % 3 == 1)
+        {
+            HostileDef = Emberfang ? Emberfang : Gloomfang;
+        }
+        else if (i % 3 == 2)
+        {
+            HostileDef = Rimefang ? Rimefang : Gloomfang;
+        }
         const FVector Location(
             RandomStream.FRandRange(-ArenaSize * 0.9f, ArenaSize * 0.9f),
             RandomStream.FRandRange(-ArenaSize * 0.9f, ArenaSize * 0.9f),

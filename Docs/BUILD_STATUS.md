@@ -3,19 +3,24 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Wave 6 — Batch 4: Survival feel + vendor economy)
-- Branch: `main` (latest: `c16fecd` — Batch 4 survival feel + vendor economy; preceded by `5dd69cd` wave-5 docs sync / `021f93a` Batch 3 source)
-- Latest change: **Wave 6 Batch 4** — four work items closed in source: (M-2a) sprint stamina
-  drain (`SprintStaminaDrainPerSecond = 7` tunable + moving-only drain + `OnSprintExhausted`
-  broadcast — ≈14 s sprint from full stamina), (M-2b) the block movement penalty is now LIVE
-  (`BlockSpeedMultiplier = 0.45` was dead code — nothing listened to `OnBlockingChanged`; now bound
-  to `RefreshMovementSpeed`), (L-2) thirst decay 0.14 → **0.0833/s** (~12 → ~20 min, matches the
-  documented design goal), and (M-11) the full vendor economy — `EAstrawildVendorResult` enum +
-  `VendorPrice`/`CurrencyItemId` fields + server-authoritative `TryPurchase`/`TrySell` on
-  `AAstrawildNPCCharacter` (450 cm trade range, no partial transactions) + Dawn Shard currency +
-  5 wares at Trader Tam + `AW.BuyItem`/`AW.SellItem` cheats + `ASTRAWILD.Economy.VendorSellValue`
-  test. REVIEW-4 verdict: CLEAN (no HIGH/MEDIUM); its L-1 vendor-filter cheat fix applied at commit.
-- Codebase: **88 C++ files (43 `.cpp` + 45 `.h`), ~15,990 LOC** in `Source/AstrawildCore` (single module)
+- Last updated: 2026-08-30 (Wave 8 — Batch 5: Ecosystem breadth + tech eras + shop UMG)
+- Branch: `main` (latest: Batch 5 — ecosystem + shop screen; preceded by `d2c28fd` wave-6 docs sync / `c16fecd` Batch 4 source)
+- Latest change: **Wave 8 Batch 5** — three work items closed in source: (A) ecosystem breadth — 3 new
+  Echo species (`Echo_Rimefang` Frost hostile · `Echo_Voltmaw` Pulse glass-cannon hostile ·
+  `Echo_Auroraling` Ancient-rare one-per-world capture prize) with element coverage now complete
+  (Light/Ash/Flora/Frost/Pulse/Ember all have ≥ 1 species), hostile spawner targets 4/2/3/1 and
+  the bootstrapper rotating 3 hostile species + seeding exactly one Auroraling per world; (B) the
+  tech tree grows 6 → **9 nodes** using two previously-unused eras (`Tech_Mechanics` Mechanical ·
+  `Tech_Thermal` Electrical · `Tech_Agriculture` Eco) with 4 new recipes (Bulk Planks, Resonator
+  Batch, Hearth Broth, Fertilizer), 3 new buildings (Sawmill, Hearth Coil, Dawn Composter) and 4
+  new items (Frostbloom, Volt Core, Hearth Broth, Fertilizer) — Voltmaw/Rimefang loot sinks into
+  Mechanics/Thermal so hostile hunting feeds progression; (C) the **vendor shop UMG screen**
+  (`UAstrawildShopWidget` + row widgets, pure-C++ UMG — no asset dependency) replacing the Batch-4
+  toast listing: interacting with Trader Tam now opens a real buy/sell screen with balance
+  readout, per-ware Buy ×1 buttons, per-inventory-item Sell ×1 buttons and a close flow that
+  restores game input — all transactions still route through the server-authoritative
+  TryPurchase/TrySell pipeline (`AW.BuyItem`/`AW.SellItem` cheats unchanged).
+- Codebase: **90 C++ files (44 `.cpp` + 46 `.h`), ~16,700 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -49,7 +54,36 @@
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Wave 6 Batch 4: Sprint stamina drain + Live block penalty + Thirst rate fix + Vendor economy)
+## Changes in this round (2026-08-30 — Wave 8 Batch 5: Ecosystem breadth + Tech eras + Shop UMG screen)
+
+### Commits
+
+| Commit | Type | Subject |
+|---|---|---|
+| (this round) | feat(batch-5) | Ecosystem breadth + tech eras + shop UMG — 3 new species (Rimefang/Voltmaw/Auroraling), tech tree 6→9 nodes (Mechanics/Thermal/Agriculture), 4 items + 4 recipes + 3 buildings, pure-C++ vendor shop screen |
+
+### Batch-5 work items
+
+| Item | Status | Notes |
+|---|---|---|
+| A — Ecosystem breadth | **DONE (source)** | `Echo_Rimefang` (Frost hostile, weakness Ember — rivalry pair with Emberfang), `Echo_Voltmaw` (Pulse glass-cannon: ATK 22 / speed 440, weakness Ash), `Echo_Auroraling` (Ancient-rare, capture 0.95, ResearchAssist ×2.2, drops Dawn Shards). Spawner targets: Gloomfang 4 · Emberfang 2 · Rimefang 3 · Voltmaw 1. Bootstrapper rotates 3 hostiles and seeds exactly 1 Auroraling per world. |
+| B — Tech tree 6 → 9 | **DONE (source)** | `Tech_Mechanics` (Mechanical, 12 RP, prereq BasicCrafting): Bulk Planks + Resonator Batch + Sawmill · `Tech_Thermal` (Electrical, 18 RP, prereq Electrical): Hearth Broth + Hearth Coil · `Tech_Agriculture` (Eco, 20 RP, prereq Husbandry): Fertilizer + Dawn Composter. Only the Ancient era stays reserved (dungeon/boss milestone). |
+| C — Shop UMG screen | **DONE (source)** | `UAstrawildShopWidget` + `UAstrawildShopRowWidget` (pure-C++ UMG): backdrop + panel + balance + buy list (wares from the shop loot table) + sell list (priced items in the player inventory) + status line + close. `AAstrawildPlayerController::OpenShop/CloseShop/IsShopOpen` handle input-mode + cursor. `NPCCharacter::Interact` now opens the screen instead of toasting. |
+
+### Changed files (Batch 5)
+
+| File | Change |
+|---|---|
+| `ContentLibrary.cpp` | +3 species, +4 items, +3 buildings, +4 recipes, +3 techs, log line 27/17/10/13/9 |
+| `HostileSpawnerSubsystem.h/.cpp` | +Rimefang/Voltmaw targets (3/1) + deficit refill + log |
+| `WorldBootstrapper.cpp` | Hostile rotation 3 species; 1 Auroraling seeded per world |
+| `AstrawildShopWidget.h/.cpp` | NEW — shop screen + row widgets (pure-C++ UMG) |
+| `PlayerController.h/.cpp` | +OpenShop/CloseShop/IsShopOpen + ShopWidgetClass |
+| `NPCCharacter.cpp` | Interact → OpenShop (toast listing retired) |
+| `Docs/ASTRAWILD_CREATURE_SYSTEM.md` | Roster tables 5 → 10 species (2 subsections) |
+| `Docs/BUILD_STATUS.md` | This entry |
+
+## Changes in the previous round (2026-08-30 — Wave 6 Batch 4: Sprint stamina drain + Live block penalty + Thirst rate fix + Vendor economy)
 
 ### Commits
 

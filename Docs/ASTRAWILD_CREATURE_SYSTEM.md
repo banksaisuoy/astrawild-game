@@ -53,10 +53,12 @@ deal 1.0 HP/s (never below 1 HP — soft pressure, not death).
 
 ---
 
-## 2. The 5 CODE_DEFAULT Species
+## 2. The 10 CODE_DEFAULT Species
 
 All values below are read from `AstrawildContentLibrary.cpp::BuildEchoes()`. `CaptureResilience` is derived:
 `Clamp(CaptureDifficulty × 0.8, 0.05, 0.95)`.
+
+### 2.1 Vertical-slice roster (wave 1)
 
 | | Lumewisp | Stonehide | Voltling | Duskmoth | Gloomfang |
 |---|---|---|---|---|---|
@@ -80,11 +82,41 @@ All values below are read from `AstrawildContentLibrary.cpp::BuildEchoes()`. `Ca
 | Defeat loot | 1 Sunfiber | 2 Fieldstone | — | — | 2 Raw Meat + 1 Dawn Crystal Shard |
 | Design intent | First companion (docile, curious) | Brave tank | Power synergy (nocturnal dynamo) | Shy researcher | First hostile — night stalker |
 
+### 2.2 Content expansion roster (waves 2 + 7 — Batch 5)
+
+| | Sprigling | Emberfang | Rimefang | Voltmaw | Auroraling |
+|---|---|---|---|---|---|
+| `DefinitionId` | `Echo_Sprigling` | `Echo_Emberfang` | `Echo_Rimefang` | `Echo_Voltmaw` | `Echo_Auroraling` |
+| Element | Flora | Ember | Frost | Pulse | Light |
+| Role | Support | Combat | Combat | Combat | Support |
+| MaxHealth | 50 | 130 | 120 | 95 | 90 |
+| AttackPower | 5 | 20 | 17 | **22** | 12 |
+| Defense | 3 | 5 | 6 | 3 | 6 |
+| MoveSpeed | 290 | 400 | 380 | **440** | 350 |
+| Dominant personality | Social | Aggressive | Aggressive | Aggressive | Curious |
+| Activity pattern | Diurnal | Crepuscular | Nocturnal | Crepuscular | Diurnal |
+| CaptureDifficulty | 0.30 | 0.90 | 0.88 | 0.92 | **0.95** |
+| CaptureResilience (derived) | 0.24 | 0.72 | 0.70 | 0.74 | 0.76 |
+| Weakness element | Frost | Frost | Ember | Ash | Ash |
+| Hostile to players | No | **Yes** | **Yes** | **Yes** | No |
+| Preferred weather | Clear, Rain | — | Rain, Storm | — | Clear |
+| Habitat | `Biome_DawnFields` | — | — | — | `Biome_DawnFields` |
+| Work affinity | Farming ×1.7 | — | — | — | ResearchAssist ×2.2 |
+| Defeat loot | 2 Dawnbloom + 1 Sunfiber | 2 Raw Meat + 2 Ember Ash | 2 Raw Meat + 2 Frostbloom | 1 Dawn Crystal Shard + 1 Volt Core | 2 Dawn Shard + 1 Dawnbloom |
+| Design intent | Herd anchor (husbandry economy) | Ember predator (food chain) | Frost predator (Emberfang rivalry pair) | Pulse glass-cannon (fastest, hardest-hitting) | **Ancient-rare** — one per world, hardest capture |
+
 Notes:
 - Species with no `PreferredWeather`/`HabitatBiomeIds` set simply don't get those capture bonuses yet.
 - Voltling's PowerGeneration ×2.0 pairs with the `Building_Generator` ("Echo Dynamo") concept; the work
   site power bonus is grid-level (×1.5 production when powered), not per-species.
 - All species share `TrustGainOnCapture = 10`.
+- Batch-5 element coverage: every element (Light/Ash/Flora/Frost/Pulse/Ember) now has at least one
+  species; the hostile roster spans Ash/Ember/Frost/Pulse. Rimefang ⇄ Emberfang are a true rivalry
+  pair (each is the other's weakness). Auroraling spawns exactly once per world via
+  `AAstrawildWorldBootstrapper::SpawnWildEchoes` and is the only non-boss Dawn Shard source outside
+  the dungeon boss / quest rewards.
+- Hostile spawner targets (per-sweep deficit refill): Gloomfang 4 · Emberfang 2 · Rimefang 3 ·
+  Voltmaw 1 (kept low — highest ATK in the roster).
 
 ---
 

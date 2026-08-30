@@ -40,8 +40,8 @@ void UAstrawildHostileSpawnerSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     }
 
     UE_LOG(LogAstrawildBuilding, Log,
-        TEXT("Hostile spawner online (gloomfang target=%d, emberfang target=%d, every %.1fs)."),
-        TargetGloomfangPopulation, TargetEmberfangPopulation, RespawnIntervalSeconds);
+        TEXT("Hostile spawner online (gloomfang target=%d, emberfang target=%d, rimefang target=%d, voltmaw target=%d, every %.1fs)."),
+        TargetGloomfangPopulation, TargetEmberfangPopulation, TargetRimefangPopulation, TargetVoltmawPopulation, RespawnIntervalSeconds);
 }
 
 void UAstrawildHostileSpawnerSubsystem::Tick(const float DeltaTime)
@@ -96,6 +96,31 @@ void UAstrawildHostileSpawnerSubsystem::Tick(const float DeltaTime)
         for (int32 i = 0; i < FMath::Max(0, Deficit); ++i)
         {
             SpawnOneHostile(EmberfangDef, Origin);
+        }
+    }
+
+    // Batch 5 — Frost line: same deficit-refill pattern as the original pair.
+    UAstrawildEchoDefinition* RimefangDef = Registry->FindEcho(RimefangId);
+    if (RimefangDef)
+    {
+        const int32 Current = Ecosystem->GetWildPopulation(RimefangId);
+        const int32 Deficit = TargetRimefangPopulation - Current;
+        for (int32 i = 0; i < FMath::Max(0, Deficit); ++i)
+        {
+            SpawnOneHostile(RimefangDef, Origin);
+        }
+    }
+
+    // Batch 5 — Pulse line: glass-cannon species, target stays at 1 so the
+    // fields never feel swarmed by the highest-ATK predator.
+    UAstrawildEchoDefinition* VoltmawDef = Registry->FindEcho(VoltmawId);
+    if (VoltmawDef)
+    {
+        const int32 Current = Ecosystem->GetWildPopulation(VoltmawId);
+        const int32 Deficit = TargetVoltmawPopulation - Current;
+        for (int32 i = 0; i < FMath::Max(0, Deficit); ++i)
+        {
+            SpawnOneHostile(VoltmawDef, Origin);
         }
     }
 }

@@ -208,6 +208,32 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     UAstrawildItemDefinition* CrystalplateCuirass = MakeItem(Outer, TEXT("Item_CrystalplateCuirass"), TEXT("Crystalplate Cuirass"), EAstrawildItemCategory::Equipment, 8.0f, 1);
     CrystalplateCuirass->ArmorRating = 80.0f;
     Registry->RegisterItem(CrystalplateCuirass);
+
+    // --- Ecosystem expansion (CODE_DEFAULT wave 7, Batch 5): Frost/Pulse loot
+    //     materials + thermal/agriculture goods for the three new tech nodes. ---
+
+    UAstrawildItemDefinition* Frostbloom = MakeItem(Outer, TEXT("Item_Frostbloom"), TEXT("Frostbloom"), EAstrawildItemCategory::Material, 0.2f, 50);
+    Frostbloom->Description = FText::FromString(TEXT("A cold-blooming petal harvested from Rimefang territory."));
+    Frostbloom->VendorPrice = 3; // Batch 5: hostile-harvest income + Warm Broth ingredient.
+    Registry->RegisterItem(Frostbloom);
+
+    UAstrawildItemDefinition* VoltCore = MakeItem(Outer, TEXT("Item_VoltCore"), TEXT("Volt Core"), EAstrawildItemCategory::Material, 0.4f, 30);
+    VoltCore->Description = FText::FromString(TEXT("A still-humming core looted from Voltmaws. Powers resonator batches."));
+    VoltCore->VendorPrice = 4; // Batch 5: hostile-harvest income + Mechanics ingredient.
+    Registry->RegisterItem(VoltCore);
+
+    UAstrawildItemDefinition* WarmBroth = MakeItem(Outer, TEXT("Item_WarmBroth"), TEXT("Hearth Broth"), EAstrawildItemCategory::Consumable, 0.6f, 20);
+    WarmBroth->FoodValue = 18.0f;
+    WarmBroth->WaterValue = 12.0f;
+    WarmBroth->HealValue = 10.0f;
+    WarmBroth->Description = FText::FromString(TEXT("A steaming bowl that warms cold-night expeditions."));
+    WarmBroth->VendorPrice = 3; // Batch 5: Tech_Thermal consumable.
+    Registry->RegisterItem(WarmBroth);
+
+    UAstrawildItemDefinition* Fertilizer = MakeItem(Outer, TEXT("Item_Fertilizer"), TEXT("Dawnfield Fertilizer"), EAstrawildItemCategory::Material, 0.3f, 50);
+    Fertilizer->Description = FText::FromString(TEXT("Composted dawn-field matter. Farm plots thrive on it."));
+    Fertilizer->VendorPrice = 2; // Batch 5: Tech_Agriculture crafted good.
+    Registry->RegisterItem(Fertilizer);
 }
 
 // ---------------------------------------------------------------------------
@@ -274,6 +300,25 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CrystalplateCuirass"), TEXT("Crystalplate Cuirass"),
         { Stack(TEXT("Item_CrystalShard"), 3), Stack(TEXT("Item_WoodPlank"), 3), Stack(TEXT("Item_EmberAsh"), 2) },
         { Stack(TEXT("Item_CrystalplateCuirass"), 1) }, 9.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
+
+    // --- Ecosystem expansion (CODE_DEFAULT wave 7, Batch 5): recipes for the
+    //     Mechanics / Thermal / Agriculture tech nodes. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_PlankBatch"), TEXT("Bulk Dawnwood Planks"),
+        { Stack(TEXT("Item_Wood"), 10) },
+        { Stack(TEXT("Item_WoodPlank"), 6) }, 6.0f, TEXT("Tech_Mechanics"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_ResonatorBatch"), TEXT("Resonator Batch"),
+        { Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_VoltCore"), 1), Stack(TEXT("Item_Fiber"), 2) },
+        { Stack(TEXT("Item_Resonator"), 3) }, 8.0f, TEXT("Tech_Mechanics"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_WarmBroth"), TEXT("Hearth Broth"),
+        { Stack(TEXT("Item_RawMeat"), 1), Stack(TEXT("Item_Frostbloom"), 1), Stack(TEXT("Item_Berry"), 1) },
+        { Stack(TEXT("Item_WarmBroth"), 2) }, 5.0f, TEXT("Tech_Thermal"), TEXT("Station_Campfire")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_Fertilizer"), TEXT("Dawnfield Fertilizer"),
+        { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Fiber"), 1), Stack(TEXT("Item_RawMeat"), 1) },
+        { Stack(TEXT("Item_Fertilizer"), 3) }, 4.0f, TEXT("Tech_Agriculture"), TEXT("Station_Campfire")));
 }
 
 // ---------------------------------------------------------------------------
@@ -359,6 +404,44 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Emberfang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Emberfang->DefeatLoot.Add(Stack(TEXT("Item_EmberAsh"), 2));
     Registry->RegisterEcho(Emberfang);
+
+    // --- Ecosystem expansion (CODE_DEFAULT wave 7, Batch 5): completes the
+    //     element coverage — every element now has at least one species, and
+    //     the hostile roster spans Ash/Ember/Frost/Pulse. ---
+
+    // Frost predator: the night's cold answer to the Emberfang rivalry. Weak to
+    // Ember (fire melts frost) while Emberfang is weak to Frost — a true rivalry pair.
+    UAstrawildEchoDefinition* Rimefang = MakeEcho(Outer, TEXT("Echo_Rimefang"), TEXT("Rimefang"), EAstrawildElementType::Frost,
+        EAstrawildEchoRole::Combat, 120.0f, 17.0f, 6.0f, 380.0f, EAstrawildPersonality::Aggressive,
+        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.88f, EAstrawildElementType::Ember, true);
+    Rimefang->PreferredWeather = { EAstrawildWeatherState::Rain, EAstrawildWeatherState::Storm };
+    Rimefang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
+    Rimefang->DefeatLoot.Add(Stack(TEXT("Item_Frostbloom"), 2));
+    Registry->RegisterEcho(Rimefang);
+
+    // Pulse predator: glass-cannon stalker — highest ATK (22) and speed (440) in
+    // the roster, paper-thin defense. Weak to Ash (stone grounds the arc).
+    UAstrawildEchoDefinition* Voltmaw = MakeEcho(Outer, TEXT("Echo_Voltmaw"), TEXT("Voltmaw"), EAstrawildElementType::Pulse,
+        EAstrawildEchoRole::Combat, 95.0f, 22.0f, 3.0f, 440.0f, EAstrawildPersonality::Aggressive,
+        EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.92f, EAstrawildElementType::Ash, true);
+    Voltmaw->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
+    Voltmaw->DefeatLoot.Add(Stack(TEXT("Item_VoltCore"), 1));
+    Registry->RegisterEcho(Voltmaw);
+
+    // Ancient-rare companion: the crown jewel of the dawn fields — one spawns per
+    // world, hardest capture in the roster (0.95), research affinity par excellence.
+    UAstrawildEchoDefinition* Auroraling = MakeEcho(Outer, TEXT("Echo_Auroraling"), TEXT("Auroraling"), EAstrawildElementType::Light,
+        EAstrawildEchoRole::Support, 90.0f, 12.0f, 6.0f, 350.0f, EAstrawildPersonality::Curious,
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.95f, EAstrawildElementType::Ash, false);
+    Auroraling->PreferredWeather = { EAstrawildWeatherState::Clear };
+    Auroraling->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
+    FAstrawildWorkAffinity AuroraResearch;
+    AuroraResearch.WorkType = EAstrawildWorkType::ResearchAssist;
+    AuroraResearch.Affinity = 2.2f;
+    Auroraling->WorkAffinities.Add(AuroraResearch);
+    Auroraling->DefeatLoot.Add(Stack(TEXT("Item_DawnShard"), 2));
+    Auroraling->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 1));
+    Registry->RegisterEcho(Auroraling);
 }
 
 // ---------------------------------------------------------------------------
@@ -399,6 +482,18 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_FeedTrough"), TEXT("Echo Feed Trough"), EAstrawildBuildingCategory::Farm,
         TEXT("Item_Wood"), 5, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::Farming));
+
+    // --- Ecosystem expansion (CODE_DEFAULT wave 7, Batch 5): the three new tech
+    //     nodes each unlock a building that anchors its era. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Sawmill"), TEXT("Dawnwood Sawmill"), EAstrawildBuildingCategory::Workstation,
+        TEXT("Item_Wood"), 10, TEXT("Tech_Mechanics"), 500.0f, EAstrawildPowerRole::Consumer, 2.0f, 0.0f, 0.0f, EAstrawildWorkType::Crafting));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Heater"), TEXT("Hearth Coil"), EAstrawildBuildingCategory::Workstation,
+        TEXT("Item_Stone"), 6, TEXT("Tech_Thermal"), 300.0f, EAstrawildPowerRole::Consumer, 3.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Composter"), TEXT("Dawn Composter"), EAstrawildBuildingCategory::Farm,
+        TEXT("Item_Wood"), 4, TEXT("Tech_Agriculture"), 220.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::Farming));
 }
 
 // ---------------------------------------------------------------------------
@@ -430,6 +525,20 @@ void UAstrawildContentLibrary::BuildTechnologies(UAstrawildItemRegistrySubsystem
     Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Armory"), TEXT("Armory"), EAstrawildTechEra::Primitive, 8,
         { TEXT("Tech_BasicCrafting") }, { TEXT("Recipe_StonehideShield"), TEXT("Recipe_CrystalBlade"),
         TEXT("Recipe_FiberWeaveVest"), TEXT("Recipe_EmberhideJacket"), TEXT("Recipe_CrystalplateCuirass") }, {}));
+
+    // --- Ecosystem expansion (CODE_DEFAULT wave 7, Batch 5): the tree grows
+    //     from 6 to 9 nodes and now uses every era enum except Ancient (reserved
+    //     for the dungeon/boss milestone). Voltmaw loot (Volt Core) sinks into
+    //     Mechanics; Rimefang loot (Frostbloom) sinks into Thermal. ---
+
+    Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Mechanics"), TEXT("Mechanical Workshop"), EAstrawildTechEra::Mechanical, 12,
+        { TEXT("Tech_BasicCrafting") }, { TEXT("Recipe_PlankBatch"), TEXT("Recipe_ResonatorBatch") }, { TEXT("Building_Sawmill") }));
+
+    Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Thermal"), TEXT("Thermal Engineering"), EAstrawildTechEra::Electrical, 18,
+        { TEXT("Tech_Electrical") }, { TEXT("Recipe_WarmBroth") }, { TEXT("Building_Heater") }));
+
+    Registry->RegisterTechnology(MakeTech(Outer, TEXT("Tech_Agriculture"), TEXT("Agriculture"), EAstrawildTechEra::Eco, 20,
+        { TEXT("Tech_Husbandry") }, { TEXT("Recipe_Fertilizer") }, { TEXT("Building_Composter") }));
 }
 
 // ---------------------------------------------------------------------------
@@ -633,5 +742,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 23 items, 13 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 27 items, 17 recipes, 10 Echo species, 13 buildings, 9 technologies, 6 quests, 2 loot tables, 2 NPCs."));
 }

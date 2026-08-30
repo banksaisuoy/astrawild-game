@@ -75,47 +75,15 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
         }
     }
 
-    // Batch 4 — M-11: vendor session — list the wares + prices so the economy is
-    // visible in-world (HUD toast). The purchase itself runs through TryPurchase
-    // (cheat `AW.BuyItem` today, shop UMG screen in a future round).
+    // Batch 5 — Item C: vendor interaction now opens the real shop screen
+    // (pure-C++ UMG — wares, prices, balance, buy/sell buttons, close). The
+    // toast-only listing from Batch 4 is retired; transactions still run
+    // through the same server-authoritative TryPurchase/TrySell pipeline.
     if (NpcDefinition && !NpcDefinition->ShopLootTableId.IsNone() && !NpcDefinition->CurrencyItemId.IsNone())
     {
-        if (UWorld* World = GetWorld())
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
         {
-            if (UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>())
-            {
-                if (const UAstrawildLootTableDefinition* Shop = Registry->FindLootTable(NpcDefinition->ShopLootTableId))
-                {
-                    TArray<FString> WareLines;
-                    for (const FAstrawildItemStack& Ware : Shop->GuaranteedDrops)
-                    {
-                        if (const UAstrawildItemDefinition* Def = Registry->FindItem(Ware.ItemId))
-                        {
-                            if (Def->VendorPrice > 0)
-                            {
-                                WareLines.Add(FString::Printf(TEXT("%s [%d]"), *Def->DisplayName.ToString(), Def->VendorPrice));
-                            }
-                        }
-                    }
-                    if (!WareLines.IsEmpty())
-                    {
-                        const int32 Balance = Player->InventoryComponent ? Player->InventoryComponent->GetQuantity(NpcDefinition->CurrencyItemId) : 0;
-                        if (const UAstrawildItemDefinition* CurrencyDef = Registry->FindItem(NpcDefinition->CurrencyItemId))
-                        {
-                            const FString Message = FString::Printf(
-                                TEXT("%s's wares: %s. You carry %d %s."),
-                                *NpcDefinition->DisplayName.ToString(),
-                                *FString::Join(WareLines, TEXT(" · ")),
-                                Balance,
-                                *CurrencyDef->DisplayName.ToString());
-                            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
-                            {
-                                PC->Notify(FText::FromString(Message));
-                            }
-                        }
-                    }
-                }
-            }
+            PC->OpenShop(this);
         }
     }
 }
