@@ -46,5 +46,9 @@ private:
     FTimerHandle AutosaveTimerHandle;
 
     void RespawnPlayer(AController* Controller);
-    class AAstrawildWorldBootstrapper* Bootstrapper = nullptr;
+
+    // Audit C-1 (final run): TObjectPtr so GC-tracked and .Get() is valid (was a raw pointer
+    // used with .Get() — a hard compile error).
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Runtime")
+    TObjectPtr<class AAstrawildWorldBootstrapper> Bootstrapper = nullptr;
 };

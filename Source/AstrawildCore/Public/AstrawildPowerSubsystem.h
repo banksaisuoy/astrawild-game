@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "UObject/ObjectKey.h"
 #include "AstrawildPowerSubsystem.generated.h"
 
 class AAstrawildBuildingActor;

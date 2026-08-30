@@ -22,9 +22,14 @@ struct ASTRAWILDCORE_API FAstrawildGameplayEvent
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Event")
     FGameplayTag EventTag;
 
-    /** Actor that caused the event (player, echo...). */
+    /**
+     * Actor that caused the event (player, echo...).
+     * Audit C-5 (final run): TObjectPtr instead of TWeakObjectPtr — UHT 5.8 policy on
+     * Blueprint-exposed weak pointers is stricter, and event payloads are short-lived
+     * so a strong ref is semantically fine (nothing currently reads this member).
+     */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Event")
-    TWeakObjectPtr<AActor> Instigator;
+    TObjectPtr<AActor> Instigator;
 
     /** Domain id: item id, echo definition, tech id, location name... */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Event")

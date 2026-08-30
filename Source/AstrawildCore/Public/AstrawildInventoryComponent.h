@@ -92,11 +92,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Inventory|Equipment")
     void Unequip();
 
-    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment")
+    // Audit C-3 (final run): both slots are DOREPLIFETIME-registered — the missing
+    // Replicated specifier rejected the replication layout (equipment would never
+    // reach clients).
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
     FName EquippedItemId = NAME_None;
 
     /** Wave 3 shield slot — feeding block mitigation on the combat component. */
-    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment")
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
     FName EquippedShieldItemId = NAME_None;
 
     /**

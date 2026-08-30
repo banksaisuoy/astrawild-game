@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "UObject/ObjectKey.h"
 #include "AstrawildEcosystemSubsystem.generated.h"
 
 class AAstrawildEchoCharacter;
@@ -81,6 +82,16 @@ public:
     void RegisterEcho(AAstrawildEchoCharacter* Echo);
     void UnregisterEcho(AAstrawildEchoCharacter* Echo);
 
+    /**
+     * Audit C-9 (final run): a captured Echo leaves the wild population — call when
+     * bCaptured flips on so WildCount reflects live wild numbers (capture used to
+     * silently over-report the wild population forever). Actor-keyed + idempotent.
+     */
+    void OnEchoCaptured(AAstrawildEchoCharacter* Echo);
+
+    /** Audit C-9 (final run): defeated wild Echo leaves the count exactly once. */
+    void OnEchoDefeated(AAstrawildEchoCharacter* Echo);
+
     /** Current simulation tier for an Echo (Tier0 by default). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ecosystem")
     EAstrawildSimulationTier GetTierForEcho(const AAstrawildEchoCharacter* Echo) const;
@@ -140,6 +151,15 @@ private:
     TArray<TWeakObjectPtr<AAstrawildEchoCharacter>> RegisteredEchoes;
     TMap<FName, FAstrawildSpeciesPopulation> Populations;
     TMap<FObjectKey, EAstrawildSimulationTier> EchoTiers;
+
+    /**
+     * Audit C-9 (final run): echoes spawned before InitializeFromDefinition register
+     * without a species, so registration re-runs after init. This marker set makes
+     * population counting idempotent (each actor counted at most once) so the re-run
+     * never double-counts.
+     */
+    TSet<FObjectKey> CountedPopulationEchoes;
+
     float TierSweepAccumulator = 0.0f;
 
     /** Predator -> prey species ids (directive §7 food chain). */

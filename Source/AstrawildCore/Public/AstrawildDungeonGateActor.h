@@ -45,7 +45,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", meta=(ClampMin="100.0"))
     float PassageHalfWidth = 500.0f;
 
-    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon", Replicated)
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon", ReplicatedUsing=OnRep_bOpen)
     bool bOpen = false;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

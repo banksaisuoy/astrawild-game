@@ -91,12 +91,14 @@ void AAstrawildGameMode::RequestPlayerRespawn(AController* Controller, const flo
         return;
     }
 
+    // Audit C-6 (final run): the previous SetTimerForNextTick lambda captured `this` raw;
+    // binding through FTimerDelegate::CreateUObject keeps the timer UObject-safe.
     FTimerHandle RespawnHandle;
-    World->GetTimerManager().SetTimerForNextTick([this, Controller, DelaySeconds, World]()
-    {
-        FTimerHandle Handle;
-        World->GetTimerManager().SetTimer(Handle, FTimerDelegate::CreateUObject(this, &AAstrawildGameMode::RespawnPlayer, Controller), FMath::Max(0.5f, DelaySeconds), false);
-    });
+    World->GetTimerManager().SetTimer(
+        RespawnHandle,
+        FTimerDelegate::CreateUObject(this, &AAstrawildGameMode::RespawnPlayer, Controller),
+        FMath::Max(0.5f, DelaySeconds),
+        false);
 }
 
 void AAstrawildGameMode::RespawnPlayer(AController* Controller)

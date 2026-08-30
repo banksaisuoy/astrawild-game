@@ -179,6 +179,11 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
     }
 
     GetCharacterMovement()->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed);
+
+    // Audit C-9 (final run): re-register now that the species is set — BeginPlay
+    // registered this Echo before the definition existed, so the population count
+    // missed it (the subsystem counts idempotently by actor key).
+    RegisterWithEcosystem();
     return true;
 }
 
@@ -294,7 +299,7 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
             {
                 if (UAstrawildEcosystemSubsystem* Ecosystem = GetEcosystem())
                 {
-                    Ecosystem->NotifyDefeated(EchoDefinition->DefinitionId);
+                    Ecosystem->OnEchoDefeated(this);
                 }
                 if (UWorld* World = GetWorld())
                 {
@@ -398,7 +403,7 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
         {
             if (UAstrawildEcosystemSubsystem* Ecosystem = GetEcosystem())
             {
-                Ecosystem->NotifyDefeated(EchoDefinition->DefinitionId);
+                Ecosystem->OnEchoDefeated(this);
             }
 
             if (UWorld* World = GetWorld())
@@ -565,7 +570,9 @@ bool AAstrawildEchoCharacter::Capture(const float InitialTrust)
 
     if (UAstrawildEcosystemSubsystem* Ecosystem = GetEcosystem())
     {
-        Ecosystem->NotifyCaptured(EchoDefinition->DefinitionId);
+        // Audit C-9 (final run): actor-keyed idempotent bookkeeping (replaces the
+        // definition-level NotifyCaptured call so the counted slot releases once).
+        Ecosystem->OnEchoCaptured(this);
     }
 
     if (UWorld* World = GetWorld())

@@ -171,18 +171,70 @@ void UAstrawildEcosystemSubsystem::RegisterEcho(AAstrawildEchoCharacter* Echo)
         return;
     }
 
+    const FObjectKey EchoKey(Echo);
     if (!RegisteredEchoes.ContainsByPredicate([&Echo](const TWeakObjectPtr<AAstrawildEchoCharacter>& Entry) { return Entry.Get() == Echo; }))
     {
         RegisteredEchoes.Add(Echo);
-        EchoTiers.Add(FObjectKey(Echo), EAstrawildSimulationTier::Tier0_Full);
+        EchoTiers.Add(EchoKey, EAstrawildSimulationTier::Tier0_Full);
     }
 
-    if (IsValid(Echo->EchoDefinition) && !Echo->EchoDefinition->DefinitionId.IsNone())
+    // Audit C-9 (final run): counting is keyed by actor — re-registration after
+    // InitializeFromDefinition (species set) increments the population exactly once,
+    // and only for Echoes that are still wild.
+    if (IsValid(Echo->EchoDefinition) && !Echo->EchoDefinition->DefinitionId.IsNone() && !Echo->bCaptured)
+    {
+        const FName SpeciesId = Echo->EchoDefinition->DefinitionId;
+        if (!CountedPopulationEchoes.Contains(EchoKey))
+        {
+            CountedPopulationEchoes.Add(EchoKey);
+            FAstrawildSpeciesPopulation& Population = Populations.FindOrAdd(SpeciesId);
+            Population.DefinitionId = SpeciesId;
+            Population.WildCount += 1;
+            OnPopulationChanged.Broadcast(SpeciesId, Population.WildCount);
+        }
+    }
+}
+
+void UAstrawildEcosystemSubsystem::OnEchoCaptured(AAstrawildEchoCharacter* Echo)
+{
+    // Audit C-9 (final run): actor-keyed + idempotent population bookkeeping — the
+    // legacy NotifyCaptured(DefinitionId) is kept for definition-level callers
+    // (cheats/tests); gameplay paths route through here so a capture can never
+    // double-decrement when registration re-runs after initialization.
+    if (!IsValid(Echo) || !IsValid(Echo->EchoDefinition))
+    {
+        return;
+    }
+
+    const FObjectKey EchoKey(Echo);
+    if (CountedPopulationEchoes.Remove(EchoKey) > 0)
     {
         const FName SpeciesId = Echo->EchoDefinition->DefinitionId;
         FAstrawildSpeciesPopulation& Population = Populations.FindOrAdd(SpeciesId);
         Population.DefinitionId = SpeciesId;
-        Population.WildCount += 1;
+        Population.WildCount = FMath::Max(0, Population.WildCount - 1);
+        Population.CapturedCount += 1;
+        OnPopulationChanged.Broadcast(SpeciesId, Population.WildCount);
+    }
+}
+
+void UAstrawildEcosystemSubsystem::OnEchoDefeated(AAstrawildEchoCharacter* Echo)
+{
+    // Audit C-9 (final run): defeat also releases the counted slot exactly once —
+    // the subsequent EndPlay unregister sees no marker and cannot double-decrement.
+    if (!IsValid(Echo) || !IsValid(Echo->EchoDefinition))
+    {
+        return;
+    }
+
+    const FObjectKey EchoKey(Echo);
+    if (CountedPopulationEchoes.Remove(EchoKey) > 0)
+    {
+        const FName SpeciesId = Echo->EchoDefinition->DefinitionId;
+        FAstrawildSpeciesPopulation& Population = Populations.FindOrAdd(SpeciesId);
+        Population.DefinitionId = SpeciesId;
+        Population.WildCount = FMath::Max(0, Population.WildCount - 1);
+        Population.DefeatedCount += 1;
         OnPopulationChanged.Broadcast(SpeciesId, Population.WildCount);
     }
 }
@@ -194,8 +246,19 @@ void UAstrawildEcosystemSubsystem::UnregisterEcho(AAstrawildEchoCharacter* Echo)
         return;
     }
 
+    // Audit C-9 (final run): destroying a counted (wild) Echo releases its population slot.
+    const FObjectKey EchoKey(Echo);
+    if (CountedPopulationEchoes.Remove(EchoKey) > 0 && IsValid(Echo->EchoDefinition))
+    {
+        if (FAstrawildSpeciesPopulation* Population = Populations.Find(Echo->EchoDefinition->DefinitionId))
+        {
+            Population->WildCount = FMath::Max(0, Population->WildCount - 1);
+            OnPopulationChanged.Broadcast(Population->DefinitionId, Population->WildCount);
+        }
+    }
+
     RegisteredEchoes.RemoveAll([&Echo](const TWeakObjectPtr<AAstrawildEchoCharacter>& Entry) { return Entry.Get() == Echo; });
-    EchoTiers.Remove(FObjectKey(Echo));
+    EchoTiers.Remove(EchoKey);
 }
 
 void UAstrawildEcosystemSubsystem::Tick(const float DeltaTime)

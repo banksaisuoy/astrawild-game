@@ -130,7 +130,11 @@ TArray<UAstrawildBuildingDefinition*> UAstrawildItemRegistrySubsystem::GetUnlock
 {
     TArray<UAstrawildBuildingDefinition*> Out;
     const UWorld* World = GetWorld();
-    const UAstrawildResearchSubsystem* Research = World ? World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>() : nullptr;
+    // Audit C-7 (final run): GetGameInstance() itself can be null in editor/preview
+    // worlds — guard the whole chain instead of dereferencing blindly.
+    const UAstrawildResearchSubsystem* Research = (World && World->GetGameInstance())
+        ? World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>()
+        : nullptr;
 
     for (const TPair<FName, TObjectPtr<UAstrawildBuildingDefinition>>& Pair : Buildings)
     {

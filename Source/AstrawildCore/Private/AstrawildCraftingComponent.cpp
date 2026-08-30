@@ -151,12 +151,15 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
     return true;
 }
 
-void UAstrawildCraftingComponent::ServerRequestCraft(const FName RecipeId)
+// Audit C-2 (final run): server RPC bodies must be named *_Implementation — the previous
+// definitions used the declared RPC name, which collides with the UHT-generated thunk
+// (C2084) and leaves the virtual _Implementation undefined (LNK2001).
+void UAstrawildCraftingComponent::ServerRequestCraft_Implementation(const FName RecipeId)
 {
     CraftByRecipeId(RecipeId);
 }
 
-void UAstrawildCraftingComponent::ServerRequestCancelCraft()
+void UAstrawildCraftingComponent::ServerRequestCancelCraft_Implementation()
 {
     CancelActiveCraft();
 }
