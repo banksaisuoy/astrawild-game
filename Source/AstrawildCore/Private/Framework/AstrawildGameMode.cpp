@@ -53,27 +53,7 @@ AAstrawildGameMode::AAstrawildGameMode()
 void AAstrawildGameMode::StartPlay()
 {
 	Super::StartPlay();
-	UE_LOG(LogAstrawild, Log, TEXT("ASTRAWILD: Echoes of the First Dawn - GameMode Started."));
-
-	// Auto-spawn prototype testing arena if not already in level.
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		bool bFoundArena = false;
-		for (TActorIterator<AAstrawildPrototypeArena> It(World); It; ++It)
-		{
-			bFoundArena = true;
-			break;
-		}
-
-		if (!bFoundArena)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			World->SpawnActor<AAstrawildPrototypeArena>(AAstrawildPrototypeArena::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-			UE_LOG(LogAstrawild, Log, TEXT("Auto-spawned AAstrawildPrototypeArena in level."));
-		}
-	}
+	UE_LOG(LogAstrawild, Log, TEXT("ASTRAWILD: Echoes of the First Dawn - GameMode Started in Level."));
 }
 
 void AAstrawildGameMode::PostLogin(APlayerController* NewPlayer)
