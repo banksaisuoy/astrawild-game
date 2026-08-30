@@ -62,7 +62,6 @@ void UAstrawildResearchRowWidget::BuildRowTree()
     const bool bUnlocked = Research->IsTechUnlocked(RowTechId);
     const TArray<FName> Missing = Research->GetMissingPrerequisites(RowTechId);
     const bool bAvailable = !bUnlocked && Missing.IsEmpty() && Research->GetResearchPoints() >= TechDef->ResearchCost;
-    const bool bLocked = !bUnlocked && (Missing.Num() > 0 || Research->GetResearchPoints() < TechDef->ResearchCost);
 
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(), TEXT("TechRow"));
 

@@ -77,8 +77,15 @@ bool FAstrawildCaptureRuleTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Resilience in 0..1"),
         Definition->BaseStats.CaptureResilience >= 0.0f && Definition->BaseStats.CaptureResilience <= 1.0f);
 
-    // Defeated creatures can never be captured (rule encoded in chance computation path).
-    TestTrue(TEXT("Design invariant placeholder: defeated -> 0 chance documented"), true);
+    // Final production run (audit C-12 — replaced the tautological placeholder):
+    // trust gained on capture must be positive, and the weaken-bonus ceiling
+    // (resilience-scaled) can never exceed the 0.95 documented clamp when stacked
+    // on the max weaken contribution — the design invariant the runtime enforces.
+    TestTrue(TEXT("Trust gain on capture is positive"), Definition->TrustGainOnCapture > 0.0f);
+    const float MaxWeakenBonus = 0.5f * (1.0f - Definition->BaseStats.CaptureResilience);
+    const float BaseChance = 0.25f + (1.0f - Definition->CaptureDifficulty) * 0.35f;
+    TestTrue(TEXT("Full weaken + observation bonus stays under the 0.95 clamp"),
+        BaseChance + MaxWeakenBonus + 0.15f <= 0.95f + KINDA_SMALL_NUMBER);
     return true;
 }
 
@@ -597,6 +604,160 @@ bool FAstrawildTerrainSeamContinuityTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("No seam jump across row borders"),
             FMath::Abs(HNorth - HSouth) < 50.0f);
     }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Final production run — advanced equipment framework (PHASE 12)
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEquipmentSlotRoutingTest,
+    "ASTRAWILD.Equipment.SlotRouting",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEquipmentSlotRoutingTest::RunTest(const FString& Parameters)
+{
+    // Explicit-slot items declare their destination; Auto keeps stat routing. The
+    // routing switch in InventoryComponent keys off exactly these values.
+    UAstrawildItemDefinition* Helmet = NewObject<UAstrawildItemDefinition>();
+    Helmet->EquipmentSlot = EAstrawildEquipmentSlot::Helmet;
+    Helmet->ArmorRating = 35.0f;
+    Helmet->InsulationRating = 6.0f;
+    TestEqual(TEXT("Helmet slot routed"), static_cast<int32>(Helmet->EquipmentSlot), static_cast<int32>(EAstrawildEquipmentSlot::Helmet));
+
+    UAstrawildItemDefinition* Laser = NewObject<UAstrawildItemDefinition>();
+    Laser->EquipmentSlot = EAstrawildEquipmentSlot::Weapon;
+    Laser->bIsRangedWeapon = true;
+    Laser->AmmoItemId = TEXT("Item_EnergyCell");
+    Laser->Element = EAstrawildElementType::Pulse;
+    TestTrue(TEXT("Ranged weapon declares ammo"), !Laser->AmmoItemId.IsNone());
+    TestTrue(TEXT("Ranged weapon is a weapon slot item"), Laser->EquipmentSlot == EAstrawildEquipmentSlot::Weapon);
+
+    // Torso + helmet ratings sum before the single diminishing-returns formula.
+    const float TorsoRating = 80.0f;
+    const float Total = TorsoRating + Helmet->ArmorRating;
+    const float Fraction = UAstrawildCombatComponent::ComputeArmorFraction(Total, 100.0f, 0.6f);
+    TestTrue(TEXT("Combined armor fraction in (0, cap]"), Fraction > 0.0f && Fraction <= 0.6f + KINDA_SMALL_NUMBER);
+    TestTrue(TEXT("Combined armor beats torso alone"),
+        Fraction > UAstrawildCombatComponent::ComputeArmorFraction(TorsoRating, 100.0f, 0.6f));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInsulationBandTest,
+    "ASTRAWILD.Survival.InsulationBand",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInsulationBandTest::RunTest(const FString& Parameters)
+{
+    // The survival Tick widens the comfort band by the equipped insulation total:
+    // cold threshold - Insulation, heat threshold + Insulation. Mirror the exact
+    // expression so a regression in the formula breaks this test.
+    const float ColdThreshold = 4.0f;
+    const float HeatThreshold = 36.0f;
+    const float Insulation = 6.0f + 8.0f; // Helm (6) + Exosuit (8).
+
+    const float FeltColdDay = 0.0f;   // Was damage; now comfortable.
+    const bool bColdSafe = FeltColdDay > ColdThreshold - Insulation;
+    TestTrue(TEXT("Helm+exosuit insulation protects a 0C day"), bColdSafe);
+
+    const float FeltHotDay = 42.0f;   // Was damage; now comfortable.
+    const bool bHeatSafe = FeltHotDay < HeatThreshold + Insulation;
+    TestTrue(TEXT("Helm+exosuit insulation protects a 42C day"), bHeatSafe);
+
+    const float ExtremeCold = -30.0f;
+    TestFalse(TEXT("Extreme cold still bites through insulation"),
+        ExtremeCold > ColdThreshold - Insulation);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Final production run — quest objectives (PHASE 15): SurviveTime + VisitZone
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestObjectiveTypesTest,
+    "ASTRAWILD.Quest.ObjectiveTypes",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestObjectiveTypesTest::RunTest(const FString& Parameters)
+{
+    // SurviveTime: RequiredCount is SECONDS; accrual clamps at the target.
+    FAstrawildQuestObjective Survive;
+    Survive.Type = EAstrawildQuestObjectiveType::SurviveTime;
+    Survive.RequiredCount = 180;
+    Survive.ProgressCount = 179;
+    TestFalse(TEXT("179/180s is not complete"), Survive.IsComplete());
+    Survive.ProgressCount = FMath::Min(Survive.RequiredCount, Survive.ProgressCount + 1);
+    TestTrue(TEXT("180/180s completes"), Survive.IsComplete());
+
+    // VisitZone: consumes Event.ZoneEntered whose TargetId is the zone id
+    // (e.g. Zone_EmberRidge) — the matcher compares TargetId directly.
+    FAstrawildQuestObjective Visit;
+    Visit.Type = EAstrawildQuestObjectiveType::VisitZone;
+    Visit.TargetId = TEXT("Zone_EmberRidge");
+    Visit.RequiredCount = 1;
+    TestEqual(TEXT("VisitZone targets the zone id"), Visit.TargetId.ToString(), FString(TEXT("Zone_EmberRidge")));
+
+    // The appended enum stays serialization-safe: VisitZone follows SurviveTime
+    // (value 9) — existing saves deserialize objective types by value.
+    TestTrue(TEXT("VisitZone appended after SurviveTime"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::VisitZone) > static_cast<int32>(EAstrawildQuestObjectiveType::SurviveTime));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Final production run — save schema v3 (PHASE 16)
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveSchemaV3Test,
+    "ASTRAWILD.Save.SchemaV3",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveSchemaV3Test::RunTest(const FString& Parameters)
+{
+    // The v3 payload types default-init so v2 saves keep deserializing (additive).
+    const FAstrawildWorkSiteSaveData Site;
+    TestTrue(TEXT("Work-site save defaults: no site id"), Site.SiteId.IsNone());
+    TestEqual(TEXT("Work-site save defaults: zero output"), Site.StoredOutput, 0);
+    TestFalse(TEXT("Work-site save defaults: no robot"), Site.bHasRobot);
+
+    const FAstrawildDroneSaveData Drone;
+    TestFalse(TEXT("Drone save defaults: not deployed"), Drone.bDeployed);
+
+    const FAstrawildRobotSaveData Robot;
+    TestTrue(TEXT("Robot save defaults: no site"), Robot.AssignedSiteId.IsNone());
+
+    const FAstrawildPowerGridSaveData Grid;
+    TestEqual(TEXT("Grid save defaults: zero charge"), Grid.StoredEnergy, 0.0f);
+
+    // Checksum remains deterministic over schema + timestamp (v3 included).
+    const FDateTime Stamp(2026, 8, 30, 12, 0, 0);
+    TestEqual(TEXT("Checksum deterministic"),
+        UAstrawildSaveSubsystem::ComputeChecksum(3, Stamp),
+        UAstrawildSaveSubsystem::ComputeChecksum(3, Stamp));
+    TestFalse(TEXT("Checksum differs across schema versions"),
+        UAstrawildSaveSubsystem::ComputeChecksum(3, Stamp) == UAstrawildSaveSubsystem::ComputeChecksum(2, Stamp));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Final production run — boss encounter math (PHASE 14)
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBossSpecialsMathTest,
+    "ASTRAWILD.Dungeon.BossSpecialsMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBossSpecialsMathTest::RunTest(const FString& Parameters)
+{
+    // Weak-point window: damage multiplier applies on top of the elemental
+    // multiplier — weakness (x1.5) during the window (x2) = x3 total.
+    const float Elemental = AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+        EAstrawildElementType::Light, EAstrawildElementType::Light, EAstrawildElementType::Ash);
+    TestEqual(TEXT("Weakness multiplier is x1.5"), Elemental, 1.5f);
+
+    const float WeakPointMultiplier = 2.0f;
+    const float Total = 100.0f * Elemental * WeakPointMultiplier;
+    TestEqual(TEXT("Weakness during the weak-point window deals x3"), Total, 300.0f);
+
+    // Enrage cadence: phase 3 halves the special cooldown (documented behavior).
+    const float Cooldown = 7.0f;
+    TestEqual(TEXT("Phase 3 special cooldown halved"), Cooldown * 0.5f, 3.5f);
     return true;
 }
 

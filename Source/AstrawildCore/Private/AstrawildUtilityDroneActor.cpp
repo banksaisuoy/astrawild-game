@@ -30,6 +30,7 @@ AAstrawildUtilityDroneActor::AAstrawildUtilityDroneActor()
 
     // Drones are replicated so remote clients see the companion hovering.
     bReplicates = true;
+    SetReplicatingMovement(true);
 }
 
 void AAstrawildUtilityDroneActor::BeginPlay()
@@ -89,7 +90,13 @@ void AAstrawildUtilityDroneActor::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Cosmetics run everywhere; gameplay pulses only on the server.
+    // Authority drives the hover/locomotion; clients mirror through replicated
+    // movement (local cosmetic ticking would fight replication updates).
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
     if (AAstrawildPlayerCharacter* Owner = GetOwnerPlayer())
     {
         // Hover target: beside the owner, gently bobbing.
@@ -101,21 +108,18 @@ void AAstrawildUtilityDroneActor::Tick(const float DeltaTime)
         const FVector NewLocation = FMath::VInterpTo(Current, HoverPoint, DeltaTime, FollowInterpSpeed);
         SetActorLocation(NewLocation);
 
-        if (GetLocalRole() == ROLE_Authority)
+        ScanAccumulator += DeltaTime;
+        if (ScanAccumulator >= ScanIntervalSeconds)
         {
-            ScanAccumulator += DeltaTime;
-            if (ScanAccumulator >= ScanIntervalSeconds)
-            {
-                ScanAccumulator = 0.0f;
-                RunScanPulse();
-            }
+            ScanAccumulator = 0.0f;
+            RunScanPulse();
+        }
 
-            HarvestAccumulator += DeltaTime;
-            if (HarvestAccumulator >= HarvestIntervalSeconds)
-            {
-                HarvestAccumulator = 0.0f;
-                RunHarvestPulse();
-            }
+        HarvestAccumulator += DeltaTime;
+        if (HarvestAccumulator >= HarvestIntervalSeconds)
+        {
+            HarvestAccumulator = 0.0f;
+            RunHarvestPulse();
         }
     }
 }

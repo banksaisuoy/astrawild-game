@@ -502,8 +502,9 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
 
 // --- Final production run (PHASE 14): special-attack pipeline ---
 
-void AAstrawildEchoBossCharacter::TickSpecials(const float DeltaTime)
+void AAstrawildEchoBossCharacter::TickSpecials(const float /*DeltaTime*/)
 {
+    // Cadence is wall-clock based (GetTimeSeconds) — DeltaTime unused by design.
     UWorld* World = GetWorld();
     AAstrawildPlayerCharacter* Player = FindNearestPlayer();
     if (!World || !Player)

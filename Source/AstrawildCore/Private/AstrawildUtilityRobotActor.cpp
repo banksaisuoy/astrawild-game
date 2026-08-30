@@ -23,6 +23,7 @@ AAstrawildUtilityRobotActor::AAstrawildUtilityRobotActor()
     VisualMesh->SetWorldScale3D(FVector(0.5f, 0.5f, 0.8f));
 
     bReplicates = true;
+    SetReplicatingMovement(true);
 }
 
 void AAstrawildUtilityRobotActor::BeginPlay()
@@ -74,6 +75,12 @@ void AAstrawildUtilityRobotActor::ReleaseFromSite()
 void AAstrawildUtilityRobotActor::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    // Authority drives locomotion; clients mirror through replicated movement.
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
 
     if (AAstrawildWorkSiteActor* Site = AssignedSite.Get())
     {
