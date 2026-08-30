@@ -7,6 +7,7 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildInventoryComponent.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTypes.h"
@@ -296,6 +297,36 @@ bool FAstrawildStatusEffectFactoryTest::RunTest(const FString& Parameters)
         const FAstrawildStatusEffect Nothing = UAstrawildCombatComponent::MakeElementalStatusEffect(NoStatus, 40.0f);
         TestTrue(TEXT("Non-elemental attacks apply no status"), Nothing.StatusId.IsNone());
         TestEqual(TEXT("Invalid status has zero duration"), Nothing.RemainingSeconds, 0.0f);
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Vendor economy (Batch 4 — M-11): sell-value rule. Exercises the REAL
+// production static (AAstrawildNPCCharacter::ComputeVendorSellValue).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVendorEconomyTest,
+    "ASTRAWILD.Economy.VendorSellValue",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVendorEconomyTest::RunTest(const FString& Parameters)
+{
+    // Sell value is half the buy price, floored at 1 for anything tradeable —
+    // a buy-low/sell-higher exploit is impossible by construction.
+    TestEqual(TEXT("Price 2 sells for 1"), AAstrawildNPCCharacter::ComputeVendorSellValue(2), 1);
+    TestEqual(TEXT("Price 3 sells for 1 (floor)"), AAstrawildNPCCharacter::ComputeVendorSellValue(3), 1);
+    TestEqual(TEXT("Price 4 sells for 2"), AAstrawildNPCCharacter::ComputeVendorSellValue(4), 2);
+    TestEqual(TEXT("Price 6 sells for 3"), AAstrawildNPCCharacter::ComputeVendorSellValue(6), 3);
+
+    // Unpriced items (VendorPrice 0) are not sellable — junk cannot be minted
+    // into currency, and the currency itself is never sellable back.
+    TestEqual(TEXT("Unpriced items sell for nothing"), AAstrawildNPCCharacter::ComputeVendorSellValue(0), 0);
+
+    // Selling always yields strictly less than buying (no arbitrage loop).
+    for (const int32 Price : { 2, 3, 4, 6 })
+    {
+        TestTrue(TEXT("Sell value is strictly below the buy price"),
+            AAstrawildNPCCharacter::ComputeVendorSellValue(Price) < Price);
     }
     return true;
 }

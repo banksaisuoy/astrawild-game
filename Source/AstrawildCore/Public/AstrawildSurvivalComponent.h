@@ -10,6 +10,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildSurvivalStatsChanged, flo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildStatusEffectApplied, FName, StatusId);
 // Batch 3 — Item A: fired when a status effect expires so speed can refresh.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildStatusEffectRemoved, FName, StatusId);
+// Batch 4 — M-2a: fired once when stamina hits the floor while sprint-draining,
+// so the player character can drop out of sprint speed.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAstrawildSprintExhausted);
 
 /**
  * Player survival vitals — server-authoritative (directive §11/§28).
@@ -37,15 +40,32 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Survival")
     FAstrawildStatusEffectRemoved OnStatusEffectRemoved;
 
+    /** Batch 4 — M-2a: stamina hit the floor while sprinting (drop out of sprint speed). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Survival")
+    FAstrawildSprintExhausted OnSprintExhausted;
+
     // --- Tunables (migrate to data asset later) ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Rates", meta=(ClampMin="0.0"))
     float HungerDecayPerSecond = 0.083f;
 
+    /**
+     * Batch 4 — L-2: previously 0.14/s (~12 minutes full-to-empty), contradicting the
+     * documented ~20-minute window above. 100 / (20 × 60) ≈ 0.0833/s → ~20 minutes.
+     */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Rates", meta=(ClampMin="0.0"))
-    float ThirstDecayPerSecond = 0.14f;
+    float ThirstDecayPerSecond = 0.0833f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Rates", meta=(ClampMin="0.0"))
     float StaminaRegenPerSecond = 14.0f;
+
+    /**
+     * Batch 4 — M-2a: stamina drained per second while sprint-drain is active and
+     * the owner is actually moving. 100 stamina / 7 per second ≈ 14 s of sprinting.
+     * While draining, passive regen is suspended (regen 14/s would otherwise
+     * out-pace the drain and make sprinting free).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Rates", meta=(ClampMin="0.0"))
+    float SprintStaminaDrainPerSecond = 7.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Survival|Rates", meta=(ClampMin="0.0"))
     float StarvationHealthDamagePerSecond = 1.5f;
@@ -85,6 +105,14 @@ public:
     /** Spend stamina for actions (sprint/dodge/attacks). Server validated. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
     bool TryConsumeStamina(float Amount);
+
+    /**
+     * Batch 4 — M-2a: mark sprint-drain as active/inactive (server-side state; the
+     * drain itself only ticks when the owner is actually moving). Call from
+     * StartSprint/StopSprint — including the exhaustion path.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void SetSprintDrainActive(bool bActive);
 
     /** Rest point: restore everything (server). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
@@ -130,11 +158,17 @@ private:
 
     bool bGodMode = false;
 
+    /** Batch 4 — M-2a: sprint-drain request flag (server-side only, not replicated). */
+    bool bSprintDrainActive = false;
+
     UFUNCTION()
     void OnRep_Stats();
 
     void UpdateTemperature();
     void ApplyStatusTicks(float DeltaTime);
     void Die();
+    /** Batch 4 — M-2a: drain only while the owner actually moves (holding sprint
+     *  while standing still is free). */
+    bool IsOwnerMoving() const;
     class UAstrawildWeatherSubsystem* GetWeatherSubsystem() const;
 };

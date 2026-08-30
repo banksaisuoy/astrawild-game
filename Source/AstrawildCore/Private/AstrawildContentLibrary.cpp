@@ -121,6 +121,7 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     Berry->FoodValue = 15.0f;
     Berry->WaterValue = 5.0f;
     Berry->EchoFeedValue = 6.0f;
+    Berry->VendorPrice = 2; // Batch 4 — M-11: Trader Tam ware.
     Registry->RegisterItem(Berry);
 
     UAstrawildItemDefinition* RawMeat = MakeItem(Outer, TEXT("Item_RawMeat"), TEXT("Raw Echo Meat"), EAstrawildItemCategory::Consumable, 0.7f, 30);
@@ -134,13 +135,17 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* WaterFlask = MakeItem(Outer, TEXT("Item_WaterFlask"), TEXT("Dew Flask"), EAstrawildItemCategory::Consumable, 0.9f, 20);
     WaterFlask->WaterValue = 40.0f;
+    WaterFlask->VendorPrice = 2; // Batch 4 — M-11: Trader Tam ware.
     Registry->RegisterItem(WaterFlask);
 
     UAstrawildItemDefinition* Bandage = MakeItem(Outer, TEXT("Item_Bandage"), TEXT("Sunfiber Bandage"), EAstrawildItemCategory::Consumable, 0.2f, 30);
     Bandage->HealValue = 40.0f;
+    Bandage->VendorPrice = 3; // Batch 4 — M-11: Trader Tam ware.
     Registry->RegisterItem(Bandage);
 
-    Registry->RegisterItem(MakeItem(Outer, TEXT("Item_Resonator"), TEXT("Echo Resonator"), EAstrawildItemCategory::CreatureItem, 0.4f, 20));
+    UAstrawildItemDefinition* Resonator = MakeItem(Outer, TEXT("Item_Resonator"), TEXT("Echo Resonator"), EAstrawildItemCategory::CreatureItem, 0.4f, 20);
+    Resonator->VendorPrice = 6; // Batch 4 — M-11: Trader Tam ware (capture resupply).
+    Registry->RegisterItem(Resonator);
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_AncientCore"), TEXT("Ancient Core"), EAstrawildItemCategory::QuestItem, 1.0f, 10));
 
     // --- Content expansion (CODE_DEFAULT wave 2) ---
@@ -160,7 +165,18 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* HerbalSalve = MakeItem(Outer, TEXT("Item_HerbalSalve"), TEXT("Dawnbloom Salve"), EAstrawildItemCategory::Consumable, 0.25f, 20);
     HerbalSalve->HealValue = 70.0f;
+    HerbalSalve->VendorPrice = 4; // Batch 4 — M-11: Trader Tam ware.
     Registry->RegisterItem(HerbalSalve);
+
+    // --- Vendor economy currency (CODE_DEFAULT wave 6, Batch 4 — M-11) ---
+
+    // Trade currency for NPC vendors. VendorPrice stays 0: the currency can
+    // neither be bought with itself nor sold back — shards enter the world only
+    // from the dungeon boss loot table, the Dawn Guard quest reward and the
+    // prototype starter kit.
+    UAstrawildItemDefinition* DawnShard = MakeItem(Outer, TEXT("Item_DawnShard"), TEXT("Dawn Shard"), EAstrawildItemCategory::Material, 0.1f, 200);
+    DawnShard->Description = FText::FromString(TEXT("A humming sliver of dawnlight. Vendors in the fields accept it as currency."));
+    Registry->RegisterItem(DawnShard);
 
     // --- Equipment (CODE_DEFAULT wave 3): weapon + shield progression. ---
 
@@ -516,6 +532,7 @@ void UAstrawildContentLibrary::BuildQuests(UAstrawildItemRegistrySubsystem* Regi
     ObjDefeat.ObjectiveText = FText::FromString(TEXT("Defeat 3 Gloomfangs"));
     Quest5->Objectives.Add(ObjDefeat);
     Quest5->RewardItems.Add(Stack(TEXT("Item_AncientCore"), 1));
+    Quest5->RewardItems.Add(Stack(TEXT("Item_DawnShard"), 5)); // Batch 4 — M-11: vendor currency.
     Quest5->RewardResearchPoints = 20;
     Quest5->NextQuestId = TEXT("Quest_ShepherdsDawn");
     Registry->RegisterQuest(Quest5);
@@ -566,13 +583,15 @@ void UAstrawildContentLibrary::BuildLootTables(UAstrawildItemRegistrySubsystem* 
 
     UAstrawildLootTableDefinition* DungeonBoss = NewObject<UAstrawildLootTableDefinition>(Outer);
     DungeonBoss->LootTableId = TEXT("Loot_DungeonBoss");
-    DungeonBoss->GuaranteedDrops = { Stack(TEXT("Item_AncientCore"), 1), Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_EmberAsh"), 2) };
+    DungeonBoss->GuaranteedDrops = { Stack(TEXT("Item_AncientCore"), 1), Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_EmberAsh"), 2), Stack(TEXT("Item_DawnShard"), 3) }; // Batch 4 — M-11: +Dawn Shards.
     DungeonBoss->BonusRollChance = 0.75f;
     Registry->RegisterLootTable(DungeonBoss);
 
+    // Batch 4 — M-11: Trader Tam's wares — the GuaranteedDrops list doubles as
+    // the shop stock list (prices live on each item's VendorPrice in Dawn Shards).
     UAstrawildLootTableDefinition* VendorStarter = NewObject<UAstrawildLootTableDefinition>(Outer);
     VendorStarter->LootTableId = TEXT("Loot_VendorStarter");
-    VendorStarter->GuaranteedDrops = { Stack(TEXT("Item_Berry"), 3), Stack(TEXT("Item_WaterFlask"), 1), Stack(TEXT("Item_Bandage"), 2) };
+    VendorStarter->GuaranteedDrops = { Stack(TEXT("Item_Berry"), 3), Stack(TEXT("Item_WaterFlask"), 1), Stack(TEXT("Item_Bandage"), 2), Stack(TEXT("Item_HerbalSalve"), 1), Stack(TEXT("Item_Resonator"), 1) };
     VendorStarter->BonusRollChance = 0.0f;
     Registry->RegisterLootTable(VendorStarter);
 }
@@ -594,6 +613,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     VendorTam->NpcId = TEXT("NPC_VendorTam");
     VendorTam->DisplayName = FText::FromString(TEXT("Trader Tam"));
     VendorTam->ShopLootTableId = TEXT("Loot_VendorStarter");
+    VendorTam->CurrencyItemId = TEXT("Item_DawnShard"); // Batch 4 — M-11: live shop.
     Registry->RegisterNPC(VendorTam);
 }
 
@@ -613,5 +633,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     BuildLootTables(Registry);
     BuildNPCs(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 22 items, 13 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 23 items, 13 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs."));
 }

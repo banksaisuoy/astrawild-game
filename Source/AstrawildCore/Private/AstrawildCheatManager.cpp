@@ -5,7 +5,9 @@
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildResearchSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
@@ -49,6 +51,105 @@ void UAstrawildCheatManager::GiveItem(const FName ItemId, const int32 Quantity)
     if (Player && Player->InventoryComponent)
     {
         Player->InventoryComponent->AddItem(ItemId, FMath::Max(1, Quantity));
+    }
+}
+
+namespace
+{
+    /** Batch 4 — M-11: nearest vendor NPC within trade range of the player
+     *  (the AW.BuyItem / AW.SellItem cheats route through the same
+     *  server-authoritative API a future shop UMG screen will use). */
+    AAstrawildNPCCharacter* FindNearestVendor(const AAstrawildPlayerCharacter* Player)
+    {
+        if (!Player)
+        {
+            return nullptr;
+        }
+        AAstrawildNPCCharacter* Best = nullptr;
+        float BestDistSq = FMath::Square(600.0f);
+        for (TActorIterator<AAstrawildNPCCharacter> It(Player->GetWorld()); It; ++It)
+        {
+            // REVIEW-4 (L-1): skip NPCs without a configured shop so the cheat
+            // targets the nearest actual vendor (Warden Maren never shadows Tam).
+            if (!It->NpcDefinition || It->NpcDefinition->ShopLootTableId.IsNone() || It->NpcDefinition->CurrencyItemId.IsNone())
+            {
+                continue;
+            }
+            const float DistSq = FVector::DistSquared(It->GetActorLocation(), Player->GetActorLocation());
+            if (DistSq < BestDistSq)
+            {
+                Best = *It;
+                BestDistSq = DistSq;
+            }
+        }
+        return Best;
+    }
+
+    /** Map a vendor result to an actionable HUD message. */
+    FString VendorResultMessage(const EAstrawildVendorResult Result, const FName ItemId, const int32 Quantity)
+    {
+        switch (Result)
+        {
+        case EAstrawildVendorResult::Success:
+            return TEXT(""); // The vendor API already notified the player.
+        case EAstrawildVendorResult::NotAVendor:
+            return TEXT("Nearest NPC is not a vendor.");
+        case EAstrawildVendorResult::NotAWare:
+            return FString::Printf(TEXT("%s is not traded here (or has no vendor price)."), *ItemId.ToString());
+        case EAstrawildVendorResult::NotEnoughCurrency:
+            return FString::Printf(TEXT("Not enough vendor currency for %d x %s."), Quantity, *ItemId.ToString());
+        case EAstrawildVendorResult::TooHeavy:
+            return FString::Printf(TEXT("Too heavy to carry %d x %s."), Quantity, *ItemId.ToString());
+        case EAstrawildVendorResult::TooFarAway:
+            return TEXT("Get closer to the vendor to trade.");
+        case EAstrawildVendorResult::InvalidRequest:
+        default:
+            return FString::Printf(TEXT("Invalid trade request for %s."), *ItemId.ToString());
+        }
+    }
+}
+
+void UAstrawildCheatManager::BuyItem(const FName ItemId, int32 Quantity)
+{
+    AAstrawildPlayerCharacter* Player = GetPlayer();
+    AAstrawildNPCCharacter* Vendor = FindNearestVendor(Player);
+    if (!Player || !Vendor)
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("AW.BuyItem: no vendor NPC within 6 m of the player."));
+        return;
+    }
+    Quantity = FMath::Clamp(Quantity, 1, 99);
+    const EAstrawildVendorResult Result = Vendor->TryPurchase(Player, ItemId, Quantity);
+    const FString Message = VendorResultMessage(Result, ItemId, Quantity);
+    if (!Message.IsEmpty())
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("AW.BuyItem: %s"), *Message);
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->Notify(FText::FromString(Message));
+        }
+    }
+}
+
+void UAstrawildCheatManager::SellItem(const FName ItemId, int32 Quantity)
+{
+    AAstrawildPlayerCharacter* Player = GetPlayer();
+    AAstrawildNPCCharacter* Vendor = FindNearestVendor(Player);
+    if (!Player || !Vendor)
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("AW.SellItem: no vendor NPC within 6 m of the player."));
+        return;
+    }
+    Quantity = FMath::Clamp(Quantity, 1, 99);
+    const EAstrawildVendorResult Result = Vendor->TrySell(Player, ItemId, Quantity);
+    const FString Message = VendorResultMessage(Result, ItemId, Quantity);
+    if (!Message.IsEmpty())
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("AW.SellItem: %s"), *Message);
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->Notify(FText::FromString(Message));
+        }
     }
 }
 

@@ -21,6 +21,17 @@ public:
     UFUNCTION(Exec)
     void GiveItem(FName ItemId, int32 Quantity);
 
+    /** Batch 4 — M-11: buy a ware from the nearest vendor NPC (within 6 m) in its
+     *  currency, e.g. `AW.BuyItem Item_Bandage 2`. Routes through the same
+     *  server-authoritative API a future shop UMG screen will use. */
+    UFUNCTION(Exec)
+    void BuyItem(FName ItemId, int32 Quantity);
+
+    /** Batch 4 — M-11: sell a priced item to the nearest vendor NPC for half its
+     *  buy price (floor 1), e.g. `AW.SellItem Item_Berry 5`. */
+    UFUNCTION(Exec)
+    void SellItem(FName ItemId, int32 Quantity);
+
     /** Wave 3: equip an owned equipment item by id (weapon or shield routing). */
     UFUNCTION(Exec)
     void EquipItem(FName ItemId);

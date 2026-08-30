@@ -85,6 +85,15 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food", meta=(ClampMin="0.0", ClampMax="3.0"))
     float EchoFeedValue = 0.0f;
 
+    /**
+     * Batch 4 — M-11: vendor buy price in the NPC's currency item. 0 = not
+     * tradeable. Sell value at a vendor is half the buy price (floor 1) via
+     * AAstrawildNPCCharacter::ComputeVendorSellValue. The currency item itself
+     * must keep VendorPrice = 0 so it cannot be bought with itself.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Economy", meta=(ClampMin="0"))
+    int32 VendorPrice = 0;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("Item")), ItemId);
@@ -422,6 +431,14 @@ public:
     /** Fixed shop loot table id (future extension). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     FName ShopLootTableId = NAME_None;
+
+    /**
+     * Batch 4 — M-11: item id of the currency this vendor trades in. Wares come
+     * from the ShopLootTableId loot table; prices come from each item's
+     * VendorPrice. No currency configured → the shop is closed (NotAVendor).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
+    FName CurrencyItemId = NAME_None;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {

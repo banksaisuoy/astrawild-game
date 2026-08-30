@@ -104,6 +104,14 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     Resonator.ItemId = TEXT("Item_Resonator");
     Resonator.Quantity = 3;
     StarterItems.Add(Resonator);
+
+    // Batch 4 — M-11: starter vendor currency so the Trader Tam economy is
+    // testable from the first spawn (further Dawn Shards come from the dungeon
+    // boss loot table and the Dawn Guard quest reward).
+    FAstrawildItemStack DawnShards;
+    DawnShards.ItemId = TEXT("Item_DawnShard");
+    DawnShards.Quantity = 10;
+    StarterItems.Add(DawnShards);
 }
 
 void AAstrawildPlayerCharacter::BeginPlay()
@@ -129,12 +137,17 @@ void AAstrawildPlayerCharacter::BeginPlay()
         // (Chill/Shock change the combined multiplier).
         SurvivalComponent->OnStatusEffectApplied.AddDynamic(this, &AAstrawildPlayerCharacter::OnStatusSpeedChanged);
         SurvivalComponent->OnStatusEffectRemoved.AddDynamic(this, &AAstrawildPlayerCharacter::OnStatusSpeedChanged);
+        // Batch 4 — M-2a: stamina floor while sprinting → drop out of sprint speed.
+        SurvivalComponent->OnSprintExhausted.AddDynamic(this, &AAstrawildPlayerCharacter::OnSprintExhausted);
     }
 
     // Batch 3 — Item B: refresh speed when the stagger state changes.
     if (CombatComponent)
     {
         CombatComponent->OnStaggerStateChanged.AddDynamic(this, &AAstrawildPlayerCharacter::OnStaggerChanged);
+        // Batch 4 — M-2b: refresh speed when blocking starts/stops so the
+        // BlockSpeedMultiplier penalty actually applies and lifts.
+        CombatComponent->OnBlockingChanged.AddDynamic(this, &AAstrawildPlayerCharacter::OnBlockingChanged);
     }
 
     // Input context binding also runs here for the initial spawn; PossessedBy covers
@@ -426,12 +439,23 @@ void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
     }
 
     bSprinting = true;
+    // Batch 4 — M-2a: arm the server-side stamina drain (ticks only while moving;
+    // RefreshMovementSpeed still gates on the >0.05 stamina fraction).
+    if (SurvivalComponent)
+    {
+        SurvivalComponent->SetSprintDrainActive(true);
+    }
     RefreshMovementSpeed();
 }
 
 void AAstrawildPlayerCharacter::StopSprint(const FInputActionValue& Value)
 {
     bSprinting = false;
+    // Batch 4 — M-2a: sprint released — stop draining, regen resumes next tick.
+    if (SurvivalComponent)
+    {
+        SurvivalComponent->SetSprintDrainActive(false);
+    }
     RefreshMovementSpeed();
 }
 
@@ -861,6 +885,14 @@ void AAstrawildPlayerCharacter::OnPlayerDied()
 {
     UE_LOG(LogAstrawildCombat, Log, TEXT("Player died — awaiting respawn."));
 
+    // Batch 4 — M-2a: death ends any active sprint-drain (FullRestore refills
+    // stamina; a stale drain request would immediately drain it again on respawn).
+    bSprinting = false;
+    if (SurvivalComponent)
+    {
+        SurvivalComponent->SetSprintDrainActive(false);
+    }
+
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         DisableInput(PC);
@@ -885,6 +917,27 @@ void AAstrawildPlayerCharacter::OnStatusSpeedChanged(FName StatusId)
 void AAstrawildPlayerCharacter::OnStaggerChanged(bool bIsStaggered, float RemainingSeconds)
 {
     // Batch 3 — Item B: entering stagger zeroes speed; leaving restores it.
+    RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::OnBlockingChanged(bool bIsBlocking)
+{
+    // Batch 4 — M-2b: block movement penalty lives in RefreshMovementSpeed — the
+    // blocking state previously changed server-side with no listener, so the
+    // ×0.45 penalty never applied (and never lifted either).
+    RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::OnSprintExhausted()
+{
+    // Batch 4 — M-2a: the stamina floor was hit while sprinting — clear the sprint
+    // state so speed falls back to walking. The >0.05 stamina gate in
+    // RefreshMovementSpeed keeps re-sprint suppressed until stamina recovers.
+    bSprinting = false;
+    if (SurvivalComponent)
+    {
+        SurvivalComponent->SetSprintDrainActive(false);
+    }
     RefreshMovementSpeed();
 }
 

@@ -237,6 +237,16 @@ protected:
     UFUNCTION()
     void OnStaggerChanged(bool bIsStaggered, float RemainingSeconds);
 
+    /** Batch 4 — M-2b: blocking started/stopped → recompute movement speed (the
+     *  BlockSpeedMultiplier penalty previously never applied because nothing
+     *  listened to OnBlockingChanged). */
+    UFUNCTION()
+    void OnBlockingChanged(bool bIsBlocking);
+
+    /** Batch 4 — M-2a: stamina hit the floor while sprinting → drop out of sprint. */
+    UFUNCTION()
+    void OnSprintExhausted();
+
 private:
     void SetMovementSpeed(float NewSpeed);
     double LastAttackTimeSeconds = -BIG_NUMBER;

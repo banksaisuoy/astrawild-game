@@ -38,8 +38,26 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
     Stats.Hunger = FMath::Max(0.0f, Stats.Hunger - HungerDecayPerSecond * DeltaTime);
     Stats.Thirst = FMath::Max(0.0f, Stats.Thirst - ThirstDecayPerSecond * DeltaTime);
 
-    // --- Passive stamina regen (drains are requested by actions) ---
-    Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + StaminaRegenPerSecond * DeltaTime);
+    // --- Stamina: sprint drain (M-2a) or passive regen (drains are requested by actions) ---
+    // Batch 4 — M-2a: sprinting previously never drained stamina (gate-only), making
+    // the exhaustion rule in RefreshMovementSpeed unreachable in normal play. While
+    // the sprint-drain request is active AND the owner actually moves, drain instead
+    // of regenerating (regen 14/s would otherwise out-pace drain 7/s → free sprint).
+    if (bSprintDrainActive && IsOwnerMoving())
+    {
+        Stats.Stamina = FMath::Max(0.0f, Stats.Stamina - SprintStaminaDrainPerSecond * DeltaTime);
+        if (Stats.Stamina <= 0.0f)
+        {
+            // Exhausted — stop draining (regen resumes next tick) and tell the owner
+            // so it can drop out of sprint speed immediately.
+            bSprintDrainActive = false;
+            OnSprintExhausted.Broadcast();
+        }
+    }
+    else
+    {
+        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + StaminaRegenPerSecond * DeltaTime);
+    }
 
     // --- Starvation / dehydration ---
     if (Stats.Hunger <= 0.0f || Stats.Thirst <= 0.0f)
@@ -61,6 +79,22 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
     {
         Die();
     }
+}
+
+void UAstrawildSurvivalComponent::SetSprintDrainActive(const bool bActive)
+{
+    // Server-side simulation state (the drain ticks in the authority-gated Tick).
+    // Harmless no-op on clients; the sprint SPEED itself is handled locally by
+    // RefreshMovementSpeed, this flag only feeds the server-side stamina economy.
+    bSprintDrainActive = bActive;
+}
+
+bool UAstrawildSurvivalComponent::IsOwnerMoving() const
+{
+    const AActor* Owner = GetOwner();
+    // Walk 450 / sprint 700 cm/s — anything above 25 cm/s counts as real movement,
+    // so holding the sprint key while standing still drains nothing.
+    return Owner && Owner->GetVelocity().SizeSquared() > (25.0f * 25.0f);
 }
 
 void UAstrawildSurvivalComponent::UpdateTemperature()

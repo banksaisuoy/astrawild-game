@@ -207,6 +207,28 @@ enum class EAstrawildEchoAIState : uint8
     Staggered UMETA(DisplayName="Staggered")
 };
 
+/**
+ * Batch 4 — M-11: vendor transaction outcome. Returned by the NPC purchase/sell
+ * API so HUD/cheat callers can surface an actionable message per failure mode.
+ */
+UENUM(BlueprintType)
+enum class EAstrawildVendorResult : uint8
+{
+    Success UMETA(DisplayName="Success"),
+    /** The NPC has no shop (no ShopLootTableId/CurrencyItemId on its definition). */
+    NotAVendor UMETA(DisplayName="Not A Vendor"),
+    /** The item is not among this vendor's wares (or has no vendor value when selling). */
+    NotAWare UMETA(DisplayName="Not A Ware"),
+    /** The purchaser cannot afford the total price in the vendor's currency. */
+    NotEnoughCurrency UMETA(DisplayName="Not Enough Currency"),
+    /** Adding the purchase would exceed the inventory weight cap. */
+    TooHeavy UMETA(DisplayName="Too Heavy"),
+    /** The purchaser is outside the vendor's trade range. */
+    TooFarAway UMETA(DisplayName="Too Far Away"),
+    /** Malformed request (bad quantity, missing components, called on a client). */
+    InvalidRequest UMETA(DisplayName="Invalid Request")
+};
+
 /** Base work types for Echoes (directive §18). */
 UENUM(BlueprintType)
 enum class EAstrawildWorkType : uint8
