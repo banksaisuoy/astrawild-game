@@ -5,6 +5,8 @@
 #include "AstrawildTypes.h"
 #include "AstrawildEchoBossCharacter.generated.h"
 
+class AAstrawildBossHazardActor;
+class AAstrawildBossTelegraphActor;
 class UStaticMeshComponent;
 class UAstrawildEchoDefinition;
 
@@ -107,6 +109,44 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss", meta=(ClampMin="0.05", ClampMax="1.0"))
     float BossStatusDurationMultiplier = 0.5f;
 
+    // --- Final production run (PHASE 14): telegraphed specials, weak point, hazards ---
+
+    /** Seconds between special attacks (energy bolt phase 1+, AoE slam phase 2+). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1.0"))
+    float SpecialAttackCooldownSeconds = 7.0f;
+
+    /** Warning time before the AoE blast detonates (the telegraph disc lifetime). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="0.3"))
+    float TelegraphDurationSeconds = 1.5f;
+
+    /** AoE blast damage at the center (pre-mitigation). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="0.0"))
+    float SpecialBlastDamage = 45.0f;
+
+    /** AoE blast radius (cm). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="50.0"))
+    float SpecialBlastRadius = 350.0f;
+
+    /** Seconds between arena-hazard spawns while in phase 2+. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="2.0"))
+    float HazardIntervalSeconds = 9.0f;
+
+    /** Hazards spawn on a ring of this radius around the arena center (cm). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="100.0"))
+    float HazardSpawnRadius = 650.0f;
+
+    /** Weak point exposes every N seconds... */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|WeakPoint", meta=(ClampMin="2.0"))
+    float WeakPointPeriodSeconds = 12.0f;
+
+    /** ...and stays vulnerable for this long (x2 damage window). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|WeakPoint", meta=(ClampMin="1.0"))
+    float WeakPointWindowSeconds = 5.0f;
+
+    /** Damage multiplier while the weak point is exposed. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|WeakPoint", meta=(ClampMin="1.0", ClampMax="5.0"))
+    float WeakPointDamageMultiplier = 2.0f;
+
     // --- Replicated encounter state ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss", Replicated)
     float CurrentHealth = 600.0f;
@@ -116,6 +156,14 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss", Replicated)
     bool bEnraged = false;
+
+    /** Final production run: the weak-point core is exposed (replicated so clients toggle the glow). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss", ReplicatedUsing=OnRep_bWeakPointExposed)
+    bool bWeakPointExposed = false;
+
+    /** Weak-point visual core (glowing sphere on the chest; hidden while closed). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss")
+    TObjectPtr<UStaticMeshComponent> WeakPointMesh;
 
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -166,9 +214,27 @@ public:
 
 private:
     double LastAttackTime = -BIG_NUMBER;
+    double LastSpecialAttackTime = -BIG_NUMBER;
+    double LastHazardTime = -BIG_NUMBER;
     float EnrageElapsed = 0.0f;
+    float WeakPointElapsed = 0.0f;
     bool bPhase2SummonsSpawned = false;
     TArray<TWeakObjectPtr<class AAstrawildEchoCharacter>> Summons;
+
+    /** Final production run: telegraphed AoE blasts in flight (ring + countdown). */
+    struct FAstrawildPendingBlast
+    {
+        FVector Location = FVector::ZeroVector;
+        float RemainingSeconds = 0.0f;
+        TWeakObjectPtr<AAstrawildBossTelegraphActor> Ring;
+    };
+    TArray<FAstrawildPendingBlast> PendingBlasts;
+
+    /** Active arena hazards (cleaned up on defeat). */
+    TArray<TWeakObjectPtr<AAstrawildBossHazardActor>> ActiveHazards;
+
+    /** Arena anchor for hazard placement (spawn location). */
+    FVector ArenaCenter = FVector::ZeroVector;
 
     /** Walk speed set by the current phase — status slows multiply on top each tick. */
     float PhaseWalkSpeed = 380.0f;
@@ -180,8 +246,20 @@ private:
     void SpawnSummons();
     void ExecuteAttack(float DeltaTime);
     void TickStatusEffects(float DeltaTime);
+
+    // Final production run (PHASE 14): the special-attack pipeline.
+    void TickSpecials(float DeltaTime);
+    void TickWeakPoint(float DeltaTime);
+    void TickPendingBlasts(float DeltaTime);
+    void FireEnergyBolt(class AAstrawildPlayerCharacter* Target);
+    void SpawnArenaHazard();
+    void CleanupEncounterFx();
+
     float GetStatusSpeedMultiplier() const;
     void RefreshWalkSpeed();
     class AAstrawildPlayerCharacter* FindNearestPlayer() const;
     float GetAttackDamage() const;
+
+    UFUNCTION()
+    void OnRep_bWeakPointExposed();
 };

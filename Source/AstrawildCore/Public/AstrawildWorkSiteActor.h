@@ -8,6 +8,7 @@
 
 class AAstrawildWorkSiteActor;
 class AAstrawildEchoCharacter;
+class AAstrawildUtilityRobotActor;
 class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAstrawildWorkProduced, AAstrawildWorkSiteActor*, Site, FName, ItemId, int32, Quantity);
@@ -53,6 +54,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Work")
     bool bRequiresPower = false;
 
+    /**
+     * Final production run: stable site id — bootstrapper sites use fixed ids
+     * ("Site_CampGathering"...), the save system re-links workers by it.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Work")
+    FName SiteId = NAME_None;
+
+    /** Fixed work rate contributed by a manned utility robot (no needs, power-gated). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Work", meta=(ClampMin="0.0", ClampMax="2.0"))
+    float RobotWorkRate = 0.8f;
+
     virtual void Tick(float DeltaTime) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -70,6 +82,26 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
     void RemoveWorker(AAstrawildEchoCharacter* Echo);
+
+    // --- Final production run: utility robot worker (PHASE 12 robotics) ---
+
+    /** Attach a utility robot (server — one robot per site). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
+    bool AssignRobot(AAstrawildUtilityRobotActor* Robot);
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
+    void RemoveRobot(AAstrawildUtilityRobotActor* Robot);
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
+    bool HasRobot() const { return AssignedRobot.IsValid(); }
+
+    /** Roster instance ids of the Echoes currently assigned (save snapshot). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
+    TArray<FGuid> GetAssignedEchoInstanceIds() const;
+
+    /** Save/restore: output level + worker identity (assignment re-linked by the save subsystem). */
+    FAstrawildWorkSiteSaveData ExportForSave() const;
+    void ImportFromSave(const FAstrawildWorkSiteSaveData& Data);
 
     /** IAstrawildInteractable (audit C-7): collect output / assign nearest idle Echo. */
     virtual void Interact_Implementation(AActor* InteractingActor) override;
@@ -89,6 +121,9 @@ private:
     float WorkAccumulator = 0.0f;
 
     TArray<TWeakObjectPtr<AAstrawildEchoCharacter>> Workers;
+
+    /** Final production run: robot presence — the site Tick adds its flat rate. */
+    TWeakObjectPtr<AAstrawildUtilityRobotActor> AssignedRobot;
 
     bool IsPowered() const;
     class UAstrawildPowerSubsystem* GetPower() const;

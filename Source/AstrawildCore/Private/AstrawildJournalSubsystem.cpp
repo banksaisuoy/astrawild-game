@@ -62,7 +62,11 @@ void UAstrawildJournalSubsystem::Tick(const float DeltaTime)
         {
             if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
             {
-                ObservePlayer(Player, 0.5f);
+                // Final production run: hold-to-scan multiplies the observation rate
+                // while the equipped scanner is active (PHASE 12 scanner framework).
+                const bool bThisPlayerScanning = ActiveScanner.IsValid() && ActiveScanner.Get() == Player;
+                const float Multiplier = bThisPlayerScanning ? ActiveScanMultiplier : 1.0f;
+                ObservePlayer(Player, 0.5f * Multiplier);
             }
         }
     }
@@ -159,6 +163,9 @@ void UAstrawildJournalSubsystem::GrantKnowledgeMilestones(FAstrawildJournalEntry
             if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
             {
                 EventBus->PublishEvent(TAG_Astrawild_Event_EchoObserved, nullptr, DefinitionId, 1, FVector::ZeroVector);
+                // Final production run: scanners complete knowledge faster — surface
+                // the completion on the bus too (audio/UI hooks).
+                EventBus->PublishEvent(TAG_Astrawild_Event_EchoScanned, nullptr, DefinitionId, 1, FVector::ZeroVector);
             }
         }
     }
@@ -205,5 +212,48 @@ void UAstrawildJournalSubsystem::ImportFromSave(const TArray<FAstrawildJournalEn
         {
             Entries.Add(Entry.EchoDefinitionId, Entry);
         }
+    }
+}
+
+// --- Final production run (PHASE 12): active scanner framework ---
+
+void UAstrawildJournalSubsystem::BeginActiveScan(AAstrawildPlayerCharacter* Scanner, const float Multiplier)
+{
+    ActiveScanner = Scanner;
+    ActiveScanMultiplier = FMath::Clamp(Multiplier, 1.0f, 10.0f);
+}
+
+void UAstrawildJournalSubsystem::EndActiveScan()
+{
+    ActiveScanner = nullptr;
+    ActiveScanMultiplier = 1.0f;
+}
+
+bool UAstrawildJournalSubsystem::IsScanActiveFor(const AAstrawildPlayerCharacter* Player) const
+{
+    return ActiveScanner.IsValid() && Player && ActiveScanner.Get() == Player;
+}
+
+void UAstrawildJournalSubsystem::AddExternalObservation(const AAstrawildEchoCharacter* Echo, const float Progress)
+{
+    // Final production run (PHASE 12): external observation feed (utility drone).
+    if (!IsValid(Echo) || !IsValid(Echo->EchoDefinition) || Progress <= 0.0f)
+    {
+        return;
+    }
+
+    const FName DefinitionId = Echo->EchoDefinition->DefinitionId;
+    FAstrawildJournalEntry& Entry = Entries.FindOrAdd(DefinitionId);
+    if (Entry.TimesEncountered == 0)
+    {
+        Entry.EchoDefinitionId = DefinitionId;
+        Entry.TimesEncountered = 1;
+    }
+
+    if (Entry.ObservationProgress < 100.0f)
+    {
+        Entry.ObservationProgress = FMath::Min(100.0f, Entry.ObservationProgress + Progress);
+        GrantKnowledgeMilestones(Entry, DefinitionId);
+        OnJournalUpdated.Broadcast(DefinitionId, Entry);
     }
 }

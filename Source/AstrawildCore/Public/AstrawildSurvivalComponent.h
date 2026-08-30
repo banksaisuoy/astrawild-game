@@ -171,4 +171,7 @@ private:
      *  while standing still is free). */
     bool IsOwnerMoving() const;
     class UAstrawildWeatherSubsystem* GetWeatherSubsystem() const;
+    // Final production run (PHASE 12): advanced-equipment integration helpers.
+    float GetEquippedInsulation() const;
+    float GetExosuitStaminaRegenBonus() const;
 };

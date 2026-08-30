@@ -276,7 +276,10 @@ enum class EAstrawildQuestObjectiveType : uint8
     PlaceBuilding UMETA(DisplayName="Place Building"),
     UnlockTechnology UMETA(DisplayName="Unlock Technology"),
     ObserveEcho UMETA(DisplayName="Observe Echo"),
-    SurviveTime UMETA(DisplayName="Survive Time")
+    SurviveTime UMETA(DisplayName="Survive Time"),
+    // Final production run (appended — serialization-safe for existing saves):
+    // consumes Event.ZoneEntered (published by the zone subsystem since Batch 7).
+    VisitZone UMETA(DisplayName="Visit Zone")
 };
 
 /** Crafting / research eras (directive §19). */
@@ -629,5 +632,103 @@ struct ASTRAWILDCORE_API FAstrawildJournalEntry
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Journal", meta=(ClampMin="0"))
     int32 TimesEncountered = 0;
+};
+
+// ============================================================================
+// FINAL PRODUCTION RUN TYPES — advanced equipment, robotics, save schema v3
+// (additive; appended-only so every existing save keeps deserializing)
+// ============================================================================
+
+/**
+ * Explicit equipment slot routing (final production run PHASE 12). Auto keeps the
+ * legacy stat-based routing (AttackPower→weapon, BlockMitigation→shield,
+ * ArmorRating→torso); new advanced items declare their slot explicitly.
+ */
+UENUM(BlueprintType)
+enum class EAstrawildEquipmentSlot : uint8
+{
+    Auto UMETA(DisplayName="Auto (stat-routed)"),
+    Weapon UMETA(DisplayName="Weapon"),
+    Shield UMETA(DisplayName="Shield"),
+    Torso UMETA(DisplayName="Torso Armor"),
+    Helmet UMETA(DisplayName="Helmet"),
+    Exosuit UMETA(DisplayName="Exosuit"),
+    Scanner UMETA(DisplayName="Scanner")
+};
+
+/** Work-site snapshot (save schema v3 — closes the automation persistence gap). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildWorkSiteSaveData
+{
+    GENERATED_BODY()
+
+    /** Stable site id (bootstrapper-placed sites use fixed ids; player-built use guids). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName SiteId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    EAstrawildWorkType WorkType = EAstrawildWorkType::Gathering;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName OutputItemId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FTransform Transform;
+
+    /** Output accumulated but not yet collected. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 StoredOutput = 0;
+
+    /** Roster instance ids of the Echoes assigned at save time. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FGuid> AssignedEchoInstanceIds;
+
+    /** True when a utility robot mans this site. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bHasRobot = false;
+};
+
+/** Utility drone snapshot (save schema v3). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildDroneSaveData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName OwnerPlayerId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FTransform Transform;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bDeployed = false;
+};
+
+/** Utility robot snapshot (save schema v3). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildRobotSaveData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName OwnerPlayerId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FTransform Transform;
+
+    /** Site id the robot was working at save time. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName AssignedSiteId = NAME_None;
+};
+
+/** Power-grid snapshot (save schema v3 — battery charge finally persists). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildPowerGridSaveData
+{
+    GENERATED_BODY()
+
+    /** Aggregate energy buffered in the grid's batteries (power-seconds). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0"))
+    float StoredEnergy = 0.0f;
 };
 

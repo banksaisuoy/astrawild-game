@@ -11,6 +11,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEquipmentChanged, FName, 
 // Batch 3 — Item C: armor slot has its own additive delegate so the existing
 // two-param OnEquipmentChanged signature stays stable for Blueprint consumers.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildArmorChanged, FName, ArmorItemId);
+// Final production run (PHASE 12): generic slot-change event covering the three
+// new advanced slots (helmet/exosuit/scanner) without touching legacy signatures.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildSlotChanged, EAstrawildEquipmentSlot, Slot, FName, ItemId);
 
 /**
  * Data-driven inventory (directive §14): stacks + weight + capacity + equipment
@@ -109,11 +112,29 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
     FName EquippedArmorItemId = NAME_None;
 
+    // --- Final production run (PHASE 12): advanced equipment slots ---
+
+    /** Helmet: extra armor rating + thermal insulation. */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
+    FName EquippedHelmetItemId = NAME_None;
+
+    /** Exosuit: insulation + stamina regen + carry weight + move speed bonuses. */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
+    FName EquippedExosuitItemId = NAME_None;
+
+    /** Scanner: enables the active hold-to-scan input (journal acceleration). */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Inventory|Equipment", Replicated)
+    FName EquippedScannerItemId = NAME_None;
+
+    /** Fired whenever one of the advanced slots changes (helmet/exosuit/scanner). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Inventory|Equipment")
+    FAstrawildSlotChanged OnSlotChanged;
+
     /** Fired whenever the armor slot changes (Batch 3 — additive delegate). */
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Inventory|Equipment")
     FAstrawildArmorChanged OnArmorChanged;
 
-    /** Fired whenever either equipment slot changes (UI hook). */
+    /** Fired whenever either legacy equipment slot changes (UI hook). */
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Inventory|Equipment")
     FAstrawildEquipmentChanged OnEquipmentChanged;
 
@@ -132,6 +153,44 @@ public:
     /** Element carried by the equipped weapon (None when unarmed/no element) — Batch 3 — Item A. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
     EAstrawildElementType GetEquippedWeaponElement() const;
+
+    // --- Final production run (PHASE 12): advanced-equipment queries ---
+
+    /** Combined armor rating of torso + helmet (feeds the combat mitigation formula). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetTotalArmorRating() const;
+
+    /** Armor rating of the equipped helmet alone (0 when none). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedHelmetArmorRating() const;
+
+    /** Insulation degrees from helmet + exosuit (widens the comfortable temperature band). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedInsulationRating() const;
+
+    /** Extra stamina regen per second from the exosuit (0 when none). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedStaminaRegenBonus() const;
+
+    /** Extra carry weight (kg) from the exosuit (0 when none). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedCarryWeightBonus() const;
+
+    /** Fractional move-speed bonus from the exosuit (0 when none). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEquippedMoveSpeedBonus() const;
+
+    /** True when the equipped weapon fires projectiles (laser/energy path). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    bool IsRangedWeaponEquipped() const;
+
+    /** Ammo item id required per shot by the equipped ranged weapon (NAME_None = free). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    FName GetEquippedAmmoItemId() const;
+
+    /** Effective carry limit including the exosuit bonus (kg). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory|Equipment")
+    float GetEffectiveMaxWeight() const;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

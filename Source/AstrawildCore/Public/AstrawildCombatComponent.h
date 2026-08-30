@@ -56,6 +56,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Attack", meta=(ClampMin="0.0"))
     float HeavyAttackStaminaCost = 25.0f;
 
+    // --- Ranged weapon tunables (final production run — PHASE 12 Pulse Lance) ---
+
+    /** Cooldown between projectile shots (ranged weapons ignore the melee stamina economy). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Ranged", meta=(ClampMin="0.05"))
+    float RangedAttackCooldown = 0.35f;
+
+    /** Forward offset from the player capsule where the bolt spawns (cm). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Ranged", meta=(ClampMin="0.0"))
+    float ProjectileSpawnOffset = 80.0f;
+
     /** Player attack element (equipment can override later). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat|Attack")
     EAstrawildElementType AttackElement = EAstrawildElementType::Ash;
@@ -109,6 +119,7 @@ public:
     // --- Client-side intent entry points (called by input) ---
     void RequestLightAttack();
     void RequestHeavyAttack();
+    void RequestRangedAttack();
     void RequestDodge(const FVector& Direction);
     void RequestSetBlocking(bool bBlocking);
 
@@ -187,6 +198,7 @@ private:
 
     double LastLightAttackTime = -BIG_NUMBER;
     double LastHeavyAttackTime = -BIG_NUMBER;
+    double LastRangedAttackTime = -BIG_NUMBER;
     double LastDodgeTime = -BIG_NUMBER;
     float DodgeInvulnerabilityRemaining = 0.0f;
     // Batch 3 — Item B: server-side stagger countdown (client feedback via OnStaggerStateChanged).
@@ -194,6 +206,12 @@ private:
 
     UFUNCTION(Server, Reliable)
     void ServerLightAttack();
+
+    /** Final production run: ranged weapon shot (validated + ammo-gated on the server). */
+    UFUNCTION(Server, Reliable)
+    void ServerRangedAttack();
+
+    bool ExecuteRangedAttack();
 
     UFUNCTION(Server, Reliable)
     void ServerHeavyAttack();

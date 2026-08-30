@@ -113,6 +113,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_EchoObserved);
 // Batch 7 — The Shattered Vale: zone transitions (server-published, zone id as TargetId).
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_ZoneEntered);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_ZoneLeft);
+// Final production run: active scanner completed a creature (journal milestone path).
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_EchoScanned);
+// Final production run: robotics deployments (drone/robot spawned).
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_DroneDeployed);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Event_RobotDeployed);
 
 // --- Faction.* ---
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Astrawild_Faction_Wild);

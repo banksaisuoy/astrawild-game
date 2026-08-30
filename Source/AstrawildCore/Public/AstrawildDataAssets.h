@@ -94,6 +94,52 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Economy", meta=(ClampMin="0"))
     int32 VendorPrice = 0;
 
+    // --- Final production run (PHASE 12 — advanced technology framework) ---
+
+    /** Explicit equipment slot; Auto keeps the legacy stat-based routing. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    EAstrawildEquipmentSlot EquipmentSlot = EAstrawildEquipmentSlot::Auto;
+
+    /**
+     * Thermal protection (helmet/exosuit): the equipped total widens the player's
+     * comfortable temperature band by this many Celsius on BOTH sides before
+     * exposure damage ticks (survival component consumes the sum).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0"))
+    float InsulationRating = 0.0f;
+
+    /** Exosuit: extra stamina regenerated per second. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0"))
+    float StaminaRegenBonus = 0.0f;
+
+    /** Exosuit: extra carry weight (kg) added to the inventory cap. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0"))
+    float CarryWeightBonus = 0.0f;
+
+    /** Exosuit: fractional walk/sprint speed bonus (0.15 = +15%). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="0.0", ClampMax="1.0"))
+    float MoveSpeedBonus = 0.0f;
+
+    /** Weapon: fires projectiles instead of the melee sweep (laser/energy path). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    bool bIsRangedWeapon = false;
+
+    /** Weapon: ammo item consumed per shot (NAME_None = no ammo requirement). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    FName AmmoItemId = NAME_None;
+
+    /** Scanner: multiplier on journal observation rate while actively scanning. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment", meta=(ClampMin="1.0", ClampMax="10.0"))
+    float ScannerSpeedMultiplier = 3.0f;
+
+    /** Deployable: consuming this item spawns a utility drone companion. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    bool bDeploysDrone = false;
+
+    /** Deployable: consuming this item spawns a utility robot worker. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
+    bool bDeploysRobot = false;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("Item")), ItemId);

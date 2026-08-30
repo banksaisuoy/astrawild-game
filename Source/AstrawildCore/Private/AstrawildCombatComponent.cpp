@@ -6,6 +6,7 @@
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
+#include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/World.h"
@@ -84,9 +85,29 @@ bool UAstrawildCombatComponent::CanAttack(const bool bHeavy) const
 
 void UAstrawildCombatComponent::RequestLightAttack()
 {
+    // Final production run (PHASE 12): a ranged weapon (Pulse Lance) reroutes the
+    // light-attack input to the projectile path — same button, weapon decides mode.
+    const AActor* Owner = GetOwner();
+    if (const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr)
+    {
+        if (Inventory->IsRangedWeaponEquipped())
+        {
+            RequestRangedAttack();
+            return;
+        }
+    }
+
     if (CanAttack(false))
     {
         ServerLightAttack();
+    }
+}
+
+void UAstrawildCombatComponent::RequestRangedAttack()
+{
+    if (CanAttack(false))
+    {
+        ServerRangedAttack();
     }
 }
 
@@ -126,6 +147,11 @@ void UAstrawildCombatComponent::RequestSetBlocking(const bool bBlocking)
 void UAstrawildCombatComponent::ServerLightAttack_Implementation()
 {
     ExecuteAttack(false);
+}
+
+void UAstrawildCombatComponent::ServerRangedAttack_Implementation()
+{
+    ExecuteRangedAttack();
 }
 
 void UAstrawildCombatComponent::ServerHeavyAttack_Implementation()
@@ -276,6 +302,63 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
     return true;
 }
 
+bool UAstrawildCombatComponent::ExecuteRangedAttack()
+{
+    // Final production run (PHASE 12): energy-weapon path — validates the ranged
+    // weapon + ammo, consumes a cell, then spawns the server-authoritative bolt.
+    UWorld* World = GetWorld();
+    UAstrawildSurvivalComponent* Survival = GetSurvival();
+    ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+    UAstrawildInventoryComponent* Inventory = OwnerCharacter ? OwnerCharacter->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
+    if (!World || !Survival || !OwnerCharacter || !Inventory || Survival->IsDead())
+    {
+        return false;
+    }
+
+    if (!Inventory->IsRangedWeaponEquipped())
+    {
+        return false;
+    }
+
+    if (World->GetTimeSeconds() - LastRangedAttackTime < RangedAttackCooldown)
+    {
+        return false;
+    }
+
+    // Ammo gate: weapons without AmmoItemId are free; the Pulse Lance burns cells.
+    const FName AmmoId = Inventory->GetEquippedAmmoItemId();
+    if (!AmmoId.IsNone())
+    {
+        FAstrawildItemStack AmmoCost;
+        AmmoCost.ItemId = AmmoId;
+        AmmoCost.Quantity = 1;
+        if (!Inventory->ConsumeItems(TArray<FAstrawildItemStack>{AmmoCost}))
+        {
+            return false;
+        }
+    }
+
+    LastRangedAttackTime = World->GetTimeSeconds();
+
+    // Muzzle: slightly in front of the player's eyes, aimed along the view.
+    const FVector AimOrigin = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector AimDirection = OwnerCharacter->GetActorForwardVector();
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    Params.Instigator = OwnerCharacter;
+    AAstrawildProjectileActor* Bolt = World->SpawnActor<AAstrawildProjectileActor>(
+        AAstrawildProjectileActor::StaticClass(), AimOrigin, AimDirection.Rotation(), Params);
+    if (!Bolt)
+    {
+        return false;
+    }
+
+    Bolt->Launch(AimDirection, GetOutgoingAttackDamage(false), GetResolvedAttackElement(), OwnerCharacter);
+    OnAttackExecuted.Broadcast(false, 0.0f);
+    return true;
+}
+
 float UAstrawildCombatComponent::GetMitigatedIncomingDamage(const float RawDamage) const
 {
     if (IsDodging())
@@ -403,7 +486,9 @@ float UAstrawildCombatComponent::GetEquippedArmorFraction() const
     const AActor* Owner = GetOwner();
     if (const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr)
     {
-        return ComputeArmorFraction(Inventory->GetEquippedArmorRating(), ArmorConstantK, ArmorMaxFraction);
+        // Final production run: torso + helmet ratings sum before the single
+        // diminishing-returns formula (PHASE 12 armor progression).
+        return ComputeArmorFraction(Inventory->GetTotalArmorRating(), ArmorConstantK, ArmorMaxFraction);
     }
     return 0.0f;
 }

@@ -106,6 +106,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoObserved, "Event.EchoObserved");
 // Batch 7 — The Shattered Vale: zone transitions.
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_ZoneEntered, "Event.ZoneEntered");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_ZoneLeft, "Event.ZoneLeft");
+// Final production run: active scanner + robotics deployments.
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoScanned, "Event.EchoScanned");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_DroneDeployed, "Event.DroneDeployed");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_RobotDeployed, "Event.RobotDeployed");
 
 // --- Faction.* ---
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Faction_Wild, "Faction.Wild");

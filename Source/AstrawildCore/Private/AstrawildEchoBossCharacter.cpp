@@ -1,5 +1,7 @@
 #include "AstrawildEchoBossCharacter.h"
 
+#include "AstrawildBossHazardActor.h"
+#include "AstrawildBossTelegraphActor.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -9,6 +11,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -40,6 +43,20 @@ AAstrawildEchoBossCharacter::AAstrawildEchoBossCharacter()
         PlaceholderMesh->SetWorldScale3D(FVector(2.4f, 2.4f, 1.6f));
         PlaceholderMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
     }
+
+    // Final production run (PHASE 14): weak-point core — a small chest sphere that
+    // exposes periodically (REPLACE_BEFORE_RELEASE: glowing material + pulse).
+    WeakPointMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeakPointMesh"));
+    WeakPointMesh->SetupAttachment(GetCapsuleComponent());
+    WeakPointMesh->SetCollisionProfileName(TEXT("NoCollision"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere"));
+    if (SphereMesh.Succeeded())
+    {
+        WeakPointMesh->SetStaticMesh(SphereMesh.Object);
+    }
+    WeakPointMesh->SetWorldScale3D(FVector(0.9f));
+    WeakPointMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
+    WeakPointMesh->SetVisibility(false);
 }
 
 void AAstrawildEchoBossCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -48,12 +65,28 @@ void AAstrawildEchoBossCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
     DOREPLIFETIME(AAstrawildEchoBossCharacter, CurrentHealth);
     DOREPLIFETIME(AAstrawildEchoBossCharacter, CurrentPhase);
     DOREPLIFETIME(AAstrawildEchoBossCharacter, bEnraged);
+    DOREPLIFETIME(AAstrawildEchoBossCharacter, bWeakPointExposed);
+}
+
+void AAstrawildEchoBossCharacter::OnRep_bWeakPointExposed()
+{
+    // Clients mirror the vulnerability window visually.
+    if (WeakPointMesh)
+    {
+        WeakPointMesh->SetVisibility(bWeakPointExposed);
+    }
 }
 
 void AAstrawildEchoBossCharacter::BeginPlay()
 {
     Super::BeginPlay();
     CurrentHealth = MaxHealth;
+    ArenaCenter = GetActorLocation();
+
+    if (WeakPointMesh)
+    {
+        WeakPointMesh->SetVisibility(bWeakPointExposed);
+    }
 }
 
 float AAstrawildEchoBossCharacter::GetHealthFraction() const
@@ -276,6 +309,11 @@ void AAstrawildEchoBossCharacter::Tick(const float DeltaTime)
 
     TickStatusEffects(DeltaTime);
     ExecuteAttack(DeltaTime);
+
+    // Final production run (PHASE 14): specials + weak point + pending blasts.
+    TickSpecials(DeltaTime);
+    TickWeakPoint(DeltaTime);
+    TickPendingBlasts(DeltaTime);
 }
 
 void AAstrawildEchoBossCharacter::TransitionToPhase(const int32 NewPhase)
@@ -395,8 +433,16 @@ float AAstrawildEchoBossCharacter::ApplyElementalBossDamage(const float DamageAm
 
     // Batch 6: resolve the element against the boss's weakness/own element (same
     // multiplier vocabulary as the Echo pipeline) before the phase pipeline.
-    const float Multiplier = ComputeBossElementalMultiplier(Element, WeaknessElement, BossElement);
-    const float Applied = ApplyBossDamage(DamageAmount * Multiplier);
+    float Damage = DamageAmount * ComputeBossElementalMultiplier(Element, WeaknessElement, BossElement);
+
+    // Final production run (PHASE 14): strikes landed while the weak-point core is
+    // exposed hit the vulnerability window (x2 by default) — the skill ceiling.
+    if (bWeakPointExposed)
+    {
+        Damage *= FMath::Max(1.0f, WeakPointDamageMultiplier);
+    }
+
+    const float Applied = ApplyBossDamage(Damage);
 
     if (Applied > 0.0f)
     {
@@ -423,6 +469,10 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
 
     if (IsDefeated())
     {
+        // Final production run (PHASE 14): dissolve telegraphs + hazards so the
+        // arena is safe the moment the fight ends.
+        CleanupEncounterFx();
+
         // Clean up summons so the arena is safe on victory.
         for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : Summons)
         {
@@ -448,4 +498,218 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
     }
 
     return Applied;
+}
+
+// --- Final production run (PHASE 14): special-attack pipeline ---
+
+void AAstrawildEchoBossCharacter::TickSpecials(const float DeltaTime)
+{
+    UWorld* World = GetWorld();
+    AAstrawildPlayerCharacter* Player = FindNearestPlayer();
+    if (!World || !Player)
+    {
+        return;
+    }
+
+    const double Now = World->GetTimeSeconds();
+
+    // Special cadence: phase 1 energy bolt; phase 2+ adds the telegraphed AoE slam
+    // (and phase 3 halves the special cooldown — enrage pressure).
+    if (Now - LastSpecialAttackTime >= SpecialAttackCooldownSeconds * (CurrentPhase >= 3 ? 0.5f : 1.0f))
+    {
+        LastSpecialAttackTime = Now;
+
+        // Always: energy bolt at the player (dodgeable projectile).
+        FireEnergyBolt(Player);
+
+        // Phase 2+: telegraphed AoE at the player's CURRENT position — the ring
+        // gives the player the window to sprint out (the whole point of telegraphs).
+        if (CurrentPhase >= 2)
+        {
+            FAstrawildPendingBlast Blast;
+            Blast.Location = Player->GetActorLocation();
+            Blast.RemainingSeconds = TelegraphDurationSeconds;
+
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            if (AAstrawildBossTelegraphActor* Ring = World->SpawnActor<AAstrawildBossTelegraphActor>(
+                AAstrawildBossTelegraphActor::StaticClass(), Blast.Location, FRotator::ZeroRotator, Params))
+            {
+                Ring->BlastRadius = SpecialBlastRadius;
+                Ring->TelegraphDuration = TelegraphDurationSeconds;
+                Blast.Ring = Ring;
+            }
+            PendingBlasts.Add(Blast);
+            UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss telegraphs a blast at %.0f,%.0f."), Blast.Location.X, Blast.Location.Y);
+        }
+    }
+
+    // Arena hazards: phase 2+ scatters lingering pools around the arena center.
+    if (CurrentPhase >= 2 && Now - LastHazardTime >= HazardIntervalSeconds)
+    {
+        LastHazardTime = Now;
+        SpawnArenaHazard();
+    }
+}
+
+void AAstrawildEchoBossCharacter::TickWeakPoint(const float DeltaTime)
+{
+    WeakPointElapsed += DeltaTime;
+
+    if (bWeakPointExposed)
+    {
+        if (WeakPointElapsed >= WeakPointWindowSeconds)
+        {
+            bWeakPointExposed = false;
+            WeakPointElapsed = 0.0f;
+            if (WeakPointMesh)
+            {
+                WeakPointMesh->SetVisibility(false);
+            }
+        }
+    }
+    else if (WeakPointElapsed >= WeakPointPeriodSeconds)
+    {
+        bWeakPointExposed = true;
+        WeakPointElapsed = 0.0f;
+        if (WeakPointMesh)
+        {
+            WeakPointMesh->SetVisibility(true);
+        }
+        UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss weak point exposed for %.1fs!"), WeakPointWindowSeconds);
+    }
+}
+
+void AAstrawildEchoBossCharacter::TickPendingBlasts(const float DeltaTime)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    const float SquaredRadius = SpecialBlastRadius * SpecialBlastRadius;
+    for (int32 i = PendingBlasts.Num() - 1; i >= 0; --i)
+    {
+        FAstrawildPendingBlast& Blast = PendingBlasts[i];
+        Blast.RemainingSeconds -= DeltaTime;
+        if (Blast.RemainingSeconds > 0.0f)
+        {
+            continue;
+        }
+
+        // Detonate: radial damage to alive players inside (standard mitigation).
+        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+        {
+            const APlayerController* PC = It->Get();
+            AAstrawildPlayerCharacter* Player = PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+            if (!Player || !Player->IsAlive())
+            {
+                continue;
+            }
+            if (FVector::DistSquared(Blast.Location, Player->GetActorLocation()) > SquaredRadius)
+            {
+                continue;
+            }
+
+            if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
+            {
+                const float Mitigated = Player->CombatComponent
+                    ? Player->CombatComponent->GetMitigatedIncomingDamage(SpecialBlastDamage)
+                    : SpecialBlastDamage;
+                Survival->ApplyDamage(Mitigated);
+                if (Player->CombatComponent)
+                {
+                    Player->CombatComponent->ApplyStagger(Player->CombatComponent->PlayerStaggerSeconds);
+                }
+            }
+        }
+
+        if (AAstrawildBossTelegraphActor* Ring = Blast.Ring.Get())
+        {
+            World->DestroyActor(Ring);
+        }
+        PendingBlasts.RemoveAt(i);
+    }
+}
+
+void AAstrawildEchoBossCharacter::FireEnergyBolt(AAstrawildPlayerCharacter* Target)
+{
+    UWorld* World = GetWorld();
+    if (!World || !Target)
+    {
+        return;
+    }
+
+    const FVector Muzzle = GetActorLocation() + GetActorForwardVector() * 120.0f + FVector(0.0f, 0.0f, 60.0f);
+    const FVector Direction = (Target->GetActorLocation() + FVector(0.0f, 0.0f, 40.0f) - Muzzle).GetSafeNormal();
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    Params.Instigator = this;
+    if (AAstrawildProjectileActor* Bolt = World->SpawnActor<AAstrawildProjectileActor>(
+        AAstrawildProjectileActor::StaticClass(), Muzzle, Direction.Rotation(), Params))
+    {
+        Bolt->Launch(Direction, GetAttackDamage() * 0.8f, BossElement, this);
+    }
+}
+
+void AAstrawildEchoBossCharacter::SpawnArenaHazard()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // Random point on the hazard ring around the arena center.
+    const float Angle = FMath::FRandRange(0.0f, PI * 2.0f);
+    const FVector Location = ArenaCenter + FVector(
+        FMath::Cos(Angle) * HazardSpawnRadius,
+        FMath::Sin(Angle) * HazardSpawnRadius,
+        0.0f);
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    if (AAstrawildBossHazardActor* Hazard = World->SpawnActor<AAstrawildBossHazardActor>(
+        AAstrawildBossHazardActor::StaticClass(), Location, FRotator::ZeroRotator, Params))
+    {
+        ActiveHazards.Add(Hazard);
+    }
+}
+
+void AAstrawildEchoBossCharacter::CleanupEncounterFx()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    for (const FAstrawildPendingBlast& Blast : PendingBlasts)
+    {
+        if (AAstrawildBossTelegraphActor* Ring = Blast.Ring.Get())
+        {
+            World->DestroyActor(Ring);
+        }
+    }
+    PendingBlasts.Reset();
+
+    for (const TWeakObjectPtr<AAstrawildBossHazardActor>& Weak : ActiveHazards)
+    {
+        if (AAstrawildBossHazardActor* Hazard = Weak.Get())
+        {
+            World->DestroyActor(Hazard);
+        }
+    }
+    ActiveHazards.Reset();
+
+    if (bWeakPointExposed)
+    {
+        bWeakPointExposed = false;
+        if (WeakPointMesh)
+        {
+            WeakPointMesh->SetVisibility(false);
+        }
+    }
 }

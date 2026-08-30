@@ -73,7 +73,11 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
 
     // Drop stale workers.
     Workers.RemoveAll([](const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak) { return !Weak.IsValid(); });
-    if (Workers.IsEmpty())
+
+    // Final production run: a utility robot mans the site on its own (PHASE 12 —
+    // the automation loop no longer strictly requires captured Echoes).
+    const bool bRobotPresent = AssignedRobot.IsValid();
+    if (Workers.IsEmpty() && !bRobotPresent)
     {
         return;
     }
@@ -119,6 +123,13 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
         }
     }
 
+    // Final production run: robots work at a flat rate (no needs decay — that is
+    // their entire niche — but the power gate above still applies).
+    if (bRobotPresent)
+    {
+        WorkAccumulator += DeltaTime * RobotWorkRate * PowerMultiplier;
+    }
+
     while (WorkAccumulator >= SecondsPerOutput)
     {
         WorkAccumulator -= SecondsPerOutput;
@@ -160,6 +171,64 @@ void AAstrawildWorkSiteActor::RemoveWorker(AAstrawildEchoCharacter* Echo)
     }
 }
 
+bool AAstrawildWorkSiteActor::AssignRobot(AAstrawildUtilityRobotActor* Robot)
+{
+    if (!IsValid(Robot) || AssignedRobot.IsValid())
+    {
+        return false;
+    }
+    AssignedRobot = Robot;
+    return true;
+}
+
+void AAstrawildWorkSiteActor::RemoveRobot(AAstrawildUtilityRobotActor* Robot)
+{
+    if (AssignedRobot.Get() == Robot)
+    {
+        AssignedRobot = nullptr;
+    }
+}
+
+TArray<FGuid> AAstrawildWorkSiteActor::GetAssignedEchoInstanceIds() const
+{
+    TArray<FGuid> Out;
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : Workers)
+    {
+        if (const AAstrawildEchoCharacter* Echo = Weak.Get())
+        {
+            Out.Add(Echo->InstanceId);
+        }
+    }
+    return Out;
+}
+
+FAstrawildWorkSiteSaveData AAstrawildWorkSiteActor::ExportForSave() const
+{
+    FAstrawildWorkSiteSaveData Data;
+    Data.SiteId = SiteId;
+    Data.WorkType = WorkType;
+    Data.OutputItemId = OutputItemId;
+    Data.Transform = GetActorTransform();
+    Data.StoredOutput = StoredOutput;
+    Data.AssignedEchoInstanceIds = GetAssignedEchoInstanceIds();
+    Data.bHasRobot = AssignedRobot.IsValid();
+    return Data;
+}
+
+void AAstrawildWorkSiteActor::ImportFromSave(const FAstrawildWorkSiteSaveData& Data)
+{
+    // Identity/output restore; assignments are re-linked by the save subsystem
+    // once the roster and robots are respawned (documented load order).
+    if (!Data.SiteId.IsNone())
+    {
+        SiteId = Data.SiteId;
+    }
+    WorkType = Data.WorkType;
+    OutputItemId = Data.OutputItemId;
+    StoredOutput = FMath::Max(0, Data.StoredOutput);
+    WorkAccumulator = 0.0f;
+}
+
 FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
 {
     // Audit C-7: dynamic prompt — collect when output waits, assign otherwise.
@@ -168,7 +237,7 @@ FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
         return FText::FromString(FString::Printf(TEXT("Collect %d x %s [E]"),
             StoredOutput, *OutputItemId.ToString()));
     }
-    if (!Workers.IsEmpty())
+    if (!Workers.IsEmpty() || AssignedRobot.IsValid())
     {
         return FText::FromString(FString::Printf(TEXT("%s — working (%s) [E]"),
             *UEnum::GetDisplayValueAsText(WorkType).ToString(), *OutputItemId.ToString()));

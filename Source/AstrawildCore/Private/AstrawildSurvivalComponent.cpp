@@ -1,6 +1,7 @@
 #include "AstrawildSurvivalComponent.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildWeatherSubsystem.h"
 #include "GameFramework/Controller.h"
@@ -56,7 +57,8 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
     }
     else
     {
-        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + StaminaRegenPerSecond * DeltaTime);
+        // Final production run: exosuit stamina-regen bonus stacks on the base rate.
+        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + (StaminaRegenPerSecond + GetExosuitStaminaRegenBonus()) * DeltaTime);
     }
 
     // --- Starvation / dehydration ---
@@ -68,7 +70,10 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
 
     // --- Environment temperature ---
     UpdateTemperature();
-    if (Stats.Temperature <= ColdThresholdCelsius || Stats.Temperature >= HeatThresholdCelsius)
+    // Final production run (PHASE 12): helmet + exosuit insulation widens the
+    // comfortable band on BOTH sides — cold protection and thermal protection.
+    const float Insulation = GetEquippedInsulation();
+    if (Stats.Temperature <= ColdThresholdCelsius - Insulation || Stats.Temperature >= HeatThresholdCelsius + Insulation)
     {
         Stats.Health = FMath::Max(0.0f, Stats.Health - ExposureHealthDamagePerSecond * DeltaTime);
     }
@@ -109,6 +114,21 @@ UAstrawildWeatherSubsystem* UAstrawildSurvivalComponent::GetWeatherSubsystem() c
 {
     const UWorld* World = GetWorld();
     return World ? World->GetSubsystem<UAstrawildWeatherSubsystem>() : nullptr;
+}
+
+float UAstrawildSurvivalComponent::GetEquippedInsulation() const
+{
+    // Final production run (PHASE 12): helmet + exosuit insulation (0 when unequipped).
+    const AActor* Owner = GetOwner();
+    const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
+    return Inventory ? Inventory->GetEquippedInsulationRating() : 0.0f;
+}
+
+float UAstrawildSurvivalComponent::GetExosuitStaminaRegenBonus() const
+{
+    const AActor* Owner = GetOwner();
+    const UAstrawildInventoryComponent* Inventory = Owner ? Owner->FindComponentByClass<UAstrawildInventoryComponent>() : nullptr;
+    return Inventory ? Inventory->GetEquippedStaminaRegenBonus() : 0.0f;
 }
 
 void UAstrawildSurvivalComponent::ApplyStatusTicks(const float DeltaTime)

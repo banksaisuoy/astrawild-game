@@ -54,6 +54,25 @@ public:
     void ExportForSave(TArray<FAstrawildJournalEntry>& OutEntries) const;
     void ImportFromSave(const TArray<FAstrawildJournalEntry>& InEntries);
 
+    // --- Final production run (PHASE 12): active scanner framework ---
+
+    /** Hold-to-scan: accelerate observation while the equipped scanner is held. */
+    void BeginActiveScan(AAstrawildPlayerCharacter* Scanner, float Multiplier);
+
+    /** Release: observation returns to the passive rate. */
+    void EndActiveScan();
+
+    /** True while the given player is actively scanning. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Journal")
+    bool IsScanActiveFor(const AAstrawildPlayerCharacter* Player) const;
+
+    /**
+     * Final production run: drone observation feed — adds progress for a creature
+     * regardless of the player's view direction (utility drone scan pulses).
+     * Runs the same milestone pipeline as direct observation.
+     */
+    void AddExternalObservation(const AAstrawildEchoCharacter* Echo, float Progress);
+
 protected:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
@@ -62,6 +81,10 @@ private:
 
     /** Throttle accumulator for the observation sweep (0.5s cadence). */
     float ObservationSweepAccumulator = 0.0f;
+
+    /** Active scanner state (weak — a disconnect/destroy simply ends the scan). */
+    TWeakObjectPtr<AAstrawildPlayerCharacter> ActiveScanner;
+    float ActiveScanMultiplier = 1.0f;
 
     void ObservePlayer(AAstrawildPlayerCharacter* Player, float DeltaTime);
     void GrantKnowledgeMilestones(FAstrawildJournalEntry& Entry, const FName DefinitionId);

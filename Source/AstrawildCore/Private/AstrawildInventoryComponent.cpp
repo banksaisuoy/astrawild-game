@@ -22,6 +22,11 @@ void UAstrawildInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePr
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedItemId);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedShieldItemId);
     DOREPLIFETIME(UAstrawildInventoryComponent, EquippedArmorItemId);
+    // Final production run: the advanced slots replicate so client HUDs/inventory
+    // screens mirror the server loadout.
+    DOREPLIFETIME(UAstrawildInventoryComponent, EquippedHelmetItemId);
+    DOREPLIFETIME(UAstrawildInventoryComponent, EquippedExosuitItemId);
+    DOREPLIFETIME(UAstrawildInventoryComponent, EquippedScannerItemId);
 }
 
 void UAstrawildInventoryComponent::BeginPlay()
@@ -58,11 +63,12 @@ float UAstrawildInventoryComponent::GetCurrentWeight() const
 
 float UAstrawildInventoryComponent::GetWeightFraction() const
 {
-    if (MaxWeight <= 0.0f)
+    const float EffectiveMax = GetEffectiveMaxWeight();
+    if (EffectiveMax <= 0.0f)
     {
         return 0.0f;
     }
-    return FMath::Clamp(GetCurrentWeight() / MaxWeight, 0.0f, 1.0f);
+    return FMath::Clamp(GetCurrentWeight() / EffectiveMax, 0.0f, 1.0f);
 }
 
 bool UAstrawildInventoryComponent::CanAddItem(const FName ItemId, const int32 Quantity) const
@@ -72,7 +78,9 @@ bool UAstrawildInventoryComponent::CanAddItem(const FName ItemId, const int32 Qu
         return false;
     }
 
-    if (MaxWeight <= 0.0f)
+    // Final production run: the exosuit carry-weight bonus raises the cap.
+    const float EffectiveMax = GetEffectiveMaxWeight();
+    if (EffectiveMax <= 0.0f)
     {
         return true;
     }
@@ -85,7 +93,7 @@ bool UAstrawildInventoryComponent::CanAddItem(const FName ItemId, const int32 Qu
             AddedWeight = ItemDef->Weight * Quantity;
         }
     }
-    return GetCurrentWeight() + AddedWeight <= MaxWeight + KINDA_SMALL_NUMBER;
+    return GetCurrentWeight() + AddedWeight <= EffectiveMax + KINDA_SMALL_NUMBER;
 }
 
 bool UAstrawildInventoryComponent::AddItem(const FName ItemId, const int32 Quantity)
@@ -239,6 +247,52 @@ bool UAstrawildInventoryComponent::EquipItem(const FName ItemId)
         const UAstrawildItemDefinition* ItemDef = Registry->FindItem(ItemId);
         if (ItemDef && ItemDef->Category == EAstrawildItemCategory::Equipment)
         {
+            // Final production run (PHASE 12): explicit slot routing wins first —
+            // advanced items (helmet/exosuit/scanner/ranged weapons) declare their
+            // slot; Auto keeps the legacy stat-based routing below.
+            switch (ItemDef->EquipmentSlot)
+            {
+            case EAstrawildEquipmentSlot::Helmet:
+                {
+                    const FName Previous = EquippedHelmetItemId;
+                    EquippedHelmetItemId = ItemId;
+                    if (Previous != ItemId)
+                    {
+                        OnSlotChanged.Broadcast(EAstrawildEquipmentSlot::Helmet, ItemId);
+                    }
+                    OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
+                    return true;
+                }
+            case EAstrawildEquipmentSlot::Exosuit:
+                {
+                    const FName Previous = EquippedExosuitItemId;
+                    EquippedExosuitItemId = ItemId;
+                    if (Previous != ItemId)
+                    {
+                        OnSlotChanged.Broadcast(EAstrawildEquipmentSlot::Exosuit, ItemId);
+                    }
+                    OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
+                    return true;
+                }
+            case EAstrawildEquipmentSlot::Scanner:
+                {
+                    const FName Previous = EquippedScannerItemId;
+                    EquippedScannerItemId = ItemId;
+                    if (Previous != ItemId)
+                    {
+                        OnSlotChanged.Broadcast(EAstrawildEquipmentSlot::Scanner, ItemId);
+                    }
+                    OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
+                    return true;
+                }
+            case EAstrawildEquipmentSlot::Weapon:
+            case EAstrawildEquipmentSlot::Shield:
+            case EAstrawildEquipmentSlot::Torso:
+            case EAstrawildEquipmentSlot::Auto:
+            default:
+                break;
+            }
+
             // Wave 3 routing: attack items are weapons, mitigation items are shields.
             if (ItemDef->AttackPower > 0.0f)
             {
@@ -280,6 +334,22 @@ void UAstrawildInventoryComponent::Unequip()
     {
         EquippedArmorItemId = NAME_None;
         OnArmorChanged.Broadcast(NAME_None);
+    }
+    // Final production run: clear the advanced slots as well.
+    if (!EquippedHelmetItemId.IsNone())
+    {
+        EquippedHelmetItemId = NAME_None;
+        OnSlotChanged.Broadcast(EAstrawildEquipmentSlot::Helmet, NAME_None);
+    }
+    if (!EquippedExosuitItemId.IsNone())
+    {
+        EquippedExosuitItemId = NAME_None;
+        OnSlotChanged.Broadcast(EAstrawildEquipmentSlot::Exosuit, NAME_None);
+    }
+    if (!EquippedScannerItemId.IsNone())
+    {
+        EquippedScannerItemId = NAME_None;
+        OnSlotChanged.Broadcast(EAstrawildEquipmentSlot::Scanner, NAME_None);
     }
     OnEquipmentChanged.Broadcast(EquippedItemId, EquippedShieldItemId);
 }
@@ -353,4 +423,136 @@ EAstrawildElementType UAstrawildInventoryComponent::GetEquippedWeaponElement() c
 void UAstrawildInventoryComponent::BroadcastWeight()
 {
     OnWeightChanged.Broadcast(GetCurrentWeight());
+}
+
+// --- Final production run (PHASE 12): advanced-equipment queries ---
+
+float UAstrawildInventoryComponent::GetEquippedHelmetArmorRating() const
+{
+    if (EquippedHelmetItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedHelmetItemId))
+        {
+            return ItemDef->ArmorRating;
+        }
+    }
+    return 0.0f;
+}
+
+float UAstrawildInventoryComponent::GetTotalArmorRating() const
+{
+    // Torso + helmet feed the same diminishing-returns formula (rating adds up).
+    return GetEquippedArmorRating() + GetEquippedHelmetArmorRating();
+}
+
+float UAstrawildInventoryComponent::GetEquippedInsulationRating() const
+{
+    float Total = 0.0f;
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (!EquippedHelmetItemId.IsNone())
+        {
+            if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedHelmetItemId))
+            {
+                Total += ItemDef->InsulationRating;
+            }
+        }
+        if (!EquippedExosuitItemId.IsNone())
+        {
+            if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedExosuitItemId))
+            {
+                Total += ItemDef->InsulationRating;
+            }
+        }
+    }
+    return Total;
+}
+
+float UAstrawildInventoryComponent::GetEquippedStaminaRegenBonus() const
+{
+    if (EquippedExosuitItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedExosuitItemId))
+        {
+            return ItemDef->StaminaRegenBonus;
+        }
+    }
+    return 0.0f;
+}
+
+float UAstrawildInventoryComponent::GetEquippedCarryWeightBonus() const
+{
+    if (EquippedExosuitItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedExosuitItemId))
+        {
+            return ItemDef->CarryWeightBonus;
+        }
+    }
+    return 0.0f;
+}
+
+float UAstrawildInventoryComponent::GetEquippedMoveSpeedBonus() const
+{
+    if (EquippedExosuitItemId.IsNone())
+    {
+        return 0.0f;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedExosuitItemId))
+        {
+            return ItemDef->MoveSpeedBonus;
+        }
+    }
+    return 0.0f;
+}
+
+bool UAstrawildInventoryComponent::IsRangedWeaponEquipped() const
+{
+    if (EquippedItemId.IsNone())
+    {
+        return false;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedItemId))
+        {
+            return ItemDef->bIsRangedWeapon;
+        }
+    }
+    return false;
+}
+
+FName UAstrawildInventoryComponent::GetEquippedAmmoItemId() const
+{
+    if (EquippedItemId.IsNone())
+    {
+        return NAME_None;
+    }
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(EquippedItemId))
+        {
+            return ItemDef->AmmoItemId;
+        }
+    }
+    return NAME_None;
+}
+
+float UAstrawildInventoryComponent::GetEffectiveMaxWeight() const
+{
+    return MaxWeight + GetEquippedCarryWeightBonus();
 }
