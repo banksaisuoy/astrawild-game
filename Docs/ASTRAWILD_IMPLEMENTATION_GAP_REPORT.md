@@ -7,14 +7,14 @@
 
 ---
 
-## Current tally (post-`d5d23c2` — Wave 4 Batch 2)
+## Current tally (post-`021f93a` — Wave 5 Batch 3)
 
-| Priority | Total | Closed Batch 1 | Closed Batch 2 | Outstanding |
-|---|---|---|---|---|
-| **CRITICAL** | 9 (C-1..C-8 + C-1b discovered during impl) | 9 | 0 | **0** |
-| **HIGH** | 14 | 8 (H-1, H-2, H-3, H-4, H-5, H-7, H-8, H-14) | 3 (B2-A hostile respawn / B2-B building dismantle / B2-C power persistence — closes hostile respawn + delete/refund + per-building power state) | **3 fully + 3 partial** (H-6 MP dupe vector, H-11 crafting output validation, H-12 MP RPC layer, H-13 gamepad, plus partial: H-9 UnregisterEcho decrement, H-10 ReachLocation/SurviveTime objective types, Ultimate Gap "Power persistence" grid-level StoredEnergy) |
-| **MEDIUM** | 14 | 2 (M-4 HUD temp, M-12 missing tags) | 0 | 12 |
-| **LOW** | 9 | 0 | 0 | 9 |
+| Priority | Total | Closed Batch 1 | Closed Batch 2 | Closed Batch 3 | Outstanding |
+|---|---|---|---|---|---|
+| **CRITICAL** | 9 (C-1..C-8 + C-1b discovered during impl) | 9 | 0 | 0 | **0** |
+| **HIGH** | 14 | 8 (H-1, H-2, H-3, H-4, H-5, H-7, H-8, H-14) | 3 (B2-A hostile respawn / B2-B building dismantle / B2-C power persistence) | 0 | **3 fully + 3 partial** (H-6 MP dupe vector, H-11 crafting output validation, H-12 MP RPC layer, H-13 gamepad, plus partial: H-9 UnregisterEcho decrement, H-10 ReachLocation/SurviveTime objective types, Ultimate Gap "Power persistence" grid-level StoredEnergy) |
+| **MEDIUM** | 14 | 2 (M-4 HUD temp, M-12 missing tags) | 0 | 1 (M-1 status system dormant — now live via the element-driven factory + combat hooks) | 11 |
+| **LOW** | 9 | 0 | 0 | 0 (1 partial: L-1 — 2 real tests added of the tautological set) | 9 |
 
 **Honest compile status:** `NOT RUN (sandbox has no UE engine — must be verified on target machine)`. All "closed" marks above mean "closed at source level — implementation exists with real logic and correct integration, verifiable by inspection". They do **not** mean compiled-and-run.
 
@@ -56,9 +56,9 @@
 
 | ID | Gap | Evidence |
 |---|---|---|
-| M-1 | Status-effect system fully implemented but dormant — zero callers; `SpeedMultiplier` unconsumed | `SurvivalComponent.cpp:189-213` |
+| M-1 | ~~Status-effect system fully implemented but dormant — zero callers; `SpeedMultiplier` unconsumed~~ **CLOSED in Batch 3 (`021f93a`)** — `MakeElementalStatusEffect` factory + player-weapon and creature-attack application hooks + `GetStatusSpeedMultiplier` consumed by `RefreshMovementSpeed` (see THIRD IMPLEMENTATION BATCH below) | `SurvivalComponent.cpp:189-213` |
 | M-2 | Sprint drains no stamina (gate-only); block movement penalty dead (never refreshed on toggle) | `PlayerCharacter.cpp:395, 402-405` vs `495-509` |
-| M-3 | Dead code: player `AttackDamage/AttackDistance/AttackCooldownSeconds/LastAttackTimeSeconds`; `bReplicatedDodgeTimer`; `MaxStackSize` unenforced; `PendingOutputTarget`; `GetResearch()`; `IsLocationPowered` dead loop; `StoredCharge` written-never-read; `SetSwitchedOn` unreachable; `AbilityIds` unused; `AttackElement` equipment override unimplemented | various |
+| M-3 | Dead code: player `AttackDamage/AttackDistance/AttackCooldownSeconds/LastAttackTimeSeconds`; `bReplicatedDodgeTimer`; `MaxStackSize` unenforced; `PendingOutputTarget`; `GetResearch()`; `IsLocationPowered` dead loop; `StoredCharge` written-never-read; `SetSwitchedOn` unreachable; `AbilityIds` unused; ~~`AttackElement` equipment override unimplemented~~ (**that piece closed in Batch 3** — `GetResolvedAttackElement()` + weapon `Element` field, `021f93a`) | various |
 | M-4 | HUD hardcodes 20°C; `PushNotification` has zero callers; refresh does a camera trace every 0.15s (duplicated cost); party command not replicated (stale on clients) | `HudWidget.cpp:174-176, 135-142, 119, 182` |
 | M-5 | Capture UX: cooldown starts before resonator check; `OnCaptureResult` has no UI subscriber; resonator consumed on failed rolls (design decision needed) | `CaptureComponent.cpp:78-87, 102` |
 | M-6 | Power: one global grid contradicting documented 1200cm connectivity; `StoredEnergy` not persisted; lamp posts draw power with no light behavior | `PowerSubsystem.cpp:68-111` |
@@ -75,7 +75,7 @@
 
 | ID | Gap |
 |---|---|
-| L-1 | 7 of 9 automation tests are tautological (assert local arithmetic / literal `true`); no save round-trip test; no ContentLibrary sanity test |
+| L-1 | 7 of 9 automation tests are tautological (assert local arithmetic / literal `true`); no save round-trip test; no ContentLibrary sanity test — **PARTIAL as of Batch 3 (`021f93a`)**: `FAstrawildArmorMathTest` + `FAstrawildStatusEffectFactoryTest` call the production statics (11 tests total, 4 real); the remaining 7 tautological tests + save round-trip + content sanity still pending |
 | L-2 | Thirst decay ≈12 min contradicts documented ~20 min (header comment) |
 | L-3 | No dedicated server target file despite MP config (IpNetDriver, MaxPlayers=4) |
 | L-4 | `GameDefaultMap` points at `/Engine/Maps/Entry` — no project map exists (packaging risk) |

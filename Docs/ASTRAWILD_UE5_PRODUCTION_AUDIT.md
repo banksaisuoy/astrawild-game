@@ -74,7 +74,7 @@ Implementation: `UAstrawildSurvivalComponent` (`.h` 120 / `.cpp` 238).
 | Hunger | [x] | Decay 0.083/s ≈ 20 min (`cpp:36-40`); starvation damage `cpp:45-49`. |
 | Thirst | [x] | Decay 0.14/s ≈ 12 min (header comment claiming ~20 min is wrong, `.h:14-15`). |
 | Temperature | [~] | 20°C base + weather offset (`cpp:66-72`); exposure damage outside 4–36°C (`cpp:53-56`). No time-of-day/shelter/biome factors. |
-| Status effects | [!] | `FAstrawildStatusEffect` + `AddStatusEffect/HasStatusEffect` fully implemented (`cpp:189-213`) — **zero callers in the entire codebase**. Dormant system. `SpeedMultiplier` never consumed by movement. |
+| Status effects | [x] | **Batch 3 (`021f93a` — compile pending): NOW LIVE.** `MakeElementalStatusEffect` factory feeds `AddStatusEffect` from real combat hooks (player weapon hits via `EchoCharacter::ApplyElementalDamage`; creature attacks via `EchoAIController::TryAttackTarget` player branch). DoT ticks + expiry in `Tick`; `GetStatusSpeedMultiplier` consumed by `RefreshMovementSpeed`; `FullRestore`/`SetStatsForRestore` broadcast removals (REVIEW-3 M-2). **VERIFIED AT SOURCE (021f93a — compile pending).** |
 | Food | [x] | `ApplyConsumption` (`cpp:139-150`) via `SmartConsume` (`PlayerCharacter.cpp:608-649`). |
 | Medicine | [x] | Bandage (heal 40) / Salve (heal 70) items through same path. |
 | Death | [x] | `Die()` → `OnDied` (`cpp:221-233`) → GameMode respawn chain. |
@@ -86,15 +86,15 @@ Implementation: `UAstrawildInventoryComponent` (`.h` 114 / `.cpp` 282).
 
 | Item | Status | Evidence |
 |---|---|---|
-| Item Definition | [x] | `UAstrawildItemDefinition` + 19 C++-registered items (`ContentLibrary.cpp:110-178`). |
+| Item Definition | [x] | `UAstrawildItemDefinition` + 22 C++-registered items (`ContentLibrary.cpp` — 19 through wave 3, +3 armor in Batch 3); `Element` + `ArmorRating` fields added in Batch 3. |
 | Item Instance | [ ] | Storage is `TMap<FName,int32>` (`.h:105`) — no per-instance items, no durability/quality. |
 | Stack | [~] | Quantity-only; `MaxStackSize` field exists but **never enforced** (`AddItem cpp:92-119` has no cap logic). |
 | Weight | [x] | 120kg cap, 1kg unknown-item fallback, divide-by-zero guarded (`cpp:58-86`). |
-| Equipment | [~] | Exactly 2 slots (weapon + shield, `cpp:207-278`). No armor slots. Equip is a reference, not a transfer; no per-slot unequip. |
+| Equipment | [~] | **3 slots as of Batch 3 (`021f93a` — compile pending): weapon + shield + armor (torso)** — `EquippedArmorItemId` (replicated) with routing by `ArmorRating > 0` before the statless fallback, `GetEquippedArmorRating`/`GetEquippedWeaponElement`, additive `OnArmorChanged` delegate. Still a reference, not a transfer; no per-slot unequip UI. Helmet/arms/legs/boots/core module slots still missing (P9 checklist). |
 | Inventory UI | [ ] | No inventory screen; HUD shows equipment readout only (`HudWidget.cpp:220-237`). |
 | Drop/pickup | [ ] | No drop actor, no pickup class. |
 | Transfer | [ ] | No container API. |
-| Persistence | [x] | Stacks + equipped ids saved/restored (`SaveSubsystem.cpp:78-80, 221-228`). |
+| Persistence | [x] | Stacks + equipped ids (weapon/shield/**armor**) saved/restored (`SaveSubsystem.cpp:78-83, 221-239` — armor added in Batch 3, `HasItem`-guarded). |
 | Duplication tests | [ ] | None. |
 
 ## 6. P4 — Combat
@@ -107,11 +107,11 @@ Implementation: `UAstrawildCombatComponent` (`.h` 145 / `.cpp` 305), `AAstrawild
 | Melee | [x] | Light 25 / Heavy 60 + weapon power; multi-sphere sweep 320cm (`cpp:185-260`). |
 | Ranged | [ ] | No projectile/ranged path at all. |
 | Dodge/parry architecture | [~] | Dodge real (RPC + 0.4s i-frames + launch impulse, `cpp:125-183`). No parry. |
-| Hit reaction | [ ] | None. |
-| Stagger | [ ] | None. |
+| Hit reaction | [x] | **Batch 3 (`021f93a` — compile pending): stagger implemented** — `AAstrawildEchoCharacter::ApplyStagger` (server-only, clamped ≤ 2 s, zeroes `MaxWalkSpeed` + `SetAIState(Staggered)`); player stagger via `UAstrawildCombatComponent::ApplyStagger` + `OnStaggerStateChanged`. **VERIFIED AT SOURCE.** |
+| Stagger | [x] | **Batch 3 triggers (verified at source):** Echo single hit ≥ 20% of `GetMaxHealth()` → 0.8 s; player hit ≥ 35 mitigated (`StaggerDamageThreshold`) → 0.6 s (`PlayerStaggerSeconds`); boss landed hits always stagger 0.6 s. `Think()` gate stops movement + skips decisions while STILL re-arming the think timer. **VERIFIED AT SOURCE (021f93a — compile pending).** |
 | Death | [x] | Numeric defeat + loot + EventBus events (`EchoCharacter.cpp:211-236`). |
-| Status effects | [!] | Combat never applies status effects (dormant API, see P3). |
-| Element system | [x] | 7 elements with weakness/resist on creatures; player attack element hardcoded Ash (`CombatComponent.h:53-55`) — equipment override not implemented. |
+| Status effects | [x] | **Batch 3 (`021f93a` — compile pending): element-driven and live on both sides.** Shared factory `MakeElementalStatusEffect` (Ember→Burn 4 s DPS `2+5%×hit` / Frost→Chill 3 s ×0.5 / Flora→Poison 6 s 2 DPS / Pulse→Shock 0.8 s ×0.3; None/Light/Ash → nothing); creatures carry replicated `StatusEffects` + server `ApplyStatusTicks` (DoT on `CurrentHealth`; DoT defeats route through the full defeat pipeline); players receive statuses from creature elements via `SurvivalComponent`. **VERIFIED AT SOURCE.** |
+| Element system | [x] | 7 elements with weakness/resist on creatures; **Batch 3 closes the weapon-element-override gap** — `GetResolvedAttackElement()` returns the equipped weapon's `Element` when set (Dawn Crystal Blade = Pulse → Shock), falling back to the `AttackElement` tunable (`CombatComponent.cpp:370-384`). **VERIFIED AT SOURCE (021f93a — compile pending).** |
 | First hostile enemy | [x] | `Echo_Gloomfang` (`ContentLibrary.cpp:284-290`) — aggro + chase + attack via `AAstrawildEchoAIController` (`EchoAIController.cpp:212-216, 567-607`). |
 
 **Combat authority is genuinely server-side** — 4 reliable Server RPCs with re-validation (`CombatComponent.h:130-140`). Dead replicated property `bReplicatedDodgeTimer` never read (`.h:122-123`).
@@ -448,3 +448,57 @@ unaffected because the bootstrapper only spawns ONCE in `BeginPlay` (no respawn 
 - `AstrawildPlayerCharacter.cpp:763` — `FollowCamera->GetForwardVector() * 500.0f` reaches 5 m
   (500 cm = 5 m). Compile-clean as-is; consider bumping to 800-1000 cm for usability in a future
   round (out of scope for Batch 2).
+
+---
+
+## 23. Wave 5 Batch 3 status update (post-`021f93a`)
+
+Batch 3 ("Depth — combat") closed the three gameplay-feel items scoped for this batch — status
+effects, hit reactions (stagger), and the armor framework — plus the weapon-element-override MEDIUM
+gap (the "player attack element hardcoded Ash" evidence in §6 above). Console gap-tracker IDs M5/M6/M7
+(all marked DONE at `021f93a`) map to these three items. RESEARCH-3 scoped the work; REVIEW-3
+(read-only compile-risk review) caught **1 HIGH + 2 MEDIUM** issues, all fixed in the same commit.
+None are runtime-verified — compile status remains `NOT RUN (sandbox has no UE engine — must be
+verified on UE 5.8 + Antigravity target machine)`.
+
+| Item | Brief | Status | Note |
+|---|---|---|---|
+| **A — Status effects (element-driven)** | `UAstrawildCombatComponent::MakeElementalStatusEffect` static BlueprintPure factory — one shared element→status vocabulary: Ember→Burn (4 s DoT, DPS `2 + 5% × hit`), Frost→Chill (3 s, speed ×0.5), Flora→Poison (6 s, 2 DPS), Pulse→Shock (0.8 s, speed ×0.3); None/Light/Ash → nothing (`CombatComponent.cpp:327-368`). Creatures: replicated `StatusEffects` + server `ApplyStatusTicks` — DoT damages `CurrentHealth`, expiry removal, and **DoT defeats route through the FULL defeat pipeline** (loot/events/quest credit, `EchoCharacter.cpp:262-313`). Players: `SurvivalComponent` statuses + `GetStatusSpeedMultiplier` (multiplicative; Chill+Shock would stack to 0.15) consumed by `RefreshMovementSpeed`. Application hooks: player weapon hits (`ApplyElementalDamage`, element ≠ None) + creature attacks on the player (`EchoAIController::TryAttackTarget` player branch). New tags `Status.Chilled/Shocked/Staggered` | `[x] VERIFIED AT SOURCE (021f93a — compile pending)` | Closes gap-report M-1 (status system dormant) and Ultimate Gap §3 "Status effects dormant" + §8 "Status effects in combat". **Statuses are NOT persisted** — transient combat state (grep-verified: zero StatusEffect references in SaveSubsystem); deliberate decision. Duskmoth is **Flora** element (poisons) — it is weak TO Frost; no Frost-element species or weapon exists in content yet, so Chill currently has no content source (a Frost weapon/species is future content) |
+| **B — Hit reactions (stagger, zero-asset)** | `EAstrawildEchoAIState::Staggered` appended AFTER `Dead` (serialization-safe, `Types.h:207`). `AAstrawildEchoCharacter::ApplyStagger` — server-only, clamped ≤ 2 s, zeroes `MaxWalkSpeed` + `SetAIState(Staggered)`; expiry in Tick restores state AND speed. Triggers: Echo hit ≥ 20% of `GetMaxHealth()` → 0.8 s; player hit ≥ 35 mitigated (`StaggerDamageThreshold`) → 0.6 s (`PlayerStaggerSeconds`); boss landed hits ALWAYS stagger (`EchoBossCharacter.cpp:229-235`). `AIController::Think` stagger gate: `StopMovement` + skip Decide/Execute, think timer re-arm UNCONDITIONAL (naive early-return would kill the AI loop). Player side: `CombatComponent::StaggerRemainingSeconds` + `ApplyStagger` + `OnStaggerStateChanged` + Tick countdown; `RefreshMovementSpeed` zeroes while `IsStaggering`. New tag `State.Creature.Staggered` | `[x] VERIFIED AT SOURCE (021f93a — compile pending)` | Closes Ultimate Gap §3 "Hit reactions/stagger" + §8 "Hit reaction/stagger". REVIEW-3 M-1 (stagger freeze) caught + fixed inline — see §23.1 below |
+| **C — Armor framework (3 tiers, diminishing returns)** | `UAstrawildItemDefinition::ArmorRating` new field. `UAstrawildInventoryComponent`: `EquippedArmorItemId` (Replicated + DOREPLIFETIME — 28th replicated prop overall) + routing branch (before the statless fallback) + `GetEquippedArmorRating` + `GetEquippedWeaponElement` + Unequip clears + additive `OnArmorChanged` delegate (2-param `OnEquipmentChanged` signature unchanged for BP stability). `UAstrawildCombatComponent`: static pure `ComputeArmorFraction(Rating, K, MaxFraction) = Rating/(Rating+K)` clamped; tunables `ArmorConstantK=100` / `ArmorMaxFraction=0.6`; `GetMitigatedIncomingDamage` multiplies by `(1−armor)` AFTER dodge/block (dodge still fully avoids, block still reduces first). Save: additive `EquippedArmorId` (no schema bump) + `HasItem`-guarded restore. Content: Fiberweave Vest 20 / Emberhide Jacket 45 / Crystalplate Cuirass 80 (16.7 / 31.0 / 44.4% reduction) + 3 recipes (4/6/9 s, `Tech_Armory` + workbench — `Tech_Armory` now unlocks 5 recipes). HUD `EquipmentText` armor segment; `EquipBest` picks the best armor | `[x] VERIFIED AT SOURCE (021f93a — compile pending)` | Closes Ultimate Gap §5 "Armor framework" row for the torso slot (helmet/arms/legs/boots/core slots remain P9 checklist items). Items 19→22, recipes 10→13. Tests: `+ASTRAWILD.Equipment.ArmorMath` + `+ASTRAWILD.Combat.StatusEffectFactory` — both call production statics (gap-report L-1 now PARTIAL: 2 real tests added; 11 total) |
+
+### 23.1 REVIEW-3 findings (all fixed inline in `021f93a`)
+
+- **H-1 (HIGH — compile blocker, pre-existing since wave 3 `2eeedf8`):** `AstrawildHudWidget.cpp` calls
+  members on `UAstrawildInventoryComponent` (`EquippedItemId` / `GetEquippedWeaponAttackPower()` /
+  `EquippedShieldItemId` — plus the new Batch-3 `EquippedArmorItemId` / `GetEquippedArmorRating()`)
+  while the type was only forward-declared in that translation unit (MSVC C2027/C2079). The include
+  closure was audited: no header in the module provides the full class. Fix: added
+  `#include "AstrawildInventoryComponent.h"` at `AstrawildHudWidget.cpp:10`. REVIEW-1/REVIEW-2 missed
+  it because the offending block predates both batches and the project has never been compiled
+  in-sandbox.
+- **M-1 (MEDIUM — runtime):** Echo stagger expiry only ran `SetAIState(Idle)`; the Tick speed
+  recompute is gated on the STATUS multiplier changing, and stagger does not touch it — with no speed
+  status active (the common case, default Ash element), `MaxWalkSpeed` stayed 0 permanently: every
+  heavy hit ≥ 20% max HP (trivially triggered, e.g. 74-damage heavy vs a 60-HP creature) permanently
+  froze the creature. Fix: the expiry branch explicitly restores
+  `Movement->MaxWalkSpeed = CachedStats.MoveSpeed * GetStatusSpeedMultiplier()`
+  (`EchoCharacter.cpp:106-119`).
+- **M-2 (MEDIUM — runtime):** `SurvivalComponent::FullRestore` / `SetStatsForRestore` called
+  `StatusEffects.Reset()` without broadcasting `OnStatusEffectRemoved` — a Chilled/Shocked player kept
+  the stale halved speed after resting at a RestPoint, after QuickLoad, or the `AW.FullRestore` cheat.
+  Fix: both paths broadcast removal per effect BEFORE `Reset()` (`SurvivalComponent.cpp:192-194, 221-225`).
+- LOW-risk residual notes (non-blocking): `CombatComponent` stagger countdown ticks on clients too
+  (harmless — server-only state, consistent with the dodge i-frame pattern); player attacks vs the
+  Boss bypass the element pipeline (bosses cannot Burn/Chill — design choice); HUD shows
+  "Unarmed (0)" for an empty armor slot (cosmetic); stagger restore always lands on `Idle` regardless
+  of pre-stagger state (AI re-decides next Think — acceptable).
+
+### 23.2 Test-suite status
+
+`ASTRAWILD.Equipment.ArmorMath` (tier fractions 20/45/80 → 16.7/31.0/44.4%, diminishing-returns
+ordering, 1,000,000-rating clamp to 0.6, K=0 degenerate case, block+cuirass ≈ 19.4 of a 100 hit) and
+`ASTRAWILD.Combat.StatusEffectFactory` (all 4 element mappings + None/Light/Ash no-op) both exercise
+the REAL production static functions — replacing tautological assertions. A pre-existing float-unsafe
+`TestEqual` was converted to a tolerance-based `TestTrue`. **11 automation tests total** — 4 call
+production code, 7 remain tautological (gap-report L-1 remainder → Batch 4).

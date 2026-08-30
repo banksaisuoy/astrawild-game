@@ -3,16 +3,19 @@
 ## Status
 
 - Overall: `PARTIAL` — full vertical-slice foundation implemented in C++ (**source-complete, never compiled**)
-- Last updated: 2026-08-30 (Wave 4 — Batch 2: Hostile respawn + Building dismantle + Power persistence)
-- Branch: `main` (latest: `d5d23c2` — Batch 2 hostile-spawner / dismantle / power-persistence; preceded by `6f14520` compile-blocker include fix from REVIEW-1)
-- Latest change: **Wave 4 Batch 2** — three HIGH integrity items closed in source: hostile respawn
-  (`UAstrawildHostileSpawnerSubsystem`), building dismantle + weight-safe refund
-  (`UAstrawildBuildingComponent::DismantleBuilding` + `UAstrawildInventoryComponent::AddItemSilent`,
-  bound to **Z**), power-state persistence (`FAstrawildBuildingSaveData.bIsPowered` + replicated
-  `AAstrawildBuildingActor::bIsPowered` + `UAstrawildPowerSubsystem::ResolveGridNow` called by
-  `UAstrawildSaveSubsystem::LoadWorld`). REVIEW-2 medium-risk population-clamp bug fixed inline
-  (re-`RegisterEcho` after `InitializeFromDefinition`).
-- Codebase: **88 C++ files (43 `.cpp` + 45 `.h`), ~14,648 LOC** in `Source/AstrawildCore` (single module)
+- Last updated: 2026-08-30 (Wave 5 — Batch 3: Status effects + Hit reactions (stagger) + Armor framework)
+- Branch: `main` (latest: `021f93a` — Batch 3 combat depth; preceded by `c2bfc44` wave-4 docs sync / `d5d23c2` Batch 2 source)
+- Latest change: **Wave 5 Batch 3** — three combat-depth systems closed in source: element-driven
+  status effects (`UAstrawildCombatComponent::MakeElementalStatusEffect` shared factory + replicated
+  `AAstrawildEchoCharacter::StatusEffects` + `UAstrawildSurvivalComponent::GetStatusSpeedMultiplier`),
+  hit reactions/stagger (Echo `EAstrawildEchoAIState::Staggered` + `ApplyStagger` clamped ≤ 2 s +
+  player stagger via `UAstrawildCombatComponent`), and the armor framework (3rd equipment slot
+  `EquippedArmorItemId` + `ComputeArmorFraction` diminishing-returns formula + 3 CODE_DEFAULT
+  tiers). Weapon-element override (`GetResolvedAttackElement`) CLOSED — Dawn Crystal Blade carries
+  Pulse → Shock. REVIEW-3 caught + fixed 1 HIGH (missing `AstrawildInventoryComponent.h` include in
+  `AstrawildHudWidget.cpp` — pre-existing since wave 3) and 2 MEDIUM runtime bugs (M-1 stagger
+  freeze, M-2 stale slow) before commit.
+- Codebase: **88 C++ files (43 `.cpp` + 45 `.h`), ~15,413 LOC** in `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -25,22 +28,85 @@
 
 - Target: `ASTRAWILDEditor Win64 Development` — pending Antigravity (user machine)
 - Result: `NOT_RUN` (unchanged — sandbox has no UE5; honest status per Definition of Done)
-- Errors: **2 latent compile errors found by the audit and fixed in source this round** —
+- Errors: **2 latent compile errors found by the audit and fixed in source in the Batch-1 round** —
   (1) `AstrawildCraftingStationActor.cpp:52` TPair-iteration over `TArray` (C-1);
   (2) `MakeRuntimeAction` declared 3 required params while all 17 call sites pass 2 (C-1b).
-  Both await engine compile confirmation; more latent errors may surface. Batch-2 changes
-  were read-only reviewed (REVIEW-2) — HIGH RISK: none; MEDIUM RISK: one runtime
-  population-clamp bug caught and fixed inline (re-`RegisterEcho` after `InitializeFromDefinition`
-  so `EcosystemSubsystem::WildCount` bumps for the new hostiles); LOW RISK: log category
-  mismatch (`LogAstrawildBuilding` reused for the spawner), uncapped `RespawnAccumulator`
-  (double-spawn after long pause — fine).
+  Both await engine compile confirmation; more latent errors may surface. Batch-3 changes were
+  read-only reviewed (REVIEW-3) — HIGH RISK: one **pre-existing** compile blocker caught and fixed
+  in `021f93a` (missing `#include "AstrawildInventoryComponent.h"` in `AstrawildHudWidget.cpp` —
+  the file calls inventory-component members while only forward-declaring the type; 3 of 5 offending
+  accesses pre-date Batch 3 from wave 3 `2eeedf8`); MEDIUM RISK: two runtime bugs caught and fixed
+  inline (M-1 Echo stagger expiry never restored `MaxWalkSpeed` — permanent creature freeze after
+  any heavy hit; M-2 `FullRestore`/`SetStatsForRestore` cleared statuses without broadcasting
+  `OnStatusEffectRemoved` — stale half-speed after rest/load); LOW RISK: see audit §23.
 - Warnings: Not measured
 - Build duration: Not measured
 - Validation steps for the target machine: `Docs/ASTRAWILD_TEST_PLAN.md` §4
 
 Static repository validation passed with `Scripts/validate_repository.sh`.
 
-## Changes in this round (2026-08-30 — Wave 4 Batch 2: Hostile respawn + Building dismantle + Power persistence)
+## Changes in this round (2026-08-30 — Wave 5 Batch 3: Status effects + Hit reactions (stagger) + Armor framework)
+
+### Commits
+
+| Commit | Type | Subject |
+|---|---|---|
+| `021f93a` | feat(batch-3) | Combat depth — status effects + hit reactions (stagger) + armor framework (22 files, +780/−15) |
+
+### Repository totals (verified with shell commands on `021f93a`)
+
+| Metric | Value | Command |
+|---|---|---|
+| C++ source files | **88** (43 `.cpp` + 45 `.h`) | `find Source -name '*.cpp' -o -name '*.h' \| wc -l` |
+| C++ LOC | **15,413** | `find Source -name '*.cpp' -o -name '*.h' \| xargs wc -l \| tail -1` |
+| Docs (`*.md`) | **49** | `ls Docs/*.md \| wc -l` |
+| DOREPLIFETIME props | **28 across 9 classes** | `grep -c DOREPLIFETIME Source/AstrawildCore/Private/*.cpp` |
+| Input actions | **19** | `MakeRuntimeAction` call sites in `AstrawildPlayerCharacter.cpp::BuildRuntimeInputDefaults` (no new keys in Batch 3) |
+| Cheat commands | **13** | `UFUNCTION(Exec)` methods on `UAstrawildCheatManager` |
+| Automation tests | **11** | `+ASTRAWILD.Equipment.ArmorMath` + `+ASTRAWILD.Combat.StatusEffectFactory` (both call production statics) |
+| Content totals | **22 items · 13 recipes · 6 techs** | `ContentLibrary.cpp` log line: "22 items, 13 recipes, 7 Echo species, 10 buildings, 6 technologies, 6 quests, 2 loot tables, 2 NPCs" |
+
+DOREPLIFETIME breakdown by class (verified by grep): `AAstrawildEchoCharacter` 7 (was 6 — `StatusEffects` added in Batch 3),
+`UAstrawildInventoryComponent` 4 (was 3 — `EquippedArmorItemId` added in Batch 3), `AAstrawildBuildingActor` 4,
+`AAstrawildGameState` 4, `AAstrawildEchoBossCharacter` 3, `UAstrawildCombatComponent` 2, `UAstrawildSurvivalComponent` 2,
+`AAstrawildDungeonRoomActor` 1, `AAstrawildWorkSiteActor` 1.
+
+### Systems added / changed in Batch 3
+
+| System | Class / symbol | Status | Files |
+|---|---|---|---|
+| Element→status shared factory (static BlueprintPure): Ember→Burn (4 s DoT, DPS `2 + 5% × hit`), Frost→Chill (3 s, speed ×0.5), Flora→Poison (6 s, 2 DPS), Pulse→Shock (0.8 s, speed ×0.3); None/Light/Ash → nothing | `UAstrawildCombatComponent::MakeElementalStatusEffect(EAstrawildElementType, float SourceDamage)` (`CombatComponent.cpp:327-368`) | NEW | `AstrawildCombatComponent.h/.cpp` |
+| Weapon element field + override — weapon `Element` overrides the `AttackElement` tunable when set; Dawn Crystal Blade = Pulse (tier-3 weapon Shocks) — **closes the weapon-element-override gap** | `UAstrawildItemDefinition::Element` + `UAstrawildCombatComponent::GetResolvedAttackElement()` | NEW field + CLOSED gap | `AstrawildDataAssets.h`, `AstrawildCombatComponent.h/.cpp`, `AstrawildContentLibrary.cpp` |
+| Creature status container (replicated) + server tick: DoT on `CurrentHealth`, expiry, combined speed multiplier; **DoT defeats route through the FULL defeat pipeline (loot/events/quest credit)** | `AAstrawildEchoCharacter::StatusEffects` (`TArray<FAstrawildStatusEffect>`, `DOREPLIFETIME` line 63) + `AddStatusEffect`/`HasStatusEffect`/`GetStatusSpeedMultiplier` + private `ApplyStatusTicks` | NEW | `AstrawildEchoCharacter.h/.cpp` |
+| Status application hooks — player weapon hits (element ≠ None) apply status to the creature; creature attacks apply the species element's status to the PLAYER | `EchoCharacter::ApplyElementalDamage` (after damage lands) + `EchoAIController::TryAttackTarget` player branch (`Survival->AddStatusEffect`) | NEW | `AstrawildEchoCharacter.cpp`, `AstrawildEchoAIController.cpp` |
+| Player status speed integration + restore fix | `UAstrawildSurvivalComponent::GetStatusSpeedMultiplier()` (multiplicative) + `OnStatusEffectRemoved` delegate; `RefreshMovementSpeed` multiplies by the combined status slow; REVIEW-3 (M-2) fix — `FullRestore`/`SetStatsForRestore` broadcast removal before clearing (no stale slow after rest/load) | NEW + FIX INLINE | `AstrawildSurvivalComponent.h/.cpp`, `AstrawildPlayerCharacter.cpp` |
+| Hit reactions — Echo stagger: server-only `ApplyStagger` (clamped ≤ 2 s) zeroes `MaxWalkSpeed` + `SetAIState(Staggered)`; heavy hits (≥ 20% of `GetMaxHealth()`) stagger 0.8 s; `EAstrawildEchoAIState::Staggered` appended AFTER `Dead` (serialization-safe); REVIEW-3 (M-1) fix — expiry explicitly restores `MaxWalkSpeed` | `AAstrawildEchoCharacter::ApplyStagger` / `StaggerRemainingSeconds` / `IsStaggered` (`EchoCharacter.cpp:319-331`, trigger at 386-389) | NEW + FIX INLINE | `AstrawildEchoCharacter.h/.cpp`, `AstrawildTypes.h` |
+| AI stagger gate — `Think()` stops movement + skips Decide/Execute while staggered but STILL re-arms the think timer (naive early-return would kill the AI loop) | `AAstrawildEchoAIController::Think` (`EchoAIController.cpp:137-153`) | NEW | `AstrawildEchoAIController.cpp` |
+| Player stagger — server-side countdown + `OnStaggerStateChanged` delegate; triggers: Echo hits ≥ 35 mitigated → 0.6 s; boss landed hits ALWAYS stagger 0.6 s; `RefreshMovementSpeed` zeroes while staggering | `UAstrawildCombatComponent::StaggerRemainingSeconds` / `ApplyStagger` / `IsStaggering` + `EchoBossCharacter::ExecuteAttack` | NEW | `AstrawildCombatComponent.h/.cpp`, `AstrawildEchoBossCharacter.cpp`, `AstrawildPlayerCharacter.cpp` |
+| Armor framework — 3rd equipment slot `EquippedArmorItemId` (replicated, 28th replicated prop) + routing branch (before statless fallback) + `GetEquippedArmorRating` + `GetEquippedWeaponElement` + Unequip clears + additive `OnArmorChanged` delegate (2-param `OnEquipmentChanged` signature unchanged for BP stability) | `UAstrawildInventoryComponent` | NEW | `AstrawildInventoryComponent.h/.cpp` |
+| Armor math — static pure `ComputeArmorFraction(Rating, K, MaxFraction) = Rating/(Rating+K)` clamped; tunables `ArmorConstantK=100` / `ArmorMaxFraction=0.6`; `GetMitigatedIncomingDamage` multiplies by `(1 − armor)` AFTER dodge/block | `UAstrawildCombatComponent::ComputeArmorFraction` / `GetEquippedArmorFraction` (`CombatComponent.cpp:387-398`) | NEW | `AstrawildCombatComponent.h/.cpp` |
+| Armor save persistence — additive `EquippedArmorId` FName (no schema bump) + `HasItem`-guarded restore in the same block as weapon/shield | `UAstrawildSaveGame::EquippedArmorId` (`SaveSubsystem.h:56`, write `cpp:83`, restore `cpp:236-238`) | NEW | `AstrawildSaveSubsystem.h/.cpp` |
+| Armor content — Fiberweave Vest (rating 20, 3.0 kg, 4 s craft), Emberhide Jacket (45, 5.0 kg, 6 s), Crystalplate Cuirass (80, 8.0 kg, 9 s) — all `Tech_Armory` + workbench; `Tech_Armory` now unlocks 5 recipes; items 19→**22**, recipes 10→**13** | `ContentLibrary.cpp:184-194, 250-260` | NEW | `AstrawildContentLibrary.cpp` |
+| HUD equipment readout + armor segment; `EquipBest` also picks the best armor by `ArmorRating` | `AstrawildHudWidget.cpp:283-288`, `PlayerCharacter::EquipBest` (`cpp:730-765`) | UPDATE | `AstrawildHudWidget.cpp`, `AstrawildPlayerCharacter.cpp` |
+| New gameplay tags | `TAG_Astrawild_Status_Chilled` / `_Shocked` / `_Staggered` + `TAG_Astrawild_State_Creature_Staggered` | NEW | `AstrawildGameplayTags.h/.cpp` |
+| Tests — 2 REAL automation tests replacing tautological coverage (both call production statics); pre-existing float-unsafe `TestEqual` converted to tolerance-based `TestTrue` | `FAstrawildArmorMathTest` (ArmorMath, `AutomationTests.cpp:217`) + `FAstrawildStatusEffectFactoryTest` (StatusEffectFactory, `:261`) — **11 total** | NEW | `AstrawildAutomationTests.cpp` |
+
+### REVIEW-3 findings (caught and fixed before commit `021f93a`)
+
+| Severity | Finding | Fix that landed in `021f93a` |
+|---|---|---|
+| **HIGH (compile blocker, pre-existing since wave 3 `2eeedf8`)** | `AstrawildHudWidget.cpp` calls members on `UAstrawildInventoryComponent` (`EquippedItemId` / `GetEquippedWeaponAttackPower()` / `EquippedShieldItemId` — plus new Batch-3 `EquippedArmorItemId` / `GetEquippedArmorRating()`) while the type is only forward-declared in that TU — MSVC C2027/C2079 | Added `#include "AstrawildInventoryComponent.h"` at `AstrawildHudWidget.cpp:10` (REVIEW-1/REVIEW-2 missed it because the offending block predates both batches and the project has never been compiled in-sandbox) |
+| **MEDIUM (runtime)** | Echo stagger expiry only ran `SetAIState(Idle)`; the Tick speed recompute is gated on the STATUS multiplier changing, which stagger does not touch — with no speed status active (default Ash element), `MaxWalkSpeed` stayed 0 permanently → every heavy hit ≥ 20% max HP permanently froze the creature | Expiry branch now explicitly restores `Movement->MaxWalkSpeed = CachedStats.MoveSpeed × GetStatusSpeedMultiplier()` (`EchoCharacter.cpp:106-119`, REVIEW-3 M-1 comment) |
+| **MEDIUM (runtime)** | `SurvivalComponent::FullRestore` / `SetStatsForRestore` called `StatusEffects.Reset()` without broadcasting `OnStatusEffectRemoved` → a Chilled/Shocked player kept the stale halved speed after resting at a RestPoint, after QuickLoad, or the `AW.FullRestore` cheat | Both paths now broadcast removal per effect BEFORE `Reset()` (`SurvivalComponent.cpp:192-194, 221-225`, REVIEW-3 M-2 comments) |
+
+### Not persisted (documented decision)
+
+Status effects are **transient combat state** — they are deliberately NOT written to `UAstrawildSaveGame`
+(grep-verified: zero `StatusEffect` references in `SaveSubsystem.h/.cpp`). A save/load or full restore
+resets both player and creature statuses; the M-2 fix guarantees the removal broadcasts fire so no
+stale slow survives the reset.
+
+## Changes in the previous round (2026-08-30 — Wave 4 Batch 2: Hostile respawn + Building dismantle + Power persistence)
 
 ### Commits
 
@@ -255,7 +321,7 @@ No `Source/` files were modified by DOCS-1.
 |---|---|---|
 | Open project | NOT_RUN | Awaiting target-machine compile (Test Plan §4) |
 | Compile Development Editor | NOT_RUN | **Blocking step for everything below** |
-| Automation suite (9 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` |
+| Automation suite (11 tests) | NOT_RUN | Run via Session Frontend, filter `ASTRAWILD` (Batch 3 added `ASTRAWILD.Equipment.ArmorMath` + `ASTRAWILD.Combat.StatusEffectFactory`) |
 | Player movement/camera | NOT_RUN | Manual flow step 4 |
 | Interaction | NOT_RUN | Step 5 |
 | Harvest resource | NOT_RUN | Step 10 |
@@ -278,25 +344,26 @@ No `Source/` files were modified by DOCS-1.
 | Medium | T-5 consume keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press **G** | **Fix in code** (G = `SmartConsume`) — verify at playtest |
 | Medium | T-6 journal per-frame iteration | `AstrawildJournalSubsystem.cpp` | Insights capture | **Fix in code** (throttled observation sweep) — verify via Insights |
 | Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (still present) |
-| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "19 actions" / "19 items, … 2 loot tables, 2 NPCs" and matches the code |
+| Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved for now: log says "19 actions" / "22 items, 13 recipes, … 2 loot tables, 2 NPCs" and matches the code |
 | Low | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | `ShopLootTableId` is a definition-level hook only — purchase flow NOT IMPLEMENTED (future round) |
-| Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending** — Batch 3 / MP batch. Single-player only at present — Item B `DismantleBuilding` uses direct method calls gated on `GetLocalRole() == ROLE_Authority` |
-| Medium | Weapon element override (player attack element hardcoded Ash) | `CombatComponent.h:53-55` | Hit a creature with a Crystal Blade | **Pending** — Batch 3 |
+| Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending** — Batch 4 / MP batch. Single-player only at present — Item B `DismantleBuilding` uses direct method calls gated on `GetLocalRole() == ROLE_Authority` |
+| ~~Medium~~ Closed | Weapon element override (player attack element hardcoded Ash) | `CombatComponent.h` `GetResolvedAttackElement` | Hit a creature with a Crystal Blade | **CLOSED in Batch 3 (`021f93a`)** — weapon `Element` overrides the tunable; Dawn Crystal Blade = Pulse → Shock. Compile pending on target machine |
 | Low | `HostileSpawnerSubsystem::Tick` requires server world | `AstrawildHostileSpawnerSubsystem.cpp:52` | Clients never run the spawn sweep | Clients see populated hostiles via replication only — server authoritative; matches the rest of the simulation |
 | Low | `PowerSubsystem::ResolveGridNow` is server-only | `AstrawildPowerSubsystem.cpp:28-33` | Clients never run `ResolveGrid` | Clients receive correct state via the new `bIsPowered` replicated UPROPERTY on `AAstrawildBuildingActor` — `ResolveGrid`'s server-only early return (`World->GetNetMode() == NM_Client`) at `.cpp:55` guards the path |
 
 ## Handoff to Antigravity
 
-The C++ core (single module `AstrawildCore`, **~14.6k LOC, 88 source files**), the zero-asset playability
+The C++ core (single module `AstrawildCore`, **~15.4k LOC, 88 source files**), the zero-asset playability
 layer (procedural world + runtime input + C++ HUD), save schema v2 (with wave 3 equipment persistence +
-wave 4 building power persistence), the CODE_DEFAULT content set (19 items / 10 recipes / 7 species /
+wave 4 building power persistence + wave 5 armor-slot persistence), the combat-depth layer (status
+effects + stagger + armor), the CODE_DEFAULT content set (22 items / 13 recipes / 7 species /
 10 buildings / 6 techs / 6 quests / 2 loot tables / 2 NPCs), the documentation suite, the test plan, and
 the asset manifest/replacement pipeline are all in the repository. Antigravity must: **pull, generate
-project files, compile `ASTRAWILDEditor Win64 Development`, run the 9 automation tests, execute the
+project files, compile `ASTRAWILDEditor Win64 Development`, run the 11 automation tests, execute the
 17-step first-playable checklist, and fill this report with real results.** Do not mark `COMPLETE` until
 Compile, the automation suite, the core-loop Playtest, and Save/Load have all passed (see
 `Docs/ASTRAWILD_DEFINITION_OF_DONE.md`).
 
-**Handoff tally:** 88 C++ files / 14,648 LOC / 49 docs / 9 automation tests / 26 replicated props across
+**Handoff tally:** 88 C++ files / 15,413 LOC / 49 docs / 11 automation tests / 28 replicated props across
 9 classes / 19 input actions / 13 console cheats. Compile status: `NOT RUN (sandbox has no UE engine —
-must be verified on target machine).`
+must be verified on UE 5.8 + Antigravity target machine).`
