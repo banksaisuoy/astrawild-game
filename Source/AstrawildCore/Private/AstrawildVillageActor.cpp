@@ -12,9 +12,9 @@
 
 namespace
 {
-    constexpr const TCHAR* ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
-    constexpr const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
-    constexpr const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
+    static constexpr const TCHAR* const ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
+    static constexpr const TCHAR* const ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
+    static constexpr const TCHAR* const ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
 }
 
 AAstrawildVillageActor::AAstrawildVillageActor()

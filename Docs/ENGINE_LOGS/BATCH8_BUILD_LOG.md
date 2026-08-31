@@ -7,7 +7,7 @@
 - **Platform**: Win64 Development Editor (UnrealEditor-AstrawildCore.dll)
 
 ## What I Did
-1. Synchronized repository with origin/main (commits e1c1b44, cbdbd82, ab15026 — Batch 8 + Production V2 Batches 1 & 2).
+1. Synchronized repository with origin/main (commits e1c1b44, cbdbd82, ab15026, 8c2e93a, 292c588 — Batch 8 + Production V2 Batches 1 & 2 + H-11 craft output guard).
 2. Regenerated project files with UnrealBuildTool (-projectfiles).
 3. Resolved C++ compilation errors, UE 5.8 API alignments, and header linkages across AstrawildCore.
 4. Built ASTRAWILDEditor Win64 Development to 100% clean status.
@@ -16,7 +16,7 @@
 1. **Float Literal Suffixes (AstrawildBestiaryData.cpp)**:
    - Fixed all 408 integer float suffixes to standard float literals (1500.0f, 360.0f).
 2. **Anonymous Namespace Symbol Collisions in Unity Build**:
-   - Used constexpr const TCHAR* for shape constants across AstrawildVillageActor.cpp and AstrawildWorldBootstrapper.cpp.
+   - Used `static constexpr const TCHAR* const` for shape constants across AstrawildVillageActor.cpp and AstrawildWorldBootstrapper.cpp to eliminate C2086 unity build redefinitions.
 3. **NPC Appearance Method Access (AstrawildNPCCharacter.h)**:
    - Moved RefreshAppearanceFromDefinition() to public section.
 4. **Navigation Invoker API (AstrawildNPCCharacter.cpp, AstrawildEchoCharacter.cpp)**:
