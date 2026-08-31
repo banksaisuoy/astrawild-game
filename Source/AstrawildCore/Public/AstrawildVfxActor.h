@@ -161,3 +161,36 @@ private:
     float DurationSeconds = 0.9f;
     float MaxRadius = 3500.0f;
 };
+
+/**
+ * Capture sequence VFX actor (Master Plan §21/§31): 3 spinning orbital resonance
+ * rings around the target Echo that contract inward with a burst of capture light.
+ */
+UCLASS(Blueprintable)
+class ASTRAWILDCORE_API AAstrawildCaptureVfxActor : public AActor
+{
+    GENERATED_BODY()
+
+public:
+    AAstrawildCaptureVfxActor();
+
+    /**
+     * Spawn orbital capture rings at TargetLocation. Contracts over DurationSeconds.
+     */
+    static AAstrawildCaptureVfxActor* SpawnCaptureVfx(UWorld* World, const FVector& TargetLocation,
+        const FLinearColor& Tint, float InitialRadius = 160.0f, float DurationSeconds = 1.0f);
+
+    virtual void Tick(float DeltaTime) override;
+
+private:
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|VFX")
+    TObjectPtr<UProceduralMeshComponent> CaptureMesh;
+
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|VFX")
+    TObjectPtr<UPointLightComponent> CaptureLight;
+
+    float ElapsedSeconds = 0.0f;
+    float DurationSeconds = 1.0f;
+    float InitialRadius = 160.0f;
+    FLinearColor BaseTint = FLinearColor::White;
+};

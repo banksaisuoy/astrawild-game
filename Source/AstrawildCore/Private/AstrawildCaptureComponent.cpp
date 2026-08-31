@@ -1,10 +1,12 @@
 #include "AstrawildCaptureComponent.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildVfxActor.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
@@ -89,6 +91,12 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
     // Capture reads the situation: weaken first, build trust, observe, then roll.
     const float CaptureChance = PreviewCaptureChance(Echo);
     OnCaptureAttempt.Broadcast(Echo, CaptureChance);
+
+    // Spawn spinning resonance capture rings around the Echo
+    const FLinearColor CaptureColor = Echo->EchoDefinition 
+        ? FAstrawildVfxPalette::GetElementTint(Echo->EchoDefinition->Element) 
+        : FLinearColor(0.2f, 0.8f, 1.0f);
+    AAstrawildCaptureVfxActor::SpawnCaptureVfx(GetWorld(), Echo->GetActorLocation(), CaptureColor, 180.0f, 1.1f);
 
     const bool bRolledSuccess = CaptureChance > 0.0f && FMath::FRandRange(0.0f, 1.0f) <= CaptureChance;
     bool bSuccess = false;

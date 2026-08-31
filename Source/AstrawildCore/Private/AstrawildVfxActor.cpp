@@ -593,3 +593,88 @@ void AAstrawildScannerPulseActor::Tick(const float DeltaTime)
         Destroy();
     }
 }
+
+AAstrawildCaptureVfxActor::AAstrawildCaptureVfxActor()
+{
+    PrimaryActorTick.bCanEverTick = true;
+
+    CaptureMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("CaptureMesh"));
+    CaptureMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    CaptureMesh->SetCastShadow(false);
+    RootComponent = CaptureMesh;
+
+    CaptureLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("CaptureLight"));
+    CaptureLight->SetupAttachment(CaptureMesh);
+    CaptureLight->SetAttenuationRadius(800.0f);
+    CaptureLight->SetCastShadows(false);
+    CaptureLight->SetIntensity(0.0f);
+}
+
+AAstrawildCaptureVfxActor* AAstrawildCaptureVfxActor::SpawnCaptureVfx(UWorld* World, const FVector& TargetLocation,
+    const FLinearColor& Tint, const float InInitialRadius, const float InDurationSeconds)
+{
+    if (!World || World->GetNetMode() == NM_DedicatedServer)
+    {
+        return nullptr;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    AAstrawildCaptureVfxActor* CaptureVfx = World->SpawnActor<AAstrawildCaptureVfxActor>(
+        AAstrawildCaptureVfxActor::StaticClass(), TargetLocation, FRotator::ZeroRotator, Params);
+    if (!CaptureVfx)
+    {
+        return nullptr;
+    }
+
+    CaptureVfx->BaseTint = Tint;
+    CaptureVfx->InitialRadius = FMath::Max(60.0f, InInitialRadius);
+    CaptureVfx->DurationSeconds = FMath::Max(0.3f, InDurationSeconds);
+
+    TArray<FVector> Vertices;
+    TArray<int32> Triangles;
+    TArray<FVector> Normals;
+    TArray<FVector2D> UVs;
+    TArray<FColor> Colors;
+
+    AAstrawildScannerPulseActor::BuildRingGeometry(32, 0.90f, Tint, Vertices, Triangles, Normals, UVs, Colors);
+
+    CaptureVfx->CaptureMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, Colors, TArray<FProcMeshTangent>(), false);
+
+    if (UMaterial* Material = AAstrawildBeamVfxActor::LoadVertexColorMaterial())
+    {
+        CaptureVfx->CaptureMesh->SetMaterial(0, Material);
+    }
+
+    CaptureVfx->CaptureLight->SetLightColor(Tint);
+    CaptureVfx->CaptureLight->SetIntensity(5000.0f);
+    return CaptureVfx;
+}
+
+void AAstrawildCaptureVfxActor::Tick(const float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    ElapsedSeconds += DeltaTime;
+    const float Alpha = FMath::Clamp(ElapsedSeconds / FMath::Max(0.01f, DurationSeconds), 0.0f, 1.0f);
+
+    // Fast spin + inward contraction
+    const float CurrentScale = FMath::Max(0.05f, (1.0f - Alpha) * InitialRadius);
+    if (CaptureMesh)
+    {
+        CaptureMesh->SetRelativeScale3D(FVector(CurrentScale, CurrentScale, CurrentScale));
+        CaptureMesh->AddLocalRotation(FRotator(DeltaTime * 180.0f, DeltaTime * 240.0f, DeltaTime * 120.0f));
+    }
+
+    if (CaptureLight)
+    {
+        // Light pulses bright as it collapses
+        const float PulseIntensity = 3000.0f + 5000.0f * FMath::Sin(Alpha * PI);
+        CaptureLight->SetIntensity(PulseIntensity);
+    }
+
+    if (Alpha >= 1.0f)
+    {
+        Destroy();
+    }
+}

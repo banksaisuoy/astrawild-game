@@ -262,11 +262,23 @@ void AAstrawildSkiffActor::Tick(float DeltaTime)
         return;
     }
 
-    // --- Yaw ---
+    // --- Dynamic Banking & Pitch Tilt ---
+    const float TargetRoll = -PilotTurnAxis * 16.0f;
+    const float TargetPitch = (PilotForwardAxis * 4.5f) + (PilotVerticalAxis * 8.0f);
+    CurrentBankRoll = FMath::FInterpTo(CurrentBankRoll, TargetRoll, DeltaTime, 4.0f);
+    CurrentPitchTilt = FMath::FInterpTo(CurrentPitchTilt, TargetPitch, DeltaTime, 3.5f);
+
+    HoverBobTime += DeltaTime;
+
+    // --- Yaw + Attitude update ---
+    FRotator CurrentRot = GetActorRotation();
+    CurrentRot.Roll = CurrentBankRoll;
+    CurrentRot.Pitch = CurrentPitchTilt;
     if (!FMath::IsNearlyZero(PilotTurnAxis))
     {
-        AddActorWorldRotation(FRotator(0.0f, PilotTurnAxis * TurnRateDegPerSecond * DeltaTime, 0.0f));
+        CurrentRot.Yaw += PilotTurnAxis * TurnRateDegPerSecond * DeltaTime;
     }
+    SetActorRotation(CurrentRot);
 
     // --- Velocity (forward thrust + vertical) with altitude clamps ---
     const FVector Velocity = ComputeSkiffVelocity(

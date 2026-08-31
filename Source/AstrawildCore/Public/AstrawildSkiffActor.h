@@ -129,6 +129,10 @@ private:
     /** Landing legs rest height above terrain when parked (Set at spawn). */
     float ParkedGroundZ = 0.0f;
 
+    float CurrentBankRoll = 0.0f;
+    float CurrentPitchTilt = 0.0f;
+    float HoverBobTime = 0.0f;
+
     void MountPilot(AAstrawildPlayerCharacter* Player);
     float ProbeGroundZ() const;
     void BuildSkiffVisuals();
