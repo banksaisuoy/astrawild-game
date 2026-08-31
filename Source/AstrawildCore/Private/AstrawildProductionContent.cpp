@@ -880,6 +880,11 @@ void UAstrawildProductionContent::BuildBiomes(UAstrawildItemRegistrySubsystem* R
         TArray<FName> Nodes;
         TArray<FName> Species;
         TArray<FName> PoiIds;
+        // Production V2 Batch 2: explicit dressing tints (placeholder scatter reads
+        // in each biome's art direction without any editor asset).
+        FLinearColor CanopyTint;
+        FLinearColor RockTint;
+        FLinearColor GrassTint;
     };
 
     const TArray<FBiomeRow> Rows =
@@ -888,62 +893,74 @@ void UAstrawildProductionContent::BuildBiomes(UAstrawildItemRegistrySubsystem* R
           EAstrawildZone::DawnFields, true,
           { TEXT("Node_Dawnwood"), TEXT("Node_Fieldstone"), TEXT("Node_Sunfiber") },
           { TEXT("Echo_Lumewisp"), TEXT("Echo_Stonehide"), TEXT("Echo_Duskmoth"), TEXT("Echo_Sprigling") },
-          { TEXT("POI_FirstLightRuin"), TEXT("POI_DawnsteadWatchtower") } },
+          { TEXT("POI_FirstLightRuin"), TEXT("POI_DawnsteadWatchtower") },
+          FLinearColor(0.36f, 0.62f, 0.24f, 1.0f), FLinearColor(0.52f, 0.48f, 0.42f, 1.0f), FLinearColor(0.55f, 0.80f, 0.34f, 1.0f) },
         { TEXT("Zone_DuskMarsh"), TEXT("Dusk Marsh"), TEXT("Low fog, black water, bioluminescent reeds"),
           EAstrawildZone::DuskMarsh, false,
           { TEXT("Node_Sunfiber"), TEXT("Node_Dawnwood") },
           { TEXT("Echo_Duskmoth"), TEXT("Echo_Sprigling") },
-          { TEXT("POI_SunkencollarCave") } },
+          { TEXT("POI_SunkencollarCave") },
+          FLinearColor(0.30f, 0.42f, 0.32f, 1.0f), FLinearColor(0.36f, 0.38f, 0.36f, 1.0f), FLinearColor(0.42f, 0.55f, 0.32f, 1.0f) },
         { TEXT("Zone_EmberRidge"), TEXT("Ember Ridge"), TEXT("Volcanic ridges, heat shimmer, obsidian spires"),
           EAstrawildZone::EmberRidge, false,
           { TEXT("Node_Fieldstone"), TEXT("Node_EmberAsh"), TEXT("Node_DawnCrystal") },
           { TEXT("Echo_Emberfang"), TEXT("Echo_Stonehide") },
-          { TEXT("POI_EmberFoundry") } },
+          { TEXT("POI_EmberFoundry") },
+          FLinearColor(0.85f, 0.32f, 0.18f, 1.0f), FLinearColor(0.22f, 0.18f, 0.18f, 1.0f), FLinearColor(0.45f, 0.35f, 0.22f, 1.0f) },
         { TEXT("Zone_FrostveilExpanse"), TEXT("Frostveil Expanse"), TEXT("Snowfields, blue shadows, aurora nights"),
           EAstrawildZone::FrostveilExpanse, false,
           { TEXT("Node_Fieldstone"), TEXT("Node_DawnCrystal") },
           { TEXT("Echo_Rimefang"), TEXT("Echo_Stonehide") },
-          { TEXT("POI_FrostveilSignalSource") } },
+          { TEXT("POI_FrostveilSignalSource") },
+          FLinearColor(0.40f, 0.58f, 0.52f, 1.0f), FLinearColor(0.55f, 0.60f, 0.68f, 1.0f), FLinearColor(0.60f, 0.68f, 0.55f, 1.0f) },
         { TEXT("Zone_Glimmerwood"), TEXT("Glimmerwood"), TEXT("Violet canopy, drifting spores, crystal undergrowth"),
           EAstrawildZone::Glimmerwood, false,
           { TEXT("Node_Dawnwood"), TEXT("Node_DawnCrystal") },
           { TEXT("Echo_Voltmaw"), TEXT("Echo_Sprigling"), TEXT("Echo_Auroraling") },
-          { TEXT("POI_GlimmerwoodMonolith") } },
+          { TEXT("POI_GlimmerwoodMonolith") },
+          FLinearColor(0.52f, 0.36f, 0.72f, 1.0f), FLinearColor(0.48f, 0.46f, 0.58f, 1.0f), FLinearColor(0.42f, 0.62f, 0.58f, 1.0f) },
         { TEXT("Zone_HollowApproach"), TEXT("Hollow Approach"), TEXT("Ash plain around a wound in the world"),
           EAstrawildZone::HollowApproach, false,
           { TEXT("Node_Fieldstone"), TEXT("Node_DawnCrystal"), TEXT("Node_AncientVein") },
           { TEXT("Echo_Gloomfang") },
-          { TEXT("POI_HollowApproachSpire") } },
+          { TEXT("POI_HollowApproachSpire") },
+          FLinearColor(0.38f, 0.32f, 0.30f, 1.0f), FLinearColor(0.28f, 0.25f, 0.26f, 1.0f), FLinearColor(0.42f, 0.38f, 0.28f, 1.0f) },
         { TEXT("Zone_AzureShallows"), TEXT("Azure Shallows"), TEXT("Knee-deep turquoise water, white sand, skiff country"),
           EAstrawildZone::AzureShallows, false,
           { TEXT("Node_SeaPearl"), TEXT("Node_Fieldstone") },
           { TEXT("Echo_Brinefin"), TEXT("Echo_Saltcrest") },
-          {} },
+          {},
+          FLinearColor(0.38f, 0.68f, 0.38f, 1.0f), FLinearColor(0.72f, 0.68f, 0.58f, 1.0f), FLinearColor(0.62f, 0.72f, 0.42f, 1.0f) },
         { TEXT("Zone_TidebreakerIsles"), TEXT("Tidebreaker Isles"), TEXT("Wave-carved stacks, driftwood hamlets, storm light"),
           EAstrawildZone::TidebreakerIsles, false,
           { TEXT("Node_SeaPearl"), TEXT("Node_Dawnwood") },
           { TEXT("Echo_Wavecrest"), TEXT("Echo_Mistwing") },
-          { TEXT("POI_TidebreakerWreck") } },
+          { TEXT("POI_TidebreakerWreck") },
+          FLinearColor(0.32f, 0.60f, 0.42f, 1.0f), FLinearColor(0.35f, 0.34f, 0.38f, 1.0f), FLinearColor(0.55f, 0.70f, 0.45f, 1.0f) },
         { TEXT("Zone_SunscarDesert"), TEXT("Sunscar Desert"), TEXT("Dune glass, white heat, buried machine bones"),
           EAstrawildZone::SunscarDesert, false,
           { TEXT("Node_DuneGlass"), TEXT("Node_Fieldstone") },
           { TEXT("Echo_Sunhide"), TEXT("Echo_Glimmerhornet") },
-          { TEXT("POI_SunscarMirageStone") } },
+          { TEXT("POI_SunscarMirageStone") },
+          FLinearColor(0.42f, 0.58f, 0.30f, 1.0f), FLinearColor(0.78f, 0.62f, 0.38f, 1.0f), FLinearColor(0.75f, 0.68f, 0.35f, 1.0f) },
         { TEXT("Zone_StormcrestHighlands"), TEXT("Stormcrest Highlands"), TEXT("Windswept tors, perpetual storm crown"),
           EAstrawildZone::StormcrestHighlands, false,
           { TEXT("Node_StormSilver"), TEXT("Node_Fieldstone") },
           { TEXT("Echo_Sunhorn"), TEXT("Echo_Geargolem") },
-          { TEXT("POI_StormcrestArray") } },
+          { TEXT("POI_StormcrestArray") },
+          FLinearColor(0.30f, 0.44f, 0.34f, 1.0f), FLinearColor(0.50f, 0.50f, 0.52f, 1.0f), FLinearColor(0.44f, 0.52f, 0.38f, 1.0f) },
         { TEXT("Zone_VerdantReach"), TEXT("Verdant Reach"), TEXT("Deep jungle green, canopy tunnels, hidden water"),
           EAstrawildZone::VerdantReach, false,
           { TEXT("Node_Sunfiber"), TEXT("Node_Dawnwood") },
           { TEXT("Echo_Verdantbloom"), TEXT("Echo_Fernthorn") },
-          { TEXT("POI_VerdantHeartTree") } },
+          { TEXT("POI_VerdantHeartTree") },
+          FLinearColor(0.22f, 0.55f, 0.20f, 1.0f), FLinearColor(0.42f, 0.44f, 0.36f, 1.0f), FLinearColor(0.35f, 0.72f, 0.30f, 1.0f) },
         { TEXT("Zone_PearlseaReef"), TEXT("Pearlsea Reef"), TEXT("Coral shelves in clear water, dangerous beauty"),
           EAstrawildZone::PearlseaReef, false,
           { TEXT("Node_CoralShard"), TEXT("Node_SeaPearl") },
           { TEXT("Echo_Coralray"), TEXT("Echo_Pearlcrest") },
-          { TEXT("POI_PearlseaResonanceWell") } },
+          { TEXT("POI_PearlseaResonanceWell") },
+          FLinearColor(0.40f, 0.66f, 0.46f, 1.0f), FLinearColor(0.80f, 0.72f, 0.66f, 1.0f), FLinearColor(0.50f, 0.75f, 0.55f, 1.0f) },
     };
 
     for (const FBiomeRow& Row : Rows)
@@ -957,6 +974,9 @@ void UAstrawildProductionContent::BuildBiomes(UAstrawildItemRegistrySubsystem* R
         Biome->ResourceNodeIds = Row.Nodes;
         Biome->SignatureSpeciesIds = Row.Species;
         Biome->PoiIds = Row.PoiIds;
+        Biome->TreeCanopyTint = Row.CanopyTint;
+        Biome->RockTint = Row.RockTint;
+        Biome->GrassTuftTint = Row.GrassTint;
         Registry->RegisterBiome(Biome);
     }
 }

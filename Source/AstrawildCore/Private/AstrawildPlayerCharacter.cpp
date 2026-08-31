@@ -24,6 +24,7 @@
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildUtilityDroneActor.h"
 #include "AstrawildUtilityRobotActor.h"
+#include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -36,6 +37,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerController.h"
+#include "Materials/Material.h"
+#include "ProceduralMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
@@ -84,6 +87,20 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
         PlaceholderMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 96.0f));
     }
 
+    // Production V2 Batch 2: procedural survivor body + held weapon mesh.
+    BodyMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("BodyMesh"));
+    BodyMesh->SetupAttachment(RootComponent);
+    BodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    BodyMesh->bVisibleInRayTracing = false;
+
+    WeaponMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("WeaponMesh"));
+    WeaponMesh->SetupAttachment(RootComponent);
+    WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    WeaponMesh->SetCastShadow(false);
+    WeaponMesh->bVisibleInRayTracing = false;
+    WeaponMesh->SetRelativeLocation(FVector(38.0f, 24.0f, 58.0f));
+    WeaponMesh->SetVisibility(false); // shown once a weapon is equipped
+
     InventoryComponent = CreateDefaultSubobject<UAstrawildInventoryComponent>(TEXT("Inventory"));
     CraftingComponent = CreateDefaultSubobject<UAstrawildCraftingComponent>(TEXT("Crafting"));
     CaptureComponent = CreateDefaultSubobject<UAstrawildCaptureComponent>(TEXT("Capture"));
@@ -125,6 +142,10 @@ void AAstrawildPlayerCharacter::BeginPlay()
     Super::BeginPlay();
     RefreshMovementSpeed();
 
+    // Production V2 Batch 2: survivor silhouette (local build — runs on server
+    // AND owning client so the body reads in every netmode).
+    BuildProceduralBody();
+
     if (bGivePrototypeStarterItems && HasAuthority() && InventoryComponent && InventoryComponent->GetItemStacks().IsEmpty())
     {
         for (const FAstrawildItemStack& StarterItem : StarterItems)
@@ -160,6 +181,16 @@ void AAstrawildPlayerCharacter::BeginPlay()
     // respawned pawns (audit C-8 — RestartPlayer spawns the pawn before possession,
     // so BeginPlay alone used to leave respawned pawns without an input mapping).
     ApplyMappingContext();
+
+    // Production V2 Batch 2: poll equipped weapons at a gentle cadence so the
+    // held-weapon silhouette follows equipment changes without plumbing every
+    // equip path through the inventory.
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().SetTimer(HeldWeaponTimerHandle, this,
+            &AAstrawildPlayerCharacter::RefreshHeldWeaponVisual, 0.5f, true);
+        RefreshHeldWeaponVisual();
+    }
 }
 
 void AAstrawildPlayerCharacter::PossessedBy(AController* NewController)
@@ -1184,6 +1215,233 @@ AActor* AAstrawildPlayerCharacter::FindInteractableActor() const
 
 // --- Final production run: scanner, robotics, UI input handlers ---
 
+namespace
+{
+    /** Player body part builder helpers — the Echo body idiom, local variant. */
+    struct FAstrawildPlayerBodyPart
+    {
+        TArray<FVector> Vertices;
+        TArray<int32> Triangles;
+        TArray<FVector> Normals;
+        TArray<FVector2D> UVs;
+        TArray<FColor> Colors;
+    };
+
+    void PushPlayerQuad(FAstrawildPlayerBodyPart& Part, const int32 A, const int32 B, const int32 C, const int32 D)
+    {
+        Part.Triangles.Append({ A, B, C, A, C, D });
+    }
+
+    void AddPlayerBox(FAstrawildPlayerBodyPart& Part, const FVector& Center, const FVector& HalfSize, const FColor& Color)
+    {
+        const int32 Base = Part.Vertices.Num();
+        const FVector Corners[8] = {
+            Center + FVector(-HalfSize.X, -HalfSize.Y, -HalfSize.Z),
+            Center + FVector( HalfSize.X, -HalfSize.Y, -HalfSize.Z),
+            Center + FVector( HalfSize.X,  HalfSize.Y, -HalfSize.Z),
+            Center + FVector(-HalfSize.X,  HalfSize.Y, -HalfSize.Z),
+            Center + FVector(-HalfSize.X, -HalfSize.Y,  HalfSize.Z),
+            Center + FVector( HalfSize.X, -HalfSize.Y,  HalfSize.Z),
+            Center + FVector( HalfSize.X,  HalfSize.Y,  HalfSize.Z),
+            Center + FVector(-HalfSize.X,  HalfSize.Y,  HalfSize.Z),
+        };
+        for (const FVector& Corner : Corners)
+        {
+            Part.Vertices.Add(Corner);
+            Part.Normals.Add((Corner - Center).GetSafeNormal());
+            Part.UVs.Add(FVector2D(0.0f, 0.0f));
+            Part.Colors.Add(Color);
+        }
+        PushPlayerQuad(Part, Base + 0, Base + 1, Base + 2, Base + 3); // bottom
+        PushPlayerQuad(Part, Base + 4, Base + 7, Base + 6, Base + 5); // top
+        PushPlayerQuad(Part, Base + 0, Base + 4, Base + 5, Base + 1); // front
+        PushPlayerQuad(Part, Base + 3, Base + 2, Base + 6, Base + 7); // back
+        PushPlayerQuad(Part, Base + 1, Base + 5, Base + 6, Base + 2); // right
+        PushPlayerQuad(Part, Base + 0, Base + 3, Base + 7, Base + 4); // left
+    }
+
+    void AddPlayerSphere(FAstrawildPlayerBodyPart& Part, const FVector& Center, const float Radius, const FColor& Color,
+        const int32 Segments = 9)
+    {
+        const int32 Rings = FMath::Max(4, Segments);
+        const int32 Slices = FMath::Max(4, Segments);
+        const int32 Base = Part.Vertices.Num();
+        for (int32 Ring = 0; Ring <= Rings; ++Ring)
+        {
+            const float Phi = PI * static_cast<float>(Ring) / static_cast<float>(Rings);
+            for (int32 Slice = 0; Slice <= Slices; ++Slice)
+            {
+                const float Theta = 2.0f * PI * static_cast<float>(Slice) / static_cast<float>(Slices);
+                const FVector Normal(
+                    FMath::Sin(Phi) * FMath::Cos(Theta),
+                    FMath::Sin(Phi) * FMath::Sin(Theta),
+                    FMath::Cos(Phi));
+                Part.Vertices.Add(Center + Normal * Radius);
+                Part.Normals.Add(Normal);
+                Part.UVs.Add(FVector2D(static_cast<float>(Slice) / Slices, static_cast<float>(Ring) / Rings));
+                Part.Colors.Add(Color);
+            }
+        }
+        for (int32 Ring = 0; Ring < Rings; ++Ring)
+        {
+            for (int32 Slice = 0; Slice < Slices; ++Slice)
+            {
+                const int32 A = Base + Ring * (Slices + 1) + Slice;
+                const int32 B = Base + (Ring + 1) * (Slices + 1) + Slice;
+                const int32 C = Base + (Ring + 1) * (Slices + 1) + Slice + 1;
+                const int32 D = Base + Ring * (Slices + 1) + Slice + 1;
+                Part.Triangles.Append({ A, B, C, A, C, D });
+            }
+        }
+    }
+
+    void AddPlayerCylinder(FAstrawildPlayerBodyPart& Part, const FVector& Center, const float Radius, const float HalfLength,
+        const FColor& Color, const int32 Sides = 8)
+    {
+        const int32 Base = Part.Vertices.Num();
+        for (int32 Side = 0; Side <= Sides; ++Side)
+        {
+            const float Theta = 2.0f * PI * static_cast<float>(Side) / static_cast<float>(Sides);
+            const FVector Dir(FMath::Cos(Theta), FMath::Sin(Theta), 0.0f);
+            Part.Vertices.Add(Center + FVector(0, 0, -HalfLength) + Dir * Radius);
+            Part.Normals.Add(Dir);
+            Part.UVs.Add(FVector2D(0.0f, 0.0f));
+            Part.Colors.Add(Color);
+            Part.Vertices.Add(Center + FVector(0, 0, HalfLength) + Dir * Radius);
+            Part.Normals.Add(Dir);
+            Part.UVs.Add(FVector2D(0.0f, 1.0f));
+            Part.Colors.Add(Color);
+        }
+        for (int32 Side = 0; Side < Sides; ++Side)
+        {
+            const int32 A = Base + Side * 2;
+            const int32 B = Base + Side * 2 + 1;
+            const int32 C = Base + Side * 2 + 3;
+            const int32 D = Base + Side * 2 + 2;
+            Part.Triangles.Append({ A, B, C, A, C, D });
+        }
+    }
+
+    UMaterial* LoadPlayerBodyMaterial()
+    {
+        UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        if (!Material)
+        {
+            Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial"));
+        }
+        return Material;
+    }
+}
+
+void AAstrawildPlayerCharacter::BuildProceduralBody()
+{
+    if (!BodyMesh)
+    {
+        return;
+    }
+
+    // ASTRAWILD frontier-survivor palette: graphite suit, amber accents, teal visor.
+    const FColor SuitDark(58, 60, 66, 255);
+    const FColor SuitMid(78, 80, 88, 255);
+    const FColor Amber(232, 152, 48, 255);
+    const FColor VisorTeal(74, 220, 200, 255);
+    const FColor HelmetGrey(128, 130, 134, 255);
+
+    FAstrawildPlayerBodyPart Body;
+
+    // Torso + chest plate.
+    AddPlayerBox(Body, FVector(0, 0, 100), FVector(17, 12, 26), SuitDark);
+    AddPlayerBox(Body, FVector(9, 0, 108), FVector(8, 9, 13), Amber);
+
+    // Head + visor.
+    AddPlayerSphere(Body, FVector(0, 0, 148), 13.5f, HelmetGrey);
+    AddPlayerBox(Body, FVector(10, 0, 149), FVector(4, 9, 6), VisorTeal);
+
+    // Backpack (scavenger gear) + strap.
+    AddPlayerBox(Body, FVector(-19, 0, 106), FVector(7, 13, 17), SuitMid);
+    AddPlayerBox(Body, FVector(-12, 0, 120), FVector(2, 11, 3), Amber);
+
+    // Legs + arms.
+    AddPlayerBox(Body, FVector(0, 8, 55), FVector(7, 7, 20), SuitMid);
+    AddPlayerBox(Body, FVector(0, -8, 55), FVector(7, 7, 20), SuitMid);
+    AddPlayerBox(Body, FVector(0, 21, 100), FVector(6, 5, 23), SuitMid);
+    AddPlayerBox(Body, FVector(0, -21, 100), FVector(6, 5, 23), SuitMid);
+
+    if (Body.Vertices.Num() > 0)
+    {
+        BodyMesh->CreateMeshSection(0, Body.Vertices, Body.Triangles, Body.Normals, Body.UVs, Body.Colors,
+            TArray<FProcMeshTangent>(), false);
+        if (UMaterial* Material = LoadPlayerBodyMaterial())
+        {
+            BodyMesh->SetMaterial(0, Material);
+        }
+
+        // The silhouette replaces the legacy grey cylinder.
+        if (PlaceholderMesh)
+        {
+            PlaceholderMesh->SetVisibility(false);
+        }
+    }
+}
+
+void AAstrawildPlayerCharacter::RefreshHeldWeaponVisual()
+{
+    if (!WeaponMesh || !CombatComponent)
+    {
+        return;
+    }
+
+    const UAstrawildWeaponDefinition* WeaponDef = CombatComponent->GetEquippedWeaponDefinition();
+    const FName WeaponId = WeaponDef ? WeaponDef->WeaponId : NAME_None;
+    if (WeaponId == LastHeldWeaponId)
+    {
+        return; // nothing changed since the last poll
+    }
+    LastHeldWeaponId = WeaponId;
+
+    if (!WeaponDef)
+    {
+        WeaponMesh->SetVisibility(false);
+        WeaponMesh->ClearAllMeshSections();
+        return;
+    }
+
+    // Family identity tint + tier scale — the held silhouette telegraphs the
+    // weapon's firing behavior (kinetic grey, plasma magenta, arc electric...).
+    const FLinearColor Tint = FAstrawildVfxPalette::GetWeaponFamilyTint(WeaponDef->Family);
+    const FColor Body = FLinearColor(Tint.R * 0.55f + 0.10f, Tint.G * 0.55f + 0.10f, Tint.B * 0.55f + 0.10f, 1.0f).ToFColor(false);
+    const FColor Accents = Tint.ToFColor(false);
+
+    float TierScale = 1.0f;
+    switch (WeaponDef->Tier)
+    {
+    case EAstrawildTechTier::Mk1:          TierScale = 1.1f; break;
+    case EAstrawildTechTier::Mk2:          TierScale = 1.25f; break;
+    case EAstrawildTechTier::Mk3:          TierScale = 1.4f; break;
+    case EAstrawildTechTier::Experimental: TierScale = 1.6f; break;
+    default: break;
+    }
+
+    FAstrawildPlayerBodyPart Gun;
+    // Receiver, grip, energy cell, barrel — sized in tier scale.
+    AddPlayerBox(Gun, FVector(0, 0, 0), FVector(15 * TierScale, 4.5f * TierScale, 6 * TierScale), Body);
+    AddPlayerBox(Gun, FVector(-9 * TierScale, 0, -7 * TierScale), FVector(3.5f * TierScale, 3.5f * TierScale, 7 * TierScale), Body);
+    AddPlayerBox(Gun, FVector(-2 * TierScale, 0, 8 * TierScale), FVector(5 * TierScale, 3.5f * TierScale, 3.5f * TierScale), Accents);
+    AddPlayerCylinder(Gun, FVector(17 * TierScale, 0, 0), 3.2f * TierScale, 13 * TierScale, Accents, 7);
+
+    WeaponMesh->ClearAllMeshSections();
+    if (Gun.Vertices.Num() > 0)
+    {
+        WeaponMesh->CreateMeshSection(0, Gun.Vertices, Gun.Triangles, Gun.Normals, Gun.UVs, Gun.Colors,
+            TArray<FProcMeshTangent>(), false);
+        if (UMaterial* Material = LoadPlayerBodyMaterial())
+        {
+            WeaponMesh->SetMaterial(0, Material);
+        }
+        WeaponMesh->SetVisibility(true);
+    }
+}
+
 void AAstrawildPlayerCharacter::StartScan(const FInputActionValue& Value)
 {
     // Hold-to-scan: only works with a scanner equipped (PHASE 12 framework).
@@ -1210,6 +1468,16 @@ void AAstrawildPlayerCharacter::StartScan(const FInputActionValue& Value)
 
     bScanKeyHeld = true;
     Journal->BeginActiveScan(this, Multiplier);
+
+    // Production V2 Batch 2: world-space pulse ring — the scan now reads as an
+    // action (tier-tinted; radius tracks the scanner's effective range).
+    if (UWorld* World = GetWorld())
+    {
+        const FLinearColor PulseTint = FAstrawildVfxPalette::GetScannerTint(InventoryComponent->EquippedScannerItemId);
+        const float RangeMultiplier = InventoryComponent->GetEquippedScannerRangeMultiplier();
+        AAstrawildScannerPulseActor::SpawnPulse(World, GetActorLocation(), PulseTint,
+            2400.0f * FMath::Max(1.0f, RangeMultiplier));
+    }
 }
 
 void AAstrawildPlayerCharacter::StopScan(const FInputActionValue& Value)

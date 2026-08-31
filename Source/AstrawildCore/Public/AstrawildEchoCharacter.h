@@ -8,6 +8,7 @@
 class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
 class AAstrawildWorkSiteActor;
+class UPointLightComponent;
 class UStaticMeshComponent;
 class UNavigationInvokerComponent;
 class UProceduralMeshComponent;
@@ -48,6 +49,14 @@ public:
 
     /** Builds BodyMesh from EchoDefinition appearance fields (safe no-op without a definition). */
     void BuildProceduralBody();
+
+    /**
+     * Production V2 Batch 2: rarity ring (Rare+ species) + element glow identity.
+     * Appends a rarity-tinted annulus section to BodyMesh and prepares the
+     * element light (party members and nearby wild elementals glow; the rest
+     * stays dark so the light budget stays tiny).
+     */
+    void ApplyVisualIdentity();
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoCaptured OnCaptured;
@@ -267,6 +276,16 @@ protected:
 
     /** Production V2: throttles the passive aura tick. */
     float PassiveAuraAccumulator = 0.0f;
+
+    /** Production V2 Batch 2: throttles the element-glow proximity update (1s). */
+    float ElementGlowAccumulator = 0.0f;
+
+    /** Production V2 Batch 2: element identity light (party + nearby wild elementals). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Echo|Appearance")
+    TObjectPtr<UPointLightComponent> ElementGlowLight;
+
+    /** Production V2 Batch 2: proximity/capture-driven element glow update. */
+    void UpdateElementGlow();
 
 private:
     FAstrawildEchoStats CachedStats;

@@ -16,7 +16,7 @@
 | V-2 | Full `Development Editor` build | 0 errors, 0 warnings-as-errors | build log |
 | V-3 | Link `ASTRAWILD.exe` / editor target | links clean (watch for the historical C-2 class of LNK2001) | build log |
 | V-4 | PIE boot, zero-asset world | terrain tiles + camp + spawners visible in <30 s | screenshot + log tail |
-| V-5 | Automation tests (`ast.``*`, 39 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
+| V-5 | Automation tests (`ast.``*`, 47 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
 
 Known "may surface on first compile" items (static review already cleaned these once):
 native gameplay tag registration order, `TObjectPtr` BP exposure policy, IMC runtime
@@ -106,6 +106,14 @@ per the production directive PHASE 16.
 | V2-10 | Robot chassis | deploy Borebot [J] at the Ridge rig → orange light, visibly faster stone output than a general robot | site output compare |
 | V2-11 | Echo auras | capture Mistmender → player + party HP slowly rises; Cindermule near → carry limit +20kg | stat watch |
 | V2-12 | Save v4 | save mid-event with a drone out + kitchen buffer → quit → load → event/battery/buffer all restored | save/load compare |
+| V2-13 | **Biome dressing boot** | log line "Biome dressing placed for 12/12 zones"; Dawn Fields shows trees/rocks/grass within 60m of (but NOT inside) the camp | screenshot from camp + from 100m out |
+| V2-14 | Zone dressing identity | Frostveil snow-dusted conifers / Sunscar cacti + sandstone / Ember glass spires / Isles palms — each zone reads differently at first glance | 4 screenshots |
+| V2-15 | Atmosphere day cycle | 07:00 warm dawn fog → 12:00 neutral noon → 18:30 ember dusk → 23:00 cool dark night; sun color shifts with it | timelapse clip / 4 screenshots |
+| V2-16 | Weather coupling | force Storm → sun visibly dims + fog thickens within ~0.25s; clear → lifts | clip + `stat unit` frame |
+| V2-17 | Beam/Arc VFX | Lumen Beam = bright piercing beam to furthest target; Arc Caster into a pack = jagged lightning chains + muzzle flashes on every shot | short clips |
+| V2-18 | Scanner pulse + Echo identity | hold V per scanner tier → teal/amber/violet expanding rings (Oracle largest); Rare+ wild Echo wears a rarity ring; captured elemental glows | 3 screenshots |
+| V2-19 | VVS perf sanity | dressing (~22k verts/36 sections) + ≤8 active element lights: `stat unit` holds 60 fps mid-GPU at the camp | stat screenshot |
+| V2-20 | Player silhouette | third-person look: survivor body (amber chest/teal visor); equip different weapon families → held gun tint/size changes within 0.5s | 2 screenshots |
 
 ---
 

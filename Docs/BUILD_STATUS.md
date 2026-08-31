@@ -2,36 +2,37 @@
 
 ## Status
 
-- Overall: `PARTIAL` — **PRODUCTION V2 DATA FOUNDATION COMPLETE on the source side** (verified
-  technical prototype per the V2 Master Plan baseline `eceabd3` + Batch 8 + **V2 Batch 1 data
-  foundation**; the V2 batch is source-implemented and awaits compile verification on the UE
-  5.8.2 target machine — see `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_1.md`)
-- Last updated: 2026-08-30 (Batch 8 — 214-species bestiary, 12-zone world with sea/islands/desert,
-  living villages + NPC AI, Dawn Skiff aircraft, dungeon #2, quests 9-10)
-- Branch: `main` (latest: Batch 8; preceded by `eceabd3` final production run, `249eec7` tests,
-  `c417b22` loop closure, `0dfe631` advanced tech, `750f87a` compile-blocker fixes)
-- Latest change: **BATCH 8 "THE GRAND EXPANSE + GRAND MENAGERIE"** — (1) **Bestiary 10→214 species**
-  (`Scripts/generate_bestiary.py` → `AstrawildBestiaryData.cpp` + `Docs/ASTRAWILD_BESTIARY_CODEX.md`):
-  10 families (Beast/Dragon/Construct/Spirit/Elemental/Aquatic/Insectoid/Flora/Avian/Ancient),
-  every species carries family/body-plan/size-class/two-tints/element/weakness/personality/activity/
-  diet/loot/work-affinities/capture-difficulty/home-zone — and **`AAstrawildEchoCharacter::BuildProceduralBody()`
-  renders all 8 body plans as distinct vertex-colored silhouettes** (zero assets, DebugMeshMaterial path).
-  (2) **World 6→12 zones** (3.2×2.4 km, 4×3 grid): Azure Shallows (sea), Tidebreaker Isles (islands),
-  Sunscar Desert, Stormcrest Highlands, Verdant Reach, Pearlsea Reef + walkable **water planes** +
-  beach/deep-sea terrain tint + `GetSeaLevelZ()` contract. (3) **Living villages** — Dawnstead (8 NPCs,
-  7 huts) + Driftwood Landing (3 NPCs, dock): `AAstrawildVillageActor` (procedural hamlet + waypoint
-  circuit) + `AAstrawildNPCAIController` (patrol walk/run, campfire nights 21:00-06:00, guards fight
-  hostile Echoes, conversation pause) + 12 NPC definitions with roles/greetings. (4) **Dawn Skiff
-  aircraft** — board [E], fly WASD + SPACE/CTRL + SHIFT boost, altitude clamps, sweep-safe
-  (`AAstrawildSkiffActor` + input routing through the player character, CTRL descend action,
-  gamepad LS-click). (5) **Dungeon #2 "The Sunken Vault"** in the Isles — Dawnfang sea-dragon boss
-  (distinct `Creature_VaultColossus` defeat id via per-dungeon `BossDefeatEventId`), portal pair +
-  publish-only survey markers (bPublishOnly). (6) **Quests 9-10** ("Wings over the Vale", "The Sunken
-  Vault") close the chain; 5 new materials (Sea Pearl/Coral Shard/Dune Glass/Storm Silver/Chitin
-  Plate) + 3 new vendor loot tables + armory/herbalist/driftwood shops. (7) Heightmap exporter +
-  self-check updated to 12 zones; 3 new automation tests (Bestiary integrity, sea classification,
-  skiff flight math) → **28 total**; zone tests re-based on the 4×3 grid.
-- Codebase: **124 C++ files, ~28,600 LOC, 28 automation tests, 61 docs** in/around `Source/AstrawildCore` (single module)
+- Overall: `PARTIAL` — **PRODUCTION V2 BATCH 2 (VISUAL VERTICAL SLICE RUNTIME SUPPORT) COMPLETE on the
+  source side** (verified technical prototype per the V2 Master Plan baseline `eceabd3` + Batch 8 + V2
+  Batch 1 data foundation + **V2 Batch 2 VVS runtime**: biome dressing / atmosphere grading / weapon VFX /
+  scanner pulses / player + Echo visual identity — all zero-asset with data-only Antigravity upgrade paths;
+  source-implemented, awaits compile verification on the UE 5.8.2 target machine — see
+  `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_2.md`)
+- Last updated: 2026-08-30 (V2 Batch 2 — biome dressing ×12 zones, atmosphere day/night/weather grading +
+  PPV, Beam/Arc/muzzle weapon VFX, scanner pulse rings, player silhouette + held weapon, Echo rarity
+  rings + element glow; tests 39 → 47)
+- Branch: `main` (latest: V2 Batch 2; preceded by `cbdbd82` V2 Batch 1 data foundation, `e1c1b44` Batch 8,
+  `eceabd3` final production run)
+- Latest change: **V2 BATCH 2 — VISUAL VERTICAL SLICE RUNTIME SUPPORT** (Master Plan §31): (1)
+  **`AAstrawildBiomeDressingActor`** — the first runtime consumer of `UAstrawildBiomeDefinition`:
+  deterministic per-zone scatter (world-seed streamed) of trees/rocks/grass with 6 canopy archetypes
+  (broadleaf/conifer+snow/palm/dead/cactus/spire), water/slope/exclusion gates (camp/villages/dungeons/
+  portals/POIs/skiffs — dressing never buries gameplay), merged PMC sections (~22k verts world-wide) and an
+  **ISM real-mesh upgrade path** from the definition's TreeMeshes/RockMeshes/GrassMeshes soft refs + 5 new
+  additive tint/density fields with explicit production tints ×12 biomes. (2) **Atmosphere pass**:
+  `EvalAtmosphereRamp` (pure, tested) — sun color + fog color/density + sky intensity keyframed dawn→noon→
+  dusk→night, **weather-coupled** (visibility multiplier → thicker fog + dimmer sun; Storm Surge now changes
+  the sky), unbounded PPV (bloom/vignette/contrast/exposure clamps), fog tuned off defaults, and a shared
+  sun-base curve so the weather multiplier can never compound per tick. (3) **Weapon VFX**:
+  `AAstrawildBeamVfxActor` — Beam weapons draw bright prisms to the furthest contact, Arc Caster renders
+  jagged deterministic lightning through the hop chain, muzzle flashes on every ranged shot, projectiles
+  get element-tinted PMC cores (hot leading pole) + `TrailVfxId` finally wired; shared `FAstrawildVfxPalette`
+  (element/rarity/family/scanner tints — one color language). (4) **Scanner pulse rings** per tier (teal/
+  amber/violet, radius tracks scanner range). (5) **Player silhouette** (graphite+amber survivor body, teal
+  visor) + **family-tinted held weapon** rebuilt on equip change; **Echo rarity rings** (Rare+) + bounded
+  element glow lights (captured always, wild within 32m of a player). Tests 39 → **47** (+8: dressing
+  profiles/rejection/determinism, atmosphere ramp, palette, beam math, arc jitter, ring geometry).
+- Codebase: **136 C++ files, ~36,855 LOC, 47 automation tests, 66 docs** in/around `Source/AstrawildCore` (single module)
 
 ## Environment
 

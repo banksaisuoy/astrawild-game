@@ -8,6 +8,7 @@
 class UProjectileMovementComponent;
 class UStaticMeshComponent;
 class USphereComponent;
+class UProceduralMeshComponent;
 
 /**
  * Final production run (PHASE 12 — advanced weapons): server-spawned energy
@@ -38,6 +39,10 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Projectile")
     TObjectPtr<UStaticMeshComponent> VisualMesh;
 
+    /** Production V2 Batch 2: element-tinted procedural core (server/listen view). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Projectile")
+    TObjectPtr<UProceduralMeshComponent> VisualBody;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Projectile")
     TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
@@ -61,6 +66,9 @@ public:
     FName TrailVfxId = NAME_None;
 
     virtual void BeginPlay() override;
+
+    /** Production V2 Batch 2: builds the element-tinted energy core (VisualBody). */
+    void BuildElementCore();
 
     /** Server: initialize the payload and launch direction. */
     void Launch(const FVector& Direction, float Damage, EAstrawildElementType InElement, AActor* InOwner);

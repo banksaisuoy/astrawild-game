@@ -5,18 +5,21 @@
 
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildBestiaryData.h"
+#include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
+#include "AstrawildWorldBootstrapper.h"
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSkiffActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTerrainTileActor.h"
 #include "AstrawildTypes.h"
+#include "AstrawildVfxActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Misc/AutomationTest.h"
 
@@ -1273,3 +1276,360 @@ bool FAstrawildQuestDiscoverPOITest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Objective completes at count"), Objective.IsComplete());
     return true;
 }
+
+// ---------------------------------------------------------------------------
+// Production V2 Batch 2 — Visual Vertical Slice runtime support
+// (biome dressing / atmosphere ramp / VFX palette + geometry math)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDressingZoneProfilesTest,
+    "ASTRAWILD.BiomeDressing.ZoneProfiles",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDressingZoneProfilesTest::RunTest(const FString& Parameters)
+{
+    // Every real zone has a dressing budget inside sane bounds; forest zones
+    // read denser than desert/sea zones (zone personality, Master Plan §5).
+    int32 ProfilesChecked = 0;
+    for (const FAstrawildZoneDescriptor& Zone : UAstrawildZoneSubsystem::GetAllZones())
+    {
+        const FAstrawildDressingProfile Profile = AAstrawildBiomeDressingActor::GetDressingProfile(Zone.Zone);
+        TestTrue(*FString::Printf(TEXT("Zone %s has trees"), *Zone.ZoneId.ToString()), Profile.TreeCount > 0);
+        TestTrue(*FString::Printf(TEXT("Zone %s has rocks"), *Zone.ZoneId.ToString()), Profile.RockCount > 0);
+        TestTrue(*FString::Printf(TEXT("Zone %s budget sane"), *Zone.ZoneId.ToString()),
+            Profile.TreeCount + Profile.RockCount + Profile.GrassCount <= 250);
+        ++ProfilesChecked;
+    }
+    TestEqual(TEXT("All 12 zones profiled"), ProfilesChecked, 12);
+
+    const FAstrawildDressingProfile Verdant = AAstrawildBiomeDressingActor::GetDressingProfile(EAstrawildZone::VerdantReach);
+    const FAstrawildDressingProfile Desert = AAstrawildBiomeDressingActor::GetDressingProfile(EAstrawildZone::SunscarDesert);
+    const FAstrawildDressingProfile Reef = AAstrawildBiomeDressingActor::GetDressingProfile(EAstrawildZone::PearlseaReef);
+    TestTrue(TEXT("Jungle denser than desert"), Verdant.TreeCount > Desert.TreeCount);
+    TestTrue(TEXT("Jungle denser than reef"), Verdant.TreeCount > Reef.TreeCount);
+
+    // Frost zones snow-blend their canopies; sea zones run palms.
+    const FAstrawildDressingProfile Frost = AAstrawildBiomeDressingActor::GetDressingProfile(EAstrawildZone::FrostveilExpanse);
+    const FAstrawildDressingProfile Isles = AAstrawildBiomeDressingActor::GetDressingProfile(EAstrawildZone::TidebreakerIsles);
+    TestTrue(TEXT("Frost blends snow into canopies"), Frost.SnowBlend > 0.3f);
+    TestTrue(TEXT("Isles dress as palms"), Isles.CanopyStyle == EAstrawildDressingCanopy::Palm);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDressingExclusionTest,
+    "ASTRAWILD.BiomeDressing.PointRejection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDressingExclusionTest::RunTest(const FString& Parameters)
+{
+    TArray<FVector2D> Centers;
+    TArray<float> Radii;
+    Centers.Add(FVector2D(0.0f, 0.0f));
+    Radii.Add(3000.0f);
+
+    TestFalse(TEXT("Camp center rejected"),
+        AAstrawildBiomeDressingActor::IsPointDressable(FVector2D(100.0f, 200.0f), Centers, Radii));
+    TestFalse(TEXT("Camp edge (inside radius) rejected"),
+        AAstrawildBiomeDressingActor::IsPointDressable(FVector2D(2999.0f, 0.0f), Centers, Radii));
+    TestTrue(TEXT("Just past the camp bubble accepted"),
+        AAstrawildBiomeDressingActor::IsPointDressable(FVector2D(3001.0f, 0.0f), Centers, Radii));
+    TestTrue(TEXT("Far point accepted"),
+        AAstrawildBiomeDressingActor::IsPointDressable(FVector2D(50000.0f, -50000.0f), Centers, Radii));
+
+    // Parallel arrays with mismatched lengths use the shorter count (safe).
+    TArray<float> ShortRadii;
+    ShortRadii.Add(100.0f);
+    TestTrue(TEXT("Mismatched exclusion arrays degrade safely"),
+        AAstrawildBiomeDressingActor::IsPointDressable(FVector2D(200.0f, 0.0f), Centers, ShortRadii));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDressingDeterministicScatterTest,
+    "ASTRAWILD.BiomeDressing.DeterministicScatter",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDressingDeterministicScatterTest::RunTest(const FString& Parameters)
+{
+    const FAstrawildZoneDescriptor* Zone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_DawnFields"));
+    if (!TestNotNull(TEXT("Dawn Fields zone resolves"), Zone))
+    {
+        return false;
+    }
+
+    const FAstrawildDressingProfile Profile = AAstrawildBiomeDressingActor::GetDressingProfile(Zone->Zone);
+    TArray<FVector> TreesA, RocksA, GrassA;
+    TArray<FVector> TreesB, RocksB, GrassB;
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesA, RocksA, GrassA);
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB);
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(4242, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB); // reuse arrays (different seed)
+
+    // Same seed → identical layout: re-run the first seed fresh.
+    TreesB.Reset(); RocksB.Reset(); GrassB.Reset();
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB);
+    TestEqual(TEXT("Same seed → same tree count"), TreesA.Num(), TreesB.Num());
+    bool bIdentical = TreesA.Num() == TreesB.Num();
+    for (int32 i = 0; bIdentical && i < TreesA.Num(); ++i)
+    {
+        bIdentical = TreesA[i].Equals(TreesB[i], 0.01f);
+    }
+    TestTrue(TEXT("Same seed → identical tree positions"), bIdentical);
+
+    // Water rule: nothing dresses below the sea margin (deep sea zone scatter
+    // lands only on islets — count can be small but every point must be dry).
+    if (const FAstrawildZoneDescriptor* SeaZone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_AzureShallows")))
+    {
+        const FAstrawildDressingProfile SeaProfile = AAstrawildBiomeDressingActor::GetDressingProfile(SeaZone->Zone);
+        TArray<FVector> SeaTrees, SeaRocks, SeaGrass;
+        AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *SeaZone, SeaProfile, {}, {}, SeaTrees, SeaRocks, SeaGrass);
+        const float SeaFloorZ = UAstrawildZoneSubsystem::GetSeaLevelZ() + AAstrawildBiomeDressingActor::GetSeaMargin();
+        bool bAllDry = true;
+        for (const FVector& Point : SeaTrees)
+        {
+            bAllDry &= Point.Z >= SeaFloorZ;
+        }
+        TestTrue(TEXT("Sea zone dressing stays above the waterline"), bAllDry);
+    }
+
+    // Camp exclusion: nothing lands inside the starter-camp bubble.
+    TArray<FVector2D> Camp;
+    TArray<float> CampRadius;
+    Camp.Add(Zone->GetCenter());
+    CampRadius.Add(3000.0f);
+    TArray<FVector> TreesC, RocksC, GrassC;
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, Camp, CampRadius, TreesC, RocksC, GrassC);
+    bool bNoneInCamp = true;
+    for (const FVector& Point : TreesC)
+    {
+        bNoneInCamp &= FVector2D::DistSquared(FVector2D(Point.X, Point.Y), Camp[0]) >= FMath::Square(3000.0f);
+    }
+    TestTrue(TEXT("Dressing avoids the starter camp"), bNoneInCamp);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAtmosphereRampTest,
+    "ASTRAWILD.Atmosphere.DayRamp",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAtmosphereRampTest::RunTest(const FString& Parameters)
+{
+    const FAstrawildAtmosphereSample Noon = AAstrawildWorldBootstrapper::EvalAtmosphereRamp(0.5f, false, 1.0f);
+    const FAstrawildAtmosphereSample Dawn = AAstrawildWorldBootstrapper::EvalAtmosphereRamp(0.0f, false, 1.0f);
+    const FAstrawildAtmosphereSample Dusk = AAstrawildWorldBootstrapper::EvalAtmosphereRamp(1.0f, false, 1.0f);
+    const FAstrawildAtmosphereSample Night = AAstrawildWorldBootstrapper::EvalAtmosphereRamp(0.5f, true, 1.0f);
+    const FAstrawildAtmosphereSample Storm = AAstrawildWorldBootstrapper::EvalAtmosphereRamp(0.5f, false, 0.4f);
+
+    // Day sky is brighter than night; night fog is nearly black.
+    TestTrue(TEXT("Noon sky light beats night"), Noon.SkyLightIntensity > Night.SkyLightIntensity * 3.0f);
+    TestTrue(TEXT("Night fog is dark"), Night.FogColor.R < 0.2f && Night.FogColor.G < 0.2f && Night.FogColor.B < 0.2f);
+
+    // Dawn/dusk sun is warm (red channel dominant), noon is near-neutral.
+    TestTrue(TEXT("Dawn sun is warm"), Dawn.SunColor.R > Dawn.SunColor.B + 0.15f);
+    TestTrue(TEXT("Dusk sun is warm"), Dusk.SunColor.R > Dusk.SunColor.B + 0.15f);
+    TestTrue(TEXT("Noon sun is near-neutral"),
+        FMath::Abs(Noon.SunColor.R - Noon.SunColor.B) < 0.12f);
+
+    // Night sun is cool (moonlight): blue channel dominant.
+    TestTrue(TEXT("Night sun is cool"), Night.SunColor.B > Night.SunColor.R);
+
+    // Storm weather: denser fog + dimmer sun than the same clear-noon moment.
+    TestTrue(TEXT("Storm thickens fog"), Storm.FogDensity > Noon.FogDensity * 1.5f);
+    TestTrue(TEXT("Storm dims the sun"), Storm.SunIntensityMultiplier < Noon.SunIntensityMultiplier);
+    TestEqual(TEXT("Clear weather never dims"), Noon.SunIntensityMultiplier, 1.0f);
+
+    // Sun base curve: noon peak, night floor.
+    TestTrue(TEXT("Noon sun base beats dawn"),
+        AAstrawildWorldBootstrapper::EvalSunBaseIntensity(0.5f, false) > AAstrawildWorldBootstrapper::EvalSunBaseIntensity(0.0f, false));
+    TestEqual(TEXT("Night sun floor"), AAstrawildWorldBootstrapper::EvalSunBaseIntensity(0.5f, true), 0.4f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVfxPaletteTest,
+    "ASTRAWILD.Vfx.Palette",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVfxPaletteTest::RunTest(const FString& Parameters)
+{
+    // Element tints: distinct, non-black, non-white — readable at gameplay distance.
+    const EAstrawildElementType Elements[] = {
+        EAstrawildElementType::None, EAstrawildElementType::Light, EAstrawildElementType::Ash,
+        EAstrawildElementType::Flora, EAstrawildElementType::Frost, EAstrawildElementType::Pulse,
+        EAstrawildElementType::Ember };
+    for (const EAstrawildElementType Element : Elements)
+    {
+        const FLinearColor Tint = FAstrawildVfxPalette::GetElementTint(Element);
+        TestTrue(*FString::Printf(TEXT("Element %d tint is visible"), static_cast<int32>(Element)),
+            Tint.R + Tint.G + Tint.B > 0.5f && Tint.R + Tint.G + Tint.B < 2.9f);
+    }
+    TestTrue(TEXT("Flora differs from Frost"),
+        !FAstrawildVfxPalette::GetElementTint(EAstrawildElementType::Flora).Equals(
+            FAstrawildVfxPalette::GetElementTint(EAstrawildElementType::Frost), 0.05f));
+    TestTrue(TEXT("Ember differs from Pulse"),
+        !FAstrawildVfxPalette::GetElementTint(EAstrawildElementType::Ember).Equals(
+            FAstrawildVfxPalette::GetElementTint(EAstrawildElementType::Pulse), 0.05f));
+
+    // Rarity ladder: every tier distinct and darkens up the chain (grey → green → cyan → violet → amber → crimson).
+    const EAstrawildRarity Rarities[] = {
+        EAstrawildRarity::Common, EAstrawildRarity::Uncommon, EAstrawildRarity::Rare,
+        EAstrawildRarity::Epic, EAstrawildRarity::Legendary, EAstrawildRarity::Mythic };
+    for (int32 i = 0; i < 6; ++i)
+    {
+        for (int32 j = i + 1; j < 6; ++j)
+        {
+            TestTrue(*FString::Printf(TEXT("Rarity %d vs %d distinct"), i, j),
+                !FAstrawildVfxPalette::GetRarityTint(Rarities[i]).Equals(
+                    FAstrawildVfxPalette::GetRarityTint(Rarities[j]), 0.05f));
+        }
+    }
+
+    // Weapon family tints: kinetic grey-ish (low saturation) vs energy families saturated.
+    const FLinearColor Kinetic = FAstrawildVfxPalette::GetWeaponFamilyTint(EAstrawildWeaponFamily::Kinetic);
+    const FLinearColor Plasma = FAstrawildVfxPalette::GetWeaponFamilyTint(EAstrawildWeaponFamily::Plasma);
+    TestTrue(TEXT("Kinetic reads industrial (low saturation)"),
+        FMath::Abs(Kinetic.R - Kinetic.G) < 0.15f && FMath::Abs(Kinetic.G - Kinetic.B) < 0.15f);
+    TestTrue(TEXT("Plasma reads energetic (saturated)"), Plasma.B > Kinetic.B + 0.1f || Plasma.R > Kinetic.R + 0.1f);
+
+    // Scanner tiers: Field teal, Array amber, Oracle violet — three identities.
+    TestTrue(TEXT("Array scanner tint differs from Field"),
+        !FAstrawildVfxPalette::GetScannerTint(TEXT("Item_ArrayScanner")).Equals(
+            FAstrawildVfxPalette::GetScannerTint(TEXT("Item_FieldScanner")), 0.05f));
+    TestTrue(TEXT("Oracle scanner tint differs from Array"),
+        !FAstrawildVfxPalette::GetScannerTint(TEXT("Item_OracleScanner")).Equals(
+            FAstrawildVfxPalette::GetScannerTint(TEXT("Item_ArrayScanner")), 0.05f));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVfxBeamMathTest,
+    "ASTRAWILD.Vfx.BeamMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVfxBeamMathTest::RunTest(const FString& Parameters)
+{
+    FVector Center;
+    FRotator Rotation;
+    float Length = 0.0f;
+
+    TestFalse(TEXT("Coincident points make no beam"),
+        AAstrawildBeamVfxActor::ComputeBeamTransform(FVector::ZeroVector, FVector(0, 0, 0.5f), Center, Rotation, Length));
+
+    TestTrue(TEXT("Axis-aligned beam resolves"),
+        AAstrawildBeamVfxActor::ComputeBeamTransform(FVector(0, 0, 100), FVector(1000, 0, 100), Center, Rotation, Length));
+    TestEqual(TEXT("Beam length matches distance"), Length, 1000.0f);
+    TestEqual(TEXT("Beam center is the midpoint"), Center, FVector(500.0f, 0.0f, 100.0f));
+    TestEqual(TEXT("Beam rotation aims down +X"), Rotation.Vector(), FVector(1, 0, 0));
+
+    // Diagonal beam: rotation forward vector matches the normalized delta.
+    const FVector Start(100, 200, 300);
+    const FVector End(1000, 1100, 300);
+    TestTrue(TEXT("Diagonal beam resolves"),
+        AAstrawildBeamVfxActor::ComputeBeamTransform(Start, End, Center, Rotation, Length));
+    const FVector Delta = (End - Start).GetSafeNormal();
+    TestTrue(TEXT("Diagonal beam orientation matches delta"),
+        FMath::Abs(FVector::DotProduct(Rotation.Vector(), Delta) - 1.0f) < 0.001f);
+    TestEqual(TEXT("Diagonal beam length"), Length, (End - Start).Size(), 1.0f);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVfxArcJitterTest,
+    "ASTRAWILD.Vfx.ArcJitter",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVfxArcJitterTest::RunTest(const FString& Parameters)
+{
+    const FVector A(0, 0, 150);
+    const FVector B(2000, 0, 150);
+
+    // Determinism: same seed → identical zig-zag.
+    TArray<FVector> PathA, PathB;
+    AAstrawildBeamVfxActor::ComputeArcJitter(777, A, B, 3, 40.0f, PathA);
+    AAstrawildBeamVfxActor::ComputeArcJitter(777, A, B, 3, 40.0f, PathB);
+    TestEqual(TEXT("Jitter waypoints deterministic"), PathA.Num(), PathB.Num());
+    bool bIdentical = PathA.Num() == PathB.Num();
+    for (int32 i = 0; bIdentical && i < PathA.Num(); ++i)
+    {
+        bIdentical = PathA[i].Equals(PathB[i], 0.001f);
+    }
+    TestTrue(TEXT("Same seed → identical zig-zag"), bIdentical);
+
+    // Structure: endpoints always included, sub-segments between.
+    TestEqual(TEXT("3 sub-segments → 5 waypoints"), PathA.Num(), 5);
+    TestTrue(TEXT("Path starts at A"), PathA[0].Equals(A, 0.01f));
+    TestTrue(TEXT("Path ends at B"), PathA.Last().Equals(B, 0.01f));
+
+    // Bounded jitter: interior waypoints stay within amplitude of the A→B line.
+    bool bBounded = true;
+    const FVector LineDir = (B - A).GetSafeNormal();
+    for (int32 i = 1; i < PathA.Num() - 1; ++i)
+    {
+        const FVector Closest = FMath::ClosestPointOnSegment(PathA[i], A, B);
+        bBounded &= FVector::Dist(PathA[i], Closest) <= 45.0f; // amplitude + epsilon
+    }
+    TestTrue(TEXT("Jitter stays within amplitude of the line"), bBounded);
+
+    // Zero sub-segments → straight path.
+    TArray<FVector> Straight;
+    AAstrawildBeamVfxActor::ComputeArcJitter(1, A, B, 0, 40.0f, Straight);
+    TestEqual(TEXT("No sub-segments → 2 waypoints"), Straight.Num(), 2);
+
+    // Different seed → different zig-zag (lightning varies per hop chain).
+    TArray<FVector> PathC;
+    AAstrawildBeamVfxActor::ComputeArcJitter(8888, A, B, 3, 40.0f, PathC);
+    bool bDiffers = false;
+    for (int32 i = 1; i < PathA.Num() - 1 && !bDiffers; ++i)
+    {
+        bDiffers = !PathA[i].Equals(PathC[i], 0.01f);
+    }
+    TestTrue(TEXT("Different seed → different interior waypoints"), bDiffers);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVfxRingGeometryTest,
+    "ASTRAWILD.Vfx.RingGeometry",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVfxRingGeometryTest::RunTest(const FString& Parameters)
+{
+    TArray<FVector> Vertices;
+    TArray<int32> Triangles;
+    TArray<FVector> Normals;
+    TArray<FVector2D> UVs;
+    TArray<FColor> Colors;
+
+    AAstrawildScannerPulseActor::BuildRingGeometry(48, 0.86f, FLinearColor(0.4f, 0.9f, 0.8f, 1.0f),
+        Vertices, Triangles, Normals, UVs, Colors);
+
+    // Closed annulus: Segments+1 ring pairs (duplicate seam vertex), 2 tris per segment.
+    TestEqual(TEXT("48 segments → 98 ring vertices"), Vertices.Num(), (48 + 1) * 2);
+    TestEqual(TEXT("48 segments → 96 triangles"), Triangles.Num(), 48 * 2 * 3);
+    TestEqual(TEXT("Colors match vertex count"), Colors.Num(), Vertices.Num());
+
+    // All vertices on one of the two radius rings (inner/outer).
+    bool bRadiiValid = true;
+    for (const FVector& Vertex : Vertices)
+    {
+        const float Radius = FVector2D(Vertex.X, Vertex.Y).Size();
+        bRadiiValid &= (FMath::Abs(Radius - 1.0f) < 0.01f || FMath::Abs(Radius - 0.86f) < 0.01f);
+    }
+    TestTrue(TEXT("Every vertex sits on the inner or outer ring"), bRadiiValid);
+
+    // Flat ring in the XY plane.
+    bool bFlat = true;
+    for (const FVector& Vertex : Vertices)
+    {
+        bFlat &= FMath::Abs(Vertex.Z) < 0.01f;
+    }
+    TestTrue(TEXT("Ring is flat (ground pulse)"), bFlat);
+
+    // Inner fraction is clamped into a valid band.
+    AAstrawildScannerPulseActor::BuildRingGeometry(12, -0.5f, FLinearColor::White,
+        Vertices, Triangles, Normals, UVs, Colors);
+    bool bClampedValid = true;
+    for (const FVector& Vertex : Vertices)
+    {
+        const float Radius = FVector2D(Vertex.X, Vertex.Y).Size();
+        bClampedValid &= Radius <= 1.05f && Radius >= 0.03f;
+    }
+    TestTrue(TEXT("Invalid inner fraction clamps safely"), bClampedValid);
+    return true;
+}
+
+#endif // WITH_DEV_AUTOMATION_TESTS

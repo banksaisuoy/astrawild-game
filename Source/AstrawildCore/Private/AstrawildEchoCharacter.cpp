@@ -12,12 +12,15 @@
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
+#include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
 #include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ProceduralMeshComponent.h"
@@ -358,10 +361,126 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         GetCapsuleComponent()->SetCapsuleSize(CapsuleRadius, CapsuleHalfHeight);
     }
 
+    // Production V2 Batch 2: rarity ring + element glow identity.
+    ApplyVisualIdentity();
+
     UE_LOG(LogAstrawildAI, Verbose, TEXT("Built procedural body for %s (plan %d, size %d)."),
         *EchoDefinition->DefinitionId.ToString(),
         static_cast<int32>(EchoDefinition->BodyPlan),
         static_cast<int32>(EchoDefinition->SizeClass));
+}
+
+void AAstrawildEchoCharacter::ApplyVisualIdentity()
+{
+    // Rarity ring (Rare+ only — Common/Uncommon stay clean to avoid noise): a
+    // flattened annulus at the feet in the rarity color, appended as BodyMesh
+    // section 1 on the shared vertex-color material.
+    if (BodyMesh && EchoDefinition && EchoDefinition->Rarity >= EAstrawildRarity::Rare)
+    {
+        const FLinearColor RarityTint = FAstrawildVfxPalette::GetRarityTint(EchoDefinition->Rarity);
+        const FColor RingColor = FLinearColor(
+            FMath::Clamp(RarityTint.R * 0.6f + 0.05f, 0.0f, 1.0f),
+            FMath::Clamp(RarityTint.G * 0.6f + 0.05f, 0.0f, 1.0f),
+            FMath::Clamp(RarityTint.B * 0.6f + 0.05f, 0.0f, 1.0f), 1.0f).ToFColor(false);
+        const FColor RingBright = FLinearColor(
+            FMath::Clamp(RarityTint.R * 1.2f + 0.10f, 0.0f, 1.0f),
+            FMath::Clamp(RarityTint.G * 1.2f + 0.10f, 0.0f, 1.0f),
+            FMath::Clamp(RarityTint.B * 1.2f + 0.10f, 0.0f, 1.0f), 1.0f).ToFColor(false);
+
+        const float CapsuleRadius = GetCapsuleComponent() ? GetCapsuleComponent()->GetUnscaledCapsuleRadius() : 34.0f;
+        const float Outer = CapsuleRadius * 1.18f;
+        const float Inner = Outer - 9.0f;
+
+        TArray<FVector> Vertices;
+        TArray<int32> Triangles;
+        TArray<FVector> Normals;
+        TArray<FVector2D> UVs;
+        TArray<FColor> Colors;
+
+        constexpr int32 Segments = 26;
+        constexpr float RingZ = 7.0f;
+        for (int32 Slice = 0; Slice <= Segments; ++Slice)
+        {
+            const float Theta = 2.0f * PI * static_cast<float>(Slice) / static_cast<float>(Segments);
+            const float CosT = FMath::Cos(Theta);
+            const float SinT = FMath::Sin(Theta);
+            Vertices.Add(FVector(CosT * Outer, SinT * Outer, RingZ));
+            Normals.Add(FVector(0, 0, 1));
+            UVs.Add(FVector2D(1.0f, 0.0f));
+            Colors.Add(RingBright);
+            Vertices.Add(FVector(CosT * Inner, SinT * Inner, RingZ));
+            Normals.Add(FVector(0, 0, 1));
+            UVs.Add(FVector2D(0.0f, 0.0f));
+            Colors.Add(RingColor);
+        }
+        for (int32 Slice = 0; Slice < Segments; ++Slice)
+        {
+            const int32 A = Slice * 2;
+            const int32 B = (Slice + 1) * 2;
+            const int32 C = (Slice + 1) * 2 + 1;
+            const int32 D = Slice * 2 + 1;
+            Triangles.Append({ A, B, C, A, C, D });
+        }
+
+        BodyMesh->CreateMeshSection(1, Vertices, Triangles, Normals, UVs, Colors, TArray<FProcMeshTangent>(), false);
+        UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        if (Material)
+        {
+            BodyMesh->SetMaterial(1, Material);
+        }
+    }
+
+    // Element glow preparation: tint + height by size class (intensity set in
+    // UpdateElementGlow — captured party members and nearby wild elementals only).
+    if (ElementGlowLight && EchoDefinition)
+    {
+        ElementGlowLight->SetLightColor(FAstrawildVfxPalette::GetElementTint(EchoDefinition->Element));
+        const float SizeScale = EchoDefinition ? BodyScaleForSize(EchoDefinition->SizeClass) : 1.0f;
+        ElementGlowLight->SetRelativeLocation(FVector(0.0f, 0.0f, 55.0f * SizeScale));
+    }
+}
+
+void AAstrawildEchoCharacter::UpdateElementGlow()
+{
+    // Runs everywhere (local cosmetic): captured Echoes always glow; wild
+    // elementals glow only near a player pawn — the active light count stays
+    // bounded no matter how many of the 200+ species roam the world.
+    if (!ElementGlowLight || !EchoDefinition || EchoDefinition->Element == EAstrawildElementType::None || IsDefeated())
+    {
+        if (ElementGlowLight)
+        {
+            ElementGlowLight->SetIntensity(0.0f);
+        }
+        return;
+    }
+
+    if (bCaptured)
+    {
+        ElementGlowLight->SetIntensity(2.4f);
+        return;
+    }
+
+    // Wild elemental: glow only when a player is close enough for it to matter.
+    constexpr float GlowProximity = 3200.0f;
+    bool bPlayerNear = false;
+    if (UWorld* World = GetWorld())
+    {
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            if (const APlayerController* PC = Cast<APlayerController>(*It))
+            {
+                if (const APawn* Pawn = PC->GetPawn())
+                {
+                    if (FVector::DistSquared(Pawn->GetActorLocation(), GetActorLocation()) < GlowProximity * GlowProximity)
+                    {
+                        bPlayerNear = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    ElementGlowLight->SetIntensity(bPlayerNear ? 1.9f : 0.0f);
 }
 
 AAstrawildEchoCharacter::AAstrawildEchoCharacter()
@@ -394,6 +513,15 @@ AAstrawildEchoCharacter::AAstrawildEchoCharacter()
     // invokers only).
     NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
     NavInvoker->SetRadii(5000.0f, 7000.0f);
+
+    // Production V2 Batch 2: element identity light — dark until the glow update
+    // enables it for party members / nearby wild elementals (light budget stays tiny).
+    ElementGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("ElementGlowLight"));
+    ElementGlowLight->SetupAttachment(GetCapsuleComponent());
+    ElementGlowLight->SetCastShadows(false);
+    ElementGlowLight->SetIntensity(0.0f);
+    ElementGlowLight->SetAttenuationRadius(520.0f);
+    ElementGlowLight->SetRelativeLocation(FVector(0.0f, 0.0f, 60.0f));
 }
 
 void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -433,6 +561,17 @@ void AAstrawildEchoCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AAstrawildEchoCharacter::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    // Production V2 Batch 2: element glow proximity update (1s cadence, local
+    // cosmetic — runs on every machine against replicated bCaptured).
+    {
+        ElementGlowAccumulator += DeltaTime;
+        if (ElementGlowAccumulator >= 1.0f)
+        {
+            ElementGlowAccumulator = 0.0f;
+            UpdateElementGlow();
+        }
+    }
 
     // Needs + bond simulate server-side only (directive §28), throttled by LOD tier.
     if (GetLocalRole() == ROLE_Authority && !IsDefeated())

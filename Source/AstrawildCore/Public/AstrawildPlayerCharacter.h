@@ -19,6 +19,7 @@ class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
 class UNavigationInvokerComponent;
+class UProceduralMeshComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
 struct FInputActionValue;
@@ -39,6 +40,18 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Visual")
     TObjectPtr<UStaticMeshComponent> PlaceholderMesh;
+
+    /**
+     * Production V2 Batch 2: procedural survivor silhouette (torso/head/visor/
+     * backpack/limbs — graphite + amber ASTRAWILD palette). Replaces the plain
+     * grey cylinder; built on server AND owning client (BeginPlay runs locally).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Visual")
+    TObjectPtr<UProceduralMeshComponent> BodyMesh;
+
+    /** Held weapon silhouette — rebuilt when the equipped weapon changes (family-tinted). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Visual")
+    TObjectPtr<UProceduralMeshComponent> WeaponMesh;
 
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void BeginPlay() override;
@@ -291,6 +304,12 @@ protected:
 
     void RefreshMovementSpeed();
 
+    /** Production V2 Batch 2: vertex-colored survivor body (mirrors the Echo body idiom). */
+    void BuildProceduralBody();
+
+    /** Production V2 Batch 2: rebuild the held weapon mesh when equipment changes (timer-polled). */
+    void RefreshHeldWeaponVisual();
+
     /** Builds a complete default Enhanced Input setup in code (zero-asset playability). */
     void BuildRuntimeInputDefaults();
 
@@ -349,4 +368,8 @@ private:
     /** Batch 8 — piloted skiff (weak so a destroyed skiff can't dangle input). */
     UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Skiff")
     TWeakObjectPtr<AAstrawildSkiffActor> PilotedSkiff;
+
+    /** Production V2 Batch 2: held-weapon refresh cadence + dedupe cache. */
+    FTimerHandle HeldWeaponTimerHandle;
+    FName LastHeldWeaponId = NAME_None;
 };

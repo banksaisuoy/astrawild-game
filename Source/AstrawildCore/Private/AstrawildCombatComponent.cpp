@@ -9,12 +9,30 @@
 #include "AstrawildLog.h"
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
+#include "AstrawildVfxActor.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+
+namespace
+{
+    /** Shot tint: elemental payload color, else the weapon family identity. */
+    FLinearColor ResolveWeaponVfxTint(const UAstrawildWeaponDefinition* WeaponDef)
+    {
+        if (WeaponDef)
+        {
+            if (WeaponDef->Element != EAstrawildElementType::None)
+            {
+                return FAstrawildVfxPalette::GetElementTint(WeaponDef->Element);
+            }
+            return FAstrawildVfxPalette::GetWeaponFamilyTint(WeaponDef->Family);
+        }
+        return FAstrawildVfxPalette::GetElementTint(EAstrawildElementType::None);
+    }
+}
 
 UAstrawildCombatComponent::UAstrawildCombatComponent()
 {
@@ -376,6 +394,10 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
         return false;
     }
 
+    // Production V2 Batch 2: every projectile shot reads with a muzzle flash
+    // tinted by the weapon's element/family identity.
+    AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, AimOrigin, AimDirection, ResolveWeaponVfxTint(WeaponDef));
+
     if (WeaponDef)
     {
         AActor* HomingTarget = nullptr;
@@ -383,6 +405,7 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
         {
             HomingTarget = AcquireLockOnTarget(WeaponDef, OwnerCharacter, AimOrigin, AimDirection);
         }
+        Bolt->TrailVfxId = WeaponDef->TrailVfxId; // VFX contract — first runtime consumer
         Bolt->LaunchFromWeapon(AimDirection, GetRangedDamage(), GetResolvedAttackElement(), OwnerCharacter,
             WeaponDef->ProjectileSpeed, WeaponDef->ProjectileVisualScale, WeaponDef->ProjectileLifetimeSeconds,
             HomingTarget, HomingTarget ? WeaponDef->HomingAcceleration : 0.0f);
@@ -473,6 +496,15 @@ bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefiniti
         }
     }
 
+    // Production V2 Batch 2: runtime beam placeholder (Niagara stays the art-pass
+    // target via TrailVfxId). The beam draws to the furthest contact or full range.
+    {
+        const FVector BeamEnd = HitResults.Num() > 0 ? HitResults.Last().ImpactPoint : End;
+        AAstrawildBeamVfxActor::SpawnBeam(World, Start, BeamEnd, ResolveWeaponVfxTint(WeaponDef));
+        AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Start, OwnerCharacter->GetActorForwardVector(),
+            ResolveWeaponVfxTint(WeaponDef));
+    }
+
     OnAttackExecuted.Broadcast(false, TotalDamage);
     return true;
 }
@@ -495,15 +527,27 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDArcAttack), false, OwnerCharacter);
     if (!World->LineTraceSingleByChannel(FirstHit, Start, End, ECC_Pawn, QueryParams))
     {
+        // Blank shot: still a muzzle flash so the trigger reads (ammo was spent).
+        AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Start, OwnerCharacter->GetActorForwardVector(),
+            ResolveWeaponVfxTint(WeaponDef));
         OnAttackExecuted.Broadcast(false, 0.0f);
         return true; // The shot fired (blank) — cooldown/ammo already spent.
     }
+
+    // VFX hop chain: muzzle -> first impact -> each zapped target.
+    TArray<FVector> VfxHops;
+    VfxHops.Add(Start);
+    VfxHops.Add(FirstHit.ImpactPoint);
 
     float TotalDamage = 0.0f;
     AActor* Current = FirstHit.GetActor();
     if (IsValid(Current) && Current != OwnerCharacter)
     {
         TotalDamage += ResolveRangedHit(Current, GetRangedDamage(), GetResolvedAttackElement());
+        if (Current)
+        {
+            VfxHops.Add(Current->GetActorLocation());
+        }
     }
 
     // Chain hops: nearest valid combatant around the previous target.
@@ -547,10 +591,16 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
         }
         TotalDamage += ResolveRangedHit(NextTarget, HopDamage, GetResolvedAttackElement());
         AlreadyZapped.Add(NextTarget);
+        VfxHops.Add(NextTarget->GetActorLocation());
         Current = NextTarget;
         HopDamage *= FMath::Clamp(WeaponDef->ChainDamageFraction, 0.0f, 1.0f);
         --HopsLeft;
     }
+
+    // Production V2 Batch 2: jagged lightning placeholder along the hop chain.
+    AAstrawildBeamVfxActor::SpawnArcChain(World, VfxHops, ResolveWeaponVfxTint(WeaponDef));
+    AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Start, OwnerCharacter->GetActorForwardVector(),
+        ResolveWeaponVfxTint(WeaponDef));
 
     OnAttackExecuted.Broadcast(false, TotalDamage);
     return true;

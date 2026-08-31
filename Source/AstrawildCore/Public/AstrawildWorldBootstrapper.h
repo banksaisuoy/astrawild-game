@@ -10,8 +10,25 @@ class UStaticMeshComponent;
 class ADirectionalLight;
 class ASkyLight;
 class APointLight;
+class APostProcessVolume;
+class AExponentialHeightFog;
 class AAstrawildTerrainTileActor;
 class AStaticMeshActor;
+
+/**
+ * Production V2 Batch 2 — one atmosphere sample from the day/night/weather ramp
+ * (pure data; automation-tested). Drives sun color, fog color/density, sky
+ * light intensity and the weather sun-dim multiplier every bootstrapper tick.
+ */
+struct FAstrawildAtmosphereSample
+{
+    FLinearColor SunColor = FLinearColor::White;
+    FLinearColor FogColor = FLinearColor::White;
+    float FogDensity = 0.00012f;
+    float SkyLightIntensity = 1.4f;
+    /** Multiplier applied on top of the existing sun intensity curve (weather). */
+    float SunIntensityMultiplier = 1.0f;
+};
 
 /**
  * Zero-asset world bootstrapper (directive §21/§50): on the server, builds the
@@ -48,6 +65,14 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|World")
     bool bBuildLandmarks = true;
+
+    /** Production V2 Batch 2: procedural biome dressing (trees/rocks/grass per zone). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|World")
+    bool bBuildBiomeDressing = true;
+
+    /** Production V2 Batch 2: day/night fog + sun color grading + weather coupling. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|World|Atmosphere")
+    bool bEnableAtmosphere = true;
 
     /** Legacy knobs kept for compatibility — now scale the Dawn Fields population. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|World|Spawns", meta=(ClampMin="0"))
@@ -86,6 +111,9 @@ private:
     void SpawnPointsOfInterest();
     void BuildZoneLandmarks();
 
+    /** Production V2 Batch 2: biome dressing scatter from biome definitions. */
+    void SpawnBiomeDressing();
+
     // --- Batch 8: living villages, sea, aircraft ---
 
     /** Spawns the water planes over the three sea zones. */
@@ -115,6 +143,19 @@ private:
     void UpdateSunRotation();
     void UpdateFlickerLights(float TimeSeconds);
 
+    /** Production V2 Batch 2: day/night + weather atmosphere grading (fog/sun/sky). */
+    void UpdateAtmosphere();
+
+    /**
+     * Pure atmosphere ramp (automation-tested): SunAlpha 0=dawn..0.5=noon..1=dusk
+     * on the 06:00-19:00 day span; night samples use bIsNight. Visibility
+     * multiplier comes from the weather subsystem (1=clear, <1=rain/fog/storm).
+     */
+    static FAstrawildAtmosphereSample EvalAtmosphereRamp(float SunAlpha, bool bIsNight, float VisibilityMultiplier);
+
+    /** Base sun intensity curve shared by UpdateSunRotation + UpdateAtmosphere (pure). */
+    static float EvalSunBaseIntensity(float SunAlpha, bool bIsNight);
+
     class AAstrawildGameState* GetGameState() const;
 
     FRandomStream RandomStream;
@@ -122,6 +163,15 @@ private:
 
     UPROPERTY()
     TObjectPtr<ADirectionalLight> SunLight;
+
+    UPROPERTY()
+    TObjectPtr<ASkyLight> SkyLightActor;
+
+    UPROPERTY()
+    TObjectPtr<AExponentialHeightFog> HeightFogActor;
+
+    UPROPERTY()
+    TObjectPtr<APostProcessVolume> PostProcessVolume;
 
     /** Landmark lights with animated flicker (lava / marsh wisps / crystals). */
     UPROPERTY()

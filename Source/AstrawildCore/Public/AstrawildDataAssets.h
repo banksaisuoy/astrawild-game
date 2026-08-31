@@ -1095,6 +1095,34 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Assets")
     TSoftObjectPtr<USoundBase> AmbientAudio;
 
+    // --- Production V2 Batch 2: placeholder dressing tints (Visual Vertical Slice §31) ---
+    // White (default) = derive at runtime from the zone table's GroundTint so
+    // every biome reads correctly with zero data; explicit values override.
+
+    /** Tree canopy tint (White = derived from the zone ground tint). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Dressing")
+    FLinearColor TreeCanopyTint = FLinearColor::White;
+
+    /** Rock / boulder tint (White = derived). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Dressing")
+    FLinearColor RockTint = FLinearColor::White;
+
+    /** Grass tuft tint (White = derived). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Dressing")
+    FLinearColor GrassTuftTint = FLinearColor::White;
+
+    /** Multiplier on the zone dressing budget (0 removes that biome's scatter). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Dressing", meta=(ClampMin="0.0", ClampMax="3.0"))
+    float DressingDensity = 1.0f;
+
+    /**
+     * When false, the runtime placeholder meshes never spawn — only real
+     * Tree/Rock/GrassMeshes instances render (for editor-shot purity once
+     * assets land). True by default: the game must look dressed with zero assets.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Dressing")
+    bool bEnablePlaceholderDressing = true;
+
     /** Gameplay anchoring: which resource node defs spawn in this biome. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Biome|Gameplay")
     TArray<FName> ResourceNodeIds;

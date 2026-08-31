@@ -1,5 +1,6 @@
 #include "AstrawildWorldBootstrapper.h"
 
+#include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCraftingStationActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -17,6 +18,7 @@
 #include "AstrawildTerrainTileActor.h"
 #include "AstrawildVillageActor.h"
 #include "AstrawildWaterPlaneActor.h"
+#include "AstrawildWeatherSubsystem.h"
 #include "AstrawildWorkSiteActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Components/StaticMeshComponent.h"
@@ -27,10 +29,11 @@
 #include "GameFramework/PlayerStart.h"
 #include "NavigationSystem.h"
 
-// Engine light classes for the runtime lighting rig.
+// Engine light + post-process classes for the runtime lighting rig.
 #include "Engine/DirectionalLight.h"
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/PointLight.h"
+#include "Engine/PostProcessVolume.h"
 #include "Engine/SkyAtmosphere.h"
 #include "Engine/SkyLight.h"
 
@@ -246,6 +249,14 @@ void AAstrawildWorldBootstrapper::BeginPlay()
         BuildZoneLandmarks();
     }
 
+    // Production V2 Batch 2: deterministic biome dressing (trees/rocks/grass)
+    // runs LAST — every gameplay actor above feeds its exclusion bubble so the
+    // scatter never buries the camp, villages, dungeons, POIs or skiff pads.
+    if (bBuildBiomeDressing)
+    {
+        SpawnBiomeDressing();
+    }
+
     // Audit C-3: kick the navmesh build — tiles generate around navigation invokers
     // (player + Echoes; see DefaultEngine.ini) so pathfinding works from frame one.
     if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
@@ -286,19 +297,69 @@ void AAstrawildWorldBootstrapper::BuildLighting()
         }
     }
 
-    // Sky light for ambient fill.
-    ASkyLight* Sky = World->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector(0, 0, 3000), FRotator::ZeroRotator, Params);
-    if (Sky)
+    // Sky light for ambient fill (cached — the atmosphere pass drives intensity).
+    if (!SkyLightActor)
     {
-        Sky->SetMobility(EComponentMobility::Movable);
-        if (USkyLightComponent* SkyComponent = Sky->GetLightComponent())
+        SkyLightActor = World->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector(0, 0, 3000), FRotator::ZeroRotator, Params);
+        if (SkyLightActor)
         {
-            SkyComponent->SetIntensity(1.5f);
+            SkyLightActor->SetMobility(EComponentMobility::Movable);
+            if (USkyLightComponent* SkyComponent = SkyLightActor->GetLightComponent())
+            {
+                SkyComponent->SetIntensity(1.5f);
+            }
         }
     }
 
     World->SpawnActor<ASkyAtmosphere>(ASkyAtmosphere::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
-    World->SpawnActor<AExponentialHeightFog>(AExponentialHeightFog::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
+
+    // Exponential height fog (cached — the atmosphere pass colors it every tick;
+    // previously spawned with defaults and never touched again).
+    if (!HeightFogActor)
+    {
+        HeightFogActor = World->SpawnActor<AExponentialHeightFog>(AExponentialHeightFog::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
+        if (HeightFogActor)
+        {
+            HeightFogActor->SetMobility(EComponentMobility::Movable);
+            if (UExponentialHeightFogComponent* FogComponent = HeightFogActor->GetComponent())
+            {
+                FogComponent->SetFogDensity(0.00012f);
+                FogComponent->SetFogHeightFalloff(0.22f);
+                FogComponent->SetFogInscatteringLuminance(FLinearColor(0.70f, 0.76f, 0.84f));
+                FogComponent->SetStartDistance(1500.0f);
+            }
+        }
+    }
+
+    // Production V2 Batch 2: unbound post-process volume — a restrained,
+    // production-directed grade (bloom + vignette + gentle contrast/saturation
+    // + exposure clamps that keep night playable and noon unblown).
+    if (!PostProcessVolume)
+    {
+        PostProcessVolume = World->SpawnActor<APostProcessVolume>(APostProcessVolume::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
+        if (PostProcessVolume)
+        {
+            PostProcessVolume->bUnbound = true;
+            PostProcessVolume->bEnabled = true;
+            PostProcessVolume->Priority = 1;
+
+            FPostProcessSettings& Settings = PostProcessVolume->Settings;
+            Settings.bOverride_BloomIntensity = true;
+            Settings.BloomIntensity = 0.6f;
+            Settings.bOverride_VignetteIntensity = true;
+            Settings.VignetteIntensity = 0.35f;
+            Settings.bOverride_ColorSaturation = true;
+            Settings.ColorSaturation = FVector4(1.05f, 1.05f, 1.05f, 1.05f);
+            Settings.bOverride_ColorContrast = true;
+            Settings.ColorContrast = FVector4(0.96f, 0.96f, 0.96f, 0.96f);
+            Settings.bOverride_AutoExposureMinBrightness = true;
+            Settings.AutoExposureMinBrightness = 0.06f;
+            Settings.bOverride_AutoExposureMaxBrightness = true;
+            Settings.AutoExposureMaxBrightness = 3.2f;
+            Settings.bOverride_AutoExposureBias = true;
+            Settings.AutoExposureBias = 0.3f;
+        }
+    }
 }
 
 void AAstrawildWorldBootstrapper::BuildTerrain()
@@ -1103,6 +1164,185 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
     }
 }
 
+FAstrawildAtmosphereSample AAstrawildWorldBootstrapper::EvalAtmosphereRamp(const float SunAlpha, const bool bIsNight,
+    const float VisibilityMultiplier)
+{
+    // Pure keyframe ramp — no engine types, no world; automation-tested.
+    FAstrawildAtmosphereSample Sample;
+    const float Alpha = FMath::Clamp(SunAlpha, 0.0f, 1.0f);
+    const float Vis = FMath::Clamp(VisibilityMultiplier, 0.1f, 2.0f);
+
+    if (bIsNight)
+    {
+        // Cool moonlight over a near-black sky.
+        Sample.SunColor = FLinearColor(0.55f, 0.65f, 0.90f, 1.0f);
+        Sample.FogColor = FLinearColor(0.05f, 0.07f, 0.13f, 1.0f);
+        Sample.FogDensity = 0.00022f;
+        Sample.SkyLightIntensity = 0.30f;
+    }
+    else
+    {
+        // Two-segment day ramp: dawn gold -> neutral noon -> ember dusk.
+        const FLinearColor DawnSun(1.00f, 0.72f, 0.45f, 1.0f);
+        const FLinearColor NoonSun(1.00f, 0.95f, 0.88f, 1.0f);
+        const FLinearColor DuskSun(1.00f, 0.62f, 0.42f, 1.0f);
+        Sample.SunColor = Alpha < 0.5f
+            ? FMath::Lerp(DawnSun, NoonSun, Alpha * 2.0f)
+            : FMath::Lerp(NoonSun, DuskSun, (Alpha - 0.5f) * 2.0f);
+
+        const FLinearColor DawnFog(0.88f, 0.70f, 0.55f, 1.0f);
+        const FLinearColor NoonFog(0.70f, 0.76f, 0.84f, 1.0f);
+        const FLinearColor DuskFog(0.66f, 0.47f, 0.50f, 1.0f);
+        Sample.FogColor = Alpha < 0.5f
+            ? FMath::Lerp(DawnFog, NoonFog, Alpha * 2.0f)
+            : FMath::Lerp(NoonFog, DuskFog, (Alpha - 0.5f) * 2.0f);
+
+        // Air thickens toward the horizon hours.
+        const float Horizon = FMath::Abs(Alpha - 0.5f) * 2.0f; // 0 noon, 1 dawn/dusk
+        Sample.FogDensity = FMath::Lerp(0.00012f, 0.00017f, Horizon);
+        Sample.SkyLightIntensity = FMath::Lerp(1.6f, 1.2f, Horizon);
+    }
+
+    // Weather coupling: poor visibility thickens the air and dims the sun
+    // (storm/fog states read as heavier atmospherics, not just a HUD label).
+    const float VisLoss = FMath::Clamp(1.0f - Vis, 0.0f, 0.9f);
+    Sample.FogDensity *= 1.0f + VisLoss * 1.8f;
+    Sample.SunIntensityMultiplier = 0.45f + 0.55f * Vis;
+    Sample.FogColor = FMath::Lerp(Sample.FogColor,
+        FLinearColor(Sample.FogColor.R * 0.55f + 0.05f, Sample.FogColor.G * 0.55f + 0.05f,
+            Sample.FogColor.B * 0.55f + 0.06f, 1.0f),
+        VisLoss * 0.6f);
+
+    return Sample;
+}
+
+void AAstrawildWorldBootstrapper::UpdateAtmosphere()
+{
+    if (!bEnableAtmosphere)
+    {
+        return;
+    }
+
+    AAstrawildGameState* GameState = GetGameState();
+    if (!GameState)
+    {
+        return;
+    }
+
+    float VisibilityMultiplier = 1.0f;
+    if (UWorld* World = GetWorld())
+    {
+        if (const UAstrawildWeatherSubsystem* Weather = World->GetSubsystem<UAstrawildWeatherSubsystem>())
+        {
+            VisibilityMultiplier = Weather->GetVisibilityMultiplier();
+        }
+    }
+
+    const FAstrawildAtmosphereSample Sample = EvalAtmosphereRamp(
+        GameState->GetSunCycleAlpha(), GameState->IsNight(), VisibilityMultiplier);
+
+    if (SunLight)
+    {
+        if (ULightComponent* LightComponent = SunLight->GetLightComponent())
+        {
+            LightComponent->SetLightColor(Sample.SunColor);
+            // Base curve x weather dim — recomputed from scratch every tick so
+            // the multiplier NEVER compounds across frames.
+            const float BaseIntensity = EvalSunBaseIntensity(GameState->GetSunCycleAlpha(), GameState->IsNight());
+            LightComponent->SetIntensity(BaseIntensity * Sample.SunIntensityMultiplier);
+        }
+    }
+
+    if (SkyLightActor)
+    {
+        if (USkyLightComponent* SkyComponent = SkyLightActor->GetLightComponent())
+        {
+            SkyComponent->SetIntensity(Sample.SkyLightIntensity);
+        }
+    }
+
+    if (HeightFogActor)
+    {
+        if (UExponentialHeightFogComponent* FogComponent = HeightFogActor->GetComponent())
+        {
+            FogComponent->SetFogDensity(Sample.FogDensity);
+            FogComponent->SetFogInscatteringLuminance(Sample.FogColor);
+        }
+    }
+}
+
+void AAstrawildWorldBootstrapper::SpawnBiomeDressing()
+{
+    // Production V2 Batch 2 — the first runtime consumer of the biome
+    // definitions: every zone scatters its dressing budget deterministically.
+    UWorld* World = GetWorld();
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (!World)
+    {
+        return;
+    }
+
+    // Exclusion bubbles from every placed gameplay actor so dressing never
+    // buries the camp, villages, dungeons, portals, POIs or skiff pads.
+    TArray<FVector2D> ExclusionCenters;
+    TArray<float> ExclusionRadii;
+    const auto AddExclusion = [&ExclusionCenters, &ExclusionRadii](const FVector& Location, const float Radius)
+    {
+        ExclusionCenters.Add(FVector2D(Location.X, Location.Y));
+        ExclusionRadii.Add(Radius);
+    };
+
+    AddExclusion(FVector(GetCampCenterXY(), 0.0f), 3000.0f); // camp + rest point + stations + work sites
+
+    for (TActorIterator<AAstrawildVillageActor> It(World); It; ++It)
+    {
+        AddExclusion(It->GetActorLocation(), 2800.0f);
+    }
+    for (TActorIterator<AAstrawildDungeonGeneratorActor> It(World); It; ++It)
+    {
+        AddExclusion(It->GetActorLocation(), 2600.0f);
+    }
+    for (TActorIterator<AAstrawildDungeonPortalActor> It(World); It; ++It)
+    {
+        AddExclusion(It->GetActorLocation(), 1400.0f);
+    }
+    for (TActorIterator<AAstrawildPOIMarkerActor> It(World); It; ++It)
+    {
+        AddExclusion(It->GetActorLocation(), 1600.0f);
+    }
+    for (TActorIterator<AAstrawildSkiffActor> It(World); It; ++It)
+    {
+        AddExclusion(It->GetActorLocation(), 1800.0f);
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    int32 DressedZones = 0;
+    for (const FAstrawildZoneDescriptor& ZoneDesc : UAstrawildZoneSubsystem::GetAllZones())
+    {
+        UAstrawildBiomeDefinition* BiomeDef = Registry ? Registry->FindBiome(ZoneDesc.ZoneId) : nullptr;
+        AAstrawildBiomeDressingActor* Dressing = World->SpawnActor<AAstrawildBiomeDressingActor>(
+            AAstrawildBiomeDressingActor::StaticClass(), FVector(ZoneDesc.GetCenter(), 0.0f), FRotator::ZeroRotator, Params);
+        if (Dressing)
+        {
+            Dressing->BuildDressing(ZoneDesc, BiomeDef, WorldSeedCached, ExclusionCenters, ExclusionRadii);
+            ++DressedZones;
+        }
+    }
+
+    UE_LOG(LogAstrawildWorld, Log,
+        TEXT("Biome dressing placed for %d/%d zones (%d exclusion bubbles)."),
+        DressedZones, UAstrawildZoneSubsystem::GetZoneCount(), ExclusionCenters.Num());
+}
+
+float AAstrawildWorldBootstrapper::EvalSunBaseIntensity(const float SunAlpha, const bool bIsNight)
+{
+    // Dim to moonlight levels at night (directive §13) — the shared base curve
+    // both UpdateSunRotation and the atmosphere pass apply before weather dimming.
+    return bIsNight ? 0.4f : FMath::Lerp(0.8f, 9.0f, FMath::Clamp(SunAlpha, 0.0f, 1.0f));
+}
+
 void AAstrawildWorldBootstrapper::UpdateSunRotation()
 {
     AAstrawildGameState* GameState = GetGameState();
@@ -1118,9 +1358,7 @@ void AAstrawildWorldBootstrapper::UpdateSunRotation()
 
     if (ULightComponent* LightComponent = SunLight->GetLightComponent())
     {
-        // Dim to moonlight levels at night (directive §13).
-        const float Intensity = GameState->IsNight() ? 0.4f : FMath::Lerp(0.8f, 9.0f, SunAlpha);
-        LightComponent->SetIntensity(Intensity);
+        LightComponent->SetIntensity(EvalSunBaseIntensity(SunAlpha, GameState->IsNight()));
     }
 }
 
@@ -1152,6 +1390,7 @@ void AAstrawildWorldBootstrapper::Tick(const float DeltaTime)
     if (GetLocalRole() == ROLE_Authority || GetNetMode() == NM_Standalone)
     {
         UpdateSunRotation();
+        UpdateAtmosphere();
         UpdateFlickerLights(GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f);
     }
 }

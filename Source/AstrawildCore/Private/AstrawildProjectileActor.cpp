@@ -8,11 +8,14 @@
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildSurvivalComponent.h"
+#include "AstrawildVfxActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/Material.h"
+#include "ProceduralMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
 AAstrawildProjectileActor::AAstrawildProjectileActor()
@@ -40,6 +43,16 @@ AAstrawildProjectileActor::AAstrawildProjectileActor()
     }
     VisualMesh->SetWorldScale3D(FVector(0.25f));
 
+    // Production V2 Batch 2: element-tinted procedural core. Built server-side
+    // on launch (PMC sections never replicate); remote clients keep the neutral
+    // constructor sphere above until the Niagara trail lands in the art pass.
+    VisualBody = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("VisualBody"));
+    VisualBody->SetupAttachment(RootComponent);
+    VisualBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    VisualBody->SetCastShadow(false);
+    VisualBody->bVisibleInRayTracing = false;
+    VisualBody->SetVisibility(false); // shown when the tinted core is built
+
     ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
     ProjectileMovement->UpdatedComponent = CollisionSphere;
     ProjectileMovement->InitialSpeed = 6000.0f;
@@ -64,11 +77,81 @@ void AAstrawildProjectileActor::BeginPlay()
     }
 }
 
+void AAstrawildProjectileActor::BuildElementCore()
+{
+    // Vertex-colored low-poly energy core: element tint with a bright leading
+    // pole so the bolt visibly streaks nose-first. Same DebugMeshMaterial path
+    // as the terrain tiles and Echo bodies.
+    if (!VisualBody)
+    {
+        return;
+    }
+
+    const FLinearColor Tint = FAstrawildVfxPalette::GetElementTint(Element);
+    const FColor BaseColor = Tint.ToFColor(false);
+    const FColor HotColor = FLinearColor(
+        FMath::Clamp(Tint.R * 1.45f + 0.08f, 0.0f, 1.0f),
+        FMath::Clamp(Tint.G * 1.45f + 0.08f, 0.0f, 1.0f),
+        FMath::Clamp(Tint.B * 1.45f + 0.08f, 0.0f, 1.0f), 1.0f).ToFColor(false);
+
+    constexpr int32 Rings = 6;
+    constexpr int32 Slices = 8;
+    constexpr float Radius = 50.0f; // engine-sphere convention — VisualScale applies outside
+
+    TArray<FVector> Vertices;
+    TArray<int32> Triangles;
+    TArray<FVector> Normals;
+    TArray<FVector2D> UVs;
+    TArray<FColor> Colors;
+
+    for (int32 Ring = 0; Ring <= Rings; ++Ring)
+    {
+        const float Phi = PI * static_cast<float>(Ring) / static_cast<float>(Rings);
+        for (int32 Slice = 0; Slice <= Slices; ++Slice)
+        {
+            const float Theta = 2.0f * PI * static_cast<float>(Slice) / static_cast<float>(Slices);
+            const FVector Normal(
+                FMath::Sin(Phi) * FMath::Cos(Theta),
+                FMath::Sin(Phi) * FMath::Sin(Theta),
+                FMath::Cos(Phi));
+            Vertices.Add(Normal * Radius);
+            Normals.Add(Normal);
+            UVs.Add(FVector2D(static_cast<float>(Slice) / Slices, static_cast<float>(Ring) / Rings));
+            // Nose (front pole) runs hot; the rest carries the element identity.
+            Colors.Add(Normal.X > 0.55f ? HotColor : BaseColor);
+        }
+    }
+    for (int32 Ring = 0; Ring < Rings; ++Ring)
+    {
+        for (int32 Slice = 0; Slice < Slices; ++Slice)
+        {
+            const int32 A = Ring * (Slices + 1) + Slice;
+            const int32 B = (Ring + 1) * (Slices + 1) + Slice;
+            const int32 C = (Ring + 1) * (Slices + 1) + Slice + 1;
+            const int32 D = Ring * (Slices + 1) + Slice + 1;
+            Triangles.Append({ A, B, C, A, C, D });
+        }
+    }
+
+    VisualBody->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, Colors, TArray<FProcMeshTangent>(), false);
+    if (UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial")))
+    {
+        VisualBody->SetMaterial(0, Material);
+    }
+    VisualBody->SetVisibility(true);
+    if (VisualMesh)
+    {
+        VisualMesh->SetVisibility(false); // tinted core takes over (server/listen view)
+    }
+}
+
 void AAstrawildProjectileActor::Launch(const FVector& Direction, const float Damage, const EAstrawildElementType InElement, AActor* InOwner)
 {
     DamageAmount = FMath::Max(0.0f, Damage);
     Element = InElement;
     OwnerActor = InOwner;
+
+    BuildElementCore();
 
     if (InOwner)
     {
@@ -96,6 +179,8 @@ void AAstrawildProjectileActor::LaunchFromWeapon(const FVector& Direction, const
     LifetimeSeconds = FMath::Max(0.5f, InLifetimeSeconds);
     VisualScale = FMath::Max(0.05f, InVisualScale);
     VisualMesh->SetWorldScale3D(FVector(VisualScale));
+    VisualBody->SetWorldScale3D(FVector(VisualScale));
+    BuildElementCore();
 
     if (InOwner)
     {
