@@ -19,6 +19,9 @@ void UAstrawildItemRegistrySubsystem::OnWorldBeginPlay(UWorld& InWorld)
     if (InWorld.GetNetMode() != NM_Client)
     {
         UAstrawildContentLibrary::BuildDefaults(this);
+        // Batch 4: resolve art pack soft refs once so combat/visual dispatchers
+        // hit loaded pointers (partial packs keep procedural fallbacks).
+        UAstrawildContentLibrary::WarmArtPackBindings(this);
     }
 }
 

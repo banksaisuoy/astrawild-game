@@ -16,7 +16,7 @@
 | V-2 | Full `Development Editor` build | 0 errors, 0 warnings-as-errors | build log |
 | V-3 | Link `ASTRAWILD.exe` / editor target | links clean (watch for the historical C-2 class of LNK2001) | build log |
 | V-4 | PIE boot, zero-asset world | terrain tiles + camp + spawners visible in <30 s | screenshot + log tail |
-| V-5 | Automation tests (`ast.``*`, 53 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
+| V-5 | Automation tests (`ast.``*`, 54 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
 
 Known "may surface on first compile" items (static review already cleaned these once):
 native gameplay tag registration order, `TObjectPtr` BP exposure policy, IMC runtime
@@ -121,6 +121,13 @@ per the production directive PHASE 16.
 | V2-25 | Evolution end-to-end (CP-02) | level/bond a Voltpylon to gates (cheat: `ASTRAWILD.` cheat manager is live) → `EvolveInstance` swaps to Voltpylon Tempest: roster entry + spawned actor rebuild (bigger, Epic) with level/bond/trust intact | roster + 2 screenshots |
 | V2-26 | Weapon Niagara binding dispatch | bind any NS_ on a weapon profile's `MuzzleFlashVfx` (or leave empty) → bound: Niagara plays, procedural octahedron does NOT; empty: octahedron plays as today | 2 clips |
 | V2-27 | Dialogue save round-trip | mid-conversation flag set → save → quit → load → flags still gate choices (Maren report hidden if already reported) | log + clip |
+| V2-28 | Art pack compile gate | rebuild Batch 4 (no new module deps — Engine/Niagara only) → 0 errors, 54/54 tests incl. new `ASTRAWILD.ArtPack.BindingContract` | build log + test screenshot |
+| V2-29 | AwPipeline import | run `py "Content/Python/AwPipeline/import_all.py"` in editor → report `Saved/AwPipelineReport/import_report.json` shows `total_missing: 0`, `errors: []` | report file |
+| V2-30 | Skinned survivor | PIE start prints `Survivor art pack active: skinned exosuit` → PMC silhouette hidden, idle/walk/run/aim(by block)/fire/jump/gather clips play, weapon mesh rides `Weapon_R` socket tier-scaled | clip |
+| V2-31 | Echo skinned swap | spawn/capture any of the 6 production species → skinned body (sized by class) + idle clip; walking switches to move clip | 2 clips |
+| V2-32 | Biome real scatter | Dawn Fields: broadleaf/conifer trees + granite rocks + grass tufts via ISM (placeholders disabled), terrain shows 4-layer M_Landscape_SciFiFrontier (grass flats / granite slopes / sand near water), ambience loop audible | clip + log |
+| V2-33 | Resource node meshes | Astraite/Pyronite/Voidstone/AncientVein nodes render crystal clusters (rarity shapes retired) | clip |
+| V2-34 | Weapon FX + audio | after authoring NS_AW_MuzzleFlash (RUNBOOK §3): fire Scrapshot → Niagara muzzle + A_Weapon_Scrap_Fire audible; bind NS_AW_Weap_Trail → projectile trail follows | clip |
 
 ---
 

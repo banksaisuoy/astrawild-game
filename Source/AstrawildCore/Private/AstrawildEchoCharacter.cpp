@@ -17,6 +17,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -685,8 +687,69 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
 
     // Batch 8: assemble the species silhouette (no-op for definitions without
     // appearance data — the legacy placeholder sphere stays visible).
-    BuildProceduralBody();
+    // Art pack (Batch 4, CP-02): the skinned species mesh replaces the PMC
+    // silhouette when its soft ref resolves; otherwise the procedural body stays.
+    bSkeletalBodyActive = TryActivateSkeletalBody();
+    if (!bSkeletalBodyActive)
+    {
+        BuildProceduralBody();
+    }
     return true;
+}
+
+bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
+{
+    if (!IsValid(EchoDefinition) || !EchoDefinition->SkeletalMesh.IsValid())
+    {
+        return false;
+    }
+    USkeletalMesh* Mesh = EchoDefinition->SkeletalMesh.LoadSynchronous();
+    if (!Mesh)
+    {
+        return false;
+    }
+
+    EchoBodyMesh = NewObject<USkeletalMeshComponent>(this, TEXT("EchoBodyMesh"));
+    if (!EchoBodyMesh)
+    {
+        return false;
+    }
+    EchoBodyMesh->SetupAttachment(GetCapsuleComponent());
+    EchoBodyMesh->SetSkeletalMesh(Mesh);
+    EchoBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    EchoBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    // Size-class scale mirrors BodyScaleForSize so Huge/Large/Small species read.
+    EchoBodyMesh->SetRelativeScale3D(FVector(BodyScaleForSize(EchoDefinition->SizeClass)));
+    EchoBodyMesh->RegisterComponent();
+
+    // Warm the locomotion clips + start the idle loop.
+    EchoDefinition->IdleAnimation.LoadSynchronous();
+    EchoDefinition->MoveAnimation.LoadSynchronous();
+    UpdateSkeletalAnimation();
+
+    // Cadence: idle/move selection follows AI speed without per-tick cost.
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().SetTimer(EchoAnimTimerHandle, this,
+            &AAstrawildEchoCharacter::UpdateSkeletalAnimation, 0.15f, true);
+    }
+    return true;
+}
+
+void AAstrawildEchoCharacter::UpdateSkeletalAnimation()
+{
+    if (!EchoBodyMesh || !IsValid(EchoDefinition))
+    {
+        return;
+    }
+    UAnimSequenceBase* Target = GetVelocity().Size() < 60.0f
+        ? EchoDefinition->IdleAnimation.Get()
+        : EchoDefinition->MoveAnimation.Get();
+    if (Target && Target != CurrentLoopAnimation)
+    {
+        EchoBodyMesh->PlayAnimation(Target, true);
+        CurrentLoopAnimation = Target;
+    }
 }
 
 bool AAstrawildEchoCharacter::InitializeFromDefinitionWithPersonality(UAstrawildEchoDefinition* InDefinition, const EAstrawildPersonality InPersonality, const FGuid& OptionalInstanceId)

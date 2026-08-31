@@ -102,6 +102,18 @@ void AAstrawildResourceNode::ApplyNodeDefinition()
     RemainingQuantity = FMath::Max(1, Def->MaxQuantity);
     RespawnDurationSeconds = FMath::Max(0.0f, Def->RespawnDurationSeconds);
 
+    // Art pack (Batch 4, CP-04): real node mesh replaces the rarity shape when
+    // the soft ref resolves (warmed by the registry art-pack pass). The rarity
+    // shape + tint placeholder stays live otherwise — zero-asset rule.
+    if (UStaticMesh* ArtMesh = Def->MeshOverride.LoadSynchronous())
+    {
+        VisualMesh->SetStaticMesh(ArtMesh);
+        VisualMesh->SetWorldScale3D(FVector(FMath::Max(0.1f, Def->VisualScale)));
+        UE_LOG(LogAstrawild, Verbose, TEXT("Resource node %s using art mesh %s."),
+            *GetName(), *Def->MeshOverride.ToSoftObjectPath().ToString());
+        return;
+    }
+
     ApplyRarityShape(Def);
     VisualMesh->SetWorldScale3D(VisualMesh->GetRelativeScale3D() * FMath::Max(0.1f, Def->VisualScale));
     ApplyVisualTint(Def->NodeTint);

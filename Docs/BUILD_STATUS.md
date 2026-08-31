@@ -2,17 +2,20 @@
 
 ## Status
 
-- Overall: `PARTIAL` — **PRODUCTION V2 BATCH 3 (DIALOGUE + CONTENT PACK FOUNDATION) COMPLETE on the
-  source side**, on top of the UE5-VERIFIED 48/48 baseline (Batches 1–2 built, cooked and tested on
-  UE 5.8.2 — `Docs/ENGINE_LOGS/`). Batch 3 ships the dialogue system (6 conversation trees, story
-  flags in save v4, pure-C++ UMG conversation screen, consequence routing through existing
-  authority pipelines) plus the **Production Content Pack** (`Docs/CONTENT_PACK/CP-00..CP-10` —
-  10-area production spec) with its C++ binding hooks: weapon Niagara/audio soft refs with
-  Niagara-first dispatch, Echo evolution (6 chains, dual level+bond gates, identity-preserving
-  roster swap), equipment visual override contracts. Tests 48 → **53** — see
-  `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_3.md`)
-- Last updated: 2026-08-31 (V2 Batch 3 — dialogue system + content pack foundation; engine logs for
-  Batches 1–2: 48/48 PASS)
+- Overall: `PARTIAL` — **PRODUCTION V2 BATCH 4 (ART PACK DELIVERY) COMPLETE on the source side**,
+  on top of the UE5-VERIFIED 48/48 baseline (Batches 1–2, `Docs/ENGINE_LOGS/`).
+  Batch 4 delivers the real art pack: **112 generated source assets** (7 skeletal meshes with rigs
+  + 25 animation clips, 25 static meshes, 44 PBR textures, 36 audio files — 53 MB, `ArtSource/`),
+  the **AwPipeline editor import automation** (`Content/Python/AwPipeline/import_all.py`: textures →
+  GLB meshes → master materials `M_Master_Surface` / `M_Landscape_SciFiFrontier` → ~30 material
+  instances + slot binding → sockets → coverage report), and the **soft C++ binding layer**
+  (AstrawildArtPack tables + registry warm pass + skinned survivor/Echo/node consumption with
+  full procedural fallbacks). Tests 53 → **54** (new `ASTRAWILD.ArtPack.BindingContract`).
+  Import on the UE host: `Docs/ASTRAWILD_ART_PACK_RUNBOOK.md` (~5 min + 3 Niagara recipes).
+  Predecessor Batch 3 (dialogue + content pack specs) remains SOURCE_IMPLEMENTED pending rebuild — see
+  `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_3.md` and `ASTRAWILD_PRODUCTION_V2_BATCH_4.md`)
+- Last updated: 2026-08-31 (V2 Batch 4 — art pack delivery: 112 assets + AwPipeline import + soft bindings; engine logs for
+  Batches 1–2: 48/48 PASS; Batches 3–4 await rebuild)
 - Branch: `main` (latest: V2 Batch 3; preceded by `5eb6b9e` sync report, `098b45c`/`60e8bc6` UE-verified
   Batches 1–2, `cbdbd82` V2 Batch 1, `e1c1b44` Batch 8, `eceabd3` final production run)
 - Latest change: **V2 BATCH 3 — DIALOGUE + PRODUCTION CONTENT PACK FOUNDATION**: (1)

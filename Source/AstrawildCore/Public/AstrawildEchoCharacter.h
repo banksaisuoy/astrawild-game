@@ -12,6 +12,8 @@ class UPointLightComponent;
 class UStaticMeshComponent;
 class UNavigationInvokerComponent;
 class UProceduralMeshComponent;
+class USkeletalMeshComponent;
+class UAnimSequenceBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
@@ -46,6 +48,29 @@ public:
      */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
     TObjectPtr<UProceduralMeshComponent> BodyMesh;
+
+    // ------------------------------------------------------------------
+    // Art pack body (Batch 4, CP-02): skinned species mesh + code-driven
+    // idle/move clips bound from EchoDefinition (AstrawildArtPack tables).
+    // When the mesh resolves, the PMC silhouette is retired.
+    // ------------------------------------------------------------------
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="ASTRAWILD|Echo|Appearance")
+    TObjectPtr<USkeletalMeshComponent> EchoBodyMesh;
+
+    /** True once the skinned body replaced the PMC silhouette. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="ASTRAWILD|Echo|Appearance")
+    bool bSkeletalBodyActive = false;
+
+    /** Attempts the skinned species swap; false keeps the procedural body. */
+    bool TryActivateSkeletalBody();
+
+    /** Code-driven idle/move selection (called on a 0.15s cadence). */
+    void UpdateSkeletalAnimation();
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> CurrentLoopAnimation;
+
+    FTimerHandle EchoAnimTimerHandle;
 
     /** Builds BodyMesh from EchoDefinition appearance fields (safe no-op without a definition). */
     void BuildProceduralBody();

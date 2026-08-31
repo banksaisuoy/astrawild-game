@@ -7,6 +7,7 @@
 #include "AstrawildCore.h"
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildArtPack.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEchoRosterSubsystem.h"
@@ -27,7 +28,9 @@
 #include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
 #include "Camera/CameraComponent.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -53,6 +56,20 @@
 AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
+
+    // Art pack soft bindings (Batch 4): AstrawildArtPack is the single source of
+    // truth — the designer can still override per-archetype in a BP subclass.
+    {
+        const AstrawildArtPack::FSurvivorArt& Art = AstrawildArtPack::GetSurvivorArt();
+        SurvivorSkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(Art.MeshPath));
+        SurvivorIdleAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.IdleAnimPath));
+        SurvivorWalkAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.WalkAnimPath));
+        SurvivorRunAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.RunAnimPath));
+        SurvivorJumpAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.JumpAnimPath));
+        SurvivorAimAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.AimAnimPath));
+        SurvivorFireAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.FireAnimPath));
+        SurvivorGatherAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.GatherAnimPath));
+    }
 
     bReplicates = true;
     SetReplicatingMovement(true);
@@ -146,6 +163,12 @@ void AAstrawildPlayerCharacter::BeginPlay()
     // AND owning client so the body reads in every netmode).
     BuildProceduralBody();
 
+    // Art pack (Batch 4): swap to the skinned exosuit when the pack is imported.
+    // The registry warm pass pre-loads the soft refs, so this is one synchronous
+    // resolution on a warmed pointer in the common case (and a cheap miss when
+    // the pack is absent — the PMC silhouette stays live, zero-asset rule).
+    bSkeletalBodyActive = TryActivateSkeletalBody();
+
     if (bGivePrototypeStarterItems && HasAuthority() && InventoryComponent && InventoryComponent->GetItemStacks().IsEmpty())
     {
         for (const FAstrawildItemStack& StarterItem : StarterItems)
@@ -190,6 +213,143 @@ void AAstrawildPlayerCharacter::BeginPlay()
         World->GetTimerManager().SetTimer(HeldWeaponTimerHandle, this,
             &AAstrawildPlayerCharacter::RefreshHeldWeaponVisual, 0.5f, true);
         RefreshHeldWeaponVisual();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Art pack animation driver (Batch 4, CP-08) — code-driven locomotion over the
+// imported AM_Survivor_* clips (single-node mode: no AnimBP required).
+// ---------------------------------------------------------------------------
+bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
+{
+    USkeletalMesh* Mesh = SurvivorSkeletalMesh.LoadSynchronous();
+    if (!Mesh)
+    {
+        return false; // pack not imported — PMC silhouette stays live
+    }
+
+    SurvivorBody = NewObject<USkeletalMeshComponent>(this, TEXT("SurvivorBody"));
+    if (!SurvivorBody)
+    {
+        return false;
+    }
+    SurvivorBody->SetupAttachment(GetCapsuleComponent());
+    SurvivorBody->SetSkeletalMesh(Mesh);
+    SurvivorBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    SurvivorBody->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    SurvivorBody->SetRelativeLocation(FVector::ZeroVector);
+    SurvivorBody->SetRelativeRotation(FRotator::ZeroRotator);
+    SurvivorBody->RegisterComponent();
+
+    // The PMC body + placeholder cylinder retire while the skinned body lives.
+    if (BodyMesh)
+    {
+        BodyMesh->SetVisibility(false);
+    }
+    if (PlaceholderMesh)
+    {
+        PlaceholderMesh->SetVisibility(false);
+    }
+
+    PrimaryActorTick.bCanEverTick = true;
+    SetActorTickEnabled(true);
+
+    // Warm the locomotion clips (registry warm pass usually already did).
+    SurvivorIdleAnim.LoadSynchronous();
+    SurvivorWalkAnim.LoadSynchronous();
+    SurvivorRunAnim.LoadSynchronous();
+    SurvivorAimAnim.LoadSynchronous();
+    SurvivorJumpAnim.LoadSynchronous();
+    SurvivorFireAnim.LoadSynchronous();
+    SurvivorGatherAnim.LoadSynchronous();
+
+    UE_LOG(LogAstrawild, Log,
+        TEXT("Survivor art pack active: skinned exosuit %s replaces the PMC silhouette."),
+        *SurvivorSkeletalMesh.ToSoftObjectPath().ToString());
+    return true;
+}
+
+void AAstrawildPlayerCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    if (bSkeletalBodyActive)
+    {
+        UpdateSurvivorAnimation();
+    }
+}
+
+void AAstrawildPlayerCharacter::UpdateSurvivorAnimation()
+{
+    if (!SurvivorBody)
+    {
+        return;
+    }
+
+    UAnimSequenceBase* Target = nullptr;
+    const float Speed = GetVelocity().Size();
+    if (bGuardPose && Speed < 450.0f)
+    {
+        Target = SurvivorAimAnim.Get();
+    }
+    else if (Speed < 60.0f)
+    {
+        Target = SurvivorIdleAnim.Get();
+    }
+    else if (Speed < 480.0f)
+    {
+        Target = SurvivorWalkAnim.Get();
+    }
+    else
+    {
+        Target = SurvivorRunAnim.Get();
+    }
+
+    if (Target && Target != CurrentLoopAnimation)
+    {
+        SurvivorBody->PlayAnimation(Target, true);
+        CurrentLoopAnimation = Target;
+    }
+    else if (!Target && CurrentLoopAnimation)
+    {
+        // Clips absent — hold the bind pose rather than stutter.
+        SurvivorBody->Stop();
+        CurrentLoopAnimation = nullptr;
+    }
+}
+
+void AAstrawildPlayerCharacter::PlaySurvivorOneShot(UAnimSequenceBase* Sequence, float Duration)
+{
+    if (!bSkeletalBodyActive || !SurvivorBody || !Sequence)
+    {
+        return;
+    }
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(SurvivorOneShotTimer);
+        World->GetTimerManager().SetTimer(SurvivorOneShotTimer, this,
+            &AAstrawildPlayerCharacter::OnSurvivorOneShotFinished, FMath::Max(0.1f, Duration), false);
+    }
+    SurvivorBody->PlayAnimation(Sequence, false);
+    CurrentLoopAnimation = nullptr;
+}
+
+void AAstrawildPlayerCharacter::OnSurvivorOneShotFinished()
+{
+    CurrentLoopAnimation = nullptr;
+    UpdateSurvivorAnimation();
+}
+
+void AAstrawildPlayerCharacter::SetGuardPose(bool bEnabled)
+{
+    if (bGuardPose == bEnabled)
+    {
+        return;
+    }
+    bGuardPose = bEnabled;
+    if (bSkeletalBodyActive && bEnabled && SurvivorAimAnim.Get())
+    {
+        CurrentLoopAnimation = nullptr; // force stance change next tick
+        UpdateSurvivorAnimation();
     }
 }
 
@@ -685,6 +845,8 @@ void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
         return;
     }
 
+    // Art pack (Batch 4): jump one-shot (skips if the clip is not imported).
+    PlaySurvivorOneShot(SurvivorJumpAnim.Get(), 0.9f);
     Jump();
 }
 
@@ -727,6 +889,13 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
     if (!IsAlive())
     {
         return;
+    }
+
+    // Art pack (Batch 4): gather/interact one-shot before the trace (skipped
+    // while piloting and when the clip is not imported).
+    if (!PilotedSkiff.IsValid())
+    {
+        PlaySurvivorOneShot(SurvivorGatherAnim.Get(), 1.0f);
     }
 
     // Batch 8 — E while piloting = dismount (before any trace).
@@ -780,6 +949,10 @@ void AAstrawildPlayerCharacter::Attack(const FInputActionValue& Value)
     }
 
     CombatComponent->RequestLightAttack();
+
+    // Art pack (Batch 4): fire recoil one-shot (fires on melee too — reads as a
+    // swing; skips when the clip is absent).
+    PlaySurvivorOneShot(SurvivorFireAnim.Get(), 0.35f);
 }
 
 void AAstrawildPlayerCharacter::HeavyAttack(const FInputActionValue& Value)
@@ -811,11 +984,13 @@ void AAstrawildPlayerCharacter::StartBlock(const FInputActionValue& Value)
     if (IsAlive() && CombatComponent)
     {
         CombatComponent->RequestSetBlocking(true);
+        SetGuardPose(true);
     }
 }
 
 void AAstrawildPlayerCharacter::StopBlock(const FInputActionValue& Value)
 {
+    SetGuardPose(false);
     if (CombatComponent)
     {
         CombatComponent->RequestSetBlocking(false);
@@ -1398,6 +1573,50 @@ void AAstrawildPlayerCharacter::RefreshHeldWeaponVisual()
         return; // nothing changed since the last poll
     }
     LastHeldWeaponId = WeaponId;
+
+    // Art pack (Batch 4, CP-03): real weapon static mesh on the hand socket when
+    // both the skinned body and the weapon mesh resolve. Falls through to the
+    // PMC silhouette otherwise (zero-asset rule).
+    if (WeaponDef && bSkeletalBodyActive && SurvivorBody)
+    {
+        UStaticMesh* WeaponMeshAsset = WeaponDef->Mesh.Get();
+        if (WeaponMeshAsset)
+        {
+            if (WeaponMesh)
+            {
+                WeaponMesh->SetVisibility(false); // retire the PMC gun
+            }
+            if (!HeldWeaponMesh)
+            {
+                HeldWeaponMesh = NewObject<UStaticMeshComponent>(this, TEXT("HeldWeaponMesh"));
+                HeldWeaponMesh->SetupAttachment(SurvivorBody);
+                HeldWeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                HeldWeaponMesh->SetCastShadow(true);
+                HeldWeaponMesh->RegisterComponent();
+            }
+            HeldWeaponMesh->AttachToComponent(SurvivorBody,
+                FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("Weapon_R"));
+            HeldWeaponMesh->SetStaticMesh(WeaponMeshAsset);
+
+            float TierScale = 1.0f;
+            switch (WeaponDef->Tier)
+            {
+            case EAstrawildTechTier::Field:         TierScale = 1.0f; break;
+            case EAstrawildTechTier::Mk1:           TierScale = 1.05f; break;
+            case EAstrawildTechTier::Mk2:           TierScale = 1.15f; break;
+            case EAstrawildTechTier::Mk3:           TierScale = 1.25f; break;
+            case EAstrawildTechTier::Experimental:  TierScale = 1.35f; break;
+            default: break;
+            }
+            HeldWeaponMesh->SetRelativeScale3D(FVector(TierScale));
+            HeldWeaponMesh->SetVisibility(true);
+            return;
+        }
+    }
+    if (HeldWeaponMesh)
+    {
+        HeldWeaponMesh->SetVisibility(false);
+    }
 
     if (!WeaponDef)
     {

@@ -3,6 +3,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildArtPack.h"
 
 // ---------------------------------------------------------------------------
 // Local helpers — terse builders mirroring the ContentLibrary house style.
@@ -263,6 +264,43 @@ void UAstrawildProductionContent::BuildWeapons(UAstrawildItemRegistrySubsystem* 
         EAstrawildWeaponFireMode::Beam, 140.0f, 2.5f, EAstrawildElementType::Light, TEXT("Item_NovaCell"));
     Nova->BeamRange = 30000.0f;
     Nova->PierceCount = 6;
+
+    // Art pack bindings (Batch 4 — Visual Vertical Slice): held meshes, hero FX
+    // and audio soft paths from AstrawildArtPack. Every binding is a SOFT path:
+    // until Antigravity imports the ArtSource pack via Content/Python/AwPipeline,
+    // none of them resolve and the zero-asset fallbacks stay live (CP-00 rule 2).
+    for (const AstrawildArtPack::FWeaponArt& Art : AstrawildArtPack::GetWeaponArt())
+    {
+        UAstrawildWeaponDefinition* WeaponDef = Registry->FindWeapon(Art.WeaponId);
+        if (!WeaponDef)
+        {
+            continue;
+        }
+        if (!Art.MeshPath.IsEmpty())
+        {
+            WeaponDef->Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(Art.MeshPath));
+        }
+        if (!Art.MuzzleVfxPath.IsEmpty())
+        {
+            WeaponDef->MuzzleFlashVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Art.MuzzleVfxPath));
+        }
+        if (!Art.ImpactVfxPath.IsEmpty())
+        {
+            WeaponDef->ImpactVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Art.ImpactVfxPath));
+        }
+        if (!Art.TrailVfxPath.IsEmpty())
+        {
+            WeaponDef->ProjectileTrailVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Art.TrailVfxPath));
+        }
+        if (!Art.FireSoundPath.IsEmpty())
+        {
+            WeaponDef->FireSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art.FireSoundPath));
+        }
+        if (!Art.ImpactSoundPath.IsEmpty())
+        {
+            WeaponDef->ImpactSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art.ImpactSoundPath));
+        }
+    }
 
     // --- Weapon items (inventory entities carrying the profiles). ---
     UAstrawildItemDefinition* Scrapshot = MakeItem(Registry, TEXT("Item_Scrapshot"), TEXT("Scrapshot"),
@@ -669,6 +707,16 @@ void UAstrawildProductionContent::BuildResourceNodes(UAstrawildItemRegistrySubsy
         EAstrawildRarity::Rare, 1, 2, 100.0f, FLinearColor(0.7f, 0.75f, 0.95f));
     MakeNode(Registry, TEXT("Node_AncientVein"), TEXT("Hidden Alloy Vein"), TEXT("Item_AncientAlloy"),
         EAstrawildRarity::Epic, 1, 1, 480.0f, FLinearColor(0.6f, 0.95f, 0.9f), true);
+
+    // Art pack bindings (Batch 4): crystal/rock cluster meshes per node type.
+    // Soft paths — the rarity-shape placeholder stays active until import.
+    for (const AstrawildArtPack::FNodeArt& Art : AstrawildArtPack::GetNodeArt())
+    {
+        if (UAstrawildResourceNodeDefinition* NodeDef = Registry->FindResourceNode(Art.NodeId))
+        {
+            NodeDef->MeshOverride = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(Art.MeshPath));
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -977,6 +1025,33 @@ void UAstrawildProductionContent::BuildBiomes(UAstrawildItemRegistrySubsystem* R
         Biome->TreeCanopyTint = Row.CanopyTint;
         Biome->RockTint = Row.RockTint;
         Biome->GrassTuftTint = Row.GrassTint;
+
+        // Art pack bindings (Batch 4, CP-04): scatter mesh sets + landscape master
+        // + ambience per biome. BiomeDressingActor's ISM path consumes these soft
+        // refs and disables the PMC placeholders once they resolve.
+        if (const AstrawildArtPack::FBiomeArt* Art = AstrawildArtPack::FindBiomeArt(Row.Id))
+        {
+            for (const FString& TreePath : Art->TreeMeshPaths)
+            {
+                Biome->TreeMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TreePath)));
+            }
+            for (const FString& RockPath : Art->RockMeshPaths)
+            {
+                Biome->RockMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(RockPath)));
+            }
+            for (const FString& GrassPath : Art->GrassMeshPaths)
+            {
+                Biome->GrassMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(GrassPath)));
+            }
+            if (!Art->LandscapeMaterialPath.IsEmpty())
+            {
+                Biome->LandscapeMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(Art->LandscapeMaterialPath));
+            }
+            if (!Art->AmbientAudioPath.IsEmpty())
+            {
+                Biome->AmbientAudio = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art->AmbientAudioPath));
+            }
+        }
         Registry->RegisterBiome(Biome);
     }
 }
@@ -1046,6 +1121,25 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
         EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Rare, EAstrawildEchoPassive::None,
         { { EAstrawildWorkType::Mining, 1.9f }, { EAstrawildWorkType::Construction, 1.3f } },
         { Stack(TEXT("Item_Stone"), 3), Stack(TEXT("Item_StormSilver"), 1) });
+
+    // Art pack bindings (Batch 4, CP-02/CP-08): skeletal meshes + idle/move clips
+    // per species. EchoCharacter swaps its PMC silhouette for the skinned body
+    // the moment these resolve; unresolved species keep the procedural body.
+    for (const AstrawildArtPack::FEchoArt& Art : AstrawildArtPack::GetEchoArt())
+    {
+        if (UAstrawildEchoDefinition* EchoDef = Registry->FindEcho(Art.EchoId))
+        {
+            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(Art.MeshPath));
+            if (!Art.IdleAnimPath.IsEmpty())
+            {
+                EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.IdleAnimPath));
+            }
+            if (!Art.MoveAnimPath.IsEmpty())
+            {
+                EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.MoveAnimPath));
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

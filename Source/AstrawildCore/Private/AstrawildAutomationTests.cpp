@@ -8,6 +8,11 @@
 #include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildArtPack.h"
+// Complete soft-pointer pointee types: TSoftObjectPtr<>::IsValid() in test code
+// needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
+#include "Engine/StaticMesh.h"
+#include "Sound/SoundBase.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
@@ -1961,6 +1966,122 @@ bool FAstrawildWeaponAssetBindingTest::RunTest(const FString& Parameters)
     UAstrawildItemDefinition* ArmorItem = NewObject<UAstrawildItemDefinition>();
     TestTrue(TEXT("Equip mesh override defaults unset"), ArmorItem->EquipMeshOverride.IsNull());
     TestTrue(TEXT("Equip material override defaults unset"), ArmorItem->EquipMaterialOverride.IsNull());
+    return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// Batch 4 — Art pack binding contract (AstrawildArtPack tables + soft path
+// behavior). Pure data: no world, no loads. Proves (1) every CODE_DEFAULT
+// production entry that claims art has well-formed /Game/ paths, and (2) the
+// zero-asset fallback rule survives the bindings: an unresolved soft path
+// reports IsValid()==false, so dispatchers keep their procedural fallbacks
+// until Antigravity imports the pack (CP-00 rule 2).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildArtPackBindingTest,
+    "ASTRAWILD.ArtPack.BindingContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildArtPackBindingTest::RunTest(const FString& Parameters)
+{
+    // --- Weapons: 8 bindings, complete mesh/sound/FX path contracts.
+    TestEqual(TEXT("weapon art entries"), AstrawildArtPack::GetWeaponArt().Num(), 8);
+    for (const AstrawildArtPack::FWeaponArt& Art : AstrawildArtPack::GetWeaponArt())
+    {
+        TestTrue(FString::Printf(TEXT("%s has mesh path"), *Art.WeaponId.ToString()),
+            Art.MeshPath.StartsWith(TEXT("/Game/Weapons/")));
+        TestTrue(FString::Printf(TEXT("%s has fire sound path"), *Art.WeaponId.ToString()),
+            Art.FireSoundPath.StartsWith(TEXT("/Game/Audio/A_Weapon_")));
+        TestTrue(FString::Printf(TEXT("%s has impact sound path"), *Art.WeaponId.ToString()),
+            Art.ImpactSoundPath.StartsWith(TEXT("/Game/Audio/A_Weapon_Impact")));
+        TestTrue(FString::Printf(TEXT("%s has muzzle vfx path"), *Art.WeaponId.ToString()),
+            Art.MuzzleVfxPath.StartsWith(TEXT("/Game/VFX/NS_AW_")));
+        if (Art.WeaponId == TEXT("Weapon_Scrapshot"))
+        {
+            TestTrue(TEXT("kinetic impact is the kinetic sound"),
+                Art.ImpactSoundPath.Contains(TEXT("Kinetic")));
+        }
+    }
+    TestTrue(TEXT("weapon lookup resolves"), AstrawildArtPack::FindWeaponArt(TEXT("Weapon_ArcCaster")) != nullptr);
+    TestTrue(TEXT("weapon lookup misses unknown ids"), AstrawildArtPack::FindWeaponArt(TEXT("Weapon_Missing")) == nullptr);
+
+    // --- Echoes: 6 species with mesh + idle + move clips.
+    TestEqual(TEXT("echo art entries"), AstrawildArtPack::GetEchoArt().Num(), 6);
+    for (const AstrawildArtPack::FEchoArt& Art : AstrawildArtPack::GetEchoArt())
+    {
+        TestTrue(FString::Printf(TEXT("%s mesh path"), *Art.EchoId.ToString()),
+            Art.MeshPath.StartsWith(TEXT("/Game/Characters/Echoes/SK_Echo_")));
+        TestTrue(FString::Printf(TEXT("%s idle clip path"), *Art.EchoId.ToString()),
+            Art.IdleAnimPath.StartsWith(TEXT("/Game/Characters/Echoes/AM_")));
+        TestTrue(FString::Printf(TEXT("%s move clip path"), *Art.EchoId.ToString()),
+            Art.MoveAnimPath.StartsWith(TEXT("/Game/Characters/Echoes/AM_")));
+        TestTrue(FString::Printf(TEXT("%s clips differ"), *Art.EchoId.ToString()),
+            Art.IdleAnimPath != Art.MoveAnimPath);
+    }
+
+    // --- Biomes: 12 zones, landscape material everywhere, ambience everywhere,
+    // trees on the vegetated zones, at least one rock scatter mesh each.
+    TestEqual(TEXT("biome art entries"), AstrawildArtPack::GetBiomeArt().Num(), 12);
+    int32 BiomesWithTrees = 0;
+    for (const AstrawildArtPack::FBiomeArt& Art : AstrawildArtPack::GetBiomeArt())
+    {
+        TestTrue(FString::Printf(TEXT("%s landscape material"), *Art.BiomeId.ToString()),
+            Art.LandscapeMaterialPath == TEXT("/Game/Materials/M_Landscape_SciFiFrontier"));
+        TestTrue(FString::Printf(TEXT("%s ambience path"), *Art.BiomeId.ToString()),
+            Art.AmbientAudioPath.StartsWith(TEXT("/Game/Audio/A_Amb_")));
+        TestTrue(FString::Printf(TEXT("%s rock scatter"), *Art.BiomeId.ToString()),
+            Art.RockMeshPaths.Num() >= 1);
+        if (Art.TreeMeshPaths.Num() > 0)
+        {
+            ++BiomesWithTrees;
+        }
+    }
+    TestTrue(TEXT("most biomes carry trees (8 vegetated zones)"), BiomesWithTrees >= 8);
+    TestTrue(TEXT("starting zone carries trees"),
+        AstrawildArtPack::FindBiomeArt(TEXT("Zone_DawnFields")) &&
+        AstrawildArtPack::FindBiomeArt(TEXT("Zone_DawnFields"))->TreeMeshPaths.Num() >= 2);
+
+    // --- Resource nodes: 10 bindings under /Game/Environment/.
+    TestEqual(TEXT("node art entries"), AstrawildArtPack::GetNodeArt().Num(), 10);
+    for (const AstrawildArtPack::FNodeArt& Art : AstrawildArtPack::GetNodeArt())
+    {
+        TestTrue(FString::Printf(TEXT("%s node mesh path"), *Art.NodeId.ToString()),
+            Art.MeshPath.StartsWith(TEXT("/Game/Environment/")));
+    }
+
+    // --- Survivor: mesh + the 7 CP-01/CP-08 clips.
+    {
+        const AstrawildArtPack::FSurvivorArt& Art = AstrawildArtPack::GetSurvivorArt();
+        TestTrue(TEXT("survivor mesh path"), Art.MeshPath.StartsWith(TEXT("/Game/Characters/Survivor/SK_")));
+        TestTrue(TEXT("survivor idle path"), Art.IdleAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+        TestTrue(TEXT("survivor walk path"), Art.WalkAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+        TestTrue(TEXT("survivor run path"), Art.RunAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+        TestTrue(TEXT("survivor jump path"), Art.JumpAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+        TestTrue(TEXT("survivor aim path"), Art.AimAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+        TestTrue(TEXT("survivor fire path"), Art.FireAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+        TestTrue(TEXT("survivor gather path"), Art.GatherAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
+    }
+
+    // --- Zero-asset fallback rule survives the bindings: a soft path that has
+    // not been imported reports IsValid()==false (no accidental hard refs, no
+    // load-on-construct). The Weapon.AssetBindingContract test covers the
+    // CLASS defaults; this proves the CODE_DEFAULT BINDINGS behave the same.
+    {
+        UAstrawildWeaponDefinition* Profile = NewObject<UAstrawildWeaponDefinition>();
+        const AstrawildArtPack::FWeaponArt* Art = AstrawildArtPack::FindWeaponArt(TEXT("Weapon_PlasmaCharger"));
+        TestTrue(TEXT("plasma binding present"), Art != nullptr);
+        if (Art)
+        {
+            Profile->Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(Art->MeshPath));
+            Profile->FireSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art->FireSoundPath));
+            TestTrue(TEXT("unimported mesh binding stays invalid (fallback rule)"),
+                !Profile->Mesh.IsValid());
+            TestTrue(TEXT("unimported sound binding stays invalid (fallback rule)"),
+                !Profile->FireSound.IsValid());
+            TestTrue(TEXT("mesh path round-trips"),
+                Profile->Mesh.ToSoftObjectPath().ToString() == Art->MeshPath);
+        }
+    }
     return true;
 }
 

@@ -1253,3 +1253,89 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
 
     UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 226 Echo species (16 authored + 6 evolution targets + 204 bestiary), 13 buildings, 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 dialogue trees."));
 }
+
+void UAstrawildContentLibrary::WarmArtPackBindings(UAstrawildItemRegistrySubsystem* Registry)
+{
+    if (!Registry)
+    {
+        return;
+    }
+
+    int32 LoadedCount = 0;
+    int32 MissingCount = 0;
+
+    auto Warm = [&LoadedCount, &MissingCount](const FSoftObjectPath& Path) -> UObject*
+    {
+        if (!Path.IsValid())
+        {
+            return nullptr;
+        }
+        if (UObject* Resolved = Path.TryLoad())
+        {
+            ++LoadedCount;
+            return Resolved;
+        }
+        ++MissingCount;
+        UE_LOG(LogAstrawild, Verbose, TEXT("Art pack path unresolved (fallback stays live): %s"), *Path.ToString());
+        return nullptr;
+    };
+
+    for (UAstrawildWeaponDefinition* Weapon : Registry->GetAllWeapons())
+    {
+        if (!Weapon)
+        {
+            continue;
+        }
+        Warm(Weapon->Mesh.ToSoftObjectPath());
+        Warm(Weapon->MuzzleFlashVfx.ToSoftObjectPath());
+        Warm(Weapon->ImpactVfx.ToSoftObjectPath());
+        Warm(Weapon->ProjectileTrailVfx.ToSoftObjectPath());
+        Warm(Weapon->FireSound.ToSoftObjectPath());
+        Warm(Weapon->ImpactSound.ToSoftObjectPath());
+    }
+
+    for (UAstrawildEchoDefinition* Echo : Registry->GetAllEchoDefinitions())
+    {
+        if (!Echo)
+        {
+            continue;
+        }
+        Warm(Echo->SkeletalMesh.ToSoftObjectPath());
+        Warm(Echo->IdleAnimation.ToSoftObjectPath());
+        Warm(Echo->MoveAnimation.ToSoftObjectPath());
+    }
+
+    for (UAstrawildBiomeDefinition* Biome : Registry->GetAllBiomes())
+    {
+        if (!Biome)
+        {
+            continue;
+        }
+        for (const TSoftObjectPtr<UStaticMesh>& Tree : Biome->TreeMeshes)
+        {
+            Warm(Tree.ToSoftObjectPath());
+        }
+        for (const TSoftObjectPtr<UStaticMesh>& Rock : Biome->RockMeshes)
+        {
+            Warm(Rock.ToSoftObjectPath());
+        }
+        for (const TSoftObjectPtr<UStaticMesh>& Grass : Biome->GrassMeshes)
+        {
+            Warm(Grass.ToSoftObjectPath());
+        }
+        Warm(Biome->LandscapeMaterial.ToSoftObjectPath());
+        Warm(Biome->AmbientAudio.ToSoftObjectPath());
+    }
+
+    for (UAstrawildResourceNodeDefinition* Node : Registry->GetAllResourceNodeDefinitions())
+    {
+        if (Node)
+        {
+            Warm(Node->MeshOverride.ToSoftObjectPath());
+        }
+    }
+
+    UE_LOG(LogAstrawild, Log,
+        TEXT("Art pack warm pass: %d assets loaded, %d paths unresolved (fallbacks active)."),
+        LoadedCount, MissingCount);
+}

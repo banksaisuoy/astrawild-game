@@ -1,0 +1,1648 @@
+{
+  "assets": {
+    "A_Amb_Forest_Dawn": {
+      "bytes": 2646044,
+      "category": "ambience",
+      "channels": 1,
+      "frames": 1323000,
+      "samplerate": 44100,
+      "seconds": 30.0,
+      "ue_path": "/Game/Audio/A_Amb_Forest_Dawn"
+    },
+    "A_Amb_Marsh_Dusk": {
+      "bytes": 2646044,
+      "category": "ambience",
+      "channels": 1,
+      "frames": 1323000,
+      "samplerate": 44100,
+      "seconds": 30.0,
+      "ue_path": "/Game/Audio/A_Amb_Marsh_Dusk"
+    },
+    "A_Amb_Night_Crystal": {
+      "bytes": 2646044,
+      "category": "ambience",
+      "channels": 1,
+      "frames": 1323000,
+      "samplerate": 44100,
+      "seconds": 30.0,
+      "ue_path": "/Game/Audio/A_Amb_Night_Crystal"
+    },
+    "A_Amb_Water_Lake": {
+      "bytes": 2646044,
+      "category": "ambience",
+      "channels": 1,
+      "frames": 1323000,
+      "samplerate": 44100,
+      "seconds": 30.0,
+      "ue_path": "/Game/Audio/A_Amb_Water_Lake"
+    },
+    "A_Amb_Wind_Gentle": {
+      "bytes": 2646044,
+      "category": "ambience",
+      "channels": 1,
+      "frames": 1323000,
+      "samplerate": 44100,
+      "seconds": 30.0,
+      "ue_path": "/Game/Audio/A_Amb_Wind_Gentle"
+    },
+    "A_Echo_Bastionbeetle_Skitter": {
+      "bytes": 50300,
+      "category": "creature",
+      "channels": 1,
+      "frames": 25128,
+      "samplerate": 44100,
+      "seconds": 0.57,
+      "ue_path": "/Game/Audio/A_Echo_Bastionbeetle_Skitter"
+    },
+    "A_Echo_Capture_Success": {
+      "bytes": 105884,
+      "category": "creature",
+      "channels": 1,
+      "frames": 52920,
+      "samplerate": 44100,
+      "seconds": 1.2,
+      "ue_path": "/Game/Audio/A_Echo_Capture_Success"
+    },
+    "A_Echo_Cindermule_Grunt": {
+      "bytes": 44144,
+      "category": "creature",
+      "channels": 1,
+      "frames": 22050,
+      "samplerate": 44100,
+      "seconds": 0.5,
+      "ue_path": "/Game/Audio/A_Echo_Cindermule_Grunt"
+    },
+    "A_Echo_Deepdelver_Rumble": {
+      "bytes": 123750,
+      "category": "creature",
+      "channels": 1,
+      "frames": 61853,
+      "samplerate": 44100,
+      "seconds": 1.403,
+      "ue_path": "/Game/Audio/A_Echo_Deepdelver_Rumble"
+    },
+    "A_Echo_Mistmender_Chime": {
+      "bytes": 94506,
+      "category": "creature",
+      "channels": 1,
+      "frames": 47231,
+      "samplerate": 44100,
+      "seconds": 1.071,
+      "ue_path": "/Game/Audio/A_Echo_Mistmender_Chime"
+    },
+    "A_Echo_Terraquill_Call": {
+      "bytes": 68990,
+      "category": "creature",
+      "channels": 1,
+      "frames": 34473,
+      "samplerate": 44100,
+      "seconds": 0.782,
+      "ue_path": "/Game/Audio/A_Echo_Terraquill_Call"
+    },
+    "A_Echo_Voltpylon_Hum": {
+      "bytes": 176442,
+      "category": "creature",
+      "channels": 1,
+      "frames": 88199,
+      "samplerate": 44100,
+      "seconds": 2.0,
+      "ue_path": "/Game/Audio/A_Echo_Voltpylon_Hum"
+    },
+    "A_Footstep_Grass": {
+      "bytes": 13274,
+      "category": "footstep",
+      "channels": 1,
+      "frames": 6615,
+      "samplerate": 44100,
+      "seconds": 0.15,
+      "ue_path": "/Game/Audio/A_Footstep_Grass"
+    },
+    "A_Footstep_Metal": {
+      "bytes": 13274,
+      "category": "footstep",
+      "channels": 1,
+      "frames": 6615,
+      "samplerate": 44100,
+      "seconds": 0.15,
+      "ue_path": "/Game/Audio/A_Footstep_Metal"
+    },
+    "A_Footstep_Sand": {
+      "bytes": 15038,
+      "category": "footstep",
+      "channels": 1,
+      "frames": 7497,
+      "samplerate": 44100,
+      "seconds": 0.17,
+      "ue_path": "/Game/Audio/A_Footstep_Sand"
+    },
+    "A_Footstep_Stone": {
+      "bytes": 11510,
+      "category": "footstep",
+      "channels": 1,
+      "frames": 5733,
+      "samplerate": 44100,
+      "seconds": 0.13,
+      "ue_path": "/Game/Audio/A_Footstep_Stone"
+    },
+    "A_Footstep_Water": {
+      "bytes": 15920,
+      "category": "footstep",
+      "channels": 1,
+      "frames": 7938,
+      "samplerate": 44100,
+      "seconds": 0.18,
+      "ue_path": "/Game/Audio/A_Footstep_Water"
+    },
+    "A_Player_Heartbeat_Low": {
+      "bytes": 176444,
+      "category": "player",
+      "channels": 1,
+      "frames": 88200,
+      "samplerate": 44100,
+      "seconds": 2.0,
+      "ue_path": "/Game/Audio/A_Player_Heartbeat_Low"
+    },
+    "A_Player_Jump": {
+      "bytes": 26504,
+      "category": "player",
+      "channels": 1,
+      "frames": 13230,
+      "samplerate": 44100,
+      "seconds": 0.3,
+      "ue_path": "/Game/Audio/A_Player_Jump"
+    },
+    "A_Player_Land": {
+      "bytes": 35324,
+      "category": "player",
+      "channels": 1,
+      "frames": 17640,
+      "samplerate": 44100,
+      "seconds": 0.4,
+      "ue_path": "/Game/Audio/A_Player_Land"
+    },
+    "A_Player_Scan_Ping": {
+      "bytes": 105884,
+      "category": "player",
+      "channels": 1,
+      "frames": 52920,
+      "samplerate": 44100,
+      "seconds": 1.2,
+      "ue_path": "/Game/Audio/A_Player_Scan_Ping"
+    },
+    "A_UI_Cancel": {
+      "bytes": 17684,
+      "category": "ui",
+      "channels": 1,
+      "frames": 8820,
+      "samplerate": 44100,
+      "seconds": 0.2,
+      "ue_path": "/Game/Audio/A_UI_Cancel"
+    },
+    "A_UI_Click": {
+      "bytes": 2690,
+      "category": "ui",
+      "channels": 1,
+      "frames": 1323,
+      "samplerate": 44100,
+      "seconds": 0.03,
+      "ue_path": "/Game/Audio/A_UI_Click"
+    },
+    "A_UI_Confirm": {
+      "bytes": 17684,
+      "category": "ui",
+      "channels": 1,
+      "frames": 8820,
+      "samplerate": 44100,
+      "seconds": 0.2,
+      "ue_path": "/Game/Audio/A_UI_Confirm"
+    },
+    "A_UI_Craft_Done": {
+      "bytes": 28268,
+      "category": "ui",
+      "channels": 1,
+      "frames": 14112,
+      "samplerate": 44100,
+      "seconds": 0.32,
+      "ue_path": "/Game/Audio/A_UI_Craft_Done"
+    },
+    "A_UI_Hover": {
+      "bytes": 5336,
+      "category": "ui",
+      "channels": 1,
+      "frames": 2646,
+      "samplerate": 44100,
+      "seconds": 0.06,
+      "ue_path": "/Game/Audio/A_UI_Hover"
+    },
+    "A_UI_Research_Done": {
+      "bytes": 30912,
+      "category": "ui",
+      "channels": 1,
+      "frames": 15434,
+      "samplerate": 44100,
+      "seconds": 0.35,
+      "ue_path": "/Game/Audio/A_UI_Research_Done"
+    },
+    "A_UI_Warning": {
+      "bytes": 21372,
+      "category": "ui",
+      "channels": 1,
+      "frames": 10664,
+      "samplerate": 44100,
+      "seconds": 0.242,
+      "ue_path": "/Game/Audio/A_UI_Warning"
+    },
+    "A_Weapon_Arc_Fire": {
+      "bytes": 44144,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 22050,
+      "samplerate": 44100,
+      "seconds": 0.5,
+      "ue_path": "/Game/Audio/A_Weapon_Arc_Fire"
+    },
+    "A_Weapon_Charge_Loop": {
+      "bytes": 141164,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 70560,
+      "samplerate": 44100,
+      "seconds": 1.6,
+      "ue_path": "/Game/Audio/A_Weapon_Charge_Loop"
+    },
+    "A_Weapon_Impact_Energy": {
+      "bytes": 31070,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 15513,
+      "samplerate": 44100,
+      "seconds": 0.352,
+      "ue_path": "/Game/Audio/A_Weapon_Impact_Energy"
+    },
+    "A_Weapon_Impact_Kinetic": {
+      "bytes": 26504,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 13230,
+      "samplerate": 44100,
+      "seconds": 0.3,
+      "ue_path": "/Game/Audio/A_Weapon_Impact_Kinetic"
+    },
+    "A_Weapon_Plasma_Fire": {
+      "bytes": 35324,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 17640,
+      "samplerate": 44100,
+      "seconds": 0.4,
+      "ue_path": "/Game/Audio/A_Weapon_Plasma_Fire"
+    },
+    "A_Weapon_Rail_Fire": {
+      "bytes": 61782,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 30869,
+      "samplerate": 44100,
+      "seconds": 0.7,
+      "ue_path": "/Game/Audio/A_Weapon_Rail_Fire"
+    },
+    "A_Weapon_Scrap_Fire": {
+      "bytes": 30912,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 15434,
+      "samplerate": 44100,
+      "seconds": 0.35,
+      "ue_path": "/Game/Audio/A_Weapon_Scrap_Fire"
+    },
+    "A_Weapon_Singularity_Fire": {
+      "bytes": 79424,
+      "category": "weapon",
+      "channels": 1,
+      "frames": 39690,
+      "samplerate": 44100,
+      "seconds": 0.9,
+      "ue_path": "/Game/Audio/A_Weapon_Singularity_Fire"
+    },
+    "SK_Echo_Bastionbeetle": {
+      "animations": [
+        "AM_Bastionbeetle_Idle",
+        "AM_Bastionbeetle_Move",
+        "AM_Bastionbeetle_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 19,
+      "bytes": 131684,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 19,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 20,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Bastionbeetle.glb",
+      "skins": 1,
+      "species": "Bastionbeetle",
+      "triangles": 1459,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Bastionbeetle",
+      "validate": "PASS"
+    },
+    "SK_Echo_Cindermule": {
+      "animations": [
+        "AM_Cindermule_Idle",
+        "AM_Cindermule_Move",
+        "AM_Cindermule_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 23,
+      "bytes": 183996,
+      "category": "mesh",
+      "element": "Ember",
+      "joints": 23,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 24,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Cindermule.glb",
+      "skins": 1,
+      "species": "Cindermule",
+      "triangles": 2264,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Cindermule",
+      "validate": "PASS"
+    },
+    "SK_Echo_Deepdelver": {
+      "animations": [
+        "AM_Deepdelver_Idle",
+        "AM_Deepdelver_Move",
+        "AM_Deepdelver_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 11,
+      "bytes": 80376,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 11,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 12,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Deepdelver.glb",
+      "skins": 1,
+      "species": "Deepdelver",
+      "triangles": 720,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Deepdelver",
+      "validate": "PASS"
+    },
+    "SK_Echo_Mistmender": {
+      "animations": [
+        "AM_Mistmender_Idle",
+        "AM_Mistmender_Move",
+        "AM_Mistmender_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 9,
+      "bytes": 61960,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Mistmender.glb",
+      "skins": 1,
+      "species": "Mistmender",
+      "triangles": 580,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistmender",
+      "validate": "PASS"
+    },
+    "SK_Echo_Terraquill": {
+      "animations": [
+        "AM_Terraquill_Idle",
+        "AM_Terraquill_Move",
+        "AM_Terraquill_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 23,
+      "bytes": 148976,
+      "category": "mesh",
+      "element": "Flora",
+      "joints": 23,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 24,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Terraquill.glb",
+      "skins": 1,
+      "species": "Terraquill",
+      "triangles": 1978,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Terraquill",
+      "validate": "PASS"
+    },
+    "SK_Echo_Voltpylon": {
+      "animations": [
+        "AM_Voltpylon_Idle",
+        "AM_Voltpylon_Move",
+        "AM_Voltpylon_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 20,
+      "bytes": 127556,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 20,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 21,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Voltpylon.glb",
+      "skins": 1,
+      "species": "Voltpylon",
+      "triangles": 1550,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Voltpylon",
+      "validate": "PASS"
+    },
+    "SK_Survivor_Exosuit": {
+      "animations": [
+        "AM_Survivor_Idle",
+        "AM_Survivor_Walk",
+        "AM_Survivor_Run",
+        "AM_Survivor_Jump",
+        "AM_Survivor_Aim",
+        "AM_Survivor_Fire",
+        "AM_Survivor_Gather"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 22,
+      "bytes": 195712,
+      "category": "mesh",
+      "joints": 22,
+      "materials": [
+        "Survivor_Suit",
+        "Survivor_Armor",
+        "Survivor_Accent",
+        "Survivor_Visor",
+        "Survivor_Scanner",
+        "Survivor_Thruster"
+      ],
+      "meshes": 1,
+      "nodes": 23,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Characters/Survivor/SK_Survivor_Exosuit.glb",
+      "skins": 1,
+      "sockets": [
+        {
+          "bone": "Hand_R",
+          "name": "Weapon_R",
+          "rotation_deg": [
+            -90,
+            0,
+            0
+          ],
+          "world_pos": [
+            0.26,
+            0.85,
+            0.06
+          ]
+        },
+        {
+          "bone": "Forearm_L",
+          "name": "Scanner_L",
+          "rotation_deg": [
+            0,
+            90,
+            0
+          ],
+          "world_pos": [
+            -0.3,
+            0.99,
+            0.05
+          ]
+        },
+        {
+          "bone": "Backpack",
+          "name": "Backpack_Spine",
+          "rotation_deg": [
+            180,
+            0,
+            0
+          ],
+          "world_pos": [
+            0.0,
+            1.32,
+            -0.3
+          ]
+        }
+      ],
+      "triangles": 2356,
+      "ue_path": "/Game/Characters/Survivor/SK_Survivor_Exosuit",
+      "validate": "PASS"
+    },
+    "SM_Cliff_Shard": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        4.105,
+        3.761,
+        2.443
+      ],
+      "bytes": 4912,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Rock_Granite"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Cliff_Shard.glb",
+      "skins": 0,
+      "triangles": 120,
+      "ue_path": "/Game/Environment/SM_Cliff_Shard",
+      "validate": "PASS"
+    },
+    "SM_Fern": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        0.855,
+        0.636,
+        0.932
+      ],
+      "bytes": 14524,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Canopy"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Fern.glb",
+      "skins": 0,
+      "triangles": 180,
+      "ue_path": "/Game/Environment/SM_Fern",
+      "validate": "PASS"
+    },
+    "SM_GlowReed": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        0.439,
+        1.36,
+        0.42
+      ],
+      "bytes": 22412,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Canopy",
+        "Foliage_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_GlowReed.glb",
+      "skins": 0,
+      "triangles": 412,
+      "ue_path": "/Game/Environment/SM_GlowReed",
+      "validate": "PASS"
+    },
+    "SM_Grass_Tuft": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        0.288,
+        0.343,
+        0.371
+      ],
+      "bytes": 11784,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Canopy"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Grass_Tuft.glb",
+      "skins": 0,
+      "triangles": 108,
+      "ue_path": "/Game/Environment/SM_Grass_Tuft",
+      "validate": "PASS"
+    },
+    "SM_Node_AncientVein": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 20916,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Node_Rock",
+        "Node_Crystal"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_AncientVein.glb",
+      "skins": 0,
+      "triangles": 504,
+      "ue_path": "/Game/Environment/ResourceNodes/SM_Node_AncientVein",
+      "validate": "PASS"
+    },
+    "SM_Node_Astraite": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 21228,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Node_Rock",
+        "Node_Crystal"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_Astraite.glb",
+      "skins": 0,
+      "triangles": 610,
+      "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Astraite",
+      "validate": "PASS"
+    },
+    "SM_Node_Pyronite": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 19360,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Node_Rock",
+        "Node_Crystal"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_Pyronite.glb",
+      "skins": 0,
+      "triangles": 522,
+      "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Pyronite",
+      "validate": "PASS"
+    },
+    "SM_Node_Voidstone": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 17296,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Node_Rock",
+        "Node_Crystal"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_Voidstone.glb",
+      "skins": 0,
+      "triangles": 508,
+      "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Voidstone",
+      "validate": "PASS"
+    },
+    "SM_Rock_Boulder_Moss": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        1.437,
+        1.172,
+        1.4
+      ],
+      "bytes": 12332,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Rock_Granite",
+        "Rock_Moss"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Boulder_Moss.glb",
+      "skins": 0,
+      "triangles": 448,
+      "ue_path": "/Game/Environment/SM_Rock_Boulder_Moss",
+      "validate": "PASS"
+    },
+    "SM_Rock_Granite_L": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        2.547,
+        1.371,
+        2.031
+      ],
+      "bytes": 11532,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Rock_Granite"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Granite_L.glb",
+      "skins": 0,
+      "triangles": 468,
+      "ue_path": "/Game/Environment/SM_Rock_Granite_L",
+      "validate": "PASS"
+    },
+    "SM_Rock_Granite_M": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        1.274,
+        0.899,
+        1.092
+      ],
+      "bytes": 8980,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Rock_Granite"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Granite_M.glb",
+      "skins": 0,
+      "triangles": 352,
+      "ue_path": "/Game/Environment/SM_Rock_Granite_M",
+      "validate": "PASS"
+    },
+    "SM_Rock_Granite_S": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        0.587,
+        0.459,
+        0.544
+      ],
+      "bytes": 5456,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Rock_Granite"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Granite_S.glb",
+      "skins": 0,
+      "triangles": 192,
+      "ue_path": "/Game/Environment/SM_Rock_Granite_S",
+      "validate": "PASS"
+    },
+    "SM_Ruin_Arch": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 25936,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Ruin_Stone",
+        "Ruin_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Ruin_Arch.glb",
+      "skins": 0,
+      "triangles": 288,
+      "ue_path": "/Game/Environment/Ruins/SM_Ruin_Arch",
+      "validate": "PASS"
+    },
+    "SM_Ruin_Block": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 18712,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Ruin_Stone",
+        "Ruin_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Ruin_Block.glb",
+      "skins": 0,
+      "triangles": 144,
+      "ue_path": "/Game/Environment/Ruins/SM_Ruin_Block",
+      "validate": "PASS"
+    },
+    "SM_Ruin_Pillar": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 17948,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Ruin_Stone",
+        "Ruin_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Ruin_Pillar.glb",
+      "skins": 0,
+      "triangles": 192,
+      "ue_path": "/Game/Environment/Ruins/SM_Ruin_Pillar",
+      "validate": "PASS"
+    },
+    "SM_SporeBush": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        1.223,
+        0.805,
+        1.088
+      ],
+      "bytes": 23008,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Canopy",
+        "Foliage_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_SporeBush.glb",
+      "skins": 0,
+      "triangles": 680,
+      "ue_path": "/Game/Environment/SM_SporeBush",
+      "validate": "PASS"
+    },
+    "SM_Tree_Broadleaf": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        4.392,
+        7.098,
+        4.969
+      ],
+      "bytes": 62332,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Bark",
+        "Foliage_Canopy",
+        "Foliage_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Tree_Broadleaf.glb",
+      "skins": 0,
+      "triangles": 2010,
+      "ue_path": "/Game/Environment/SM_Tree_Broadleaf",
+      "validate": "PASS"
+    },
+    "SM_Tree_Conifer": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        3.196,
+        8.02,
+        3.141
+      ],
+      "bytes": 23300,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Bark",
+        "Foliage_Canopy"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Tree_Conifer.glb",
+      "skins": 0,
+      "triangles": 644,
+      "ue_path": "/Game/Environment/SM_Tree_Conifer",
+      "validate": "PASS"
+    },
+    "SM_Tree_SporeCanopy": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bounds_m": [
+        4.881,
+        5.609,
+        4.309
+      ],
+      "bytes": 56336,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Foliage_Bark",
+        "Foliage_Canopy",
+        "Foliage_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Tree_SporeCanopy.glb",
+      "skins": 0,
+      "triangles": 1332,
+      "ue_path": "/Game/Environment/SM_Tree_SporeCanopy",
+      "validate": "PASS"
+    },
+    "SM_Vehicle_DawnSkiff": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 137504,
+      "category": "mesh",
+      "deck_top_y": 0.12,
+      "hover_height_m": 1.1,
+      "joints": 0,
+      "materials": [
+        "Vehicle_Hull",
+        "Vehicle_Metal",
+        "Vehicle_Accent",
+        "Vehicle_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Vehicles/SM_Vehicle_DawnSkiff.glb",
+      "skins": 0,
+      "triangles": 1844,
+      "ue_path": "/Game/Vehicles/SM_Vehicle_DawnSkiff",
+      "validate": "PASS"
+    },
+    "SM_Weapon_ArcCannon": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 61012,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Weapon_Body",
+        "Weapon_Metal",
+        "Weapon_Grip",
+        "Weapon_Glow",
+        "Weapon_Coil"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_ArcCannon.glb",
+      "skins": 0,
+      "sockets": [
+        {
+          "name": "Muzzle",
+          "pos": [
+            0.0,
+            0.115,
+            0.56
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "triangles": 1028,
+      "ue_path": "/Game/Weapons/Meshes/SM_Weapon_ArcCannon",
+      "validate": "PASS"
+    },
+    "SM_Weapon_PlasmaCarbine": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 50496,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Weapon_Body",
+        "Weapon_Metal",
+        "Weapon_Grip",
+        "Weapon_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_PlasmaCarbine.glb",
+      "skins": 0,
+      "sockets": [
+        {
+          "name": "Muzzle",
+          "pos": [
+            0.0,
+            0.105,
+            0.56
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "triangles": 564,
+      "ue_path": "/Game/Weapons/Meshes/SM_Weapon_PlasmaCarbine",
+      "validate": "PASS"
+    },
+    "SM_Weapon_Railgun": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 66384,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Weapon_Body",
+        "Weapon_Metal",
+        "Weapon_Grip",
+        "Weapon_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_Railgun.glb",
+      "skins": 0,
+      "sockets": [
+        {
+          "name": "Muzzle",
+          "pos": [
+            0.0,
+            0.125,
+            0.56
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "triangles": 676,
+      "ue_path": "/Game/Weapons/Meshes/SM_Weapon_Railgun",
+      "validate": "PASS"
+    },
+    "SM_Weapon_ScrapRifle": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 51688,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Weapon_Body",
+        "Weapon_Metal",
+        "Weapon_Grip",
+        "Weapon_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_ScrapRifle.glb",
+      "skins": 0,
+      "sockets": [
+        {
+          "name": "Muzzle",
+          "pos": [
+            0.0,
+            0.105,
+            0.56
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "triangles": 612,
+      "ue_path": "/Game/Weapons/Meshes/SM_Weapon_ScrapRifle",
+      "validate": "PASS"
+    },
+    "SM_Weapon_SingularityCannon": {
+      "animations": [],
+      "asset_type": "static_mesh",
+      "bytes": 57760,
+      "category": "mesh",
+      "joints": 0,
+      "materials": [
+        "Weapon_Body",
+        "Weapon_Metal",
+        "Weapon_Grip",
+        "Weapon_Glow"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_SingularityCannon.glb",
+      "skins": 0,
+      "sockets": [
+        {
+          "name": "Muzzle",
+          "pos": [
+            0.0,
+            0.11,
+            0.55
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "triangles": 996,
+      "ue_path": "/Game/Weapons/Meshes/SM_Weapon_SingularityCannon",
+      "validate": "PASS"
+    },
+    "T_Bark_D": {
+      "bytes": 308724,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Bark_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Bark_D"
+    },
+    "T_Bark_N": {
+      "bytes": 903063,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Bark_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Bark_N"
+    },
+    "T_Crystal_D": {
+      "bytes": 294385,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Crystal_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Crystal_D"
+    },
+    "T_Crystal_E": {
+      "bytes": 613223,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Crystal_E.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Crystal_E"
+    },
+    "T_Crystal_N": {
+      "bytes": 897231,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Crystal_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Crystal_N"
+    },
+    "T_DefaultORM": {
+      "bytes": 76,
+      "category": "utility",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_DefaultORM.png",
+      "size": [
+        4,
+        4
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_DefaultORM"
+    },
+    "T_Echo_Body_D": {
+      "bytes": 589999,
+      "category": "echo",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Body_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Echo_Body_D"
+    },
+    "T_Echo_Body_N": {
+      "bytes": 2428532,
+      "category": "echo",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Body_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Echo_Body_N"
+    },
+    "T_Echo_Body_ORM": {
+      "bytes": 1062055,
+      "category": "echo",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Body_ORM.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Echo_Body_ORM"
+    },
+    "T_Echo_Emissive_M": {
+      "bytes": 150822,
+      "category": "echo",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Emissive_M.png",
+      "size": [
+        512,
+        512
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Echo_Emissive_M"
+    },
+    "T_FX_Flare_E": {
+      "bytes": 15759,
+      "category": "fx",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_FX_Flare_E.png",
+      "size": [
+        512,
+        512
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_FX_Flare_E"
+    },
+    "T_FX_Smoke_FB": {
+      "bytes": 215233,
+      "category": "fx",
+      "flipbook": "8x8",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_FX_Smoke_FB.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_FX_Smoke_FB"
+    },
+    "T_FX_Sparks_FB": {
+      "bytes": 145965,
+      "category": "fx",
+      "flipbook": "8x8",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_FX_Sparks_FB.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_FX_Sparks_FB"
+    },
+    "T_Foliage_Canopy_D": {
+      "bytes": 778919,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Foliage_Canopy_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Foliage_Canopy_D"
+    },
+    "T_Foliage_Canopy_N": {
+      "bytes": 1365627,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Foliage_Canopy_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Foliage_Canopy_N"
+    },
+    "T_Foliage_Spore_E": {
+      "bytes": 46981,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Foliage_Spore_E.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Foliage_Spore_E"
+    },
+    "T_Landscape_Granite_D": {
+      "bytes": 523803,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Granite_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Landscape_Granite_D"
+    },
+    "T_Landscape_Granite_N": {
+      "bytes": 1868424,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Granite_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Landscape_Granite_N"
+    },
+    "T_Landscape_Grass_D": {
+      "bytes": 1214810,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Grass_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Landscape_Grass_D"
+    },
+    "T_Landscape_Grass_N": {
+      "bytes": 2588191,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Grass_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Landscape_Grass_N"
+    },
+    "T_Landscape_ORM": {
+      "bytes": 675926,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_ORM.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Landscape_ORM"
+    },
+    "T_Landscape_Sand_D": {
+      "bytes": 286919,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Sand_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Landscape_Sand_D"
+    },
+    "T_Landscape_Sand_N": {
+      "bytes": 1275311,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Sand_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Landscape_Sand_N"
+    },
+    "T_Landscape_Soil_D": {
+      "bytes": 164661,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Soil_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Landscape_Soil_D"
+    },
+    "T_Landscape_Soil_N": {
+      "bytes": 961553,
+      "category": "landscape",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Soil_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Landscape_Soil_N"
+    },
+    "T_Rock_D": {
+      "bytes": 598906,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Rock_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Rock_D"
+    },
+    "T_Rock_N": {
+      "bytes": 2281421,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Rock_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Rock_N"
+    },
+    "T_Ruin_D": {
+      "bytes": 354284,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Ruin_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Ruin_D"
+    },
+    "T_Ruin_N": {
+      "bytes": 1856238,
+      "category": "environment",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Ruin_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Ruin_N"
+    },
+    "T_Survivor_Exosuit_D": {
+      "bytes": 2341193,
+      "category": "survivor",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_Exosuit_D.png",
+      "size": [
+        2048,
+        2048
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Survivor_Exosuit_D"
+    },
+    "T_Survivor_Exosuit_N": {
+      "bytes": 2693760,
+      "category": "survivor",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_Exosuit_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Survivor_Exosuit_N"
+    },
+    "T_Survivor_ORM": {
+      "bytes": 1096658,
+      "category": "survivor",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_ORM.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Survivor_ORM"
+    },
+    "T_Survivor_Visor_E": {
+      "bytes": 7100,
+      "category": "survivor",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_Visor_E.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Survivor_Visor_E"
+    },
+    "T_Vehicle_Glow_E": {
+      "bytes": 2197,
+      "category": "vehicle",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Glow_E.png",
+      "size": [
+        512,
+        512
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Vehicle_Glow_E"
+    },
+    "T_Vehicle_Hull_D": {
+      "bytes": 548679,
+      "category": "vehicle",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Hull_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Vehicle_Hull_D"
+    },
+    "T_Vehicle_Hull_N": {
+      "bytes": 1767696,
+      "category": "vehicle",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Hull_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Vehicle_Hull_N"
+    },
+    "T_Vehicle_Hull_ORM": {
+      "bytes": 445596,
+      "category": "vehicle",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Hull_ORM.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Vehicle_Hull_ORM"
+    },
+    "T_Weapon_Glow_E": {
+      "bytes": 1591,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Glow_E.png",
+      "size": [
+        512,
+        512
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Weapon_Glow_E"
+    },
+    "T_Weapon_Scraps_D": {
+      "bytes": 791461,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Scraps_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Weapon_Scraps_D"
+    },
+    "T_Weapon_Scraps_N": {
+      "bytes": 1881741,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Scraps_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Weapon_Scraps_N"
+    },
+    "T_Weapon_Scraps_ORM": {
+      "bytes": 883603,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Scraps_ORM.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Weapon_Scraps_ORM"
+    },
+    "T_Weapon_Tech_D": {
+      "bytes": 317052,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Tech_D.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": true,
+      "ue_path": "/Game/Textures/T_Weapon_Tech_D"
+    },
+    "T_Weapon_Tech_N": {
+      "bytes": 1327307,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Tech_N.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Weapon_Tech_N"
+    },
+    "T_Weapon_Tech_ORM": {
+      "bytes": 413715,
+      "category": "weapons",
+      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Tech_ORM.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "srgb": false,
+      "ue_path": "/Game/Textures/T_Weapon_Tech_ORM"
+    }
+  },
+  "generator": "ASTRAWILD ArtSourceGen 1.0"
+}

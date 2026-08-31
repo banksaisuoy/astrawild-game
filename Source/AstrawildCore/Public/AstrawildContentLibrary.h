@@ -22,6 +22,15 @@ public:
     /** Registers the full default content set into the registry (idempotent per world). */
     static void BuildDefaults(UAstrawildItemRegistrySubsystem* Registry);
 
+    /**
+     * Art pack warm pass (Batch 4): synchronously resolves every soft asset path
+     * bound by AstrawildArtPack (weapon meshes/FX/sounds, Echo meshes + clips,
+     * biome scatter meshes/materials/ambience, node meshes). Missing assets log
+     * Verbose and keep their procedural fallbacks — the game never blocks or
+     * fails on a partial pack (CP-00 rule 2).
+     */
+    static void WarmArtPackBindings(UAstrawildItemRegistrySubsystem* Registry);
+
 private:
     static void BuildItems(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildRecipes(UAstrawildItemRegistrySubsystem* Registry);

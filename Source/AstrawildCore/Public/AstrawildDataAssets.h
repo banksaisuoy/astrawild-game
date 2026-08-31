@@ -10,6 +10,7 @@ class UTexture2D;
 class UStaticMesh;
 class UMaterialInterface;
 class USoundBase;
+class UAnimSequenceBase;
 class UNiagaraSystem;
 
 UENUM(BlueprintType)
@@ -285,6 +286,15 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
+
+    /** Art pack (CP-02/CP-08): idle locomotion clip — played by the code-driven
+     * single-node animation when the skeletal mesh is bound. Unset = bind pose. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Art")
+    TSoftObjectPtr<UAnimSequenceBase> IdleAnimation;
+
+    /** Art pack (CP-02/CP-08): moving locomotion clip (speed > idle threshold). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Art")
+    TSoftObjectPtr<UAnimSequenceBase> MoveAnimation;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TSoftObjectPtr<UTexture2D> Icon;
@@ -800,6 +810,11 @@ public:
     /** Impact sound (plays at hit points; unset = silent). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Assets")
     TSoftObjectPtr<USoundBase> ImpactSound;
+
+    /** Art pack (CP-03): held weapon static mesh. Resolves via AstrawildArtPack
+     * binding tables; when unset the procedural gun silhouette stays active. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Art")
+    TSoftObjectPtr<UStaticMesh> Mesh;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {

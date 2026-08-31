@@ -19,14 +19,14 @@ art pass**.
 
 | Pack | Area | Primary binding (C++) | Status |
 |---|---|---|---|
-| [CP-01](CP-01_PLAYER.md) | Player — exosuit, armor tiers, materials, equipment visuals | `UAstrawildItemDefinition::EquipMeshOverride/EquipMaterialOverride` **NEW**, tier fields | SPEC_READY |
-| [CP-02](CP-02_ECHO.md) | Echo — 8 body plans, evolution, elements, rarity, animations | `UAstrawildEchoDefinition::EvolveToDefinitionId` + gates **NEW**, `UAstrawildEchoRosterSubsystem::EvolveInstance` **NEW** | SPEC_READY + SOURCE_TESTED |
-| [CP-03](CP-03_WEAPONS.md) | Weapons — 5 launch families, muzzle/impact/projectile FX, sound | `UAstrawildWeaponDefinition::MuzzleFlashVfx/ImpactVfx/ProjectileTrailVfx/FireSound/ImpactSound` **NEW** | SPEC_READY |
-| [CP-04](CP-04_ENVIRONMENT.md) | Environment — 12 biome asset lists, foliage, rocks, crystals, ruins, POIs | `UAstrawildBiomeDefinition::TreeMeshes/RockMeshes/GrassMeshes/LandscapeMaterial/AmbientAudio` | SPEC_READY |
-| [CP-05](CP-05_NIAGARA.md) | Niagara — weapon, capture, scanner, shield, elemental systems | CP-03 fields + capture/scanner hooks (procedural fallbacks active) | SPEC_READY |
-| [CP-06](CP-06_AUDIO.md) | Audio — weapons, creatures, ambience, UI, footsteps, environment | CP-03 sound fields + `UAstrawildBiomeDefinition::AmbientAudio` | SPEC_READY |
-| [CP-07](CP-07_MATERIALS.md) | Materials — landscape, metal, armor, crystal, water, hologram | Direct asset assignment (meshes/materials reference these) | SPEC_READY |
-| [CP-08](CP-08_ANIMATION.md) | Animation — player locomotion/combat/dodge, Echo locomotion, capture | `ABP_` layer over existing C++ movement state | SPEC_READY |
+| [CP-01](CP-01_PLAYER.md) | Player — exosuit, armor tiers, materials, equipment visuals | `UAstrawildItemDefinition::EquipMeshOverride/EquipMaterialOverride` **NEW**, tier fields | MESH+ANIMS DELIVERED (Batch 4: SK_Survivor_Exosuit + 7 clips; EquipMeshOverride consumption next) |
+| [CP-02](CP-02_ECHO.md) | Echo — 8 body plans, evolution, elements, rarity, animations | `UAstrawildEchoDefinition::EvolveToDefinitionId` + gates **NEW**, `UAstrawildEchoRosterSubsystem::EvolveInstance` **NEW** | 6/6 STARTER MESHES DELIVERED (Batch 4) + SOURCE_TESTED |
+| [CP-03](CP-03_WEAPONS.md) | Weapons — 5 launch families, muzzle/impact/projectile FX, sound | `UAstrawildWeaponDefinition::MuzzleFlashVfx/ImpactVfx/ProjectileTrailVfx/FireSound/ImpactSound` **NEW** | 5 MESHES + 8 AUDIO DELIVERED + PATHS BOUND (Batch 4) |
+| [CP-04](CP-04_ENVIRONMENT.md) | Environment — 12 biome asset lists, foliage, rocks, crystals, ruins, POIs | `UAstrawildBiomeDefinition::TreeMeshes/RockMeshes/GrassMeshes/LandscapeMaterial/AmbientAudio` | 19 MESHES DELIVERED + 12 BIOMES BOUND (Batch 4) |
+| [CP-05](CP-05_NIAGARA.md) | Niagara — weapon, capture, scanner, shield, elemental systems | CP-03 fields + capture/scanner hooks (procedural fallbacks active) | FX TEXTURES + PATHS READY; 3 HERO SYSTEMS = RUNBOOK §3 (manual, in-editor) |
+| [CP-06](CP-06_AUDIO.md) | Audio — weapons, creatures, ambience, UI, footsteps, environment | CP-03 sound fields + `UAstrawildBiomeDefinition::AmbientAudio` | 36 WAV DELIVERED + BOUND (Batch 4; SoundCue mixing next) |
+| [CP-07](CP-07_MATERIALS.md) | Materials — landscape, metal, armor, crystal, water, hologram | Direct asset assignment (meshes/materials reference these) | 2 MASTERS + ~30 INSTANCES SCRIPTED (AwPipeline; water/hologram next) |
+| [CP-08](CP-08_ANIMATION.md) | Animation — player locomotion/combat/dodge, Echo locomotion, capture | `ABP_` layer over existing C++ movement state | 25 CLIPS DELIVERED + CODE-DRIVEN STATE MACHINES (Batch 4; ABP upgrade path open) |
 | [CP-09](CP-09_QUEST_NPC.md) | Quest/NPC content — dialogue trees, story flags, villages | `UAstrawildDialogueTreeDefinition` **NEW** (6 trees shipped) + 12 NPCs | SOURCE_IMPLEMENTED |
 | [CP-10](CP-10_UX_HUD.md) | UX/HUD polish — glassmorphism, hit markers, radar | Pure-C++ UMG screens (HUD/shop/dialogue) restyle targets | SPEC_READY |
 

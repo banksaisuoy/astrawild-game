@@ -20,6 +20,9 @@ class UInputAction;
 class UInputMappingContext;
 class UNavigationInvokerComponent;
 class UProceduralMeshComponent;
+class USkeletalMesh;
+class USkeletalMeshComponent;
+class UAnimSequenceBase;
 class USpringArmComponent;
 class UStaticMeshComponent;
 struct FInputActionValue;
@@ -53,9 +56,52 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Visual")
     TObjectPtr<UProceduralMeshComponent> WeaponMesh;
 
+    // ------------------------------------------------------------------
+    // Art pack bindings (Batch 4 — Visual Vertical Slice, CP-01/CP-08).
+    // Soft refs bound from AstrawildArtPack::GetSurvivorArt(). When the mesh
+    // resolves (AwPipeline import on the host machine) the skinned exosuit
+    // replaces the PMC silhouette and code-driven locomotion takes over.
+    // ------------------------------------------------------------------
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<USkeletalMesh> SurvivorSkeletalMesh;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorIdleAnim;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorWalkAnim;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorRunAnim;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorJumpAnim;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorAimAnim;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorFireAnim;
+
+    UPROPERTY(EditDefaultsOnly, Category="ASTRAWILD|Art")
+    TSoftObjectPtr<UAnimSequenceBase> SurvivorGatherAnim;
+
+    /** Skinned exosuit body (created lazily when the art pack resolves). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="ASTRAWILD|Art")
+    TObjectPtr<USkeletalMeshComponent> SurvivorBody;
+
+    /** Socket-driven held weapon mesh (replaces the PMC gun when active). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="ASTRAWILD|Art")
+    TObjectPtr<UStaticMeshComponent> HeldWeaponMesh;
+
+    /** True once the skinned body is live (PMC silhouette hidden). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category="ASTRAWILD|Art")
+    bool bSkeletalBodyActive = false;
+
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick(float DeltaSeconds) override;
     virtual void PossessedBy(AController* NewController) override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
 
@@ -261,6 +307,24 @@ public:
     bool IsAlive() const;
 
 protected:
+    // ---- Art pack animation driver (Batch 4, CP-08) ----
+    /** Attempts the skinned exosuit swap; returns true when the art pack resolved. */
+    bool TryActivateSkeletalBody();
+    /** Code-driven locomotion selection (Idle/Walk/Run/Aim by velocity + guard). */
+    void UpdateSurvivorAnimation();
+    /** Fire/Jump/Gather one-shots: plays the clip once, then restores the loop. */
+    void PlaySurvivorOneShot(UAnimSequenceBase* Sequence, float Duration);
+    void OnSurvivorOneShotFinished();
+    /** Guard pose (block) drives the Aim stance while mostly stationary. */
+    void SetGuardPose(bool bEnabled);
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> CurrentLoopAnimation;
+
+    bool bGuardPose = false;
+
+    FTimerHandle SurvivorOneShotTimer;
+
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     void StartSprint(const FInputActionValue& Value);
