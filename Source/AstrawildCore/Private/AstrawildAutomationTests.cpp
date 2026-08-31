@@ -843,6 +843,55 @@ bool FAstrawildSkiffFlightMathTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// Production V2 Batch 2 — H-11: craft output weight guard
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCraftOutputGuardTest,
+    "ASTRAWILD.Craft.OutputGuard",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCraftOutputGuardTest::RunTest(const FString& Parameters)
+{
+    // World-free inventory: registry-less fallback weight is 1.0 per unit,
+    // default MaxWeight 120 — deterministic math without a world.
+    UAstrawildInventoryComponent* Inventory = NewObject<UAstrawildInventoryComponent>();
+
+    // Empty set always fits.
+    TestTrue(TEXT("Empty stack set always fits"), Inventory->CanAddItemStacks({}));
+
+    const auto MakeStack = [](const TCHAR* ItemId, const int32 Quantity)
+    {
+        FAstrawildItemStack Stack;
+        Stack.ItemId = ItemId;
+        Stack.Quantity = Quantity;
+        return Stack;
+    };
+
+    // CUMULATIVE rule (the H-11 core): each 70-unit stack ALONE fits the
+    // 120-weight pack, but the pair (140) must be rejected as a set.
+    TestTrue(TEXT("Single 70-unit stack fits alone"),
+        Inventory->CanAddItemStacks({ MakeStack(TEXT("Item_Plank"), 70) }));
+    TestFalse(TEXT("Pair of 70-unit stacks rejected as a SET (140 > 120)"),
+        Inventory->CanAddItemStacks({ MakeStack(TEXT("Item_Plank"), 70), MakeStack(TEXT("Item_Nail"), 70) }));
+
+    // Exactly-at-cap accepted (KINDA_SMALL_NUMBER tolerance), one-over rejected.
+    TestTrue(TEXT("Exactly 120 units accepted at the cap"),
+        Inventory->CanAddItemStacks({ MakeStack(TEXT("Item_Plank"), 60), MakeStack(TEXT("Item_Nail"), 60) }));
+    TestFalse(TEXT("121 units rejected"),
+        Inventory->CanAddItemStacks({ MakeStack(TEXT("Item_Plank"), 60), MakeStack(TEXT("Item_Nail"), 61) }));
+
+    // Zero-quantity stacks are skipped in the sum, not fatal.
+    TestTrue(TEXT("Zero-quantity stack skipped in the sum"),
+        Inventory->CanAddItemStacks({ MakeStack(TEXT("Item_Plank"), 0), MakeStack(TEXT("Item_Nail"), 5) }));
+
+    // Pre-flight wiring: CraftRecipe consults CanAddItemStacks BEFORE consuming
+    // ingredients (source contract — the refusal path keeps every material).
+    // (Full component flow needs a world; the guard math above is the
+    // deterministic half of H-11.)
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
 
 // ---------------------------------------------------------------------------

@@ -97,6 +97,56 @@ bool UAstrawildInventoryComponent::CanAddItem(const FName ItemId, const int32 Qu
     return GetCurrentWeight() + AddedWeight <= EffectiveMax + KINDA_SMALL_NUMBER;
 }
 
+bool UAstrawildInventoryComponent::CanAddItemStacks(const TArray<FAstrawildItemStack>& Stacks) const
+{
+    // H-11: cumulative weight check for a whole stack set (craft outputs).
+    // Each stack alone might fit while the set does not — the sum is what
+    // actually has to land in the pack.
+    float AddedWeight = 0.0f;
+    int32 ValidUnits = 0;
+    if (const UAstrawildItemRegistrySubsystem* Registry = GetRegistry())
+    {
+        for (const FAstrawildItemStack& Stack : Stacks)
+        {
+            if (Stack.Quantity <= 0)
+            {
+                continue;
+            }
+            ValidUnits += Stack.Quantity;
+            if (const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Stack.ItemId))
+            {
+                AddedWeight += ItemDef->Weight * Stack.Quantity;
+            }
+            else
+            {
+                AddedWeight += static_cast<float>(Stack.Quantity); // registry-less fallback (tests)
+            }
+        }
+    }
+    else
+    {
+        for (const FAstrawildItemStack& Stack : Stacks)
+        {
+            if (Stack.Quantity > 0)
+            {
+                ValidUnits += Stack.Quantity;
+                AddedWeight += static_cast<float>(Stack.Quantity);
+            }
+        }
+    }
+    if (ValidUnits <= 0)
+    {
+        return true; // nothing to add
+    }
+
+    const float EffectiveMax = GetEffectiveMaxWeight();
+    if (EffectiveMax <= 0.0f)
+    {
+        return true; // unlimited pack
+    }
+    return GetCurrentWeight() + AddedWeight <= EffectiveMax + KINDA_SMALL_NUMBER;
+}
+
 bool UAstrawildInventoryComponent::AddItem(const FName ItemId, const int32 Quantity)
 {
     if (!IsValidQuantityRequest(ItemId, Quantity))

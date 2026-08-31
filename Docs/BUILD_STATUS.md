@@ -30,9 +30,9 @@
   (element/rarity/family/scanner tints — one color language). (4) **Scanner pulse rings** per tier (teal/
   amber/violet, radius tracks scanner range). (5) **Player silhouette** (graphite+amber survivor body, teal
   visor) + **family-tinted held weapon** rebuilt on equip change; **Echo rarity rings** (Rare+) + bounded
-  element glow lights (captured always, wild within 32m of a player). Tests 39 → **47** (+8: dressing
+  element glow lights (captured always, wild within 32m of a player). Tests 39 → **48** (+8 batch-2 + 1 H-11: dressing
   profiles/rejection/determinism, atmosphere ramp, palette, beam math, arc jitter, ring geometry).
-- Codebase: **136 C++ files, ~36,855 LOC, 47 automation tests, 66 docs** in/around `Source/AstrawildCore` (single module)
+- Codebase: **136 C++ files, ~36,855 LOC, 48 automation tests, 66 docs** in/around `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -581,7 +581,7 @@ No `Source/` files were modified by DOCS-1.
 | ~~High~~ Closed | H-9 ecosystem population counting | `EcosystemSubsystem` / `EchoCharacter` | Spawn + capture/defeat; observe WildCount | **CLOSED in final run (`750f87a`)** — actor-keyed idempotent counting; capture/defeat/destroy release exactly once; re-registration after InitializeFromDefinition no longer double-counts. Compile pending |
 | ~~High~~ Closed | H-10 SurviveTime/ReachLocation objectives | `QuestComponent` | ReachLocation closed Batch 6 (portals); SurviveTime + VisitZone **closed in final run** — 1 s accrual tick + Event.ZoneEntered matcher; quest 8 uses both. Compile pending |
 | ~~High~~ Closed | H-13 gamepad input | `PlayerCharacter` | Plug a controller | **CLOSED in final run (`c417b22`)** — full companion IMC coexisting with KB/M. Verify at playtest (V-31) |
-| Medium | H-11 craft output validation ignores AddItem result | `CraftingComponent::CompleteActiveCraft` | Craft while over-encumbered | Open — outputs can be lost when AddItem refuses; weight gate + refund paths documented; fix-forward at first compile round |
+| Medium | H-11 craft output validation ignores AddItem result | `CraftingComponent::CompleteActiveCraft` / `CraftRecipe` | Craft while over-encumbered | **Resolved (V2 Batch 2, ab15026+)** — triple guard: (1) `CanAddItemStacks` cumulative pre-flight refuses to START a craft whose outputs cannot fit (nothing consumed); (2) completion grants front-to-back, holds the remainder and retries every 1s until pack space frees (never silently drops — no double-grant: granted stacks leave the pending list); (3) cancel refused while outputs await hand-off (would refund ingredients AND keep granted outputs). Test `ASTRAWILD.Craft.OutputGuard` |
 | ~~Low~~ Closed | NPC vendor purchase logic | `AstrawildNPCCharacter` | Talk to Trader Tam | **CLOSED in Batch 4 (`c16fecd`)** — `TryPurchase`/`TrySell` server-authoritative transaction flow live (450 cm trade range, Dawn Shard currency, wares listed in an Interact HUD toast; buy/sell via `AW.BuyItem`/`AW.SellItem`). The shop **UMG screen** remains open (future round). Compile pending on target machine |
 | Medium | H-9 / H-12 RPC layer for multiplayer | `PlayerCharacter.cpp` / `EchoCharacter.cpp` | 2-PIE capture / eat / feed / equip / command | **Pending — MP batch.** Single-player only at present — Item B `DismantleBuilding` and the Batch-4 vendor transactions both use direct method calls gated on `GetLocalRole() == ROLE_Authority` (fine for SP/listen-server; a future shop UI for remote clients must route through a Server RPC — noted in `NPCCharacter.cpp:132-134`) |
 | ~~Medium~~ Closed | Weapon element override (player attack element hardcoded Ash) | `CombatComponent.h` `GetResolvedAttackElement` | Hit a creature with a Crystal Blade | **CLOSED in Batch 3 (`021f93a`)** — weapon `Element` overrides the tunable; Dawn Crystal Blade = Pulse → Shock. Compile pending on target machine |

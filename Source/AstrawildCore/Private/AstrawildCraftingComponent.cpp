@@ -119,7 +119,23 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
     }
 
     UAstrawildInventoryComponent* Inventory = GetInventory();
-    if (!Inventory || !Inventory->ConsumeItems(Recipe->Ingredients))
+    if (!Inventory)
+    {
+        return false;
+    }
+
+    // H-11 fix (Production V2): pre-flight the OUTPUT weight BEFORE consuming
+    // ingredients — a craft whose results cannot fit never starts, instead of
+    // consuming materials and silently losing the outputs at completion.
+    if (!Inventory->CanAddItemStacks(Recipe->Outputs))
+    {
+        UE_LOG(LogAstrawildEconomy, Warning,
+            TEXT("Craft refused (outputs would exceed carry weight): %s — free pack space first."),
+            *Recipe->RecipeId.ToString());
+        return false;
+    }
+
+    if (!Inventory->ConsumeItems(Recipe->Ingredients))
     {
         return false;
     }
@@ -168,6 +184,18 @@ bool UAstrawildCraftingComponent::CancelActiveCraft()
 {
     if (GetOwnerRole() != ROLE_Authority || !IsCrafting())
     {
+        return false;
+    }
+
+    // H-11 guard: once outputs are (partially) granted and only the held
+    // remainder awaits pack space, cancelling would refund the ingredients
+    // AND keep granted outputs — free items. Refuse: the craft is done cooking,
+    // it just needs space.
+    if (bOutputsPendingHandoff)
+    {
+        UE_LOG(LogAstrawildEconomy, Warning,
+            TEXT("Cancel refused (outputs waiting for pack space): %s — free inventory space to finish."),
+            *ActiveRecipeId.ToString());
         return false;
     }
 
@@ -284,14 +312,38 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
     UAstrawildInventoryComponent* Inventory = GetInventory();
     const FName CompletedRecipe = ActiveRecipeId;
 
+    // H-11 fix (Production V2): weight can shift while a timed craft runs
+    // (equipment swaps mid-craft). If the pack can no longer absorb the
+    // outputs, HOLD them and retry every second — outputs are never silently
+    // dropped, and the craft completes the moment space frees up.
     if (Inventory)
     {
-        for (const FAstrawildItemStack& Output : PendingOutputs)
+        // Grant outputs front-to-back; each SUCCESSFUL stack is removed from
+        // the pending list so a later retry never double-grants it.
+        while (PendingOutputs.Num() > 0)
         {
-            Inventory->AddItem(Output.ItemId, Output.Quantity);
+            const FAstrawildItemStack& Output = PendingOutputs[0];
+            if (!Inventory->AddItem(Output.ItemId, Output.Quantity))
+            {
+                break;
+            }
+            PendingOutputs.RemoveAt(0);
+        }
+        if (PendingOutputs.Num() > 0)
+        {
+            // Remainder held — retry on the existing 1s cadence. The player
+            // sees "waiting for pack space" instead of losing items.
+            bOutputsPendingHandoff = true;
+            CraftTimeRemaining = 1.0f;
+            CraftTimeTotal = FMath::Max(CraftTimeTotal, 1.0f);
+            UE_LOG(LogAstrawildEconomy, Warning,
+                TEXT("Craft outputs held (carry weight full): %s — %d stack(s) pending, will retry until space frees."),
+                *CompletedRecipe.ToString(), PendingOutputs.Num());
+            return;
         }
     }
 
+    bOutputsPendingHandoff = false;
     ActiveRecipeId = NAME_None;
     PendingOutputs.Reset();
     CraftTimeRemaining = 0.0f;

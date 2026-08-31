@@ -82,6 +82,14 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory")
     bool CanAddItem(FName ItemId, int32 Quantity) const;
 
+    /**
+     * H-11 fix (Production V2): can the inventory absorb a WHOLE stack set at
+     * once (craft outputs) — cumulative weight check across all stacks, unlike
+     * per-stack CanAddItem. Registry weights with 1.0/unit fallback.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Inventory")
+    bool CanAddItemStacks(const TArray<FAstrawildItemStack>& Stacks) const;
+
     // --- Equipment (wave 3: weapon + shield slots, auto-routed by item stat) ---
     /**
      * Equips an Equipment-category item. Routing (wave 3): items with

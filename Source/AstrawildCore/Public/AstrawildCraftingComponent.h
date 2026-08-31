@@ -97,6 +97,13 @@ private:
     float CraftTimeRemaining = 0.0f;
     float CraftTimeTotal = 0.0f;
     TArray<FAstrawildItemStack> PendingOutputs;
+
+    /**
+     * H-11 guard (Production V2): true while completed outputs are held because
+     * the pack is full — retries every second until space frees, blocks cancel
+     * (a cancel here would refund ingredients AND keep granted outputs).
+     */
+    bool bOutputsPendingHandoff = false;
     TWeakObjectPtr<AActor> PendingOutputTarget;
 
     class UAstrawildInventoryComponent* GetInventory() const;
