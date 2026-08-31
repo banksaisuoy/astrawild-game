@@ -102,6 +102,16 @@ public:
     /** Batch 8 — Driftwood Landing village center in the Tidebreaker Isles. */
     static FVector2D GetDriftwoodLandingXY();
 
+    /**
+     * Pure atmosphere ramp (automation-tested): SunAlpha 0=dawn..0.5=noon..1=dusk
+     * on the 06:00-19:00 day span; night samples use bIsNight. Visibility
+     * multiplier comes from the weather subsystem (1=clear, <1=rain/fog/storm).
+     */
+    static FAstrawildAtmosphereSample EvalAtmosphereRamp(float SunAlpha, bool bIsNight, float VisibilityMultiplier);
+
+    /** Base sun intensity curve shared by UpdateSunRotation + UpdateAtmosphere (pure). */
+    static float EvalSunBaseIntensity(float SunAlpha, bool bIsNight);
+
 private:
     void BuildLighting();
     void BuildTerrain();
@@ -145,16 +155,6 @@ private:
 
     /** Production V2 Batch 2: day/night + weather atmosphere grading (fog/sun/sky). */
     void UpdateAtmosphere();
-
-    /**
-     * Pure atmosphere ramp (automation-tested): SunAlpha 0=dawn..0.5=noon..1=dusk
-     * on the 06:00-19:00 day span; night samples use bIsNight. Visibility
-     * multiplier comes from the weather subsystem (1=clear, <1=rain/fog/storm).
-     */
-    static FAstrawildAtmosphereSample EvalAtmosphereRamp(float SunAlpha, bool bIsNight, float VisibilityMultiplier);
-
-    /** Base sun intensity curve shared by UpdateSunRotation + UpdateAtmosphere (pure). */
-    static float EvalSunBaseIntensity(float SunAlpha, bool bIsNight);
 
     class AAstrawildGameState* GetGameState() const;
 

@@ -1,5 +1,6 @@
 #include "AstrawildWorldEventSubsystem.h"
 
+#include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -329,7 +330,7 @@ void UAstrawildWorldEventSubsystem::ResolveEventEffects(const UAstrawildWorldEve
         {
             const AAstrawildGameState* GameState = GetGameState();
             const int32 Seed = GameState ? GameState->WorldSeed : 1337;
-            FRandomStream Stream(Seed ^ 0xB100M0 ^ static_cast<uint32>(GetAbsoluteMinute()));
+            FRandomStream Stream(Seed ^ 0xB100A0u ^ static_cast<uint32>(GetAbsoluteMinute()));
             const FVector2D Center = ZoneDesc->GetCenter();
             for (int32 i = 0; i < Definition->SpeciesBoostCount; ++i)
             {

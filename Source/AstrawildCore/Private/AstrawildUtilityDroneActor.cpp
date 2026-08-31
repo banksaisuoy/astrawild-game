@@ -124,9 +124,9 @@ void AAstrawildUtilityDroneActor::Tick(const float DeltaTime)
                 }
                 // Recall = destroy + clear the player's active-drone handle (deploy
                 // key redeploys free, mirroring the manual recall semantics).
-                if (Owner->GetActiveDrone() == this)
+                if (TargetPlayer && TargetPlayer->GetActiveDrone() == this)
                 {
-                    Owner->ClearActiveDrone();
+                    TargetPlayer->ClearActiveDrone();
                 }
                 World->DestroyActor(this);
                 return;
@@ -169,9 +169,9 @@ void AAstrawildUtilityDroneActor::RunScanPulse()
 
     // Production V2: modules extend scan radius + rate (best per category).
     float ScanRadiusBonus = 0.0f, HarvestRadiusBonus = 0.0f, ScanRateBonus = 0.0f, BatteryBonus = 0.0f;
-    if (const AAstrawildPlayerCharacter* Owner = GetOwnerPlayer())
+    if (const AAstrawildPlayerCharacter* PlayerChar = GetOwnerPlayer())
     {
-        if (const UAstrawildInventoryComponent* Inventory = Owner->FindComponentByClass<UAstrawildInventoryComponent>())
+        if (const UAstrawildInventoryComponent* Inventory = PlayerChar->FindComponentByClass<UAstrawildInventoryComponent>())
         {
             ResolveModules(Inventory, ScanRadiusBonus, HarvestRadiusBonus, ScanRateBonus, BatteryBonus);
         }
@@ -247,9 +247,9 @@ float AAstrawildUtilityDroneActor::GetEffectiveBatterySeconds() const
 {
     // Base capacity + the best battery module in the owner's inventory.
     float ScanRadiusBonus = 0.0f, HarvestRadiusBonus = 0.0f, ScanRateBonus = 0.0f, BatteryBonus = 0.0f;
-    if (const AAstrawildPlayerCharacter* Owner = GetOwnerPlayer())
+    if (const AAstrawildPlayerCharacter* PlayerChar = GetOwnerPlayer())
     {
-        if (const UAstrawildInventoryComponent* Inventory = Owner->FindComponentByClass<UAstrawildInventoryComponent>())
+        if (const UAstrawildInventoryComponent* Inventory = PlayerChar->FindComponentByClass<UAstrawildInventoryComponent>())
         {
             ResolveModules(Inventory, ScanRadiusBonus, HarvestRadiusBonus, ScanRateBonus, BatteryBonus);
         }

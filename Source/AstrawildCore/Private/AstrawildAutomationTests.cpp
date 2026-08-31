@@ -892,8 +892,6 @@ bool FAstrawildCraftOutputGuardTest::RunTest(const FString& Parameters)
     return true;
 }
 
-#endif // WITH_DEV_AUTOMATION_TESTS
-
 // ---------------------------------------------------------------------------
 // Production V2 — weapon profiles (Master Plan §8): each family is a distinct
 // firing archetype with sane damage/interval math.
@@ -1574,7 +1572,7 @@ bool FAstrawildVfxBeamMathTest::RunTest(const FString& Parameters)
     const FVector Delta = (End - Start).GetSafeNormal();
     TestTrue(TEXT("Diagonal beam orientation matches delta"),
         FMath::Abs(FVector::DotProduct(Rotation.Vector(), Delta) - 1.0f) < 0.001f);
-    TestEqual(TEXT("Diagonal beam length"), Length, (End - Start).Size(), 1.0f);
+    TestEqual(TEXT("Diagonal beam length"), Length, static_cast<float>((End - Start).Size()), 1.0f);
     return true;
 }
 

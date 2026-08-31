@@ -1471,7 +1471,7 @@ void AAstrawildPlayerCharacter::StartScan(const FInputActionValue& Value)
 
     // Production V2 Batch 2: world-space pulse ring — the scan now reads as an
     // action (tier-tinted; radius tracks the scanner's effective range).
-    if (UWorld* World = GetWorld())
+    if (World)
     {
         const FLinearColor PulseTint = FAstrawildVfxPalette::GetScannerTint(InventoryComponent->EquippedScannerItemId);
         const float RangeMultiplier = InventoryComponent->GetEquippedScannerRangeMultiplier();

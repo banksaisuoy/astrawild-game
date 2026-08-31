@@ -29,7 +29,7 @@
 #include "GameFramework/PlayerStart.h"
 #include "NavigationSystem.h"
 
-// Engine light classes for the runtime lighting rig.
+#include "Components/ExponentialHeightFogComponent.h"
 #include "Components/LightComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
@@ -38,7 +38,6 @@
 #include "Engine/ExponentialHeightFog.h"
 #include "Engine/PointLight.h"
 #include "Engine/PostProcessVolume.h"
-#include "Engine/SkyAtmosphere.h"
 #include "Engine/SkyLight.h"
 
 namespace
@@ -324,12 +323,12 @@ void AAstrawildWorldBootstrapper::BuildLighting()
         HeightFogActor = World->SpawnActor<AExponentialHeightFog>(AExponentialHeightFog::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
         if (HeightFogActor)
         {
-            HeightFogActor->SetMobility(EComponentMobility::Movable);
             if (UExponentialHeightFogComponent* FogComponent = HeightFogActor->GetComponent())
             {
+                FogComponent->SetMobility(EComponentMobility::Movable);
                 FogComponent->SetFogDensity(0.00012f);
                 FogComponent->SetFogHeightFalloff(0.22f);
-                FogComponent->SetFogInscatteringLuminance(FLinearColor(0.70f, 0.76f, 0.84f));
+                FogComponent->FogInscatteringLuminance = FLinearColor(0.70f, 0.76f, 0.84f);
                 FogComponent->SetStartDistance(1500.0f);
             }
         }
@@ -1188,7 +1187,7 @@ FAstrawildAtmosphereSample AAstrawildWorldBootstrapper::EvalAtmosphereRamp(const
     {
         // Two-segment day ramp: dawn gold -> neutral noon -> ember dusk.
         const FLinearColor DawnSun(1.00f, 0.72f, 0.45f, 1.0f);
-        const FLinearColor NoonSun(1.00f, 0.95f, 0.88f, 1.0f);
+        const FLinearColor NoonSun(1.00f, 0.98f, 0.92f, 1.0f);
         const FLinearColor DuskSun(1.00f, 0.62f, 0.42f, 1.0f);
         Sample.SunColor = Alpha < 0.5f
             ? FMath::Lerp(DawnSun, NoonSun, Alpha * 2.0f)
@@ -1270,7 +1269,7 @@ void AAstrawildWorldBootstrapper::UpdateAtmosphere()
         if (UExponentialHeightFogComponent* FogComponent = HeightFogActor->GetComponent())
         {
             FogComponent->SetFogDensity(Sample.FogDensity);
-            FogComponent->SetFogInscatteringLuminance(Sample.FogColor);
+            FogComponent->FogInscatteringLuminance = Sample.FogColor;
         }
     }
 }

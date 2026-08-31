@@ -291,41 +291,83 @@ UAstrawildBiomeDefinition* UAstrawildItemRegistrySubsystem::FindBiome(const FNam
 TArray<UAstrawildWeaponDefinition*> UAstrawildItemRegistrySubsystem::GetAllWeapons() const
 {
     TArray<UAstrawildWeaponDefinition*> Out;
-    Weapons.GenerateValueArray(Out);
+    Out.Reserve(Weapons.Num());
+    for (const auto& Pair : Weapons)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
 TArray<UAstrawildWorldEventDefinition*> UAstrawildItemRegistrySubsystem::GetAllWorldEvents() const
 {
     TArray<UAstrawildWorldEventDefinition*> Out;
-    WorldEvents.GenerateValueArray(Out);
+    Out.Reserve(WorldEvents.Num());
+    for (const auto& Pair : WorldEvents)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
 TArray<UAstrawildPOIDefinition*> UAstrawildItemRegistrySubsystem::GetAllPOIs() const
 {
     TArray<UAstrawildPOIDefinition*> Out;
-    POIs.GenerateValueArray(Out);
+    Out.Reserve(POIs.Num());
+    for (const auto& Pair : POIs)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
 TArray<UAstrawildWorkSiteDefinition*> UAstrawildItemRegistrySubsystem::GetAllWorkSiteDefinitions() const
 {
     TArray<UAstrawildWorkSiteDefinition*> Out;
-    WorkSites.GenerateValueArray(Out);
+    Out.Reserve(WorkSites.Num());
+    for (const auto& Pair : WorkSites)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
 TArray<UAstrawildBiomeDefinition*> UAstrawildItemRegistrySubsystem::GetAllBiomes() const
 {
     TArray<UAstrawildBiomeDefinition*> Out;
-    Biomes.GenerateValueArray(Out);
+    Out.Reserve(Biomes.Num());
+    for (const auto& Pair : Biomes)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
 
 TArray<UAstrawildResourceNodeDefinition*> UAstrawildItemRegistrySubsystem::GetAllResourceNodeDefinitions() const
 {
     TArray<UAstrawildResourceNodeDefinition*> Out;
-    ResourceNodes.GenerateValueArray(Out);
+    Out.Reserve(ResourceNodes.Num());
+    for (const auto& Pair : ResourceNodes)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
     return Out;
 }
