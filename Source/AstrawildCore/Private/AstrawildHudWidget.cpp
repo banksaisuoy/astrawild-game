@@ -2,6 +2,7 @@
 
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
+#include "AstrawildCombatComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildPowerSubsystem.h"
@@ -383,8 +384,9 @@ void UAstrawildHudWidget::RefreshState()
             {
                 if (UAstrawildWeaponDefinition* WeaponDef = Pawn->CombatComponent->GetEquippedWeaponDefinition())
                 {
-                    WeaponLine = FString::Printf(TEXT("%s | DMG %.0f | %.1fs"),
-                        *WeaponDef->DisplayName.ToString(), Pawn->CombatComponent->GetRangedDamage(),
+                    const FString WeaponName = WeaponDef->DisplayName.ToString();
+                    WeaponLine = FString::Printf(TEXT("%s | DMG %.0f | Rate %.1f"),
+                        *WeaponName, Pawn->CombatComponent->GetRangedDamage(),
                         Pawn->CombatComponent->GetRangedFireInterval());
                     if (!WeaponDef->AmmoItemId.IsNone() && Pawn->InventoryComponent)
                     {

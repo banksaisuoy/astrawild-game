@@ -1333,7 +1333,17 @@ public:
     TArray<FAstrawildDialogueNode> Nodes;
 
     /** Node lookup (nullptr when the id is unknown). */
-    const FAstrawildDialogueNode* FindNode(FName NodeId) const;
+    const FAstrawildDialogueNode* FindNode(FName NodeId) const
+    {
+        for (const FAstrawildDialogueNode& Node : Nodes)
+        {
+            if (Node.NodeId == NodeId)
+            {
+                return &Node;
+            }
+        }
+        return nullptr;
+    }
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {

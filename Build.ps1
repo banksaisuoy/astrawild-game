@@ -1,4 +1,4 @@
-﻿$env:DOTNET_ROOT = "E:\dotnet"
+$env:DOTNET_ROOT = "E:\dotnet"
 $env:PATH = "E:\dotnet;" + $env:PATH
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " ASTRAWILD UE5 Build Pipeline" -ForegroundColor Green
@@ -9,7 +9,7 @@ $UbtPath = "E:\Epic Games\UnrealEngine\Engine\Binaries\DotNET\UnrealBuildTool\Un
 $ProjectPath = "E:\AstrawildGame\ASTRAWILD.uproject"
 
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-& $UbtPath ASTRAWILDEditor Win64 Development -Project=$ProjectPath -WaitMutex -FromMsBuild -NoUBA
+& $UbtPath ASTRAWILDEditor Win64 Development "-Project=$ProjectPath" -WaitMutex -FromMsBuild -NoUBA
 $sw.Stop()
 
 if ($LASTEXITCODE -eq 0) {

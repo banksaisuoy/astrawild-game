@@ -24,6 +24,7 @@
 #include "AstrawildVfxActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Misc/AutomationTest.h"
+#include "NiagaraSystem.h"
 
 // ---------------------------------------------------------------------------
 // Inventory: add/remove/weight/stack behavior (directive §14)
@@ -1940,11 +1941,11 @@ bool FAstrawildWeaponAssetBindingTest::RunTest(const FString& Parameters)
     Profile->Family = EAstrawildWeaponFamily::Plasma;
     Profile->FireMode = EAstrawildWeaponFireMode::Projectile;
 
-    TestTrue(TEXT("Muzzle binding defaults unset"), !Profile->MuzzleFlashVfx.IsValid());
-    TestTrue(TEXT("Impact binding defaults unset"), !Profile->ImpactVfx.IsValid());
-    TestTrue(TEXT("Trail binding defaults unset"), !Profile->ProjectileTrailVfx.IsValid());
-    TestTrue(TEXT("Fire sound defaults unset"), !Profile->FireSound.IsValid());
-    TestTrue(TEXT("Impact sound defaults unset"), !Profile->ImpactSound.IsValid());
+    TestTrue(TEXT("Muzzle binding defaults unset"), Profile->MuzzleFlashVfx.IsNull());
+    TestTrue(TEXT("Impact binding defaults unset"), Profile->ImpactVfx.IsNull());
+    TestTrue(TEXT("Trail binding defaults unset"), Profile->ProjectileTrailVfx.IsNull());
+    TestTrue(TEXT("Fire sound defaults unset"), Profile->FireSound.IsNull());
+    TestTrue(TEXT("Impact sound defaults unset"), Profile->ImpactSound.IsNull());
 
     // The FName id contract stays the authored directory convention alongside
     // the direct refs (two binding paths, one source of truth per asset).
@@ -1958,8 +1959,8 @@ bool FAstrawildWeaponAssetBindingTest::RunTest(const FString& Parameters)
     // Equipment visual binding (CP-01) defaults unset the same way — the
     // procedural player silhouette is the fallback until meshes bind.
     UAstrawildItemDefinition* ArmorItem = NewObject<UAstrawildItemDefinition>();
-    TestTrue(TEXT("Equip mesh override defaults unset"), !ArmorItem->EquipMeshOverride.IsValid());
-    TestTrue(TEXT("Equip material override defaults unset"), !ArmorItem->EquipMaterialOverride.IsValid());
+    TestTrue(TEXT("Equip mesh override defaults unset"), ArmorItem->EquipMeshOverride.IsNull());
+    TestTrue(TEXT("Equip material override defaults unset"), ArmorItem->EquipMaterialOverride.IsNull());
     return true;
 }
 
