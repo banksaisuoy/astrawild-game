@@ -12,8 +12,11 @@
   (AstrawildArtPack tables + registry warm pass + skinned survivor/Echo/node consumption with
   full procedural fallbacks). Tests 53 → **54** (new `ASTRAWILD.ArtPack.BindingContract`).
   Import on the UE host: `Docs/ASTRAWILD_ART_PACK_RUNBOOK.md` (~5 min + 3 Niagara recipes).
-  Predecessor Batch 3 (dialogue + content pack specs) remains SOURCE_IMPLEMENTED pending rebuild — see
-  `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_3.md` and `ASTRAWILD_PRODUCTION_V2_BATCH_4.md`)
+  Predecessor Batch 3 is now **UE5_VERIFIED: Editor build SUCCESS + 53/53 automation tests PASS**
+  (`Docs/ENGINE_LOGS/ANTIGRAVITY_BUILD_REPORT.md` — three host-side fixes folded back in 91f0f44:
+  FindNode linker, HudWidget format string, SoftObjectPtr test compile). Batch 4 rebuild
+  expectation: 54/54 — see `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_3.md` and
+  `ASTRAWILD_PRODUCTION_V2_BATCH_4.md`)
 - Last updated: 2026-08-31 (V2 Batch 4 — art pack delivery: 112 assets + AwPipeline import + soft bindings; engine logs for
   Batches 1–2: 48/48 PASS; Batches 3–4 await rebuild)
 - Branch: `main` (latest: V2 Batch 3; preceded by `5eb6b9e` sync report, `098b45c`/`60e8bc6` UE-verified
