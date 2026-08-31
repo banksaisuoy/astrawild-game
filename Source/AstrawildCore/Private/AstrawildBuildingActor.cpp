@@ -8,6 +8,7 @@
 #include "AstrawildPlayerController.h"
 #include "AstrawildPowerSubsystem.h"
 #include "AstrawildResearchSubsystem.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -27,6 +28,16 @@ AAstrawildBuildingActor::AAstrawildBuildingActor()
     if (CubeMesh.Succeeded())
     {
         VisualMesh->SetStaticMesh(CubeMesh.Object);
+    }
+
+    PowerIndicatorLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("PowerIndicatorLight"));
+    if (PowerIndicatorLight)
+    {
+        PowerIndicatorLight->SetupAttachment(RootComponent);
+        PowerIndicatorLight->SetRelativeLocation(FVector(0.0f, 0.0f, 60.0f));
+        PowerIndicatorLight->SetAttenuationRadius(350.0f);
+        PowerIndicatorLight->SetCastShadows(false);
+        PowerIndicatorLight->SetIntensity(0.0f);
     }
 
     BuildingId = FGuid::NewGuid();
@@ -124,7 +135,45 @@ bool AAstrawildBuildingActor::InitializeFromDefinition(const UAstrawildBuildingD
     }
 
     RegisterPower();
+    UpdateVisualPowerState();
     return true;
+}
+
+void AAstrawildBuildingActor::UpdateVisualPowerState()
+{
+    if (!PowerIndicatorLight)
+    {
+        return;
+    }
+
+    const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
+    if (!Def)
+    {
+        PowerIndicatorLight->SetIntensity(0.0f);
+        return;
+    }
+
+    if (Def->Category == EAstrawildBuildingCategory::Power)
+    {
+        // Generator / Battery: glowing active cyan/gold core
+        PowerIndicatorLight->SetLightColor(FLinearColor(0.2f, 0.9f, 0.85f));
+        PowerIndicatorLight->SetIntensity(bIsSwitchedOn ? 2.5f : 0.0f);
+    }
+    else if (Def->PowerRole == EAstrawildPowerRole::Consumer && Def->PowerDraw > 0.0f)
+    {
+        // Consumer: Green = powered, Red = unpowered
+        PowerIndicatorLight->SetLightColor(bIsPowered ? FLinearColor(0.2f, 1.0f, 0.3f) : FLinearColor(1.0f, 0.15f, 0.1f));
+        PowerIndicatorLight->SetIntensity(1.8f);
+    }
+    else
+    {
+        PowerIndicatorLight->SetIntensity(0.0f);
+    }
+}
+
+void AAstrawildBuildingActor::OnRep_IsPowered()
+{
+    UpdateVisualPowerState();
 }
 
 void AAstrawildBuildingActor::ApplyBuildingDamage(const float DamageAmount)
@@ -149,6 +198,7 @@ void AAstrawildBuildingActor::SetSwitchedOn(const bool bOn)
     if (GetLocalRole() == ROLE_Authority)
     {
         bIsSwitchedOn = bOn;
+        UpdateVisualPowerState();
     }
 }
 
@@ -272,5 +322,6 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
     {
         CurrentHealth = FMath::Max(1.0f, Data.CurrentHealth);
     }
+    UpdateVisualPowerState();
     return true;
 }

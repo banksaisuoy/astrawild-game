@@ -27,6 +27,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building")
     TObjectPtr<UStaticMeshComponent> VisualMesh;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building")
+    TObjectPtr<class UPointLightComponent> PowerIndicatorLight;
+
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Building")
     FAstrawildBuildingDamaged OnBuildingDamaged;
 
@@ -45,11 +48,16 @@ public:
      * lamp/visual state. Captured at save time in ToSaveData and restored at load
      * time in FromSaveData before the first natural Tick re-resolves it.
      */
-    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building", Replicated)
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building", ReplicatedUsing=OnRep_IsPowered)
     bool bIsPowered = false;
 
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building")
     FName OwnerPlayerId = NAME_None;
+
+    UFUNCTION()
+    void OnRep_IsPowered();
+
+    void UpdateVisualPowerState();
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
     bool InitializeFromDefinition(const UAstrawildBuildingDefinition* Definition, FName InOwnerPlayerId);

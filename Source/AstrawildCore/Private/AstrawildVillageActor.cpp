@@ -12,9 +12,9 @@
 
 namespace
 {
-    static constexpr const TCHAR* const ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
-    static constexpr const TCHAR* const ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
-    static constexpr const TCHAR* const ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
+    static constexpr const TCHAR* const VillageShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
+    static constexpr const TCHAR* const VillageShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
+    static constexpr const TCHAR* const VillageShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
 }
 
 AAstrawildVillageActor::AAstrawildVillageActor()
@@ -115,9 +115,9 @@ void AAstrawildVillageActor::BuildVillage()
             GroundZ);
 
         // Hut body.
-        SpawnShape(ShapeCube, HutCenter + FVector(0, 0, 130), FVector(2.2, 2.2, 2.6), FRotator(0.0f, FMath::RadiansToDegrees(-Angle), 0.0f));
+        SpawnShape(VillageShapeCube, HutCenter + FVector(0, 0, 130), FVector(2.2, 2.2, 2.6), FRotator(0.0f, FMath::RadiansToDegrees(-Angle), 0.0f));
         // Roof.
-        SpawnShape(ShapeCone, HutCenter + FVector(0, 0, 470), FVector(2.6, 2.6, 1.7), FRotator::ZeroRotator);
+        SpawnShape(VillageShapeCone, HutCenter + FVector(0, 0, 470), FVector(2.6, 2.6, 1.7), FRotator::ZeroRotator);
         // Door frame gap marker (lamp post with warm light).
         if (Hut % 2 == 0)
         {
@@ -130,11 +130,11 @@ void AAstrawildVillageActor::BuildVillage()
     for (int32 Log = 0; Log < 5; ++Log)
     {
         const float LogAngle = 2.0f * PI * Log / 5.0f;
-        SpawnShape(ShapeCylinder,
+        SpawnShape(VillageShapeCylinder,
             CampfireLocation + FVector(70 * FMath::Cos(LogAngle), 70 * FMath::Sin(LogAngle), 20),
             FVector(0.5, 0.5, 0.5), FRotator(0.0f, FMath::RadiansToDegrees(LogAngle), 75.0f));
     }
-    SpawnShape(ShapeCone, CampfireLocation + FVector(0, 0, 60), FVector(0.9, 0.9, 1.2), FRotator::ZeroRotator); // flame marker
+    SpawnShape(VillageShapeCone, CampfireLocation + FVector(0, 0, 60), FVector(0.9, 0.9, 1.2), FRotator::ZeroRotator); // flame marker
     SpawnVillageLight(CampfireLocation + FVector(0, 0, 120), FLinearColor(1.0f, 0.6f, 0.25f), 5.0f);
 
     // --- Perimeter: palisade posts (inland) or dock planks (coastal). ---
@@ -142,7 +142,7 @@ void AAstrawildVillageActor::BuildVillage()
     {
         for (int32 Plank = 0; Plank < 8; ++Plank)
         {
-            SpawnShape(ShapeCube,
+            SpawnShape(VillageShapeCube,
                 Center + FVector(VillageRadius + 800.0f, -1050.0f + Plank * 300.0f, -30),
                 FVector(4.0, 1.4, 0.3), FRotator::ZeroRotator);
         }
@@ -152,7 +152,7 @@ void AAstrawildVillageActor::BuildVillage()
         for (int32 Post = 0; Post < 16; ++Post)
         {
             const float Angle = 2.0f * PI * Post / 16.0f;
-            SpawnShape(ShapeCylinder,
+            SpawnShape(VillageShapeCylinder,
                 Center + FVector((VillageRadius + 900.0f) * FMath::Cos(Angle), (VillageRadius + 900.0f) * FMath::Sin(Angle), 130),
                 FVector(0.4, 0.4, 2.6), FRotator::ZeroRotator);
         }
@@ -170,7 +170,7 @@ void AAstrawildVillageActor::BuildVillage()
         Waypoints.Add(Waypoint);
         if (Point % 3 == 0)
         {
-            SpawnShape(ShapeCylinder, Waypoint - FVector(0, 0, 10), FVector(0.3, 0.3, 0.8), FRotator::ZeroRotator); // road marker
+            SpawnShape(VillageShapeCylinder, Waypoint - FVector(0, 0, 10), FVector(0.3, 0.3, 0.8), FRotator::ZeroRotator); // road marker
         }
     }
 
