@@ -16,7 +16,7 @@
 | V-2 | Full `Development Editor` build | 0 errors, 0 warnings-as-errors | build log |
 | V-3 | Link `ASTRAWILD.exe` / editor target | links clean (watch for the historical C-2 class of LNK2001) | build log |
 | V-4 | PIE boot, zero-asset world | terrain tiles + camp + spawners visible in <30 s | screenshot + log tail |
-| V-5 | Automation tests (`ast.``*`, 47 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
+| V-5 | Automation tests (`ast.``*`, 48 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
 
 Known "may surface on first compile" items (static review already cleaned these once):
 native gameplay tag registration order, `TObjectPtr` BP exposure policy, IMC runtime
