@@ -33,6 +33,8 @@ public:
     static void BuildPOIs(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildBiomes(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildProductionEchoes(UAstrawildItemRegistrySubsystem* Registry);
+    static void BuildEvolutionTargets(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildProductionTechnologies(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildProductionQuests(UAstrawildItemRegistrySubsystem* Registry);
+    static void BuildDialogueTrees(UAstrawildItemRegistrySubsystem* Registry);
 };

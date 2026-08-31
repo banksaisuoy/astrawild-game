@@ -2,37 +2,33 @@
 
 ## Status
 
-- Overall: `PARTIAL` — **PRODUCTION V2 BATCH 2 (VISUAL VERTICAL SLICE RUNTIME SUPPORT) COMPLETE on the
-  source side** (verified technical prototype per the V2 Master Plan baseline `eceabd3` + Batch 8 + V2
-  Batch 1 data foundation + **V2 Batch 2 VVS runtime**: biome dressing / atmosphere grading / weapon VFX /
-  scanner pulses / player + Echo visual identity — all zero-asset with data-only Antigravity upgrade paths;
-  source-implemented, awaits compile verification on the UE 5.8.2 target machine — see
-  `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_2.md`)
-- Last updated: 2026-08-30 (V2 Batch 2 — biome dressing ×12 zones, atmosphere day/night/weather grading +
-  PPV, Beam/Arc/muzzle weapon VFX, scanner pulse rings, player silhouette + held weapon, Echo rarity
-  rings + element glow; tests 39 → 47)
-- Branch: `main` (latest: V2 Batch 2; preceded by `cbdbd82` V2 Batch 1 data foundation, `e1c1b44` Batch 8,
-  `eceabd3` final production run)
-- Latest change: **V2 BATCH 2 — VISUAL VERTICAL SLICE RUNTIME SUPPORT** (Master Plan §31): (1)
-  **`AAstrawildBiomeDressingActor`** — the first runtime consumer of `UAstrawildBiomeDefinition`:
-  deterministic per-zone scatter (world-seed streamed) of trees/rocks/grass with 6 canopy archetypes
-  (broadleaf/conifer+snow/palm/dead/cactus/spire), water/slope/exclusion gates (camp/villages/dungeons/
-  portals/POIs/skiffs — dressing never buries gameplay), merged PMC sections (~22k verts world-wide) and an
-  **ISM real-mesh upgrade path** from the definition's TreeMeshes/RockMeshes/GrassMeshes soft refs + 5 new
-  additive tint/density fields with explicit production tints ×12 biomes. (2) **Atmosphere pass**:
-  `EvalAtmosphereRamp` (pure, tested) — sun color + fog color/density + sky intensity keyframed dawn→noon→
-  dusk→night, **weather-coupled** (visibility multiplier → thicker fog + dimmer sun; Storm Surge now changes
-  the sky), unbounded PPV (bloom/vignette/contrast/exposure clamps), fog tuned off defaults, and a shared
-  sun-base curve so the weather multiplier can never compound per tick. (3) **Weapon VFX**:
-  `AAstrawildBeamVfxActor` — Beam weapons draw bright prisms to the furthest contact, Arc Caster renders
-  jagged deterministic lightning through the hop chain, muzzle flashes on every ranged shot, projectiles
-  get element-tinted PMC cores (hot leading pole) + `TrailVfxId` finally wired; shared `FAstrawildVfxPalette`
-  (element/rarity/family/scanner tints — one color language). (4) **Scanner pulse rings** per tier (teal/
-  amber/violet, radius tracks scanner range). (5) **Player silhouette** (graphite+amber survivor body, teal
-  visor) + **family-tinted held weapon** rebuilt on equip change; **Echo rarity rings** (Rare+) + bounded
-  element glow lights (captured always, wild within 32m of a player). Tests 39 → **48** (+8 batch-2 + 1 H-11: dressing
-  profiles/rejection/determinism, atmosphere ramp, palette, beam math, arc jitter, ring geometry).
-- Codebase: **136 C++ files, ~36,855 LOC, 48 automation tests, 66 docs** in/around `Source/AstrawildCore` (single module)
+- Overall: `PARTIAL` — **PRODUCTION V2 BATCH 3 (DIALOGUE + CONTENT PACK FOUNDATION) COMPLETE on the
+  source side**, on top of the UE5-VERIFIED 48/48 baseline (Batches 1–2 built, cooked and tested on
+  UE 5.8.2 — `Docs/ENGINE_LOGS/`). Batch 3 ships the dialogue system (6 conversation trees, story
+  flags in save v4, pure-C++ UMG conversation screen, consequence routing through existing
+  authority pipelines) plus the **Production Content Pack** (`Docs/CONTENT_PACK/CP-00..CP-10` —
+  10-area production spec) with its C++ binding hooks: weapon Niagara/audio soft refs with
+  Niagara-first dispatch, Echo evolution (6 chains, dual level+bond gates, identity-preserving
+  roster swap), equipment visual override contracts. Tests 48 → **51** — see
+  `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_3.md`)
+- Last updated: 2026-08-31 (V2 Batch 3 — dialogue system + content pack foundation; engine logs for
+  Batches 1–2: 48/48 PASS)
+- Branch: `main` (latest: V2 Batch 3; preceded by `5eb6b9e` sync report, `098b45c`/`60e8bc6` UE-verified
+  Batches 1–2, `cbdbd82` V2 Batch 1, `e1c1b44` Batch 8, `eceabd3` final production run)
+- Latest change: **V2 BATCH 3 — DIALOGUE + PRODUCTION CONTENT PACK FOUNDATION**: (1)
+  **Dialogue system (P12)**: `UAstrawildDialogueTreeDefinition` (lines/choices/nodes, ANDed conditions,
+  ordered consequences) + `UAstrawildDialogueComponent` on the player controller (persistent story flags,
+  save v4 `DialogueFlags` additive) + `UAstrawildDialogueWidget` (pure-C++ conversation screen, ESC
+  closes, vendor hand-off) + NPC interact routing (tree-first, legacy fallback) + 6 authored trees
+  (Maren/Tam/Rowan/Kael/Sela/Perry — quest offers, one-time beats, chained flags, item/research grants).
+  (2) **Content Pack hooks**: weapon profiles gain `MuzzleFlashVfx/ImpactVfx/ProjectileTrailVfx` +
+  `FireSound/ImpactSound` soft refs consumed Niagara-first (procedural Batch-2 fallbacks intact);
+  projectile trail/impact bindings; Echo definitions gain evolution fields + `EvolveInstance` roster swap
+  with 6 authored evolved species; item definitions gain equipment visual override contracts; new
+  `Niagara` module dependency. (3) **Content specs**: `Docs/CONTENT_PACK/CP-00..CP-10` (player/exosuit,
+  Echo/evolution, weapons, environment×12, Niagara, audio, materials, animation, quest/NPC, UX/HUD)
+  with budgets, binding steps and acceptance criteria. Tests 48 → **51**.
+- Codebase: **140 C++ files (143 with build scripts), ~39,300 LOC, 51 automation tests, 86 docs** in/around `Source/AstrawildCore` (single module)
 
 ## Environment
 
@@ -44,7 +40,9 @@
 ## Compile
 
 - Target: `ASTRAWILDEditor Win64 Development` — pending Antigravity (user machine)
-- Result: `NOT_RUN` (unchanged — sandbox has no UE5; honest status per Definition of Done)
+- Result: **Batches 1–2 = PASS on the target machine** (Antigravity build 2026-08-31: 0 errors, 48/48
+  automation tests — `Docs/ENGINE_LOGS/BATCH8_BUILD_LOG.md` / `BATCH8_PLAYTEST_LOG.md`). **Batch 3 =
+  NOT_RUN** (sandbox has no UE5; honest status per Definition of Done — queue rows V2-21..V2-27 pending)
 - Errors: **all static-review compile blockers fixed in source** — the final-run audit re-read every
   file end-to-end and fixed C-1 (GameMode raw-ptr `.Get()`) and C-2 (RPC `_Implementation` naming) at
   `750f87a`, on top of the earlier Batch-1 fixes (C-1 TPair iteration, C-1b MakeRuntimeAction arity) and

@@ -15,7 +15,57 @@
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "Net/UnrealNetwork.h"
+
+namespace
+{
+    // Content Pack CP-03/CP-05/CP-06: Niagara-first dispatch — a bound asset
+    // plays when loaded (no synchronous loads, no hitch risk), otherwise the
+    // procedural Batch-2 fallback keeps the zero-asset visual language. Fire
+    // audio is independent of the muzzle asset so sounds bind first if desired.
+    void SpawnWeaponMuzzleFlash(UWorld* World, const UAstrawildWeaponDefinition* WeaponDef,
+        const FVector& Location, const FVector& Direction, const FLinearColor& Tint)
+    {
+        if (World && WeaponDef)
+        {
+            UNiagaraSystem* MuzzleVfx = WeaponDef->MuzzleFlashVfx.IsValid() ? WeaponDef->MuzzleFlashVfx.Get() : nullptr;
+            if (MuzzleVfx)
+            {
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(World, MuzzleVfx, Location, Direction.Rotation());
+            }
+            else
+            {
+                AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Location, Direction, Tint);
+            }
+            if (USoundBase* FireSfx = WeaponDef->FireSound.IsValid() ? WeaponDef->FireSound.Get() : nullptr)
+            {
+                UGameplayStatics::PlaySoundAtLocation(World, FireSfx, Location);
+            }
+            return;
+        }
+        AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Location, Direction, Tint);
+    }
+
+    /** CP-05 impact burst + CP-06 impact audio at a contact point (no-op without bindings). */
+    void SpawnWeaponImpact(UWorld* World, const UAstrawildWeaponDefinition* WeaponDef, const FVector& Location)
+    {
+        if (!World || !WeaponDef)
+        {
+            return;
+        }
+        if (UNiagaraSystem* ImpactVfx = WeaponDef->ImpactVfx.IsValid() ? WeaponDef->ImpactVfx.Get() : nullptr)
+        {
+            UNiagaraFunctionLibrary::SpawnSystemAtLocation(World, ImpactVfx, Location);
+        }
+        if (USoundBase* ImpactSfx = WeaponDef->ImpactSound.IsValid() ? WeaponDef->ImpactSound.Get() : nullptr)
+        {
+            UGameplayStatics::PlaySoundAtLocation(World, ImpactSfx, Location);
+        }
+    }
+}
 
 namespace
 {
@@ -394,9 +444,10 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
         return false;
     }
 
-    // Production V2 Batch 2: every projectile shot reads with a muzzle flash
-    // tinted by the weapon's element/family identity.
-    AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, AimOrigin, AimDirection, ResolveWeaponVfxTint(WeaponDef));
+    // Production V2 Batch 2 / CP-03: every projectile shot reads with a muzzle
+    // flash — Niagara-first when the profile binds one, procedural octahedron
+    // otherwise (element/family tinted).
+    SpawnWeaponMuzzleFlash(World, WeaponDef, AimOrigin, AimDirection, ResolveWeaponVfxTint(WeaponDef));
 
     if (WeaponDef)
     {
@@ -406,6 +457,7 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
             HomingTarget = AcquireLockOnTarget(WeaponDef, OwnerCharacter, AimOrigin, AimDirection);
         }
         Bolt->TrailVfxId = WeaponDef->TrailVfxId; // VFX contract — first runtime consumer
+        Bolt->SetWeaponVfxAssets(WeaponDef); // CP-05: direct Niagara trail/impact binding.
         Bolt->LaunchFromWeapon(AimDirection, GetRangedDamage(), GetResolvedAttackElement(), OwnerCharacter,
             WeaponDef->ProjectileSpeed, WeaponDef->ProjectileVisualScale, WeaponDef->ProjectileLifetimeSeconds,
             HomingTarget, HomingTarget ? WeaponDef->HomingAcceleration : 0.0f);
@@ -496,13 +548,18 @@ bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefiniti
         }
     }
 
-    // Production V2 Batch 2: runtime beam placeholder (Niagara stays the art-pass
-    // target via TrailVfxId). The beam draws to the furthest contact or full range.
+    // Production V2 Batch 2 / CP-05: runtime beam placeholder (Niagara stays the
+    // upgrade target). The beam draws to the furthest contact or full range; the
+    // impact burst + audio land at the terminal point when the profile binds them.
     {
         const FVector BeamEnd = HitResults.Num() > 0 ? HitResults.Last().ImpactPoint : End;
         AAstrawildBeamVfxActor::SpawnBeam(World, Start, BeamEnd, ResolveWeaponVfxTint(WeaponDef));
-        AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Start, OwnerCharacter->GetActorForwardVector(),
+        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
             ResolveWeaponVfxTint(WeaponDef));
+        if (HitResults.Num() > 0)
+        {
+            SpawnWeaponImpact(World, WeaponDef, BeamEnd);
+        }
     }
 
     OnAttackExecuted.Broadcast(false, TotalDamage);
@@ -528,7 +585,7 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
     if (!World->LineTraceSingleByChannel(FirstHit, Start, End, ECC_Pawn, QueryParams))
     {
         // Blank shot: still a muzzle flash so the trigger reads (ammo was spent).
-        AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Start, OwnerCharacter->GetActorForwardVector(),
+        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
             ResolveWeaponVfxTint(WeaponDef));
         OnAttackExecuted.Broadcast(false, 0.0f);
         return true; // The shot fired (blank) — cooldown/ammo already spent.
@@ -597,10 +654,12 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
         --HopsLeft;
     }
 
-    // Production V2 Batch 2: jagged lightning placeholder along the hop chain.
+    // Production V2 Batch 2 / CP-05: jagged lightning placeholder along the hop
+    // chain; the impact burst lands at the first contact when the profile binds one.
     AAstrawildBeamVfxActor::SpawnArcChain(World, VfxHops, ResolveWeaponVfxTint(WeaponDef));
-    AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Start, OwnerCharacter->GetActorForwardVector(),
+    SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
         ResolveWeaponVfxTint(WeaponDef));
+    SpawnWeaponImpact(World, WeaponDef, FirstHit.ImpactPoint);
 
     OnAttackExecuted.Broadcast(false, TotalDamage);
     return true;

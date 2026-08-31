@@ -7,6 +7,7 @@
 
 class AAstrawildEchoCharacter;
 class APlayerController;
+class UAstrawildEchoDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildRosterChanged, int32, RosterSize);
 
@@ -55,6 +56,30 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     int32 SpawnPartyActors(APlayerController* Owner);
+
+    // --- Content Pack CP-02: evolution / progression ---
+
+    /**
+     * Pure evolution gate check (automation-tested): the current species must
+     * name a target, the target must resolve, and the instance must clear BOTH
+     * the level gate and the bond gate.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Evolution")
+    static bool CanEvolveInstance(const FAstrawildEchoInstanceV2& Instance,
+        const UAstrawildEchoDefinition* Definition, const UAstrawildEchoDefinition* TargetDefinition);
+
+    /** True when the roster instance currently meets its evolution gates. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Evolution")
+    bool CanEvolve(const FGuid& InstanceId) const;
+
+    /**
+     * Evolve a roster instance: DefinitionId swaps to the evolved species
+     * (stats/rarity/silhouette refresh) while level, bond, trust and personality
+     * are preserved — identity survives the transformation. A spawned party actor
+     * re-initializes from the new definition (full body rebuild). Server-side.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Evolution")
+    bool EvolveInstance(const FGuid& InstanceId);
 
 private:
     TArray<FAstrawildEchoInstanceV2> Roster;

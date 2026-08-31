@@ -253,6 +253,14 @@ void UAstrawildItemRegistrySubsystem::RegisterBiome(UAstrawildBiomeDefinition* D
     }
 }
 
+void UAstrawildItemRegistrySubsystem::RegisterDialogueTree(UAstrawildDialogueTreeDefinition* Definition)
+{
+    if (IsValid(Definition) && !Definition->DialogueId.IsNone())
+    {
+        DialogueTrees.Add(Definition->DialogueId, Definition);
+    }
+}
+
 UAstrawildWeaponDefinition* UAstrawildItemRegistrySubsystem::FindWeapon(const FName WeaponId) const
 {
     return Weapons.FindRef(WeaponId);
@@ -286,6 +294,11 @@ UAstrawildPOIDefinition* UAstrawildItemRegistrySubsystem::FindPOI(const FName Po
 UAstrawildBiomeDefinition* UAstrawildItemRegistrySubsystem::FindBiome(const FName BiomeId) const
 {
     return Biomes.FindRef(BiomeId);
+}
+
+UAstrawildDialogueTreeDefinition* UAstrawildItemRegistrySubsystem::FindDialogueTree(const FName DialogueId) const
+{
+    return DialogueTrees.FindRef(DialogueId);
 }
 
 TArray<UAstrawildWeaponDefinition*> UAstrawildItemRegistrySubsystem::GetAllWeapons() const
@@ -349,6 +362,20 @@ TArray<UAstrawildBiomeDefinition*> UAstrawildItemRegistrySubsystem::GetAllBiomes
     TArray<UAstrawildBiomeDefinition*> Out;
     Out.Reserve(Biomes.Num());
     for (const auto& Pair : Biomes)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
+TArray<UAstrawildDialogueTreeDefinition*> UAstrawildItemRegistrySubsystem::GetAllDialogueTrees() const
+{
+    TArray<UAstrawildDialogueTreeDefinition*> Out;
+    Out.Reserve(DialogueTrees.Num());
+    for (const auto& Pair : DialogueTrees)
     {
         if (Pair.Value)
         {

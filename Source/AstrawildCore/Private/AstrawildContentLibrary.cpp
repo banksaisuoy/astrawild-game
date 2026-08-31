@@ -1054,6 +1054,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     WardenMaren->NpcId = TEXT("NPC_WardenMaren");
     WardenMaren->DisplayName = FText::FromString(TEXT("Warden Maren"));
     WardenMaren->OfferedQuestId = TEXT("Quest_FirstLight");
+    WardenMaren->DialogueTreeId = TEXT("Dialogue_WardenMaren"); // Batch 3: quest offer lives in the tree now.
     WardenMaren->Role = EAstrawildNPCRole::QuestGiver;
     WardenMaren->VillageId = TEXT("Village_Dawnstead");
     WardenMaren->PrimaryTint = FLinearColor(0.40f, 0.85f, 0.65f);
@@ -1069,6 +1070,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     VendorTam->VillageId = TEXT("Village_Dawnstead");
     VendorTam->PrimaryTint = FLinearColor(0.90f, 0.75f, 0.35f);
     VendorTam->Greeting = FText::FromString(TEXT("Shards, friend. Shards for everything."));
+    VendorTam->DialogueTreeId = TEXT("Dialogue_TraderTam"); // Batch 3: shop hand-off through conversation.
     Registry->RegisterNPC(VendorTam);
 
     UAstrawildNPCDefinition* HerbalistWren = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1097,6 +1099,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     ElderRowan->NpcId = TEXT("NPC_ElderRowan");
     ElderRowan->DisplayName = FText::FromString(TEXT("Elder Rowan"));
     ElderRowan->OfferedQuestId = TEXT("Quest_WingsOverTheVale");
+    ElderRowan->DialogueTreeId = TEXT("Dialogue_ElderRowan");
     ElderRowan->Role = EAstrawildNPCRole::Elder;
     ElderRowan->VillageId = TEXT("Village_Dawnstead");
     ElderRowan->PrimaryTint = FLinearColor(0.70f, 0.55f, 0.90f);
@@ -1110,6 +1113,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     GuardSela->VillageId = TEXT("Village_Dawnstead");
     GuardSela->PrimaryTint = FLinearColor(0.45f, 0.65f, 0.95f);
     GuardSela->Greeting = FText::FromString(TEXT("Keep the fire behind you and the dark ahead."));
+    GuardSela->DialogueTreeId = TEXT("Dialogue_GuardSela");
     Registry->RegisterNPC(GuardSela);
 
     UAstrawildNPCDefinition* GuardBram = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1136,6 +1140,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     SkiffWardenKael->NpcId = TEXT("NPC_SkiffWardenKael");
     SkiffWardenKael->DisplayName = FText::FromString(TEXT("Skiff Warden Kael"));
     SkiffWardenKael->OfferedQuestId = TEXT("Quest_SunkenVault");
+    SkiffWardenKael->DialogueTreeId = TEXT("Dialogue_SkiffWardenKael");
     SkiffWardenKael->Role = EAstrawildNPCRole::QuestGiver;
     SkiffWardenKael->VillageId = TEXT("Village_DriftwoodLanding");
     SkiffWardenKael->PrimaryTint = FLinearColor(0.35f, 0.85f, 0.85f);
@@ -1160,6 +1165,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     OldSaltPerry->VillageId = TEXT("Village_DriftwoodLanding");
     OldSaltPerry->PrimaryTint = FLinearColor(0.55f, 0.55f, 0.60f);
     OldSaltPerry->Greeting = FText::FromString(TEXT("The tide took the old world. It can wait for you too."));
+    OldSaltPerry->DialogueTreeId = TEXT("Dialogue_OldSaltPerry");
     Registry->RegisterNPC(OldSaltPerry);
 }
 
@@ -1245,5 +1251,5 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     // Production V2 retrofits: existing items/techs gain their new data fields.
     ApplyProductionV2Retrofits(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 220 Echo species (16 authored + 204 bestiary), 13 buildings, 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 226 Echo species (16 authored + 6 evolution targets + 204 bestiary), 13 buildings, 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 dialogue trees."));
 }

@@ -10,6 +10,7 @@ class UTexture2D;
 class UStaticMesh;
 class UMaterialInterface;
 class USoundBase;
+class UNiagaraSystem;
 
 UENUM(BlueprintType)
 enum class EAstrawildItemCategory : uint8
@@ -172,6 +173,21 @@ public:
     /** Scanner: reveals hidden resource nodes (scanner-gated harvesting). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
     bool bHiddenResourceDetection = false;
+
+    // --- Content Pack CP-01 (additive): equipment visual binding ---
+    // Soft refs for the armor/exosuit art pass: when Antigravity authors
+    // SK_AW_Armor_<tier> meshes and M_AW_Armor_<tier> materials, .uasset item
+    // definitions point straight at them and the equipment rig consumes them
+    // (BP layer reads; the procedural player silhouette stays the zero-asset
+    // fallback). The FName ids above remain the authored asset-directory contract.
+
+    /** Mesh shown on the player while this equipment piece is worn (unset = procedural silhouette). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment|Assets")
+    TSoftObjectPtr<UStaticMesh> EquipMeshOverride;
+
+    /** Material override for the worn piece (unset = mesh default material). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment|Assets")
+    TSoftObjectPtr<UMaterialInterface> EquipMaterialOverride;
 
     /** Scanner: doubles ancient-POI discovery radius + unlocks signal tracking HUD. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
@@ -379,6 +395,24 @@ public:
     /** Permanent party aura while this Echo fights beside the player. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Behavior")
     EAstrawildEchoPassive Passive = EAstrawildEchoPassive::None;
+
+    // --- Content Pack CP-02 (additive): evolution / progression ---
+    // Evolution is earned through combat level AND bond — a raised companion,
+    // not just a ground one. The roster's EvolveInstance swaps the DefinitionId
+    // (stats/silhouette/rarity update) while keeping level, bond, trust and
+    // personality — the creature's identity survives the transformation.
+
+    /** Species this one evolves into when gates are met (NAME_None = final form). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Evolution")
+    FName EvolveToDefinitionId = NAME_None;
+
+    /** Level gate (instance level must reach this). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Evolution", meta=(ClampMin="2"))
+    int32 EvolveRequiredLevel = 25;
+
+    /** Bond gate 0..100 — evolution is a relationship milestone, not a grind bar. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Evolution", meta=(ClampMin="0.0", ClampMax="100.0"))
+    float EvolveRequiredBond = 40.0f;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
@@ -599,6 +633,14 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     FName VillageId = NAME_None;
 
+    /**
+     * Production V2 Batch 3: conversation tree — when set (and it resolves),
+     * interacting opens the dialogue screen instead of the legacy quest toast.
+     * Quest offers migrate into choice consequences (StartQuestId).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
+    FName DialogueTreeId = NAME_None;
+
     /** Robe/body tint — procedural villager appearance. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     FLinearColor PrimaryTint = FLinearColor(0.65f, 0.55f, 0.45f);
@@ -732,6 +774,32 @@ public:
     /** Fire sound id (audio contract: SC_AW_Weap_<FireSoundId>). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|VFX")
     FName FireSoundId = NAME_None;
+
+    // --- Content Pack CP-03/CP-05/CP-06 (additive): direct asset bindings ---
+    // The FName ids above stay the authored contract for the asset directory
+    // (NS_AW_Weap_<id>); these soft refs let .uasset weapon profiles bind
+    // straight to the Niagara systems / SoundCues without string conventions.
+    // Unset = procedural Batch-2 VFX + silence (zero-asset fallback path).
+
+    /** Niagara muzzle flash (binds over the procedural octahedron flash). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Assets")
+    TSoftObjectPtr<UNiagaraSystem> MuzzleFlashVfx;
+
+    /** Niagara impact burst at hit points (new with CP-05). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Assets")
+    TSoftObjectPtr<UNiagaraSystem> ImpactVfx;
+
+    /** Niagara projectile trail (binds over the element-tinted PMC core). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Assets")
+    TSoftObjectPtr<UNiagaraSystem> ProjectileTrailVfx;
+
+    /** Fire sound (per-shot report; unset = silent). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Assets")
+    TSoftObjectPtr<USoundBase> FireSound;
+
+    /** Impact sound (plays at hit points; unset = silent). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Weapon|Assets")
+    TSoftObjectPtr<USoundBase> ImpactSound;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
@@ -1138,5 +1206,137 @@ public:
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("Biome")), BiomeId);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Production V2 Batch 3 — the dialogue system (P12 Story/NPC, Master Plan §17):
+// data-driven conversation trees. NPCs stop being quest-toast dispensers and
+// become characters: speaker lines, gated player choices, and consequences
+// that route through the SAME battle-tested pipelines (StartQuest, inventory
+// grants, research points) — dialogue never bypasses authority.
+// ---------------------------------------------------------------------------
+
+/** One line of speech inside a dialogue node. Empty SpeakerName = the NPC. */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildDialogueLine
+{
+    GENERATED_BODY()
+
+    /** Optional speaker override (empty = the owning NPC's display name). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    FText SpeakerName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue", meta=(MultiLine=true))
+    FText Text;
+};
+
+/**
+ * A player reply. Conditions are ANDed (all must pass; NAME_None = ignored);
+ * consequences apply in a fixed order (quest start, flag, items, research)
+ * before the conversation continues to GotoNodeId.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildDialogueChoice
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    FText Text;
+
+    // --- Conditions (all must hold) ---
+
+    /** Quest that must be ACTIVE (started, not completed). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition")
+    FName RequiredQuestActiveId = NAME_None;
+
+    /** Quest that must be COMPLETED. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition")
+    FName RequiredQuestCompletedId = NAME_None;
+
+    /** Story flag that must be SET. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition")
+    FName RequiredFlagId = NAME_None;
+
+    /** Story flag that must NOT be set (hide follow-ups after one-time beats). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition")
+    FName ForbiddenFlagId = NAME_None;
+
+    // --- Consequences ---
+
+    /** Quest started when this choice is taken (routes through the quest component). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    FName StartQuestId = NAME_None;
+
+    /** Story flag set when taken (persistent across sessions). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    FName SetFlagId = NAME_None;
+
+    /** Item granted to the player (server-side inventory add). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    FName GiveItemId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence", meta=(ClampMin="0"))
+    int32 GiveItemQuantity = 0;
+
+    /** Research points granted on top of any quest rewards. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence", meta=(ClampMin="0"))
+    int32 GiveResearchPoints = 0;
+
+    /** Next node (NAME_None + !bEndDialogue = also ends the conversation). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    FName GotoNodeId = NAME_None;
+
+    /** Vendor bridge: closes the dialogue and opens this NPC's shop screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    bool bOpenShop = false;
+
+    /** Hard end (no follow-up node). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    bool bEndDialogue = false;
+};
+
+/** A conversation beat: NPC line(s) played in order, then the player picks. */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildDialogueNode
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    FName NodeId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    TArray<FAstrawildDialogueLine> Lines;
+
+    /** Player replies; conditions filter the visible set (empty after filtering = node ends). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    TArray<FAstrawildDialogueChoice> Choices;
+};
+
+/**
+ * A conversation tree owned by an NPC (via UAstrawildNPCDefinition::DialogueTreeId).
+ * Nodes are looked up by id; the entry node is where Interact begins.
+ */
+UCLASS(BlueprintType)
+class ASTRAWILDCORE_API UAstrawildDialogueTreeDefinition : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    FName DialogueId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    FName EntryNodeId = NAME_None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    TArray<FAstrawildDialogueNode> Nodes;
+
+    /** Node lookup (nullptr when the id is unknown). */
+    const FAstrawildDialogueNode* FindNode(FName NodeId) const;
+
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId(FPrimaryAssetType(TEXT("Dialogue")), DialogueId);
     }
 };

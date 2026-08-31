@@ -1,9 +1,11 @@
 #include "AstrawildEchoRosterSubsystem.h"
 
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
 
 bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo)
@@ -159,4 +161,96 @@ int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
         UE_LOG(LogAstrawildAI, Log, TEXT("Party respawned from roster: %d Echoes."), Spawned);
     }
     return Spawned;
+}
+
+// --- Content Pack CP-02: evolution / progression ---
+
+bool UAstrawildEchoRosterSubsystem::CanEvolveInstance(const FAstrawildEchoInstanceV2& Instance,
+    const UAstrawildEchoDefinition* Definition, const UAstrawildEchoDefinition* TargetDefinition)
+{
+    // Both definitions must resolve and the chain link must match — a data bug
+    // (dangling EvolveToDefinitionId) fails closed instead of evolving into garbage.
+    if (!Definition || !TargetDefinition || Definition->EvolveToDefinitionId.IsNone())
+    {
+        return false;
+    }
+    if (Definition->EvolveToDefinitionId != TargetDefinition->DefinitionId)
+    {
+        return false;
+    }
+    if (TargetDefinition->DefinitionId == Definition->DefinitionId)
+    {
+        return false; // No self-cycles — a chain must terminate.
+    }
+
+    // Dual gate: combat level AND bond. Evolution is a relationship milestone.
+    return Instance.Level >= Definition->EvolveRequiredLevel
+        && Instance.Bond >= Definition->EvolveRequiredBond;
+}
+
+bool UAstrawildEchoRosterSubsystem::CanEvolve(const FGuid& InstanceId) const
+{
+    const FAstrawildEchoInstanceV2* Entry = Roster.FindByPredicate(
+        [&InstanceId](const FAstrawildEchoInstanceV2& Item) { return Item.InstanceId == InstanceId; });
+    if (!Entry)
+    {
+        return false;
+    }
+
+    const UAstrawildItemRegistrySubsystem* Registry = GetGameInstance()
+        ? GetGameInstance()->GetWorld() ? GetGameInstance()->GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr
+        : nullptr;
+    if (!Registry)
+    {
+        return false;
+    }
+
+    const UAstrawildEchoDefinition* Definition = Registry->FindEcho(Entry->DefinitionId);
+    const UAstrawildEchoDefinition* Target = Registry->FindEcho(Definition ? Definition->EvolveToDefinitionId : NAME_None);
+    return CanEvolveInstance(*Entry, Definition, Target);
+}
+
+bool UAstrawildEchoRosterSubsystem::EvolveInstance(const FGuid& InstanceId)
+{
+    FAstrawildEchoInstanceV2* Entry = Roster.FindByPredicate(
+        [&InstanceId](const FAstrawildEchoInstanceV2& Item) { return Item.InstanceId == InstanceId; });
+    if (!Entry)
+    {
+        return false;
+    }
+
+    UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr;
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (!Registry)
+    {
+        return false;
+    }
+
+    UAstrawildEchoDefinition* Definition = Registry->FindEcho(Entry->DefinitionId);
+    UAstrawildEchoDefinition* Target = Registry->FindEcho(Definition ? Definition->EvolveToDefinitionId : NAME_None);
+    if (!CanEvolveInstance(*Entry, Definition, Target))
+    {
+        UE_LOG(LogAstrawildAI, Verbose, TEXT("Evolution rejected: gates not met for instance %s."), *InstanceId.ToString());
+        return false;
+    }
+
+    // The transformation: species swaps, identity (level/bond/trust/personality) survives.
+    Entry->DefinitionId = Target->DefinitionId;
+    OnRosterChanged.Broadcast(Roster.Num());
+    UE_LOG(LogAstrawildAI, Log, TEXT("Echo evolved: instance %s is now species %s (level %d, bond %.1f)."),
+        *InstanceId.ToString(), *Target->DefinitionId.ToString(), Entry->Level, Entry->Bond);
+
+    // Live party actor rebuilds from the new definition (stats + silhouette).
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : SpawnedParty)
+    {
+        if (AAstrawildEchoCharacter* Echo = Weak.Get())
+        {
+            if (Echo->InstanceId == InstanceId)
+            {
+                Echo->InitializeFromDefinition(Target, InstanceId);
+                break;
+            }
+        }
+    }
+    return true;
 }

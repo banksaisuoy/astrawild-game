@@ -9,6 +9,8 @@ class UProjectileMovementComponent;
 class UStaticMeshComponent;
 class USphereComponent;
 class UProceduralMeshComponent;
+class UNiagaraSystem;
+class UAstrawildWeaponDefinition;
 
 /**
  * Final production run (PHASE 12 — advanced weapons): server-spawned energy
@@ -65,7 +67,24 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Projectile")
     FName TrailVfxId = NAME_None;
 
+    // --- Content Pack CP-05 (additive): direct Niagara bindings ---
+
+    /** Trail system bound from the weapon profile (plays attached; unset = procedural core only). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Projectile|VFX")
+    TSoftObjectPtr<UNiagaraSystem> TrailVfxAsset;
+
+    /** Impact burst spawned at the contact point (unset = no impact FX). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Projectile|VFX")
+    TSoftObjectPtr<UNiagaraSystem> ImpactVfxAsset;
+
     virtual void BeginPlay() override;
+
+    /**
+     * CP-05: copies the weapon profile's direct Niagara bindings and attaches the
+     * trail when loaded (no sync load — unloaded refs stay procedural). Call before
+     * LaunchFromWeapon so the trail follows from the first frame of flight.
+     */
+    void SetWeaponVfxAssets(const UAstrawildWeaponDefinition* WeaponDef);
 
     /** Production V2 Batch 2: builds the element-tinted energy core (VisualBody). */
     void BuildElementCore();

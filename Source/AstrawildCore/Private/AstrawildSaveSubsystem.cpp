@@ -3,6 +3,7 @@
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDialogueComponent.h"
 #include "AstrawildDungeonGeneratorActor.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
@@ -115,6 +116,12 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
         {
             Quests->ExportForSave(SaveGame->Quests);
+        }
+
+        // Batch 3 — persistent story flags live beside them.
+        if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+        {
+            Dialogue->ExportForSave(SaveGame->DialogueFlags);
         }
     }
 
@@ -397,6 +404,12 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
         {
             Quests->ImportFromSave(SaveGame->Quests);
+        }
+
+        // Batch 3 — restore the story flags (dialogue gates survive reloads).
+        if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+        {
+            Dialogue->ImportFromSave(SaveGame->DialogueFlags);
         }
     }
 

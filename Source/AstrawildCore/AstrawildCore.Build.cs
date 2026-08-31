@@ -22,7 +22,9 @@ public class AstrawildCore : ModuleRules
                 "NavigationSystem",
                 "UMG",
                 // Batch 7 — The Shattered Vale: runtime procedural terrain tiles.
-                "ProceduralMeshComponent"
+                "ProceduralMeshComponent",
+                // Content Pack CP-05 — weapon Niagara bindings (muzzle/impact/trail).
+                "Niagara"
             }
         );
 

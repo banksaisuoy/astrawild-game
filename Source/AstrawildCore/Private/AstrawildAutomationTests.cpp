@@ -8,7 +8,9 @@
 #include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDialogueComponent.h"
 #include "AstrawildEchoBossCharacter.h"
+#include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
@@ -1676,6 +1678,288 @@ bool FAstrawildVfxRingGeometryTest::RunTest(const FString& Parameters)
         bClampedValid &= Radius <= 1.05f && Radius >= 0.03f;
     }
     TestTrue(TEXT("Invalid inner fraction clamps safely"), bClampedValid);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Production V2 Batch 3 — dialogue system (P12 Story/NPC)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDialogueTreeContractTest,
+    "ASTRAWILD.Dialogue.TreeContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDialogueTreeContractTest::RunTest(const FString& Parameters)
+{
+    // A hand-built tree exercising the full node/choice vocabulary.
+    UAstrawildDialogueTreeDefinition* Tree = NewObject<UAstrawildDialogueTreeDefinition>();
+    Tree->DialogueId = TEXT("Dialogue_TestTree");
+    Tree->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        FAstrawildDialogueLine First;
+        First.Text = FText::FromString(TEXT("Line one."));
+        Node.Lines = { First };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Dig deeper"));
+            Choice.GotoNodeId = TEXT("lore");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tree->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("lore");
+        FAstrawildDialogueLine Line;
+        Line.Text = FText::FromString(TEXT("Lore line."));
+        Node.Lines = { Line };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Tree->Nodes.Add(Node);
+    }
+
+    // Entry node resolves and unknown ids do not.
+    TestNotNull(TEXT("Entry node resolves"), const_cast<FAstrawildDialogueNode*>(Tree->FindNode(TEXT("hello"))));
+    TestNotNull(TEXT("Lore node resolves"), const_cast<FAstrawildDialogueNode*>(Tree->FindNode(TEXT("lore"))));
+    TestNull(TEXT("Unknown node id returns null"), const_cast<FAstrawildDialogueNode*>(Tree->FindNode(TEXT("nope"))));
+
+    // Structural integrity: unique node ids, every goto resolves, no node has
+    // both bEndDialogue and a GotoNodeId (ambiguous routing), entry exists.
+    bool bIdsUnique = true;
+    TSet<FName> SeenIds;
+    for (const FAstrawildDialogueNode& Node : Tree->Nodes)
+    {
+        if (SeenIds.Contains(Node.NodeId) || Node.NodeId.IsNone())
+        {
+            bIdsUnique = false;
+        }
+        SeenIds.Add(Node.NodeId);
+    }
+    TestTrue(TEXT("Node ids are unique and named"), bIdsUnique);
+    TestTrue(TEXT("Entry node exists"), SeenIds.Contains(Tree->EntryNodeId));
+
+    bool bGotosResolve = true;
+    bool bNoAmbiguousEnds = true;
+    for (const FAstrawildDialogueNode& Node : Tree->Nodes)
+    {
+        TestTrue(TEXT("Every node speaks"), Node.Lines.Num() > 0);
+        for (const FAstrawildDialogueChoice& Choice : Node.Choices)
+        {
+            if (!Choice.GotoNodeId.IsNone() && !SeenIds.Contains(Choice.GotoNodeId))
+            {
+                bGotosResolve = false;
+            }
+            if (Choice.bEndDialogue && !Choice.GotoNodeId.IsNone())
+            {
+                bNoAmbiguousEnds = false;
+            }
+        }
+    }
+    TestTrue(TEXT("Every choice goto resolves to a real node"), bGotosResolve);
+    TestTrue(TEXT("No choice is both a hard end and a goto"), bNoAmbiguousEnds);
+
+    // Primary asset id type — dialogue trees join the registry's asset family.
+    TestEqual(TEXT("Primary asset type is Dialogue"),
+        Tree->GetPrimaryAssetId().PrimaryAssetType.ToString(), FString(TEXT("Dialogue")));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDialogueChoiceConditionsTest,
+    "ASTRAWILD.Dialogue.ChoiceConditions",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDialogueChoiceConditionsTest::RunTest(const FString& Parameters)
+{
+    // A world-free component: flag conditions work standalone; quest conditions
+    // resolve to FAIL without a quest component (missing owner ≠ ignored).
+    UAstrawildDialogueComponent* Dialogue = NewObject<UAstrawildDialogueComponent>();
+
+    FAstrawildDialogueChoice Choice;
+    Choice.Text = FText::FromString(TEXT("Gated reply"));
+    Choice.RequiredFlagId = TEXT("Flag_Told");
+    TestFalse(TEXT("Required flag hides the choice until set"), Dialogue->EvaluateChoiceConditions(Choice));
+
+    Dialogue->SetStoryFlag(TEXT("Flag_Told"));
+    TestTrue(TEXT("Required flag reveals the choice"), Dialogue->EvaluateChoiceConditions(Choice));
+
+    // Forbidden flag flips the result once set (one-time beats).
+    Choice.ForbiddenFlagId = TEXT("Flag_Done");
+    TestTrue(TEXT("Forbidden flag unset keeps the choice visible"), Dialogue->EvaluateChoiceConditions(Choice));
+    Dialogue->SetStoryFlag(TEXT("Flag_Done"));
+    TestFalse(TEXT("Forbidden flag hides the choice after one use"), Dialogue->EvaluateChoiceConditions(Choice));
+
+    // AND semantics: all conditions must hold simultaneously.
+    FAstrawildDialogueChoice Strict;
+    Strict.RequiredFlagId = TEXT("Flag_A");
+    Strict.ForbiddenFlagId = TEXT("Flag_B");
+    TestFalse(TEXT("Missing required flag fails"), Dialogue->EvaluateChoiceConditions(Strict));
+    Dialogue->SetStoryFlag(TEXT("Flag_A"));
+    TestTrue(TEXT("Required + absent forbidden passes"), Dialogue->EvaluateChoiceConditions(Strict));
+    Dialogue->SetStoryFlag(TEXT("Flag_B"));
+    TestFalse(TEXT("Second condition failing fails the pair"), Dialogue->EvaluateChoiceConditions(Strict));
+
+    // Quest gates need a quest component; a world-free component fails them
+    // (they are conditions, not optional flavor).
+    FAstrawildDialogueChoice QuestChoice;
+    QuestChoice.RequiredQuestActiveId = TEXT("Quest_Any");
+    TestFalse(TEXT("Quest-active gate fails without quest state"), Dialogue->EvaluateChoiceConditions(QuestChoice));
+    FAstrawildDialogueChoice QuestChoice2;
+    QuestChoice2.RequiredQuestCompletedId = TEXT("Quest_Any");
+    TestFalse(TEXT("Quest-completed gate fails without quest state"), Dialogue->EvaluateChoiceConditions(QuestChoice2));
+
+    // Empty choice (all NAME_None) is always visible.
+    FAstrawildDialogueChoice Free;
+    TestTrue(TEXT("Condition-free choice is always visible"), Dialogue->EvaluateChoiceConditions(Free));
+
+    // Flag store hygiene: set is idempotent, export/import round-trips.
+    Dialogue->SetStoryFlag(TEXT("Flag_A"));
+    TArray<FName> Exported;
+    Dialogue->ExportForSave(Exported);
+    TestTrue(TEXT("Export contains 4 unique flags"), Exported.Num() == 4);
+    TestTrue(TEXT("Set is idempotent"), Dialogue->GetStoryFlags().Contains(TEXT("Flag_A")));
+
+    UAstrawildDialogueComponent* Restored = NewObject<UAstrawildDialogueComponent>();
+    Restored->ImportFromSave(Exported);
+    TestTrue(TEXT("Imported flag survives the round-trip"), Restored->HasStoryFlag(TEXT("Flag_Told")));
+    TestTrue(TEXT("Import restores the AND pair"), Restored->EvaluateChoiceConditions(Strict) == false && Restored->HasStoryFlag(TEXT("Flag_B")));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDialogueConsequenceTest,
+    "ASTRAWILD.Dialogue.Consequences",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDialogueConsequenceTest::RunTest(const FString& Parameters)
+{
+    UAstrawildDialogueComponent* Dialogue = NewObject<UAstrawildDialogueComponent>();
+
+    // Flag-only consequence applies cleanly with zero dependencies.
+    FAstrawildDialogueChoice FlagChoice;
+    FlagChoice.Text = FText::FromString(TEXT("Take the tip"));
+    FlagChoice.SetFlagId = TEXT("Flag_TipTaken");
+    TestTrue(TEXT("Flag consequence applies"), Dialogue->ApplyChoiceConsequences(FlagChoice));
+    TestTrue(TEXT("Flag is set after the consequence"), Dialogue->HasStoryFlag(TEXT("Flag_TipTaken")));
+
+    // Unknown quest id is a HARD fail (trees must reference registered content).
+    FAstrawildDialogueChoice BrokenChoice;
+    BrokenChoice.StartQuestId = TEXT("Quest_DoesNotExist");
+    TestFalse(TEXT("Unknown quest start fails hard"), Dialogue->ApplyChoiceConsequences(BrokenChoice));
+
+    // No consequence at all is a no-op success (pure navigation replies).
+    FAstrawildDialogueChoice NavChoice;
+    NavChoice.GotoNodeId = TEXT("hello");
+    TestTrue(TEXT("Navigation-only choice succeeds"), Dialogue->ApplyChoiceConsequences(NavChoice));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Content Pack CP-02 — evolution gates (level AND bond, fail closed)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEchoEvolutionGatesTest,
+    "ASTRAWILD.Echo.EvolutionGates",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEchoEvolutionGatesTest::RunTest(const FString& Parameters)
+{
+    UAstrawildEchoDefinition* Base = NewObject<UAstrawildEchoDefinition>();
+    Base->DefinitionId = TEXT("Echo_TestBase");
+    Base->EvolveToDefinitionId = TEXT("Echo_TestEvolved");
+    Base->EvolveRequiredLevel = 20;
+    Base->EvolveRequiredBond = 35.0f;
+
+    UAstrawildEchoDefinition* Evolved = NewObject<UAstrawildEchoDefinition>();
+    Evolved->DefinitionId = TEXT("Echo_TestEvolved");
+
+    FAstrawildEchoInstanceV2 Instance;
+    Instance.DefinitionId = Base->DefinitionId;
+    Instance.Level = 20;
+    Instance.Bond = 35.0f;
+
+    // Fail-closed: missing definitions, dangling links, self-cycles.
+    TestFalse(TEXT("Null definitions fail closed"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, nullptr, nullptr));
+    TestFalse(TEXT("No chain link fails"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Base, nullptr));
+
+    UAstrawildEchoDefinition* SelfCycle = NewObject<UAstrawildEchoDefinition>();
+    SelfCycle->DefinitionId = TEXT("Echo_TestBase");
+    SelfCycle->EvolveToDefinitionId = TEXT("Echo_TestBase");
+    SelfCycle->EvolveRequiredLevel = 1;
+    SelfCycle->EvolveRequiredBond = 0.0f;
+    TestFalse(TEXT("Self-cycles are rejected"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, SelfCycle, SelfCycle));
+
+    // Mismatched target id (data bug) fails closed.
+    UAstrawildEchoDefinition* WrongTarget = NewObject<UAstrawildEchoDefinition>();
+    WrongTarget->DefinitionId = TEXT("Echo_TestWrong");
+    TestFalse(TEXT("Mismatched target id fails closed"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Base, WrongTarget));
+
+    // Dual gate: level AND bond must both clear.
+    TestTrue(TEXT("Both gates met evolves"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Base, Evolved));
+    Instance.Level = 19;
+    TestFalse(TEXT("Level below gate fails"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Base, Evolved));
+    Instance.Level = 20;
+    Instance.Bond = 34.9f;
+    TestFalse(TEXT("Bond below gate fails"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Base, Evolved));
+    Instance.Bond = 35.0f;
+    TestTrue(TEXT("Exact gate values pass"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Base, Evolved));
+
+    // Gate defaults on un-authored species: NAME_None = final form.
+    UAstrawildEchoDefinition* Final = NewObject<UAstrawildEchoDefinition>();
+    Final->DefinitionId = TEXT("Echo_TestFinal");
+    TestTrue(TEXT("Final forms have no chain link"), Final->EvolveToDefinitionId.IsNone());
+    TestFalse(TEXT("Final forms cannot evolve"), UAstrawildEchoRosterSubsystem::CanEvolveInstance(Instance, Final, nullptr));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Content Pack CP-03/CP-05 — weapon Niagara/audio binding contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWeaponAssetBindingTest,
+    "ASTRAWILD.Weapon.AssetBindingContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWeaponAssetBindingTest::RunTest(const FString& Parameters)
+{
+    // The zero-asset fallback contract: CODE_DEFAULT profiles bind nothing —
+    // Niagara-first dispatch must fall back to the procedural Batch-2 VFX and
+    // stay silent until Antigravity's .uasset profiles carry real bindings.
+    UAstrawildWeaponDefinition* Profile = NewObject<UAstrawildWeaponDefinition>();
+    Profile->WeaponId = TEXT("Weapon_TestBinding");
+    Profile->Family = EAstrawildWeaponFamily::Plasma;
+    Profile->FireMode = EAstrawildWeaponFireMode::Projectile;
+
+    TestTrue(TEXT("Muzzle binding defaults unset"), !Profile->MuzzleFlashVfx.IsValid());
+    TestTrue(TEXT("Impact binding defaults unset"), !Profile->ImpactVfx.IsValid());
+    TestTrue(TEXT("Trail binding defaults unset"), !Profile->ProjectileTrailVfx.IsValid());
+    TestTrue(TEXT("Fire sound defaults unset"), !Profile->FireSound.IsValid());
+    TestTrue(TEXT("Impact sound defaults unset"), !Profile->ImpactSound.IsValid());
+
+    // The FName id contract stays the authored directory convention alongside
+    // the direct refs (two binding paths, one source of truth per asset).
+    Profile->MuzzleVfxId = TEXT("PlasmaMuzzle");
+    Profile->TrailVfxId = TEXT("PlasmaTrail");
+    Profile->ImpactVfxId = TEXT("PlasmaImpact");
+    Profile->FireSoundId = TEXT("PlasmaFire");
+    TestEqual(TEXT("Muzzle id contract round-trips"), Profile->MuzzleVfxId, FName(TEXT("PlasmaMuzzle")));
+    TestEqual(TEXT("Fire sound id contract round-trips"), Profile->FireSoundId, FName(TEXT("PlasmaFire")));
+
+    // Equipment visual binding (CP-01) defaults unset the same way — the
+    // procedural player silhouette is the fallback until meshes bind.
+    UAstrawildItemDefinition* ArmorItem = NewObject<UAstrawildItemDefinition>();
+    TestTrue(TEXT("Equip mesh override defaults unset"), !ArmorItem->EquipMeshOverride.IsValid());
+    TestTrue(TEXT("Equip material override defaults unset"), !ArmorItem->EquipMaterialOverride.IsValid());
     return true;
 }
 

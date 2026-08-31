@@ -1049,6 +1049,98 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
 }
 
 // ---------------------------------------------------------------------------
+// Content Pack CP-02 — evolution targets (the progression side of the roster).
+// Each production Echo earns an evolved form: rarity + size class + stat bumps,
+// same element/family/body-plan (identity reads), deeper work affinities.
+// Gate discipline: level AND bond — a raised companion, not a ground one.
+// ---------------------------------------------------------------------------
+
+void UAstrawildProductionContent::BuildEvolutionTargets(UAstrawildItemRegistrySubsystem* Registry)
+{
+    struct FEvolutionSpec
+    {
+        FName BaseId;
+        FName TargetId;
+        FString TargetName;
+        FName EvolveFromName; // For the description only.
+        int32 LevelGate;
+        float BondGate;
+    };
+    const FEvolutionSpec Specs[] = {
+        { TEXT("Echo_Terraquill"),    TEXT("Echo_TerraquillVerdant"),   TEXT("Terraquill Verdant"),   TEXT("Terraquill"),    20, 35.0f },
+        { TEXT("Echo_Cindermule"),    TEXT("Echo_CindermulePyre"),      TEXT("Cindermule Pyre"),      TEXT("Cindermule"),    22, 40.0f },
+        { TEXT("Echo_Voltpylon"),     TEXT("Echo_VoltpylonTempest"),    TEXT("Voltpylon Tempest"),    TEXT("Voltpylon"),     25, 45.0f },
+        { TEXT("Echo_Bastionbeetle"), TEXT("Echo_BastionbeetleBulwark"),TEXT("Bastionbeetle Bulwark"),TEXT("Bastionbeetle"), 28, 50.0f },
+        { TEXT("Echo_Mistmender"),    TEXT("Echo_MistmenderRime"),      TEXT("Mistmender Rime"),      TEXT("Mistmender"),    24, 45.0f },
+        { TEXT("Echo_Deepdelver"),    TEXT("Echo_DeepdelverAbyssal"),   TEXT("Deepdelver Abyssal"),   TEXT("Deepdelver"),    26, 40.0f },
+    };
+
+    for (const FEvolutionSpec& Spec : Specs)
+    {
+        UAstrawildEchoDefinition* Base = Registry->FindEcho(Spec.BaseId);
+        if (!Base)
+        {
+            UE_LOG(LogAstrawildEconomy, Warning, TEXT("Evolution chain: base species %s not found."), *Spec.BaseId.ToString());
+            continue;
+        }
+
+        // Evolved stat block: +35..40% health, +~30% attack/defense, slight speed trim.
+        UAstrawildEchoDefinition* Evolved = NewObject<UAstrawildEchoDefinition>(Registry);
+        Evolved->DefinitionId = Spec.TargetId;
+        Evolved->DisplayName = FText::FromString(Spec.TargetName);
+        Evolved->Description = FText::FromString(FString::Printf(
+            TEXT("Evolved form of %s — earned through level and bond. The same companion, transformed."),
+            *Spec.EvolveFromName.ToString()));
+        Evolved->Element = Base->Element;
+        Evolved->Role = Base->Role;
+        Evolved->BaseStats.MaxHealth = FMath::RoundToFloat(Base->BaseStats.MaxHealth * 1.38f);
+        Evolved->BaseStats.AttackPower = FMath::RoundToFloat(Base->BaseStats.AttackPower * 1.30f);
+        Evolved->BaseStats.Defense = FMath::RoundToFloat(Base->BaseStats.Defense * 1.32f);
+        Evolved->BaseStats.MoveSpeed = FMath::RoundToFloat(Base->BaseStats.MoveSpeed * 1.03f);
+        Evolved->BaseStats.CaptureResilience = Base->BaseStats.CaptureResilience;
+        Evolved->DominantPersonality = Base->DominantPersonality;
+        Evolved->ActivityPattern = Base->ActivityPattern;
+        Evolved->PreferredFoodIds = Base->PreferredFoodIds;
+        Evolved->CaptureDifficulty = FMath::Clamp(Base->CaptureDifficulty + 0.2f, 0.1f, 0.95f);
+        Evolved->WeaknessElement = Base->WeaknessElement;
+        Evolved->Family = Base->Family;
+        Evolved->BodyPlan = Base->BodyPlan;
+        // Size grows one class (Small→Medium, Medium→Large; Large stays — the cap).
+        Evolved->SizeClass = Base->SizeClass == EAstrawildSizeClass::Small
+            ? EAstrawildSizeClass::Medium
+            : EAstrawildSizeClass::Large;
+        Evolved->HomeZone = Base->HomeZone;
+        Evolved->Rarity = Base->Rarity == EAstrawildRarity::Uncommon
+            ? EAstrawildRarity::Rare
+            : EAstrawildRarity::Epic;
+        Evolved->Passive = Base->Passive;
+        // Work affinities deepen (+0.1 across the board, capped by the 0..2 contract).
+        Evolved->WorkAffinities = Base->WorkAffinities;
+        for (FAstrawildWorkAffinity& Affinity : Evolved->WorkAffinities)
+        {
+            Affinity.Affinity = FMath::Clamp(Affinity.Affinity + 0.1f, 0.0f, 2.0f);
+        }
+        Evolved->DefeatLoot = Base->DefeatLoot;
+        Evolved->bHostileToPlayers = false;
+        // Deeper, more saturated tints — the evolved form reads at a glance.
+        Evolved->PrimaryTint = FLinearColor(
+            FMath::Clamp(Base->PrimaryTint.R * 1.15f, 0.0f, 1.0f),
+            FMath::Clamp(Base->PrimaryTint.G * 1.15f, 0.0f, 1.0f),
+            FMath::Clamp(Base->PrimaryTint.B * 1.15f, 0.0f, 1.0f), 1.0f);
+        Evolved->SecondaryTint = FLinearColor(
+            FMath::Clamp(Base->SecondaryTint.R * 0.8f, 0.0f, 1.0f),
+            FMath::Clamp(Base->SecondaryTint.G * 0.8f, 0.0f, 1.0f),
+            FMath::Clamp(Base->SecondaryTint.B * 0.9f, 0.0f, 1.0f), 1.0f);
+        Registry->RegisterEcho(Evolved);
+
+        // Chain link + gates on the base species.
+        Base->EvolveToDefinitionId = Spec.TargetId;
+        Base->EvolveRequiredLevel = Spec.LevelGate;
+        Base->EvolveRequiredBond = Spec.BondGate;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Production technologies — 6 new branch-tagged nodes (Master Plan §16)
 // ---------------------------------------------------------------------------
 
@@ -1160,6 +1252,451 @@ void UAstrawildProductionContent::BuildProductionQuests(UAstrawildItemRegistrySu
 }
 
 // ---------------------------------------------------------------------------
+// Production V2 Batch 3 — dialogue trees (P12 Story/NPC, Master Plan §17).
+// NPCs stop being quest-toast dispensers: quest offers migrate into choice
+// consequences, vendor hand-off routes through bOpenShop, and one-time beats
+// (tips, gifts) use story flags so they never repeat after a save/reload.
+// ---------------------------------------------------------------------------
+
+namespace
+{
+    FAstrawildDialogueLine Line(const TCHAR* Speaker, const TCHAR* Text)
+    {
+        FAstrawildDialogueLine Out;
+        if (Speaker)
+        {
+            Out.SpeakerName = FText::FromString(Speaker);
+        }
+        Out.Text = FText::FromString(Text);
+        return Out;
+    }
+}
+
+void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsystem* Registry)
+{
+    // --- Warden Maren (Dawnstead) — First Light offer + Vale lore + report-back beat ---
+    UAstrawildDialogueTreeDefinition* Maren = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Maren->DialogueId = TEXT("Dialogue_WardenMaren");
+    Maren->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("The fields are calm — for now. Storms roll in off the Highlands and the wild Echoes get bold after dark.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the Vale"));
+            Choice.GotoNodeId = TEXT("vale");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Accept: First Light"));
+            Choice.RequiredQuestActiveId = NAME_None; // Visible until taken.
+            Choice.ForbiddenFlagId = TEXT("Maren_FirstLightAccepted");
+            Choice.StartQuestId = TEXT("Quest_FirstLight");
+            Choice.SetFlagId = TEXT("Maren_FirstLightAccepted");
+            Choice.GotoNodeId = TEXT("accepted");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Report: First Light"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstLight");
+            Choice.ForbiddenFlagId = TEXT("Maren_FirstLightReported");
+            Choice.SetFlagId = TEXT("Maren_FirstLightReported");
+            Choice.GiveResearchPoints = 15;
+            Choice.GotoNodeId = TEXT("reported");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Maren->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("vale");
+        Node.Lines = {
+            Line(nullptr, TEXT("Dawn Fields were the first ground we ever fenced. Fertile, gentle — and everything hungry knows it.")),
+            Line(nullptr, TEXT("East past the reef the isles start. Old Salt Perry will talk your ear off about what swims between them."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Maren->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("accepted");
+        Node.Lines = { Line(nullptr, TEXT("Good. Mark three Echo signatures with the Field Scanner, then return. The dawn fields keep you.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Maren->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("reported");
+        Node.Lines = {
+            Line(nullptr, TEXT("Three clean marks. You've the patience for this work.")),
+            Line(nullptr, TEXT("Take these field notes — the research bench will make better use of them than my shelf."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Maren->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Maren);
+
+    // --- Trader Tam (Dawnstead vendor) — shop hand-off + one-time Gloomfang tip ---
+    UAstrawildDialogueTreeDefinition* Tam = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Tam->DialogueId = TEXT("Dialogue_TraderTam");
+    Tam->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Shards, friend. Shards for everything. What catches your eye?")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse wares"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the Gloomfangs"));
+            Choice.ForbiddenFlagId = TEXT("Tam_GloomfangTip");
+            Choice.SetFlagId = TEXT("Tam_GloomfangTip");
+            Choice.GiveResearchPoints = 10;
+            Choice.GotoNodeId = TEXT("gloomfang");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tam->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("gloomfang");
+        Node.Lines = {
+            Line(nullptr, TEXT("Came in a pack of six last dark. Sela's watch dropped two before the torches caught.")),
+            Line(nullptr, TEXT("They hate bright light and they hesitate before a shielded man. Worth knowing — here, I'll sketch the footfall pattern for your bench."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse wares"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tam->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Tam);
+
+    // --- Elder Rowan (Dawnstead) — Wings over the Vale offer + old-world lore ---
+    UAstrawildDialogueTreeDefinition* Rowan = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Rowan->DialogueId = TEXT("Dialogue_ElderRowan");
+    Rowan->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Sit. The Vale has grown wider while you slept — the skiff wardens chart isles now where our maps end.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the old world"));
+            Choice.GotoNodeId = TEXT("oldworld");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Accept: Wings over the Vale"));
+            Choice.ForbiddenFlagId = TEXT("Rowan_WingsAccepted");
+            Choice.StartQuestId = TEXT("Quest_WingsOverTheVale");
+            Choice.SetFlagId = TEXT("Rowan_WingsAccepted");
+            Choice.GotoNodeId = TEXT("accepted");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("oldworld");
+        Node.Lines = {
+            Line(nullptr, TEXT("Before the quiet, they crossed the sky in machines that sang. What's left of their roads still hums at dusk.")),
+            Line(nullptr, TEXT("We do not dig where it hums. You, I think, will."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("accepted");
+        Node.Lines = { Line(nullptr, TEXT("Kael at Driftwood Landing will ready a skiff. Mind the reefs — and bring back a story worth a chair by the fire.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Rowan);
+
+    // --- Skiff Warden Kael (Driftwood Landing) — Sunken Vault offer + vault warning ---
+    UAstrawildDialogueTreeDefinition* Kael = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Kael->DialogueId = TEXT("Dialogue_SkiffWardenKael");
+    Kael->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Skiff's fueled. The isles are yours now — just remember the tide decides when they aren't.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the Sunken Vault"));
+            Choice.GotoNodeId = TEXT("vault");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Accept: The Sunken Vault"));
+            Choice.ForbiddenFlagId = TEXT("Kael_VaultAccepted");
+            Choice.StartQuestId = TEXT("Quest_SunkenVault");
+            Choice.SetFlagId = TEXT("Kael_VaultAccepted");
+            Choice.GotoNodeId = TEXT("accepted");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Kael->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("vault");
+        Node.Lines = {
+            Line(nullptr, TEXT("There's a door under the west isle that no fish will swim past. The old folk called it the Sunken Vault.")),
+            Line(nullptr, TEXT("Pearl-divers went in two generations back. One came out — richer, quieter."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Kael->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("accepted");
+        Node.Lines = { Line(nullptr, TEXT("Then take the portal marker on the jetty. Whatever built that door built the colossus inside it — scan before you shoot.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Kael->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Kael);
+
+    // --- Guard Captain Sela (Dawnstead) — night-raid survival lore + one-time watch advice ---
+    UAstrawildDialogueTreeDefinition* Sela = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Sela->DialogueId = TEXT("Dialogue_GuardSela");
+    Sela->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Keep the fire behind you and the dark ahead. What's your business on my watch?")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the night raids"));
+            Choice.GotoNodeId = TEXT("raids");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask for watch advice"));
+            Choice.ForbiddenFlagId = TEXT("Sela_AdviceGiven");
+            Choice.SetFlagId = TEXT("Sela_AdviceGiven");
+            Choice.GiveResearchPoints = 10;
+            Choice.GotoNodeId = TEXT("advice");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("raids");
+        Node.Lines = {
+            Line(nullptr, TEXT("When the sky goes amber, they come — Gloomfangs bold, Ashfangs hungry, worse behind them on the storm nights.")),
+            Line(nullptr, TEXT("A fence slows them. A powered fence stops them. Get your generator humming before dusk, not after."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("advice");
+        Node.Lines = {
+            Line(nullptr, TEXT("Watch the treeline, not the dark between the trees. Eyes catch movement — lanterns catch nothing.")),
+            Line(nullptr, TEXT("I've written my patrol timing into the watch book. Your research bench can lift a thing or two from it."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Sela);
+
+    // --- Old Salt Perry (Driftwood Landing) — pure village color + one-time sea pearl gift ---
+    UAstrawildDialogueTreeDefinition* Perry = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Perry->DialogueId = TEXT("Dialogue_OldSaltPerry");
+    Perry->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = {
+            Line(nullptr, TEXT("The tide took the old world. It can wait for you too.")),
+            Line(nullptr, TEXT("Sit a while, or don't. The sea's not going anywhere — that's the whole trick of her."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the tide"));
+            Choice.GotoNodeId = TEXT("tide");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Accept the sea pearl"));
+            Choice.ForbiddenFlagId = TEXT("Perry_PearlGiven");
+            Choice.RequiredFlagId = TEXT("Perry_TideHeard"); // He only gifts after sharing the tide story once.
+            Choice.SetFlagId = TEXT("Perry_PearlGiven");
+            Choice.GiveItemId = TEXT("Item_SeaPearl");
+            Choice.GiveItemQuantity = 1;
+            Choice.GotoNodeId = TEXT("pearl");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Perry->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("tide");
+        Node.Lines = {
+            Line(nullptr, TEXT("Twice a day she swallows the reef road whole. The isles you want are the ones she only licks.")),
+            Line(nullptr, TEXT("Nima sells charts. I sell the truth the charts leave off — free, today."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.SetFlagId = TEXT("Perry_TideHeard");
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Perry->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("pearl");
+        Node.Lines = { Line(nullptr, TEXT("Dived it the summer my knees still worked. It'll light a crystal circuit brighter than any shard — or sit pretty on a shelf. Your call.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Perry->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Perry);
+}
+
+// ---------------------------------------------------------------------------
 
 void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Registry)
 {
@@ -1176,9 +1713,11 @@ void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Regi
     BuildPOIs(Registry);
     BuildBiomes(Registry);
     BuildProductionEchoes(Registry);
+    BuildEvolutionTargets(Registry); // CP-02: evolved forms + chain links + gates.
     BuildProductionTechnologies(Registry);
     BuildProductionQuests(Registry);
+    BuildDialogueTrees(Registry);
 
     UE_LOG(LogAstrawildEconomy, Log,
-        TEXT("Production V2 content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 production Echoes, 6 technologies, 2 quests."));
+        TEXT("Production V2 content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 production Echoes + 6 evolution targets, 6 technologies, 2 quests, 6 dialogue trees."));
 }

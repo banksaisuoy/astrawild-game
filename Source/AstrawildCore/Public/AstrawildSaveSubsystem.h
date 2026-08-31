@@ -121,6 +121,11 @@ public:
     /** Discovered points of interest. */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TArray<FName> DiscoveredPOIIds;
+
+    /** Production V2 Batch 3: persistent story flags set through dialogue choices
+     *  (v4 payload extension — additive, older v4 saves deserialize empty). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FName> DialogueFlags;
 };
 
 UCLASS()

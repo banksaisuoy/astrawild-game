@@ -2,8 +2,12 @@
 
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
+#include "AstrawildDialogueComponent.h"
+#include "AstrawildDialogueWidget.h"
 #include "AstrawildHudWidget.h"
 #include "AstrawildInventoryScreenWidget.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
@@ -18,6 +22,9 @@ AAstrawildPlayerController::AAstrawildPlayerController()
 
     CheatClass = UAstrawildCheatManager::StaticClass();
     QuestComponent = CreateDefaultSubobject<UAstrawildQuestComponent>(TEXT("Quests"));
+    // Batch 3 — persistent dialogue state lives beside the quest component so
+    // story flags survive death/respawn (saved with the v4 payload).
+    DialogueComponent = CreateDefaultSubobject<UAstrawildDialogueComponent>(TEXT("Dialogue"));
 }
 
 void AAstrawildPlayerController::BeginPlay()
@@ -104,6 +111,72 @@ bool AAstrawildPlayerController::IsShopOpen() const
     return ShopWidget && ShopWidget->IsInViewport();
 }
 
+// --- Production V2 Batch 3: dialogue screen (P12 Story/NPC) ---
+
+void AAstrawildPlayerController::OpenDialogue(AAstrawildNPCCharacter* Npc)
+{
+    // Local controller only — same screen discipline as the shop. Conversation
+    // CONSEQUENCES still route through the authority pipelines (quest start,
+    // server inventory adds, research points) inside the dialogue component.
+    if (!IsLocalController() || !Npc || !Npc->NpcDefinition)
+    {
+        return;
+    }
+
+    // Resolve the tree through the registry (CODE_DEFAULT today, .uasset trees
+    // tomorrow — same-id override contract as every other definition).
+    UAstrawildItemRegistrySubsystem* Registry = GetWorld()
+        ? GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>()
+        : nullptr;
+    UAstrawildDialogueTreeDefinition* Tree = Registry
+        ? Registry->FindDialogueTree(Npc->NpcDefinition->DialogueTreeId)
+        : nullptr;
+    if (!Tree)
+    {
+        UE_LOG(LogAstrawild, Warning,
+            TEXT("OpenDialogue: tree %s not registered — falling back to legacy interact path."),
+            *Npc->NpcDefinition->DialogueTreeId.ToString());
+        return;
+    }
+
+    if (!DialogueWidget)
+    {
+        const TSubclassOf<UAstrawildDialogueWidget> WidgetClass = DialogueWidgetClass
+            ? DialogueWidgetClass
+            : TSubclassOf<UAstrawildDialogueWidget>(UAstrawildDialogueWidget::StaticClass());
+        DialogueWidget = CreateWidget<UAstrawildDialogueWidget>(this, WidgetClass);
+    }
+    if (!DialogueWidget)
+    {
+        return;
+    }
+
+    DialogueWidget->InitializeDialogue(Npc, Tree);
+    DialogueWidget->AddToViewport(10); // Above the HUD, same layer as the other screens.
+
+    FInputModeUIOnly InputMode;
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    SetInputMode(InputMode);
+    bShowMouseCursor = true;
+    UE_LOG(LogAstrawild, Log, TEXT("Dialogue screen opened (%s)."), *Npc->GetName());
+}
+
+void AAstrawildPlayerController::CloseDialogue()
+{
+    if (DialogueWidget)
+    {
+        DialogueWidget->RemoveFromParent();
+    }
+
+    SetInputMode(FInputModeGameOnly());
+    bShowMouseCursor = false;
+}
+
+bool AAstrawildPlayerController::IsDialogueOpen() const
+{
+    return DialogueWidget && DialogueWidget->IsInViewport();
+}
+
 // --- Final production run: inventory / research / pause screens ---
 
 void AAstrawildPlayerController::ToggleInventoryScreen()
@@ -117,6 +190,7 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
 
     // Close siblings first — one full-screen UI at a time.
     CloseShop();
+    CloseDialogue();
     if (IsResearchOpen())
     {
         ToggleResearchScreen();
@@ -171,6 +245,7 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     const bool bOpen = !IsResearchOpen();
 
     CloseShop();
+    CloseDialogue();
     if (IsInventoryOpen())
     {
         ToggleInventoryScreen();
@@ -225,6 +300,7 @@ void AAstrawildPlayerController::TogglePauseMenu()
     const bool bOpen = !IsPauseMenuOpen();
 
     CloseShop();
+    CloseDialogue();
     if (IsInventoryOpen())
     {
         ToggleInventoryScreen();
@@ -273,5 +349,5 @@ bool AAstrawildPlayerController::IsPauseMenuOpen() const
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen();
 }

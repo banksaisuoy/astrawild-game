@@ -11,6 +11,8 @@ class UAstrawildInventoryScreenWidget;
 class UAstrawildPauseMenuWidget;
 class UAstrawildResearchScreenWidget;
 class UAstrawildShopWidget;
+class UAstrawildDialogueWidget;
+class UAstrawildDialogueComponent;
 
 /**
  * ASTRAWILD player controller: hosts the quest component (survives respawn) and
@@ -26,6 +28,14 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Quest")
     TObjectPtr<UAstrawildQuestComponent> QuestComponent;
+
+    /** Production V2 Batch 3: persistent dialogue state (story flags + consequence routing). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
+    TObjectPtr<UAstrawildDialogueComponent> DialogueComponent;
+
+    /** Dialogue screen class override point (defaults to the pure-C++ dialogue widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildDialogueWidget> DialogueWidgetClass;
 
     /** HUD class override point for future UMG-styled HUDs. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
@@ -56,6 +66,20 @@ public:
     /** True while the shop screen is on the viewport. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Vendor|UI")
     bool IsShopOpen() const;
+
+    // --- Production V2 Batch 3: dialogue screen (P12 Story/NPC) ---
+
+    /** Open the conversation screen for the given NPC (UI-only input + mouse cursor). Local controller only. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC|Dialogue|UI")
+    void OpenDialogue(AAstrawildNPCCharacter* Npc);
+
+    /** Close the conversation screen and restore game-only input. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC|Dialogue|UI")
+    void CloseDialogue();
+
+    /** True while the dialogue screen is on the viewport. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Dialogue|UI")
+    bool IsDialogueOpen() const;
 
     // --- Final production run: inventory / research / pause screens ---
 
@@ -102,6 +126,9 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildShopWidget> ShopWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildDialogueWidget> DialogueWidget;
 
     UPROPERTY()
     TObjectPtr<UAstrawildInventoryScreenWidget> InventoryScreen;

@@ -2,6 +2,7 @@
 
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
@@ -15,6 +16,9 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/Material.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "ProceduralMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -217,8 +221,36 @@ void AAstrawildProjectileActor::LaunchFromWeapon(const FVector& Direction, const
         DamageAmount, Speed, IsValid(HomingTarget) ? 1 : 0);
 }
 
+void AAstrawildProjectileActor::SetWeaponVfxAssets(const UAstrawildWeaponDefinition* WeaponDef)
+{
+    // CP-05: copy the profile's direct Niagara bindings (soft — unloaded refs
+    // keep the procedural element core; loaded ones attach immediately).
+    if (!WeaponDef)
+    {
+        return;
+    }
+
+    TrailVfxAsset = WeaponDef->ProjectileTrailVfx;
+    ImpactVfxAsset = WeaponDef->ImpactVfx;
+
+    if (UNiagaraSystem* Trail = TrailVfxAsset.IsValid() ? TrailVfxAsset.Get() : nullptr)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAttached(Trail, CollisionSphere, NAME_None,
+            FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset,
+            /*bAutoDestroy*/ true);
+    }
+}
+
 void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AActor* OtherActor, UPrimitiveComponent* /*OtherComp*/, FVector /*NormalImpulse*/, const FHitResult& /*Hit*/)
 {
+    // CP-05: impact burst on every machine that sees the contact (visual only,
+    // before the authority gate — clients get the hit callback through the
+    // replicated movement as well).
+    if (UNiagaraSystem* Impact = ImpactVfxAsset.IsValid() ? ImpactVfxAsset.Get() : nullptr)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), Impact, GetActorLocation());
+    }
+
     // Resolve only on the server (single player shares the same path).
     if (GetLocalRole() != ROLE_Authority)
     {

@@ -16,7 +16,7 @@
 | V-2 | Full `Development Editor` build | 0 errors, 0 warnings-as-errors | build log |
 | V-3 | Link `ASTRAWILD.exe` / editor target | links clean (watch for the historical C-2 class of LNK2001) | build log |
 | V-4 | PIE boot, zero-asset world | terrain tiles + camp + spawners visible in <30 s | screenshot + log tail |
-| V-5 | Automation tests (`ast.``*`, 48 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
+| V-5 | Automation tests (`ast.``*`, 51 tests) | `&` filter in Session Frontend → all pass, 0 fail | screenshot of test list |
 
 Known "may surface on first compile" items (static review already cleaned these once):
 native gameplay tag registration order, `TObjectPtr` BP exposure policy, IMC runtime
@@ -114,6 +114,13 @@ per the production directive PHASE 16.
 | V2-18 | Scanner pulse + Echo identity | hold V per scanner tier → teal/amber/violet expanding rings (Oracle largest); Rare+ wild Echo wears a rarity ring; captured elemental glows | 3 screenshots |
 | V2-19 | VVS perf sanity | dressing (~22k verts/36 sections) + ≤8 active element lights: `stat unit` holds 60 fps mid-GPU at the camp | stat screenshot |
 | V2-20 | Player silhouette | third-person look: survivor body (amber chest/teal visor); equip different weapon families → held gun tint/size changes within 0.5s | 2 screenshots |
+| V2-21 | **Dialogue screen (Batch 3)** | Talk [E] to Warden Maren → conversation panel (speaker amber, replies teal-filtered); Accept starts First Light; ESC closes; input returns to game-only | short clip |
+| V2-22 | Dialogue conditions + flags | after First Light completes, Maren's "Report" choice appears ONCE (grants 15 research) then never again — also after save/load | 2 clips + log |
+| V2-23 | Vendor hand-off through dialogue | Tam: "Browse wares" closes conversation → same shop screen opens | clip |
+| V2-24 | Chained flags (Perry) | hear Perry's tide story → "Accept the sea pearl" appears → grants Item_SeaPearl once, never again | inventory + clip |
+| V2-25 | Evolution end-to-end (CP-02) | level/bond a Voltpylon to gates (cheat: `ASTRAWILD.` cheat manager is live) → `EvolveInstance` swaps to Voltpylon Tempest: roster entry + spawned actor rebuild (bigger, Epic) with level/bond/trust intact | roster + 2 screenshots |
+| V2-26 | Weapon Niagara binding dispatch | bind any NS_ on a weapon profile's `MuzzleFlashVfx` (or leave empty) → bound: Niagara plays, procedural octahedron does NOT; empty: octahedron plays as today | 2 clips |
+| V2-27 | Dialogue save round-trip | mid-conversation flag set → save → quit → load → flags still gate choices (Maren report hidden if already reported) | log + clip |
 
 ---
 

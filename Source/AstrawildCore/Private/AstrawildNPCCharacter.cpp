@@ -175,6 +175,28 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     }
     LastInteractedActor = Player;
 
+    // Production V2 Batch 3 — when the NPC has a dialogue tree, the conversation
+    // screen takes over the whole interaction: quest offers migrate into choice
+    // consequences (StartQuestId) and vendor hand-off happens via bOpenShop, so
+    // both legacy paths below are skipped. NPCs without a tree keep the direct
+    // quest-toast + shop behavior.
+    if (NpcDefinition && !NpcDefinition->DialogueTreeId.IsNone())
+    {
+        if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            UAstrawildItemRegistrySubsystem* Registry = GetWorld()
+                ? GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>()
+                : nullptr;
+            if (Registry && Registry->FindDialogueTree(NpcDefinition->DialogueTreeId))
+            {
+                AstrawildPC->OpenDialogue(this);
+                return;
+            }
+            UE_LOG(LogAstrawild, Warning, TEXT("NPC %s references unregistered dialogue tree %s."),
+                *NpcDefinition->NpcId.ToString(), *NpcDefinition->DialogueTreeId.ToString());
+        }
+    }
+
     // Offer the quest attached to this NPC (directive §25/§26).
     if (NpcDefinition && !NpcDefinition->OfferedQuestId.IsNone())
     {

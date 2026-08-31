@@ -19,6 +19,7 @@ class UAstrawildWorkSiteDefinition;
 class UAstrawildWorldEventDefinition;
 class UAstrawildPOIDefinition;
 class UAstrawildBiomeDefinition;
+class UAstrawildDialogueTreeDefinition;
 
 /**
  * Central registry of gameplay definitions (directive §35).
@@ -58,6 +59,9 @@ public:
     void RegisterWorldEvent(UAstrawildWorldEventDefinition* Definition);
     void RegisterPOI(UAstrawildPOIDefinition* Definition);
     void RegisterBiome(UAstrawildBiomeDefinition* Definition);
+
+    /** Production V2 Batch 3: conversation trees (P12 Story/NPC). */
+    void RegisterDialogueTree(UAstrawildDialogueTreeDefinition* Definition);
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     UAstrawildItemDefinition* FindItem(FName ItemId) const;
@@ -105,6 +109,13 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     UAstrawildBiomeDefinition* FindBiome(FName BiomeId) const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    UAstrawildDialogueTreeDefinition* FindDialogueTree(FName DialogueId) const;
+
+    /** Production V2 Batch 3: all registered conversation trees (integrity checks). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildDialogueTreeDefinition*> GetAllDialogueTrees() const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     TArray<UAstrawildWeaponDefinition*> GetAllWeapons() const;
@@ -183,6 +194,9 @@ private:
 
     UPROPERTY()
     TMap<FName, TObjectPtr<UAstrawildBiomeDefinition>> Biomes;
+
+    UPROPERTY()
+    TMap<FName, TObjectPtr<UAstrawildDialogueTreeDefinition>> DialogueTrees;
 
     void BuildContentDefaults();
 };
