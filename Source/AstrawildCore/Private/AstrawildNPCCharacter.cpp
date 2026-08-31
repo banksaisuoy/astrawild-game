@@ -38,7 +38,7 @@ AAstrawildNPCCharacter::AAstrawildNPCCharacter()
 
     // Navmesh anchor — runtime tiles generate around each villager (audit C-3 pattern).
     UNavigationInvokerComponent* NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
-    NavInvoker->SetRadii(4000.0f, 6000.0f);
+    NavInvoker->SetGenerationRadii(4000.0f, 6000.0f);
 
     PlaceholderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderMesh"));
     PlaceholderMesh->SetupAttachment(GetCapsuleComponent());

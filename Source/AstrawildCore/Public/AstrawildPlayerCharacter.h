@@ -240,10 +240,10 @@ public:
 
     /** Batch 8 — the skiff this player is currently piloting (null = on foot). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff")
-    AAstrawildSkiffActor* GetPilotedSkiff() const { return PilotedSkiff.Get(); }
+    AAstrawildSkiffActor* GetPilotedSkiff() const;
 
     /** Called by the skiff on mount/dismount (input routing switches over). */
-    void SetPilotedSkiff(AAstrawildSkiffActor* Skiff) { PilotedSkiff = Skiff; }
+    void SetPilotedSkiff(AAstrawildSkiffActor* Skiff);
 
     /** Server: spawn a drone bound to this player (deploy key / save-load). */
     AAstrawildUtilityDroneActor* SpawnUtilityDrone();

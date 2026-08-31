@@ -8,7 +8,6 @@ public class ASTRAWILDEditorTarget : TargetRules
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V7;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
-        BuildEnvironment = TargetBuildEnvironment.Unique;
         ExtraModuleNames.Add("AstrawildCore");
     }
 }

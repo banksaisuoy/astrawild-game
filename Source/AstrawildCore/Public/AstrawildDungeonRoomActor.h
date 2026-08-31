@@ -60,6 +60,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FAstrawildDungeonRoomTemplate Template;
 
+    /** Batch 8: per-dungeon quest target identifier emitted upon boss defeat. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName BossDefeatEventId;
+
     /** Sequential room index within the dungeon. */
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
     int32 RoomIndex = 0;

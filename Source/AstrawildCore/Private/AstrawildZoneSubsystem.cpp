@@ -217,7 +217,7 @@ FBox2D UAstrawildZoneSubsystem::GetWorldBounds()
 bool UAstrawildZoneSubsystem::IsSeaZone(const EAstrawildZone Zone)
 {
     const FAstrawildZoneDescriptor* Desc = FindZone(Zone);
-    return Desc && (Desc->BaseHeight - Desc->HeightAmplitude) < GetSeaLevelZ();
+    return Desc && (Zone == EAstrawildZone::AzureShallows || Zone == EAstrawildZone::TidebreakerIsles || Zone == EAstrawildZone::PearlseaReef);
 }
 
 bool UAstrawildZoneSubsystem::HasDiscoveredZone(const EAstrawildZone Zone) const

@@ -6,6 +6,7 @@
 #include "AstrawildPlayerController.h"
 #include "AstrawildTerrainTileActor.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"

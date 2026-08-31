@@ -438,7 +438,7 @@ bool FAstrawildZoneTableIntegrityTest::RunTest(const FString& Parameters)
 {
     const TArray<FAstrawildZoneDescriptor>& Zones = UAstrawildZoneSubsystem::GetAllZones();
 
-    TestEqual(TEXT("Six surface zones"), Zones.Num(), 6);
+    TestEqual(TEXT("Twelve surface zones"), Zones.Num(), 12);
 
     // Unique ids + unique enum values.
     TSet<FName> Ids;

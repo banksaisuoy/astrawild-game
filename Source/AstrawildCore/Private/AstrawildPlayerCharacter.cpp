@@ -1720,3 +1720,13 @@ void AAstrawildPlayerCharacter::TogglePauseMenuInput(const FInputActionValue& Va
         PC->TogglePauseMenu();
     }
 }
+
+AAstrawildSkiffActor* AAstrawildPlayerCharacter::GetPilotedSkiff() const
+{
+    return PilotedSkiff.Get();
+}
+
+void AAstrawildPlayerCharacter::SetPilotedSkiff(AAstrawildSkiffActor* Skiff)
+{
+    PilotedSkiff = Skiff;
+}

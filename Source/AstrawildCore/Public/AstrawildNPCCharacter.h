@@ -101,12 +101,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC|Vendor")
     EAstrawildVendorResult TrySell(AActor* Seller, FName ItemId, int32 Quantity);
 
-protected:
-    virtual void BeginPlay() override;
-
     /** Batch 8: applies definition appearance (tint lantern + role silhouette). Public — the bootstrapper calls it after assigning NpcDefinition (BeginPlay runs before the assignment). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC")
     void RefreshAppearanceFromDefinition();
+
+protected:
+    virtual void BeginPlay() override;
 
 private:
     int32 PatrolIndex = 0;

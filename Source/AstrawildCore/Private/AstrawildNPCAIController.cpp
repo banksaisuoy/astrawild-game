@@ -1,5 +1,7 @@
 #include "AstrawildNPCAIController.h"
 
+#include "AstrawildCore.h"
+#include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
@@ -60,7 +62,7 @@ void AAstrawildNPCAIController::Think()
         StopMovement();
         if (AActor* Partner = Npc->GetLastInteractedActor())
         {
-            const FVector ToPartner = Partner->GetActorLocation() - Npc->GetActorLocation();
+            FVector ToPartner = Partner->GetActorLocation() - Npc->GetActorLocation();
             ToPartner.Z = 0.0f;
             if (!ToPartner.IsNearlyZero())
             {
@@ -205,7 +207,7 @@ AAstrawildEchoCharacter* AAstrawildNPCAIController::FindNearestHostileEcho(const
         {
             continue;
         }
-        if (!IsValid(Echo->EchoDefinition) || !Echo->EchoDefinition->bHostileToPlayers)
+        if (!Echo->EchoDefinition || !Echo->EchoDefinition->bHostileToPlayers)
         {
             continue;
         }

@@ -46,8 +46,8 @@ namespace
     // Engine basic shape asset paths (zero-asset world).
     constexpr const TCHAR* ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
     constexpr const TCHAR* ShapeSphere = TEXT("/Engine/BasicShapes/Sphere.Sphere");
-    const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
-    const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
+    constexpr const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
+    constexpr const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
 
     // Per-zone wildlife table (Batch 7 + Batch 8): species placement that makes
     // the twelve regions read differently — herd critters near camp, element

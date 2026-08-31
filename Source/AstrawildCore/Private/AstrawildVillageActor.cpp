@@ -2,6 +2,8 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildLog.h"
+#include "Components/LightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/PointLight.h"
 #include "Engine/StaticMesh.h"
@@ -10,9 +12,9 @@
 
 namespace
 {
-    const TCHAR* ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
-    const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
-    const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
+    constexpr const TCHAR* ShapeCube = TEXT("/Engine/BasicShapes/Cube.Cube");
+    constexpr const TCHAR* ShapeCylinder = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
+    constexpr const TCHAR* ShapeCone = TEXT("/Engine/BasicShapes/Cone.Cone");
 }
 
 AAstrawildVillageActor::AAstrawildVillageActor()
