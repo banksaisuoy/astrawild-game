@@ -9,7 +9,7 @@
   authority pipelines) plus the **Production Content Pack** (`Docs/CONTENT_PACK/CP-00..CP-10` —
   10-area production spec) with its C++ binding hooks: weapon Niagara/audio soft refs with
   Niagara-first dispatch, Echo evolution (6 chains, dual level+bond gates, identity-preserving
-  roster swap), equipment visual override contracts. Tests 48 → **51** — see
+  roster swap), equipment visual override contracts. Tests 48 → **53** — see
   `Docs/ASTRAWILD_PRODUCTION_V2_BATCH_3.md`)
 - Last updated: 2026-08-31 (V2 Batch 3 — dialogue system + content pack foundation; engine logs for
   Batches 1–2: 48/48 PASS)
@@ -27,8 +27,8 @@
   with 6 authored evolved species; item definitions gain equipment visual override contracts; new
   `Niagara` module dependency. (3) **Content specs**: `Docs/CONTENT_PACK/CP-00..CP-10` (player/exosuit,
   Echo/evolution, weapons, environment×12, Niagara, audio, materials, animation, quest/NPC, UX/HUD)
-  with budgets, binding steps and acceptance criteria. Tests 48 → **51**.
-- Codebase: **140 C++ files (143 with build scripts), ~39,300 LOC, 51 automation tests, 86 docs** in/around `Source/AstrawildCore` (single module)
+  with budgets, binding steps and acceptance criteria. Tests 48 → **53**.
+- Codebase: **140 C++ files (143 with build scripts), ~39,600 LOC, 53 automation tests, 91 docs** in/around `Source/AstrawildCore` (single module)
 
 ## Environment
 

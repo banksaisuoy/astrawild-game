@@ -1,6 +1,6 @@
 # ASTRAWILD — PRODUCTION V2 BATCH 3: Dialogue System + Production Content Pack Foundation
 
-**Status:** SOURCE_IMPLEMENTED / SOURCE_TESTED (51 automation tests — compile pending
+**Status:** SOURCE_IMPLEMENTED / SOURCE_TESTED (53 automation tests — compile pending
 UE5 verification on the target machine). Baseline: `5eb6b9e` (Batches 1–2 UE5-VERIFIED
 48/48, engine logs in `Docs/ENGINE_LOGS/`).
 
@@ -43,7 +43,7 @@ Two deliveries in one batch:
 | `AstrawildCore.Build.cs` | + `"Niagara"` module dependency |
 | `AstrawildAutomationTests.cpp` | +5 tests (below) |
 
-### 1.3 Tests (48 → 51)
+### 1.3 Tests (48 → 53)
 
 - `ASTRAWILD.Dialogue.TreeContract` — node lookup, unique ids, goto resolution, no
   ambiguous end+goto, asset-id type.
@@ -68,7 +68,7 @@ Two deliveries in one batch:
 ## 3. What Antigravity must do (per `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md`)
 
 1. Pull + rebuild (note: **new module dependency `Niagara`** — UBT will ask once).
-2. Run the 51 automation tests (`V-5`) — expect 51/51 (three dialogue + evolution
+2. Run the 53 automation tests (`V-5`) — expect 53/53 (three dialogue + evolution
    gates + weapon binding contract are new).
 3. Walk V2-21..V2-27: dialogue screen, condition gating, one-time beats, vendor
    hand-off, Perry's chained flags, evolution end-to-end, Niagara dispatch, save
