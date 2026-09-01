@@ -159,15 +159,12 @@ void AAstrawildPlayerCharacter::BeginPlay()
     Super::BeginPlay();
     RefreshMovementSpeed();
 
-    // Production V2 Batch 2: survivor silhouette (local build — runs on server
-    // AND owning client so the body reads in every netmode).
-    BuildProceduralBody();
-
-    // Art pack (Batch 4): swap to the skinned exosuit when the pack is imported.
-    // The registry warm pass pre-loads the soft refs, so this is one synchronous
-    // resolution on a warmed pointer in the common case (and a cheap miss when
-    // the pack is absent — the PMC silhouette stays live, zero-asset rule).
+    // Art pack: activate AAA character mesh (SKM_Manny_Simple) or fall back to procedural
     bSkeletalBodyActive = TryActivateSkeletalBody();
+    if (!bSkeletalBodyActive)
+    {
+        BuildProceduralBody();
+    }
 
     if (bGivePrototypeStarterItems && HasAuthority() && InventoryComponent && InventoryComponent->GetItemStacks().IsEmpty())
     {
@@ -218,11 +215,11 @@ void AAstrawildPlayerCharacter::BeginPlay()
 
 // ---------------------------------------------------------------------------
 // Art pack animation driver (Batch 4, CP-08) — code-driven locomotion over the
-// imported AM_Survivor_* clips (single-node mode: no AnimBP required).
+// imported clips (single-node mode: no AnimBP required).
 // ---------------------------------------------------------------------------
 bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
 {
-    USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
+    USkeletalMesh* SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
     if (!SkelMesh)
     {
         SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
@@ -251,6 +248,7 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     // The PMC body + placeholder cylinder retire while the skinned body lives.
     if (BodyMesh)
     {
+        BodyMesh->ClearAllMeshSections();
         BodyMesh->SetVisibility(false);
         BodyMesh->SetHiddenInGame(true);
     }
@@ -264,45 +262,36 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     SetActorTickEnabled(true);
 
     // Warm the locomotion clips and play Idle loop immediately.
-    UAnimSequenceBase* IdleClip = SurvivorIdleAnim.LoadSynchronous();
-    if (!IdleClip)
+    SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle"));
+    if (!SurvivorIdleAnim.Get())
     {
-        IdleClip = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
+        SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
     }
-    if (IdleClip)
+    if (SurvivorIdleAnim.Get())
     {
-        SurvivorIdleAnim = IdleClip;
-        SurvivorBody->PlayAnimation(IdleClip, true);
-        CurrentLoopAnimation = IdleClip;
+        SurvivorBody->PlayAnimation(SurvivorIdleAnim.Get(), true);
+        CurrentLoopAnimation = SurvivorIdleAnim.Get();
     }
 
+    SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd"));
     if (!SurvivorWalkAnim.Get())
     {
         SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Walk.AM_Survivor_Walk"));
     }
+
+    SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd"));
     if (!SurvivorRunAnim.Get())
     {
         SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Run.AM_Survivor_Run"));
     }
-    if (!SurvivorAimAnim.Get())
-    {
-        SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Aim.AM_Survivor_Aim"));
-    }
-    if (!SurvivorJumpAnim.Get())
-    {
-        SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Jump.AM_Survivor_Jump"));
-    }
-    if (!SurvivorFireAnim.Get())
-    {
-        SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Fire.AM_Survivor_Fire"));
-    }
-    if (!SurvivorGatherAnim.Get())
-    {
-        SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Gather.AM_Survivor_Gather"));
-    }
+
+    SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Pistol/Aim/AO_Pistol.AO_Pistol"));
+    SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump"));
+    SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01.MM_Attack_01"));
+    SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_02.MM_Attack_02"));
 
     UE_LOG(LogAstrawild, Log,
-        TEXT("Survivor art pack active: skinned exosuit SK_Survivor_Exosuit replaces procedural body with animation clips."));
+        TEXT("AAA Character active: SKM_Manny_Simple loaded with full locomotion animations."));
     return true;
 }
 
