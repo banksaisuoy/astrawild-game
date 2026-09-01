@@ -290,7 +290,15 @@ void AAstrawildWorldBootstrapper::BuildLighting()
 
     if (!SunLight)
     {
-        SunLight = World->SpawnActor<ADirectionalLight>(ADirectionalLight::StaticClass(), FVector(0, 0, 4000), FRotator(-50.0f, 30.0f, 0.0f), Params);
+        for (TActorIterator<ADirectionalLight> It(World); It; ++It)
+        {
+            SunLight = *It;
+            break;
+        }
+        if (!SunLight)
+        {
+            SunLight = World->SpawnActor<ADirectionalLight>(ADirectionalLight::StaticClass(), FVector(0, 0, 4000), FRotator(-50.0f, 30.0f, 0.0f), Params);
+        }
         if (SunLight)
         {
             SunLight->SetMobility(EComponentMobility::Movable);
@@ -301,6 +309,7 @@ void AAstrawildWorldBootstrapper::BuildLighting()
                 DirLight->bAtmosphereSunLight = true;
                 DirLight->AtmosphereSunLightIndex = 0;
                 DirLight->CastShadows = true;
+                DirLight->ForwardShadingPriority = 1;
             }
             else if (ULightComponent* LightComponent = SunLight->GetLightComponent())
             {
@@ -312,7 +321,15 @@ void AAstrawildWorldBootstrapper::BuildLighting()
     // Sky light for ambient fill (cached — the atmosphere pass drives intensity).
     if (!SkyLightActor)
     {
-        SkyLightActor = World->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector(0, 0, 3000), FRotator::ZeroRotator, Params);
+        for (TActorIterator<ASkyLight> It(World); It; ++It)
+        {
+            SkyLightActor = *It;
+            break;
+        }
+        if (!SkyLightActor)
+        {
+            SkyLightActor = World->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector(0, 0, 3000), FRotator::ZeroRotator, Params);
+        }
         if (SkyLightActor)
         {
             if (USkyLightComponent* SkyComponent = SkyLightActor->GetLightComponent())

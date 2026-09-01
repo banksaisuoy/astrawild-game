@@ -1,5 +1,6 @@
 #include "AstrawildBiomeDressingActor.h"
 
+#include "AstrawildArtPack.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildLog.h"
 #include "AstrawildTerrainTileActor.h"
@@ -433,22 +434,18 @@ void AAstrawildBiomeDressingActor::BuildInstancedMeshes(UAstrawildBiomeDefinitio
     const TArray<FVector>& TreePoints, const TArray<FVector>& RockPoints, const TArray<FVector>& GrassPoints,
     FRandomStream& Stream)
 {
-    // Antigravity upgrade path: soft refs that RESOLVE replace the matching
-    // placeholder sections with instanced real meshes at the same transforms.
-    if (!BiomeDef)
-    {
-        return;
-    }
-
-    const auto BuildISM = [this](const TArray<TSoftObjectPtr<UStaticMesh>>& Meshes, const TArray<FVector>& Points,
+    const auto BuildISMFromPaths = [this](const TArray<const TCHAR*>& Paths, const TArray<FVector>& Points,
         const FName Label, FRandomStream& InStream) -> bool
     {
         TArray<UStaticMesh*> Loaded;
-        for (const TSoftObjectPtr<UStaticMesh>& SoftMesh : Meshes)
+        for (const TCHAR* Path : Paths)
         {
-            if (UStaticMesh* Mesh = SoftMesh.LoadSynchronous())
+            if (Path && *Path)
             {
-                Loaded.Add(Mesh);
+                if (UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, Path))
+                {
+                    Loaded.Add(Mesh);
+                }
             }
         }
         if (Loaded.IsEmpty() || Points.IsEmpty())
@@ -456,32 +453,102 @@ void AAstrawildBiomeDressingActor::BuildInstancedMeshes(UAstrawildBiomeDefinitio
             return false;
         }
 
-        UInstancedStaticMeshComponent* ISM = NewObject<UInstancedStaticMeshComponent>(this, *(FString("ISM_") + Label.ToString()));
-        if (!ISM)
+        for (int32 MeshIdx = 0; MeshIdx < Loaded.Num(); ++MeshIdx)
         {
-            return false;
-        }
-        ISM->RegisterComponent();
-        ISM->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-        ISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        ISM->SetStaticMesh(Loaded[0]);
+            UStaticMesh* CurrentMesh = Loaded[MeshIdx];
+            UInstancedStaticMeshComponent* ISM = NewObject<UInstancedStaticMeshComponent>(this,
+                *FString::Printf(TEXT("ISM_%s_%d"), *Label.ToString(), MeshIdx));
+            if (!ISM)
+            {
+                continue;
+            }
+            ISM->RegisterComponent();
+            ISM->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+            ISM->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            ISM->SetCollisionResponseToAllChannels(ECR_Block);
+            ISM->SetStaticMesh(CurrentMesh);
 
-        for (int32 Index = 0; Index < Points.Num(); ++Index)
-        {
-            const FVector& Point = Points[Index];
-            const float Yaw = InStream.FRandRange(0.0f, 360.0f);
-            const float Pitch = InStream.FRandRange(-2.5f, 2.5f);
-            const float Roll = InStream.FRandRange(-2.5f, 2.5f);
-            const float Scale = InStream.FRandRange(0.85f, 1.25f);
-            FTransform Instance(FRotator(Pitch, Yaw, Roll), Point, FVector(Scale));
-            ISM->AddInstance(Instance, false);
+            for (int32 Index = MeshIdx; Index < Points.Num(); Index += Loaded.Num())
+            {
+                const FVector& Point = Points[Index];
+                const float Yaw = InStream.FRandRange(0.0f, 360.0f);
+                const float Pitch = InStream.FRandRange(-2.5f, 2.5f);
+                const float Roll = InStream.FRandRange(-2.5f, 2.5f);
+                const float Scale = InStream.FRandRange(0.85f, 1.35f);
+                FTransform Instance(FRotator(Pitch, Yaw, Roll), Point, FVector(Scale));
+                ISM->AddInstance(Instance, false);
+            }
         }
         return true;
     };
 
-    BuildISM(BiomeDef->TreeMeshes, TreePoints, TEXT("Trees"), Stream);
-    BuildISM(BiomeDef->RockMeshes, RockPoints, TEXT("Rocks"), Stream);
-    BuildISM(BiomeDef->GrassMeshes, GrassPoints, TEXT("Grass"), Stream);
+    // 1. Check DataAsset first
+    if (BiomeDef)
+    {
+        const auto BuildISMFromSoft = [this](const TArray<TSoftObjectPtr<UStaticMesh>>& Meshes, const TArray<FVector>& Points,
+            const FName Label, FRandomStream& InStream) -> bool
+        {
+            TArray<UStaticMesh*> Loaded;
+            for (const TSoftObjectPtr<UStaticMesh>& SoftMesh : Meshes)
+            {
+                if (UStaticMesh* Mesh = SoftMesh.LoadSynchronous())
+                {
+                    Loaded.Add(Mesh);
+                }
+            }
+            if (Loaded.IsEmpty() || Points.IsEmpty())
+            {
+                return false;
+            }
+            UInstancedStaticMeshComponent* ISM = NewObject<UInstancedStaticMeshComponent>(this, *(FString("ISM_") + Label.ToString()));
+            if (ISM)
+            {
+                ISM->RegisterComponent();
+                ISM->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+                ISM->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+                ISM->SetCollisionResponseToAllChannels(ECR_Block);
+                ISM->SetStaticMesh(Loaded[0]);
+                for (int32 Index = 0; Index < Points.Num(); ++Index)
+                {
+                    const FVector& Point = Points[Index];
+                    const float Yaw = InStream.FRandRange(0.0f, 360.0f);
+                    const float Scale = InStream.FRandRange(0.85f, 1.25f);
+                    FTransform Instance(FRotator(0.0f, Yaw, 0.0f), Point, FVector(Scale));
+                    ISM->AddInstance(Instance, false);
+                }
+            }
+            return true;
+        };
+
+        BuildISMFromSoft(BiomeDef->TreeMeshes, TreePoints, TEXT("Trees"), Stream);
+        BuildISMFromSoft(BiomeDef->RockMeshes, RockPoints, TEXT("Rocks"), Stream);
+        BuildISMFromSoft(BiomeDef->GrassMeshes, GrassPoints, TEXT("Grass"), Stream);
+    }
+    else
+    {
+        // 2. Resolve real 3D models from AstrawildArtPack
+        const TArray<const TCHAR*> Trees = {
+            TEXT("/Game/Environment/SM_Tree_Broadleaf.SM_Tree_Broadleaf"),
+            TEXT("/Game/Environment/SM_Tree_Conifer.SM_Tree_Conifer"),
+            TEXT("/Game/Environment/SM_Tree_SporeCanopy.SM_Tree_SporeCanopy")
+        };
+        const TArray<const TCHAR*> Rocks = {
+            TEXT("/Game/Environment/SM_Rock_Granite_L.SM_Rock_Granite_L"),
+            TEXT("/Game/Environment/SM_Rock_Granite_M.SM_Rock_Granite_M"),
+            TEXT("/Game/Environment/SM_Rock_Granite_S.SM_Rock_Granite_S"),
+            TEXT("/Game/Environment/SM_Rock_Boulder_Moss.SM_Rock_Boulder_Moss")
+        };
+        const TArray<const TCHAR*> Grass = {
+            TEXT("/Game/Environment/SM_Grass_Tuft.SM_Grass_Tuft"),
+            TEXT("/Game/Environment/SM_Fern.SM_Fern"),
+            TEXT("/Game/Environment/SM_SporeBush.SM_SporeBush"),
+            TEXT("/Game/Environment/SM_GlowReed.SM_GlowReed")
+        };
+
+        BuildISMFromPaths(Trees, TreePoints, TEXT("Trees"), Stream);
+        BuildISMFromPaths(Rocks, RockPoints, TEXT("Rocks"), Stream);
+        BuildISMFromPaths(Grass, GrassPoints, TEXT("Grass"), Stream);
+    }
 }
 
 void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor& Zone,
@@ -501,29 +568,17 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
     ScatterDressingPoints(WorldSeed, Zone, Profile, ExclusionCenters, ExclusionRadii,
         TreePoints, RockPoints, GrassPoints);
 
-    // Real-mesh path first — it decides which placeholder sections are needed.
     const int32 ZoneIndex = static_cast<int32>(Zone.Zone);
     FRandomStream Stream(WorldSeed * 7919 + ZoneIndex * 104729 + 13);
-    const bool bPlaceholder = !BiomeDef || BiomeDef->bEnablePlaceholderDressing;
 
-    // A kind uses the placeholder mesh when there is no resolved real mesh for
-    // it (no def / empty array / soft refs unresolved).
-    const auto HasResolvedMesh = [](const TArray<TSoftObjectPtr<UStaticMesh>>& Meshes)
-    {
-        for (const TSoftObjectPtr<UStaticMesh>& SoftMesh : Meshes)
-        {
-            if (!SoftMesh.IsNull())
-            {
-                return true;
-            }
-        }
-        return false;
-    };
-    const bool bUsePlaceholderTrees = bPlaceholder && !(BiomeDef && HasResolvedMesh(BiomeDef->TreeMeshes));
-    const bool bUsePlaceholderRocks = bPlaceholder && !(BiomeDef && HasResolvedMesh(BiomeDef->RockMeshes));
-    const bool bUsePlaceholderGrass = bPlaceholder && !(BiomeDef && HasResolvedMesh(BiomeDef->GrassMeshes));
-
+    // Build real 3D instanced meshes
     BuildInstancedMeshes(BiomeDef, TreePoints, RockPoints, GrassPoints, Stream);
+
+    // If real meshes loaded, disable placeholder geometry entirely
+    const bool bHasRealMeshes = (LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Environment/SM_Tree_Broadleaf.SM_Tree_Broadleaf")) != nullptr);
+    const bool bUsePlaceholderTrees = !bHasRealMeshes;
+    const bool bUsePlaceholderRocks = !bHasRealMeshes;
+    const bool bUsePlaceholderGrass = !bHasRealMeshes;
 
     // ---- Placeholder geometry (merged sections per kind) ----
     const FLinearColor GroundTint = Zone.GroundTint;

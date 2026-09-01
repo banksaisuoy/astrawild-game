@@ -232,24 +232,27 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
         return false; // pack not imported — PMC silhouette stays live
     }
 
-    SurvivorBody = NewObject<USkeletalMeshComponent>(this, TEXT("SurvivorBody"));
-    if (!SurvivorBody)
+    USkeletalMeshComponent* MeshComp = GetMesh();
+    if (!MeshComp)
     {
         return false;
     }
-    SurvivorBody->SetupAttachment(GetCapsuleComponent());
-    SurvivorBody->SetSkeletalMesh(SkelMesh);
-    SurvivorBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    SurvivorBody->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+
+    MeshComp->SetSkeletalMesh(SkelMesh);
+    MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    MeshComp->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 88.0f;
-    SurvivorBody->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
-    SurvivorBody->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
-    SurvivorBody->RegisterComponent();
+    MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
+    MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+    MeshComp->SetVisibility(true);
+    MeshComp->SetHiddenInGame(false);
+    SurvivorBody = MeshComp;
 
     // The PMC body + placeholder cylinder retire while the skinned body lives.
     if (BodyMesh)
     {
         BodyMesh->SetVisibility(false);
+        BodyMesh->SetHiddenInGame(true);
     }
     if (PlaceholderMesh)
     {
@@ -260,18 +263,46 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     PrimaryActorTick.bCanEverTick = true;
     SetActorTickEnabled(true);
 
-    // Warm the locomotion clips (registry warm pass usually already did).
-    SurvivorIdleAnim.LoadSynchronous();
-    SurvivorWalkAnim.LoadSynchronous();
-    SurvivorRunAnim.LoadSynchronous();
-    SurvivorAimAnim.LoadSynchronous();
-    SurvivorJumpAnim.LoadSynchronous();
-    SurvivorFireAnim.LoadSynchronous();
-    SurvivorGatherAnim.LoadSynchronous();
+    // Warm the locomotion clips and play Idle loop immediately.
+    UAnimSequenceBase* IdleClip = SurvivorIdleAnim.LoadSynchronous();
+    if (!IdleClip)
+    {
+        IdleClip = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
+    }
+    if (IdleClip)
+    {
+        SurvivorIdleAnim = IdleClip;
+        SurvivorBody->PlayAnimation(IdleClip, true);
+        CurrentLoopAnimation = IdleClip;
+    }
+
+    if (!SurvivorWalkAnim.Get())
+    {
+        SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Walk.AM_Survivor_Walk"));
+    }
+    if (!SurvivorRunAnim.Get())
+    {
+        SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Run.AM_Survivor_Run"));
+    }
+    if (!SurvivorAimAnim.Get())
+    {
+        SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Aim.AM_Survivor_Aim"));
+    }
+    if (!SurvivorJumpAnim.Get())
+    {
+        SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Jump.AM_Survivor_Jump"));
+    }
+    if (!SurvivorFireAnim.Get())
+    {
+        SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Fire.AM_Survivor_Fire"));
+    }
+    if (!SurvivorGatherAnim.Get())
+    {
+        SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Gather.AM_Survivor_Gather"));
+    }
 
     UE_LOG(LogAstrawild, Log,
-        TEXT("Survivor art pack active: skinned exosuit %s replaces the PMC silhouette."),
-        *SurvivorSkeletalMesh.ToSoftObjectPath().ToString());
+        TEXT("Survivor art pack active: skinned exosuit SK_Survivor_Exosuit replaces procedural body with animation clips."));
     return true;
 }
 
