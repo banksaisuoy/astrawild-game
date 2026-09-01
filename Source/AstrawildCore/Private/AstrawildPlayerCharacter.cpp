@@ -222,8 +222,8 @@ void AAstrawildPlayerCharacter::BeginPlay()
 // ---------------------------------------------------------------------------
 bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
 {
-    USkeletalMesh* Mesh = SurvivorSkeletalMesh.LoadSynchronous();
-    if (!Mesh)
+    USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
+    if (!SkelMesh)
     {
         return false; // pack not imported — PMC silhouette stays live
     }
@@ -234,7 +234,7 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
         return false;
     }
     SurvivorBody->SetupAttachment(GetCapsuleComponent());
-    SurvivorBody->SetSkeletalMesh(Mesh);
+    SurvivorBody->SetSkeletalMesh(SkelMesh);
     SurvivorBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SurvivorBody->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     SurvivorBody->SetRelativeLocation(FVector::ZeroVector);

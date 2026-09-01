@@ -703,8 +703,8 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
     {
         return false;
     }
-    USkeletalMesh* Mesh = EchoDefinition->SkeletalMesh.LoadSynchronous();
-    if (!Mesh)
+    USkeletalMesh* SkelMesh = EchoDefinition->SkeletalMesh.LoadSynchronous();
+    if (!SkelMesh)
     {
         return false;
     }
@@ -715,7 +715,7 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
         return false;
     }
     EchoBodyMesh->SetupAttachment(GetCapsuleComponent());
-    EchoBodyMesh->SetSkeletalMesh(Mesh);
+    EchoBodyMesh->SetSkeletalMesh(SkelMesh);
     EchoBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     EchoBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     // Size-class scale mirrors BodyScaleForSize so Huge/Large/Small species read.
