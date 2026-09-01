@@ -466,9 +466,14 @@ void AAstrawildBiomeDressingActor::BuildInstancedMeshes(UAstrawildBiomeDefinitio
         ISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         ISM->SetStaticMesh(Loaded[0]);
 
-        for (const FVector& Point : Points)
+        for (int32 Index = 0; Index < Points.Num(); ++Index)
         {
-            FTransform Instance(FRotator(0.0f, InStream.FRandRange(0.0f, 360.0f), 0.0f), Point);
+            const FVector& Point = Points[Index];
+            const float Yaw = InStream.FRandRange(0.0f, 360.0f);
+            const float Pitch = InStream.FRandRange(-2.5f, 2.5f);
+            const float Roll = InStream.FRandRange(-2.5f, 2.5f);
+            const float Scale = InStream.FRandRange(0.85f, 1.25f);
+            FTransform Instance(FRotator(Pitch, Yaw, Roll), Point, FVector(Scale));
             ISM->AddInstance(Instance, false);
         }
         return true;
@@ -507,7 +512,7 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
     {
         for (const TSoftObjectPtr<UStaticMesh>& SoftMesh : Meshes)
         {
-            if (SoftMesh.IsValid())
+            if (!SoftMesh.IsNull())
             {
                 return true;
             }
@@ -609,13 +614,17 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
         }
     }
 
-    // Shared vertex-color material across every section (terrain tile idiom).
+    // Shared PBR material across every section.
     if (DressingMesh && DressingMesh->GetNumSections() > 0)
     {
-        UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_Master_Surface.M_Master_Surface"));
         if (!Material)
         {
-            Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial"));
+            Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        }
+        if (!Material)
+        {
+            Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial.DefaultMaterial"));
         }
         if (Material)
         {

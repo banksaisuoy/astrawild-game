@@ -225,6 +225,10 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
     if (!SkelMesh)
     {
+        SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+    }
+    if (!SkelMesh)
+    {
         return false; // pack not imported — PMC silhouette stays live
     }
 
@@ -237,8 +241,9 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     SurvivorBody->SetSkeletalMesh(SkelMesh);
     SurvivorBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SurvivorBody->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    SurvivorBody->SetRelativeLocation(FVector::ZeroVector);
-    SurvivorBody->SetRelativeRotation(FRotator::ZeroRotator);
+    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 88.0f;
+    SurvivorBody->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
+    SurvivorBody->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     SurvivorBody->RegisterComponent();
 
     // The PMC body + placeholder cylinder retire while the skinned body lives.
@@ -249,6 +254,7 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     if (PlaceholderMesh)
     {
         PlaceholderMesh->SetVisibility(false);
+        PlaceholderMesh->SetHiddenInGame(true);
     }
 
     PrimaryActorTick.bCanEverTick = true;

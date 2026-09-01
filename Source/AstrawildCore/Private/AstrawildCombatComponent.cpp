@@ -11,6 +11,7 @@
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildVfxActor.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/OverlapResult.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
@@ -31,7 +32,7 @@ namespace
     {
         if (World && WeaponDef)
         {
-            UNiagaraSystem* MuzzleVfx = WeaponDef->MuzzleFlashVfx.IsValid() ? WeaponDef->MuzzleFlashVfx.Get() : nullptr;
+            UNiagaraSystem* MuzzleVfx = WeaponDef->MuzzleFlashVfx.LoadSynchronous();
             if (MuzzleVfx)
             {
                 UNiagaraFunctionLibrary::SpawnSystemAtLocation(World, MuzzleVfx, Location, Direction.Rotation());
@@ -40,7 +41,7 @@ namespace
             {
                 AAstrawildBeamVfxActor::SpawnMuzzleFlash(World, Location, Direction, Tint);
             }
-            if (USoundBase* FireSfx = WeaponDef->FireSound.IsValid() ? WeaponDef->FireSound.Get() : nullptr)
+            if (USoundBase* FireSfx = WeaponDef->FireSound.LoadSynchronous())
             {
                 UGameplayStatics::PlaySoundAtLocation(World, FireSfx, Location);
             }
@@ -56,11 +57,11 @@ namespace
         {
             return;
         }
-        if (UNiagaraSystem* ImpactVfx = WeaponDef->ImpactVfx.IsValid() ? WeaponDef->ImpactVfx.Get() : nullptr)
+        if (UNiagaraSystem* ImpactVfx = WeaponDef->ImpactVfx.LoadSynchronous())
         {
             UNiagaraFunctionLibrary::SpawnSystemAtLocation(World, ImpactVfx, Location);
         }
-        if (USoundBase* ImpactSfx = WeaponDef->ImpactSound.IsValid() ? WeaponDef->ImpactSound.Get() : nullptr)
+        if (USoundBase* ImpactSfx = WeaponDef->ImpactSound.LoadSynchronous())
         {
             UGameplayStatics::PlaySoundAtLocation(World, ImpactSfx, Location);
         }

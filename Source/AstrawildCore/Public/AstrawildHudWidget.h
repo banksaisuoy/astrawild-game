@@ -104,7 +104,12 @@ protected:
     TObjectPtr<UTextBlock> PowerText;
 
     /** Production V2: weapon + ammo line (combat readability, Master Plan §8). */
+    UPROPERTY()
     TObjectPtr<UTextBlock> WeaponText;
+
+    /** Sci-Fi reticle at screen center. */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> CrosshairText;
 
 private:
     float RefreshAccumulator = 0.0f;
