@@ -42,6 +42,9 @@ void AAstrawildGameMode::BeginPlay()
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         Bootstrapper = World->SpawnActor<AAstrawildWorldBootstrapper>(
             AAstrawildWorldBootstrapper::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params);
+
+        // Immediate PlayerStart anchor so frame-0 pawn possession places player safely on ground
+        World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator, Params);
     }
 
     // Audit C-2: free root technologies (e.g. BasicCrafting) are granted every session

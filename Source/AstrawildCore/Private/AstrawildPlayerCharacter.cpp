@@ -476,21 +476,27 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     auto MapMoveKey = [&Context, this](const FKey& Key, const float X, const float Y)
     {
         FEnhancedActionKeyMapping& Mapping = Context->MapKey(MoveAction, Key);
-        if (X < 0.0f)
+        if (Y != 0.0f)
+        {
+            UInputModifierSwizzleAxis* Swizzle = NewObject<UInputModifierSwizzleAxis>(this);
+            Swizzle->Order = EInputAxisSwizzle::YXZ;
+            Mapping.Modifiers.Add(Swizzle);
+            if (Y < 0.0f)
+            {
+                UInputModifierNegate* NegateY = NewObject<UInputModifierNegate>(this);
+                NegateY->bX = false;
+                NegateY->bY = true;
+                NegateY->bZ = false;
+                Mapping.Modifiers.Add(NegateY);
+            }
+        }
+        else if (X < 0.0f)
         {
             UInputModifierNegate* NegateX = NewObject<UInputModifierNegate>(this);
             NegateX->bX = true;
             NegateX->bY = false;
             NegateX->bZ = false;
             Mapping.Modifiers.Add(NegateX);
-        }
-        if (Y < 0.0f)
-        {
-            UInputModifierNegate* NegateY = NewObject<UInputModifierNegate>(this);
-            NegateY->bX = false;
-            NegateY->bY = true;
-            NegateY->bZ = false;
-            Mapping.Modifiers.Add(NegateY);
         }
     };
     MapMoveKey(EKeys::W, 0.0f, 1.0f);
@@ -1503,12 +1509,16 @@ namespace
         }
     }
 
-    UMaterial* LoadPlayerBodyMaterial()
+    UMaterialInterface* LoadPlayerBodyMaterial()
     {
-        UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_Master_Surface.M_Master_Surface"));
         if (!Material)
         {
-            Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial"));
+            Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/Instances/MI_Survivor_Armor.MI_Survivor_Armor"));
+        }
+        if (!Material)
+        {
+            Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial.DefaultMaterial"));
         }
         return Material;
     }
@@ -1522,37 +1532,72 @@ void AAstrawildPlayerCharacter::BuildProceduralBody()
     }
 
     // ASTRAWILD frontier-survivor palette: graphite suit, amber accents, teal visor.
-    const FColor SuitDark(58, 60, 66, 255);
-    const FColor SuitMid(78, 80, 88, 255);
-    const FColor Amber(232, 152, 48, 255);
+    const FColor SuitDark(42, 45, 50, 255);
+    const FColor SuitMid(65, 68, 75, 255);
+    const FColor Amber(235, 145, 35, 255);
     const FColor VisorTeal(74, 220, 200, 255);
-    const FColor HelmetGrey(128, 130, 134, 255);
+    const FColor HelmetGrey(110, 115, 122, 255);
+    const FColor MetalGrey(160, 165, 172, 255);
 
     FAstrawildPlayerBodyPart Body;
 
-    // Torso + chest plate.
-    AddPlayerBox(Body, FVector(0, 0, 100), FVector(17, 12, 26), SuitDark);
-    AddPlayerBox(Body, FVector(9, 0, 108), FVector(8, 9, 13), Amber);
+    // 1. Boots & Feet (Z: -88 to -74, touching ground plane)
+    AddPlayerBox(Body, FVector(3, -10, -80), FVector(10, 5, 8), SuitDark);
+    AddPlayerBox(Body, FVector(3, 10, -80), FVector(10, 5, 8), SuitDark);
+    AddPlayerBox(Body, FVector(4, -10, -78), FVector(9, 4, 3), Amber);
+    AddPlayerBox(Body, FVector(4, 10, -78), FVector(9, 4, 3), Amber);
 
-    // Head + visor.
-    AddPlayerSphere(Body, FVector(0, 0, 148), 13.5f, HelmetGrey);
-    AddPlayerBox(Body, FVector(10, 0, 149), FVector(4, 9, 6), VisorTeal);
+    // 2. Lower Legs & Shins (Z: -72 to -40)
+    AddPlayerBox(Body, FVector(0, -10, -56), FVector(6, 5, 16), SuitMid);
+    AddPlayerBox(Body, FVector(0, 10, -56), FVector(6, 5, 16), SuitMid);
+    AddPlayerBox(Body, FVector(4, -10, -42), FVector(3, 4, 4), Amber); // Knee guards
+    AddPlayerBox(Body, FVector(4, 10, -42), FVector(3, 4, 4), Amber);
 
-    // Backpack (scavenger gear) + strap.
-    AddPlayerBox(Body, FVector(-19, 0, 106), FVector(7, 13, 17), SuitMid);
-    AddPlayerBox(Body, FVector(-12, 0, 120), FVector(2, 11, 3), Amber);
+    // 3. Thighs / Upper Legs (Z: -38 to -8)
+    AddPlayerBox(Body, FVector(0, -10, -23), FVector(7, 6, 15), SuitDark);
+    AddPlayerBox(Body, FVector(0, 10, -23), FVector(7, 6, 15), SuitDark);
 
-    // Legs + arms.
-    AddPlayerBox(Body, FVector(0, 8, 55), FVector(7, 7, 20), SuitMid);
-    AddPlayerBox(Body, FVector(0, -8, 55), FVector(7, 7, 20), SuitMid);
-    AddPlayerBox(Body, FVector(0, 21, 100), FVector(6, 5, 23), SuitMid);
-    AddPlayerBox(Body, FVector(0, -21, 100), FVector(6, 5, 23), SuitMid);
+    // 4. Pelvis & Belt (Z: -8 to +6)
+    AddPlayerBox(Body, FVector(0, 0, -2), FVector(11, 15, 6), SuitDark);
+    AddPlayerBox(Body, FVector(1, 0, 2), FVector(12, 16, 3), SuitMid);
+    AddPlayerBox(Body, FVector(7, 0, 2), FVector(2, 4, 3), Amber); // Buckle
+
+    // 5. Torso & Chest Armor (Z: +6 to +46)
+    AddPlayerBox(Body, FVector(0, 0, 14), FVector(10, 13, 8), SuitDark); // Abdomen
+    AddPlayerBox(Body, FVector(1, 0, 30), FVector(14, 17, 12), SuitDark); // Chest plate
+    AddPlayerBox(Body, FVector(8, 0, 32), FVector(4, 9, 8), Amber); // Chest trim
+    AddPlayerSphere(Body, FVector(11, 0, 33), 4.5f, VisorTeal); // Glowing Arc Reactor Core
+
+    // 6. Scavenger Backpack & Battery Rig (Z: +18 to +46)
+    AddPlayerBox(Body, FVector(-13, 0, 30), FVector(7, 13, 14), SuitMid);
+    AddPlayerBox(Body, FVector(-16, -6, 32), FVector(3, 3, 10), Amber); // Left battery cell
+    AddPlayerBox(Body, FVector(-16, 6, 32), FVector(3, 3, 10), Amber);  // Right battery cell
+
+    // 7. Shoulders & Pauldrons (Z: +38 to +46)
+    AddPlayerBox(Body, FVector(0, -20, 40), FVector(8, 5, 5), HelmetGrey);
+    AddPlayerBox(Body, FVector(0, 20, 40), FVector(8, 5, 5), HelmetGrey);
+
+    // 8. Arms & Forearm Scanner (Z: +8 to +35)
+    AddPlayerBox(Body, FVector(0, -20, 26), FVector(5, 5, 8), SuitMid); // Biceps
+    AddPlayerBox(Body, FVector(0, 20, 26), FVector(5, 5, 8), SuitMid);
+    AddPlayerBox(Body, FVector(3, -20, 12), FVector(6, 6, 8), SuitDark); // Left Forearm (Scanner)
+    AddPlayerBox(Body, FVector(8, -20, 13), FVector(2, 4, 5), VisorTeal); // Hologram Scanner Screen
+    AddPlayerBox(Body, FVector(3, 20, 12), FVector(5, 5, 8), SuitDark); // Right Forearm
+    AddPlayerBox(Body, FVector(3, -20, 2), FVector(4, 4, 3), MetalGrey); // Hands
+    AddPlayerBox(Body, FVector(5, 20, 2), FVector(4, 4, 3), MetalGrey);
+
+    // 9. Neck & Helmet (Z: +44 to +74)
+    AddPlayerBox(Body, FVector(0, 0, 45), FVector(5, 5, 4), SuitDark); // Neck
+    AddPlayerSphere(Body, FVector(0, 0, 58), 12.5f, HelmetGrey); // Helmet Dome
+    AddPlayerBox(Body, FVector(7, 0, 58), FVector(5, 8, 5), VisorTeal); // Curved Glowing Visor
+    AddPlayerBox(Body, FVector(5, -8, 53), FVector(3, 3, 3), MetalGrey); // Filter L
+    AddPlayerBox(Body, FVector(5, 8, 53), FVector(3, 3, 3), MetalGrey);  // Filter R
 
     if (Body.Vertices.Num() > 0)
     {
         BodyMesh->CreateMeshSection(0, Body.Vertices, Body.Triangles, Body.Normals, Body.UVs, Body.Colors,
             TArray<FProcMeshTangent>(), false);
-        if (UMaterial* Material = LoadPlayerBodyMaterial())
+        if (UMaterialInterface* Material = LoadPlayerBodyMaterial())
         {
             BodyMesh->SetMaterial(0, Material);
         }
@@ -1561,6 +1606,7 @@ void AAstrawildPlayerCharacter::BuildProceduralBody()
         if (PlaceholderMesh)
         {
             PlaceholderMesh->SetVisibility(false);
+            PlaceholderMesh->SetHiddenInGame(true);
         }
     }
 }
@@ -1659,7 +1705,7 @@ void AAstrawildPlayerCharacter::RefreshHeldWeaponVisual()
     {
         WeaponMesh->CreateMeshSection(0, Gun.Vertices, Gun.Triangles, Gun.Normals, Gun.UVs, Gun.Colors,
             TArray<FProcMeshTangent>(), false);
-        if (UMaterial* Material = LoadPlayerBodyMaterial())
+        if (UMaterialInterface* Material = LoadPlayerBodyMaterial())
         {
             WeaponMesh->SetMaterial(0, Material);
         }

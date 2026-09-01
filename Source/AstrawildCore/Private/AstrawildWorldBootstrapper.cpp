@@ -29,6 +29,7 @@
 #include "GameFramework/PlayerStart.h"
 #include "NavigationSystem.h"
 
+#include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/LightComponent.h"
 #include "Components/PointLightComponent.h"
@@ -293,9 +294,17 @@ void AAstrawildWorldBootstrapper::BuildLighting()
         if (SunLight)
         {
             SunLight->SetMobility(EComponentMobility::Movable);
-            if (ULightComponent* LightComponent = SunLight->GetLightComponent())
+            if (UDirectionalLightComponent* DirLight = Cast<UDirectionalLightComponent>(SunLight->GetLightComponent()))
             {
-                LightComponent->SetIntensity(8.0f);
+                DirLight->SetIntensity(65000.0f);
+                DirLight->SetLightColor(FLinearColor(1.0f, 0.95f, 0.88f));
+                DirLight->bAtmosphereSunLight = true;
+                DirLight->AtmosphereSunLightIndex = 0;
+                DirLight->CastShadows = true;
+            }
+            else if (ULightComponent* LightComponent = SunLight->GetLightComponent())
+            {
+                LightComponent->SetIntensity(65000.0f);
             }
         }
     }
@@ -309,7 +318,9 @@ void AAstrawildWorldBootstrapper::BuildLighting()
             if (USkyLightComponent* SkyComponent = SkyLightActor->GetLightComponent())
             {
                 SkyComponent->SetMobility(EComponentMobility::Movable);
-                SkyComponent->SetIntensity(1.5f);
+                SkyComponent->SetIntensity(3.5f);
+                SkyComponent->bRealTimeCapture = true;
+                SkyComponent->SetLightColor(FLinearColor(0.85f, 0.92f, 1.0f));
             }
         }
     }
