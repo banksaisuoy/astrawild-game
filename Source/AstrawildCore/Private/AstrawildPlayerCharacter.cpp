@@ -225,6 +225,10 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
     if (!SkelMesh)
     {
+        SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+    }
+    if (!SkelMesh)
+    {
         return false; // pack not imported — PMC silhouette stays live
     }
 
@@ -250,6 +254,7 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     if (PlaceholderMesh)
     {
         PlaceholderMesh->SetVisibility(false);
+        PlaceholderMesh->SetHiddenInGame(true);
     }
 
     PrimaryActorTick.bCanEverTick = true;

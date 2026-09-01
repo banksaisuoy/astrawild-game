@@ -304,12 +304,16 @@ void AAstrawildTerrainTileActor::BuildTile(const FAstrawildZoneDescriptor& InZon
 
     Mesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, VertexColors, TArray<FProcMeshTangent>(), true);
 
-    // Vertex-color material candidates from engine content (project ships zero assets).
-    // DebugMeshMaterial renders vertex colors; fall back to the engine default.
-    UMaterial* TileMaterial = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+    // Production V2: Bind the 4-layer Sci-Fi Landscape Master Material.
+    // Falls back gracefully to DebugMeshMaterial / DefaultMaterial if asset is not loaded.
+    UMaterialInterface* TileMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_Landscape_SciFiFrontier.M_Landscape_SciFiFrontier"));
     if (!TileMaterial)
     {
-        TileMaterial = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial.DefaultMaterial"));
+        TileMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+    }
+    if (!TileMaterial)
+    {
+        TileMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial.DefaultMaterial"));
     }
     if (TileMaterial)
     {

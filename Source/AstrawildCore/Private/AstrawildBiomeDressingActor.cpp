@@ -614,13 +614,17 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
         }
     }
 
-    // Shared vertex-color material across every section (terrain tile idiom).
+    // Shared PBR material across every section.
     if (DressingMesh && DressingMesh->GetNumSections() > 0)
     {
-        UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_Master_Surface.M_Master_Surface"));
         if (!Material)
         {
-            Material = LoadObject<UMaterial>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial"));
+            Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineDebugMaterials/DebugMeshMaterial.DebugMeshMaterial"));
+        }
+        if (!Material)
+        {
+            Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineMaterials/DefaultMaterial.DefaultMaterial"));
         }
         if (Material)
         {
