@@ -719,7 +719,11 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
     EchoBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     EchoBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     // Size-class scale mirrors BodyScaleForSize so Huge/Large/Small species read.
-    EchoBodyMesh->SetRelativeScale3D(FVector(BodyScaleForSize(EchoDefinition->SizeClass)));
+    const float S = BodyScaleForSize(EchoDefinition->SizeClass);
+    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : (60.0f * S);
+    EchoBodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
+    EchoBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+    EchoBodyMesh->SetRelativeScale3D(FVector(S));
     EchoBodyMesh->RegisterComponent();
 
     // Warm the locomotion clips + start the idle loop.

@@ -237,8 +237,9 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     SurvivorBody->SetSkeletalMesh(SkelMesh);
     SurvivorBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SurvivorBody->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    SurvivorBody->SetRelativeLocation(FVector::ZeroVector);
-    SurvivorBody->SetRelativeRotation(FRotator::ZeroRotator);
+    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 88.0f;
+    SurvivorBody->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
+    SurvivorBody->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     SurvivorBody->RegisterComponent();
 
     // The PMC body + placeholder cylinder retire while the skinned body lives.
