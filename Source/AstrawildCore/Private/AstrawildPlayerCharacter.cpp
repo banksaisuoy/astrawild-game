@@ -656,6 +656,23 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
         return;
     }
 
+    // CRITICAL: Construct runtime input actions BEFORE attempting to bind them.
+    // If SetupPlayerInputComponent executes before BeginPlay/PossessedBy, runtime
+    // action pointers would be null and all BindAction calls would be skipped.
+    if (!DefaultMappingContext)
+    {
+        BuildRuntimeInputDefaults();
+    }
+    if (!GamepadMappingContext)
+    {
+        BuildGamepadInputDefaults();
+    }
+
+    UE_LOG(LogAstrawild, Log, TEXT("SetupPlayerInputComponent: MoveAction=%s, LookAction=%s, JumpAction=%s"),
+        MoveAction ? TEXT("VALID") : TEXT("NULL"),
+        LookAction ? TEXT("VALID") : TEXT("NULL"),
+        JumpAction ? TEXT("VALID") : TEXT("NULL"));
+
     if (MoveAction)
     {
         EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAstrawildPlayerCharacter::Move);
