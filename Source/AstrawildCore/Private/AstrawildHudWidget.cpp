@@ -146,6 +146,11 @@ void UAstrawildHudWidget::BuildWidgetTree()
     // --- Final production run: scanner + drone companion readout (under capture). ---
     ScanText = MakeText(TEXT("ScanText"), FLinearColor(0.62f, 0.88f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(ScanText), FVector2D(0.5f, 0.885f), FVector2D(0.5f, 0.885f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 20.0f));
+
+    // --- Sci-Fi reticle at screen center ---
+    CrosshairText = MakeText(TEXT("CrosshairText"), FLinearColor(0.29f, 0.86f, 0.78f, 0.85f), 16);
+    AnchorSlot(RootCanvas->AddChildToCanvas(CrosshairText), FVector2D(0.5f, 0.5f), FVector2D(0.5f, 0.5f), FVector2D(-12.0f, -12.0f), FVector2D(24.0f, 24.0f));
+    CrosshairText->SetText(FText::FromString(TEXT("•")));
 }
 
 AAstrawildPlayerCharacter* UAstrawildHudWidget::GetAstrawildPawn() const
@@ -505,5 +510,20 @@ void UAstrawildHudWidget::RefreshState()
             ScanLine += TEXT("[Drone active]");
         }
         ScanText->SetText(FText::FromString(ScanLine));
+    }
+
+    // Reticle update: contracts to precision amber reticle when aiming, teal dot when hip-firing.
+    if (CrosshairText && Pawn)
+    {
+        if (Pawn->IsAiming())
+        {
+            CrosshairText->SetText(FText::FromString(TEXT("< + >")));
+            CrosshairText->SetColorAndOpacity(FSlateColor(FLinearColor(0.91f, 0.60f, 0.19f, 1.0f)));
+        }
+        else
+        {
+            CrosshairText->SetText(FText::FromString(TEXT("•")));
+            CrosshairText->SetColorAndOpacity(FSlateColor(FLinearColor(0.29f, 0.86f, 0.78f, 0.85f)));
+        }
     }
 }

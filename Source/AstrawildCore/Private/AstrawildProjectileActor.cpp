@@ -233,7 +233,7 @@ void AAstrawildProjectileActor::SetWeaponVfxAssets(const UAstrawildWeaponDefinit
     TrailVfxAsset = WeaponDef->ProjectileTrailVfx;
     ImpactVfxAsset = WeaponDef->ImpactVfx;
 
-    if (UNiagaraSystem* Trail = TrailVfxAsset.IsValid() ? TrailVfxAsset.Get() : nullptr)
+    if (UNiagaraSystem* Trail = TrailVfxAsset.LoadSynchronous())
     {
         UNiagaraFunctionLibrary::SpawnSystemAttached(Trail, CollisionSphere, NAME_None,
             FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset,
@@ -246,7 +246,7 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
     // CP-05: impact burst on every machine that sees the contact (visual only,
     // before the authority gate — clients get the hit callback through the
     // replicated movement as well).
-    if (UNiagaraSystem* Impact = ImpactVfxAsset.IsValid() ? ImpactVfxAsset.Get() : nullptr)
+    if (UNiagaraSystem* Impact = ImpactVfxAsset.LoadSynchronous())
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), Impact, GetActorLocation());
     }

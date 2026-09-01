@@ -281,6 +281,11 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Drone")
     AAstrawildUtilityDroneActor* GetActiveDrone() const { return ActiveDrone.Get(); }
 
+    /** Aim / Guard stance state. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Combat")
+    bool IsAiming() const { return bGuardPose; }
+    bool IsGuardPose() const { return bGuardPose; }
+
     /** Production V2: clear the active-drone handle (battery auto-recall path). */
     void ClearActiveDrone() { ActiveDrone = nullptr; }
 
