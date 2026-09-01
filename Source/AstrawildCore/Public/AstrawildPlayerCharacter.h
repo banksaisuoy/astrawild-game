@@ -103,7 +103,11 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
     virtual void PossessedBy(AController* NewController) override;
+    virtual void PawnClientRestart() override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
+
+    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay, PawnClientRestart, and PossessedBy. */
+    void ApplyMappingContext();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
@@ -387,9 +391,6 @@ protected:
     // Audit C-1b (latent compile error): every existing call passes 2 arguments while the
     // declaration demanded 3 — default bNegateY so the file compiles (value is unused).
     class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY = false);
-
-    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay and every PossessedBy (audit C-8). */
-    void ApplyMappingContext();
 
     UFUNCTION()
     void OnPlayerDied();
