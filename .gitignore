@@ -1,29 +1,56 @@
-# Unreal Engine generated files
-Binaries/
-DerivedDataCache/
-Intermediate/
-Saved/
-.vs/
-.vscode/
-Build/
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.dll
+*.so
+*.a
+*.exe
+*.out
 
-# IDE / OS files
-*.suo
-*.user
-*.userosscache
-*.sln
-*.VC.db
-*.VC.opendb
+# Dependencies
+node_modules/
+venv/
+.venv/
+.env
+.env.local
+*.env.*
+
+# Build directories
+Build/
+Binaries/
+Intermediate/
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# MyPy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/
+
+# Distribution
+dist/
+build/
+target/
+.gradle/
+
+# System files
 .DS_Store
 Thumbs.db
-
-# Logs and local settings
-*.log
-*.tmp
-*.bak
-
-# Local packaging/output
-Packaged/
-StagedBuilds/
-
-# Keep project source, config, content, docs and uproject tracked.
+```
