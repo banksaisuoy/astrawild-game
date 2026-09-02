@@ -13,3 +13,4 @@ public:
 
 // Include new components
 #include "Components/AstrawildProceduralEchoMesh.h"
+#include "Materials/AstrawildMaterialBuilder.h"
