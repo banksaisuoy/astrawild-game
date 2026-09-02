@@ -216,23 +216,43 @@ void AAstrawildPlayerCharacter::BeginPlay()
 // ---------------------------------------------------------------------------
 bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
 {
+    int32 MeshTier = 0;
     USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
+    if (SkelMesh)
+    {
+        MeshTier = 1;
+    }
     if (!SkelMesh)
     {
         SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+        if (SkelMesh)
+        {
+            MeshTier = 1;
+        }
     }
     if (!SkelMesh)
     {
         SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit/SkeletalMeshes/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+        if (SkelMesh)
+        {
+            MeshTier = 1;
+        }
     }
     if (!SkelMesh)
     {
         SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+        if (SkelMesh)
+        {
+            MeshTier = 2;
+        }
     }
     if (!SkelMesh)
     {
+        UE_LOG(LogAstrawild, Log, TEXT("Survivor mesh fallback: Tier 5 (9-part procedural exosuit active)."));
         return false; // pack not imported — procedural silhouette stays live
     }
+
+    UE_LOG(LogAstrawild, Log, TEXT("Survivor mesh active: Tier %d (%s)."), MeshTier, *SkelMesh->GetName());
 
     USkeletalMeshComponent* MeshComp = GetMesh();
     if (!MeshComp)
@@ -672,6 +692,18 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
         MoveAction ? TEXT("VALID") : TEXT("NULL"),
         LookAction ? TEXT("VALID") : TEXT("NULL"),
         JumpAction ? TEXT("VALID") : TEXT("NULL"));
+
+    if (!MoveAction || !LookAction || !JumpAction || !SprintAction || !InteractAction || !AttackAction || !InventoryAction)
+    {
+        UE_LOG(LogAstrawild, Error, TEXT("CRITICAL: One or more core loop actions are NULL during SetupPlayerInputComponent! Move=%s, Look=%s, Jump=%s, Sprint=%s, Interact=%s, Attack=%s, Inventory=%s"),
+            MoveAction ? TEXT("VALID") : TEXT("NULL"),
+            LookAction ? TEXT("VALID") : TEXT("NULL"),
+            JumpAction ? TEXT("VALID") : TEXT("NULL"),
+            SprintAction ? TEXT("VALID") : TEXT("NULL"),
+            InteractAction ? TEXT("VALID") : TEXT("NULL"),
+            AttackAction ? TEXT("VALID") : TEXT("NULL"),
+            InventoryAction ? TEXT("VALID") : TEXT("NULL"));
+    }
 
     if (MoveAction)
     {

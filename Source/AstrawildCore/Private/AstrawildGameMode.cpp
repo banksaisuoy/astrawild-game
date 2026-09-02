@@ -10,6 +10,7 @@
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildWorldBootstrapper.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerStart.h"
 #include "TimerManager.h"
@@ -38,13 +39,33 @@ void AAstrawildGameMode::BeginPlay()
     UWorld* World = GetWorld();
     if (World)
     {
-        FActorSpawnParameters Params;
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        Bootstrapper = World->SpawnActor<AAstrawildWorldBootstrapper>(
-            AAstrawildWorldBootstrapper::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params);
+        // Prevent duplicate bootstrapper (reuse existing instance if already in level)
+        for (TActorIterator<AAstrawildWorldBootstrapper> It(World); It; ++It)
+        {
+            Bootstrapper = *It;
+            break;
+        }
+        if (!Bootstrapper)
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            Bootstrapper = World->SpawnActor<AAstrawildWorldBootstrapper>(
+                AAstrawildWorldBootstrapper::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params);
+        }
 
-        // Immediate PlayerStart anchor so frame-0 pawn possession places player safely on ground
-        World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator, Params);
+        // Prevent duplicate PlayerStart anchor
+        bool bHasPlayerStart = false;
+        for (TActorIterator<APlayerStart> It(World); It; ++It)
+        {
+            bHasPlayerStart = true;
+            break;
+        }
+        if (!bHasPlayerStart)
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), FVector(0.0f, 0.0f, 150.0f), FRotator::ZeroRotator, Params);
+        }
     }
 
     // Audit C-2: free root technologies (e.g. BasicCrafting) are granted every session

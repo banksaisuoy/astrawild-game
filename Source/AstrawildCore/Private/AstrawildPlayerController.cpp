@@ -68,11 +68,11 @@ void AAstrawildPlayerController::OnPossess(APawn* InPawn)
         bShowMouseCursor = false;
         SetIgnoreMoveInput(false);
         SetIgnoreLookInput(false);
-    }
 
-    if (AAstrawildPlayerCharacter* PlayerChar = Cast<AAstrawildPlayerCharacter>(InPawn))
-    {
-        PlayerChar->ApplyMappingContext();
+        if (AAstrawildPlayerCharacter* PlayerChar = Cast<AAstrawildPlayerCharacter>(InPawn))
+        {
+            PlayerChar->ApplyMappingContext();
+        }
     }
 }
 
