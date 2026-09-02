@@ -10,3 +10,7 @@ public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
 };
+
+// Include new components
+#include "Components/AstrawildProceduralEchoMesh.h"
+#include "Materials/AstrawildMaterialBuilder.h"
