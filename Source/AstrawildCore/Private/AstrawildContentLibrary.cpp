@@ -288,6 +288,17 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     CureTonic->Description = FText::FromString(TEXT("CODE_DEFAULT — medicine bench brew; clears one creature illness and restores 30 sanity."));
     Registry->RegisterItem(CureTonic);
 
+    // --- SCP Phase 10: breeding economy. ---
+
+    UAstrawildItemDefinition* BreedingCake = MakeItem(Outer, TEXT("Item_BreedingCake"), TEXT("Echo Breeding Cake"), EAstrawildItemCategory::Consumable, 0.6f, 10);
+    BreedingCake->EchoFeedValue = 10.0f;
+    BreedingCake->Description = FText::FromString(TEXT("CODE_DEFAULT — rich feed; two bonded Echoes at the Breeding Pen produce an egg."));
+    Registry->RegisterItem(BreedingCake);
+
+    UAstrawildItemDefinition* EchoEgg = MakeItem(Outer, TEXT("Item_EchoEgg"), TEXT("Echo Egg"), EAstrawildItemCategory::CreatureItem, 1.5f, 5);
+    EchoEgg->Description = FText::FromString(TEXT("CODE_DEFAULT — a warm, humming egg; hatch it at the Egg Incubator."));
+    Registry->RegisterItem(EchoEgg);
+
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): torso progression. ---
     // Rating feeds ComputeArmorFraction(Rating, K=100) → 17% / 31% / 44% reduction.
 
@@ -478,6 +489,12 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CureTonic"), TEXT("Echo Cure Tonic"),
         { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Berry"), 1), Stack(TEXT("Item_CrystalShard"), 1) },
         { Stack(TEXT("Item_CureTonic"), 2) }, 5.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
+
+    // --- SCP Phase 10: breeding recipe. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_BreedingCake"), TEXT("Echo Breeding Cake"),
+        { Stack(TEXT("Item_Berry"), 2), Stack(TEXT("Item_FeedMix"), 1), Stack(TEXT("Item_Dawnbloom"), 2) },
+        { Stack(TEXT("Item_BreedingCake"), 1) }, 8.0f, TEXT("Tech_Husbandry"), TEXT("Station_Campfire")));
 
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): armory progression. ---
 
@@ -844,6 +861,14 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_DefenseTurret"), TEXT("Bolt Turret"), EAstrawildBuildingCategory::Defense,
         TEXT("Item_Stone"), 6, TEXT("Tech_Electrical"), 400.0f, EAstrawildPowerRole::Consumer, 0.0f, 3.0f, 0.0f, EAstrawildWorkType::None));
+
+    // --- SCP Phase 10: breeding. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_BreedingPen"), TEXT("Breeding Pen"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_WoodPlank"), 6, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_EggIncubator"), TEXT("Egg Incubator"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_CrystalShard"), 2, TEXT("Tech_Husbandry"), 240.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::None));
 }
 
 // ---------------------------------------------------------------------------

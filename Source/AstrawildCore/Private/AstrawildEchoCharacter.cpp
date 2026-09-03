@@ -5,6 +5,7 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildGeneticsLibrary.h"
 #include "AstrawildMountComponent.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEcosystemSubsystem.h"
@@ -1094,13 +1095,15 @@ float AAstrawildEchoCharacter::GetHealthFraction() const
 
 float AAstrawildEchoCharacter::GetMaxHealth() const
 {
-    // +10% per level above 1 (growth, directive §4).
-    return FMath::Max(1.0f, CachedStats.MaxHealth * (1.0f + 0.1f * (Level - 1)));
+    // +10% per level above 1 (growth, directive §4); Sturdy traits stack on top.
+    const float TraitHealth = UAstrawildGeneticsLibrary::ComputeTraitHealthMultiplier(InstanceTraits);
+    return FMath::Max(1.0f, CachedStats.MaxHealth * (1.0f + 0.1f * (Level - 1)) * TraitHealth);
 }
 
 float AAstrawildEchoCharacter::GetAttackPower() const
 {
-    return CachedStats.AttackPower * (1.0f + 0.08f * (Level - 1));
+    const float TraitAttack = UAstrawildGeneticsLibrary::ComputeTraitAttackMultiplier(InstanceTraits);
+    return CachedStats.AttackPower * (1.0f + 0.08f * (Level - 1)) * TraitAttack;
 }
 
 float AAstrawildEchoCharacter::ComputeCaptureChance() const
@@ -1192,12 +1195,35 @@ float AAstrawildEchoCharacter::GetAggroRadiusMultiplier() const
 
 float AAstrawildEchoCharacter::GetWorkSpeedMultiplier() const
 {
+    float PersonalityMultiplier = 1.0f;
     switch (Personality)
     {
-    case EAstrawildPersonality::Lazy:      return 0.6f;
-    case EAstrawildPersonality::Energetic: return 1.4f;
-    case EAstrawildPersonality::Loyal:     return 1.15f;
-    default: return 1.0f;
+    case EAstrawildPersonality::Lazy:      PersonalityMultiplier = 0.6f; break;
+    case EAstrawildPersonality::Energetic: PersonalityMultiplier = 1.4f; break;
+    case EAstrawildPersonality::Loyal:     PersonalityMultiplier = 1.15f; break;
+    default: break;
+    }
+
+    // SCP Phase 10: Artisan traits multiply work output on top of personality.
+    return PersonalityMultiplier * UAstrawildGeneticsLibrary::ComputeTraitWorkMultiplier(InstanceTraits);
+}
+
+void AAstrawildEchoCharacter::SetInstanceTraits(const TArray<FName>& InTraits)
+{
+    // Only the four slots are meaningful; duplicates inherit by design.
+    InstanceTraits = InTraits;
+    if (InstanceTraits.Num() > 4)
+    {
+        InstanceTraits.SetNum(4);
+    }
+
+    // Swift traits speed the base movement budget (speed recompute reads
+    // CachedStats on the next multiplier change or restore — force it now).
+    if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+    {
+        Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed *
+            UAstrawildGeneticsLibrary::ComputeTraitSpeedMultiplier(InstanceTraits) *
+            GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier());
     }
 }
 
@@ -1412,6 +1438,8 @@ FAstrawildEchoInstanceV2 AAstrawildEchoCharacter::ToSaveDataV2() const
     {
         SanityComponent->ExportForSave(Data.Sanity, Data.IllnessId);
     }
+    // SCP Phase 10: breeding traits persist with the instance.
+    Data.Traits = InstanceTraits;
     return Data;
 }
 
@@ -1473,6 +1501,20 @@ bool AAstrawildEchoCharacter::FromSaveDataV2(const FAstrawildEchoInstanceV2& Dat
     if (SanityComponent)
     {
         SanityComponent->ImportFromSave(FMath::IsFinite(Data.Sanity) ? Data.Sanity : 100.0f, Data.IllnessId);
+    }
+    // SCP Phase 10: restore breeding traits + reapply their stat effects
+    // (only known trait ids survive — edited saves cannot inject effects).
+    {
+        TArray<FName> SafeTraits;
+        const TArray<FName>& Pool = UAstrawildGeneticsLibrary::GetTraitPool();
+        for (const FName& Candidate : Data.Traits)
+        {
+            if (Pool.Contains(Candidate))
+            {
+                SafeTraits.Add(Candidate);
+            }
+        }
+        SetInstanceTraits(SafeTraits);
     }
     return true;
 }

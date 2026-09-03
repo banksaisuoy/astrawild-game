@@ -555,6 +555,10 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
     /** SCP Phase 9 (additive): active illness id (NAME_None = healthy). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
     FName IllnessId = NAME_None;
+
+    /** SCP Phase 10 (additive): passive traits rolled at breeding (4 slots). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    TArray<FName> Traits;
 };
 
 /** Quest objective definition + runtime progress (directive §25). */

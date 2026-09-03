@@ -177,6 +177,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Mount")
     TObjectPtr<UAstrawildMountComponent> MountComponent;
 
+    /** SCP Phase 10: passive traits rolled at breeding (4 slots, saved with the instance). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Genetics")
+    TArray<FName> InstanceTraits;
+
+    /** Assign breeding traits + apply their stat effects (server). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Genetics")
+    void SetInstanceTraits(const TArray<FName>& InTraits);
+
     // ------------------------------------------------------------------
     // GDP-1 — Echo ability engine (server-authoritative, replicated cooldowns).
     // ------------------------------------------------------------------

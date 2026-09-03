@@ -7,6 +7,7 @@
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildGeneticsLibrary.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -19,6 +20,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
@@ -390,6 +392,142 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
         {
             PC->ToggleResearchScreen();
+        }
+        return;
+    }
+
+    // SCP Phase 10: breeding pen — the two highest-bond party echoes + a
+    // breeding cake produce one Echo Egg (species follows the dominant parent).
+    if (DefinitionId == TEXT("Building_BreedingPen") && Player->InventoryComponent &&
+        GetLocalRole() == ROLE_Authority)
+    {
+        UAstrawildEchoRosterSubsystem* Roster = World ? World->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr;
+        const TArray<AAstrawildEchoCharacter*> Party = Roster ? Roster->GetSpawnedParty() : TArray<AAstrawildEchoCharacter*>();
+
+        FText Result = NSLOCTEXT("ASTRAWILD", "BreedNeedTwo", "Breeding Pen: needs two bonded Echoes and a Breeding Cake.");
+
+        if (Party.Num() >= 2 && Player->InventoryComponent->HasItem(TEXT("Item_BreedingCake"), 1))
+        {
+            // The two highest-bond parents sire the egg.
+            AAstrawildEchoCharacter* ParentA = nullptr;
+            AAstrawildEchoCharacter* ParentB = nullptr;
+            for (AAstrawildEchoCharacter* Echo : Party)
+            {
+                if (!Echo || !Echo->bCaptured)
+                {
+                    continue;
+                }
+                if (!ParentA || Echo->Bond > ParentA->Bond)
+                {
+                    ParentB = ParentA;
+                    ParentA = Echo;
+                }
+                else if (!ParentB || Echo->Bond > ParentB->Bond)
+                {
+                    ParentB = Echo;
+                }
+            }
+
+            if (ParentA && ParentB && Player->InventoryComponent->RemoveItem(TEXT("Item_BreedingCake"), 1))
+            {
+                Player->InventoryComponent->AddItemSilent(TEXT("Item_EchoEgg"), 1);
+                Result = FText::Format(
+                    NSLOCTEXT("ASTRAWILD", "BreedEgg", "An Echo Egg formed from {0} and {1}! Incubate it at the Egg Incubator."),
+                    FText::FromName(ParentA->EchoDefinition ? ParentA->EchoDefinition->DefinitionId : NAME_None),
+                    FText::FromName(ParentB->EchoDefinition ? ParentB->EchoDefinition->DefinitionId : NAME_None));
+                UE_LOG(LogAstrawildBuilding, Log, TEXT("Breeding: egg produced (parents %s + %s)."),
+                    *GetNameSafe(ParentA), *GetNameSafe(ParentB));
+            }
+        }
+
+        if (AAstrawildPlayerController* BreedPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            BreedPC->Notify(Result);
+        }
+        return;
+    }
+
+    // SCP Phase 10: egg incubator — consumes an Echo Egg and hatches a new
+    // party member with rolled genetics (warm hatches near fire gain a level).
+    if (DefinitionId == TEXT("Building_EggIncubator") && Player->InventoryComponent &&
+        GetLocalRole() == ROLE_Authority)
+    {
+        UAstrawildEchoRosterSubsystem* Roster = World ? World->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr;
+        FText Result = NSLOCTEXT("ASTRAWILD", "IncubatorNeedEgg", "Egg Incubator: bring an Echo Egg.");
+
+        if (Player->InventoryComponent->HasItem(TEXT("Item_EchoEgg"), 1) && Roster)
+        {
+            // Warmth: a campfire or hearth within 800cm accelerates the hatch
+            // (directive: temperature-driven speed) — warm hatch = +1 level.
+            bool bWarmHatch = false;
+            for (TActorIterator<AAstrawildBuildingActor> WarmIt(World); WarmIt; ++WarmIt)
+            {
+                const AAstrawildBuildingActor* HeatSource = *WarmIt;
+                if (!IsValid(HeatSource) || (HeatSource->DefinitionId != TEXT("Building_Campfire") &&
+                    HeatSource->DefinitionId != TEXT("Building_Heater")))
+                {
+                    continue;
+                }
+                if (FVector::DistSquared(HeatSource->GetActorLocation(), GetActorLocation()) <= 800.0f * 800.0f)
+                {
+                    bWarmHatch = true;
+                    break;
+                }
+            }
+
+            // Species: the dominant (highest-bond) party parent's line.
+            AAstrawildEchoCharacter* Template = nullptr;
+            for (AAstrawildEchoCharacter* Echo : Roster->GetSpawnedParty())
+            {
+                if (Echo && Echo->bCaptured && IsValid(Echo->EchoDefinition) &&
+                    (!Template || Echo->Bond > Template->Bond))
+                {
+                    Template = Echo;
+                }
+            }
+
+            if (Template && Player->InventoryComponent->RemoveItem(TEXT("Item_EchoEgg"), 1))
+            {
+                // Roll genetics from the template's traits (self-pairing keeps
+                // the 70/30 inheritance rules meaningful).
+                const FAstrawildGeneticsProfile Genetics = UAstrawildGeneticsLibrary::RollOffspring(
+                    Template->InstanceTraits, Template->InstanceTraits, FMath::Rand());
+
+                // Spawn the offspring from the parent's species.
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+                const FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 200.0f;
+                AAstrawildEchoCharacter* Offspring = World->SpawnActor<AAstrawildEchoCharacter>(
+                    AAstrawildEchoCharacter::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+                if (Offspring && Offspring->InitializeFromDefinition(Template->EchoDefinition))
+                {
+                    Offspring->SetInstanceTraits(Genetics.Traits);
+                    Offspring->Capture(10.0f);
+                    Offspring->OwnerPlayerId = Player->GetFName();
+                    if (bWarmHatch)
+                    {
+                        Offspring->Level = 2;
+                    }
+                    Roster->AddToRoster(Offspring);
+
+                    Result = FText::Format(
+                        NSLOCTEXT("ASTRAWILD", "IncubatorHatch", "Hatched a {0}! Traits: {1}."),
+                        FText::FromName(Template->EchoDefinition->DefinitionId),
+                        FText::FromString(FString::JoinBy(Genetics.Traits, TEXT(", "),
+                            [](const FName& Trait) { return Trait.ToString(); })));
+                }
+                else
+                {
+                    // Fail-closed: the egg is only consumed on a successful hatch.
+                    Player->InventoryComponent->AddItemSilent(TEXT("Item_EchoEgg"), 1);
+                    Result = NSLOCTEXT("ASTRAWILD", "IncubatorFail", "The egg trembled but did not hatch (spawn failed — egg kept).");
+                }
+            }
+        }
+
+        if (AAstrawildPlayerController* IncubPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            IncubPC->Notify(Result);
         }
         return;
     }

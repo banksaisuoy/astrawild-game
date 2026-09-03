@@ -17,7 +17,9 @@
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildErrorReporter.h"
 #include "AstrawildMountComponent.h"
+#include "AstrawildGeneticsLibrary.h"
 #include "AstrawildNPCScheduleComponent.h"
+#include "AstrawildPerformanceManager.h"
 #include "AstrawildSpoilageSubsystem.h"
 #include "AstrawildTurretComponent.h"
 #include "AstrawildEchoCharacter.h"
@@ -3782,6 +3784,85 @@ bool FAstrawildTurretPolicyTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Turret range is 2500cm"), Turret::TurretRange, 2500.0f);
     TestEqual(TEXT("Fire interval is 1.5s"), Turret::FireIntervalSeconds, 1.5f);
     TestEqual(TEXT("Bolt damage is 30"), Turret::BoltDamage, 30.0f);
+    return true;
+}
+
+// --- SCP Phase 10: genetics inheritance (Test 98) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildGeneticsTest,
+    "ASTRAWILD.SCP.Genetics.Inheritance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildGeneticsTest::RunTest(const FString& Parameters)
+{
+    using Gene = UAstrawildGeneticsLibrary;
+
+    // Trait pool: the directive's four effects plus healthy flavor traits.
+    TestTrue(TEXT("Trait pool holds 8 entries"), Gene::GetTraitPool().Num() >= 8);
+    TestTrue(TEXT("Swift is in the pool"), Gene::GetTraitPool().Contains(TEXT("Trait_Swift")));
+    TestTrue(TEXT("Artisan is in the pool"), Gene::GetTraitPool().Contains(TEXT("Trait_Artisan")));
+    TestTrue(TEXT("Ferocious is in the pool"), Gene::GetTraitPool().Contains(TEXT("Trait_Ferocious")));
+
+    // Effect contracts (directive Phase 10.3 numbers).
+    TestEqual(TEXT("Swift = +30% speed"), Gene::GetTraitSpeedMultiplier(TEXT("Trait_Swift")), 1.3f);
+    TestEqual(TEXT("Artisan = +50% work"), Gene::GetTraitWorkMultiplier(TEXT("Trait_Artisan")), 1.5f);
+    TestEqual(TEXT("Ferocious = +20% attack"), Gene::GetTraitAttackMultiplier(TEXT("Trait_Ferocious")), 1.2f);
+    TestEqual(TEXT("Sturdy = +20% health"), Gene::GetTraitHealthMultiplier(TEXT("Trait_Sturdy")), 1.2f);
+    TestTrue(TEXT("Lucky grants capture bonus"), Gene::GetTraitCaptureBonus(TEXT("Trait_Lucky")) > 0.0f);
+    TestEqual(TEXT("Unknown traits are inert"), Gene::GetTraitSpeedMultiplier(TEXT("Trait_Nope")), 1.0f);
+
+    // Stacking is multiplicative: 2x Swift = 1.69x.
+    TestEqual(TEXT("Double Swift stacks"), Gene::ComputeTraitSpeedMultiplier({ TEXT("Trait_Swift"), TEXT("Trait_Swift") }), 1.69f);
+
+    // Offspring rolls: 4 slots, deterministic per seed, IVs in bounds.
+    const TArray<FName> Parents = { TEXT("Trait_Swift"), TEXT("Trait_Artisan") };
+    const FAstrawildGeneticsProfile A = Gene::RollOffspring(Parents, Parents, 42);
+    const FAstrawildGeneticsProfile B = Gene::RollOffspring(Parents, Parents, 42);
+    TestTrue(TEXT("Profile valid"), A.IsValid());
+    TestEqual(TEXT("Reroll with the same seed is deterministic"), A.Traits == B.Traits, true);
+    TestTrue(TEXT("Traits draw from the known pool"), Gene::GetTraitPool().Contains(A.Traits[0]));
+
+    const FAstrawildGeneticsProfile C = Gene::RollOffspring(Parents, Parents, 1337);
+    TestTrue(TEXT("Different seed may differ"), C.IsValid());
+
+    TestTrue(TEXT("IV health in 0..31"), A.IVs.X >= 0.0f && A.IVs.X <= 31.0f);
+    TestTrue(TEXT("IV attack in 0..31"), A.IVs.Y >= 0.0f && A.IVs.Y <= 31.0f);
+
+    // IV contribution: 0 -> 1.0x, 31 -> 1.31x.
+    TestEqual(TEXT("IV 0 is neutral"), Gene::ComputeIVStatMultiplier(0.0f), 1.0f);
+    TestEqual(TEXT("IV 31 is +31%"), Gene::ComputeIVStatMultiplier(31.0f), 1.31f);
+    return true;
+}
+
+// --- SCP Phase 13: performance tier math (Test 99) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPerformanceTierTest,
+    "ASTRAWILD.SCP.Perf.TierLadder",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPerformanceTierTest::RunTest(const FString& Parameters)
+{
+    using Perf = UAstrawildPerformanceManager;
+
+    // Tier ladder: High full, Medium reduced, Low floor (monotone).
+    TestTrue(TEXT("View distance scales down with tiers"),
+        Perf::GetViewDistanceScaleForTier(2) > Perf::GetViewDistanceScaleForTier(1) &&
+        Perf::GetViewDistanceScaleForTier(1) > Perf::GetViewDistanceScaleForTier(0));
+    TestTrue(TEXT("Foliage density scales down with tiers"),
+        Perf::GetFoliageDensityScaleForTier(2) > Perf::GetFoliageDensityScaleForTier(1) &&
+        Perf::GetFoliageDensityScaleForTier(1) > Perf::GetFoliageDensityScaleForTier(0));
+    TestTrue(TEXT("Shadow quality scales down with tiers"),
+        Perf::GetShadowQualityForTier(2) > Perf::GetShadowQualityForTier(1) &&
+        Perf::GetShadowQualityForTier(1) > Perf::GetShadowQualityForTier(0));
+
+    // Out-of-range tiers clamp, never crash.
+    TestEqual(TEXT("Tier clamps high"), Perf::GetViewDistanceScaleForTier(99), Perf::GetViewDistanceScaleForTier(2));
+    TestEqual(TEXT("Tier clamps low"), Perf::GetViewDistanceScaleForTier(-1), Perf::GetViewDistanceScaleForTier(0));
+
+    // Step policy: 3 slow samples drop, 12 fast samples climb, hysteresis
+    // in between (a single sample never swings the tier).
+    TestTrue(TEXT("3 slow samples step down"), Perf::ShouldStepDown(3));
+    TestFalse(TEXT("2 slow samples hold"), Perf::ShouldStepDown(2));
+    TestTrue(TEXT("12 fast samples step up"), Perf::ShouldStepUp(12));
+    TestFalse(TEXT("11 fast samples hold"), Perf::ShouldStepUp(11));
     return true;
 }
 
