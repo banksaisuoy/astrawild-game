@@ -13,6 +13,7 @@
 #include "AstrawildDataValidator.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildErrorReporter.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildSpoilageSubsystem.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildBiomeDressingActor.h"
