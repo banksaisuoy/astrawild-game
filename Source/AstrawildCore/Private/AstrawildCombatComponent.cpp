@@ -1,5 +1,6 @@
 #include "AstrawildCombatComponent.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
@@ -7,6 +8,7 @@
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildVfxActor.h"
@@ -325,6 +327,12 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
         FCollisionShape::MakeSphere(SweepRadius), QueryParams);
 
     float TotalDamageDealt = 0.0f;
+
+    // GDP-3: Power Strike — the queued skill multiplies THIS swing's damage and
+    // is consumed by it (window set by the smart-cast, spent here, never both).
+    AAstrawildPlayerCharacter* PlayerForSkills = Cast<AAstrawildPlayerCharacter>(GetOwner());
+    const bool bEmpowered = PlayerForSkills && PlayerForSkills->IsNextMeleeEmpowered();
+
     for (const FHitResult& Hit : HitResults)
     {
         AActor* HitActor = Hit.GetActor();
@@ -333,7 +341,11 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             continue;
         }
 
-        const float BaseDamage = GetOutgoingAttackDamage(bHeavy);
+        float BaseDamage = GetOutgoingAttackDamage(bHeavy);
+        if (bEmpowered)
+        {
+            BaseDamage *= 2.2f;
+        }
         // Batch 3 — Item A: resolve the element per hit (weapon override → tunable fallback)
         // so elemental statuses apply from whichever weapon is equipped.
         const EAstrawildElementType ResolvedElement = GetResolvedAttackElement();
@@ -367,6 +379,16 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             DamageTarget->ApplyDamage(BaseDamage);
             TotalDamageDealt += BaseDamage;
         }
+    }
+
+    // GDP-3: Power Strike spent on this swing + Might XP for connecting hits.
+    if (bEmpowered && PlayerForSkills)
+    {
+        PlayerForSkills->ConsumeEmpoweredMelee();
+    }
+    if (PlayerForSkills && PlayerForSkills->AttributeComponent && TotalDamageDealt > 0.0f)
+    {
+        PlayerForSkills->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Might, bHeavy ? 4.0f : 2.0f);
     }
 
     OnAttackExecuted.Broadcast(bHeavy, TotalDamageDealt);
@@ -749,11 +771,26 @@ float UAstrawildCombatComponent::GetRangedDamage() const
 {
     // Weapon profile damage + the equipped item's flat attack bonus (the item
     // still carries the progression stat; the definition carries behaviour).
+    float Damage;
     if (const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition())
     {
-        return FMath::Max(1.0f, WeaponDef->DamagePerHit) + GetEquippedWeaponAttackPower();
+        Damage = FMath::Max(1.0f, WeaponDef->DamagePerHit) + GetEquippedWeaponAttackPower();
     }
-    return GetOutgoingAttackDamage(false);
+    else
+    {
+        Damage = GetOutgoingAttackDamage(false);
+    }
+
+    // GDP-3: Instinct-earned Overcharge adds +30% ranged damage while its window
+    // is open (the smart-cast sets it; the window decays on the player's Tick).
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->GetRangedBuffRemaining() > 0.0f)
+        {
+            Damage *= 1.3f;
+        }
+    }
+    return Damage;
 }
 
 float UAstrawildCombatComponent::GetMitigatedIncomingDamage(const float RawDamage) const
@@ -801,8 +838,18 @@ float UAstrawildCombatComponent::GetEquippedWeaponAttackPower() const
 float UAstrawildCombatComponent::GetOutgoingAttackDamage(const bool bHeavy) const
 {
     // Wave 3: the equipped weapon adds flat attack power to both attack tiers.
-    const float Base = bHeavy ? HeavyAttackDamage : LightAttackDamage;
-    return Base + GetEquippedWeaponAttackPower();
+    float Base = bHeavy ? HeavyAttackDamage : LightAttackDamage;
+    Base += GetEquippedWeaponAttackPower();
+
+    // GDP-3: Might attribute scales melee output (1 + 4% per level above 1).
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Base *= Attributes->GetMeleeDamageMultiplier();
+        }
+    }
+    return Base;
 }
 
 // --- Batch 3 — Item A: element-driven status effects ---

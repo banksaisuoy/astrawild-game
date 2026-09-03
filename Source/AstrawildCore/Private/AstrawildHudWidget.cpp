@@ -1,5 +1,6 @@
 #include "AstrawildHudWidget.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCombatComponent.h"
@@ -129,6 +130,10 @@ void UAstrawildHudWidget::BuildWidgetTree()
     // --- Right-bottom party command (directive §10) ---
     CommandText = MakeText(TEXT("CommandText"), FLinearColor(0.70f, 0.85f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(CommandText), FVector2D(0.98f, 0.93f), FVector2D(0.98f, 0.93f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 20.0f));
+
+    // --- GDP: ability readiness line (under the party command) ---
+    AbilityText = MakeText(TEXT("AbilityText"), FLinearColor(0.75f, 0.95f, 0.65f, 1.0f), 13);
+    AnchorSlot(RootCanvas->AddChildToCanvas(AbilityText), FVector2D(0.98f, 0.955f), FVector2D(0.98f, 0.955f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 18.0f));
 
     // --- Right-bottom equipment readout (wave 3) ---
     EquipmentText = MakeText(TEXT("EquipmentText"), FLinearColor(0.98f, 0.80f, 0.55f, 1.0f), 14);
@@ -367,6 +372,36 @@ void UAstrawildHudWidget::RefreshState()
     {
         CommandText->SetText(FText::FromString(FString::Printf(TEXT("Party command [C]: %s"),
             *UEnum::GetDisplayValueAsText(Pawn->CurrentPartyCommand).ToString())));
+    }
+
+    // GDP: ability readiness — how many party Echo abilities + player skills are
+    // castable right now (the T/Y keys become readable instead of guessable).
+    if (AbilityText)
+    {
+        int32 ReadyEchoAbilities = 0;
+        int32 PartySize = 0;
+        if (const UWorld* World = GetWorld())
+        {
+            for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+            {
+                const AAstrawildEchoCharacter* Echo = *It;
+                if (Echo && Echo->bCaptured && Echo->OwnerPlayerId == Pawn->GetFName() && !Echo->IsDefeated())
+                {
+                    PartySize++;
+                    ReadyEchoAbilities += Echo->GetKnownAbilityIds().Num() -
+                        Echo->AbilityCooldowns.Num(); // Off-cooldown approximation read client-side.
+                }
+            }
+        }
+
+        int32 UnlockedSkills = 0;
+        if (Pawn->AttributeComponent)
+        {
+            UnlockedSkills = Pawn->AttributeComponent->GetUnlockedSkills().Num();
+        }
+
+        AbilityText->SetText(FText::FromString(FString::Printf(TEXT("[T] Echo abilities ready: %d/%d | [Y] Skills: %d"),
+            FMath::Max(0, ReadyEchoAbilities), PartySize, UnlockedSkills)));
     }
 
     // Equipment readout (wave 3): weapon ATK + shield block.

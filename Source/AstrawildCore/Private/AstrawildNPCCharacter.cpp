@@ -9,6 +9,7 @@
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildTimeSubsystem.h"
 #include "AstrawildVillageActor.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
@@ -175,6 +176,9 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     }
     LastInteractedActor = Player;
 
+    // GDP-4: talking builds the relationship (+2, once per in-world day).
+    AddAffinity(2.0f);
+
     // Production V2 Batch 3 — when the NPC has a dialogue tree, the conversation
     // screen takes over the whole interaction: quest offers migrate into choice
     // consequences (StartQuestId) and vendor hand-off happens via bOpenShop, so
@@ -283,7 +287,9 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TryPurchase(AActor* Purchaser, co
     }
 
     // Funds + weight — validated before anything moves (no partial transactions).
-    const int32 TotalCost = WareDef->VendorPrice * Quantity;
+    // GDP-4: Confidants get up to 15% off — the relationship literally pays.
+    const int32 TotalCost = FMath::Max(1,
+        FMath::FloorToInt32(WareDef->VendorPrice * Quantity * (1.0f - GetVendorDiscountFraction())));
     if (!Inventory->HasItem(NpcDefinition->CurrencyItemId, TotalCost))
     {
         return EAstrawildVendorResult::NotEnoughCurrency;
@@ -296,6 +302,9 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TryPurchase(AActor* Purchaser, co
     // Execute: currency out, ware in (silent adds — the caller notifies once).
     Inventory->RemoveItem(NpcDefinition->CurrencyItemId, TotalCost);
     Inventory->AddItemSilent(ItemId, Quantity);
+
+    // GDP-4: trading deepens the bond (+1, shared once-per-day gate with talking).
+    AddAffinity(1.0f);
 
     UE_LOG(LogAstrawildEconomy, Log,
         TEXT("Vendor %s sold %d x %s to %s for %d %s."),
@@ -381,4 +390,77 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TrySell(AActor* Seller, const FNa
     }
 
     return EAstrawildVendorResult::Success;
+}
+
+// ===========================================================================
+// GDP-4 — NPC affinity
+// ===========================================================================
+
+int32 AAstrawildNPCCharacter::GetCurrentWorldDay() const
+{
+    if (const UWorld* World = GetWorld())
+    {
+        if (const UAstrawildTimeSubsystem* Time = World->GetSubsystem<UAstrawildTimeSubsystem>())
+        {
+            return Time->GetCurrentDay();
+        }
+    }
+    return 0;
+}
+
+FName AAstrawildNPCCharacter::GetStableNPCId() const
+{
+    return NpcDefinition ? NpcDefinition->NpcId : NAME_None;
+}
+
+int32 AAstrawildNPCCharacter::GetAffinityTier() const
+{
+    if (Affinity >= 75.0f) return 3; // Confidant
+    if (Affinity >= 50.0f) return 2; // Friend
+    if (Affinity >= 25.0f) return 1; // Acquaintance
+    return 0;                        // Stranger
+}
+
+FText AAstrawildNPCCharacter::GetAffinityTierTitle() const
+{
+    switch (GetAffinityTier())
+    {
+    case 3: return FText::FromString(TEXT("Confidant"));
+    case 2: return FText::FromString(TEXT("Friend"));
+    case 1: return FText::FromString(TEXT("Acquaintance"));
+    default: return FText::FromString(TEXT("Stranger"));
+    }
+}
+
+float AAstrawildNPCCharacter::GetVendorDiscountFraction() const
+{
+    // 5% per tier above Stranger — the relationship literally pays for itself.
+    return GetAffinityTier() * 0.05f;
+}
+
+void AAstrawildNPCCharacter::AddAffinity(const float Amount)
+{
+    if (GetLocalRole() != ROLE_Authority || Amount <= 0.0f)
+    {
+        return;
+    }
+
+    // Once-per-in-world-day gate (same cadence as vendor stock restock).
+    const int32 Today = GetCurrentWorldDay();
+    if (LastAffinityGainDay == Today)
+    {
+        return;
+    }
+    LastAffinityGainDay = Today;
+
+    const float Before = Affinity;
+    Affinity = FMath::Clamp(Affinity + Amount, 0.0f, 100.0f);
+
+    const int32 TierBefore = FMath::Clamp(static_cast<int32>(Before / 25.0f), 0, 3);
+    const int32 TierAfter = GetAffinityTier();
+    if (TierAfter > TierBefore)
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("NPC %s affinity tier up: %s (%.0f)."),
+            *GetStableNPCId().ToString(), *GetAffinityTierTitle().ToString(), Affinity);
+    }
 }

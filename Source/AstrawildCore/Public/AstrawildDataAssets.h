@@ -372,6 +372,15 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
     EAstrawildEchoFamily Family = EAstrawildEchoFamily::Beast;
 
+    /**
+     * GDP-2 — locomotion class: how the species actually moves. Auto derives
+     * deterministically from family/body plan/home zone at runtime
+     * (AAstrawildEchoCharacter::GetLocomotionClass), so existing definitions
+     * and the generated 200-species table need no migration.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Locomotion")
+    EAstrawildLocomotionClass Locomotion = EAstrawildLocomotionClass::Auto;
+
     /** Procedural silhouette kit used by the runtime body builder. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
     EAstrawildBodyPlan BodyPlan = EAstrawildBodyPlan::Quadruped;

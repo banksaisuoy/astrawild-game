@@ -152,8 +152,25 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
     bool IsGodMode() const { return bGodMode; }
 
+    /**
+     * GDP-3 (public — the save load path calls it after importing attributes):
+     * recompute max health from the owner's Vigor level (server-side).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void RefreshVigorMaxHealth();
+
 protected:
     virtual void BeginPlay() override;
+
+    // --- GDP-3: attribute-driven vitals ---
+
+    /** Vigor level-up feed (max health refresh). */
+    UFUNCTION()
+    void HandleAttributeLevelUp(EAstrawildAttributeType Attribute, int32 NewLevel);
+
+    /** Pre-Vigor base max health (tunable; the level multiplier scales this). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Survival", meta=(ClampMin="1.0"))
+    float BaseMaxHealth = 100.0f;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:

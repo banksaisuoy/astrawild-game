@@ -1,8 +1,10 @@
 #include "AstrawildSurvivalComponent.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildWeatherSubsystem.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
@@ -23,6 +25,50 @@ void UAstrawildSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimePro
 void UAstrawildSurvivalComponent::BeginPlay()
 {
     Super::BeginPlay();
+
+    // GDP-3: Vigor scales max health — subscribe to level-ups so the bar grows
+    // live, and take the current level into account right away.
+    if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Attributes->OnAttributeLevelUp.AddDynamic(this, &UAstrawildSurvivalComponent::HandleAttributeLevelUp);
+        }
+    }
+    RefreshVigorMaxHealth();
+}
+
+void UAstrawildSurvivalComponent::HandleAttributeLevelUp(const EAstrawildAttributeType Attribute, const int32 NewLevel)
+{
+    if (Attribute == EAstrawildAttributeType::Vigor)
+    {
+        RefreshVigorMaxHealth();
+    }
+}
+
+void UAstrawildSurvivalComponent::RefreshVigorMaxHealth()
+{
+    if (GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    float Multiplier = 1.0f;
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Multiplier = Attributes->GetMaxHealthMultiplier();
+        }
+    }
+
+    const float NewMax = BaseMaxHealth * Multiplier;
+    if (!FMath::IsNearlyEqual(Stats.MaxHealth, NewMax))
+    {
+        Stats.MaxHealth = NewMax;
+        Stats.Health = FMath::Min(Stats.Health, Stats.MaxHealth);
+        OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+    }
 }
 
 void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -58,7 +104,16 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
     else
     {
         // Final production run: exosuit stamina-regen bonus stacks on the base rate.
-        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + (StaminaRegenPerSecond + GetExosuitStaminaRegenBonus()) * DeltaTime);
+        // GDP-3: Agility speeds the regen itself (1 + 4% per level above 1).
+        float Regen = StaminaRegenPerSecond + GetExosuitStaminaRegenBonus();
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+            {
+                Regen *= Attributes->GetStaminaRegenMultiplier();
+            }
+        }
+        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Regen * DeltaTime);
     }
 
     // --- Starvation / dehydration ---
@@ -199,6 +254,18 @@ float UAstrawildSurvivalComponent::ApplyDamage(const float DamageAmount)
     const float Applied = FMath::Min(Stats.Health, DamageAmount);
     Stats.Health = FMath::Max(0.0f, Stats.Health - DamageAmount);
     OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+
+    // GDP-3: Vigor grows by surviving real hits (anything that hurts at least 5).
+    if (Applied >= 5.0f)
+    {
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->AttributeComponent)
+            {
+                Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Vigor, 1.0f);
+            }
+        }
+    }
 
     UE_LOG(LogAstrawildCombat, Verbose, TEXT("Player took %.1f damage (%.1f remaining)."), DamageAmount, Stats.Health);
 

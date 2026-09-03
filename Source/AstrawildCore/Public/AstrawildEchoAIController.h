@@ -97,6 +97,16 @@ private:
     EAstrawildEchoAIState DecideState();
     void ExecuteState(float DeltaThinkSeconds);
 
+    // GDP-2: locomotion-aware movement. Flying species steer directly (no navmesh
+    // path); everything else keeps the pathfollowing contract.
+    bool IsFlyingMover() const;
+    void SteerFlyingToward(const FVector& Point, float HoverHeight = 260.0f);
+    void MoveTowardPoint(const FVector& Point, float AcceptanceRadius);
+    void MoveTowardTarget(AActor* Target, float AcceptanceRadius);
+
+    // GDP-1: ability combat beat — true when an ability fired this think.
+    bool TryCastCombatAbility(class AAstrawildEchoCharacter* Echo, AActor* Target);
+
     // State executors.
     void ExecuteExplore();
     void ExecuteFlee();

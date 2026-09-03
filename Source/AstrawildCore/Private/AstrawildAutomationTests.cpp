@@ -4,7 +4,10 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "AstrawildCaptureComponent.h"
+#include "AstrawildAbilityLibrary.h"
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildBestiaryData.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
@@ -2884,5 +2887,440 @@ bool FAstrawildSaveFinalAuditContractsTest::RunTest(const FString& Parameters)
 
     return true;
 }
+
+
+// ===========================================================================
+// GAMEPLAY DEPTH PACK (GDP) — Tests 73-84: ability engine, locomotion,
+// attributes, skills, NPC affinity.
+// ===========================================================================
+
+// --- GDP-1: ability library integrity (Test 73) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityLibraryIntegrityTest,
+    "ASTRAWILD.Ability.LibraryIntegrity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityLibraryIntegrityTest::RunTest(const FString& Parameters)
+{
+    TArray<FString> Problems;
+    UAstrawildAbilityLibrary::ValidateTable(Problems);
+    for (const FString& Problem : Problems)
+    {
+        AddError(Problem);
+    }
+    TestTrue(TEXT("Ability table validates clean"), Problems.IsEmpty());
+    TestEqual(TEXT("Ability table holds 44 templates"), UAstrawildAbilityLibrary::GetAbilityCount(), 44);
+    TestTrue(TEXT("Signature ability resolves"), UAstrawildAbilityLibrary::IsKnownAbility(TEXT("Ability_LumewispDawn")));
+    TestFalse(TEXT("Unknown id rejected"), UAstrawildAbilityLibrary::IsKnownAbility(TEXT("Ability_Nope")));
+
+    return true;
+}
+
+// --- GDP-1: derived loadouts cover every element/role (Test 74) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityDerivedLoadoutTest,
+    "ASTRAWILD.Ability.DerivedLoadout",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityDerivedLoadoutTest::RunTest(const FString& Parameters)
+{
+    const EAstrawildElementType Elements[6] =
+    {
+        EAstrawildElementType::Light, EAstrawildElementType::Ash, EAstrawildElementType::Flora,
+        EAstrawildElementType::Ember, EAstrawildElementType::Frost, EAstrawildElementType::Pulse
+    };
+    const EAstrawildEchoRole Roles[4] =
+    {
+        EAstrawildEchoRole::Combat, EAstrawildEchoRole::Base,
+        EAstrawildEchoRole::Support, EAstrawildEchoRole::Explorer
+    };
+
+    for (const EAstrawildElementType Element : Elements)
+    {
+        for (const EAstrawildEchoRole Role : Roles)
+        {
+            const TArray<FName> Loadout = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+                Element, Role, EAstrawildEchoFamily::Beast);
+            TestTrue(TEXT("Derived loadout non-empty"), Loadout.Num() >= 4);
+            bool bHasOffense = false;
+            for (const FName& Id : Loadout)
+            {
+                const FAstrawildAbilityData* Data = UAstrawildAbilityLibrary::FindAbility(Id);
+                TestNotNull(TEXT("Derived id resolves"), Data);
+                if (Data && Data->Category == EAstrawildAbilityCategory::Offensive)
+                {
+                    bHasOffense = true;
+                }
+            }
+            TestTrue(TEXT("Every element x role combo derives an offensive option"), bHasOffense);
+        }
+    }
+
+    // Determinism: same inputs, same loadout.
+    const TArray<FName> A = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Ember, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Dragon);
+    const TArray<FName> B = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Ember, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Dragon);
+    TestTrue(TEXT("Derivation is deterministic"), A == B);
+
+    return true;
+}
+
+// --- GDP-1: combat pick ladder (Test 75) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityCombatPickTest,
+    "ASTRAWILD.Ability.CombatPick",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityCombatPickTest::RunTest(const FString& Parameters)
+{
+    // One offense + one heal, both ready, in range.
+    TArray<FName> Known = { TEXT("Ability_CinderBolt"), TEXT("Ability_FieldTriage") };
+    TMap<FName, float> NoCooldowns;
+
+    // No healing wanted -> offense wins.
+    TestEqual(TEXT("Healthy caster prefers offense"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(Known, NoCooldowns, 10, 500.0f, false, false),
+        FName(TEXT("Ability_CinderBolt")));
+
+    // Hurt caster -> the medic heals itself first.
+    TestEqual(TEXT("Hurt caster prefers the heal"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(Known, NoCooldowns, 10, 500.0f, true, false),
+        FName(TEXT("Ability_FieldTriage")));
+
+    // Everything cooling down -> nothing castable.
+    TMap<FName, float> AllCooling;
+    AllCooling.Add(TEXT("Ability_CinderBolt"), 5.0f);
+    AllCooling.Add(TEXT("Ability_FieldTriage"), 5.0f);
+    TestTrue(TEXT("All-cooldown returns none"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(Known, AllCooling, 10, 500.0f, true, true) == NAME_None);
+
+    // Out of range offense -> falls back to other categories or none.
+    TArray<FName> OnlyOffense = { TEXT("Ability_FlareNova") }; // Range 500.
+    TestTrue(TEXT("Out-of-range offense not cast"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(OnlyOffense, NoCooldowns, 20, 1200.0f, false, false) == NAME_None);
+
+    return true;
+}
+
+// --- GDP-1: species ability loadout (authored + derived merge) (Test 76) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilitySpeciesLoadoutTest,
+    "ASTRAWILD.Ability.SpeciesLoadout",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilitySpeciesLoadoutTest::RunTest(const FString& Parameters)
+{
+    UAstrawildEchoDefinition* Def = NewObject<UAstrawildEchoDefinition>();
+
+    // No authored ids -> derived kit only.
+    Def->Element = EAstrawildElementType::Frost;
+    Def->Role = EAstrawildEchoRole::Support;
+    Def->Family = EAstrawildEchoFamily::Avian;
+    TArray<FName> Loadout = UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(Def);
+    TestTrue(TEXT("Unauthored species derives a kit"), Loadout.Num() >= 4);
+
+    // Authored ids come first, derived fill the rest, no duplicates.
+    Def->AbilityIds = { TEXT("Ability_LumewispDawn"), TEXT("Ability_LumewispDawn") };
+    Loadout = UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(Def);
+    TestEqual(TEXT("Authored ids lead the loadout"), Loadout[0], FName(TEXT("Ability_LumewispDawn")));
+    TSet<FName> Unique(Loadout);
+    TestEqual(TEXT("No duplicated ids in merged loadout"), Unique.Num(), Loadout.Num());
+
+    return true;
+}
+
+// --- GDP-2: locomotion derivation matrix (Test 77) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLocomotionDerivationTest,
+    "ASTRAWILD.Locomotion.Derivation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLocomotionDerivationTest::RunTest(const FString& Parameters)
+{
+    using L = EAstrawildLocomotionClass;
+
+    // Avian family / winged body plan -> flight.
+    TestEqual(TEXT("Avian family flies"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Biped, EAstrawildZone::DawnFields), L::Flying);
+    TestEqual(TEXT("Avian body plan flies"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Avian, EAstrawildZone::DawnFields), L::Flying);
+    TestEqual(TEXT("Floating body plan hovers"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildZone::Glimmerwood), L::Flying);
+
+    // Aquatic family + sea zones -> water.
+    TestEqual(TEXT("Aquatic family swims"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Serpent, EAstrawildZone::DawnFields), L::Water);
+    TestEqual(TEXT("Sea-zone beast swims"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildZone::AzureShallows), L::Water);
+    TestEqual(TEXT("Pearlsea reef swims"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Flora, EAstrawildBodyPlan::Amorphous, EAstrawildZone::PearlseaReef), L::Water);
+    TestEqual(TEXT("Tidebreaker isles swim"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Insectoid, EAstrawildBodyPlan::Insectoid, EAstrawildZone::TidebreakerIsles), L::Water);
+
+    // Everything else walks.
+    TestEqual(TEXT("Inland beast walks"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildZone::DawnFields), L::Land);
+    TestEqual(TEXT("Winged sea-zone species still flies (flight outranks water)"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Avian, EAstrawildZone::AzureShallows), L::Flying);
+
+    return true;
+}
+
+// --- GDP-3: attribute XP curve + level cap (Test 78) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeXPCurveTest,
+    "ASTRAWILD.Attributes.XPCurve",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeXPCurveTest::RunTest(const FString& Parameters)
+{
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Might starts at 1"), Attributes->GetLevel(EAstrawildAttributeType::Might), 1);
+    TestEqual(TEXT("Might starts at 0 XP"), Attributes->GetXP(EAstrawildAttributeType::Might), 0.0f);
+    TestEqual(TEXT("Level 1 needs 100 XP"), Attributes->GetXPToNextLevel(EAstrawildAttributeType::Might), 100.0f);
+
+    // Level 2 exactly at 100 XP.
+    Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 100.0f);
+    TestEqual(TEXT("100 XP -> level 2"), Attributes->GetLevel(EAstrawildAttributeType::Might), 2);
+    TestEqual(TEXT("Overflow XP carried"), Attributes->GetXP(EAstrawildAttributeType::Might), 0.0f);
+    TestEqual(TEXT("Level 2 needs 200 XP"), Attributes->GetXPToNextLevel(EAstrawildAttributeType::Might), 200.0f);
+
+    // Cap at 10 with no overflow residue.
+    for (int32 i = 0; i < 40; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 1000.0f);
+    }
+    TestEqual(TEXT("Might caps at 10"), Attributes->GetLevel(EAstrawildAttributeType::Might), 10);
+    TestEqual(TEXT("Cap clears the XP residue"), Attributes->GetXP(EAstrawildAttributeType::Might), 0.0f);
+    TestEqual(TEXT("Capped attribute reports 0 to next"), Attributes->GetXPToNextLevel(EAstrawildAttributeType::Might), 0.0f);
+
+    // Negative/zero XP is rejected.
+    Attributes->AddAttributeXP(EAstrawildAttributeType::Vigor, -50.0f);
+    TestEqual(TEXT("Negative XP rejected"), Attributes->GetXP(EAstrawildAttributeType::Vigor), 0.0f);
+
+    return true;
+}
+
+// --- GDP-3: bonus formulas (Test 79) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeBonusFormulasTest,
+    "ASTRAWILD.Attributes.BonusFormulas",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeBonusFormulasTest::RunTest(const FString& Parameters)
+{
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+
+    // Fresh component: every multiplier reads exactly 1.0/0.0.
+    TestEqual(TEXT("Fresh melee mult 1.0"), Attributes->GetMeleeDamageMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh max health mult 1.0"), Attributes->GetMaxHealthMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh stamina regen mult 1.0"), Attributes->GetStaminaRegenMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh move mult 1.0"), Attributes->GetMoveSpeedMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh capture bonus 0"), Attributes->GetCaptureChanceBonus(), 0.0f);
+    TestEqual(TEXT("Fresh craft mult 1.0"), Attributes->GetCraftSpeedMultiplier(), 1.0f);
+    TestEqual(TEXT("No masterwork at Craft 1"), Attributes->GetMasterworkRefundChance(), 0.0f);
+
+    // Might 10 -> 1 + 0.04*9 = 1.36.
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 1000.0f);
+    }
+    TestEqual(TEXT("Might 10 melee mult 1.36"), Attributes->GetMeleeDamageMultiplier(), 1.36f);
+
+    // Craft 5 -> masterwork unlocked at 15%.
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Craft, 1000.0f);
+    }
+    TestEqual(TEXT("Craft 5+ masterwork 15%"), Attributes->GetMasterworkRefundChance(), 0.15f);
+
+    return true;
+}
+
+// --- GDP-3: skill unlock milestones + smart-cast ladder (Test 80) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeSkillUnlockTest,
+    "ASTRAWILD.Attributes.SkillUnlock",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeSkillUnlockTest::RunTest(const FString& Parameters)
+{
+    using S = EAstrawildPlayerSkillId;
+
+    // Milestone table (static rule — no component needed).
+    TestTrue(TEXT("PowerStrike at Might 3"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::PowerStrike, 3, 1, 1, 1, 1));
+    TestFalse(TEXT("PowerStrike locked at Might 2"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::PowerStrike, 2, 1, 1, 1, 1));
+    TestTrue(TEXT("Whirlwind at Might 6"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Whirlwind, 6, 1, 1, 1, 1));
+    TestTrue(TEXT("Dash at Agility 3"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Dash, 1, 1, 3, 1, 1));
+    TestTrue(TEXT("SecondWind at Vigor 4"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::SecondWind, 1, 4, 1, 1, 1));
+    TestTrue(TEXT("HuntersFocus at Instinct 4"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::HuntersFocus, 1, 1, 1, 4, 1));
+    TestTrue(TEXT("Masterwork at Craft 5"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Masterwork, 1, 1, 1, 1, 5));
+    TestTrue(TEXT("Overcharge at Instinct 7"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Overcharge, 1, 1, 1, 7, 1));
+    TestFalse(TEXT("None never unlocks"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::None, 10, 10, 10, 10, 10));
+
+    // Cooldown table sanity.
+    TestEqual(TEXT("Masterwork is passive (0 cooldown)"), UAstrawildAttributeComponent::GetSkillCooldown(S::Masterwork), 0.0f);
+    TestTrue(TEXT("SecondWind has the longest cooldown"),
+        UAstrawildAttributeComponent::GetSkillCooldown(S::SecondWind) > UAstrawildAttributeComponent::GetSkillCooldown(S::PowerStrike));
+
+    // Smart-cast ladder: hurt player with SecondWind picks the heal.
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Vigor, 1000.0f);
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Agility, 1000.0f);
+    }
+    TestEqual(TEXT("Hurt player smart-casts SecondWind"),
+        Attributes->PickBestReadySkill(0.2f, 0, false, false), S::SecondWind);
+    TestEqual(TEXT("Healthy moving player smart-casts Dash"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true), S::Dash);
+
+    // After casting, the cooldown blocks a re-pick.
+    Attributes->StartSkillCooldown(S::Dash);
+    TestTrue(TEXT("Dash on cooldown is not picked"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true) != S::Dash);
+    Attributes->TickCooldowns(UAstrawildAttributeComponent::GetSkillCooldown(S::Dash) + 0.1f);
+    TestEqual(TEXT("Cooldown expiry re-enables Dash"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true), S::Dash);
+
+    return true;
+}
+
+// --- GDP-3: attribute save round-trip + sanitize (Test 81) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeSaveRoundTripTest,
+    "ASTRAWILD.Attributes.SaveRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeSaveRoundTripTest::RunTest(const FString& Parameters)
+{
+    UAstrawildAttributeComponent* Source = NewObject<UAstrawildAttributeComponent>();
+    Source->AddAttributeXP(EAstrawildAttributeType::Might, 350.0f);   // Level 3, 50 XP.
+    Source->AddAttributeXP(EAstrawildAttributeType::Craft, 120.0f);  // Level 2, 20 XP.
+
+    const TArray<FAstrawildAttributeSaveData> Saved = Source->ToSaveData();
+    TestEqual(TEXT("Save payload has all five attributes"), Saved.Num(), 5);
+
+    UAstrawildAttributeComponent* Target = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Clean import repairs nothing"), Target->ImportFromSaveData(Saved), 0);
+    TestEqual(TEXT("Might level survives the round-trip"), Target->GetLevel(EAstrawildAttributeType::Might), 3);
+    TestEqual(TEXT("Might XP survives the round-trip"), Target->GetXP(EAstrawildAttributeType::Might), 50.0f);
+    TestEqual(TEXT("Craft level survives the round-trip"), Target->GetLevel(EAstrawildAttributeType::Craft), 2);
+
+    // Corrupt import: out-of-range level, negative XP, duplicates.
+    TArray<FAstrawildAttributeSaveData> Corrupt;
+    FAstrawildAttributeSaveData Row;
+    Row.Type = EAstrawildAttributeType::Vigor;
+    Row.Level = 99;
+    Row.XP = -10.0f;
+    Corrupt.Add(Row);
+    Corrupt.Add(Row); // Duplicate row.
+    TestTrue(TEXT("Corrupt import reports repairs"), Target->ImportFromSaveData(Corrupt) >= 2);
+    TestEqual(TEXT("Vigor level clamped to 10"), Target->GetLevel(EAstrawildAttributeType::Vigor), 10);
+    TestEqual(TEXT("Vigor XP clamped to >= 0"), Target->GetXP(EAstrawildAttributeType::Vigor), 0.0f);
+
+    // Old saves (empty array) import as fresh states.
+    UAstrawildAttributeComponent* Fresh = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Empty payload imports clean"), Fresh->ImportFromSaveData(TArray<FAstrawildAttributeSaveData>()), 0);
+    TestEqual(TEXT("Fresh Might at 1"), Fresh->GetLevel(EAstrawildAttributeType::Might), 1);
+
+    return true;
+}
+
+// --- GDP-4: NPC affinity tiers + discount (Test 82) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNPCAffinityTierTest,
+    "ASTRAWILD.NPC.AffinityTiers",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNPCAffinityTierTest::RunTest(const FString& Parameters)
+{
+    // Tier boundaries: 0/25/50/75 -> Stranger/Acquaintance/Friend/Confidant.
+    AAstrawildNPCCharacter* Npc = NewObject<AAstrawildNPCCharacter>();
+    Npc->Affinity = 0.0f;
+    TestEqual(TEXT("Stranger tier 0"), Npc->GetAffinityTier(), 0);
+    TestEqual(TEXT("Stranger no discount"), Npc->GetVendorDiscountFraction(), 0.0f);
+
+    Npc->Affinity = 24.9f;
+    TestEqual(TEXT("Below 25 stays Stranger"), Npc->GetAffinityTier(), 0);
+    Npc->Affinity = 25.0f;
+    TestEqual(TEXT("25 -> Acquaintance"), Npc->GetAffinityTier(), 1);
+    TestEqual(TEXT("Acquaintance 5% off"), Npc->GetVendorDiscountFraction(), 0.05f);
+
+    Npc->Affinity = 50.0f;
+    TestEqual(TEXT("50 -> Friend"), Npc->GetAffinityTier(), 2);
+    Npc->Affinity = 75.0f;
+    TestEqual(TEXT("75 -> Confidant"), Npc->GetAffinityTier(), 3);
+    TestEqual(TEXT("Confidant 15% off"), Npc->GetVendorDiscountFraction(), 0.15f);
+    Npc->Affinity = 100.0f;
+    TestEqual(TEXT("100 clamps at Confidant"), Npc->GetAffinityTier(), 3);
+
+    TestTrue(TEXT("Titles are non-empty"), !Npc->GetAffinityTierTitle().IsEmpty());
+    TestTrue(TEXT("No definition -> no stable id"), Npc->GetStableNPCId().IsNone());
+
+    return true;
+}
+
+// --- GDP-4: NPC affinity save payload (Test 83) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNPCAffinitySaveTest,
+    "ASTRAWILD.NPC.AffinitySave",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNPCAffinitySaveTest::RunTest(const FString& Parameters)
+{
+    FAstrawildNPCAffinitySaveData Row;
+    TestTrue(TEXT("Default id is none"), Row.NPCId.IsNone());
+    TestEqual(TEXT("Default affinity is 0"), Row.Affinity, 0.0f);
+
+    Row.NPCId = TEXT("NPC_Wren");
+    Row.Affinity = 62.5f;
+    const FAstrawildNPCAffinitySaveData Copy = Row;
+    TestTrue(TEXT("NPC id survives the struct copy"), Copy.NPCId == Row.NPCId);
+    TestEqual(TEXT("Affinity survives the struct copy"), Copy.Affinity, 62.5f);
+
+    // The save field exists and defaults empty (old saves deserialize clean).
+    UAstrawildSaveGame* SaveGame = NewObject<UAstrawildSaveGame>();
+    TestEqual(TEXT("Fresh save holds no NPC affinity rows"), SaveGame->NPCAffinities.Num(), 0);
+    TestEqual(TEXT("Fresh save holds no attribute rows"), SaveGame->Attributes.Num(), 0);
+    SaveGame->NPCAffinities.Add(Row);
+    SaveGame->Attributes.Add(FAstrawildAttributeSaveData());
+    TestEqual(TEXT("Rows append"), SaveGame->NPCAffinities.Num(), 1);
+    TestEqual(TEXT("Attribute rows append"), SaveGame->Attributes.Num(), 1);
+
+    return true;
+}
+
+// --- GDP-1: full pipeline — Echo ability engine contracts (Test 84) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityEngineContractTest,
+    "ASTRAWILD.Ability.EngineContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityEngineContractTest::RunTest(const FString& Parameters)
+{
+    UAstrawildEchoDefinition* Def = NewObject<UAstrawildEchoDefinition>();
+    Def->Element = EAstrawildElementType::Flora;
+    Def->Role = EAstrawildEchoRole::Support;
+    Def->Family = EAstrawildEchoFamily::Flora;
+    Def->AbilityIds = { TEXT("Ability_ThornLash"), TEXT("Ability_RootSnare"), TEXT("Ability_LumewispDawn") };
+
+    AAstrawildEchoCharacter* Echo = NewObject<AAstrawildEchoCharacter>();
+    Echo->EchoDefinition = Def;
+
+    // Every learned id is level-1 knowable: LumewispDawn (1), ThornLash (3),
+    // RootSnare (5) — knowledge follows the level gate.
+    TestEqual(TEXT("All ids exposed"), Echo->GetAllAbilityIds().Num(), 5); // 3 authored (2 unique after element dedupe) + derived kit.
+    TestTrue(TEXT("Level 1 knows LumewispDawn"), Echo->GetKnownAbilityIds().Contains(TEXT("Ability_LumewispDawn")));
+    TestFalse(TEXT("Level 1 does not know ThornLash (needs 3)"), Echo->GetKnownAbilityIds().Contains(TEXT("Ability_ThornLash")));
+    TestFalse(TEXT("Gated ability is not ready at level 1"), Echo->IsAbilityReady(TEXT("Ability_ThornLash")));
+
+    // Cooldown query reads 0 for unknown ids (never blocks).
+    TestEqual(TEXT("Unknown ability reports no cooldown"), Echo->GetAbilityCooldownRemaining(TEXT("Ability_Nope")), 0.0f);
+
+    // PickCombatAbility never crashes and respects level gates: level 1 with
+    // only > 1 unlock-level kits yields nothing castable in range.
+    const FName Picked = Echo->PickCombatAbility(400.0f, false, false);
+    if (Picked != NAME_None)
+    {
+        TestTrue(TEXT("Level 1 pick is actually level-1 knowable"),
+            Echo->GetKnownAbilityIds().Contains(Picked));
+    }
+    Echo->Level = 30;
+    TestTrue(TEXT("Level 30 can pick something in melee range"),
+        Echo->PickCombatAbility(300.0f, false, false) != NAME_None);
+
+    return true;
+}
+
 
 #endif // WITH_DEV_AUTOMATION_TESTS

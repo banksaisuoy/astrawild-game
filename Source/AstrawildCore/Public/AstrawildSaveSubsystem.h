@@ -129,6 +129,14 @@ public:
 
     // --- v5 payload (Final Run — Act 3 ending state) ---
 
+    /** GDP-3: player attribute levels/XP (absent in pre-GDP saves = fresh states). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildAttributeSaveData> Attributes;
+
+    /** GDP-4: per-NPC affinity (absent in pre-GDP saves = strangers). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildNPCAffinitySaveData> NPCAffinities;
+
     /** Ending choice as int32-cast EAstrawildEndingState (0 = None = story in play). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     int32 EndingState = 0;

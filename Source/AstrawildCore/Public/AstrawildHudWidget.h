@@ -70,6 +70,10 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> CommandText;
 
+    /** GDP: party ability [T] + player smart-cast [Y] readiness readout. */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> AbilityText;
+
     /** Wave 3: equipped weapon + shield readout (right-bottom). */
     UPROPERTY()
     TObjectPtr<UTextBlock> EquipmentText;

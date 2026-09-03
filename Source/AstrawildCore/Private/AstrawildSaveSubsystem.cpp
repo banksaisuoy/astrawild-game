@@ -1,5 +1,6 @@
 #include "AstrawildSaveSubsystem.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -12,6 +13,7 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildLog.h"
@@ -142,6 +144,26 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
         {
             Dialogue->ExportForSave(SaveGame->DialogueFlags);
+        }
+
+        // GDP-3: player attribute levels/XP.
+        if (PC->AttributeComponent)
+        {
+            SaveGame->Attributes = PC->AttributeComponent->ToSaveData();
+        }
+    }
+
+    // GDP-4: NPC affinity snapshot (every NPC with a stable id).
+    SaveGame->NPCAffinities.Reset();
+    for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+    {
+        AAstrawildNPCCharacter* Npc = *NpcIt;
+        if (Npc && !Npc->GetStableNPCId().IsNone() && Npc->Affinity > 0.0f)
+        {
+            FAstrawildNPCAffinitySaveData Row;
+            Row.NPCId = Npc->GetStableNPCId();
+            Row.Affinity = FMath::Clamp(Npc->Affinity, 0.0f, 100.0f);
+            SaveGame->NPCAffinities.Add(Row);
         }
     }
 
@@ -514,6 +536,48 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
         {
             Dialogue->ImportFromSave(SaveGame->DialogueFlags);
+        }
+
+        // GDP-3: restore attribute levels/XP (sanitized import — duplicates dropped,
+        // levels clamped; old saves without the array keep fresh 1/0 states).
+        if (PC->AttributeComponent)
+        {
+            PC->AttributeComponent->ImportFromSaveData(SaveGame->Attributes);
+        }
+
+        // GDP-3: apply the restored Vigor to max health immediately (the level-up
+        // delegate only fires on live gains, not on import).
+        if (PC->SurvivalComponent)
+        {
+            PC->SurvivalComponent->RefreshVigorMaxHealth();
+        }
+    }
+
+    // GDP-4: restore NPC affinity (id lookup; duplicates first-seen-wins).
+    if (SaveGame->NPCAffinities.Num() > 0)
+    {
+        TSet<FName> SeenNpcIds;
+        for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+        {
+            AAstrawildNPCCharacter* Npc = *NpcIt;
+            if (!Npc)
+            {
+                continue;
+            }
+            const FName Id = Npc->GetStableNPCId();
+            if (Id.IsNone() || SeenNpcIds.Contains(Id))
+            {
+                continue;
+            }
+            SeenNpcIds.Add(Id);
+            for (const FAstrawildNPCAffinitySaveData& Row : SaveGame->NPCAffinities)
+            {
+                if (Row.NPCId == Id)
+                {
+                    Npc->Affinity = FMath::Clamp(Row.Affinity, 0.0f, 100.0f);
+                    break;
+                }
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 #include "AstrawildCraftingComponent.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildCraftingStationActor.h"
 #include "AstrawildDataAssets.h"
@@ -8,6 +9,7 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildResearchSubsystem.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -140,6 +142,20 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
         return false;
     }
 
+    // GDP-3: Masterwork (Craft 5+) — 15% chance the craft was so clean the
+    // station refunds the full ingredient set on completion. The roll happens
+    // at consume time so the outcome is fixed even for timed crafts.
+    bool bMasterworkRefund = false;
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->AttributeComponent &&
+            Player->AttributeComponent->GetMasterworkRefundChance() > 0.0f &&
+            FMath::FRandRange(0.0f, 1.0f) < Player->AttributeComponent->GetMasterworkRefundChance())
+        {
+            bMasterworkRefund = true;
+        }
+    }
+
     if (Recipe->CraftDurationSeconds <= 0.0f)
     {
         // Instant craft.
@@ -147,7 +163,22 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
         {
             Inventory->AddItem(Output.ItemId, Output.Quantity);
         }
+        if (bMasterworkRefund)
+        {
+            for (const FAstrawildItemStack& Ingredient : Recipe->Ingredients)
+            {
+                Inventory->AddItem(Ingredient.ItemId, Ingredient.Quantity);
+            }
+            UE_LOG(LogAstrawildEconomy, Log, TEXT("Masterwork! Ingredients refunded: %s"), *Recipe->RecipeId.ToString());
+        }
         OnCraftCompleted.Broadcast(Recipe->RecipeId, true);
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->AttributeComponent)
+            {
+                Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Craft, 8.0f);
+            }
+        }
         if (UWorld* World = GetWorld())
         {
             if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
@@ -158,12 +189,24 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
         return true;
     }
 
-    // Timed craft queue (directive §15 craft time).
+    // Timed craft queue (directive §15 craft time). GDP-3: Craft attribute
+    // shaves real seconds off (1 + 4% per level above 1; floor 25% of base).
+    float CraftSeconds = Recipe->CraftDurationSeconds;
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->AttributeComponent)
+        {
+            CraftSeconds = FMath::Max(Recipe->CraftDurationSeconds * 0.25f,
+                Recipe->CraftDurationSeconds / Player->AttributeComponent->GetCraftSpeedMultiplier());
+        }
+    }
     ActiveRecipeId = Recipe->RecipeId;
-    CraftTimeTotal = Recipe->CraftDurationSeconds;
+    CraftTimeTotal = CraftSeconds;
     CraftTimeRemaining = CraftTimeTotal;
     PendingOutputs = Recipe->Outputs;
-    OnCraftStarted.Broadcast(Recipe->RecipeId, Recipe->CraftDurationSeconds);
+    bMasterworkPendingRefund = bMasterworkRefund;
+    PendingRefundInputs = bMasterworkRefund ? Recipe->Ingredients : TArray<FAstrawildItemStack>();
+    OnCraftStarted.Broadcast(Recipe->RecipeId, CraftSeconds);
     return true;
 }
 
@@ -346,6 +389,27 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
     bOutputsPendingHandoff = false;
     ActiveRecipeId = NAME_None;
     PendingOutputs.Reset();
+
+    // GDP-3: Masterwork refund + Craft XP on timed-craft completion.
+    if (bMasterworkPendingRefund && Inventory)
+    {
+        for (const FAstrawildItemStack& Refund : PendingRefundInputs)
+        {
+            Inventory->AddItem(Refund.ItemId, Refund.Quantity);
+        }
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Masterwork! Ingredients refunded: %s"), *CompletedRecipe.ToString());
+    }
+    bMasterworkPendingRefund = false;
+    PendingRefundInputs.Reset();
+
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Craft, 8.0f);
+        }
+    }
+
     CraftTimeRemaining = 0.0f;
     CraftTimeTotal = 0.0f;
 

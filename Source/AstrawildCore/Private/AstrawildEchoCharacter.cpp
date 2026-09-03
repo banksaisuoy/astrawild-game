@@ -1,5 +1,6 @@
 #include "AstrawildEchoCharacter.h"
 
+#include "AstrawildAbilityLibrary.h"
 #include "AstrawildCore.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
@@ -10,10 +11,12 @@
 #include "AstrawildGameState.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -537,6 +540,7 @@ void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(AAstrawildEchoCharacter, ActiveCommand);
     DOREPLIFETIME(AAstrawildEchoCharacter, OwnerPlayerId);
     DOREPLIFETIME(AAstrawildEchoCharacter, StatusEffects);
+    DOREPLIFETIME(AAstrawildEchoCharacter, AbilityCooldowns);
 }
 
 void AAstrawildEchoCharacter::BeginPlay()
@@ -598,6 +602,29 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
         const float PreviousSpeedMultiplier = GetStatusSpeedMultiplier();
         ApplyStatusTicks(DeltaTime);
 
+        // GDP-1: ability cooldown countdown (0.25s cadence, replicated for HUD readiness).
+        if (!AbilityCooldowns.IsEmpty())
+        {
+            AbilityCooldownAccumulator += DeltaTime;
+            if (AbilityCooldownAccumulator >= 0.25f)
+            {
+                const float Step = AbilityCooldownAccumulator;
+                AbilityCooldownAccumulator = 0.0f;
+                for (TPair<FName, float>& Pair : AbilityCooldowns)
+                {
+                    Pair.Value = FMath::Max(0.0f, Pair.Value - Step);
+                }
+                // Prune finished entries so the map (and its replication) stays tiny.
+                for (auto It = AbilityCooldowns.CreateIterator(); It; ++It)
+                {
+                    if (It->Value <= 0.0f)
+                    {
+                        It.RemoveCurrent();
+                    }
+                }
+            }
+        }
+
         // Batch 3 — Item B: stagger countdown → restore speed + AI state on expiry.
         if (StaggerRemainingSeconds > 0.0f)
         {
@@ -613,14 +640,15 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
                 // not affect it. Without this, a staggered creature stayed at 0 speed.
                 if (UCharacterMovementComponent* Movement = GetCharacterMovement())
                 {
-                    Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetStatusSpeedMultiplier());
+                    Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier());
                 }
             }
         }
 
-        // Recompute walk speed when the combined status multiplier changed (Chill/Shock).
-        const float NewSpeedMultiplier = GetStatusSpeedMultiplier();
-        if (!FMath::IsNearlyEqual(PreviousSpeedMultiplier, NewSpeedMultiplier))
+        // Recompute walk speed when the combined status/locomotion multiplier changed
+        // (Chill/Shock, and GDP-2: water species crossing zone borders).
+        const float NewSpeedMultiplier = GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier();
+        if (!FMath::IsNearlyEqual(PreviousSpeedMultiplier * GetLocomotionSpeedMultiplier(), NewSpeedMultiplier))
         {
             if (UCharacterMovementComponent* Movement = GetCharacterMovement())
             {
@@ -849,6 +877,12 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
         {
             CurrentHealth = FMath::Max(0.0f, CurrentHealth - Effect.DamagePerSecond * DeltaTime);
         }
+        // GDP-1: negative DPS = heal over time (Blessing-style restore statuses),
+        // clamped to max health so ward healing can never inflate a creature.
+        else if (Effect.DamagePerSecond < 0.0f && !IsDefeated())
+        {
+            CurrentHealth = FMath::Min(GetMaxHealth(), CurrentHealth - Effect.DamagePerSecond * DeltaTime);
+        }
         if (Effect.RemainingSeconds <= 0.0f)
         {
             StatusEffects.RemoveAt(i);
@@ -921,6 +955,13 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
     }
 
     float Damage = DamageAmount;
+
+    // GDP-1: defensive abilities (Photon Veil / Stone Skin / Glacial Wall / Shell
+    // statuses) halve incoming damage while active — a real, readable shield.
+    if (HasStatusEffect(TEXT("Shell")))
+    {
+        Damage *= 0.5f;
+    }
 
     // Elemental interactions (directive §9): weakness x1.5, matching element resisted.
     if (IsValid(EchoDefinition))
@@ -1517,4 +1558,275 @@ bool AAstrawildEchoCharacter::HasPlayerPartyPassive(const UWorld* World, const A
         }
     }
     return false;
+}
+
+// ===========================================================================
+// GDP-1 — Echo ability engine
+// ===========================================================================
+
+TArray<FName> AAstrawildEchoCharacter::GetAllAbilityIds() const
+{
+    return UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(EchoDefinition);
+}
+
+TArray<FName> AAstrawildEchoCharacter::GetKnownAbilityIds() const
+{
+    TArray<FName> Known;
+    if (!IsValid(EchoDefinition))
+    {
+        return Known;
+    }
+    for (const FName& Id : GetAllAbilityIds())
+    {
+        const FAstrawildAbilityData* Data = UAstrawildAbilityLibrary::FindAbility(Id);
+        if (Data && Data->UnlockLevel <= Level)
+        {
+            Known.Add(Id);
+        }
+    }
+    return Known;
+}
+
+bool AAstrawildEchoCharacter::IsAbilityReady(FName AbilityId) const
+{
+    return GetAbilityCooldownRemaining(AbilityId) <= 0.0f && GetKnownAbilityIds().Contains(AbilityId);
+}
+
+float AAstrawildEchoCharacter::GetAbilityCooldownRemaining(FName AbilityId) const
+{
+    const float* Remaining = AbilityCooldowns.Find(AbilityId);
+    return Remaining ? FMath::Max(0.0f, *Remaining) : 0.0f;
+}
+
+FName AAstrawildEchoCharacter::PickCombatAbility(const float DistanceToTarget, const bool bWantsHeal,
+    const bool bWantsShield) const
+{
+    if (!IsValid(EchoDefinition))
+    {
+        return NAME_None;
+    }
+    return UAstrawildAbilityLibrary::ChooseAbilityForCombat(
+        GetKnownAbilityIds(), AbilityCooldowns, Level, DistanceToTarget, bWantsHeal, bWantsShield);
+}
+
+bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* TargetActor)
+{
+    // Fail-closed deny path — every denial is logged Verbose, never crashes,
+    // never mutes the caller (AI just resumes melee next think).
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (no authority): %s"), *AbilityId.ToString());
+        return false;
+    }
+
+    const FAstrawildAbilityData* Data = UAstrawildAbilityLibrary::FindAbility(AbilityId);
+    if (!Data)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (unknown id): %s"), *AbilityId.ToString());
+        return false;
+    }
+    if (Data->UnlockLevel > Level)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (level %d < %d): %s"),
+            Level, Data->UnlockLevel, *AbilityId.ToString());
+        return false;
+    }
+    if (GetAbilityCooldownRemaining(AbilityId) > 0.0f)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (cooling down): %s"), *AbilityId.ToString());
+        return false;
+    }
+
+    UWorld* World = GetWorld();
+    if (!World || IsDefeated())
+    {
+        return false;
+    }
+
+    bool bResolved = false;
+
+    switch (Data->Category)
+    {
+    case EAstrawildAbilityCategory::Offensive:
+    {
+        // Level-scaled bolt down the projectile pipeline (homing when we have a target).
+        const float ScaledPower = Data->Power * (1.0f + 0.05f * FMath::Max(0, Level - 1));
+        FVector Direction = GetActorForwardVector();
+        if (TargetActor)
+        {
+            Direction = (TargetActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+        }
+        FActorSpawnParameters Params;
+        Params.Owner = this;
+        Params.Instigator = this;
+        AAstrawildProjectileActor* Bolt = World->SpawnActor<AAstrawildProjectileActor>(
+            AAstrawildProjectileActor::StaticClass(),
+            GetActorLocation() + Direction * 90.0f + FVector(0, 0, 40.0f),
+            Direction.Rotation(), Params);
+        if (Bolt)
+        {
+            Bolt->LaunchFromWeapon(Direction, ScaledPower, Data->Element, this, 3200.0f,
+                0.45f, 3.0f, TargetActor, 2400.0f);
+            bResolved = true;
+        }
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Debuff:
+    {
+        AAstrawildEchoCharacter* TargetEcho = Cast<AAstrawildEchoCharacter>(TargetActor);
+        if (TargetEcho && !TargetEcho->IsDefeated() &&
+            FVector::Dist(GetActorLocation(), TargetEcho->GetActorLocation()) <= Data->Range)
+        {
+            FAstrawildStatusEffect Effect;
+            Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Chill");
+            Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
+            Effect.DamagePerSecond = FMath::Max(0.0f, Data->Power);
+            Effect.SpeedMultiplier = FMath::Clamp(Data->StatusSpeedMultiplier, 0.2f, 1.0f);
+            TargetEcho->AddStatusEffect(Effect);
+            bResolved = true;
+        }
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Defensive:
+    {
+        FAstrawildStatusEffect Effect;
+        Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Shell");
+        Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
+        Effect.DamagePerSecond = 0.0f;
+        Effect.SpeedMultiplier = 1.0f;
+        AddStatusEffect(Effect);
+        bResolved = true;
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Restore:
+    {
+        // Heal-over-time ward when the ability carries a status payload, direct
+        // burst otherwise. Either way: self + nearby party members.
+        FAstrawildStatusEffect Ward;
+        if (Data->StatusId != NAME_None && Data->StatusSeconds > 0.0f)
+        {
+            Ward.StatusId = Data->StatusId;
+            Ward.RemainingSeconds = Data->StatusSeconds;
+            Ward.DamagePerSecond = -(Data->Power / Data->StatusSeconds);
+            Ward.SpeedMultiplier = 1.0f;
+        }
+        else
+        {
+            Ward.StatusId = TEXT("Mend");
+            Ward.RemainingSeconds = 1.0f;
+            Ward.DamagePerSecond = -Data->Power;
+            Ward.SpeedMultiplier = 1.0f;
+        }
+
+        AddStatusEffect(Ward);
+        bResolved = true;
+
+        // Party-wide: every healthy captured echo of the same owner in range.
+        if (bCaptured && OwnerPlayerId != NAME_None)
+        {
+            for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+            {
+                AAstrawildEchoCharacter* Other = *It;
+                if (Other && Other != this && Other->bCaptured && !Other->IsDefeated() &&
+                    Other->OwnerPlayerId == OwnerPlayerId &&
+                    FVector::Dist(GetActorLocation(), Other->GetActorLocation()) <= Data->Range)
+                {
+                    Other->AddStatusEffect(Ward);
+                }
+            }
+        }
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Mobility:
+    {
+        FAstrawildStatusEffect Effect;
+        Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Surge");
+        Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
+        Effect.DamagePerSecond = 0.0f;
+        Effect.SpeedMultiplier = FMath::Clamp(Data->StatusSpeedMultiplier, 1.0f, 2.5f);
+        AddStatusEffect(Effect);
+        bResolved = true;
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    if (bResolved)
+    {
+        AbilityCooldowns.Add(AbilityId, Data->CooldownSeconds);
+        OnAbilityExecuted.Broadcast(this, AbilityId, true);
+        UE_LOG(LogAstrawild, Log, TEXT("%s (Lv %d) cast %s."), *GetName(), Level, *AbilityId.ToString());
+    }
+    else
+    {
+        OnAbilityExecuted.Broadcast(this, AbilityId, false);
+    }
+    return bResolved;
+}
+
+// ===========================================================================
+// GDP-2 — locomotion classes
+// ===========================================================================
+
+EAstrawildLocomotionClass AAstrawildEchoCharacter::DeriveLocomotionClass(const EAstrawildEchoFamily Family,
+    const EAstrawildBodyPlan BodyPlan, const EAstrawildZone HomeZone)
+{
+    // 1) Explicit winged bodies and the Avian family fly.
+    if (BodyPlan == EAstrawildBodyPlan::Avian || Family == EAstrawildEchoFamily::Avian)
+    {
+        return EAstrawildLocomotionClass::Flying;
+    }
+    // 2) The Aquatic family and the three sea zones make water movers.
+    if (Family == EAstrawildEchoFamily::Aquatic)
+    {
+        return EAstrawildLocomotionClass::Water;
+    }
+    if (HomeZone == EAstrawildZone::AzureShallows || HomeZone == EAstrawildZone::TidebreakerIsles ||
+        HomeZone == EAstrawildZone::PearlseaReef)
+    {
+        // Sea-zone species that are not winged: amphibious water movers.
+        return EAstrawildLocomotionClass::Water;
+    }
+    // 3) Floating spirit/elemental bodies hover — treated as flying movers.
+    if (BodyPlan == EAstrawildBodyPlan::Floating)
+    {
+        return EAstrawildLocomotionClass::Flying;
+    }
+    return EAstrawildLocomotionClass::Land;
+}
+
+EAstrawildLocomotionClass AAstrawildEchoCharacter::GetLocomotionClass() const
+{
+    if (!IsValid(EchoDefinition))
+    {
+        return EAstrawildLocomotionClass::Land;
+    }
+    if (EchoDefinition->Locomotion != EAstrawildLocomotionClass::Auto)
+    {
+        return EchoDefinition->Locomotion;
+    }
+    return DeriveLocomotionClass(EchoDefinition->Family, EchoDefinition->BodyPlan, EchoDefinition->HomeZone);
+}
+
+float AAstrawildEchoCharacter::GetLocomotionSpeedMultiplier() const
+{
+    const EAstrawildLocomotionClass Loco = GetLocomotionClass();
+    if (Loco != EAstrawildLocomotionClass::Water)
+    {
+        // Land and Flying movers are unaffected (flying runs MOVE_Flying speed).
+        return 1.0f;
+    }
+
+    // Water species: +40% in the three sea zones, -15% drag on dry land.
+    const EAstrawildZone CurrentZone = UAstrawildZoneSubsystem::GetZoneAt(GetActorLocation());
+    const bool bInSeaZone = CurrentZone == EAstrawildZone::AzureShallows ||
+        CurrentZone == EAstrawildZone::TidebreakerIsles ||
+        CurrentZone == EAstrawildZone::PearlseaReef;
+    return bInSeaZone ? 1.4f : 0.85f;
 }

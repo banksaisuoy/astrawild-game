@@ -111,3 +111,20 @@ UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automa
 Filter: ASTRAWILD.                                          (all 72)
 Expected: 72 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
+
+## Gameplay Depth Pack contracts (73-84)
+
+| # | Test | Covers |
+|---|------|--------|
+| 73 | ASTRAWILD.Ability.LibraryIntegrity | 44 unique templates, bounds, names, payload sanity |
+| 74 | ASTRAWILD.Ability.DerivedLoadout | Every element x role combo derives >= 4 abilities incl. offense; deterministic |
+| 75 | ASTRAWILD.Ability.CombatPick | Tactical ladder: hurt -> heal, healthy -> offense, cooldown/range gating |
+| 76 | ASTRAWILD.Ability.SpeciesLoadout | Authored ids lead, derived fill, no duplicates |
+| 77 | ASTRAWILD.Locomotion.Derivation | Avian/floating fly; aquatic/sea-zone swim; flight outranks water; else land |
+| 78 | ASTRAWILD.Attributes.XPCurve | Level thresholds, overflow carry, cap 10 + residue clear, negative XP rejected |
+| 79 | ASTRAWILD.Attributes.BonusFormulas | All seven bonus formulas at fresh/max, masterwork 15% gate |
+| 80 | ASTRAWILD.Attributes.SkillUnlock | Milestone table, cooldown table, smart-cast ladder + cooldown blocking |
+| 81 | ASTRAWILD.Attributes.SaveRoundTrip | Clean round-trip, corrupt import repairs (clamp/dedup), empty = fresh |
+| 82 | ASTRAWILD.NPC.AffinityTiers | 0/25/50/75 boundaries, discount ladder, stable id fallback |
+| 83 | ASTRAWILD.NPC.AffinitySave | Payload round-trip + save field defaults empty |
+| 84 | ASTRAWILD.Ability.EngineContracts | End-to-end echo contracts: knowability gates, cooldown queries, combat picks |

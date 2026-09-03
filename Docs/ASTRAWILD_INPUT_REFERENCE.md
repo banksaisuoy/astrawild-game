@@ -1,7 +1,7 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-09-03** (final-audit sync — 26 actions incl. LeftCtrl skiff Descend; screens close with their advertised keys; crafting stations open the crafting screen on E)
+**Date: 2026-09-03** (final-audit sync — 28 actions incl. LeftCtrl skiff Descend; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,10 +11,10 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (26 actions)
+## 1. Complete Keybinding Table (28 actions)
 
 `BuildRuntimeInputDefaults` creates **26 runtime actions** (`MakeRuntimeAction` count incl.
-Descend) and the log line matches ("26 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
+Descend) and the log line matches ("28 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
 inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
@@ -131,3 +131,11 @@ time-scale testing of decay rates.
   `DefaultMappingContext` on the player Blueprint (the runtime build then skips itself).
 - **Planned:** real IMC/IA assets (M9) + settings screen with full remap, sensitivity, invert, toggle/hold,
   aim assist per master plan §5/§12.
+
+
+## Gameplay Depth Pack additions (v3.4)
+
+| Key | Gamepad | Action | Since |
+|-----|---------|--------|-------|
+| T | Right stick click | Party ability cast — every owned Echo casts its best ready ability (heal when hurt, offense otherwise) | GDP-1 |
+| Y | — (radial menu pass owns gamepad smart-cast) | Player smart-cast — priority ladder picks the best ready unlocked skill (SecondWind > Whirlwind > PowerStrike > HuntersFocus > Dash > Overcharge) | GDP-3 |

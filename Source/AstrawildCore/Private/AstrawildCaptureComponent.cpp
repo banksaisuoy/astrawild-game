@@ -1,11 +1,13 @@
 #include "AstrawildCaptureComponent.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildVfxActor.h"
 #include "Engine/World.h"
@@ -62,6 +64,21 @@ float UAstrawildCaptureComponent::PreviewCaptureChance(const AAstrawildEchoChara
     if (IsTracking(Target))
     {
         Chance += 0.05f;
+    }
+
+    // GDP-3: Instinct attribute (+1.5% per level above 1) and the Hunter's
+    // Focus smart-cast window (+25% while active) — the growth path a capture
+    // player actually feels.
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Chance += Attributes->GetCaptureChanceBonus();
+        }
+        if (Player->GetCaptureFocusRemaining() > 0.0f)
+        {
+            Chance += 0.25f;
+        }
     }
 
     return FMath::Clamp(Chance, 0.0f, 0.95f);
@@ -125,6 +142,16 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         AActor* Owner = GetOwner();
         Echo->OwnerPlayerId = Owner ? Owner->GetFName() : NAME_None;
         bSuccess = Echo->Capture(InitialTrust);
+    }
+
+    // GDP-3: Instinct grows from the hunt itself — successful captures pay big,
+    // failed attempts still teach the player something about the species.
+    if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Instinct, bSuccess ? 25.0f : 4.0f);
+        }
     }
 
     OnCaptureResult.Broadcast(Echo, bSuccess);

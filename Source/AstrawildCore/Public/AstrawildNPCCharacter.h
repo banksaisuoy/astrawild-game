@@ -105,6 +105,34 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC")
     void RefreshAppearanceFromDefinition();
 
+    // ------------------------------------------------------------------
+    // GDP-4 — NPC affinity (relationship growth with the player).
+    // ------------------------------------------------------------------
+
+    /** Current affinity 0..100 (grows by talking/trading; saved per NPC id). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Affinity")
+    float Affinity = 0.0f;
+
+    /** Relationship tier 0..3 (Stranger / Acquaintance / Friend / Confidant). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    int32 GetAffinityTier() const;
+
+    /** Tier title for prompts/UI. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    FText GetAffinityTierTitle() const;
+
+    /** Vendor discount fraction by tier (0 / 5 / 10 / 15%). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    float GetVendorDiscountFraction() const;
+
+    /** Stable id for save persistence (definition NpcId, NAME_None without one). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    FName GetStableNPCId() const;
+
+    /** Server-side affinity grant with the once-per-in-world-day gate. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC|Affinity")
+    void AddAffinity(float Amount);
+
 protected:
     virtual void BeginPlay() override;
 
@@ -112,4 +140,11 @@ private:
     int32 PatrolIndex = 0;
     double LastInteractedTime = -BIG_NUMBER;
     TWeakObjectPtr<AActor> LastInteractedActor;
+
+    /** GDP-4: in-world day of the last affinity gain (once-per-day gate). */
+    UPROPERTY()
+    int32 LastAffinityGainDay = -1;
+
+    /** Current in-world day (absolute minutes / 1440). */
+    int32 GetCurrentWorldDay() const;
 };

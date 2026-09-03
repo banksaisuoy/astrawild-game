@@ -85,3 +85,13 @@
 **Orphan check**: none (every task has an owner + status + next).
 **Contradiction check**: none (single active quest rule documented; element matrix single-sourced).
 **Duplicate check**: none (Act 3 content registered once; PR #4 content classified, not re-implemented).
+
+## E. Gameplay Depth Pack (GDP — user-directed expansion, post-freeze)
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| GDP-1 | Echo combat | Ability engine: 44 templates + per-species loadouts (authored AbilityIds + derived element/role/family kits), level gates, replicated cooldowns, AI combat casting, T-key party cast, Shell/negative-DPS status semantics | GLM | IMPLEMENTED | `AstrawildAbilityLibrary` + `AstrawildEchoCharacter` + `AstrawildEchoAIController` + HUD line; ENGINE-UNVERIFIED |
+| GDP-2 | Locomotion | Land/Water/Flying classes with derivation rule, MOVE_Flying + 3D steering for flyers, sea-zone speed tuning for swimmers | GLM | IMPLEMENTED | Deterministic; covers all 210+ species; ENGINE-UNVERIFIED |
+| GDP-3 | Player growth | 5 attributes + XP wiring at combat/capture/craft/survival sites, 7 milestone skills with smart-cast ladder (Y), passive bonuses consumed by existing systems, save round-trip | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
+| GDP-4 | NPC affinity | 0-100 tiers, talk/trade gains with daily gate, up to 15% vendor discount, per-NPC-id persistence | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
+| GDP-5 | Quality | 12 automation contracts (84 total), validator gate 84, docs updated (this pass) | GLM | IMPLEMENTED | `ASTRAWILD.Ability.*`, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*`, `ASTRAWILD.NPC.Affinity*` |

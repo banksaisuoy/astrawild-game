@@ -1024,3 +1024,148 @@ struct ASTRAWILDCORE_API FAstrawildWorldEventScheduleSaveData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     TMap<FName, int32> CooldownEndMinutes;
 };
+
+// ===========================================================================
+// Gameplay Depth Pack (GDP) — real variety layer on top of the frozen core.
+// Every piece is additive: old saves keep loading, existing systems read the
+// bonuses opportunistically, and all data is code-default registered so the
+// zero-asset build path stays intact.
+// ===========================================================================
+
+/** GDP-1: what an Echo ability does when it resolves. */
+UENUM(BlueprintType)
+enum class EAstrawildAbilityCategory : uint8
+{
+    Offensive UMETA(DisplayName="Offensive (elemental strike)"),
+    Debuff UMETA(DisplayName="Debuff (status on target)"),
+    Defensive UMETA(DisplayName="Defensive (self shield)"),
+    Restore UMETA(DisplayName="Restore (party heal)"),
+    Mobility UMETA(DisplayName="Mobility (self surge)")
+};
+
+/** GDP-1: one Echo ability template (code-default registered, data-driven). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildAbilityData
+{
+    GENERATED_BODY()
+
+    /** Stable ability id (Ability_XXX). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    FName AbilityId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    FText DisplayName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(MultiLine=true))
+    FText Description;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    EAstrawildAbilityCategory Category = EAstrawildAbilityCategory::Offensive;
+
+    /** Element carried — offensive bolts ride the elemental damage pipeline. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    EAstrawildElementType Element = EAstrawildElementType::None;
+
+    /** Damage (offensive/debuff DoT scale) or heal amount (restore). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="0.0"))
+    float Power = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="1.0"))
+    float CooldownSeconds = 6.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="100.0"))
+    float Range = 900.0f;
+
+    /** Echo level required before the ability is known. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="1"))
+    int32 UnlockLevel = 1;
+
+    /** Optional status applied on resolve (target for debuff, self for defensive/mobility). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    FName StatusId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="0.0"))
+    float StatusSeconds = 0.0f;
+
+    /** Movement speed multiplier carried by the applied status. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="0.0"))
+    float StatusSpeedMultiplier = 1.0f;
+};
+
+/** GDP-2: how a species moves through the world. */
+UENUM(BlueprintType)
+enum class EAstrawildLocomotionClass : uint8
+{
+    /** Definition did not set one — derived deterministically from family/home zone. */
+    Auto UMETA(DisplayName="Auto (derived)"),
+    Land UMETA(DisplayName="Land"),
+    Water UMETA(DisplayName="Water (amphibious, faster in home water)"),
+    Flying UMETA(DisplayName="Flying (true flight, ignores ground nav)")
+};
+
+/** GDP-3: player growth attributes (each 1..10, fed by doing the thing). */
+UENUM(BlueprintType)
+enum class EAstrawildAttributeType : uint8
+{
+    Might UMETA(DisplayName="Might (melee damage)"),
+    Vigor UMETA(DisplayName="Vigor (max health)"),
+    Agility UMETA(DisplayName="Agility (stamina & speed)"),
+    Instinct UMETA(DisplayName="Instinct (capture & observation)"),
+    Craft UMETA(DisplayName="Craft (crafting speed & refunds)")
+};
+
+/** GDP-3: live state of one attribute. */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildAttributeStat
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Attribute", meta=(ClampMin="1", ClampMax="10"))
+    int32 Level = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Attribute", meta=(ClampMin="0.0"))
+    float XP = 0.0f;
+};
+
+/** GDP-3: save payload for one attribute (additive schema v5 field). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildAttributeSaveData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    EAstrawildAttributeType Type = EAstrawildAttributeType::Might;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="1", ClampMax="10"))
+    int32 Level = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0"))
+    float XP = 0.0f;
+};
+
+/** GDP-3: active player skills unlocked by attribute milestones. */
+UENUM(BlueprintType)
+enum class EAstrawildPlayerSkillId : uint8
+{
+    None UMETA(DisplayName="None"),
+    PowerStrike UMETA(DisplayName="Power Strike (Might 3)"),
+    Whirlwind UMETA(DisplayName="Whirlwind (Might 6)"),
+    Dash UMETA(DisplayName="Dash (Agility 3)"),
+    SecondWind UMETA(DisplayName="Second Wind (Vigor 4)"),
+    HuntersFocus UMETA(DisplayName="Hunter's Focus (Instinct 4)"),
+    Masterwork UMETA(DisplayName="Masterwork (Craft 5)"),
+    Overcharge UMETA(DisplayName="Overcharge (Instinct 7)")
+};
+
+/** GDP-4: NPC relationship persistence (additive schema v5 field). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildNPCAffinitySaveData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName NPCId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0", ClampMax="100.0"))
+    float Affinity = 0.0f;
+};

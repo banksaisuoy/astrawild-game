@@ -1,5 +1,7 @@
 #include "AstrawildPlayerCharacter.h"
 
+#include "AstrawildAbilityLibrary.h"
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingActor.h"
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
@@ -55,7 +57,11 @@
 
 AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    // GDP-3: the tick must ALWAYS run — skill cooldowns + buff windows decay in
+    // Tick (zero-asset mode included; the animation driver gate below used to be
+    // the only enabler, which would have frozen the skill system with no skinned mesh).
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 
     // Art pack soft bindings (Batch 4): AstrawildArtPack is the single source of
     // truth — the designer can still override per-archetype in a BP subclass.
@@ -121,6 +127,7 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     SurvivalComponent = CreateDefaultSubobject<UAstrawildSurvivalComponent>(TEXT("Survival"));
     CombatComponent = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
     BuildingComponent = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
+    AttributeComponent = CreateDefaultSubobject<UAstrawildAttributeComponent>(TEXT("Attributes"));
 
     // Audit C-3: broad navmesh generation around the player covers the camp, the
     // arena interior and the dungeon approach in the zero-asset world.
@@ -346,6 +353,199 @@ void AAstrawildPlayerCharacter::Tick(float DeltaSeconds)
     if (bSkeletalBodyActive)
     {
         UpdateSurvivorAnimation();
+    }
+
+    // GDP-3: player growth upkeep — skill cooldowns + active buff windows.
+    if (AttributeComponent && GetLocalRole() == ROLE_Authority)
+    {
+        AttributeComponent->TickCooldowns(DeltaSeconds);
+        EmpoweredMeleeRemaining = FMath::Max(0.0f, EmpoweredMeleeRemaining - DeltaSeconds);
+        RangedBuffRemaining = FMath::Max(0.0f, RangedBuffRemaining - DeltaSeconds);
+        CaptureFocusRemaining = FMath::Max(0.0f, CaptureFocusRemaining - DeltaSeconds);
+    }
+}
+
+void AAstrawildPlayerCharacter::CastPartyAbility(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    // Every owned party Echo picks and casts its own best ability with the same
+    // tactical brain the AI uses — the T key is "everyone, do your thing".
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    const FName OwnerId = GetFName();
+    const FVector PlayerLocation = GetActorLocation();
+    int32 Casts = 0;
+
+    TArray<AActor*> Echoes;
+    UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+        if (!Echo || !Echo->bCaptured || Echo->OwnerPlayerId != OwnerId || Echo->IsDefeated())
+        {
+            continue;
+        }
+
+        // Nearest hostile to THIS echo is its default cast target.
+        AActor* BestTarget = nullptr;
+        float BestDist = FLT_MAX;
+        TArray<AActor*> Candidates;
+        UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Candidates);
+        for (AActor* Candidate : Candidates)
+        {
+            AAstrawildEchoCharacter* CandidateEcho = Cast<AAstrawildEchoCharacter>(Candidate);
+            if (CandidateEcho && !CandidateEcho->bCaptured && !CandidateEcho->IsDefeated() &&
+                CandidateEcho->EchoDefinition && CandidateEcho->EchoDefinition->bHostileToPlayers)
+            {
+                const float Dist = FVector::Dist(Echo->GetActorLocation(), CandidateEcho->GetActorLocation());
+                if (Dist < BestDist && Dist < 2000.0f)
+                {
+                    BestDist = Dist;
+                    BestTarget = CandidateEcho;
+                }
+            }
+        }
+
+        const float TargetDistance = BestTarget ? BestDist : 0.0f;
+        const float HealthFraction = Echo->GetHealthFraction();
+        const FName AbilityId = Echo->PickCombatAbility(TargetDistance, HealthFraction < 0.45f, HealthFraction < 0.3f);
+        if (AbilityId != NAME_None && Echo->ExecuteAbility(AbilityId, BestTarget))
+        {
+            Casts++;
+        }
+    }
+
+    UE_LOG(LogAstrawildAI, Log, TEXT("Party ability cast: %d echoes."), Casts);
+}
+
+void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority || !AttributeComponent)
+    {
+        return;
+    }
+
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // Battlefield read for the smart-cast ladder.
+    const float HealthFraction = SurvivalComponent ? SurvivalComponent->GetHealthFraction() : 1.0f;
+    const FVector PlayerLocation = GetActorLocation();
+
+    int32 NearbyEnemies = 0;
+    bool bEnemyInMelee = false;
+    TArray<AActor*> Echoes;
+    UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+        if (!Echo || Echo->bCaptured || Echo->IsDefeated() || !Echo->EchoDefinition ||
+            !Echo->EchoDefinition->bHostileToPlayers)
+        {
+            continue;
+        }
+        const float Dist = FVector::Dist(PlayerLocation, Echo->GetActorLocation());
+        if (Dist < 700.0f)
+        {
+            NearbyEnemies++;
+            if (Dist < 420.0f)
+            {
+                bEnemyInMelee = true;
+            }
+        }
+    }
+
+    const bool bMoving = GetVelocity().SizeSquared() > 4000.0f;
+    const EAstrawildPlayerSkillId Skill = AttributeComponent->PickBestReadySkill(
+        HealthFraction, NearbyEnemies, bEnemyInMelee, bMoving);
+
+    if (Skill == EAstrawildPlayerSkillId::None)
+    {
+        UE_LOG(LogAstrawildAI, Verbose, TEXT("Smart-cast: nothing ready for this situation."));
+        return;
+    }
+
+    bool bSuccess = false;
+    switch (Skill)
+    {
+    case EAstrawildPlayerSkillId::PowerStrike:
+        EmpoweredMeleeRemaining = 6.0f; // Consumed by the next melee hit.
+        bSuccess = true;
+        break;
+
+    case EAstrawildPlayerSkillId::Whirlwind:
+    {
+        // 360-degree sweep: every hostile echo in 350 units takes melee damage.
+        if (CombatComponent)
+        {
+            const float BaseDamage = CombatComponent->LightAttackDamage *
+                AttributeComponent->GetMeleeDamageMultiplier() * 1.2f;
+            for (AActor* Actor : Echoes)
+            {
+                AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+                if (Echo && !Echo->bCaptured && !Echo->IsDefeated() &&
+                    FVector::Dist(PlayerLocation, Echo->GetActorLocation()) <= 350.0f)
+                {
+                    Echo->ApplyElementalDamage(BaseDamage, EAstrawildElementType::None);
+                }
+            }
+            bSuccess = true;
+        }
+        break;
+    }
+
+    case EAstrawildPlayerSkillId::Dash:
+    {
+        FVector Direction = GetLastMovementInputVector().GetSafeNormal();
+        if (Direction.SizeSquared() < 0.01f)
+        {
+            Direction = GetActorForwardVector();
+        }
+        LaunchCharacter(Direction * 1350.0f + FVector(0, 0, 120.0f), true, true);
+        bSuccess = true;
+        break;
+    }
+
+    case EAstrawildPlayerSkillId::SecondWind:
+        if (SurvivalComponent)
+        {
+            // 40% of base max health — the milestone heal is a flat, readable number.
+            SurvivalComponent->RestoreHealth(40.0f);
+            SurvivalComponent->RestoreStamina(60.0f);
+            bSuccess = true;
+        }
+        break;
+
+    case EAstrawildPlayerSkillId::HuntersFocus:
+        CaptureFocusRemaining = 12.0f;
+        bSuccess = true;
+        break;
+
+    case EAstrawildPlayerSkillId::Overcharge:
+        RangedBuffRemaining = 10.0f;
+        bSuccess = true;
+        break;
+
+    default:
+        break;
+    }
+
+    if (bSuccess)
+    {
+        AttributeComponent->StartSkillCooldown(Skill);
+        AttributeComponent->OnPlayerSkillExecuted.Broadcast(Skill, true);
+        UE_LOG(LogAstrawildAI, Log, TEXT("Player smart-cast: %s"), *UEnum::GetValueAsString(Skill));
     }
 }
 
@@ -614,8 +814,15 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     DescendAction = MakeRuntimeAction(TEXT("AWD_Descend"), static_cast<uint8>(EInputActionValueType::Boolean));
     Context->MapKey(DescendAction, EKeys::LeftControl);
 
+    // GDP: T = party ability cast, Y = player smart-cast skill (adjacent keys,
+    // both unused by the 26-action contract above).
+    PartyAbilityAction = MakeRuntimeAction(TEXT("AWD_PartyAbility"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(PartyAbilityAction, EKeys::T);
+    PlayerSkillAction = MakeRuntimeAction(TEXT("AWD_PlayerSkill"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(PlayerSkillAction, EKeys::Y);
+
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (26 actions, WASD+mouse+wheel+UI+skiff)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (28 actions, WASD+mouse+wheel+UI+skiff+GDP)."));
 }
 
 void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
@@ -648,6 +855,13 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
 
     // D-pad: up command, right feed, down consume, left equip-best.
     Context->MapKey(CommandAction, EKeys::Gamepad_DPad_Up);
+    // GDP: party ability = right stick click. The player smart-cast stays
+    // KB/M-only for now (Y) — every face/d-pad button is already committed, and
+    // the radial menu pass (documented in INPUT_REFERENCE) will own it.
+    if (PartyAbilityAction)
+    {
+        Context->MapKey(PartyAbilityAction, EKeys::Gamepad_RightThumbstick);
+    }
     // Batch 8 — LS click = skiff descend (A button climbs through JumpAction).
     if (DescendAction)
     {
@@ -754,6 +968,14 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (FeedAction)
     {
         EnhancedInput->BindAction(FeedAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::FeedTarget);
+    }
+    if (PartyAbilityAction)
+    {
+        EnhancedInput->BindAction(PartyAbilityAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::CastPartyAbility);
+    }
+    if (PlayerSkillAction)
+    {
+        EnhancedInput->BindAction(PlayerSkillAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::CastPlayerSkill);
     }
     if (BuildModeAction)
     {
@@ -941,6 +1163,12 @@ void AAstrawildPlayerCharacter::RefreshMovementSpeed()
     if (InventoryComponent)
     {
         TargetSpeed *= (1.0f + InventoryComponent->GetEquippedMoveSpeedBonus());
+    }
+
+    // GDP-3: Agility adds a permanent fractional speed bonus (1 + 2% per level above 1).
+    if (AttributeComponent)
+    {
+        TargetSpeed *= AttributeComponent->GetMoveSpeedMultiplier();
     }
 
     SetMovementSpeed(TargetSpeed);

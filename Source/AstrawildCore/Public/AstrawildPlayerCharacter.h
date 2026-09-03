@@ -10,6 +10,7 @@ class AAstrawildEchoCharacter;
 class AAstrawildSkiffActor;
 class AAstrawildUtilityDroneActor;
 class UAstrawildBuildingComponent;
+class UAstrawildAttributeComponent;
 class UAstrawildCaptureComponent;
 class UAstrawildCombatComponent;
 class UAstrawildCraftingComponent;
@@ -139,6 +140,24 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
     TObjectPtr<UAstrawildBuildingComponent> BuildingComponent;
 
+    /** GDP-3: player growth — five attributes + seven milestone skills. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildAttributeComponent> AttributeComponent;
+
+    // --- GDP-3: skill windows (public getters — the combat/capture components read them) ---
+
+    /** True while Power Strike is queued onto the next melee swing. */
+    bool IsNextMeleeEmpowered() const { return EmpoweredMeleeRemaining > 0.0f; }
+
+    /** Spent by the combat component the moment the empowered swing lands. */
+    void ConsumeEmpoweredMelee() { EmpoweredMeleeRemaining = 0.0f; }
+
+    /** Remaining seconds of the Overcharge ranged damage window (+30% while active). */
+    float GetRangedBuffRemaining() const { return RangedBuffRemaining; }
+
+    /** Remaining seconds of the Hunter's Focus capture window (+25% chance while active). */
+    float GetCaptureFocusRemaining() const { return CaptureFocusRemaining; }
+
     /**
      * Navigation invoker (audit C-3): generates navmesh tiles around the player in
      * the zero-asset world so creature pathfinding works everywhere the player goes.
@@ -249,6 +268,14 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> DescendAction;
 
+    /** GDP-1: T — every owned party Echo casts its best ready ability. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> PartyAbilityAction;
+
+    /** GDP-3: Y — smart-cast the player's best ready skill. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> PlayerSkillAction;
+
     // --- Tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat", meta=(ClampMin="0.0"))
     float AttackDamage = 25.0f;
@@ -350,6 +377,21 @@ protected:
     void HandleJump(const FInputActionValue& Value);
     void CyclePartyCommand(const FInputActionValue& Value);
     void FeedTarget(const FInputActionValue& Value);
+
+    // GDP-1/3: T = every party Echo casts its best ready ability; Y = the
+    // player's smart-cast skill (priority ladder on the attribute component).
+    void CastPartyAbility(const FInputActionValue& Value);
+    void CastPlayerSkill(const FInputActionValue& Value);
+
+    /** GDP-3: Power Strike window (seconds; consumed by the next melee hit). */
+    float EmpoweredMeleeRemaining = 0.0f;
+
+    /** GDP-3: Overcharge window (seconds; +30% ranged damage while active). */
+    float RangedBuffRemaining = 0.0f;
+
+    /** GDP-3: Hunter's Focus window (seconds; +25% capture chance while active). */
+    float CaptureFocusRemaining = 0.0f;
+
     void ToggleBuildMode(const FInputActionValue& Value);
     void RotateBuilding(const FInputActionValue& Value);
     void CycleBuildingPiece(const FInputActionValue& Value);

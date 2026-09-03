@@ -125,12 +125,23 @@ docs/evidence logs = UNVERIFIED claims superseded by re-run on the final SHA.
 Delivery path: Antigravity pulls `final-completion` (§1 of the HANDOFF) and pushes after
 engine integration.
 
+## 5b. GAMEPLAY DEPTH PACK (GDP — user-directed, post-freeze expansion)
+
+User directive (2026-10): the frozen core ran, but the creatures had no per-species combat identity, the player had no growth systems, and the NPCs had no relationship layer — "a game made for testing, not a real one." GDP adds the depth layer WITHOUT touching the frozen canon:
+
+- **GDP-1 Echo Abilities (every creature fights like itself)**: 44 code-default ability templates (24 element-flavored, 4 role kits, 8 family signatures, 8 authored-species signatures). Authored species carry curated `AbilityIds`; all other species derive a deterministic 4-ability loadout from element + role + family. Level-gated unlocks, cooldowns replicated for HUD, AI casts in combat (heal/shield when hurt, offense otherwise), player party-cast on **T**, bosses excluded (own choreography). `Shell` status = real 50% damage halving; negative-DPS statuses = heal-over-time.
+- **GDP-2 Locomotion (land / water / flying)**: `EAstrawildLocomotionClass` on EchoDefinition (Auto = derive). Avian family/plan + Floating bodies fly (MOVE_Flying + direct 3D steering, no navmesh); Aquatic family + sea-zone species swim (+40% speed in sea zones, -15% on land). All 210+ species classified by one deterministic rule.
+- **GDP-3 Player Attributes + Skills (สเตตัส + สกิวคน)**: five attributes (Might/Vigor/Agility/Instinct/Craft, level 1-10, XP from the actions themselves — hitting, capturing, crafting, surviving). Passive bonuses feed the existing systems (melee dmg, max HP, stamina regen, move speed, capture chance, craft speed, Masterwork 15% refund). Seven milestone skills with a smart-cast ladder on **Y** (PowerStrike/Whirlwind/Dash/SecondWind/HuntersFocus/Masterwork/Overcharge). Saved (additive v5 field, sanitized import).
+- **GDP-4 NPC Affinity (สัมพันธภาพ)**: 0-100 affinity per NPC (Stranger → Acquaintance → Friend → Confidant), gained by talking (+2/day) and trading (+1/day), grants up to 15% vendor discount, saved per NPC id (additive v5 field). Schedules already existed (patrol day / campfire night — Batch 8); affinity completes the living-village layer.
+
+Input contract grows 26 → 28 actions (T = party ability cast, Y = player smart-cast; gamepad: right-stick click = party cast). Save schema stays V5 (both new fields are additive arrays; pre-GDP saves load as fresh states). 12 new automation contracts (72 → 84).
+
 ## 6. Engine verification evidence ledger (Antigravity-owned)
 
 | Gate | Status | Notes |
 | :--- | :--- | :--- |
 | MSVC build @ 8313c61 | DECLARED PASS (raw log) | superseded — rebuild on final SHA required |
-| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 72 tests now — re-run required |
+| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 84 tests now — re-run required |
 | Final-audit static validation | **PASS 46/46 (this sandbox)** | re-run at AG-2 per HANDOFF §4 |
 | Cook & package | FAILED at 8313c61 (UBT ExitCode 6) per own log | FZ-A1 blocker — re-run on final SHA |
 | Packaged exe runtime | STALE binary evidence (FZ-A2) | re-run on final SHA |
@@ -169,7 +180,7 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 
 1. `git fetch && git checkout final-completion` (or merge into main — subsumes PR #4)
 2. Build: `Engine\Build\BatchFiles\Build.bat AstrawildEditor Win64 Development -project=<repo>\ASTRAWILD.uproject`
-3. Run automation: 72/72 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`)
+3. Run automation: 84/84 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, plus the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2)
 4. PIE smoke: MQ chain HUD tracker · save/load round-trip (schema 5 stamp in log) ·
    `AW.FastForward` to MQ-13+ if needed → verify anchor POIs, Eye Gate at 150 m with coil skiff,
    Sovereign fight, ending banner, post-game weather pin (Ending A).
@@ -236,3 +247,4 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026-09-03 | **v3.1 (GLM RECOVERY)**: second sandbox reset destroyed the unpushed `glm/final-run` work tree — Final Run source LOST (docs survived in glm-staging). Working branch recreated as `final-completion` from PR #4 head f31f5e1 per binding user rule; control docs restored into repo; registry statuses reset to PLANNED (REDO); push-after-every-batch rule adopted; game design/canon unchanged |
 | 2026-09-03 | **v3.2 (GLM FINAL COMPLETION)**: FR-1..12 redo landed batch-by-batch on final-completion (BATCH-0..5, all pushed) · Act 3 + 2 endings + post-game + schema V5 + 17 building pieces + 11/11 NPC dialogue · 46/46 static checks · 67 tests · READY_FOR_FINAL_BUILD (source-side) declared · content manifest issued (459/459 LFS, 65/65 /Game refs) |
 | 2026-09-03 | **v3.3 (GLM FINAL SOURCE COMPLETION PASS)**: user-ordered full-repo audit (Phases A–V) executed — 5 parallel deep audits (loop/player, echo/save, quest/boss, world/automation, input/UI/MP/perf); **2 CRITICAL + ~13 HIGH + ~25 MEDIUM defects found and fixed** in FINAL-AUDIT-A (1be6e20: drone compile/crash, POI/boss one-shot quest back-fill, MQ-17 ending gate per canon, view-axis ranged aiming, crafting screen wiring, echo owner identity, robot chassis save, camp respawn, CampKitchen spawn, MainMap default map) and FINAL-AUDIT-B (69a1d65: element canon unified across 204 bestiary rows + authored roster + bosses, echo health persistence, species DefeatLoot live, research import sanitize, AI perception-forgotten + fight-back, stranded-party recall, keyboard screen closes, FastForward cheat) · +5 regression contracts (a5aa74d, 72 tests) · docs reconciled to ONE truth (this pass) · canon UNCHANGED (implementation fixed to match canon) · READY_FOR_FINAL_BUILD re-affirmed (source/repository side) |
+| 2026-10-XX | **v3.4 (GLM GAMEPLAY DEPTH PACK)**: user-directed depth expansion — GDP-1 Echo ability engine (44 templates, per-species loadouts, AI casting, T-key party cast) · GDP-2 locomotion classes (Land/Water/Flying, true flight) · GDP-3 player attributes + 7 milestone smart-cast skills (Y) + save fields · GDP-4 NPC affinity tiers with vendor discounts + save fields · 12 new automation contracts (72 → 84) · canon UNCHANGED · READY_FOR_FINAL_BUILD re-affirmed (source/repository side) |

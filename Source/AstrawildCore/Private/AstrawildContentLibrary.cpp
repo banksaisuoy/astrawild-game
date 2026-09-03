@@ -1,5 +1,6 @@
 #include "AstrawildContentLibrary.h"
 
+#include "AstrawildAbilityLibrary.h"
 #include "AstrawildBestiaryData.h"
 #include "AstrawildProductionContent.h"
 #include "AstrawildDataAssets.h"
@@ -482,6 +483,8 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     LightWork.Affinity = 1.2f;
     Lumewisp->WorkAffinities.Add(LightWork);
     Lumewisp->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 1));
+    // GDP-1: signature loadout — the starter healer flash + the party gleam.
+    Lumewisp->AbilityIds = { TEXT("Ability_LumewispDawn"), TEXT("Ability_RestoringGleam") };
     Registry->RegisterEcho(Lumewisp);
 
     // Sturdy stone companion: brave tank.
@@ -494,6 +497,8 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     MiningWork.Affinity = 1.8f;
     Stonehide->WorkAffinities.Add(MiningWork);
     Stonehide->DefeatLoot.Add(Stack(TEXT("Item_Stone"), 2));
+    // GDP-1: signature loadout — the tank's stance + its own hide of stone.
+    Stonehide->AbilityIds = { TEXT("Ability_StonehideBulwark"), TEXT("Ability_StoneSkin"), TEXT("Ability_GravelSpit") };
     Registry->RegisterEcho(Stonehide);
 
     // Nocturnal energy creature — the power synergy of directive §55.
@@ -505,6 +510,8 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     PowerWork.WorkType = EAstrawildWorkType::PowerGeneration;
     PowerWork.Affinity = 2.0f;
     Voltling->WorkAffinities.Add(PowerWork);
+    // GDP-1: signature loadout — the blink + the bolt.
+    Voltling->AbilityIds = { TEXT("Ability_VoltlingStatic"), TEXT("Ability_ArcBolt") };
     Registry->RegisterEcho(Voltling);
 
     // Dusk moth: shy support with research affinity.
@@ -516,6 +523,8 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     ResearchWork.WorkType = EAstrawildWorkType::ResearchAssist;
     ResearchWork.Affinity = 1.6f;
     Duskmoth->WorkAffinities.Add(ResearchWork);
+    // GDP-1: signature loadout — the soporific cloud + a lashing vine.
+    Duskmoth->AbilityIds = { TEXT("Ability_DuskmothPowder"), TEXT("Ability_ThornLash") };
     Registry->RegisterEcho(Duskmoth);
 
     // First hostile creature (directive §21): night stalker.
@@ -526,6 +535,8 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
         EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.85f, EAstrawildElementType::None, true);
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
+    // GDP-1: signature loadout — the night stalker earns its fear honestly.
+    Gloomfang->AbilityIds = { TEXT("Ability_GloomfangTerror"), TEXT("Ability_GravelSpit"), TEXT("Ability_DustScreen") };
     Registry->RegisterEcho(Gloomfang);
 
     // --- Content expansion (CODE_DEFAULT wave 2) ---
@@ -543,6 +554,8 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Sprigling->WorkAffinities.Add(FarmWork);
     Sprigling->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 2));
     Sprigling->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 1));
+    // GDP-1: signature loadout — the meadow's gentle mend + a rooting snare.
+    Sprigling->AbilityIds = { TEXT("Ability_SpriglingCheer"), TEXT("Ability_RootSnare") };
     Registry->RegisterEcho(Sprigling);
 
     // Ember predator: crepuscular stalker of the meadow edges (directive §7 food chain).
@@ -1280,6 +1293,10 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
 
     // Production V2 (Master Plan STEP 3): the data-driven content foundation.
     UAstrawildProductionContent::BuildAll(Registry);
+
+    // GDP-1: the Echo ability library (44 templates — authored signatures + the
+    // derived element/role/family kits every species falls back to).
+    UAstrawildAbilityLibrary::BuildDefaults();
 
     // Production V2 retrofits: existing items/techs gain their new data fields.
     ApplyProductionV2Retrofits(Registry);

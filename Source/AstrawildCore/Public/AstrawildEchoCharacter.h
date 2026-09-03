@@ -14,6 +14,7 @@ class UNavigationInvokerComponent;
 class UProceduralMeshComponent;
 class USkeletalMeshComponent;
 class UAnimSequenceBase;
+class AAstrawildProjectileActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
@@ -21,6 +22,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoDefeated, AAstrawildEc
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoLevelUp, AAstrawildEchoCharacter*, Echo, int32, NewLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoCommandReceived, AAstrawildEchoCharacter*, Echo, EAstrawildEchoCommand, Command);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoAIStateChanged, AAstrawildEchoCharacter*, Echo, EAstrawildEchoAIState, NewState);
+
+/** GDP-1: fired on every ability resolve attempt (success or deny — UI toasts listen). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAstrawildEchoAbilityExecuted, AAstrawildEchoCharacter*, Echo, FName, AbilityId, bool, bSuccess);
 
 /**
  * Echo — the creature heart of ASTRAWILD (directive §4).
@@ -101,6 +105,10 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoAIStateChanged OnAIStateChanged;
 
+    /** GDP-1: ability resolve broadcast (HUD toast + audio hooks). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoAbilityExecuted OnAbilityExecuted;
+
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TObjectPtr<UAstrawildEchoDefinition> EchoDefinition;
 
@@ -158,6 +166,58 @@ public:
     /** Assigned work site for base jobs (directive §18). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TWeakObjectPtr<AAstrawildWorkSiteActor> AssignedWorkSite;
+
+    // ------------------------------------------------------------------
+    // GDP-1 — Echo ability engine (server-authoritative, replicated cooldowns).
+    // ------------------------------------------------------------------
+
+    /** Live cooldowns (seconds remaining); replicated so the HUD shows readiness. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Ability", Replicated)
+    TMap<FName, float> AbilityCooldowns;
+
+    /** All ability ids this species can ever learn (authored + derived). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    TArray<FName> GetAllAbilityIds() const;
+
+    /** Ability ids known at the CURRENT level (UnlockLevel gate applied). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    TArray<FName> GetKnownAbilityIds() const;
+
+    /** True when the ability is known and off cooldown. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    bool IsAbilityReady(FName AbilityId) const;
+
+    /** Seconds until the ability is ready again (0 when ready/unknown). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    float GetAbilityCooldownRemaining(FName AbilityId) const;
+
+    /**
+     * Server-side ability resolve. Offensive/debuff ride the projectile pipeline
+     * toward TargetActor; restore/defensive/mobility apply immediately. Returns
+     * false (with a broadcast) when unknown/locked/cooling down.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Ability")
+    bool ExecuteAbility(FName AbilityId, AActor* TargetActor);
+
+    /** Deterministic combat pick used by the AI and the player's party-cast key. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    FName PickCombatAbility(float DistanceToTarget, bool bWantsHeal, bool bWantsShield) const;
+
+    // ------------------------------------------------------------------
+    // GDP-2 — locomotion class (Land / Water / Flying).
+    // ------------------------------------------------------------------
+
+    /** Resolved locomotion (definition field, or derived from family/plan/zone when Auto). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Locomotion")
+    EAstrawildLocomotionClass GetLocomotionClass() const;
+
+    /** Static derivation rule — public for tests. */
+    static EAstrawildLocomotionClass DeriveLocomotionClass(EAstrawildEchoFamily Family,
+        EAstrawildBodyPlan BodyPlan, EAstrawildZone HomeZone);
+
+    /** GDP-2: zone-based speed multiplier (water species surge in sea zones, drag on land). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Locomotion")
+    float GetLocomotionSpeedMultiplier() const;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     bool InitializeFromDefinition(UAstrawildEchoDefinition* InDefinition, const FGuid& OptionalInstanceId = FGuid());
@@ -320,6 +380,9 @@ private:
 
     /** Needs simulate at a throttled cadence based on ecosystem LOD tier (directive §34). */
     float NeedsDecayAccumulator = 0.0f;
+
+    /** GDP-1: throttled (0.25s) server tick that decrements ability cooldowns. */
+    float AbilityCooldownAccumulator = 0.0f;
 
     void RollPersonalityFromDefinition();
     void RegisterWithEcosystem();
