@@ -839,6 +839,11 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_MedicineBench"), TEXT("Medicine Bench"), EAstrawildBuildingCategory::Workstation,
         TEXT("Item_WoodPlank"), 3, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::Crafting));
+
+    // --- SCP Phase 11: base defense. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_DefenseTurret"), TEXT("Bolt Turret"), EAstrawildBuildingCategory::Defense,
+        TEXT("Item_Stone"), 6, TEXT("Tech_Electrical"), 400.0f, EAstrawildPowerRole::Consumer, 0.0f, 3.0f, 0.0f, EAstrawildWorkType::None));
 }
 
 // ---------------------------------------------------------------------------

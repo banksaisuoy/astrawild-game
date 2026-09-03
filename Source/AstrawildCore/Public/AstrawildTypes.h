@@ -643,6 +643,24 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
      */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     TArray<FAstrawildItemStack> StoredItems;
+
+    // --- SCP Phase 8 (additive): farm plot crop lifecycle ---
+
+    /** Crop seed item (NAME_None on empty plots). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName CropSeedId = NAME_None;
+
+    /** Crop state as uint8-cast EAstrawildCropState (0 = Empty). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    uint8 CropState = 0;
+
+    /** Crop growth 0..1. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    float CropGrowth = 0.0f;
+
+    /** True while the plot is composted (x2 growth). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bCropFertilized = false;
 };
 
 /**

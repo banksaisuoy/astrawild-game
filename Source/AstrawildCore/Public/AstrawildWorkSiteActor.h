@@ -87,6 +87,14 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
     int32 GetStoredOutput() const { return StoredOutput; }
 
+    /**
+     * SCP Phase 8: credit offline production for elapsed wall seconds (called
+     * by SaveSubsystem::LoadWorld with now - SavedAtUtc). Capped at 48h, at a
+     * 50% rate, and honest about cycle inputs — offline production never
+     * free-mints items from empty buffers (directive Phase 8.3).
+     */
+    void CreditOfflineProduction(float OfflineSeconds);
+
     /** Player collects the accumulated output. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
     int32 CollectOutput();

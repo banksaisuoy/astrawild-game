@@ -8,6 +8,8 @@
 
 class UAstrawildBuildingDefinition;
 class UStaticMeshComponent;
+class UAstrawildCropComponent;
+class UAstrawildTurretComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildBuildingDamaged, class AAstrawildBuildingActor*, Building);
 
@@ -66,6 +68,20 @@ public:
     void OnRep_IsPowered();
 
     void UpdateVisualPowerState();
+
+    /**
+     * SCP Phase 8: crop lifecycle for Farm Plot buildings (created lazily on
+     * initialize/restore when the definition matches).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building|Farm")
+    TObjectPtr<UAstrawildCropComponent> CropComponent;
+
+    /**
+     * SCP Phase 11: auto-turret behavior for Defense buildings (powered gate,
+     * nearest-hostile fire loop).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building|Defense")
+    TObjectPtr<UAstrawildTurretComponent> TurretComponent;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
     bool InitializeFromDefinition(const UAstrawildBuildingDefinition* Definition, FName InOwnerPlayerId);

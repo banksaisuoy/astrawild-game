@@ -2,6 +2,7 @@
 
 #include "AstrawildBaseTerminalActor.h"
 #include "AstrawildCore.h"
+#include "AstrawildCropComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
@@ -13,6 +14,7 @@
 #include "AstrawildPlayerController.h"
 #include "AstrawildPowerSubsystem.h"
 #include "AstrawildResearchSubsystem.h"
+#include "AstrawildTurretComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -154,6 +156,19 @@ bool AAstrawildBuildingActor::InitializeFromDefinition(const UAstrawildBuildingD
     OwnerPlayerId = InOwnerPlayerId;
     MaxHealth = FMath::Max(1.0f, Definition->MaxHealth);
     CurrentHealth = MaxHealth;
+
+    // SCP Phase 8/11: specialized behaviors attach by definition (crop cycles
+    // on farm plots, auto-turrets on defense pieces — plain buildings skip).
+    if (DefinitionId == TEXT("Building_FarmPlot") && !CropComponent)
+    {
+        CropComponent = NewObject<UAstrawildCropComponent>(this);
+        CropComponent->RegisterComponent();
+    }
+    if (Definition->Category == EAstrawildBuildingCategory::Defense && !TurretComponent)
+    {
+        TurretComponent = NewObject<UAstrawildTurretComponent>(this);
+        TurretComponent->RegisterComponent();
+    }
 
     // Structural scale per category for readable placeholder silhouettes.
     if (VisualMesh)
@@ -379,6 +394,67 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
         return;
     }
 
+    // SCP Phase 8: farm plots run their crop cycle interact — plant a berry
+    // seed, water with a Dew Flask, fertilize with compost, harvest mature
+    // stalks. Status flows to the player through the notify line.
+    if (CropComponent && DefinitionId == TEXT("Building_FarmPlot") && Player->InventoryComponent)
+    {
+        if (GetLocalRole() == ROLE_Authority)
+        {
+            FText Result = CropComponent->GetPlotStatusText();
+
+            const FName CropSeed = CropComponent->SeedItemId;
+            const EAstrawildCropState State = CropComponent->CropState;
+
+            if (State == EAstrawildCropState::Mature)
+            {
+                FName HarvestedId = NAME_None;
+                int32 HarvestedQuantity = 0;
+                if (CropComponent->Harvest(Player->InventoryComponent, HarvestedId, HarvestedQuantity))
+                {
+                    Result = FText::Format(
+                        NSLOCTEXT("ASTRAWILD", "CropHarvested", "Harvested {0} x{1}."),
+                        FText::FromName(HarvestedId), FText::AsNumber(HarvestedQuantity));
+                }
+            }
+            else if (State == EAstrawildCropState::Empty || State == EAstrawildCropState::Withered ||
+                State == EAstrawildCropState::Harvested)
+            {
+                static const FName SeedId = TEXT("Item_Berry");
+                if (CropComponent->PlantSeed(Player->InventoryComponent, SeedId))
+                {
+                    Result = NSLOCTEXT("ASTRAWILD", "CropPlanted", "Planted a Glimmer Berry seed.");
+                }
+            }
+            else if (Player->InventoryComponent->HasItem(TEXT("Item_Compost"), 1) && !CropComponent->bFertilized)
+            {
+                if (Player->InventoryComponent->RemoveItem(TEXT("Item_Compost"), 1))
+                {
+                    CropComponent->bFertilized = true;
+                    Result = NSLOCTEXT("ASTRAWILD", "CropFertilized", "Composted — the plot grows twice as fast.");
+                }
+            }
+            else if (Player->InventoryComponent->HasItem(TEXT("Item_WaterFlask"), 1))
+            {
+                if (Player->InventoryComponent->RemoveItem(TEXT("Item_WaterFlask"), 1))
+                {
+                    CropComponent->WaterPlot();
+                    Result = NSLOCTEXT("ASTRAWILD", "CropWatered", "Watered the plot (90 seconds).");
+                }
+            }
+            else if (!CropSeed.IsNone())
+            {
+                Result = CropComponent->GetPlotStatusText();
+            }
+
+            if (AAstrawildPlayerController* PlotPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+            {
+                PlotPC->Notify(Result);
+            }
+        }
+        return;
+    }
+
     // Final-audit M-6: Workstation-category pieces (Workbench, Campfire, Sawmill,
     // Composter, FeedTrough...) used to be inert decorations — placed, powered,
     // then nothing on interact. They now open the crafting screen, the same
@@ -563,6 +639,12 @@ FAstrawildBuildingSaveData AAstrawildBuildingActor::ToSaveData() const
     // FR-9: door state + crate contents persist (additive v5 payload fields).
     Data.bIsOpen = bIsOpen;
     Data.StoredItems = StoredItems;
+
+    // SCP Phase 8: crop lifecycle rides the building payload (additive).
+    if (CropComponent)
+    {
+        CropComponent->ExportForSave(Data.CropSeedId, Data.CropState, Data.CropGrowth, Data.bCropFertilized);
+    }
     return Data;
 }
 
@@ -616,6 +698,13 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
         {
             StoredItems.Add(Stack);
         }
+    }
+
+    // SCP Phase 8: crop restore (InitializeFromDefinition above already created
+    // the component for farm plots; pre-SCP saves deserialize as empty plots).
+    if (CropComponent)
+    {
+        CropComponent->ImportFromSave(Data.CropSeedId, Data.CropState, Data.CropGrowth, Data.bCropFertilized);
     }
     ApplyDoorVisualState();
 

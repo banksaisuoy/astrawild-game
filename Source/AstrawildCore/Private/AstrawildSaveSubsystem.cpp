@@ -703,6 +703,12 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
 
         SiteIt->ImportFromSave(*Found);
 
+        // SCP Phase 8: offline production — credit elapsed wall time between
+        // save and load (capped 48h at half rate inside the site itself).
+        const float OfflineSeconds = static_cast<float>(
+            FMath::Max(0.0, (FDateTime::UtcNow() - SaveGame->SavedAtUtc).GetTotalSeconds()));
+        SiteIt->CreditOfflineProduction(OfflineSeconds);
+
         if (World->GetGameInstance())
         {
             if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())

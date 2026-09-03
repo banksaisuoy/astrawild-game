@@ -393,6 +393,41 @@ void AAstrawildWorkSiteActor::ImportFromSave(const FAstrawildWorkSiteSaveData& D
     OutputQuantity = FMath::Max(1, Data.OutputQuantity);
 }
 
+void AAstrawildWorkSiteActor::CreditOfflineProduction(float OfflineSeconds)
+{
+    // Directive Phase 8.3: capped at 48 hours, half rate, and each credited
+    // cycle still burns its real inputs — an empty buffer stalls exactly like
+    // the live loop (no offline item minting).
+    if (OfflineSeconds <= 0.0f || OutputItemId.IsNone() || SecondsPerOutput <= 0.0f)
+    {
+        return;
+    }
+
+    const float EffectiveSeconds = FMath::Min(OfflineSeconds, 48.0f * 3600.0f) * 0.5f;
+    int32 CreditedCycles = 0;
+
+    // Simulate whole cycles against the live input buffer.
+    float Accumulated = EffectiveSeconds;
+    while (Accumulated >= SecondsPerOutput)
+    {
+        if (!ConsumeCycleInputs())
+        {
+            // Inputs exhausted mid-window — production stalls, matching the
+            // live-loop contract (the accumulator pins at the threshold).
+            break;
+        }
+        Accumulated -= SecondsPerOutput;
+        ++CreditedCycles;
+    }
+
+    if (CreditedCycles > 0)
+    {
+        StoredOutput += CreditedCycles * FMath::Max(1, OutputQuantity);
+        UE_LOG(LogAstrawildBuilding, Log, TEXT("Offline production: site %s credited %d cycles (%d x %s)."),
+            *SiteId.ToString(), CreditedCycles, CreditedCycles * FMath::Max(1, OutputQuantity), *OutputItemId.ToString());
+    }
+}
+
 FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
 {
     // Audit C-7: dynamic prompt — collect when output waits, assign otherwise.

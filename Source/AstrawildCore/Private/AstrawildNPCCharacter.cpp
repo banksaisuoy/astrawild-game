@@ -6,6 +6,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCAIController.h"
+#include "AstrawildNPCScheduleComponent.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildQuestComponent.h"
@@ -36,6 +37,9 @@ AAstrawildNPCCharacter::AAstrawildNPCCharacter()
     // Batch 8 — living villages: the NPC brain (patrol / guard duty / campfire nights).
     AIControllerClass = AAstrawildNPCAIController::StaticClass();
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+    // SCP Phase 7: living schedule — work hours, rain shelter, night curfew.
+    ScheduleComponent = CreateDefaultSubobject<UAstrawildNPCScheduleComponent>(TEXT("Schedule"));
 
     // Navmesh anchor — runtime tiles generate around each villager (audit C-3 pattern).
     UNavigationInvokerComponent* NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));

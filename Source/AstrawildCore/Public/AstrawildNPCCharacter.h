@@ -7,6 +7,7 @@
 #include "AstrawildNPCCharacter.generated.h"
 
 class UAstrawildNPCDefinition;
+class UAstrawildNPCScheduleComponent;
 class UStaticMeshComponent;
 class UPointLightComponent;
 class AAstrawildVillageActor;
@@ -51,6 +52,10 @@ public:
 
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     TObjectPtr<UAstrawildNPCDefinition> NpcDefinition;
+
+    /** SCP Phase 7: daily schedule (work/home/shelter/sleep anchors + service gating). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Schedule")
+    TObjectPtr<UAstrawildNPCScheduleComponent> ScheduleComponent;
 
     /** Home village — waypoint provider for the patrol AI (set by the bootstrapper). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC")

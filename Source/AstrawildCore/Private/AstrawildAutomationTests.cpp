@@ -10,13 +10,16 @@
 #include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBestiaryData.h"
 #include "AstrawildComboSubsystem.h"
+#include "AstrawildCropComponent.h"
 #include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataValidator.h"
 #include "AstrawildDifficultySubsystem.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildErrorReporter.h"
 #include "AstrawildMountComponent.h"
+#include "AstrawildNPCScheduleComponent.h"
 #include "AstrawildSpoilageSubsystem.h"
+#include "AstrawildTurretComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
@@ -3670,6 +3673,115 @@ bool FAstrawildDifficultyBandTest::RunTest(const FString& Parameters)
 
     // Unknown bands fall back to Standard multipliers.
     TestEqual(TEXT("Unknown band is neutral"), DDA::GetHostileStrengthMultiplier(99), 1.0f);
+    return true;
+}
+
+// --- SCP Phase 8: crop growth math (Test 95) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCropMathTest,
+    "ASTRAWILD.SCP.Crop.GrowthMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCropMathTest::RunTest(const FString& Parameters)
+{
+    using Crop = UAstrawildCropComponent;
+
+    // Growth: watered full rate, dry half, compost doubles, season scales.
+    const float Watered = Crop::ComputeGrowthStep(30.0f, true, false, 1.0f);
+    const float Dry = Crop::ComputeGrowthStep(30.0f, false, false, 1.0f);
+    const float Composted = Crop::ComputeGrowthStep(30.0f, true, true, 1.0f);
+    TestEqual(TEXT("Watered step is 30/300"), Watered, 0.1f);
+    TestEqual(TEXT("Dry step is half"), Dry, 0.05f);
+    TestEqual(TEXT("Compost doubles"), Composted, 0.2f);
+    TestTrue(TEXT("Steps never exceed 1"), Crop::ComputeGrowthStep(100000.0f, true, true, 2.0f) <= 1.0f);
+
+    // Season ladder: spring 1.25, summer 1.0, autumn 0.85, winter 0.5, wraps.
+    TestEqual(TEXT("Spring x1.25"), Crop::ComputeSeasonMultiplier(0), 1.25f);
+    TestEqual(TEXT("Summer x1.0"), Crop::ComputeSeasonMultiplier(1), 1.0f);
+    TestEqual(TEXT("Autumn x0.85"), Crop::ComputeSeasonMultiplier(2), 0.85f);
+    TestEqual(TEXT("Winter x0.5"), Crop::ComputeSeasonMultiplier(3), 0.5f);
+    TestEqual(TEXT("Year wraps to spring"), Crop::ComputeSeasonMultiplier(4), 1.25f);
+
+    // State ladder from progress.
+    TestEqual(TEXT("0 -> Empty"), static_cast<int32>(Crop::ResolveStateFromProgress(0.0f)),
+        static_cast<int32>(EAstrawildCropState::Empty));
+    TestEqual(TEXT("0.1 -> Planted"), static_cast<int32>(Crop::ResolveStateFromProgress(0.1f)),
+        static_cast<int32>(EAstrawildCropState::Planted));
+    TestEqual(TEXT("0.5 -> Sprout"), static_cast<int32>(Crop::ResolveStateFromProgress(0.5f)),
+        static_cast<int32>(EAstrawildCropState::Sprout));
+    TestEqual(TEXT("0.8 -> Young"), static_cast<int32>(Crop::ResolveStateFromProgress(0.8f)),
+        static_cast<int32>(EAstrawildCropState::Young));
+    TestEqual(TEXT("1.0 -> Mature"), static_cast<int32>(Crop::ResolveStateFromProgress(1.0f)),
+        static_cast<int32>(EAstrawildCropState::Mature));
+    return true;
+}
+
+// --- SCP Phase 7: NPC schedule anchors (Test 96) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNPCScheduleTest,
+    "ASTRAWILD.SCP.NPC.ScheduleAnchors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNPCScheduleTest::RunTest(const FString& Parameters)
+{
+    using Sched = UAstrawildNPCScheduleComponent;
+
+    // Work hours: smith/farmer at work, guard patrols, trader opens 8-20.
+    TestEqual(TEXT("Farmer works at noon"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 12, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Work));
+    TestEqual(TEXT("Smith works at 7"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Smith, 7, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Work));
+    TestEqual(TEXT("Trader closed at 7"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Trader, 7, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Home));
+    TestEqual(TEXT("Trader open at 9"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Trader, 9, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Work));
+    TestEqual(TEXT("Guard patrols at noon"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Guard, 12, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Patrol));
+
+    // Rain: everyone but guards shelters.
+    TestEqual(TEXT("Farmer shelters in rain"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 12, true)),
+        static_cast<int32>(EAstrawildNPCAnchor::Shelter));
+    TestEqual(TEXT("Guard patrols through rain"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Guard, 12, true)),
+        static_cast<int32>(EAstrawildNPCAnchor::Patrol));
+
+    // Night: curfew (guards keep a skeleton patrol).
+    TestEqual(TEXT("Farmer sleeps at midnight"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 0, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Sleep));
+    TestEqual(TEXT("Guard night patrol"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Guard, 0, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Patrol));
+    TestEqual(TEXT("Evening at home (20h)"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 20, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Home));
+
+    // Service gating follows the same rules.
+    TestTrue(TEXT("Trader services open at noon"), Sched::IsServiceOpen(EAstrawildNPCProfession::Trader, 12, false));
+    TestFalse(TEXT("Trader services closed in rain"), Sched::IsServiceOpen(EAstrawildNPCProfession::Trader, 12, true));
+    TestFalse(TEXT("Trader services closed at night"), Sched::IsServiceOpen(EAstrawildNPCProfession::Trader, 22, false));
+
+    // Role -> profession derivation.
+    TestEqual(TEXT("Vendor -> Trader"), static_cast<int32>(Sched::ResolveProfession(static_cast<uint8>(EAstrawildNPCRole::Vendor))),
+        static_cast<int32>(EAstrawildNPCProfession::Trader));
+    TestEqual(TEXT("Guard -> Guard"), static_cast<int32>(Sched::ResolveProfession(static_cast<uint8>(EAstrawildNPCRole::Guard))),
+        static_cast<int32>(EAstrawildNPCProfession::Guard));
+    TestEqual(TEXT("Villager -> Farmer"), static_cast<int32>(Sched::ResolveProfession(static_cast<uint8>(EAstrawildNPCRole::Villager))),
+        static_cast<int32>(EAstrawildNPCProfession::Farmer));
+    return true;
+}
+
+// --- SCP Phase 11: turret range + target policy (Test 97) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildTurretPolicyTest,
+    "ASTRAWILD.SCP.Turret.RangeAndPolicy",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildTurretPolicyTest::RunTest(const FString& Parameters)
+{
+    using Turret = UAstrawildTurretComponent;
+
+    // Range gate (pure math).
+    TestTrue(TEXT("Point inside range"), Turret::IsInRange(FVector::ZeroVector, FVector(1000.0f, 0.0f, 0.0f), Turret::TurretRange));
+    TestFalse(TEXT("Point outside range"), Turret::IsInRange(FVector::ZeroVector, FVector(10000.0f, 0.0f, 0.0f), Turret::TurretRange));
+
+    // Numbers pinned: 2500cm range, 1.5s cadence, 30 damage.
+    TestEqual(TEXT("Turret range is 2500cm"), Turret::TurretRange, 2500.0f);
+    TestEqual(TEXT("Fire interval is 1.5s"), Turret::FireIntervalSeconds, 1.5f);
+    TestEqual(TEXT("Bolt damage is 30"), Turret::BoltDamage, 30.0f);
     return true;
 }
 
