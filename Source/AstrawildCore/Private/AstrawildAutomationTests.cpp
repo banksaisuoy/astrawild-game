@@ -2476,16 +2476,21 @@ bool FAstrawildDialogueEndingChoiceTest::RunTest(const FString& Parameters)
 
     // A hand-built ending choice: hard end + one-way flag + ending route —
     // the exact Maren crown shape (structural contract).
+    // Final-audit G-2: canon gates the ending on MQ-17 (Quest_FirstDawnAgain,
+    // the homecoming terminus) — gating on the Sovereign (MQ-16) would fire the
+    // ending one quest early and strand MQ-17 active under the ending banner.
     Choice.Text = FText::FromString(TEXT("Break the cage"));
-    Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+    Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
     Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
     Choice.SetFlagId = TEXT("Maren_EndingResolved");
     Choice.TriggerEndingId = TEXT("Ending_BreakCage");
     Choice.bEndDialogue = true;
     TestTrue(TEXT("Ending choice is a hard end"), Choice.bEndDialogue);
     TestTrue(TEXT("Ending choice has no goto (unambiguous)"), Choice.GotoNodeId.IsNone());
-    TestTrue(TEXT("Ending choice is gated on the Sovereign"),
-        Choice.RequiredQuestCompletedId == FName(TEXT("Quest_TheDrownedSovereign")));
+    TestTrue(TEXT("Ending choice is gated on the MQ-17 homecoming, not the Sovereign"),
+        Choice.RequiredQuestCompletedId == FName(TEXT("Quest_FirstDawnAgain")));
+    TestTrue(TEXT("Ending gate is NOT the MQ-16 Sovereign kill"),
+        Choice.RequiredQuestCompletedId != FName(TEXT("Quest_TheDrownedSovereign")));
 
     // The ending enum itself is a closed 4-value vocabulary (None + 2 + Count).
     TestEqual(TEXT("Ending enum order: None=0, Dawn=1, Storm=2, Count=3"),

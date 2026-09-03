@@ -134,6 +134,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
         {
             Quests->ExportForSave(SaveGame->Quests);
+            // Final-audit G-3: lifetime defeat counters ride beside the quests.
+            Quests->ExportDefeatCounts(SaveGame->DefeatedCreatureCounts);
         }
 
         // Batch 3 — persistent story flags live beside them.
@@ -187,6 +189,11 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         RobotData.OwnerPlayerId = RobotIt->GetOwnerPlayerId();
         RobotData.Transform = RobotIt->GetActorTransform();
         RobotData.AssignedSiteId = RobotIt->GetAssignedSiteId();
+        // Final-audit H-2: the chassis id MUST be written or specialist robots
+        // (Borebot/Cultivator/Sentinel — distinct recipes + rates) silently degrade
+        // to the generic 0.8x frame on every save/load; the load path (below)
+        // has branched on this field since it was introduced, but nothing wrote it.
+        RobotData.RobotDefinitionId = RobotIt->RobotDefinitionId;
         SaveGame->Robots.Add(RobotData);
     }
 
@@ -497,6 +504,9 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
 
         if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
         {
+            // Final-audit G-3: restore the lifetime defeat counters FIRST — the
+            // quest import back-fills one-shot objectives from them.
+            Quests->ImportDefeatCounts(SaveGame->DefeatedCreatureCounts);
             Quests->ImportFromSave(SaveGame->Quests);
         }
 

@@ -2,6 +2,7 @@
 
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
+#include "AstrawildCraftingScreenWidget.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDialogueWidget.h"
@@ -217,6 +218,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleResearchScreen();
     }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
@@ -272,6 +277,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     {
         ToggleInventoryScreen();
     }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
@@ -312,6 +321,66 @@ bool AAstrawildPlayerController::IsResearchOpen() const
     return ResearchScreen && ResearchScreen->IsInViewport();
 }
 
+void AAstrawildPlayerController::ToggleCraftingScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsCraftingOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!CraftingScreen)
+        {
+            const TSubclassOf<UAstrawildCraftingScreenWidget> WidgetClass = CraftingScreenClass
+                ? CraftingScreenClass
+                : TSubclassOf<UAstrawildCraftingScreenWidget>(UAstrawildCraftingScreenWidget::StaticClass());
+            CraftingScreen = CreateWidget<UAstrawildCraftingScreenWidget>(this, WidgetClass);
+        }
+        if (CraftingScreen)
+        {
+            CraftingScreen->RefreshRecipes();
+            CraftingScreen->AddToViewport(10);
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (CraftingScreen)
+        {
+            CraftingScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsCraftingOpen() const
+{
+    return CraftingScreen && CraftingScreen->IsInViewport();
+}
+
 void AAstrawildPlayerController::TogglePauseMenu()
 {
     if (!IsLocalController())
@@ -330,6 +399,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsResearchOpen())
     {
         ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
     }
 
     if (bOpen)
@@ -371,5 +444,5 @@ bool AAstrawildPlayerController::IsPauseMenuOpen() const
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen();
 }

@@ -8,6 +8,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPOISubsystem.h"
 #include "AstrawildResearchSubsystem.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -94,6 +95,12 @@ bool UAstrawildQuestComponent::StartQuest(const FName QuestId)
     State.bActive = true;
     State.bCompleted = false;
 
+    // Final-audit G-1/G-3: one-shot objectives are back-filled from world history —
+    // POIs already discovered (MQ-11's FirstLightRuin sits ~25m from spawn) and
+    // one-shot bosses already defeated (portals/world bosses live from world
+    // start) would otherwise dead-end the 17-quest chain with no recovery path.
+    BackFillOneShotObjectivesFromWorld(State);
+
     QuestStates.Add(State);
     ActiveQuestId = QuestId;
     OnQuestStateChanged.Broadcast(QuestId, false);
@@ -132,6 +139,18 @@ void UAstrawildQuestComponent::HandleGameplayEvent(const FAstrawildGameplayEvent
     {
         return;
     }
+
+    // Final-audit G-3: lifetime defeat counters observe EVERY defeat event,
+    // regardless of which quest (if any) is active — one-shot bosses never
+    // respawn, so pre-activation kills must stay creditable later.
+    if ((Event.EventTag == TAG_Astrawild_Event_HostileDefeated ||
+         Event.EventTag == TAG_Astrawild_Event_EchoDefeated) &&
+        !Event.TargetId.IsNone() && Event.Amount > 0)
+    {
+        int32& Count = DefeatedCreatureCounts.FindOrAdd(Event.TargetId);
+        Count = FMath::Min(999, Count + FMath::Max(1, Event.Amount));
+    }
+
     ApplyEventToQuest(Event);
 }
 
@@ -248,7 +267,11 @@ void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& 
             bMatches = Event.EventTag == TAG_Astrawild_Event_RecipeCrafted && Event.TargetId == Objective.TargetId;
             break;
         case EAstrawildQuestObjectiveType::PlaceBuilding:
-            bMatches = Event.EventTag == TAG_Astrawild_Event_BuildingPlaced && Event.TargetId == Objective.TargetId;
+            // Final-audit F-03: dismantles publish BuildingPlaced with Amount=-1;
+            // the Max(1, Amount) clamp below would otherwise turn a DISMANTLE into
+            // +1 placement progress (place/dismantle farming on MQ-03/04/06).
+            bMatches = Event.EventTag == TAG_Astrawild_Event_BuildingPlaced
+                && Event.TargetId == Objective.TargetId && Event.Amount > 0;
             break;
         case EAstrawildQuestObjectiveType::UnlockTechnology:
             bMatches = Event.EventTag == TAG_Astrawild_Event_TechUnlocked && Event.TargetId == Objective.TargetId;
@@ -409,6 +432,91 @@ void UAstrawildQuestComponent::ExportForSave(TArray<FAstrawildQuestSaveData>& Ou
     OutQuests = QuestStates;
 }
 
+void UAstrawildQuestComponent::ImportDefeatCounts(const TMap<FName, int32>& InCounts)
+{
+    // Sanitized import (mirrors the quest import policy): drop id-less entries,
+    // clamp negative counts, cap at 999 — a crafted save cannot mint progress.
+    DefeatedCreatureCounts.Reset();
+    for (const TPair<FName, int32>& Pair : InCounts)
+    {
+        if (Pair.Key.IsNone() || Pair.Value <= 0)
+        {
+            UE_LOG(LogAstrawild, Warning, TEXT("ImportDefeatCounts: dropped invalid entry %s x%d."),
+                *Pair.Key.ToString(), Pair.Value);
+            continue;
+        }
+        DefeatedCreatureCounts.Add(Pair.Key, FMath::Min(999, Pair.Value));
+    }
+}
+
+int32 UAstrawildQuestComponent::BackFillOneShotObjectives(FAstrawildQuestSaveData& State,
+    const TMap<FName, int32>& DefeatedCreatureCounts,
+    const TSet<FName>& DiscoveredPoiIds)
+{
+    // Pure history-application: only one-shot objective types (POIs discover once
+    // per save; one-shot bosses never respawn) receive back-fill — everything
+    // else stays event-driven so live gameplay remains the only live source.
+    int32 BackFilled = 0;
+    for (FAstrawildQuestObjective& Objective : State.Objectives)
+    {
+        if (Objective.IsComplete())
+        {
+            continue;
+        }
+        int32 Credited = 0;
+        if (Objective.Type == EAstrawildQuestObjectiveType::DiscoverPOI && DiscoveredPoiIds.Contains(Objective.TargetId))
+        {
+            Credited = Objective.RequiredCount;
+        }
+        else if (Objective.Type == EAstrawildQuestObjectiveType::DefeatCreature)
+        {
+            if (const int32* Count = DefeatedCreatureCounts.Find(Objective.TargetId))
+            {
+                Credited = FMath::Min(Objective.RequiredCount, *Count);
+            }
+        }
+        if (Credited > 0)
+        {
+            Objective.ProgressCount = FMath::Min(Objective.RequiredCount,
+                FMath::Max(Objective.ProgressCount, Credited));
+            ++BackFilled;
+        }
+    }
+    return BackFilled;
+}
+
+void UAstrawildQuestComponent::BackFillOneShotObjectivesFromWorld(FAstrawildQuestSaveData& State)
+{
+    if (State.bCompleted)
+    {
+        return;
+    }
+
+    // Gather world history from the live subsystems (world-free when absent).
+    TSet<FName> DiscoveredPoiIds;
+    if (const UWorld* World = GetWorld())
+    {
+        if (const UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
+        {
+            for (const FAstrawildQuestObjective& Objective : State.Objectives)
+            {
+                if (Objective.Type == EAstrawildQuestObjectiveType::DiscoverPOI &&
+                    POIs->IsPOIDiscovered(Objective.TargetId))
+                {
+                    DiscoveredPoiIds.Add(Objective.TargetId);
+                }
+            }
+        }
+    }
+
+    const int32 BackFilled = BackFillOneShotObjectives(State, DefeatedCreatureCounts, DiscoveredPoiIds);
+    if (BackFilled > 0)
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("Quest %s: %d one-shot objective(s) back-filled from world history."),
+            *State.QuestId.ToString(), BackFilled);
+    }
+}
+
 void UAstrawildQuestComponent::ImportFromSave(const TArray<FAstrawildQuestSaveData>& InQuests)
 {
     // FR-3 (Final Run redo): save-import sanitize. Duplicated quest ids used to
@@ -451,6 +559,15 @@ void UAstrawildQuestComponent::ImportFromSave(const TArray<FAstrawildQuestSaveDa
                 UE_LOG(LogAstrawild, Warning, TEXT("ImportFromSave: quest %s active past the first active quest — demoted."), *State.QuestId.ToString());
             }
         }
+    }
+
+    // Final-audit G-1/G-3: the saved session may itself contain one-shot history
+    // that pre-dates the active quest's activation (discover POI, kill boss,
+    // then save) — back-fill the active quest so the reload cannot dead-end it.
+    if (FAstrawildQuestSaveData* ActiveState = QuestStates.FindByPredicate(
+        [this](const FAstrawildQuestSaveData& Item) { return Item.QuestId == ActiveQuestId && !Item.bCompleted; }))
+    {
+        BackFillOneShotObjectivesFromWorld(*ActiveState);
     }
 
     // Saved game without any quest state and an unstarted chain: restart the intro quest.

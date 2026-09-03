@@ -1414,9 +1414,12 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         {
             // Final Run (FR-6): the crown conversation unlocks once the Drowned
             // Sovereign falls — the last story beat routes to the ending choice.
+            // Final-audit G-2: canon (MASTER_CONTROL §3) gates Maren's final
+            // dialogue on MQ-17 (homecoming) — NOT the Sovereign kill, or the
+            // ending fires one quest early and strands MQ-17 active.
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("The crown — what do we do?"));
-            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
             Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
             Choice.GotoNodeId = TEXT("crown");
             Node.Choices.Add(Choice);
@@ -1491,7 +1494,9 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Break the cage — end the storms forever"));
-            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            // Final-audit G-2: gated on MQ-17 (homecoming) per canon — see the
+            // reveal choice comment above.
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
             Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
             Choice.SetFlagId = TEXT("Maren_EndingResolved");
             Choice.TriggerEndingId = TEXT("Ending_BreakCage"); // → The Dawn That Stays.
@@ -1501,7 +1506,8 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Let it sleep — the crown keeps its vigil"));
-            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            // Final-audit G-2: gated on MQ-17 (homecoming) per canon.
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
             Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
             Choice.SetFlagId = TEXT("Maren_EndingResolved");
             Choice.TriggerEndingId = TEXT("Ending_StormSleeps"); // → The Storm That Sleeps.

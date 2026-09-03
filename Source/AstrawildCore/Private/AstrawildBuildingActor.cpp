@@ -343,14 +343,27 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
     // the player picks the branch (the old auto-buy-cheapest behavior removed player
     // agency entirely). Runs wherever the interacting player's controller is local;
     // the unlock itself remains server-authoritative through TryUnlockTech.
-    if (Def->Category != EAstrawildBuildingCategory::Research)
+    if (Def->Category == EAstrawildBuildingCategory::Research)
     {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->ToggleResearchScreen();
+        }
         return;
     }
 
-    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+    // Final-audit M-6: Workstation-category pieces (Workbench, Campfire, Sawmill,
+    // Composter, FeedTrough...) used to be inert decorations — placed, powered,
+    // then nothing on interact. They now open the crafting screen, the same
+    // surface the camp CraftingStation uses (F-02), so every built station is a
+    // real station. The craft itself stays server-authoritative per-recipe.
+    if (Def->Category == EAstrawildBuildingCategory::Workstation)
     {
-        PC->ToggleResearchScreen();
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->ToggleCraftingScreen();
+        }
+        return;
     }
 }
 

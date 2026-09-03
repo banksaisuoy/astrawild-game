@@ -65,6 +65,17 @@ public:
     UFUNCTION(Exec)
     void TeleportForward(float Distance);
 
+    /**
+     * Final-audit F-06: complete the active quest chain up to (and including) the
+     * given quest id, e.g. `AW.FastForward Quest_StormAnchors`. MASTER_CONTROL §8
+     * references this command for the PIE verification shortcut; it did not exist.
+     * Rewards fire exactly once per quest (the normal completion path) so tech/
+     * items unlocked this way match a genuine playthrough.
+     */
+    UFUNCTION(Exec)
+    void FastForward(FName QuestId);
+
 private:
     class AAstrawildPlayerCharacter* GetPlayer() const;
+    class UAstrawildQuestComponent* GetQuests() const;
 };

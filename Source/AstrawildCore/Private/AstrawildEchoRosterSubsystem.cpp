@@ -166,7 +166,14 @@ int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
             AAstrawildEchoCharacter::StaticClass(), Location, FRotator::ZeroRotator, Params);
         if (Echo && Echo->InitializeFromDefinition(Definition, Entry.InstanceId) && Echo->FromSaveDataV2(Entry))
         {
-            Echo->OwnerPlayerId = Owner->GetFName();
+            // Final-audit H-1: OwnerPlayerId must match the PAWN name — every
+            // consumer (party passives EchoCharacter.cpp, command cycling
+            // PlayerCharacter.cpp, work assignment WorkSiteActor.cpp, combat
+            // owner-exclusion EchoAIController.cpp) compares against the pawn set
+            // at capture. The controller name used to be written here instead,
+            // silently killing party passives/commands after every save/load and
+            // letting Attack-commanded echoes re-target their own player.
+            Echo->OwnerPlayerId = (Owner && Owner->GetPawn()) ? Owner->GetPawn()->GetFName() : NAME_None;
             Echo->IssueCommand(EAstrawildEchoCommand::Follow);
             SpawnedParty.Add(Echo);
             ++Spawned;

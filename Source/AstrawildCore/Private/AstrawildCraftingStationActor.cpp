@@ -6,6 +6,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -39,6 +40,34 @@ FText AAstrawildCraftingStationActor::GetInteractionPrompt_Implementation() cons
 void AAstrawildCraftingStationActor::Interact_Implementation(AActor* InteractingActor)
 {
     AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(InteractingActor);
+
+    // Final-audit F-02: the crafting station used to auto-craft the FIRST passing
+    // recipe with no player agency — while a fully implemented crafting screen
+    // (recipe list, gates, timers, cancel) sat unreachable in the widget code.
+    // Interact now opens that screen; the player chooses.
+    if (Player)
+    {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            if (PC->IsCraftingOpen())
+            {
+                PC->ToggleCraftingScreen(); // E again = close (fast back-to-game).
+            }
+            else
+            {
+                PC->ToggleCraftingScreen();
+                if (PC->IsCraftingOpen())
+                {
+                    UE_LOG(LogAstrawildEconomy, Log, TEXT("%s opened the crafting screen at %s."),
+                        *Player->GetName(), *StationId.ToString());
+                }
+            }
+            return;
+        }
+    }
+
+    // No local player controller (dedicated server path): keep the legacy
+    // auto-craft fallback so automation tests / server scripts still function.
     UAstrawildCraftingComponent* Crafting = Player ? Player->CraftingComponent : nullptr;
     const UWorld* World = GetWorld();
     UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
@@ -48,9 +77,7 @@ void AAstrawildCraftingStationActor::Interact_Implementation(AActor* Interacting
         return;
     }
 
-    // Craft the first station recipe whose gates pass (vertical-slice behavior).
-    // NOTE: GetAllRecipes() returns TArray<UAstrawildRecipeDefinition*> (audit C-1 —
-    // the previous TPair iteration could not compile).
+    // Craft the first station recipe whose gates pass (server fallback path).
     for (const UAstrawildRecipeDefinition* Recipe : Registry->GetAllRecipes())
     {
         if (!Recipe || Recipe->RequiredStationId != StationId)

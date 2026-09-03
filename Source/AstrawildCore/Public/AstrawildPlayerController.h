@@ -7,6 +7,7 @@
 class AAstrawildNPCCharacter;
 class UAstrawildQuestComponent;
 class UAstrawildHudWidget;
+class UAstrawildCraftingScreenWidget;
 class UAstrawildInventoryScreenWidget;
 class UAstrawildPauseMenuWidget;
 class UAstrawildResearchScreenWidget;
@@ -103,6 +104,18 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsResearchOpen() const;
 
+    /** Final-audit F-02: the crafting screen (recipe list + gates + timers + cancel)
+     *  existed fully implemented but was never instantiated — stations auto-crafted
+     *  the first passing recipe with no player agency. This is its open path. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildCraftingScreenWidget> CraftingScreenClass;
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleCraftingScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsCraftingOpen() const;
+
     /** Pause menu class override point (defaults to the pure-C++ widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
     TSubclassOf<UAstrawildPauseMenuWidget> PauseMenuClass;
@@ -135,6 +148,9 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildResearchScreenWidget> ResearchScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildCraftingScreenWidget> CraftingScreen;
 
     UPROPERTY()
     TObjectPtr<UAstrawildPauseMenuWidget> PauseMenuWidget;

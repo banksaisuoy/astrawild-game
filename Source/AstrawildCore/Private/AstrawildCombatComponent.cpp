@@ -420,8 +420,12 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
     LastRangedAttackTime = World->GetTimeSeconds();
 
     // Muzzle: slightly in front of the player's eyes, aimed along the view.
-    const FVector AimOrigin = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
-    const FVector AimDirection = OwnerCharacter->GetActorForwardVector();
+    // Final-audit F-01: the pawn uses orient-to-movement (bUseControllerRotationYaw
+    // = false), so the ACTOR forward is the last MOVEMENT direction, not the aim.
+    // Ranged fire, beam traces and lock-on must derive from the CONTROL rotation —
+    // the same axis the HUD crosshair sits on — or shots diverge up to 180°.
+    const FVector AimDirection = OwnerCharacter->GetControlRotation().Vector();
+    const FVector AimOrigin = OwnerCharacter->GetActorLocation() + AimDirection * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
 
     // --- Fire-mode branches (data-driven archetypes) ---
 
@@ -520,8 +524,10 @@ bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefiniti
         return false;
     }
 
-    const FVector Start = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
-    const FVector End = Start + OwnerCharacter->GetActorForwardVector() * WeaponDef->BeamRange;
+    // Final-audit F-01: view-axis firing (see ExecuteRangedAttack).
+    const FVector AimDirection = OwnerCharacter->GetControlRotation().Vector();
+    const FVector Start = OwnerCharacter->GetActorLocation() + AimDirection * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector End = Start + AimDirection * WeaponDef->BeamRange;
 
     TArray<FHitResult> HitResults;
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDBeamAttack), false, OwnerCharacter);
@@ -555,7 +561,7 @@ bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefiniti
     {
         const FVector BeamEnd = HitResults.Num() > 0 ? HitResults.Last().ImpactPoint : End;
         AAstrawildBeamVfxActor::SpawnBeam(World, Start, BeamEnd, ResolveWeaponVfxTint(WeaponDef));
-        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
+        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, AimDirection,
             ResolveWeaponVfxTint(WeaponDef));
         if (HitResults.Num() > 0)
         {
@@ -578,15 +584,17 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
         return false;
     }
 
-    const FVector Start = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
-    const FVector End = Start + OwnerCharacter->GetActorForwardVector() * WeaponDef->BeamRange;
+    // Final-audit F-01: view-axis firing (see ExecuteRangedAttack).
+    const FVector AimDirection = OwnerCharacter->GetControlRotation().Vector();
+    const FVector Start = OwnerCharacter->GetActorLocation() + AimDirection * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector End = Start + AimDirection * WeaponDef->BeamRange;
 
     FHitResult FirstHit;
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDArcAttack), false, OwnerCharacter);
     if (!World->LineTraceSingleByChannel(FirstHit, Start, End, ECC_Pawn, QueryParams))
     {
         // Blank shot: still a muzzle flash so the trigger reads (ammo was spent).
-        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
+        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, AimDirection,
             ResolveWeaponVfxTint(WeaponDef));
         OnAttackExecuted.Broadcast(false, 0.0f);
         return true; // The shot fired (blank) — cooldown/ammo already spent.
@@ -658,7 +666,7 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
     // Production V2 Batch 2 / CP-05: jagged lightning placeholder along the hop
     // chain; the impact burst lands at the first contact when the profile binds one.
     AAstrawildBeamVfxActor::SpawnArcChain(World, VfxHops, ResolveWeaponVfxTint(WeaponDef));
-    SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
+    SpawnWeaponMuzzleFlash(World, WeaponDef, Start, AimDirection,
         ResolveWeaponVfxTint(WeaponDef));
     SpawnWeaponImpact(World, WeaponDef, FirstHit.ImpactPoint);
 

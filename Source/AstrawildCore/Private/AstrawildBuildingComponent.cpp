@@ -300,9 +300,13 @@ void UAstrawildBuildingComponent::ServerPlaceBuilding_Implementation(const FName
     if (!ValidatePlacementLocation(Location, Def->GridCellSize))
     {
         // Refund the consumed materials.
+        // Final-audit F-04: AddItemSilent — the dismantle and save-restore refunds
+        // were already silent; this placement-rejection path still fired
+        // ItemCollected, falsely advancing a live "collect Item_Wood" objective
+        // (MASTER_CONTROL §9 refund rule).
         if (Player->InventoryComponent)
         {
-            Player->InventoryComponent->AddItem(Def->RequiredItemId, Def->RequiredItemCount);
+            Player->InventoryComponent->AddItemSilent(Def->RequiredItemId, Def->RequiredItemCount);
         }
         return;
     }

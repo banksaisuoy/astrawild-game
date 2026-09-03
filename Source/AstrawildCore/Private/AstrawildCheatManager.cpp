@@ -10,6 +10,7 @@
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
+#include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSurvivalComponent.h"
@@ -298,5 +299,54 @@ void UAstrawildCheatManager::TeleportForward(const float Distance)
     {
         const FVector Target = Player->GetActorLocation() + Player->GetActorForwardVector() * FMath::Max(0.0f, Distance);
         Player->SetActorLocation(Target + FVector(0, 0, 100.0f), false, nullptr, ETeleportType::TeleportPhysics);
+    }
+}
+
+UAstrawildQuestComponent* UAstrawildCheatManager::GetQuests() const
+{
+    // The quest component lives on the PlayerController (survives respawn) —
+    // the same outer this CheatManager hangs off.
+    const APlayerController* PC = Cast<APlayerController>(GetOuter());
+    return PC ? PC->FindComponentByClass<UAstrawildQuestComponent>() : nullptr;
+}
+
+void UAstrawildCheatManager::FastForward(const FName QuestId)
+{
+    UAstrawildQuestComponent* Quests = GetQuests();
+    if (!Quests)
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("AW.FastForward: no quest component on the player controller."));
+        return;
+    }
+
+    // Walk the ACTIVE chain forward until the requested quest completes.
+    // CompleteQuest is the live path: rewards fire exactly once, the next quest
+    // auto-starts, and the re-entrancy guard keeps nested broadcasts safe.
+    int32 Steps = 0;
+    while (!Quests->GetActiveQuestId().IsNone() && Steps < 20)
+    {
+        const FName Current = Quests->GetActiveQuestId();
+        if (Current == QuestId)
+        {
+            break;
+        }
+        Quests->CompleteQuest(Current);
+        ++Steps;
+    }
+
+    if (Quests->GetActiveQuestId() == QuestId)
+    {
+        Quests->CompleteQuest(QuestId);
+        UE_LOG(LogAstrawild, Log, TEXT("AW.FastForward: completed the chain through %s (%d quests)."),
+            *QuestId.ToString(), Steps + 1);
+    }
+    else if (Quests->IsQuestCompleted(QuestId))
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("AW.FastForward: %s was already completed."), *QuestId.ToString());
+    }
+    else
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("AW.FastForward: %s is not on the active chain (active: %s)."),
+            *QuestId.ToString(), *Quests->GetActiveQuestId().ToString());
     }
 }

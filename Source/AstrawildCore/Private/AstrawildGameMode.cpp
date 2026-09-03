@@ -141,11 +141,19 @@ void AAstrawildGameMode::RespawnPlayer(AController* Controller)
 
     if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(Controller->GetPawn()))
     {
+        // Final-audit H-1 (AUD-4): respawn used to hard-teleport to the WORLD ORIGIN
+        // (0,0,150) — the 4-zone map corner, far from the camp, with a bogus Z.
+        // The camp PlayerStart that RestartPlayer just selected was immediately
+        // overridden. Respawn now lands at the camp center on the terrain (the
+        // same deterministic point a fresh game uses).
+        FVector RespawnLocation(0.0f, 0.0f, 150.0f);
         if (AAstrawildWorldBootstrapper* Bootstrap = Bootstrapper.Get())
         {
-            Player->HandleRespawn(FTransform(FVector(0.0f, 0.0f, 150.0f)));
+            const FVector2D CampXY = AAstrawildWorldBootstrapper::GetCampCenterXY();
+            RespawnLocation = FVector(CampXY.X, CampXY.Y, Bootstrap->GroundZ(CampXY) + 120.0f);
         }
-        UE_LOG(LogAstrawildCombat, Log, TEXT("Player respawned."));
+        Player->HandleRespawn(FTransform(RespawnLocation));
+        UE_LOG(LogAstrawildCombat, Log, TEXT("Player respawned at the camp."));
     }
 }
 

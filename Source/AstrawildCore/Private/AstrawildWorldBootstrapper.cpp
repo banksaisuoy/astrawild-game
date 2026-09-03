@@ -710,7 +710,15 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
     };
 
     // Rest point — revive anchor.
-    World->SpawnActor<AAstrawildRestPoint>(AAstrawildRestPoint::StaticClass(), CampLocation(CampRadius, 0.0f), FRotator::ZeroRotator, Params);
+    if (AAstrawildRestPoint* RestPoint = World->SpawnActor<AAstrawildRestPoint>(AAstrawildRestPoint::StaticClass(), CampLocation(CampRadius, 0.0f), FRotator::ZeroRotator, Params))
+    {
+        // Final-audit F-05: deterministic id from the camp site — the ctor rolls
+        // FGuid::NewGuid() every session, so the LoadWorld WorldObjectId matcher
+        // never matched across cold boots and the saved activation state was dead.
+        const uint32 CampHashX = GetTypeHash(static_cast<int32>(CampXY.X));
+        const uint32 CampHashY = GetTypeHash(static_cast<int32>(CampXY.Y));
+        RestPoint->WorldObjectId = FGuid(CampHashX, CampHashY, 0xA572A1u, 1u);
+    }
 
     // Crafting stations: workbench + campfire.
     if (AAstrawildCraftingStationActor* Workbench = World->SpawnActor<AAstrawildCraftingStationActor>(AAstrawildCraftingStationActor::StaticClass(), CampLocation(0.0f, CampRadius), FRotator::ZeroRotator, Params))
@@ -735,6 +743,13 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         {
             { TEXT("Site_CampGathering"), CampLocation(-CampRadius, 0.0f) },
             { TEXT("Site_CampFarm"), CampLocation(-CampRadius * 0.7f, CampRadius * 0.7f) },
+            // Final-audit H-2: the Camp Kitchen is the ONLY consume→produce site
+            // (RawMeat in → CookedMeat out — the Production V2 input-buffer
+            // showcase). Its definition lives in DawnFields, which the generic
+            // placement loop below skips, and it was never in this historical
+            // table — so the entire input-consumption mechanic had ZERO live
+            // instances in the world.
+            { TEXT("Site_CampKitchen"), CampLocation(0.0f, CampRadius) },
         };
         for (const FSitePlacement& Placement : Placements)
         {

@@ -136,6 +136,12 @@ public:
     /** True once any ending was chosen — post-game free-roam flag. */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     bool bPostGameUnlocked = false;
+
+    /** Final-audit G-3 (additive v5, no schema bump): lifetime defeat counters
+     *  (species/boss id -> kills). One-shot bosses defeated before their quest
+     *  activates must stay creditable across sessions — see QuestComponent. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, int32> DefeatedCreatureCounts;
 };
 
 UCLASS()
