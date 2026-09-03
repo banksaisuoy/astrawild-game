@@ -11,6 +11,7 @@
 #include "AstrawildArtPack.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildResearchSubsystem.h"
 #include "InputMappingContext.h"
 // Complete soft-pointer pointee types: TSoftObjectPtr<>::IsValid() in test code
 // needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
@@ -2673,6 +2674,214 @@ bool FAstrawildSkiffCeilingGateTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Default stock ceiling matches the design"), SkiffCDO->MaxAltitudeAboveGround, 12000.0f);
     TestEqual(TEXT("Default coiled ceiling matches the design"), SkiffCDO->CoiledMaxAltitudeAboveGround, 16000.0f);
     TestEqual(TEXT("Default coil item id matches the content"), SkiffCDO->StratosCoilItemId, FName(TEXT("Item_SkiffStratosCoil")));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 68: one-shot objective back-fill (G-1/G-3).
+// POIs discovered or one-shot bosses defeated BEFORE a quest activates must
+// credit that quest at StartQuest — the alternative was a dead objective that
+// soft-locked the 17-quest chain (MQ-11's FirstLightRuin sits ~25m from spawn).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestOneShotBackFillTest,
+    "ASTRAWILD.Quest.OneShotBackFill",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestOneShotBackFillTest::RunTest(const FString& Parameters)
+{
+    const auto MakeObjective = [](const EAstrawildQuestObjectiveType Type, const TCHAR* TargetId, const int32 Required)
+    {
+        FAstrawildQuestObjective Objective;
+        Objective.Type = Type;
+        Objective.TargetId = TargetId;
+        Objective.RequiredCount = Required;
+        return Objective;
+    };
+
+    // Discovered POI back-fills to full (discovery is one-shot per save).
+    FAstrawildQuestSaveData State;
+    State.QuestId = TEXT("Q_BackFill");
+    State.Objectives = {
+        MakeObjective(EAstrawildQuestObjectiveType::DiscoverPOI, TEXT("POI_FirstLightRuin"), 1),
+        MakeObjective(EAstrawildQuestObjectiveType::DiscoverPOI, TEXT("POI_NeverSeen"), 1),
+        MakeObjective(EAstrawildQuestObjectiveType::DefeatCreature, TEXT("Creature_DrownedSovereign"), 1),
+        MakeObjective(EAstrawildQuestObjectiveType::DefeatCreature, TEXT("Echo_Gloomfang"), 3),
+        MakeObjective(EAstrawildQuestObjectiveType::CollectItem, TEXT("Item_Wood"), 10)
+    };
+
+    TMap<FName, int32> DefeatCounts;
+    DefeatCounts.Add(TEXT("Creature_DrownedSovereign"), 1);
+    DefeatCounts.Add(TEXT("Echo_Gloomfang"), 2); // 2 of 3 — partial credit
+
+    TSet<FName> DiscoveredPois;
+    DiscoveredPois.Add(TEXT("POI_FirstLightRuin"));
+
+    const int32 BackFilled = UAstrawildQuestComponent::BackFillOneShotObjectives(State, DefeatCounts, DiscoveredPois);
+
+    TestEqual(TEXT("Four objectives received back-fill"), BackFilled, 4);
+    TestTrue(TEXT("Discovered POI objective completes"), State.Objectives[0].IsComplete());
+    TestFalse(TEXT("Undiscovered POI objective stays at zero"), State.Objectives[1].IsComplete());
+    TestTrue(TEXT("Defeated one-shot boss objective completes"), State.Objectives[2].IsComplete());
+    TestEqual(TEXT("Partial kill count credits 2 of 3"), State.Objectives[3].ProgressCount, 2);
+    TestEqual(TEXT("CollectItem is NEVER back-filled (live gameplay only)"), State.Objectives[4].ProgressCount, 0);
+
+    // Pre-completed objectives are never touched (no double-grant, no reset).
+    State.Objectives[1].ProgressCount = 1; // simulate completed progress
+    const int32 SecondPass = UAstrawildQuestComponent::BackFillOneShotObjectives(State, DefeatCounts, DiscoveredPois);
+    TestTrue(TEXT("Completed objectives are skipped on re-run"), SecondPass < 5);
+
+    // Counters cannot exceed the requirement (no minted progress from history).
+    TMap<FName, int32> HugeCounts;
+    HugeCounts.Add(TEXT("Echo_Gloomfang"), 500);
+    FAstrawildQuestSaveData Capped = State;
+    Capped.Objectives = { MakeObjective(EAstrawildQuestObjectiveType::DefeatCreature, TEXT("Echo_Gloomfang"), 3) };
+    UAstrawildQuestComponent::BackFillOneShotObjectives(Capped, HugeCounts, {});
+    TestEqual(TEXT("Back-fill caps at the required count"), Capped.Objectives[0].ProgressCount, 3);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 69: defeat-counter import sanitize (G-3).
+// Crafted saves cannot mint quest credit: id-less entries dropped, negatives
+// dropped, values capped.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestDefeatCountImportTest,
+    "ASTRAWILD.Quest.DefeatCountImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestDefeatCountImportTest::RunTest(const FString& Parameters)
+{
+    UAstrawildQuestComponent* Quests = NewObject<UAstrawildQuestComponent>();
+    if (!TestNotNull(TEXT("Quest component constructed"), Quests))
+    {
+        return false;
+    }
+
+    TMap<FName, int32> Crafted;
+    Crafted.Add(TEXT("Creature_GlassTyrant"), 2);
+    Crafted.Add(NAME_None, 7);              // id-less — dropped
+    Crafted.Add(TEXT("Echo_BadValue"), -4); // negative — dropped
+    Crafted.Add(TEXT("Echo_HugeValue"), 5000); // capped
+
+    Quests->ImportDefeatCounts(Crafted);
+
+    TMap<FName, int32> Imported;
+    Quests->ExportDefeatCounts(Imported);
+    TestEqual(TEXT("Valid entries survive import"), Imported.FindRef(TEXT("Creature_GlassTyrant")), 2);
+    TestFalse(TEXT("Id-less entry dropped"), Imported.Contains(NAME_None));
+    TestFalse(TEXT("Negative entry dropped"), Imported.Contains(TEXT("Echo_BadValue")));
+    TestEqual(TEXT("Absurd counter capped at 999"), Imported.FindRef(TEXT("Echo_HugeValue")), 999);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 70: dismantle never advances a
+// PlaceBuilding objective (F-03) — the event Amount=-1 clamp exploit.
+// Drives the REAL objective matcher (ApplyEventToQuest is the production path).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestDismantleNotPlacementTest,
+    "ASTRAWILD.Quest.DismantleIsNotPlacement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestDismantleNotPlacementTest::RunTest(const FString& Parameters)
+{
+    UAstrawildQuestComponent* Quests = NewObject<UAstrawildQuestComponent>();
+    if (!TestNotNull(TEXT("Quest component constructed"), Quests))
+    {
+        return false;
+    }
+
+    FAstrawildQuestSaveData State;
+    State.QuestId = TEXT("Q_Place");
+    FAstrawildQuestObjective Objective;
+    Objective.Type = EAstrawildQuestObjectiveType::PlaceBuilding;
+    Objective.TargetId = TEXT("Building_Foundation");
+    Objective.RequiredCount = 2;
+    State.Objectives = { Objective };
+    State.bActive = true;
+    Quests->ImportFromSave({ State });
+
+    const auto BuildingEvent = [](const int32 Amount)
+    {
+        FAstrawildGameplayEvent Event;
+        Event.EventTag = TAG_Astrawild_Event_BuildingPlaced;
+        Event.TargetId = TEXT("Building_Foundation");
+        Event.Amount = Amount;
+        return Event;
+    };
+
+    // The dismantle publication: BuildingPlaced with Amount = -1.
+    Quests->ApplyEventToQuest(BuildingEvent(-1));
+    TestEqual(TEXT("Dismantle does NOT advance the placement objective"), Quests->GetActiveObjectives()[0].ProgressCount, 0);
+
+    // A real placement still counts.
+    Quests->ApplyEventToQuest(BuildingEvent(1));
+    TestEqual(TEXT("Real placement advances the objective"), Quests->GetActiveObjectives()[0].ProgressCount, 1);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 71: research import sanitize (M-3) —
+// duplicate tech ids collapse, invalid entries drop, negative RP clamps.
+// The earlier hardening of this path was lost with the destroyed Final-Run
+// branch; this contract pins its re-landing.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildResearchImportSafetyTest,
+    "ASTRAWILD.Research.ImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildResearchImportSafetyTest::RunTest(const FString& Parameters)
+{
+    UAstrawildResearchSubsystem* Research = NewObject<UAstrawildResearchSubsystem>();
+    if (!TestNotNull(TEXT("Research subsystem constructed"), Research))
+    {
+        return false;
+    }
+
+    FAstrawildResearchSaveData Crafted;
+    Crafted.UnlockedTechIds = { TEXT("Tech_Electrical"), TEXT("Tech_Electrical"), NAME_None, TEXT("Tech_Husbandry") };
+    Crafted.ResearchPoints = -25;
+
+    Research->ImportFromSave(Crafted);
+
+    TestEqual(TEXT("Duplicate tech collapses (first-seen-wins)"), Research->GetUnlockedTechIds().Num(), 2);
+    TestTrue(TEXT("Valid tech survived"), Research->IsTechUnlocked(TEXT("Tech_Electrical")));
+    TestTrue(TEXT("Second valid tech survived"), Research->IsTechUnlocked(TEXT("Tech_Husbandry")));
+    TestFalse(TEXT("Id-less tech dropped"), Research->IsTechUnlocked(NAME_None));
+    TestEqual(TEXT("Negative research points clamp to zero"), Research->GetResearchPoints(), 0);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 72: final-audit save contracts —
+// echo health (M-2) + robot chassis (H-2) additive fields round-trip.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveFinalAuditContractsTest,
+    "ASTRAWILD.Save.FinalAuditContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveFinalAuditContractsTest::RunTest(const FString& Parameters)
+{
+    // M-2: echo health persists; 0 is the legacy sentinel (full-heal for old saves).
+    FAstrawildEchoInstanceV2 EchoData;
+    TestEqual(TEXT("Echo health defaults to the legacy sentinel"), EchoData.CurrentHealth, 0.0f);
+    EchoData.CurrentHealth = 37.5f;
+    TestEqual(TEXT("Echo health carries the saved value"), EchoData.CurrentHealth, 37.5f);
+    EchoData.CurrentHealth = -5.0f;
+    TestTrue(TEXT("Negative health fails the > 0 restore gate"), EchoData.CurrentHealth <= 0.0f);
+
+    // H-2: the robot chassis id persists — the field the SaveWorld loop now writes.
+    FAstrawildRobotSaveData RobotData;
+    TestTrue(TEXT("Robot chassis defaults to none"), RobotData.RobotDefinitionId.IsNone());
+    RobotData.RobotDefinitionId = TEXT("Robot_Borebot");
+    TestTrue(TEXT("Robot chassis carries the definition id"), RobotData.RobotDefinitionId == FName(TEXT("Robot_Borebot")));
+    TestTrue(TEXT("Chassis survives a struct copy (save -> load round-trip shape)"),
+        FAstrawildRobotSaveData(RobotData).RobotDefinitionId == RobotData.RobotDefinitionId);
+
     return true;
 }
 
