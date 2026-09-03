@@ -186,3 +186,13 @@ family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
 §20 build sequence yields a complete, playable game with both endings.
 
 **READY_FOR_FINAL_BUILD** — engine verification (AG-2..5) is the sole remaining gate.
+
+
+## GDP Amendment (v1.2 — Gameplay Depth Pack)
+
+- **Echo abilities**: 44 code-default ability templates registered by `UAstrawildAbilityLibrary` (DATA, CODE_DEFAULT — same replace-by-asset contract as all definitions). Authored species carry curated AbilityIds; every other species derives a deterministic 4-ability kit (element x role x family). PROCEDURAL/derived data — no .uasset requirement.
+- **Locomotion classes**: `EAstrawildLocomotionClass` data field (Auto = derived at runtime). All 210+ species classified — no per-species assets required.
+- **Player attributes + skills**: runtime component systems — DATA lives in code tables (`UAstrawildAttributeComponent`), no assets.
+- **NPC affinity**: runtime values + save fields — no assets.
+- Input contract: 26 -> 28 actions (T party-cast, Y smart-cast). Save schema: still V5 (additive fields only).
+- Verdict: READY_FOR_FINAL_BUILD re-affirmed (source/repository side).

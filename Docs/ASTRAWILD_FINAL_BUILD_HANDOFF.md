@@ -251,3 +251,14 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 **Completion declaration**: when 1–9 pass, ASTRAWILD is GAME-COMPLETE (source-complete +
 engine-verified + packaged). Record the final SHA + log manifest in
 `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md` §J.
+
+
+## GDP Playtest Additions (v3.4)
+
+During the PIE golden path, additionally verify:
+1. Press **T** near hostiles with a captured party — every party Echo should visibly cast (projectile/heal/shield per its loadout; HUD line shows readiness counts).
+2. Press **Y** — the smart-cast should fire (or log "nothing ready" early on; after Might 3 etc. it lights up). Verify Power Strike doubles the next swing's damage number.
+3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
+4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
+5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
+6. Automation now expects **84/84** (was 72).
