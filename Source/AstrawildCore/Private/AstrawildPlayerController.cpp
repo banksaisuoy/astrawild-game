@@ -240,6 +240,9 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
         {
             InventoryScreen->RefreshInventory();
             InventoryScreen->AddToViewport(10);
+            // Final-audit F-05: give the screen keyboard focus so TAB/ESC close
+            // without requiring a prior mouse click.
+            InventoryScreen->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);
@@ -299,6 +302,8 @@ void AAstrawildPlayerController::ToggleResearchScreen()
         {
             ResearchScreen->RefreshResearch();
             ResearchScreen->AddToViewport(10);
+            // Final-audit F-05: keyboard focus for the advertised K/ESC close.
+            ResearchScreen->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);
@@ -359,6 +364,8 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
         {
             CraftingScreen->RefreshRecipes();
             CraftingScreen->AddToViewport(10);
+            // Final-audit F-05: keyboard focus for the ESC close.
+            CraftingScreen->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);
@@ -419,6 +426,8 @@ void AAstrawildPlayerController::TogglePauseMenu()
             // Pause the world while the menu is up (single-player/listen-server).
             SetPause(true);
             PauseMenuWidget->AddToViewport(20);
+            // Final-audit F-05: keyboard focus for ESC-resume.
+            PauseMenuWidget->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);

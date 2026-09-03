@@ -20,8 +20,12 @@ class ASTRAWILDCORE_API UAstrawildCraftingScreenWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    /** Final-audit F-05: focusable so ESC actually closes the screen in UIOnly input mode. */
+    UAstrawildCraftingScreenWidget();
+
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
+    virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
     /** Bound crafting component from the owning player pawn (may be null early). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Crafting|UI")

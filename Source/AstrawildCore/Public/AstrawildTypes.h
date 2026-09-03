@@ -535,6 +535,15 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
     bool bInParty = false;
+
+    /**
+     * Final-audit M-2 (additive, no schema bump): health at save time. 0 = the
+     * pre-audit sentinel (legacy saves / fresh entries) — restore full. Otherwise
+     * restored clamped to [1, MaxHealth] so a load can neither revive a defeated
+     * echo for free nor mint overheal.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0"))
+    float CurrentHealth = 0.0f;
 };
 
 /** Quest objective definition + runtime progress (directive §25). */

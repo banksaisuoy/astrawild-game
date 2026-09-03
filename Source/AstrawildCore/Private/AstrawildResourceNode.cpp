@@ -120,6 +120,9 @@ void AAstrawildResourceNode::ApplyNodeDefinition()
     ResourceItemId = Def->ResourceItemId;
     ResourceQuantityPerHarvest = FMath::Max(1, Def->QuantityPerHarvest);
     RemainingQuantity = FMath::Max(1, Def->MaxQuantity);
+    // Final-audit M-7 (AUD-4): the respawn restores the DEFINED max, not the
+    // per-harvest rate — Node_Dawnwood (3 max, 2/harvest) used to respawn at 2 forever.
+    CachedMaxQuantity = FMath::Max(1, Def->MaxQuantity);
     RespawnDurationSeconds = FMath::Max(0.0f, Def->RespawnDurationSeconds);
 
     // Art pack (Batch 4, CP-04): real node mesh replaces the rarity shape when
@@ -248,12 +251,14 @@ void AAstrawildResourceNode::Interact_Implementation(AActor* InteractingActor)
 
 FText AAstrawildResourceNode::GetInteractionPrompt_Implementation() const
 {
-    return FText::Format(NSLOCTEXT("ASTRAWILD", "HarvestPrompt", "เก็บ {0}"), FText::FromName(ResourceItemId));
+    return FText::Format(NSLOCTEXT("ASTRAWILD", "HarvestPrompt", "Harvest {0} [E]"), FText::FromName(ResourceItemId));
 }
 
 void AAstrawildResourceNode::RespawnNode()
 {
-    RemainingQuantity = FMath::Max(1, ResourceQuantityPerHarvest);
+    // Final-audit M-7 (AUD-4): restore the definition's MaxQuantity (cached at
+    // ApplyNodeDefinition; falls back to the per-harvest rate for nodes without one).
+    RemainingQuantity = FMath::Max(1, CachedMaxQuantity > 0 ? CachedMaxQuantity : ResourceQuantityPerHarvest);
     SetActorHiddenInGame(false);
     SetActorEnableCollision(true);
 }

@@ -1,8 +1,31 @@
 #include "AstrawildCraftingScreenWidget.h"
 
+#include "AstrawildPlayerController.h"
+
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildLog.h"
 #include "GameFramework/Pawn.h"
+
+
+UAstrawildCraftingScreenWidget::UAstrawildCraftingScreenWidget()
+{
+    // Final-audit F-05: focusable so ESC reaches NativeOnKeyDown in UIOnly mode.
+    bIsFocusable = true;
+}
+
+FReply UAstrawildCraftingScreenWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // Final-audit F-05: ESC closes the crafting screen (station E toggles it too).
+    if (InKeyEvent.GetKey() == EKeys::Escape)
+    {
+        if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+        {
+            PC->ToggleCraftingScreen();
+            return FReply::Handled();
+        }
+    }
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
 
 void UAstrawildCraftingScreenWidget::NativeConstruct()
 {

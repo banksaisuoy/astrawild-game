@@ -735,6 +735,10 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         // are known (SetStoredEnergy clamps to live battery capacity).
         Power->ResolveGridNow();
         Power->SetStoredEnergy(SanitizeSavedFloat(SaveGame->PowerGrid.StoredEnergy, 0.0f));
+        // Final-audit L-4 (AUD-4): the first resolve ran with an EMPTY battery —
+        // a saved charged bank was ignored for the first <=2s (first-frame brownout
+        // contradicting the "no flicker" intent). Resolve again with the charge applied.
+        Power->ResolveGridNow();
     }
 
     UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings (%d dropped + refunded), %d work sites, %d robots, grid %.0f)."),

@@ -80,13 +80,30 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         return false;
     }
 
-    LastCaptureTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
-
-    // Consume a Resonator per attempt (directive §8).
-    UAstrawildInventoryComponent* Inventory = GetInventory();
-    if (!Inventory || !Inventory->HasItem(ResonatorItemId, 1) || !Inventory->RemoveItem(ResonatorItemId, 1))
+    // Final-audit L-9: validate capturability BEFORE consuming the Resonator and
+    // BEFORE stamping the cooldown — a dead/already-captured target used to burn
+    // the resonator and start the cooldown for a guaranteed-failure attempt.
+    if (Echo->IsDefeated() || Echo->bCaptured)
     {
+        OnCaptureResult.Broadcast(Echo, false);
+        return false;
+    }
+
+    UAstrawildInventoryComponent* Inventory = GetInventory();
+    if (!Inventory || !Inventory->HasItem(ResonatorItemId, 1))
+    {
+        // Final-audit F-20: no Resonator → report and leave the cooldown unstamped
+        // (the failed check itself must not lock the player out of a later attempt).
         UE_LOG(LogAstrawild, Warning, TEXT("Capture attempt without a Resonator."));
+        OnCaptureResult.Broadcast(Echo, false);
+        return false;
+    }
+
+    // The roll can succeed — stamp the cooldown and consume the Resonator now.
+    LastCaptureTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    if (!Inventory->RemoveItem(ResonatorItemId, 1))
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("Capture: Resonator removal failed after the gate."));
         OnCaptureResult.Broadcast(Echo, false);
         return false;
     }

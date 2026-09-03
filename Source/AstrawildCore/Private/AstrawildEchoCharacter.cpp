@@ -970,6 +970,44 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
         // Loot + events (server-side).
         if (IsValid(EchoDefinition))
         {
+            // Final-audit (AUD-3 loot note): species DefeatLoot was authored across
+            // the whole roster (ContentLibrary + bestiary + production) but had NO
+            // runtime consumer — killing creatures yielded nothing. The nearest
+            // living player (the killer, single-player-first) now collects it; the
+            // grant goes through AddItem so genuine ItemCollected quests advance.
+            if (!bCaptured && EchoDefinition->DefeatLoot.Num() > 0)
+            {
+                if (UWorld* World = GetWorld())
+                {
+                    AAstrawildPlayerCharacter* Killer = nullptr;
+                    float BestDistSq = FMath::Square(2500.0f);
+                    for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
+                    {
+                        AAstrawildPlayerCharacter* Player = *It;
+                        if (!Player || !Player->IsAlive())
+                        {
+                            continue;
+                        }
+                        const float DistSq = FVector::DistSquared(GetActorLocation(), Player->GetActorLocation());
+                        if (DistSq < BestDistSq)
+                        {
+                            BestDistSq = DistSq;
+                            Killer = Player;
+                        }
+                    }
+                    if (Killer && Killer->InventoryComponent)
+                    {
+                        for (const FAstrawildItemStack& Drop : EchoDefinition->DefeatLoot)
+                        {
+                            if (Drop.IsValid())
+                            {
+                                Killer->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
+                            }
+                        }
+                    }
+                }
+            }
+
             if (UAstrawildEcosystemSubsystem* Ecosystem = GetEcosystem())
             {
                 Ecosystem->OnEchoDefeated(this);
@@ -1312,6 +1350,9 @@ FAstrawildEchoInstanceV2 AAstrawildEchoCharacter::ToSaveDataV2() const
     Data.Needs = Needs;
     Data.LastKnownTransform = GetActorTransform();
     Data.bInParty = bCaptured; // Roster membership == captured in v2 schema.
+    // Final-audit M-2: health at save time — a load must not free-heal the party
+    // (defeated echoes used to revive on reload).
+    Data.CurrentHealth = FMath::Max(0.0f, CurrentHealth);
     return Data;
 }
 
@@ -1328,14 +1369,44 @@ bool AAstrawildEchoCharacter::FromSaveDataV2(const FAstrawildEchoInstanceV2& Dat
     Experience = FMath::Max(0.0f, Data.Experience);
     Trust = FMath::Max(0.0f, Data.Trust);
     Bond = FMath::Clamp(Data.Bond, 0.0f, 100.0f);
-    Needs = Data.Needs;
+
+    // Final-audit M-4: NaN-safe needs (FMath::Clamp passes NaN through verbatim —
+    // a crafted save must not poison the needs-decay tick) + transform guard (the
+    // player path has guarded this exact crash class since FR-2; the echo path
+    // applied a crafted transform unchecked).
+    const auto SafeNeed = [](const float Value)
+    {
+        return FMath::IsFinite(Value) ? FMath::Clamp(Value, 0.0f, 100.0f) : 100.0f;
+    };
+    Needs.Hunger = SafeNeed(Data.Needs.Hunger);
+    Needs.Energy = SafeNeed(Data.Needs.Energy);
+    Needs.Mood = SafeNeed(Data.Needs.Mood);
+
     bCaptured = Data.bInParty;
-    SetActorTransform(Data.LastKnownTransform);
+    if (Data.LastKnownTransform.ContainsNaN() || Data.LastKnownTransform.Equals(FTransform::Identity))
+    {
+        // Keep the spawn-ring placement — a crafted/garbage transform is refused.
+        UE_LOG(LogAstrawildAI, Warning, TEXT("Echo restore: rejected non-finite/identity transform (kept ring spawn)."));
+    }
+    else
+    {
+        SetActorTransform(Data.LastKnownTransform);
+    }
 
     if (IsValid(EchoDefinition))
     {
         CachedStats = EchoDefinition->BaseStats;
-        CurrentHealth = FMath::Min(FMath::Max(1.0f, CurrentHealth > 0.0f ? CurrentHealth : GetMaxHealth()), GetMaxHealth());
+        // Final-audit M-2: restore saved health when the field carries one
+        // (legacy 0 = the pre-audit full-heal behavior, kept for old saves);
+        // clamp to [1, MaxHealth] — no free revive, no overheal.
+        if (FMath::IsFinite(Data.CurrentHealth) && Data.CurrentHealth > 0.0f)
+        {
+            CurrentHealth = FMath::Clamp(Data.CurrentHealth, 1.0f, GetMaxHealth());
+        }
+        else
+        {
+            CurrentHealth = FMath::Min(FMath::Max(1.0f, CurrentHealth > 0.0f ? CurrentHealth : GetMaxHealth()), GetMaxHealth());
+        }
         GetCharacterMovement()->MaxWalkSpeed = CachedStats.MoveSpeed;
     }
     return true;

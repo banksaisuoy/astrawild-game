@@ -378,8 +378,8 @@ bool FAstrawildBossElementalMultiplierTest::RunTest(const FString& Parameters)
 
     TestEqual(TEXT("Attacking the weakness deals x1.5"),
         AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Weakness, Weakness, Own), 1.5f);
-    TestEqual(TEXT("Same-element attacks are resisted x0.75"),
-        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Own, Weakness, Own), 0.75f);
+    TestEqual(TEXT("Same-element attacks are resisted x0.80 (unified with the Echo pipeline)"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Own, Weakness, Own), 0.8f);
     TestEqual(TEXT("Neutral elements deal x1.0"),
         AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(EEl::Frost, Weakness, Own), 1.0f);
     TestEqual(TEXT("The None element never triggers a multiplier"),
@@ -2570,9 +2570,9 @@ bool FAstrawildEchoFinalRunBossesTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Dawn Light exploits the Sovereign (x1.5)"),
         AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
             EAstrawildElementType::Light, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 1.5f);
-    TestEqual(TEXT("Pulse attacks are resisted (x0.75)"),
+    TestEqual(TEXT("Pulse attacks are resisted (x0.80, unified)"),
         AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
-            EAstrawildElementType::Pulse, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 0.75f);
+            EAstrawildElementType::Pulse, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 0.8f);
 
     // Glass Tyrant weakness (MQ-14): Light cuts it too — the Dawn arsenal
     // carries Act 3, exactly as the story promises.

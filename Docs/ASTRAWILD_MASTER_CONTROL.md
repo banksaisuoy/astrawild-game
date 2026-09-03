@@ -75,9 +75,11 @@ No cheat-command dependency anywhere in the chain.
   All zones have ≥1 POI (Azure Shallows got POI_ShallowsSextant in the Final Run).
 - **229 Echo species** (19 authored + 6 evolution targets + 204 bestiary-generated rows).
   The historical "214" was a documentation error — never use it.
-- **Element system**: 6 elements, opposition pairs **Light↔Ash, Flora↔Ember, Frost↔Pulse**
-  (weakness ×1.5, same-element resist ×0.8). All 19 authored species now obey the matrix
-  (7 were aligned in the Final Run — see Task Registry FR-3).
+- **Element system**: 6 elements, weakness chain **Flora→Ember, Ember→Frost, Frost→Pulse, Pulse→Light;
+  Light and Ash have no weakness** (weakness ×1.5, same-element resist ×0.80 — unified across the wild-Echo
+  and boss pipelines in the final audit). All 19 authored species, all 204 bestiary-generated rows and all
+  4 bosses obey this matrix (FR-3 + final audit H-1/H-2/H-4). The Glass Tyrant's Light weakness is the one
+  documented encounter DESIGN exception (Ash otherwise has no weakness — see ProductionContent.cpp).
 - **2 villages** (Dawnstead 8 NPCs + Driftwood Landing 3), all 11 NPCs now have dialogue trees.
 - **3 dungeons**: Hollow Underlight (5 rooms, Warden), Sunken Vault (4 rooms, Colossus),
   Eye of the Maelstrom (5 rooms, Drowned Sovereign — Final Run).

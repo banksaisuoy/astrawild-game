@@ -20,6 +20,15 @@ bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo)
         return true;
     }
 
+    // Final-audit L-5: bounded roster — the array is exported wholesale into the
+    // save; a capture-happy session (or a crafted import) must not grow it forever.
+    static constexpr int32 MaxRosterSize = 100;
+    if (Roster.Num() >= MaxRosterSize)
+    {
+        UE_LOG(LogAstrawildAI, Warning, TEXT("AddToRoster: roster at cap (%d) — capture refused."), MaxRosterSize);
+        return false;
+    }
+
     Roster.Add(Echo->ToSaveDataV2());
 
     // Track spawned party actor (capped).

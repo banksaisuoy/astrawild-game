@@ -38,6 +38,9 @@ AAstrawildEchoAIController::AAstrawildEchoAIController()
         Perception->ConfigureSense(*SightConfig);
         Perception->SetDominantSense(SightConfig->GetSenseImplementation());
         Perception->OnTargetPerceptionUpdated.AddDynamic(this, &AAstrawildEchoAIController::HandlePerception);
+        // Final-audit M-8: forgotten stimuli previously had NO handler — aggro
+        // latched through walls/line-of-sight loss until the 4km combat rescan.
+        Perception->OnTargetPerceptionForgotten.AddDynamic(this, &AAstrawildEchoAIController::HandlePerceptionForgotten);
     }
 }
 
@@ -66,6 +69,9 @@ void AAstrawildEchoAIController::OnPossess(APawn* InPawn)
         }
     }
 
+    // Final-audit M-8: the damage feed — wild echoes fight back / flee on hits.
+    Echo->OnDamaged.AddDynamic(this, &AAstrawildEchoAIController::HandleDamaged);
+
     GetWorldTimerManager().SetTimer(ThinkTimerHandle, FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think), ThinkIntervalSeconds, false);
 }
 
@@ -74,6 +80,11 @@ void AAstrawildEchoAIController::OnUnPossess()
     if (UWorld* World = GetWorld())
     {
         World->GetTimerManager().ClearAllTimersForObject(this);
+    }
+    // Final-audit M-8: unhook the damage feed with the perception feed.
+    if (AAstrawildEchoCharacter* Echo = EchoPawn.Get())
+    {
+        Echo->OnDamaged.RemoveAll(this);
     }
     EchoPawn = nullptr;
     Super::OnUnPossess();
@@ -127,6 +138,47 @@ void AAstrawildEchoAIController::HandlePerception(AActor* Actor, FAIStimulus Sti
         {
             TargetActor = Actor;
             TransitionTo(EAstrawildEchoAIState::Investigate);
+        }
+    }
+}
+
+void AAstrawildEchoAIController::HandlePerceptionForgotten(AActor* Actor)
+{
+    // Final-audit M-8: the stimulus expired (out of LoseSightRadius / LOS lost).
+    // Drop the threat latch and the target when it points at the forgotten actor —
+    // the next Think re-acquires only what is actually perceivable.
+    if (TargetActor.Get() == Actor)
+    {
+        TargetActor = nullptr;
+        bPerceivedThreat = false;
+    }
+}
+
+void AAstrawildEchoAIController::HandleDamaged(AAstrawildEchoCharacter* Echo, float NewHealth)
+{
+    // Final-audit M-8: OnDamaged → aggro. The EchoCharacter comment claimed this
+    // wiring existed; it never did (Aggressive/Brave "fight back" was dead).
+    // Attacker = the damage instigator when the player path sets one; otherwise
+    // the nearest player within combat range (the de-facto attacker, single-player-first).
+    if (!Echo || Echo->bCaptured || Echo->IsDefeated())
+    {
+        return; // Party echoes do not aggro their owner's attacks.
+    }
+    AActor* Attacker = Echo->GetInstigator();
+    if (!Attacker || !Attacker->IsA<AAstrawildPlayerCharacter>())
+    {
+        Attacker = FindNearestPlayer(3000.0f);
+    }
+    if (Attacker)
+    {
+        bPerceivedThreat = true;
+        TargetActor = Attacker;
+        // Aggressive/Brave personalities turn immediately; others let the
+        // next Think decide (flee for skittish species).
+        if (Echo->Personality == EAstrawildPersonality::Aggressive ||
+            Echo->Personality == EAstrawildPersonality::Brave)
+        {
+            TransitionTo(EAstrawildEchoAIState::Combat);
         }
     }
 }
@@ -414,6 +466,27 @@ void AAstrawildEchoAIController::ExecuteFollow()
     if (Echo->bCaptured)
     {
         Subject = FindNearestPlayer(100000.0f);
+        // Final-audit M-7: stranded party recovery. Beyond the 1km scan the echo
+        // used to StopMovement() FOREVER (fast skiff travel / failed pathing / flee
+        // chains left it permanently behind). No subject + captured + far from any
+        // player → teleport home beside the owner (the same ring the roster spawn
+        // uses). A recall, not a crawl.
+        if (!Subject)
+        {
+            AActor* AnyPlayer = FindNearestPlayer(10000000.0f);
+            if (AnyPlayer)
+            {
+                const FVector Ring = AnyPlayer->GetActorLocation() + AnyPlayer->GetActorForwardVector() * 320.0f + FVector(0.0f, 0.0f, 120.0f);
+                Echo->SetActorLocation(Ring, false, nullptr, ETeleportType::TeleportPhysics);
+                Subject = AnyPlayer;
+                UE_LOG(LogAstrawildAI, Log, TEXT("Party echo %s recalled to its owner (was stranded)."), *Echo->GetName());
+            }
+            else
+            {
+                StopMovement();
+                return;
+            }
+        }
     }
     else if (TargetActor.IsValid())
     {
@@ -458,25 +531,53 @@ void AAstrawildEchoAIController::ExecuteProtect()
         return;
     }
 
+    // Final-audit F-12: the hostile scan used GetAllActorsOfClass every think
+    // (0.25s per defending echo — 3 echoes = 12 full-world scans/second). The list
+    // is now cached for one second around the protected player.
+    const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    const bool bCacheValid = (Now - HostilesCacheTime) < 1.0
+        && HostilesCacheAnchor.Get() == NearestPlayer
+        && CachedNearbyHostiles.Num() >= 0;
+    if (!bCacheValid)
+    {
+        CachedNearbyHostiles.Reset();
+        const double CacheTimeBefore = Now;
+        if (UWorld* World = GetWorld())
+        {
+            TArray<AActor*> Echoes;
+            UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+            for (AActor* Actor : Echoes)
+            {
+                AAstrawildEchoCharacter* Other = Cast<AAstrawildEchoCharacter>(Actor);
+                if (!Other || Other == Echo || !IsValid(Other->EchoDefinition) || !Other->EchoDefinition->bHostileToPlayers)
+                {
+                    continue;
+                }
+                const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
+                if (Distance < 800.0f)
+                {
+                    CachedNearbyHostiles.Add(Other);
+                }
+            }
+        }
+        HostilesCacheTime = CacheTimeBefore;
+        HostilesCacheAnchor = NearestPlayer;
+    }
+
     AAstrawildEchoCharacter* NearestHostile = nullptr;
     float BestDistance = 800.0f;
-    if (UWorld* World = GetWorld())
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : CachedNearbyHostiles)
     {
-        TArray<AActor*> Echoes;
-        UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
-        for (AActor* Actor : Echoes)
+        AAstrawildEchoCharacter* Other = Weak.Get();
+        if (!Other)
         {
-            AAstrawildEchoCharacter* Other = Cast<AAstrawildEchoCharacter>(Actor);
-            if (!Other || Other == Echo || !IsValid(Other->EchoDefinition) || !Other->EchoDefinition->bHostileToPlayers)
-            {
-                continue;
-            }
-            const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
-            if (Distance < BestDistance)
-            {
-                BestDistance = Distance;
-                NearestHostile = Other;
-            }
+            continue;
+        }
+        const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
+        if (Distance < BestDistance)
+        {
+            BestDistance = Distance;
+            NearestHostile = Other;
         }
     }
 

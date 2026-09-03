@@ -939,6 +939,19 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
             EyeExit->PromptText = FText::FromString(TEXT("Fall back to the Gate [E]"));
             EyeExit->Destination = GateLocation + FVector(0.0f, 0.0f, 100.0f);
         }
+
+        // Final-audit H-5: MQ-15's "Enter the Eye of the Maelstrom" objective
+        // used to complete only on the EXIT pad ("fall back to the Gate") — the
+        // quest read as finished while the player was leaving, before any combat.
+        // This publish-only arrival marker sits beside the dungeon's entry point,
+        // so the objective completes the moment the player actually ARRIVES.
+        if (AAstrawildDungeonPortalActor* EyeArrival = World->SpawnActor<AAstrawildDungeonPortalActor>(
+            AAstrawildDungeonPortalActor::StaticClass(), EyeDungeonLocation + FVector(0.0f, -900.0f, 150.0f), FRotator::ZeroRotator, Params))
+        {
+            EyeArrival->PortalId = TEXT("Location_EyeOfTheMaelstrom");
+            EyeArrival->PromptText = FText::FromString(TEXT("The Eye of the Maelstrom — you are inside the storm [E]"));
+            EyeArrival->bPublishOnly = true;
+        }
     }
 
     // Dawnstead homecoming marker (MQ-17): a publish-only pad at the camp —

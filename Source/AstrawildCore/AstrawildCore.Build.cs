@@ -14,7 +14,9 @@ public class AstrawildCore : ModuleRules
                 "Engine",
                 "InputCore",
                 "EnhancedInput",
-                "GameplayAbilities",
+                // Final-audit F-18: GameplayAbilities removed — no GAS/StateTree code
+                // exists in the module (comment-only future references); the plugin is
+                // disabled in the .uproject to shed the compile weight.
                 "GameplayTags",
                 "GameplayTasks",
                 // V2 architecture (audit §F): AI, navigation, UI foundation.

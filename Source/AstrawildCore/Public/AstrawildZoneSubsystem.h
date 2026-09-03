@@ -12,7 +12,9 @@ class AActor;
 /**
  * Static description of one surface zone of the Shattered Vale (Batch 7).
  * Bounds are world-space centimeters on the XY plane and tile the world exactly:
- * X [-120000, 120000] x Y [-80000, 80000] (2.4km x 1.6km).
+ * X [-120000, 120000] x Y [-80000, 80000] are the ZONE-CENTER ranges; the full
+ * world grid (final-audit L-5, AUD-4 — was misdocumented) is
+ * X [-160000, 160000] x Y [-120000, 120000] = 3.2km x 2.4km (4x3 zones of 800m).
  */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildZoneDescriptor

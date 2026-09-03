@@ -1046,6 +1046,33 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
                 }
             }
         }
+        else if (Echo->bCaptured && Echo->OwnerPlayerId == GetFName())
+        {
+            // Final-audit M-5: the evolution system (6 authored chains, gated,
+            // tested) had ZERO gameplay callers — real code, unreachable. E on your
+            // OWN party echo now evolves it when the gates clear; otherwise it
+            // reports what is missing. Identity (level/bond/trust) is preserved.
+            if (UGameInstance* GameInstance = GetGameInstance())
+            {
+                if (UAstrawildEchoRosterSubsystem* Roster = GameInstance->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+                {
+                    if (Roster->CanEvolve(Echo->InstanceId))
+                    {
+                        if (Roster->EvolveInstance(Echo->InstanceId))
+                        {
+                            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+                            {
+                                PC->Notify(FText::FromString(TEXT("Your Echo evolved — its dream deepened.")));
+                            }
+                        }
+                    }
+                    else if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+                    {
+                        PC->Notify(FText::FromString(TEXT("Not ready to evolve — deepen the bond and level it first.")));
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1380,7 +1407,13 @@ void AAstrawildPlayerCharacter::QuickSave(const FInputActionValue& Value)
 
     if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
     {
-        SaveSubsystem->SaveWorld(GetWorld());
+        // Final-audit F21: F5 used to be completely silent — the player had no way
+        // to know the save landed (the pause-menu path always toasted).
+        const bool bSaved = SaveSubsystem->SaveWorld(GetWorld());
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(bSaved ? TEXT("Game saved.") : TEXT("Save failed.")));
+        }
     }
 }
 
@@ -1879,15 +1912,22 @@ AAstrawildUtilityDroneActor* AAstrawildPlayerCharacter::SpawnUtilityDrone()
         return nullptr;
     }
 
-    // Recall path: one drone per player — pressing H again recalls it (refund item? no —
-    // the drone is re-deployable for free within the session; the save system tracks it).
+    // Recall path: one drone per player — pressing H again recalls it.
+    // Final-audit M-6: the consumed Item_UtilityDrone is refunded (weight-gated,
+    // silent) on recall — the old path destroyed the actor with no refund while
+    // the next deploy consumed ANOTHER drone item, permanently losing one per
+    // recall+save cycle (the save only tracks DEPLOYED drones).
     if (AAstrawildUtilityDroneActor* Existing = ActiveDrone.Get())
     {
         Existing->Destroy();
         ActiveDrone = nullptr;
+        if (InventoryComponent)
+        {
+            InventoryComponent->AddItemSilent(TEXT("Item_UtilityDrone"), 1);
+        }
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
         {
-            PC->Notify(FText::FromString(TEXT("Drone recalled.")));
+            PC->Notify(FText::FromString(TEXT("Drone recalled — the unit is back in your pack.")));
         }
         return nullptr;
     }

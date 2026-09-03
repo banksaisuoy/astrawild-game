@@ -18,3 +18,8 @@
 
 # Batch 7 heightmap exports (plain binary, no LFS needed at ~510KB each)
 *.r16 -text
+# Final-audit F-19 (AUD-5): reserve the remaining UE binary payload formats for LFS
+# (none exist in-repo yet; future cooks will track correctly from day one).
+*.uexp filter=lfs diff=lfs merge=lfs -text
+*.ubulk filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text

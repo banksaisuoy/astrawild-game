@@ -65,7 +65,7 @@ void AAstrawildRestPoint::Interact_Implementation(AActor* InteractingActor)
 
 FText AAstrawildRestPoint::GetInteractionPrompt_Implementation() const
 {
-    return NSLOCTEXT("ASTRAWILD", "RestPointPrompt", "พักฟื้น (ฟื้นพลังทั้งหมด) [E]");
+    return NSLOCTEXT("ASTRAWILD", "RestPointPrompt", "Rest at the campfire (full recovery) [E]");
 }
 
 FAstrawildRestPointSaveData AAstrawildRestPoint::ToSaveData() const

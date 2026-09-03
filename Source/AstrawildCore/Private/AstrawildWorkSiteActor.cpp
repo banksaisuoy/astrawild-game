@@ -93,8 +93,17 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
 
     for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : Workers)
     {
-        const AAstrawildEchoCharacter* Echo = Weak.Get();
+        AAstrawildEchoCharacter* Echo = Weak.Get();
         if (!Echo || !IsValid(Echo->EchoDefinition) || Echo->IsDefeated())
+        {
+            continue;
+        }
+
+        // Final-audit M-9: workers produce only while AT the site (2× the work
+        // range — ExecuteWork paths them to the site, so present workers are the
+        // norm). Previously an echo "worked" from across the map, and an echo that
+        // refused the Work command (obedience roll) still produced at full rate.
+        if (FVector::Dist(Echo->GetActorLocation(), GetActorLocation()) > (WorkRange * 2.0f))
         {
             continue;
         }
@@ -118,11 +127,7 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
         WorkAccumulator += DeltaTime * Affinity * PersonalityMult * MoodMult * EnergyMult * PowerMultiplier;
 
         // Working consumes energy.
-        // (Mutating Needs on a const-free path: Workers holds non-const weak pointers.)
-        if (AAstrawildEchoCharacter* MutableEcho = Weak.Get())
-        {
-            MutableEcho->Needs.Energy = FMath::Max(0.0f, MutableEcho->Needs.Energy - DeltaTime * 0.5f);
-        }
+        Echo->Needs.Energy = FMath::Max(0.0f, Echo->Needs.Energy - DeltaTime * 0.5f);
     }
 
     // Final production run + Production V2: robots work at a flat rate (no needs

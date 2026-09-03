@@ -25,6 +25,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Resource", meta=(ClampMin="1"))
     int32 ResourceQuantityPerHarvest = 1;
 
+    /** Final-audit M-7: cached definition MaxQuantity — RespawnNode restores the full node, not the per-harvest rate. */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Resource")
+    int32 CachedMaxQuantity = 0;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Resource", meta=(ClampMin="1"))
     int32 RemainingQuantity = 3;
 

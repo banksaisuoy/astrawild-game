@@ -26,8 +26,13 @@ class ASTRAWILDCORE_API UAstrawildPauseMenuWidget : public UUserWidget
 {
     GENERATED_BODY()
 
+public:
+    /** Final-audit F-05: focusable so ESC-resume actually fires in UIOnly input mode. */
+    UAstrawildPauseMenuWidget();
+
 protected:
     virtual void NativeConstruct() override;
+    virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 private:
     void BuildWidgetTree();

@@ -97,6 +97,10 @@ void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDef
                 }
             }
             Boss->DefeatEventTargetId = BossDefeatEventId; // Batch 8: per-dungeon quest target.
+            // Final-audit (AUD-3 loot note): room bosses are rewarded by the room's
+            // ClearLootTableId on clear — the species DefeatLoot path is disabled
+            // so the Sovereign does not triple-drop its SovereignCore.
+            Boss->bGrantSpeciesDefeatLoot = false;
             // Final Run (FR-7): phase-2 summon override — the Sovereign calls Eye
             // Sentinels instead of the class-default Gloomfangs.
             if (!BossSummonSpeciesId.IsNone())

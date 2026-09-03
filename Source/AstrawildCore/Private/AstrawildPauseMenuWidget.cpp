@@ -19,6 +19,28 @@ namespace
     constexpr float PauseButtonHeight = 44.0f;
 }
 
+
+UAstrawildPauseMenuWidget::UAstrawildPauseMenuWidget()
+{
+    // Final-audit F-05: focusable so ESC-resume reaches NativeOnKeyDown in UIOnly mode.
+    bIsFocusable = true;
+}
+
+FReply UAstrawildPauseMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // Final-audit F-05: ESC resumes — the universal pause convention the menu
+    // previously only claimed via its Resume button.
+    if (InKeyEvent.GetKey() == EKeys::Escape)
+    {
+        if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+        {
+            PC->TogglePauseMenu();
+            return FReply::Handled();
+        }
+    }
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 void UAstrawildPauseMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
@@ -105,18 +127,21 @@ void UAstrawildPauseMenuWidget::HandleResumeClicked()
 
 void UAstrawildPauseMenuWidget::HandleSaveClicked()
 {
+    bool bSaved = false;
     UWorld* World = GetWorld();
     if (World && World->GetGameInstance())
     {
         if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
         {
-            SaveSubsystem->SaveWorld(World, TEXT("ASTRAWILD_Main"));
+            // Final-audit F11: SaveWorld returns false on clients/corruption —
+            // the old code toasted "Saved." unconditionally (false feedback).
+            bSaved = SaveSubsystem->SaveWorld(World, TEXT("ASTRAWILD_Main"));
         }
     }
 
     if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
     {
-        PC->Notify(FText::FromString(TEXT("Saved.")));
+        PC->Notify(FText::FromString(bSaved ? TEXT("Saved.") : TEXT("Save failed — the host authority writes saves.")));
     }
 }
 

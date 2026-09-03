@@ -207,7 +207,29 @@ void UAstrawildResearchSubsystem::ExportForSave(FAstrawildResearchSaveData& OutD
 
 void UAstrawildResearchSubsystem::ImportFromSave(const FAstrawildResearchSaveData& InData)
 {
-    UnlockedTechIds = InData.UnlockedTechIds;
-    ResearchPoints = InData.ResearchPoints;
+    // Final-audit M-3: sanitized import (mirrors the quest/roster policy — the
+    // earlier hardening of this exact path was lost with the destroyed Final-Run
+    // branch and never re-landed). Duplicates bloat the save and double-list the
+    // research screen; negative RP verbatim would break every cost check below zero.
+    UnlockedTechIds.Reset();
+    for (const FName TechId : InData.UnlockedTechIds)
+    {
+        if (TechId.IsNone())
+        {
+            UE_LOG(LogAstrawildEconomy, Warning, TEXT("ImportFromSave: dropped tech entry with no id."));
+            continue;
+        }
+        if (UnlockedTechIds.Contains(TechId))
+        {
+            UE_LOG(LogAstrawildEconomy, Warning, TEXT("ImportFromSave: duplicate tech %s — first entry wins."), *TechId.ToString());
+            continue;
+        }
+        UnlockedTechIds.Add(TechId);
+    }
+    ResearchPoints = FMath::Max(0, InData.ResearchPoints);
+    if (ResearchPoints != InData.ResearchPoints)
+    {
+        UE_LOG(LogAstrawildEconomy, Warning, TEXT("ImportFromSave: negative research points clamped to 0 (was %d)."), InData.ResearchPoints);
+    }
     OnResearchPointsChanged.Broadcast(ResearchPoints);
 }

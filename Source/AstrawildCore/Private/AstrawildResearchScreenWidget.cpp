@@ -163,6 +163,27 @@ void UAstrawildResearchRowWidget::HandleUnlockClicked()
 // Screen widget
 // ---------------------------------------------------------------------------
 
+
+UAstrawildResearchScreenWidget::UAstrawildResearchScreenWidget()
+{
+    // Final-audit F-05: focusable so K/ESC reach NativeOnKeyDown in UIOnly mode.
+    bIsFocusable = true;
+}
+
+FReply UAstrawildResearchScreenWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // Final-audit F-05: the screen advertises "Close [K]" — make it true.
+    if (InKeyEvent.GetKey() == EKeys::K || InKeyEvent.GetKey() == EKeys::Escape)
+    {
+        if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+        {
+            PC->ToggleResearchScreen();
+            return FReply::Handled();
+        }
+    }
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 void UAstrawildResearchScreenWidget::NativeConstruct()
 {
     Super::NativeConstruct();

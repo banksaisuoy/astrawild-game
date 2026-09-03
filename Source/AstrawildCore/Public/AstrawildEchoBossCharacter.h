@@ -89,11 +89,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
     FName DefeatEventTargetId = TEXT("Creature_UnderlightWarden");
 
+    /**
+     * Final-audit (AUD-3 loot note): when true, defeat grants the species'
+     * authored DefeatLoot to the nearest player. Dungeon-room bosses set this to
+     * FALSE at spawn — their room's ClearLootTableId already rewards the kill
+     * (double-dipping would inflate the Sovereign's SovereignCore count). World
+     * bosses (the Glass Tyrant) keep it true — nothing else rewards them.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
+    bool bGrantSpeciesDefeatLoot = true;
+
     /** Attacking with this element deals ×1.5 (resolved from the species definition). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
     EAstrawildElementType WeaknessElement = EAstrawildElementType::Light;
 
-    /** The boss's own element — same-element attacks are resisted (×0.75). */
+    /** The boss's own element — same-element attacks are resisted (×0.80, unified). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
     EAstrawildElementType BossElement = EAstrawildElementType::Ash;
 

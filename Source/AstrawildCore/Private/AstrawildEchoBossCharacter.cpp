@@ -9,6 +9,7 @@
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildProjectileActor.h"
@@ -149,7 +150,10 @@ float AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
     }
     if (AttackElement == OwnElement)
     {
-        return 0.75f;
+        // Final-audit H-4: unified with the wild-Echo pipeline (×(1−0.2)=×0.80,
+        // DataAssets.h ElementalResistance default) and MASTER_CONTROL §3 — the
+        // boss path previously used a divergent ×0.75.
+        return 0.8f;
     }
     return 1.0f;
 }
@@ -326,6 +330,14 @@ void AAstrawildEchoBossCharacter::Tick(const float DeltaTime)
     if (!bEnraged && EnrageElapsed >= EnrageTimerSeconds)
     {
         bEnraged = true;
+        // Final-audit H-10: enrage from phase 1 used to jump straight to phase 3,
+        // skipping phase 2's SpawnSummons entirely — a stalled fight never
+        // presented its adds. Pass through phase 2 first (its adds spawn), then
+        // land on the enrage tempo in the same tick — the no-stall guarantee holds.
+        if (CurrentPhase < 2)
+        {
+            TransitionToPhase(2);
+        }
         TransitionToPhase(3);
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss ENRAGED by timer at %.0f%% health."), GetHealthFraction() * 100.0f);
     }
@@ -521,6 +533,35 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
             if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
             {
                 EventBus->PublishEvent(TAG_Astrawild_Event_HostileDefeated, this, DefeatEventTargetId, 1, GetActorLocation());
+            }
+        }
+
+        // Final-audit (AUD-3 loot note): world bosses (the Glass Tyrant) had NO
+        // reward path — its authored DefeatLoot (MaelstromGlass x2 + DuneGlass x2)
+        // was unreachable data. Dungeon-room bosses opt out (bGrantSpeciesDefeatLoot
+        // = false) because their room's ClearLootTableId already rewards the kill.
+        if (bGrantSpeciesDefeatLoot && GetWorld() && !BossSpeciesId.IsNone())
+        {
+            UAstrawildItemRegistrySubsystem* Registry =
+                GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+            const UAstrawildEchoDefinition* Species = Registry ? Registry->FindEcho(BossSpeciesId) : nullptr;
+            if (Species && Species->DefeatLoot.Num() > 0)
+            {
+                if (AAstrawildPlayerCharacter* Killer = FindNearestPlayer())
+                {
+                    if (UAstrawildInventoryComponent* Inventory = Killer->FindComponentByClass<UAstrawildInventoryComponent>())
+                    {
+                        for (const FAstrawildItemStack& Drop : Species->DefeatLoot)
+                        {
+                            if (Drop.IsValid())
+                            {
+                                Inventory->AddItem(Drop.ItemId, Drop.Quantity);
+                            }
+                        }
+                        UE_LOG(LogAstrawildEconomy, Log, TEXT("Boss %s dropped species loot to %s."),
+                            *DefeatEventTargetId.ToString(), *Killer->GetName());
+                    }
+                }
             }
         }
 
