@@ -332,6 +332,13 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff")
     AAstrawildSkiffActor* GetPilotedSkiff() const;
 
+    /** SCP Phase 5: the Echo this player is currently riding (null = afoot). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Mount")
+    AAstrawildEchoCharacter* GetMountedEcho() const { return MountedEcho.Get(); }
+
+    /** Called by the mount component on mount/dismount (input routing switches). */
+    void SetMountedEcho(AAstrawildEchoCharacter* Echo);
+
     /** Called by the skiff on mount/dismount (input routing switches over). */
     void SetPilotedSkiff(AAstrawildSkiffActor* Skiff);
 
@@ -480,6 +487,10 @@ private:
     /** Batch 8 — piloted skiff (weak so a destroyed skiff can't dangle input). */
     UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Skiff")
     TWeakObjectPtr<AAstrawildSkiffActor> PilotedSkiff;
+
+    /** SCP Phase 5: ridden Echo (weak — a defeated mount auto-dismounts). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Mount")
+    TWeakObjectPtr<AAstrawildEchoCharacter> MountedEcho;
 
     /** Production V2 Batch 2: held-weapon refresh cadence + dedupe cache. */
     FTimerHandle HeldWeaponTimerHandle;

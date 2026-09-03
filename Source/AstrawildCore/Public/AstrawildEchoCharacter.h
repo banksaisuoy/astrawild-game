@@ -9,6 +9,7 @@ class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
 class AAstrawildWorkSiteActor;
 class UAstrawildCreatureSanityComponent;
+class UAstrawildMountComponent;
 class UPointLightComponent;
 class UStaticMeshComponent;
 class UNavigationInvokerComponent;
@@ -171,6 +172,10 @@ public:
     /** SCP Phase 9: sanity / illness / healthcare simulation. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Sanity")
     TObjectPtr<UAstrawildCreatureSanityComponent> SanityComponent;
+
+    /** SCP Phase 5: riding (rider attach + forwarded input driving). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Mount")
+    TObjectPtr<UAstrawildMountComponent> MountComponent;
 
     // ------------------------------------------------------------------
     // GDP-1 — Echo ability engine (server-authoritative, replicated cooldowns).

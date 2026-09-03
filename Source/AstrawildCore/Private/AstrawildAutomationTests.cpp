@@ -3533,4 +3533,56 @@ bool FAstrawildBaseTerminalContractTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// --- SCP Phase 5: mount eligibility + speed + seat contract (Test 92) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildMountContractTest,
+    "ASTRAWILD.SCP.Mount.SpeciesAndSpeed",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildMountContractTest::RunTest(const FString& Parameters)
+{
+    using Mnt = UAstrawildMountComponent;
+
+    // Species gates: classic mount families + quadruped/avian plans + Medium+.
+    TestTrue(TEXT("Beast quadruped large is rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
+    TestTrue(TEXT("Avian mount is rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Avian, EAstrawildSizeClass::Medium));
+    TestTrue(TEXT("Dragon mount is rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Dragon, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Huge));
+    TestFalse(TEXT("Tiny creatures are never rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Tiny));
+    TestFalse(TEXT("Small creatures are never rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Small));
+    TestFalse(TEXT("Serpent bodies carry no saddle"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Large));
+    TestFalse(TEXT("Flora Kindred are companions, not mounts"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Flora, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
+    TestFalse(TEXT("Floating wisps carry no rider"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Huge));
+
+    // Speed: 1.25x species speed with a sane floor.
+    TestEqual(TEXT("Mount speed is 1.25x species speed"), Mnt::ComputeMountSpeed(400.0f), 500.0f);
+    TestEqual(TEXT("Slow species get the mount floor"), Mnt::ComputeMountSpeed(50.0f), 250.0f);
+
+    // Seat contract scales with size (rider sits higher on bigger mounts).
+    const FVector MediumSeat = Mnt::ComputeRiderSeatOffset(EAstrawildSizeClass::Medium);
+    const FVector LargeSeat = Mnt::ComputeRiderSeatOffset(EAstrawildSizeClass::Large);
+    const FVector HugeSeat = Mnt::ComputeRiderSeatOffset(EAstrawildSizeClass::Huge);
+    TestTrue(TEXT("Larger mounts seat higher"), LargeSeat.Z > MediumSeat.Z && HugeSeat.Z > LargeSeat.Z);
+
+    // Socket contract: all six directive socket names are pinned.
+    TestTrue(TEXT("MountSocket pinned"), Mnt::GetMountSocketName() == TEXT("MountSocket"));
+    TestTrue(TEXT("RiderPelvisSocket pinned"), Mnt::GetRiderPelvisSocketName() == TEXT("RiderPelvisSocket"));
+    TestTrue(TEXT("Hand grip sockets pinned"),
+        Mnt::GetLeftHandGripSocketName() == TEXT("LeftHandGripSocket") &&
+        Mnt::GetRightHandGripSocketName() == TEXT("RightHandGripSocket"));
+    TestTrue(TEXT("Stirrup sockets pinned"),
+        Mnt::GetLeftFootStirrupSocketName() == TEXT("LeftFootStirrupSocket") &&
+        Mnt::GetRightFootStirrupSocketName() == TEXT("RightFootStirrupSocket"));
+
+    // Bond gate: the trust arc number from the directive spec.
+    TestEqual(TEXT("Mount bond gate is 25"), Mnt::MountBondGate, 25.0f);
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

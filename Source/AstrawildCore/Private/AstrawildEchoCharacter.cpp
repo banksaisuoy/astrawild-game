@@ -5,6 +5,7 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEcosystemSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -527,6 +528,9 @@ AAstrawildEchoCharacter::AAstrawildEchoCharacter()
 
     // SCP Phase 9: sanity/illness simulation (server ticks, replicated state).
     SanityComponent = CreateDefaultSubobject<UAstrawildCreatureSanityComponent>(TEXT("Sanity"));
+
+    // SCP Phase 5: riding contract (rider attach + input-driven movement).
+    MountComponent = CreateDefaultSubobject<UAstrawildMountComponent>(TEXT("Mount"));
     ElementGlowLight->SetupAttachment(GetCapsuleComponent());
     ElementGlowLight->SetCastShadows(false);
     ElementGlowLight->SetIntensity(0.0f);

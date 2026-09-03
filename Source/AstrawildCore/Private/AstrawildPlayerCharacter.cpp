@@ -1078,6 +1078,16 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
         return;
     }
 
+    // SCP Phase 5 — riding a mount: WASD drives the creature instead of the pawn.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderMove(MovementVector.Y, MovementVector.X);
+            return;
+        }
+    }
+
     if (!Controller || MovementVector.IsNearlyZero())
     {
         return;
@@ -1202,6 +1212,16 @@ void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
         return;
     }
 
+    // SCP Phase 5 — SPACE while riding a flying mount = climb.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(1.0f);
+            return;
+        }
+    }
+
     // Art pack (Batch 4): jump one-shot (skips if the clip is not imported).
     PlaySurvivorOneShot(SurvivorJumpAnim.Get(), 0.9f);
     Jump();
@@ -1221,6 +1241,16 @@ void AAstrawildPlayerCharacter::OnJumpReleased(const FInputActionValue& Value)
         return;
     }
 
+    // SCP Phase 5 — mount climb release.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(0.0f);
+            return;
+        }
+    }
+
     StopJumping();
 }
 
@@ -1230,6 +1260,16 @@ void AAstrawildPlayerCharacter::StartDescend(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(-1.0f);
+        return;
+    }
+
+    // SCP Phase 5 — CTRL while riding a flying mount = descend.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(-1.0f);
+        }
     }
 }
 
@@ -1238,6 +1278,15 @@ void AAstrawildPlayerCharacter::StopDescend(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(0.0f);
+        return;
+    }
+
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(0.0f);
+        }
     }
 }
 
@@ -1262,7 +1311,30 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
         return;
     }
 
+    // SCP Phase 5 — E while riding = dismount (before any trace).
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->DismountRider();
+            return;
+        }
+    }
+
     AActor* InteractableActor = FindInteractableActor();
+
+    // SCP Phase 5 — E at an own, bonded, rideable party Echo = board it
+    // (mount attempt BEFORE the generic interact path so seats beat menus).
+    if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(InteractableActor))
+    {
+        if (Echo->MountComponent && Echo->MountComponent->CanBeMountedBy(this))
+        {
+            if (Echo->MountComponent->MountRider(this))
+            {
+                return;
+            }
+        }
+    }
 
     // Standard interactables (nodes, stations, rest points, NPCs).
     if (IsValid(InteractableActor) && InteractableActor->GetClass()->ImplementsInterface(UAstrawildInteractable::StaticClass()))
@@ -1676,6 +1748,16 @@ void AAstrawildPlayerCharacter::QuickLoad(const FInputActionValue& Value)
 void AAstrawildPlayerCharacter::OnPlayerDied()
 {
     UE_LOG(LogAstrawildCombat, Log, TEXT("Player died — awaiting respawn."));
+
+    // SCP Phase 5: a dead rider falls off the mount (before input disable so
+    // the dismount path can run its notify).
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->DismountRider();
+        }
+    }
 
     // Batch 4 — M-2a: death ends any active sprint-drain (FullRestore refills
     // stamina; a stale drain request would immediately drain it again on respawn).
@@ -2380,6 +2462,13 @@ void AAstrawildPlayerCharacter::TogglePauseMenuInput(const FInputActionValue& Va
 AAstrawildSkiffActor* AAstrawildPlayerCharacter::GetPilotedSkiff() const
 {
     return PilotedSkiff.Get();
+}
+
+void AAstrawildPlayerCharacter::SetMountedEcho(AAstrawildEchoCharacter* Echo)
+{
+    MountedEcho = Echo;
+    // Movement speed re-resolves on the next refresh (rider stance changes nothing
+    // for the pawn itself — its movement is disabled while seated).
 }
 
 void AAstrawildPlayerCharacter::SetPilotedSkiff(AAstrawildSkiffActor* Skiff)
