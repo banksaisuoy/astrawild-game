@@ -1,20 +1,22 @@
 ﻿# ASTRAWILD — FINAL READINESS REPORT
 
-**Report date**: 2026-09-03 · **Author**: GLM 5.3 (Final Run)
-**Baseline**: `glm/final-run` (main 94a398c + PR #4 f31f5e1 + Final-Run commits — see HANDOFF §1)
-**Top-level status** (only allowed values): **NOT_READY (RECOVERY — v3.1)**
+**Report date**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run)
+**Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + 99e4105..HEAD, all pushed)
+**Top-level status**: **READY_FOR_FINAL_BUILD (SOURCE-SIDE)** — engine verification
+(AG-2..5) is the only remaining gate; the final content manifest (Batch 5) closes this
+report.
 
 > Evidence discipline: everything below is *source-side* (static) unless explicitly marked
 > with an engine-evidence class. GLM has no UE5 in its sandbox; nothing here claims a
 > runtime PASS. The one-time integration runbook that converts this report is
-
-> [!WARNING]
-> **RECOVERY RESET (2026-09-03)**: the Final Run source behind every YES below was lost
-> before push (sandbox reset; no PAT). The report will be re-issued as the redo on branch
-> `final-completion` restores each pillar. Specs remain locked in MASTER_CONTROL v3.1.
 > `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`.
 
----
+> [!NOTE]
+> **REDO LANDED (2026-09-03)**: every pillar below was re-implemented on branch
+> `final-completion` and pushed batch-by-batch (BATCH-0..5). The static validator runs
+> 46/46 ALL CHECKS PASSED and the automation suite holds 67 world-free contract tests
+> (inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`). Specs remain LOCKED as MASTER_CONTROL
+> v3.2 — the redo changed no design.
 
 ## A. Game Canon
 

@@ -1,11 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 3.1 (RECOVERY — Final Run source lost, redo in progress)
+**Document Version**: 3.2 (FINAL COMPLETION RUN — FR redo complete, all batches pushed)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
-**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (working branch)
-**Recovery base**: f31f5e1 — all Final Run commits were lost before push (see WARNING below)
-**Last Updated**: 2026-09-03 (recovery run)
+**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (working branch, ALL batches pushed)
+**Last Updated**: 2026-09-03 (final completion run)
 
 ---
 
@@ -14,21 +13,19 @@
 > for ASTRAWILD. Every historical roadmap file listed in §12 is HISTORICAL/SUPERSEDED.
 > When any other document conflicts with MASTER_CONTROL, MASTER_CONTROL wins.
 > This version supersedes: the Antigravity MASTER_CONTROL v2.0 (was 136 lines, absorbed),
-> and the GLM staging MASTER_CONTROL v1.7 (mirror retained in glm-staging for reference).
+> the GLM staging MASTER_CONTROL v1.7 (mirror retained in glm-staging for reference),
+> and the v3.1 recovery edition.
 
-> [!WARNING]
-> **RECOVERY STATUS (v3.1 — read before anything else)**: The Final Run commits
-> (f310698 / 0ae9764 / aee4cc8 / af30c98 on the lost branch `glm/final-run`) were **never pushed**
-> (no GitHub PAT in the GLM sandbox) and the sandbox was reset again, destroying the local repo.
-> **All Final Run SOURCE work is lost and must be re-implemented.** What survived:
-> this document set (MASTER_CONTROL v3.0, TASK_REGISTRY, BUILD_HANDOFF, READINESS_REPORT,
-> validate_final_run.py — mirrored in glm-staging) + the full implementation specs they contain
-> + the worklog. The recovery re-implements FR-1..14 on branch **`final-completion`**
-> (based on PR #4 head f31f5e1, per binding rule: never branch from the old baseline).
-> Statuses in the Task Registry were reset to PLANNED (REDO). The game definition, story canon,
-> and all specs below remain LOCKED as v3.0 — this recovery changes no design.
-> **Push rule (binding, user-issued)**: push after every completed batch; if no PAT,
-> stop work and request one — never accumulate more than 1 batch unpushed.
+> [!NOTE]
+> **REDO COMPLETE (v3.2)**: the Final Completion Run re-implemented FR-1..12 on branch
+> `final-completion` (base f31f5e1, per binding rule) and pushed EVERY batch to GitHub:
+> BATCH-0 recovery 99e4105 · BATCH-1 hardening 61c45e6 · BATCH-2 Act 3/endings/save V5
+> 93ee929 · BATCH-3 polish/canon b9c1bd6 · docs batch (this commit). The static validator
+> runs **46/46 ALL CHECKS PASSED**; the automation suite holds **67 world-free contract
+> tests**. Everything remains ENGINE-UNVERIFIED until the Antigravity machine runs
+> AG-2..5 (HANDOFF §20). Game definition, story canon and specs stay LOCKED as v3.0 —
+> this run changed no design, only re-landed and completed it.
+> **Push rule (binding, user-issued — honored)**: push after every completed batch.
 
 ---
 

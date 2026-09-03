@@ -4,30 +4,33 @@
 > copy-pasteable on the Antigravity Windows machine. Machine assumptions: UE 5.8.2 at
 > `E:\Epic Games\UnrealEngine`, repo at `E:\AstrawildGame`, .NET at `E:\dotnet`,
 > archive at `E:\Astrawild_Packaged` (adjust if the workspace moved).
-> Source state: `glm/final-run` — see §1 for the exact SHA.
+> Source state: `final-completion` — see §1 for the exact SHAs (ALL PUSHED to GitHub).
 
-> [!WARNING]
-> **RECOVERY NOTE (2026-09-03)**: the commit SHAs listed in §1 were lost with the sandbox
-> before push and do not exist on any remote. This runbook becomes operative again when the
-> recovery re-implementation of FR-1..13 lands on branch **`final-completion`** (same base
-> f31f5e1). All commands, engine assumptions, and verification sequences below remain valid
-> — only the final SHA will differ. Check `git log --oneline -8 origin/final-completion` for
-> the current redo state before executing.
+> [!NOTE]
+> **REDO LANDED (2026-09-03, Final Completion Run)**: the FR-1..14 re-implementation is
+> complete on branch **`final-completion`** and every batch is pushed to origin (the
+> recovery-era warning about lost SHAs is retired — §1 below now lists the live commits).
+> All commands, engine assumptions, and verification sequences remain valid as written.
 
 ---
 
 ## 1. FINAL COMMIT SHA
 
 ```
-branch: glm/final-run   (base: f31f5e1 = agent/antigravity-ue5-v2 @ PR #4 head)
-commits (oldest→newest):
-  f310698  fix(core): P0/P1 source hardening — final run batch 1 (FR-0001..FR-0017)
-  0ae9764  feat(story): Final Run — Act 3 'The Storm Crown' (ending + post-game)
-  aee4cc8  feat(polish): building shell completes, living villages, element canon, skiff mesh
-  <DOCS>   docs(final): MASTER_CONTROL v3.0 + task registry + handoff + readiness report
+branch: final-completion   (base: f31f5e1 = agent/antigravity-ue5-v2 @ PR #4 head)
+commits (oldest→newest, ALL pushed to origin/final-completion):
+  99e4105  [BATCH-0] Recovery: restore Final Run control docs + validator after sandbox loss
+  61c45e6  [BATCH-1] P0 Hardening: exploit fixes, save guard, fail-closed building
+  93ee929  [BATCH-2] Act 3 The Storm Crown: final boss + 2 endings + save V5
+  b9c1bd6  [BATCH-3] Polish: buildings complete + every NPC converses + canon matrix
+  <DOCS>   [BATCH-4] Docs: MASTER_CONTROL v3.2 + registry + handoff + readiness + test inventory
+  <FINAL>  [BATCH-5] Final content manifest + READY_FOR_FINAL_BUILD declaration
 ```
-Verify on your machine after pulling: `git log --oneline -6` must show all of the above.
-**PR #4 is subsumed** — merging `glm/final-run` into `main` closes it (do not re-merge PR #4 separately).
+Verify on your machine after pulling: `git log --oneline -8` must show all of the above
+
+(in 99e4105..HEAD order; `git ls-remote origin final-completion` confirms the remote head).
+**PR #4 is subsumed** — merging `final-completion` into `main` closes it (do not re-merge
+PR #4 separately).
 
 ## 2. ENGINE VERSION
 
