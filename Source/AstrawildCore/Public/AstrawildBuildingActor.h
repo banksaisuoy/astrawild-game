@@ -27,6 +27,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building")
     TObjectPtr<UStaticMeshComponent> VisualMesh;
 
+    /**
+     * Final Run (FR-9): the door's sliding panel. The root (VisualMesh) shrinks
+     * to a thin track so the SAVED actor transform stays stable; only this panel
+     * slides/collides. Hidden for every non-door category.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building")
+    TObjectPtr<UStaticMeshComponent> DoorPanel;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building")
     TObjectPtr<class UPointLightComponent> PowerIndicatorLight;
 
@@ -79,6 +87,33 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
     bool IsDestroyed() const { return CurrentHealth <= 0.0f; }
+
+    // --- Final Run (FR-9): door + storage crate ---
+
+    /** FR-9: door state (toggled through Interact; replicated for clients). */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building", ReplicatedUsing=OnRep_IsOpen)
+    bool bIsOpen = false;
+
+    /** FR-9: storage crate contents (server-authoritative, saved/loaded). */
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Building")
+    TArray<FAstrawildItemStack> StoredItems;
+
+    /** FR-9: crate capacity in distinct stacks. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Building", meta=(ClampMin="1", ClampMax="50"))
+    int32 StorageCapacity = 20;
+
+    UFUNCTION()
+    void OnRep_IsOpen();
+
+    /** FR-9: apply the door open/closed visual + collision state. */
+    void ApplyDoorVisualState();
+
+    /**
+     * FR-9: crate transfer — deposits the first non-equipped inventory stack
+     * (when there is room), otherwise withdraws the first stored stack back to
+     * the player. Returns a human-readable result line for the HUD toast.
+     */
+    FText TransferStorageStack(AAstrawildPlayerCharacter* Player);
 
     /** IAstrawildInteractable (audit C-2): Research Desk spends points on the next tech. */
     virtual void Interact_Implementation(AActor* InteractingActor) override;

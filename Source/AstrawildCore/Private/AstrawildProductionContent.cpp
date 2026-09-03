@@ -910,6 +910,13 @@ void UAstrawildProductionContent::BuildPOIs(UAstrawildItemRegistrySubsystem* Reg
         TEXT("The reef grows in rings around whatever is at the bottom."),
         EAstrawildPOIType::SignalSource, EAstrawildZone::PearlseaReef, FVector2D(-1800.0f, -1800.0f), 1000.0f,
         TEXT("Loot_POIAncient"), 6, true);
+
+    // Final Run (FR-10): the Azure Shallows finally gets its POI — the sextant
+    // platform reads the tide races and explains why the isles' charts end mid-water.
+    MakePOI(Registry, TEXT("POI_ShallowsSextant"), TEXT("The Shallows Sextant"),
+        TEXT("A drowned surveyor's ring — it still tracks something deep under the race."),
+        EAstrawildPOIType::Ruin, EAstrawildZone::AzureShallows, FVector2D(2400.0f, -1600.0f), 1200.0f,
+        TEXT("Loot_VendorDriftwood"), 5);
 }
 
 // ---------------------------------------------------------------------------
@@ -1833,6 +1840,280 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         Perry->Nodes.Add(Node);
     }
     Registry->RegisterDialogueTree(Perry);
+
+    // -------------------------------------------------------------------------
+    // Final Run (FR-10) — the last five villagers get their trees. Every NPC in
+    // the Vale now converses: vendor hand-offs route through bOpenShop, one-time
+    // beats use story flags, and conditions gate on quest state + world facts.
+    // -------------------------------------------------------------------------
+
+    // --- Herbalist Wren (Dawnstead vendor) — salve recipe tip + shop ---
+    UAstrawildDialogueTreeDefinition* Wren = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Wren->DialogueId = TEXT("Dialogue_HerbalistWren");
+    Wren->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Bark, root, bloom. The marsh gives everything if you know which parts to boil.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse remedies"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the salve recipe"));
+            Choice.ForbiddenFlagId = TEXT("Wren_SalveTip");
+            Choice.SetFlagId = TEXT("Wren_SalveTip");
+            Choice.GiveResearchPoints = 8;
+            Choice.GotoNodeId = TEXT("salve");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Wren->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("salve");
+        Node.Lines = {
+            Line(nullptr, TEXT("Chitin plate, marsh bloom, a whisper of dawn shard. Grind, warm, wrap — the Herbal Salve writes itself.")),
+            Line(nullptr, TEXT("Here, the proportions. Your research bench will make better ink of it than my chalk."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse remedies"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Wren->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Wren);
+
+    // --- Blacksmith Borin (Dawnstead vendor) — one-time whetstone gift + shop ---
+    UAstrawildDialogueTreeDefinition* Borin = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Borin->DialogueId = TEXT("Dialogue_BlacksmithBorin");
+    Borin->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Steel today, story tomorrow. Which do you need?")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the forge"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Take the whetstone offer"));
+            Choice.ForbiddenFlagId = TEXT("Borin_WhetstoneGiven");
+            Choice.SetFlagId = TEXT("Borin_WhetstoneGiven");
+            Choice.GiveItemId = TEXT("Item_Stone");
+            Choice.GiveItemQuantity = 3;
+            Choice.GotoNodeId = TEXT("whetstone");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Borin->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("whetstone");
+        Node.Lines = {
+            Line(nullptr, TEXT("First-fielders get whetstones. Keep an edge on everything — the Vale doesn't forgive dull tools.")),
+            Line(nullptr, TEXT("Three stones. Don't come back crying when you've ground them to sand."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the forge"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Borin->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Borin);
+
+    // --- Guard Bram (Dawnstead) — night-watch intelligence + the Tyrant rumor ---
+    UAstrawildDialogueTreeDefinition* Bram = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Bram->DialogueId = TEXT("Dialogue_GuardBram");
+    Bram->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Gloomfangs again. Always Gloomfangs. Third night running they test the south fence.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("How do I survive a night raid?"));
+            Choice.ForbiddenFlagId = TEXT("Bram_NightTip");
+            Choice.SetFlagId = TEXT("Bram_NightTip");
+            Choice.GiveResearchPoints = 8;
+            Choice.GotoNodeId = TEXT("nighttip");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Anything stranger than Gloomfangs?"));
+            Choice.GotoNodeId = TEXT("rumor");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Bram->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("nighttip");
+        Node.Lines = {
+            Line(nullptr, TEXT("Fires. Lamplight. Don't chase them past the treeline — they pull you off the wall and swarm.")),
+            Line(nullptr, TEXT("And keep a shield up. Here — the watch rotation notes, for your bench."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("rumor");
+        Node.Lines = {
+            Line(nullptr, TEXT("The Sunscar. Something made of glass has been walking the dunes at noon — flat, bright, wrong.")),
+            Line(nullptr, TEXT("Kael's charts call it the Glass Tyrant. If you're headed that way... take the bright stuff. It hates light."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    Registry->RegisterDialogueTree(Bram);
+
+    // --- Farmer Jori (Dawnstead) — Sprigling husbandry tip ---
+    UAstrawildDialogueTreeDefinition* Jori = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Jori->DialogueId = TEXT("Dialogue_FarmerJori");
+    Jori->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Spriglings turn the soil better than any hoe. I just follow behind with seeds and apologies.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("How do you keep Spriglings happy?"));
+            Choice.ForbiddenFlagId = TEXT("Jori_HusbandryTip");
+            Choice.SetFlagId = TEXT("Jori_HusbandryTip");
+            Choice.GiveResearchPoints = 6;
+            Choice.GotoNodeId = TEXT("husbandry");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Jori->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("husbandry");
+        Node.Lines = {
+            Line(nullptr, TEXT("Feed mix, a trough, and patience. They sulk without company — pen them near the fire, not the fence.")),
+            Line(nullptr, TEXT("The old feeding schedule is in the shed ledger. Take it; my eyes are done with small print."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Jori->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Jori);
+
+    // --- Fisher Nima (Driftwood Landing vendor) — tide table + shop ---
+    UAstrawildDialogueTreeDefinition* Nima = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Nima->DialogueId = TEXT("Dialogue_FisherNima");
+    Nima->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Fresh catch, sea pearls, and gossip — the gossip's the expensive part.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the catch"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What's beyond the shallows?"));
+            Choice.GotoNodeId = TEXT("beyond");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Nima->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("beyond");
+        Node.Lines = {
+            Line(nullptr, TEXT("There's a surveyor's ring out in the Azure Shallows — a sextant, still turning, still pointed at nothing.")),
+            Line(nullptr, TEXT("Perry says the charts end there because the surveyor never came back to finish them. I say the sea keeps what it likes."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the catch"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    Registry->RegisterDialogueTree(Nima);
 }
 
 // ---------------------------------------------------------------------------
@@ -1874,8 +2155,10 @@ void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySub
 
     // --- Act 3 boss species roster ---
 
-    // Glass Tyrant — the Sunscar's crystalline mini-boss (MQ-14). Weak to Dawn
-    // Light; drops the Maelstrom Glass the Stratos Coil needs.
+    // Glass Tyrant — the Sunscar's crystalline mini-boss (MQ-14). An encounter
+    // DESIGN exception to the FR-3 matrix (Ash normally has no weakness): the
+    // Tyrant's glass shatters under concentrated light — Bram's tip, the quest
+    // text and the Dawn arsenal theme all agree.
     MakeProductionEcho(Registry, TEXT("Echo_GlassTyrant"), TEXT("Glass Tyrant"),
         EAstrawildElementType::Ash, EAstrawildEchoRole::Combat,
         260.0f, 38.0f, 22.0f, 520.0f,
@@ -1886,11 +2169,12 @@ void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySub
         { }, { Stack(TEXT("Item_MaelstromGlass"), 2), Stack(TEXT("Item_DuneGlass"), 2) });
 
     // Eye Sentinel — the Sovereign's floating guards (dungeon adds + boss summons).
+    // FR-3 matrix: Pulse falls to Light.
     MakeProductionEcho(Registry, TEXT("Echo_EyeSentinel"), TEXT("Eye Sentinel"),
         EAstrawildElementType::Pulse, EAstrawildEchoRole::Combat,
         90.0f, 22.0f, 12.0f, 480.0f,
         EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Nocturnal,
-        { }, 0.85f, EAstrawildElementType::Frost,
+        { }, 0.85f, EAstrawildElementType::Light,
         EAstrawildEchoFamily::Construct, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Medium,
         EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Rare, EAstrawildEchoPassive::None,
         { }, { Stack(TEXT("Item_MaelstromGlass"), 1) });
@@ -2072,5 +2356,5 @@ void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Regi
     BuildFinalRunContent(Registry); // FR-5: Act 3 "The Storm Crown" + the two endings.
 
     UE_LOG(LogAstrawildEconomy, Log,
-        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 quests (17 total), 6 dialogue trees (Maren carries the endings)."));
+        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 quests (17 total), 6 + 5 dialogue trees (11 total — every NPC converses)."));
 }

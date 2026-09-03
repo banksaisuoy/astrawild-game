@@ -609,6 +609,20 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
     int32 RefundItemCount = 0;
+
+    /**
+     * Final Run (FR-9): door open state (additive — older saves deserialize
+     * closed, which matches the pre-door world exactly).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bIsOpen = false;
+
+    /**
+     * Final Run (FR-9): storage crate contents (additive — older saves
+     * deserialize empty crates; nothing is lost, nothing is minted).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildItemStack> StoredItems;
 };
 
 /**

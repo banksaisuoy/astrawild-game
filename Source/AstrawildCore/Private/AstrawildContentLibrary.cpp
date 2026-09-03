@@ -471,9 +471,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     const TArray<FName> BerryFood = { TEXT("Item_Berry") };
 
     // The first companion: docile, curious, light-element (directive §21 first Echo).
+    // FR-3 matrix: Light has no weakness (the pure element — nothing counters it).
     UAstrawildEchoDefinition* Lumewisp = MakeEcho(Outer, TEXT("Echo_Lumewisp"), TEXT("Lumewisp"), EAstrawildElementType::Light,
         EAstrawildEchoRole::Support, 60.0f, 8.0f, 2.0f, 320.0f, EAstrawildPersonality::Curious,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.25f, EAstrawildElementType::Ash, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.25f, EAstrawildElementType::None, false);
     Lumewisp->PreferredWeather = { EAstrawildWeatherState::Clear, EAstrawildWeatherState::Cloudy };
     Lumewisp->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
     FAstrawildWorkAffinity LightWork;
@@ -484,9 +485,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Registry->RegisterEcho(Lumewisp);
 
     // Sturdy stone companion: brave tank.
+    // FR-3 matrix: Ash has no weakness (grit endures everything equally).
     UAstrawildEchoDefinition* Stonehide = MakeEcho(Outer, TEXT("Echo_Stonehide"), TEXT("Stonehide"), EAstrawildElementType::Ash,
         EAstrawildEchoRole::Combat, 140.0f, 16.0f, 8.0f, 260.0f, EAstrawildPersonality::Brave,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.55f, EAstrawildElementType::Light, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.55f, EAstrawildElementType::None, false);
     FAstrawildWorkAffinity MiningWork;
     MiningWork.WorkType = EAstrawildWorkType::Mining;
     MiningWork.Affinity = 1.8f;
@@ -495,9 +497,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Registry->RegisterEcho(Stonehide);
 
     // Nocturnal energy creature — the power synergy of directive §55.
+    // FR-3 matrix: Pulse falls to Light (dawn light grounds the arc).
     UAstrawildEchoDefinition* Voltling = MakeEcho(Outer, TEXT("Echo_Voltling"), TEXT("Voltling"), EAstrawildElementType::Pulse,
         EAstrawildEchoRole::Base, 55.0f, 10.0f, 3.0f, 380.0f, EAstrawildPersonality::Energetic,
-        EAstrawildActivityPattern::Nocturnal, BerryFood, 0.45f, EAstrawildElementType::Frost, false);
+        EAstrawildActivityPattern::Nocturnal, BerryFood, 0.45f, EAstrawildElementType::Light, false);
     FAstrawildWorkAffinity PowerWork;
     PowerWork.WorkType = EAstrawildWorkType::PowerGeneration;
     PowerWork.Affinity = 2.0f;
@@ -505,9 +508,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Registry->RegisterEcho(Voltling);
 
     // Dusk moth: shy support with research affinity.
+    // FR-3 matrix: Flora falls to Ember (the burning counter to green things).
     UAstrawildEchoDefinition* Duskmoth = MakeEcho(Outer, TEXT("Echo_Duskmoth"), TEXT("Duskmoth"), EAstrawildElementType::Flora,
         EAstrawildEchoRole::Support, 45.0f, 6.0f, 2.0f, 300.0f, EAstrawildPersonality::Timid,
-        EAstrawildActivityPattern::Crepuscular, BerryFood, 0.35f, EAstrawildElementType::Frost, false);
+        EAstrawildActivityPattern::Crepuscular, BerryFood, 0.35f, EAstrawildElementType::Ember, false);
     FAstrawildWorkAffinity ResearchWork;
     ResearchWork.WorkType = EAstrawildWorkType::ResearchAssist;
     ResearchWork.Affinity = 1.6f;
@@ -515,9 +519,11 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Registry->RegisterEcho(Duskmoth);
 
     // First hostile creature (directive §21): night stalker.
+    // FR-3 matrix: Ash has no weakness — light RESISTS it narratively, but the
+    // numbers treat Ash as the uncountered grit element.
     UAstrawildEchoDefinition* Gloomfang = MakeEcho(Outer, TEXT("Echo_Gloomfang"), TEXT("Gloomfang"), EAstrawildElementType::Ash,
         EAstrawildEchoRole::Combat, 110.0f, 18.0f, 4.0f, 420.0f, EAstrawildPersonality::Aggressive,
-        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.85f, EAstrawildElementType::Light, true);
+        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.85f, EAstrawildElementType::None, true);
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
     Registry->RegisterEcho(Gloomfang);
@@ -525,9 +531,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     // --- Content expansion (CODE_DEFAULT wave 2) ---
 
     // Herding flora companion: the husbandry anchor species (directive §7 herds).
+    // FR-3 matrix: Flora falls to Ember.
     UAstrawildEchoDefinition* Sprigling = MakeEcho(Outer, TEXT("Echo_Sprigling"), TEXT("Sprigling"), EAstrawildElementType::Flora,
         EAstrawildEchoRole::Support, 50.0f, 5.0f, 3.0f, 290.0f, EAstrawildPersonality::Social,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.30f, EAstrawildElementType::Frost, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.30f, EAstrawildElementType::Ember, false);
     Sprigling->PreferredWeather = { EAstrawildWeatherState::Clear, EAstrawildWeatherState::Rain };
     Sprigling->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
     FAstrawildWorkAffinity FarmWork;
@@ -539,6 +546,7 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Registry->RegisterEcho(Sprigling);
 
     // Ember predator: crepuscular stalker of the meadow edges (directive §7 food chain).
+    // FR-3 matrix: Ember falls to Frost ✓ (the counter-chain runs Ember→Frost→Pulse→Light).
     UAstrawildEchoDefinition* Emberfang = MakeEcho(Outer, TEXT("Echo_Emberfang"), TEXT("Emberfang"), EAstrawildElementType::Ember,
         EAstrawildEchoRole::Combat, 130.0f, 20.0f, 5.0f, 400.0f, EAstrawildPersonality::Aggressive,
         EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.90f, EAstrawildElementType::Frost, true);
@@ -550,30 +558,34 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     //     element coverage — every element now has at least one species, and
     //     the hostile roster spans Ash/Ember/Frost/Pulse. ---
 
-    // Frost predator: the night's cold answer to the Emberfang rivalry. Weak to
-    // Ember (fire melts frost) while Emberfang is weak to Frost — a true rivalry pair.
+    // Frost predator: the night's cold answer.
+    // FR-3 matrix: Frost falls to PULSE — the counter-chain is Frost→Pulse (the
+    // arc shatters the ice), while Ember melts nothing here; the old Frost/Ember
+    // rivalry pair was a canon violation (Ember already answers to Frost).
     UAstrawildEchoDefinition* Rimefang = MakeEcho(Outer, TEXT("Echo_Rimefang"), TEXT("Rimefang"), EAstrawildElementType::Frost,
         EAstrawildEchoRole::Combat, 120.0f, 17.0f, 6.0f, 380.0f, EAstrawildPersonality::Aggressive,
-        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.88f, EAstrawildElementType::Ember, true);
+        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.88f, EAstrawildElementType::Pulse, true);
     Rimefang->PreferredWeather = { EAstrawildWeatherState::Rain, EAstrawildWeatherState::Storm };
     Rimefang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Rimefang->DefeatLoot.Add(Stack(TEXT("Item_Frostbloom"), 2));
     Registry->RegisterEcho(Rimefang);
 
     // Pulse predator: glass-cannon stalker — highest ATK (22) and speed (440) in
-    // the roster, paper-thin defense. Weak to Ash (stone grounds the arc).
+    // the roster, paper-thin defense.
+    // FR-3 matrix: Pulse falls to Light (dawn light grounds the arc).
     UAstrawildEchoDefinition* Voltmaw = MakeEcho(Outer, TEXT("Echo_Voltmaw"), TEXT("Voltmaw"), EAstrawildElementType::Pulse,
         EAstrawildEchoRole::Combat, 95.0f, 22.0f, 3.0f, 440.0f, EAstrawildPersonality::Aggressive,
-        EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.92f, EAstrawildElementType::Ash, true);
+        EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.92f, EAstrawildElementType::Light, true);
     Voltmaw->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
     Voltmaw->DefeatLoot.Add(Stack(TEXT("Item_VoltCore"), 1));
     Registry->RegisterEcho(Voltmaw);
 
     // Ancient-rare companion: the crown jewel of the dawn fields — one spawns per
     // world, hardest capture in the roster (0.95), research affinity par excellence.
+    // FR-3 matrix: Light has no weakness.
     UAstrawildEchoDefinition* Auroraling = MakeEcho(Outer, TEXT("Echo_Auroraling"), TEXT("Auroraling"), EAstrawildElementType::Light,
         EAstrawildEchoRole::Support, 90.0f, 12.0f, 6.0f, 350.0f, EAstrawildPersonality::Curious,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.95f, EAstrawildElementType::Ash, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.95f, EAstrawildElementType::None, false);
     Auroraling->PreferredWeather = { EAstrawildWeatherState::Clear };
     Auroraling->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
     FAstrawildWorkAffinity AuroraResearch;
@@ -686,6 +698,22 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Composter"), TEXT("Dawn Composter"), EAstrawildBuildingCategory::Farm,
         TEXT("Item_Wood"), 4, TEXT("Tech_Agriculture"), 220.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::Farming));
+
+    // --- Final Run (FR-9): the construction set completes — floors, roofs, a
+    //     working door (toggle + collision) and a storage crate (deposit /
+    //     withdraw, contents persist through save schema v5). ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Floor"), TEXT("Floor Deck"), EAstrawildBuildingCategory::Floor,
+        TEXT("Item_Wood"), 2, NAME_None, 400.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Roof"), TEXT("Roof Cap"), EAstrawildBuildingCategory::Roof,
+        TEXT("Item_Wood"), 3, NAME_None, 350.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Door"), TEXT("Sliding Door"), EAstrawildBuildingCategory::Door,
+        TEXT("Item_Wood"), 3, NAME_None, 300.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_StorageCrate"), TEXT("Storage Crate"), EAstrawildBuildingCategory::Storage,
+        TEXT("Item_Wood"), 6, NAME_None, 250.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
 }
 
 // ---------------------------------------------------------------------------
@@ -1082,6 +1110,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     HerbalistWren->VillageId = TEXT("Village_Dawnstead");
     HerbalistWren->PrimaryTint = FLinearColor(0.45f, 0.80f, 0.45f);
     HerbalistWren->Greeting = FText::FromString(TEXT("Bark, root, bloom — the marsh provides."));
+    HerbalistWren->DialogueTreeId = TEXT("Dialogue_HerbalistWren"); // FR-10: full tree.
     Registry->RegisterNPC(HerbalistWren);
 
     UAstrawildNPCDefinition* BlacksmithBorin = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1093,6 +1122,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     BlacksmithBorin->VillageId = TEXT("Village_Dawnstead");
     BlacksmithBorin->PrimaryTint = FLinearColor(0.55f, 0.40f, 0.30f);
     BlacksmithBorin->Greeting = FText::FromString(TEXT("Steel today, story tomorrow."));
+    BlacksmithBorin->DialogueTreeId = TEXT("Dialogue_BlacksmithBorin"); // FR-10: full tree.
     Registry->RegisterNPC(BlacksmithBorin);
 
     UAstrawildNPCDefinition* ElderRowan = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1123,6 +1153,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     GuardBram->VillageId = TEXT("Village_Dawnstead");
     GuardBram->PrimaryTint = FLinearColor(0.50f, 0.60f, 0.90f);
     GuardBram->Greeting = FText::FromString(TEXT("Gloomfangs again. Always Gloomfangs."));
+    GuardBram->DialogueTreeId = TEXT("Dialogue_GuardBram"); // FR-10: full tree.
     Registry->RegisterNPC(GuardBram);
 
     UAstrawildNPCDefinition* FarmerJori = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1132,6 +1163,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     FarmerJori->VillageId = TEXT("Village_Dawnstead");
     FarmerJori->PrimaryTint = FLinearColor(0.80f, 0.70f, 0.40f);
     FarmerJori->Greeting = FText::FromString(TEXT("Spriglings turn the soil better than any hoe."));
+    FarmerJori->DialogueTreeId = TEXT("Dialogue_FarmerJori"); // FR-10: full tree.
     Registry->RegisterNPC(FarmerJori);
 
     // --- Driftwood Landing (the island fishing hamlet, Tidebreaker Isles) ---
@@ -1156,6 +1188,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     FisherNima->VillageId = TEXT("Village_DriftwoodLanding");
     FisherNima->PrimaryTint = FLinearColor(0.40f, 0.75f, 0.90f);
     FisherNima->Greeting = FText::FromString(TEXT("Fresh catch, sea pearls, and gossip — cheap."));
+    FisherNima->DialogueTreeId = TEXT("Dialogue_FisherNima"); // FR-10: full tree.
     Registry->RegisterNPC(FisherNima);
 
     UAstrawildNPCDefinition* OldSaltPerry = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1251,7 +1284,7 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     // Production V2 retrofits: existing items/techs gain their new data fields.
     ApplyProductionV2Retrofits(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 226 Echo species (16 authored + 6 evolution targets + 204 bestiary), 13 buildings, 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 dialogue trees."));
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 226 Echo species (16 authored + 6 evolution targets + 204 bestiary), 17 buildings (13 + Floor/Roof/Door/StorageCrate), 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 dialogue trees."));
 }
 
 void UAstrawildContentLibrary::WarmArtPackBindings(UAstrawildItemRegistrySubsystem* Registry)

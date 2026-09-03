@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
@@ -41,6 +42,18 @@ AAstrawildBuildingActor::AAstrawildBuildingActor()
     }
 
     BuildingId = FGuid::NewGuid();
+
+    // FR-9: the sliding door panel — attached to the root, only visible/colliding
+    // for Door-category buildings (the root shrinks to a thin track for them so
+    // the saved actor transform never moves when the door slides).
+    DoorPanel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorPanel"));
+    if (DoorPanel)
+    {
+        DoorPanel->SetupAttachment(VisualMesh);
+        DoorPanel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        DoorPanel->SetVisibility(false);
+        DoorPanel->SetRelativeScale3D(FVector(1.4f, 0.15f, 1.6f));
+    }
 }
 
 void AAstrawildBuildingActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -50,6 +63,7 @@ void AAstrawildBuildingActor::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(AAstrawildBuildingActor, bIsPowered);
     DOREPLIFETIME(AAstrawildBuildingActor, CurrentHealth);
     DOREPLIFETIME(AAstrawildBuildingActor, StoredCharge);
+    DOREPLIFETIME(AAstrawildBuildingActor, bIsOpen);
 }
 
 void AAstrawildBuildingActor::BeginPlay()
@@ -128,11 +142,40 @@ bool AAstrawildBuildingActor::InitializeFromDefinition(const UAstrawildBuildingD
         case EAstrawildBuildingCategory::Power:
             VisualMesh->SetWorldScale3D(FVector(0.9f, 0.9f, 1.4f));
             break;
+        // Final Run (FR-9): the four new construction pieces.
+        case EAstrawildBuildingCategory::Floor:
+            // Thin plank deck laid on foundations/walls.
+            VisualMesh->SetWorldScale3D(FVector(2.0f, 2.0f, 0.12f));
+            break;
+        case EAstrawildBuildingCategory::Roof:
+            // Wide flat cap — reads as shelter from the top-down build view.
+            VisualMesh->SetWorldScale3D(FVector(2.2f, 2.2f, 0.18f));
+            break;
+        case EAstrawildBuildingCategory::Door:
+            // Root becomes the thin track; DoorPanel is the visible leaf.
+            VisualMesh->SetWorldScale3D(FVector(1.5f, 0.12f, 0.12f));
+            break;
+        case EAstrawildBuildingCategory::Storage:
+            // Chest-sized box — reads as a container, not a wall.
+            VisualMesh->SetWorldScale3D(FVector(1.1f, 1.1f, 0.9f));
+            break;
         default:
             VisualMesh->SetWorldScale3D(FVector(1.2f, 1.2f, 1.0f));
             break;
         }
+
+        // FR-9: only doors carry the sliding panel; everything else hides it.
+        if (DoorPanel)
+        {
+            const bool bIsDoor = Definition->Category == EAstrawildBuildingCategory::Door;
+            DoorPanel->SetVisibility(bIsDoor);
+            DoorPanel->SetCollisionEnabled(bIsDoor ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+            DoorPanel->SetRelativeLocation(FVector::ZeroVector);
+        }
     }
+
+    // FR-9: doors start closed (the panel state applies on the next refresh).
+    ApplyDoorVisualState();
 
     RegisterPower();
     UpdateVisualPowerState();
@@ -210,6 +253,24 @@ FText AAstrawildBuildingActor::GetInteractionPrompt_Implementation() const
         return FText::GetEmpty();
     }
 
+    // Final Run (FR-9): door + storage crate prompts.
+    if (Def->Category == EAstrawildBuildingCategory::Door)
+    {
+        return bIsOpen
+            ? FText::FromString(TEXT("Close door [E]"))
+            : FText::FromString(TEXT("Open door [E]"));
+    }
+    if (Def->Category == EAstrawildBuildingCategory::Storage)
+    {
+        const int32 StoredCount = StoredItems.Num();
+        if (StoredCount <= 0)
+        {
+            return FText::FromString(TEXT("Storage crate (empty) — deposit [E]"));
+        }
+        return FText::FromString(FString::Printf(TEXT("Storage crate (%d/%d stacks) — deposit / take [E]"),
+            StoredCount, StorageCapacity));
+    }
+
     // Audit C-2: the Research Desk is the in-world research entry point.
     // Final production run: interacting now OPENS the research screen (player
     // agency over the tree) — the prompt still previews the cheapest unlock.
@@ -240,19 +301,49 @@ FText AAstrawildBuildingActor::GetInteractionPrompt_Implementation() const
 
 void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
 {
-    // Final production run: Research Desk interaction opens the research TREE screen —
-    // the player picks the branch (the old auto-buy-cheapest behavior removed player
-    // agency entirely). Runs wherever the interacting player's controller is local;
-    // the unlock itself remains server-authoritative through TryUnlockTech.
     const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
     UWorld* World = GetWorld();
-    if (!Def || Def->Category != EAstrawildBuildingCategory::Research || !World)
+    if (!Def || !World)
     {
         return;
     }
 
     AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(InteractingActor);
     if (!Player)
+    {
+        return;
+    }
+
+    // Final Run (FR-9): door toggle (server-authoritative, one-way flip).
+    if (Def->Category == EAstrawildBuildingCategory::Door)
+    {
+        if (GetLocalRole() == ROLE_Authority)
+        {
+            bIsOpen = !bIsOpen;
+            ApplyDoorVisualState();
+            UE_LOG(LogAstrawildBuilding, Log, TEXT("Door %s toggled %s."),
+                *BuildingId.ToString(), bIsOpen ? TEXT("open") : TEXT("closed"));
+        }
+        return;
+    }
+
+    // Final Run (FR-9): storage crate transfer (deposit-first, withdraw when
+    // nothing depositable remains or the crate is full).
+    if (Def->Category == EAstrawildBuildingCategory::Storage)
+    {
+        const FText Result = TransferStorageStack(Player);
+        if (AAstrawildPlayerController* CratePC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            CratePC->Notify(Result);
+        }
+        return;
+    }
+
+    // Final production run: Research Desk interaction opens the research TREE screen —
+    // the player picks the branch (the old auto-buy-cheapest behavior removed player
+    // agency entirely). Runs wherever the interacting player's controller is local;
+    // the unlock itself remains server-authoritative through TryUnlockTech.
+    if (Def->Category != EAstrawildBuildingCategory::Research)
     {
         return;
     }
@@ -266,6 +357,81 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
 float AAstrawildBuildingActor::GetHealthFraction() const
 {
     return FMath::Clamp(CurrentHealth / FMath::Max(1.0f, MaxHealth), 0.0f, 1.0f);
+}
+
+void AAstrawildBuildingActor::ApplyDoorVisualState()
+{
+    // FR-9: garage-style slide — the panel rises into the track when open.
+    // The ACTOR transform never moves, so save/load placement stays exact.
+    if (DoorPanel)
+    {
+        DoorPanel->SetRelativeLocation(bIsOpen ? FVector(0.0f, 0.0f, 140.0f) : FVector::ZeroVector);
+        DoorPanel->SetCollisionEnabled(bIsOpen ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryAndPhysics);
+    }
+}
+
+void AAstrawildBuildingActor::OnRep_IsOpen()
+{
+    ApplyDoorVisualState();
+}
+
+FText AAstrawildBuildingActor::TransferStorageStack(AAstrawildPlayerCharacter* Player)
+{
+    // FR-9 crate contract (server-side only — the caller routes through the
+    // server interact path):
+    //   1. deposit the first inventory stack that is NOT currently equipped;
+    //   2. otherwise withdraw the first stored stack back to the player.
+    // One stack per press — deliberate: transfers stay legible, and weight
+    // limits apply naturally through AddItem's own overflow rules.
+    if (GetLocalRole() != ROLE_Authority || !Player || !Player->InventoryComponent)
+    {
+        return FText::FromString(TEXT("The crate is locked."));
+    }
+
+    UAstrawildInventoryComponent* Inventory = Player->InventoryComponent;
+
+    // --- Deposit: first non-equipped, valid stack. ---
+    TArray<FAstrawildItemStack> Stacks = Inventory->GetItemStacks();
+    for (int32 i = 0; i < Stacks.Num(); ++i)
+    {
+        const FAstrawildItemStack& Stack = Stacks[i];
+        if (!Stack.IsValid())
+        {
+            continue;
+        }
+        const bool bEquipped = Stack.ItemId == Inventory->EquippedItemId || Stack.ItemId == Inventory->EquippedShieldItemId ||
+            Stack.ItemId == Inventory->EquippedArmorItemId || Stack.ItemId == Inventory->EquippedHelmetItemId ||
+            Stack.ItemId == Inventory->EquippedExosuitItemId || Stack.ItemId == Inventory->EquippedScannerItemId;
+        if (bEquipped)
+        {
+            continue;
+        }
+        if (StoredItems.Num() >= StorageCapacity)
+        {
+            return FText::FromString(FString::Printf(TEXT("Crate full (%d/%d)."), StoredItems.Num(), StorageCapacity));
+        }
+        if (Inventory->RemoveItem(Stack.ItemId, Stack.Quantity))
+        {
+            StoredItems.Add(Stack);
+            return FText::FromString(FString::Printf(TEXT("Stored: %s x%d"),
+                *Stack.ItemId.ToString(), Stack.Quantity));
+        }
+    }
+
+    // --- Withdraw: first stored stack. ---
+    if (StoredItems.Num() > 0)
+    {
+        const FAstrawildItemStack Stack = StoredItems[0];
+        if (Inventory->AddItem(Stack.ItemId, Stack.Quantity))
+        {
+            StoredItems.RemoveAt(0);
+            return FText::FromString(FString::Printf(TEXT("Took: %s x%d"),
+                *Stack.ItemId.ToString(), Stack.Quantity));
+        }
+        return FText::FromString(TEXT("Too heavy to carry — stash something first."));
+    }
+
+    return FText::FromString(TEXT("Nothing to store."));
 }
 
 FAstrawildBuildingSaveData AAstrawildBuildingActor::ToSaveData() const
@@ -298,6 +464,10 @@ FAstrawildBuildingSaveData AAstrawildBuildingActor::ToSaveData() const
         Data.RefundItemId = Def->RequiredItemId;
         Data.RefundItemCount = FMath::Max(0, Def->RequiredItemCount);
     }
+
+    // FR-9: door state + crate contents persist (additive v5 payload fields).
+    Data.bIsOpen = bIsOpen;
+    Data.StoredItems = StoredItems;
     return Data;
 }
 
@@ -339,6 +509,20 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
     CurrentHealth = (FMath::IsNaN(Data.CurrentHealth) || !FMath::IsFinite(Data.CurrentHealth))
         ? MaxHealth
         : FMath::Clamp(Data.CurrentHealth, 1.0f, MaxHealth);
+
+    // FR-9: restore door state (panel position + collision) and crate contents.
+    // Invalid stored stacks (corrupt save) are dropped fail-closed — a crate never
+    // mints items from garbage data.
+    bIsOpen = Data.bIsOpen;
+    StoredItems.Reset();
+    for (const FAstrawildItemStack& Stack : Data.StoredItems)
+    {
+        if (Stack.IsValid())
+        {
+            StoredItems.Add(Stack);
+        }
+    }
+    ApplyDoorVisualState();
 
     UpdateVisualPowerState();
     return true;

@@ -211,6 +211,19 @@ void UAstrawildBuildingComponent::UpdatePreview()
         case EAstrawildBuildingCategory::Wall:
             PreviewActor->VisualMesh->SetWorldScale3D(FVector(2.0f, 0.2f, 1.5f));
             break;
+        // Final Run (FR-9): preview silhouettes mirror the placed pieces.
+        case EAstrawildBuildingCategory::Floor:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(2.0f, 2.0f, 0.12f));
+            break;
+        case EAstrawildBuildingCategory::Roof:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(2.2f, 2.2f, 0.18f));
+            break;
+        case EAstrawildBuildingCategory::Door:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(1.5f, 0.15f, 1.6f));
+            break;
+        case EAstrawildBuildingCategory::Storage:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(1.1f, 1.1f, 0.9f));
+            break;
         default:
             PreviewActor->VisualMesh->SetWorldScale3D(FVector(1.2f, 1.2f, 1.0f));
             break;
@@ -222,6 +235,19 @@ void UAstrawildBuildingComponent::UpdatePreview()
     const UAstrawildInventoryComponent* Inventory = Player ? Player->InventoryComponent : nullptr;
     const bool bHasMaterials = Def && Inventory && Inventory->HasItem(Def->RequiredItemId, Def->RequiredItemCount);
     bPlacementValid = bHasMaterials && ValidatePlacementLocation(Location, SnapGridSize);
+
+    // Final Run (FR-9): validity tint — the preview's indicator light reads
+    // GREEN when the placement resolves (materials + clear ground) and RED
+    // when it does not. Zero-asset-safe: the basic-shape mesh catches the
+    // colored light, so validity reads at a glance while rotating.
+    if (PreviewActor && PreviewActor->PowerIndicatorLight)
+    {
+        PreviewActor->PowerIndicatorLight->SetIntensity(bPlacementValid ? 6.0f : 10.0f);
+        PreviewActor->PowerIndicatorLight->SetAttenuationRadius(1100.0f);
+        PreviewActor->PowerIndicatorLight->SetLightColor(bPlacementValid
+            ? FLinearColor(0.15f, 0.95f, 0.35f, 1.0f)
+            : FLinearColor(0.95f, 0.20f, 0.12f, 1.0f));
+    }
 }
 
 void UAstrawildBuildingComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
