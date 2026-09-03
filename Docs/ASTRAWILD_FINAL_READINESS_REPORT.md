@@ -2,9 +2,11 @@
 
 **Report date**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run)
 **Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + 99e4105..HEAD, all pushed)
-**Top-level status**: **READY_FOR_FINAL_BUILD (SOURCE-SIDE)** — engine verification
-(AG-2..5) is the only remaining gate; the final content manifest (Batch 5) closes this
-report.
+**Top-level status**: **READY_FOR_FINAL_BUILD** — the final content manifest
+(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`, Batch 5) has been issued: 459/459 LFS
+objects verified live on GitHub, all 65 hardcoded /Game/ references resolve, every
+content family carries a single CODE_DEFAULT source of truth. Engine verification
+(AG-2..5 per HANDOFF §20) is the sole remaining gate.
 
 > Evidence discipline: everything below is *source-side* (static) unless explicitly marked
 > with an engine-evidence class. GLM has no UE5 in its sandbox; nothing here claims a
