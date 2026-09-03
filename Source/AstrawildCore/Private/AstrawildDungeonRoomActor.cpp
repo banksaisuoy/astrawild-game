@@ -97,6 +97,12 @@ void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDef
                 }
             }
             Boss->DefeatEventTargetId = BossDefeatEventId; // Batch 8: per-dungeon quest target.
+            // Final Run (FR-7): phase-2 summon override — the Sovereign calls Eye
+            // Sentinels instead of the class-default Gloomfangs.
+            if (!BossSummonSpeciesId.IsNone())
+            {
+                Boss->SummonSpeciesId = BossSummonSpeciesId;
+            }
             BossCreature = Boss;
             UE_LOG(LogAstrawildAI, Log, TEXT("Dungeon boss room %d: phased boss spawned."), RoomIndex);
         }

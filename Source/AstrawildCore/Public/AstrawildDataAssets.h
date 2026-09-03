@@ -1298,6 +1298,15 @@ struct ASTRAWILDCORE_API FAstrawildDialogueChoice
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence", meta=(ClampMin="0"))
     int32 GiveResearchPoints = 0;
 
+    /**
+     * Final Run (FR-6): ending route — when set, taking this choice triggers the
+     * world ending through the game state (one-way, save-persistent). Vocabulary:
+     * Ending_BreakCage → The Dawn That Stays; Ending_StormSleeps → The Storm That
+     * Sleeps. Unknown ids are refused with a warning (fail-closed, like quest ids).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    FName TriggerEndingId = NAME_None;
+
     /** Next node (NAME_None + !bEndDialogue = also ends the conversation). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
     FName GotoNodeId = NAME_None;

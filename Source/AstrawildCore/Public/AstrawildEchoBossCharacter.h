@@ -198,6 +198,22 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
 
+    /**
+     * Final Run (FR-11): per-boss HUD display name — resolved from
+     * DefeatEventTargetId (the stable per-boss identity) with a graceful
+     * fallback to the species name. The HUD never hardcodes "Underlight
+     * Warden" for every boss again.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
+    FText GetBossDisplayName() const;
+
+    /**
+     * Final Run (FR-11): pure display-name resolver (automation-tested).
+     * Maps the four canonical defeat ids to names; anything else falls back
+     * to the provided species label (or "Echo Boss" when unknown).
+     */
+    static FText ResolveBossDisplayName(FName DefeatEventId, const FText& SpeciesLabel);
+
     // --- Batch 6: pure statics (unit-tested — ASTRAWILD.Dungeon.*) ---
 
     /** Elemental multiplier: weakness ×1.5, same-element resist ×0.75, otherwise ×1. */
@@ -238,6 +254,9 @@ private:
 
     /** Walk speed set by the current phase — status slows multiply on top each tick. */
     float PhaseWalkSpeed = 380.0f;
+
+    /** FR-11: species display label cached at initialization (HUD fallback). */
+    FText CachedSpeciesLabel;
 
     /** Active status effects (server-side; health replication carries the visible result). */
     TArray<FAstrawildStatusEffect> ActiveStatusEffects;

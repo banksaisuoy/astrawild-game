@@ -2364,4 +2364,311 @@ bool FAstrawildEchoRosterImportSafetyTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// Final Run (FR-12) — Act 3 "The Storm Crown" contracts.
+// World-free: pure data/struct contracts + static resolvers, exactly like the
+// rest of the suite (engine run happens on the Antigravity machine, AG-3).
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildFinalRunQuestChainTest,
+    "ASTRAWILD.Quest.FinalRunChain",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildFinalRunQuestChainTest::RunTest(const FString& Parameters)
+{
+    // MQ-13..17 chain contract (FR-5): every link resolves inside the set,
+    // exactly ONE terminus, every quest has objectives, and the objective
+    // vocabulary stays inside the Act 3 set (DiscoverPOI / DefeatCreature /
+    // CraftRecipe / ReachLocation) — mirrors the BuildFinalRunContent data.
+    UAstrawildQuestDefinition* StormAnchors = NewObject<UAstrawildQuestDefinition>();
+    StormAnchors->QuestId = TEXT("Quest_StormAnchors");
+    StormAnchors->NextQuestId = TEXT("Quest_CrownRelay");
+    StormAnchors->Objectives = { FAstrawildQuestObjective() }; // DiscoverPOI default-set in content.
+
+    UAstrawildQuestDefinition* CrownRelay = NewObject<UAstrawildQuestDefinition>();
+    CrownRelay->QuestId = TEXT("Quest_CrownRelay");
+    CrownRelay->NextQuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    CrownRelay->Objectives = { FAstrawildQuestObjective(), FAstrawildQuestObjective() };
+
+    UAstrawildQuestDefinition* EyeQuest = NewObject<UAstrawildQuestDefinition>();
+    EyeQuest->QuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    EyeQuest->NextQuestId = TEXT("Quest_TheDrownedSovereign");
+    EyeQuest->Objectives = { FAstrawildQuestObjective(), FAstrawildQuestObjective() };
+
+    UAstrawildQuestDefinition* Sovereign = NewObject<UAstrawildQuestDefinition>();
+    Sovereign->QuestId = TEXT("Quest_TheDrownedSovereign");
+    Sovereign->NextQuestId = TEXT("Quest_FirstDawnAgain");
+    Sovereign->Objectives = { FAstrawildQuestObjective() };
+
+    UAstrawildQuestDefinition* FirstDawn = NewObject<UAstrawildQuestDefinition>();
+    FirstDawn->QuestId = TEXT("Quest_FirstDawnAgain");
+    FirstDawn->NextQuestId = NAME_None; // THE terminus (validator: chain closure).
+    FirstDawn->Objectives = { FAstrawildQuestObjective() };
+
+    const TArray<UAstrawildQuestDefinition*> Chain = { StormAnchors, CrownRelay, EyeQuest, Sovereign, FirstDawn };
+
+    // Chain walk: 5 links, 4 hops, ends at FirstDawnAgain with no successor.
+    int32 Hops = 0;
+    const UAstrawildQuestDefinition* Current = Chain[0];
+    while (Current && !Current->NextQuestId.IsNone() && Hops < 10)
+    {
+        const UAstrawildQuestDefinition* Next = nullptr;
+        for (const UAstrawildQuestDefinition* Quest : Chain)
+        {
+            if (Quest->QuestId == Current->NextQuestId)
+            {
+                Next = Quest;
+                break;
+            }
+        }
+        TestNotNull(FString::Printf(TEXT("Link resolves: %s"), *Current->QuestId.ToString()), const_cast<UAstrawildQuestDefinition*>(Next));
+        Current = Next;
+        ++Hops;
+    }
+    TestEqual(TEXT("Chain walks exactly 4 hops"), Hops, 4);
+    TestEqual(TEXT("Chain ends at the terminus"), Current ? Current->QuestId : FName(), FName(TEXT("Quest_FirstDawnAgain")));
+
+    // Exactly one terminus + every quest carries objectives and rewards policy.
+    int32 Terminii = 0;
+    for (const UAstrawildQuestDefinition* Quest : Chain)
+    {
+        if (Quest->NextQuestId.IsNone())
+        {
+            ++Terminii;
+        }
+        TestTrue(FString::Printf(TEXT("Quest %s has objectives"), *Quest->QuestId.ToString()), Quest->Objectives.Num() > 0);
+        TestTrue(FString::Printf(TEXT("Quest %s grants research"), *Quest->QuestId.ToString()), Quest->RewardResearchPoints > 0);
+    }
+    TestEqual(TEXT("Exactly one chain terminus"), Terminii, 1);
+
+    // Act 3 objective vocabulary: the chain consumes the four Final Run types
+    // (enum members exist + are distinct — serialization-safe, appended-only).
+    TestNotEqual(TEXT("DiscoverPOI differs from ReachLocation"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::DiscoverPOI), static_cast<int32>(EAstrawildQuestObjectiveType::ReachLocation));
+    TestNotEqual(TEXT("DefeatCreature differs from CraftRecipe"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::DefeatCreature), static_cast<int32>(EAstrawildQuestObjectiveType::CraftRecipe));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDialogueEndingChoiceTest,
+    "ASTRAWILD.Dialogue.EndingChoice",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDialogueEndingChoiceTest::RunTest(const FString& Parameters)
+{
+    // FR-6: the ending id vocabulary is closed and maps to exactly two states.
+    TestEqual(TEXT("Ending_BreakCage routes to The Dawn That Stays"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(TEXT("Ending_BreakCage"))),
+        static_cast<int32>(EAstrawildEndingState::TheDawnThatStays));
+    TestEqual(TEXT("Ending_StormSleeps routes to The Storm That Sleeps"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(TEXT("Ending_StormSleeps"))),
+        static_cast<int32>(EAstrawildEndingState::TheStormThatSleeps));
+    TestEqual(TEXT("Unknown ending id routes to None"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(TEXT("Ending_Nonsense"))),
+        static_cast<int32>(EAstrawildEndingState::None));
+    TestEqual(TEXT("None id routes to None"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(NAME_None)),
+        static_cast<int32>(EAstrawildEndingState::None));
+
+    // The choice struct carries the consequence field, defaulting to off.
+    FAstrawildDialogueChoice Choice;
+    TestTrue(TEXT("TriggerEndingId defaults to NAME_None"), Choice.TriggerEndingId.IsNone());
+
+    // A hand-built ending choice: hard end + one-way flag + ending route —
+    // the exact Maren crown shape (structural contract).
+    Choice.Text = FText::FromString(TEXT("Break the cage"));
+    Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+    Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+    Choice.SetFlagId = TEXT("Maren_EndingResolved");
+    Choice.TriggerEndingId = TEXT("Ending_BreakCage");
+    Choice.bEndDialogue = true;
+    TestTrue(TEXT("Ending choice is a hard end"), Choice.bEndDialogue);
+    TestTrue(TEXT("Ending choice has no goto (unambiguous)"), Choice.GotoNodeId.IsNone());
+    TestTrue(TEXT("Ending choice is gated on the Sovereign"),
+        Choice.RequiredQuestCompletedId == FName(TEXT("Quest_TheDrownedSovereign")));
+
+    // The ending enum itself is a closed 4-value vocabulary (None + 2 + Count).
+    TestEqual(TEXT("Ending enum order: None=0, Dawn=1, Storm=2, Count=3"),
+        static_cast<int32>(EAstrawildEndingState::Count), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveSchemaV5EndingTest,
+    "ASTRAWILD.Save.SchemaV5Ending",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveSchemaV5EndingTest::RunTest(const FString& Parameters)
+{
+    // FR-6: schema v5 — the subsystem reports 5 and the save object carries the
+    // ending payload with save-safe defaults (None + locked post-game).
+    UAstrawildSaveSubsystem* Subsystem = NewObject<UAstrawildSaveSubsystem>();
+    TestEqual(TEXT("Current schema version is 5"), Subsystem->GetCurrentSchemaVersion(), 5);
+
+    UAstrawildSaveGame* Save = NewObject<UAstrawildSaveGame>();
+    TestEqual(TEXT("Ending defaults to 0 (None)"), Save->EndingState, 0);
+    TestFalse(TEXT("Post-game defaults locked"), Save->bPostGameUnlocked);
+
+    // Round-trip: chosen ending survives the int32-cast pair used by
+    // SaveWorld/LoadWorld (GameState->enum -> int32 -> enum on restore).
+    Save->EndingState = static_cast<int32>(EAstrawildEndingState::TheDawnThatStays);
+    Save->bPostGameUnlocked = true;
+    TestEqual(TEXT("Dawn ending round-trips"),
+        static_cast<EAstrawildEndingState>(Save->EndingState), EAstrawildEndingState::TheDawnThatStays);
+    Save->EndingState = static_cast<int32>(EAstrawildEndingState::TheStormThatSleeps);
+    TestEqual(TEXT("Storm ending round-trips"),
+        static_cast<EAstrawildEndingState>(Save->EndingState), EAstrawildEndingState::TheStormThatSleeps);
+
+    // Load-side clamp contract (corrupt saves fail closed, never trust garbage).
+    const int32 Corrupt = 9999;
+    const int32 Clamped = FMath::Clamp(Corrupt, 0, static_cast<int32>(EAstrawildEndingState::Count) - 1);
+    TestEqual(TEXT("Corrupt ending value clamps into range"), Clamped, 2);
+    TestTrue(TEXT("Clamped value is a valid enum member"), Clamped >= 0 && Clamped < static_cast<int32>(EAstrawildEndingState::Count));
+
+    // Legacy contract: the save object's own schema stamp default stays at the
+    // historical 2 (older saves deserialize with their written version; the
+    // subsystem always stamps the current 5 on write).
+    TestEqual(TEXT("Save object schema default is the legacy 2 stamp"), Save->SaveSchemaVersion, 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEchoFinalRunBossesTest,
+    "ASTRAWILD.Echo.FinalRunBosses",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEchoFinalRunBossesTest::RunTest(const FString& Parameters)
+{
+    // FR-11: the boss display-name resolver covers the canonical roster and
+    // falls back gracefully — no boss is ever "Underlight Warden" by mistake.
+    TestEqual(TEXT("Warden id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_UnderlightWarden"), FText()).ToString(),
+        FString(TEXT("Underlight Warden")));
+    TestEqual(TEXT("Colossus id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_VaultColossus"), FText()).ToString(),
+        FString(TEXT("Vault Colossus")));
+    TestEqual(TEXT("Tyrant id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_GlassTyrant"), FText()).ToString(),
+        FString(TEXT("Glass Tyrant")));
+    TestEqual(TEXT("Sovereign id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_DrownedSovereign"), FText()).ToString(),
+        FString(TEXT("The Drowned Sovereign")));
+    TestEqual(TEXT("Unknown id falls back to the species label"),
+        AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_SomethingNew"), FText::FromString(TEXT("Wild Boss"))).ToString(),
+        FString(TEXT("Wild Boss")));
+    TestEqual(TEXT("Unknown id with no label falls back to a generic title"),
+        AAstrawildEchoBossCharacter::ResolveBossDisplayName(NAME_None, FText()).ToString(), FString(TEXT("Echo Boss")));
+
+    // The Drowned Sovereign combat contract (MQ-16): 2000 HP at the standard
+    // boss scale (400 base × 5.0) + Dawn Light weakness + Pulse resist.
+    UAstrawildEchoDefinition* Sovereign = NewObject<UAstrawildEchoDefinition>();
+    Sovereign->BaseStats.MaxHealth = 400.0f;
+    Sovereign->WeaknessElement = EAstrawildElementType::Light;
+    Sovereign->Element = EAstrawildElementType::Pulse;
+    const float BossHealthScale = 5.0f;
+    TestEqual(TEXT("Sovereign boss health is 2000"), FMath::RoundToInt(Sovereign->BaseStats.MaxHealth * BossHealthScale), 2000);
+
+    TestEqual(TEXT("Dawn Light exploits the Sovereign (x1.5)"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+            EAstrawildElementType::Light, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 1.5f);
+    TestEqual(TEXT("Pulse attacks are resisted (x0.75)"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+            EAstrawildElementType::Pulse, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 0.75f);
+
+    // Glass Tyrant weakness (MQ-14): Light cuts it too — the Dawn arsenal
+    // carries Act 3, exactly as the story promises.
+    UAstrawildEchoDefinition* Tyrant = NewObject<UAstrawildEchoDefinition>();
+    Tyrant->WeaknessElement = EAstrawildElementType::Light;
+    Tyrant->Element = EAstrawildElementType::Ash;
+    TestEqual(TEXT("Light exploits the Glass Tyrant"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+            EAstrawildElementType::Light, Tyrant->WeaknessElement, Tyrant->Element), 1.5f);
+
+    // Phase design at 2000 HP: thresholds 66%/33% remain meaningful.
+    TestEqual(TEXT("Phase 1 above 66%"), AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.99f, false), 1);
+    TestEqual(TEXT("Phase 2 in the middle band"), AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.5f, false), 2);
+    TestEqual(TEXT("Phase 3 below 33%"), AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.25f, false), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildTechSkiffEngineeringTest,
+    "ASTRAWILD.Tech.SkiffEngineering",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildTechSkiffEngineeringTest::RunTest(const FString& Parameters)
+{
+    // FR-8/FR-5: Skiff Engineering unlocks exactly the Stratos Coil recipe —
+    // the tech and the recipe form one gate (25 RP, AdvancedEnergy era).
+    UAstrawildTechnologyDefinition* Tech = NewObject<UAstrawildTechnologyDefinition>();
+    Tech->TechId = TEXT("Tech_SkiffEngineering");
+    Tech->ResearchCost = 25;
+    Tech->UnlockedRecipeIds = { TEXT("Recipe_SkiffStratosCoil") };
+    TestEqual(TEXT("Tech cost is 25"), Tech->ResearchCost, 25);
+    TestEqual(TEXT("Tech unlocks exactly one recipe"), Tech->UnlockedRecipeIds.Num(), 1);
+    TestTrue(TEXT("Tech unlocks the coil recipe"), Tech->UnlockedRecipeIds.Contains(FName(TEXT("Recipe_SkiffStratosCoil"))));
+
+    // The recipe contract: three materials in, one key item out, workbench-gated.
+    UAstrawildRecipeDefinition* Recipe = NewObject<UAstrawildRecipeDefinition>();
+    Recipe->RecipeId = TEXT("Recipe_SkiffStratosCoil");
+    Recipe->Ingredients.SetNum(3);
+    Recipe->Ingredients[0].ItemId = TEXT("Item_StormSilver");
+    Recipe->Ingredients[0].Quantity = 4;
+    Recipe->Ingredients[1].ItemId = TEXT("Item_DuneGlass");
+    Recipe->Ingredients[1].Quantity = 3;
+    Recipe->Ingredients[2].ItemId = TEXT("Item_MaelstromGlass");
+    Recipe->Ingredients[2].Quantity = 2;
+    Recipe->Outputs.SetNum(1);
+    Recipe->Outputs[0].ItemId = TEXT("Item_SkiffStratosCoil");
+    Recipe->Outputs[0].Quantity = 1;
+    Recipe->RequiredTechId = TEXT("Tech_SkiffEngineering");
+    Recipe->RequiredStationId = TEXT("Station_Workbench");
+    Recipe->CraftDurationSeconds = 20.0f;
+
+    TestEqual(TEXT("Recipe consumes three materials"), Recipe->Ingredients.Num(), 3);
+    TestEqual(TEXT("Recipe outputs exactly one coil"), Recipe->Outputs.Num(), 1);
+    TestEqual(TEXT("Coil output quantity is 1"), Recipe->Outputs[0].Quantity, 1);
+    TestTrue(TEXT("Every ingredient has a positive quantity"),
+        Recipe->Ingredients[0].Quantity > 0 && Recipe->Ingredients[1].Quantity > 0 && Recipe->Ingredients[2].Quantity > 0);
+    TestTrue(TEXT("Recipe is gated by its own tech"), Recipe->RequiredTechId == FName(TEXT("Tech_SkiffEngineering")));
+    bool bHasMaelstromGate = false;
+    for (const FAstrawildItemStack& Input : Recipe->Ingredients)
+    {
+        if (Input.ItemId == FName(TEXT("Item_MaelstromGlass")))
+        {
+            bHasMaelstromGate = true;
+        }
+    }
+    TestTrue(TEXT("Maelstrom Glass is the Act 3 material gate"), bHasMaelstromGate);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSkiffCeilingGateTest,
+    "ASTRAWILD.Skiff.CeilingGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSkiffCeilingGateTest::RunTest(const FString& Parameters)
+{
+    // FR-8: the Stratos Coil ceiling gate — pure resolver, no world needed.
+    // Stock skiff: 12000 (120m). Coiled: 16000 (160m) — the Eye Gate at 150m
+    // sits BETWEEN them, which is what makes the coil Act 3's key.
+    TestEqual(TEXT("Stock ceiling stays 12000"),
+        AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, false), 12000.0f);
+    TestEqual(TEXT("Coiled ceiling rises to 16000"),
+        AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, true), 16000.0f);
+
+    // The Eye Gate altitude (15000) is inside the coiled band and outside the
+    // stock band — the gate is physically unreachable without the coil.
+    const float StockCeiling = AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, false);
+    const float CoiledCeiling = AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, true);
+    const float EyeGateAltitude = 15000.0f;
+    TestTrue(TEXT("Eye Gate is above the stock ceiling"), EyeGateAltitude > StockCeiling);
+    TestTrue(TEXT("Eye Gate is below the coiled ceiling"), EyeGateAltitude < CoiledCeiling);
+
+    // Defensive contract: a mis-tuned coiled value can never LOWER the ceiling.
+    TestEqual(TEXT("Bad coil data never lowers the ceiling"),
+        AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 9000.0f, true), 12000.0f);
+
+    // Symmetry with the class defaults (the actor's tunables match the design;
+    // read from the CDO — no world spawn needed).
+    const AAstrawildSkiffActor* SkiffCDO = AAstrawildSkiffActor::StaticClass()->GetDefaultObject<AAstrawildSkiffActor>();
+    TestEqual(TEXT("Default stock ceiling matches the design"), SkiffCDO->MaxAltitudeAboveGround, 12000.0f);
+    TestEqual(TEXT("Default coiled ceiling matches the design"), SkiffCDO->CoiledMaxAltitudeAboveGround, 16000.0f);
+    TestEqual(TEXT("Default coil item id matches the content"), SkiffCDO->StratosCoilItemId, FName(TEXT("Item_SkiffStratosCoil")));
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

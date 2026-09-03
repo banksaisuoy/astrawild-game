@@ -1341,7 +1341,9 @@ void UAstrawildProductionContent::BuildProductionQuests(UAstrawildItemRegistrySu
     }
     Vanguard->RewardItems = { Stack(TEXT("Item_AncientAlloy"), 1), Stack(TEXT("Item_StormSilver"), 3) };
     Vanguard->RewardResearchPoints = 25;
-    Vanguard->NextQuestId = NAME_None; // Chain closes (Antigravity's slice ends here for now).
+    // Final Run (FR-5): Act 3 opens here — "The Storm Crown Stirs" takes over
+    // the moment the Vanguard Protocol closes (validator: chain bridge).
+    Vanguard->NextQuestId = TEXT("Quest_StormAnchors");
     Registry->RegisterQuest(Vanguard);
 }
 
@@ -1403,6 +1405,16 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             Node.Choices.Add(Choice);
         }
         {
+            // Final Run (FR-6): the crown conversation unlocks once the Drowned
+            // Sovereign falls — the last story beat routes to the ending choice.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("The crown — what do we do?"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+            Choice.GotoNodeId = TEXT("crown");
+            Node.Choices.Add(Choice);
+        }
+        {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Leave"));
             Choice.bEndDialogue = true;
@@ -1453,6 +1465,39 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Maren->Nodes.Add(Node);
+    }
+    {
+        // Final Run (FR-6) — Maren's final choice: the two endings. The crown
+        // cage stands open; the Vale waits on one word. Both choices are one-way
+        // (TriggerEndingId routes through the game state; the flag hides the
+        // beat afterward; post-game free roam unlocks either way).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("crown");
+        Node.Lines = {
+            Line(nullptr, TEXT("The cage is open. The core still hums — one pulse from the storm crown, one heartbeat of everything that drowned.")),
+            Line(nullptr, TEXT("Break it, and the storms never return — but the Vale changes forever. Let it sleep, and we live beside the crown — guarded, watchful, free."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Break the cage — end the storms forever"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+            Choice.SetFlagId = TEXT("Maren_EndingResolved");
+            Choice.TriggerEndingId = TEXT("Ending_BreakCage"); // → The Dawn That Stays.
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Let it sleep — the crown keeps its vigil"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+            Choice.SetFlagId = TEXT("Maren_EndingResolved");
+            Choice.TriggerEndingId = TEXT("Ending_StormSleeps"); // → The Storm That Sleeps.
             Choice.bEndDialogue = true;
             Node.Choices.Add(Choice);
         }
@@ -1791,6 +1836,219 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
 }
 
 // ---------------------------------------------------------------------------
+// Final Run (FR-5) — Act 3 "The Storm Crown" content pack.
+//
+// The game finally ENDS: MQ-13..17 walk the player from the three storm
+// anchors, through the Glass Tyrant mini-boss and the Stratos Coil ceiling
+// gate, into the Eye of the Maelstrom, against the Drowned Sovereign — then
+// home to Dawnstead, where Warden Maren holds the last choice (two endings,
+// wired through TriggerEndingId → the game state; see the Maren tree above).
+// ---------------------------------------------------------------------------
+
+void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySubsystem* Registry)
+{
+    if (!Registry)
+    {
+        return;
+    }
+
+    // --- Act 3 materials + key item ---
+
+    UAstrawildItemDefinition* SovereignCore = MakeItem(Registry, TEXT("Item_SovereignCore"), TEXT("Sovereign Core"),
+        EAstrawildItemCategory::QuestItem, 0.8f, 1);
+    SovereignCore->Rarity = EAstrawildRarity::Legendary;
+    SovereignCore->Description = FText::FromString(TEXT("The storm crown's heart, torn from the Drowned Sovereign. It still hums with the first pulse of the Vale."));
+    SovereignCore->VendorPrice = 0; // Quest item — not for sale.
+
+    UAstrawildItemDefinition* MaelstromGlass = MakeItem(Registry, TEXT("Item_MaelstromGlass"), TEXT("Maelstrom Glass"),
+        EAstrawildItemCategory::Material, 0.5f, 20);
+    MaelstromGlass->Rarity = EAstrawildRarity::Rare;
+    MaelstromGlass->Description = FText::FromString(TEXT("Storm-fused glass. It rings when the crown stirs — and it coils resonance like wire."));
+    MaelstromGlass->VendorPrice = 9;
+
+    UAstrawildItemDefinition* StratosCoil = MakeItem(Registry, TEXT("Item_SkiffStratosCoil"), TEXT("Skiff Stratos Coil"),
+        EAstrawildItemCategory::QuestItem, 2.0f, 1);
+    StratosCoil->Rarity = EAstrawildRarity::Epic;
+    StratosCoil->Description = FText::FromString(TEXT("A resonance coil that lifts a Dawn Skiff past the storm ceiling (120m → 160m). The sky gate opens."));
+    StratosCoil->VendorPrice = 0; // Key item — not for sale.
+
+    // --- Act 3 boss species roster ---
+
+    // Glass Tyrant — the Sunscar's crystalline mini-boss (MQ-14). Weak to Dawn
+    // Light; drops the Maelstrom Glass the Stratos Coil needs.
+    MakeProductionEcho(Registry, TEXT("Echo_GlassTyrant"), TEXT("Glass Tyrant"),
+        EAstrawildElementType::Ash, EAstrawildEchoRole::Combat,
+        260.0f, 38.0f, 22.0f, 520.0f,
+        EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Diurnal,
+        { }, 0.90f, EAstrawildElementType::Light,
+        EAstrawildEchoFamily::Elemental, EAstrawildBodyPlan::Crystalline, EAstrawildSizeClass::Large,
+        EAstrawildZone::SunscarDesert, EAstrawildRarity::Epic, EAstrawildEchoPassive::None,
+        { }, { Stack(TEXT("Item_MaelstromGlass"), 2), Stack(TEXT("Item_DuneGlass"), 2) });
+
+    // Eye Sentinel — the Sovereign's floating guards (dungeon adds + boss summons).
+    MakeProductionEcho(Registry, TEXT("Echo_EyeSentinel"), TEXT("Eye Sentinel"),
+        EAstrawildElementType::Pulse, EAstrawildEchoRole::Combat,
+        90.0f, 22.0f, 12.0f, 480.0f,
+        EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Nocturnal,
+        { }, 0.85f, EAstrawildElementType::Frost,
+        EAstrawildEchoFamily::Construct, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Medium,
+        EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Rare, EAstrawildEchoPassive::None,
+        { }, { Stack(TEXT("Item_MaelstromGlass"), 1) });
+
+    // The Drowned Sovereign — the final boss (MQ-16). 400 HP base × the boss
+    // health scale (5.0) = 2000 HP, three phases, weak to Dawn Light.
+    MakeProductionEcho(Registry, TEXT("Echo_DrownedSovereign"), TEXT("The Drowned Sovereign"),
+        EAstrawildElementType::Pulse, EAstrawildEchoRole::Combat,
+        400.0f, 46.0f, 26.0f, 430.0f,
+        EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Diurnal,
+        { }, 0.95f, EAstrawildElementType::Light,
+        EAstrawildEchoFamily::Ancient, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Huge,
+        EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Legendary, EAstrawildEchoPassive::None,
+        { }, { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 3) });
+
+    // --- Skiff Engineering (FR-8 tech + recipe) ---
+
+    MakeTech(Registry, TEXT("Tech_SkiffEngineering"), TEXT("Skiff Engineering"), EAstrawildTechEra::AdvancedEnergy,
+        EAstrawildResearchBranch::Exploration, 25,
+        { TEXT("Tech_AdvancedEnergy") },
+        { TEXT("Recipe_SkiffStratosCoil") });
+
+    MakeRecipe(Registry, TEXT("Recipe_SkiffStratosCoil"), TEXT("Skiff Stratos Coil"),
+        { Stack(TEXT("Item_StormSilver"), 4), Stack(TEXT("Item_DuneGlass"), 3), Stack(TEXT("Item_MaelstromGlass"), 2) },
+        { Stack(TEXT("Item_SkiffStratosCoil"), 1) }, 20.0f, TEXT("Tech_SkiffEngineering"), TEXT("Station_Workbench"));
+
+    // --- The Sovereign's loot table (FR-7 boss-room override) ---
+
+    MakeLoot(Registry, TEXT("Loot_EyeCore"),
+        { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 2) }, 0.5f);
+
+    // --- MQ-13 "The Storm Crown Stirs" ---
+    UAstrawildQuestDefinition* StormAnchors = NewObject<UAstrawildQuestDefinition>(Registry);
+    StormAnchors->QuestId = TEXT("Quest_StormAnchors");
+    StormAnchors->Title = FText::FromString(TEXT("The Storm Crown Stirs"));
+    StormAnchors->Summary = FText::FromString(TEXT("Three ancient anchors hum across the Vale — Frostveil, Sunscar, Stormcrest. Read them all; the crown is waking."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_FrostveilSignalSource");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Read the Frostveil signal source"));
+        StormAnchors->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_SunscarMirageStone");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Read the Sunscar mirage stone"));
+        StormAnchors->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_StormcrestArray");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Read the Stormcrest array"));
+        StormAnchors->Objectives.Add(Obj);
+    }
+    StormAnchors->RewardItems = { Stack(TEXT("Item_MaelstromGlass"), 1) };
+    StormAnchors->RewardResearchPoints = 25;
+    StormAnchors->NextQuestId = TEXT("Quest_CrownRelay");
+    Registry->RegisterQuest(StormAnchors);
+
+    // --- MQ-14 "The Crown Relay" ---
+    UAstrawildQuestDefinition* CrownRelay = NewObject<UAstrawildQuestDefinition>(Registry);
+    CrownRelay->QuestId = TEXT("Quest_CrownRelay");
+    CrownRelay->Title = FText::FromString(TEXT("The Crown Relay"));
+    CrownRelay->Summary = FText::FromString(TEXT("A Glass Tyrant squats on the Sunscar relay, and the skiff needs a coil that sings above the storm ceiling."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Creature_GlassTyrant");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Break the Glass Tyrant"));
+        CrownRelay->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::CraftRecipe;
+        Obj.TargetId = TEXT("Recipe_SkiffStratosCoil");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Craft the Skiff Stratos Coil"));
+        CrownRelay->Objectives.Add(Obj);
+    }
+    CrownRelay->RewardItems = { Stack(TEXT("Item_DawnShard"), 6) };
+    CrownRelay->RewardResearchPoints = 30;
+    CrownRelay->NextQuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    Registry->RegisterQuest(CrownRelay);
+
+    // --- MQ-15 "The Eye of the Maelstrom" ---
+    UAstrawildQuestDefinition* EyeQuest = NewObject<UAstrawildQuestDefinition>(Registry);
+    EyeQuest->QuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    EyeQuest->Title = FText::FromString(TEXT("The Eye of the Maelstrom"));
+    EyeQuest->Summary = FText::FromString(TEXT("The eye opens above Stormcrest, past the 150-metre storm ceiling. Coil installed, climb, and enter."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ReachLocation;
+        Obj.TargetId = TEXT("Location_EyeGate");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Reach the Eye Gate above Stormcrest"));
+        EyeQuest->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ReachLocation;
+        Obj.TargetId = TEXT("Location_EyeOfTheMaelstrom");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Enter the Eye of the Maelstrom"));
+        EyeQuest->Objectives.Add(Obj);
+    }
+    EyeQuest->RewardItems = { Stack(TEXT("Item_EnergyCell"), 6) };
+    EyeQuest->RewardResearchPoints = 30;
+    EyeQuest->NextQuestId = TEXT("Quest_TheDrownedSovereign");
+    Registry->RegisterQuest(EyeQuest);
+
+    // --- MQ-16 "The Drowned Sovereign" ---
+    UAstrawildQuestDefinition* Sovereign = NewObject<UAstrawildQuestDefinition>(Registry);
+    Sovereign->QuestId = TEXT("Quest_TheDrownedSovereign");
+    Sovereign->Title = FText::FromString(TEXT("The Drowned Sovereign"));
+    Sovereign->Summary = FText::FromString(TEXT("Everything the storms drowned is still down there, wearing a crown. Dawn Light is its bane — three phases, one core."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Creature_DrownedSovereign");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Defeat the Drowned Sovereign"));
+        Sovereign->Objectives.Add(Obj);
+    }
+    Sovereign->RewardItems = { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 3) };
+    Sovereign->RewardResearchPoints = 40;
+    Sovereign->NextQuestId = TEXT("Quest_FirstDawnAgain");
+    Registry->RegisterQuest(Sovereign);
+
+    // --- MQ-17 "First Dawn Again" (terminus) ---
+    UAstrawildQuestDefinition* FirstDawn = NewObject<UAstrawildQuestDefinition>(Registry);
+    FirstDawn->QuestId = TEXT("Quest_FirstDawnAgain");
+    FirstDawn->Title = FText::FromString(TEXT("First Dawn Again"));
+    FirstDawn->Summary = FText::FromString(TEXT("Carry the core home to Dawnstead. Maren is waiting at the watch-fire — and the Vale is waiting on her word."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ReachLocation;
+        Obj.TargetId = TEXT("Location_Dawnstead");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Return to Dawnstead and speak with Warden Maren"));
+        FirstDawn->Objectives.Add(Obj);
+    }
+    FirstDawn->RewardItems = { };
+    FirstDawn->RewardResearchPoints = 50;
+    FirstDawn->NextQuestId = NAME_None; // Chain terminus — the endings live in Maren's crown dialogue.
+    Registry->RegisterQuest(FirstDawn);
+
+    UE_LOG(LogAstrawildEconomy, Log,
+        TEXT("Final Run content registered: Act 3 quest chain MQ-13..17 (StormAnchors→CrownRelay→EyeOfTheMaelstrom→DrownedSovereign→FirstDawnAgain), 3 boss species (GlassTyrant/EyeSentinel/DrownedSovereign), 3 items (SovereignCore/MaelstromGlass/SkiffStratosCoil), Tech_SkiffEngineering + coil recipe, Loot_EyeCore, Maren ending dialogue (2 endings)."));
+}
+
+// ---------------------------------------------------------------------------
 
 void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Registry)
 {
@@ -1811,7 +2069,8 @@ void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Regi
     BuildProductionTechnologies(Registry);
     BuildProductionQuests(Registry);
     BuildDialogueTrees(Registry);
+    BuildFinalRunContent(Registry); // FR-5: Act 3 "The Storm Crown" + the two endings.
 
     UE_LOG(LogAstrawildEconomy, Log,
-        TEXT("Production V2 content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 production Echoes + 6 evolution targets, 6 technologies, 2 quests, 6 dialogue trees."));
+        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 quests (17 total), 6 dialogue trees (Maren carries the endings)."));
 }

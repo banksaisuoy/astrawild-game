@@ -1,6 +1,8 @@
 #include "AstrawildSkiffActor.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildGameState.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
@@ -112,6 +114,23 @@ void AAstrawildSkiffActor::BeginPlay()
         // Park on the terrain (spawn happens before navmesh/light passes).
         SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, ParkedGroundZ + MinHoverHeight));
     }
+
+    // Final Run (FR-8): bind the real hull mesh when the ArtPack asset is
+    // present (SM_Vehicle_DawnSkiff); the zero-asset silhouette stays live
+    // otherwise (CP-00 rule 2 — engine-basic-shape fallback, never a hard fail).
+    // Orientation risk is a documented engine-verify item (registry FR-8).
+    if (HullMesh)
+    {
+        if (UStaticMesh* SkiffMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Vehicles/SM_Vehicle_DawnSkiff")))
+        {
+            HullMesh->SetStaticMesh(SkiffMesh);
+            HullMesh->SetRelativeLocation(FVector::ZeroVector);
+            HullMesh->SetRelativeScale3D(FVector(1.0f));
+            NoseCone->SetVisibility(false, true); // hull carries its own nose.
+            TailFin->SetVisibility(false, true);
+            UE_LOG(LogAstrawildWorld, Log, TEXT("Dawn Skiff hull bound to SM_Vehicle_DawnSkiff."));
+        }
+    }
 }
 
 void AAstrawildSkiffActor::OnConstruction(const FTransform& Transform)
@@ -122,7 +141,14 @@ void AAstrawildSkiffActor::OnConstruction(const FTransform& Transform)
 float AAstrawildSkiffActor::ProbeGroundZ() const
 {
     const FVector2D XY(GetActorLocation().X, GetActorLocation().Y);
-    return AAstrawildTerrainTileActor::EvalWorldHeight(XY, 1337);
+
+    // Final Run (FR-8): probe with the replicated world seed — the hardcoded
+    // 1337 drifted from the generated terrain whenever the seed changed, which
+    // could park the skiff underground or clamp flights against ghost terrain.
+    const UWorld* World = GetWorld();
+    const AAstrawildGameState* GameState = World ? World->GetGameState<AAstrawildGameState>() : nullptr;
+    const int32 Seed = GameState ? GameState->WorldSeed : 1337;
+    return AAstrawildTerrainTileActor::EvalWorldHeight(XY, Seed);
 }
 
 FText AAstrawildSkiffActor::GetInteractionPrompt_Implementation() const
@@ -247,6 +273,32 @@ FVector AAstrawildSkiffActor::ComputeSkiffVelocity(const FVector& Forward, const
     return Forward.GetSafeNormal() * (ForwardClamped * HorizontalSpeed) + FVector(0.0f, 0.0f, VerticalClamped * VerticalSpeed);
 }
 
+bool AAstrawildSkiffActor::HasStratosCoil() const
+{
+    // Final Run (FR-8): coil ownership reads the pilot's inventory (key item,
+    // stack 1). Parked skiff = no pilot = base ceiling; boarding re-checks.
+    if (!StratosCoilItemId.IsNone() && Pilot)
+    {
+        if (const UAstrawildInventoryComponent* Inventory = Pilot->InventoryComponent)
+        {
+            return Inventory->HasItem(StratosCoilItemId, 1);
+        }
+    }
+    return false;
+}
+
+float AAstrawildSkiffActor::GetCurrentCeiling() const
+{
+    return ComputeFlightCeiling(MaxAltitudeAboveGround, CoiledMaxAltitudeAboveGround, HasStratosCoil());
+}
+
+float AAstrawildSkiffActor::ComputeFlightCeiling(const float BaseCeiling, const float CoiledCeiling, const bool bHasCoil)
+{
+    // Pure resolver (FR-8): coil picks the higher ceiling — a tuned-down coiled
+    // value never LOWERs the ceiling below base (defensive against bad data).
+    return bHasCoil ? FMath::Max(BaseCeiling, CoiledCeiling) : BaseCeiling;
+}
+
 void AAstrawildSkiffActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -290,7 +342,7 @@ void AAstrawildSkiffActor::Tick(float DeltaTime)
     // Altitude clamps against terrain floor and flight ceiling.
     const float GroundZ = ProbeGroundZ();
     const float MinZ = GroundZ + MinHoverHeight;
-    const float MaxZ = GroundZ + MaxAltitudeAboveGround;
+    const float MaxZ = GroundZ + GetCurrentCeiling(); // FR-8: Stratos Coil gate.
     const float CurrentZ = GetActorLocation().Z;
     if (CurrentZ + Delta.Z < MinZ)
     {

@@ -6,9 +6,12 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildVfxActor.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 UAstrawildCaptureComponent::UAstrawildCaptureComponent()
 {
@@ -108,9 +111,39 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
     }
 
     OnCaptureResult.Broadcast(Echo, bSuccess);
+
+    // Final Run (FR-11): capture feedback — HUD toast on both outcomes plus the
+    // success stinger (A_Echo_Capture_Success) at the capture site. The audio is
+    // a soft load: absent asset = silent pass-through (zero-asset rule, CP-00).
+    if (AAstrawildPlayerController* PC = GetOwnerPlayerController())
+    {
+        if (bSuccess)
+        {
+            const FText SpeciesName = Echo->EchoDefinition ? Echo->EchoDefinition->DisplayName : FText::FromString(TEXT("Echo"));
+            PC->Notify(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *SpeciesName.ToString())));
+        }
+        else
+        {
+            PC->Notify(FText::FromString(TEXT("The Echo broke free — weaken it, feed it, or observe longer.")));
+        }
+    }
+    if (bSuccess)
+    {
+        if (USoundBase* CaptureStinger = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/A_Echo_Capture_Success")))
+        {
+            UGameplayStatics::PlaySoundAtLocation(GetWorld(), CaptureStinger, Echo->GetActorLocation());
+        }
+    }
+
     if (!bSuccess)
     {
         UE_LOG(LogAstrawild, Verbose, TEXT("Capture failed for %s (chance %.2f)."), *Echo->GetName(), CaptureChance);
     }
     return bSuccess;
+}
+
+AAstrawildPlayerController* UAstrawildCaptureComponent::GetOwnerPlayerController() const
+{
+    const APawn* Pawn = Cast<APawn>(GetOwner());
+    return Pawn ? Cast<AAstrawildPlayerController>(Pawn->GetController()) : nullptr;
 }

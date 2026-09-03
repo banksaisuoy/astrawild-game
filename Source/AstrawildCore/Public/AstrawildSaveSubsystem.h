@@ -126,6 +126,16 @@ public:
      *  (v4 payload extension — additive, older v4 saves deserialize empty). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TArray<FName> DialogueFlags;
+
+    // --- v5 payload (Final Run — Act 3 ending state) ---
+
+    /** Ending choice as int32-cast EAstrawildEndingState (0 = None = story in play). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 EndingState = 0;
+
+    /** True once any ending was chosen — post-game free-roam flag. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bPostGameUnlocked = false;
 };
 
 UCLASS()
@@ -170,7 +180,7 @@ public:
     static uint32 ComputeChecksum(int32 SchemaVersion, const FDateTime& SavedAtUtc);
 
 private:
-    static constexpr int32 CurrentSchemaVersion = 4;
+    static constexpr int32 CurrentSchemaVersion = 5;
 
     /**
      * FR-2 (Final Run redo): hard cap on day catch-up during load. A corrupted
@@ -187,4 +197,8 @@ private:
 
     /** v3 -> v4 is purely additive (world events + POIs default-init). */
     void MigrateV3ToV4(UAstrawildSaveGame* SaveGame) const;
+
+    /** v4 -> v5 (Final Run): purely additive — ending state defaults to None
+     *  (story in play) and post-game stays locked on legacy saves. */
+    void MigrateV4ToV5(UAstrawildSaveGame* SaveGame) const;
 };

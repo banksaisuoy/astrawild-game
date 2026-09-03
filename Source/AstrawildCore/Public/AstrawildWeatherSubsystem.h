@@ -76,4 +76,11 @@ private:
 
     void RollNextWeather();
     class AAstrawildGameState* GetAstrawildGameState() const;
+
+    /**
+     * Final Run (FR-6) "EndingBreak": true after "The Dawn That Stays" — the
+     * sky is pinned to Clear and transition rolls stop (the storm crown is
+     * broken). "The Storm That Sleeps" keeps the living sky.
+     */
+    bool IsEndingBreakPinned() const;
 };

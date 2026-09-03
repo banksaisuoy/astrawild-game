@@ -61,6 +61,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Dialogue")
     bool ApplyChoiceConsequences(const FAstrawildDialogueChoice& Choice);
 
+    /**
+     * Final Run (FR-6): pure ending-id resolver (automation-tested closed
+     * vocabulary). Ending_BreakCage → The Dawn That Stays;
+     * Ending_StormSleeps → The Storm That Sleeps; anything else → None.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dialogue")
+    static EAstrawildEndingState ResolveEndingForTriggerId(FName TriggerEndingId);
+
     // --- Save round-trip (schema v4 additive) ---
 
     void ExportForSave(TArray<FName>& OutFlags) const;

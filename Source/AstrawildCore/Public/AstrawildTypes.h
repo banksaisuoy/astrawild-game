@@ -171,6 +171,21 @@ enum class EAstrawildWeatherState : uint8
 };
 
 /**
+ * Final Run — Act 3 "The Storm Crown" ending state (directive §11 FINAL STORY SPEC).
+ * None = the story is still in play. The two endings are one-way and persisted
+ * (save schema v5); post-game free-roam continues under the chosen sky.
+ * Appended-only, save-safe (serialized as int32).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildEndingState : uint8
+{
+    None UMETA(DisplayName="The Storm Crown Stirs"),
+    TheDawnThatStays UMETA(DisplayName="The Dawn That Stays"),
+    TheStormThatSleeps UMETA(DisplayName="The Storm That Sleeps"),
+    Count UMETA(Hidden)
+};
+
+/**
  * World zones of the Shattered Vale (Batch 7 — directive §21/M-13; Batch 8 expands
  * the grid from 3x2 to 4x3): twelve rectangular regions tiling the 3.2km x 2.4km
  * surface world. Zone lookup is a pure static (see UAstrawildZoneSubsystem) so HUD

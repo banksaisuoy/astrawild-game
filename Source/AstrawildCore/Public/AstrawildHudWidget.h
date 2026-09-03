@@ -93,6 +93,10 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> BossText;
 
+    /** Final Run (FR-6): persistent ending verdict banner (post-game overlay). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> EndingBannerText;
+
     /** Scanner + drone companion status line (under the capture chance). */
     UPROPERTY()
     TObjectPtr<UTextBlock> ScanText;

@@ -145,6 +145,13 @@ void UAstrawildHudWidget::BuildWidgetTree()
     BossText = MakeText(TEXT("BossText"), FLinearColor(0.98f, 0.75f, 0.78f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(BossText), FVector2D(0.5f, 0.225f), FVector2D(0.5f, 0.225f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 20.0f));
 
+    // --- Final Run (FR-6): full-screen ending banner — shows for the whole
+    // post-game once an ending is chosen (persistent verdict, not a toast). ---
+    EndingBannerText = MakeText(TEXT("EndingBannerText"), FLinearColor(0.98f, 0.86f, 0.55f, 1.0f), 16);
+    EndingBannerText->SetAutoWrapText(true);
+    AnchorSlot(RootCanvas->AddChildToCanvas(EndingBannerText), FVector2D(0.5f, 0.255f), FVector2D(0.5f, 0.255f), FVector2D(-220.0f, 0.0f), FVector2D(440.0f, 40.0f));
+    EndingBannerText->SetVisibility(ESlateVisibility::Hidden);
+
     // --- Final production run: scanner + drone companion readout (under capture). ---
     ScanText = MakeText(TEXT("ScanText"), FLinearColor(0.62f, 0.88f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(ScanText), FVector2D(0.5f, 0.885f), FVector2D(0.5f, 0.885f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 20.0f));
@@ -478,7 +485,9 @@ void UAstrawildHudWidget::RefreshState()
             BossHealthBar->SetVisibility(ESlateVisibility::Visible);
             BossText->SetVisibility(ESlateVisibility::Visible);
             BossHealthBar->SetPercent(Boss->GetHealthFraction());
-            BossText->SetText(FText::FromString(FString::Printf(TEXT("Underlight Warden — Phase %d%s%s"),
+            // FR-11: per-boss display name — dynamic, never a hardcoded string.
+            BossText->SetText(FText::FromString(FString::Printf(TEXT("%s — Phase %d%s%s"),
+                *Boss->GetBossDisplayName().ToString(),
                 Boss->CurrentPhase,
                 Boss->bEnraged ? TEXT(" ENRAGED") : TEXT(""),
                 Boss->bWeakPointExposed ? TEXT(" | WEAK POINT EXPOSED!") : TEXT(""))));
@@ -489,6 +498,22 @@ void UAstrawildHudWidget::RefreshState()
             CachedBoss = nullptr;
             BossHealthBar->SetVisibility(ESlateVisibility::Hidden);
             BossText->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+
+    // Final Run (FR-6): ending banner — persistent post-game verdict overlay.
+    if (EndingBannerText)
+    {
+        UWorld* World = GetWorld();
+        const AAstrawildGameState* GameState = World ? World->GetGameState<AAstrawildGameState>() : nullptr;
+        if (GameState && GameState->EndingState != EAstrawildEndingState::None)
+        {
+            EndingBannerText->SetText(GameState->GetEndingBannerText());
+            EndingBannerText->SetVisibility(ESlateVisibility::Visible);
+        }
+        else
+        {
+            EndingBannerText->SetVisibility(ESlateVisibility::Hidden);
         }
     }
 

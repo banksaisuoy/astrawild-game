@@ -94,6 +94,36 @@ float AAstrawildEchoBossCharacter::GetHealthFraction() const
     return FMath::Clamp(CurrentHealth / FMath::Max(1.0f, MaxHealth), 0.0f, 1.0f);
 }
 
+FText AAstrawildEchoBossCharacter::GetBossDisplayName() const
+{
+    // Final Run (FR-11): display name resolves from the stable defeat id first
+    // (per-boss identity), then the cached species label, then a generic title.
+    return ResolveBossDisplayName(DefeatEventTargetId, CachedSpeciesLabel);
+}
+
+FText AAstrawildEchoBossCharacter::ResolveBossDisplayName(const FName DefeatEventId, const FText& SpeciesLabel)
+{
+    // Final Run (FR-11): the canonical boss roster. Appended-only — a future
+    // boss just adds one row (or falls through to the species label).
+    if (DefeatEventId == TEXT("Creature_UnderlightWarden"))
+    {
+        return FText::FromString(TEXT("Underlight Warden"));
+    }
+    if (DefeatEventId == TEXT("Creature_VaultColossus"))
+    {
+        return FText::FromString(TEXT("Vault Colossus"));
+    }
+    if (DefeatEventId == TEXT("Creature_GlassTyrant"))
+    {
+        return FText::FromString(TEXT("Glass Tyrant"));
+    }
+    if (DefeatEventId == TEXT("Creature_DrownedSovereign"))
+    {
+        return FText::FromString(TEXT("The Drowned Sovereign"));
+    }
+    return SpeciesLabel.IsEmpty() ? FText::FromString(TEXT("Echo Boss")) : SpeciesLabel;
+}
+
 float AAstrawildEchoBossCharacter::GetAttackDamage() const
 {
     return ComputeBossAttackDamage(BaseDamage, CurrentPhase, bEnraged, EnrageDamageMultiplier);
@@ -167,6 +197,7 @@ void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildE
     BossSpeciesId = Definition->DefinitionId;
     WeaknessElement = Definition->WeaknessElement;
     BossElement = Definition->Element;
+    CachedSpeciesLabel = Definition->DisplayName; // FR-11: HUD fallback label.
 
     // Boss scale on top of the species baseline (directive §24 — the PHASE design
     // carries the difficulty; the scale just makes it a boss-sized encounter).

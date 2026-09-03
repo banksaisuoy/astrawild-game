@@ -5,10 +5,15 @@
 #include "AstrawildTypes.h"
 #include "AstrawildGameState.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEndingTriggered, EAstrawildEndingState, Ending, EAstrawildEndingState, OldEnding);
+
 /**
  * Replicated world state — single source of truth for time-of-day, day number and weather
  * (directive §13/§12/§28). Server-authoritative: only the server (via subsystems) writes;
  * clients read for rendering, audio and UI.
+ *
+ * Final Run (FR-6): also owns the Act 3 ending state — a one-way, replicated,
+ * save-persistent (schema v5) world verdict. None = the story is still in play.
  */
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildGameState : public AGameStateBase
@@ -32,6 +37,20 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World", Replicated)
     int32 WorldSeed = 1337;
 
+    // --- Final Run (FR-6): Act 3 ending state ---
+
+    /** One-way ending verdict (save schema v5). None = story in play. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World|Ending", ReplicatedUsing=OnRep_EndingState)
+    EAstrawildEndingState EndingState = EAstrawildEndingState::None;
+
+    /** True once any ending has been chosen — post-game free roam is live. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World|Ending", Replicated)
+    bool bPostGameActive = false;
+
+    /** Fired once when the ending is first set (HUD banner, weather pin, saves hook here). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|World|Ending")
+    FAstrawildEndingTriggered OnEndingTriggered;
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Time")
     float GetTimeOfDayNormalized() const;
 
@@ -49,6 +68,14 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Time")
     FText GetTimeOfDayText() const;
 
+    /** Final Run (FR-6): true once any ending has been chosen (post-game free roam). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Ending")
+    bool IsPostGameActive() const { return bPostGameActive; }
+
+    /** Final Run (FR-6): human-readable ending banner text (HUD reads this). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Ending")
+    FText GetEndingBannerText() const;
+
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     /** Server-side setters (called by subsystems only). */
@@ -57,10 +84,21 @@ public:
     void SetWeatherState(EAstrawildWeatherState InState);
     void SetWorldSeed(int32 InSeed);
 
+    /**
+     * Final Run (FR-6): trigger the ending (server only, one-way — a set ending
+     * never changes back or switches sides). "The Dawn That Stays" additionally
+     * pins the weather to Clear forever (the EndingBreak); "The Storm That Sleeps"
+     * keeps the living sky. Both unlock post-game free roam.
+     */
+    void SetEndingState(EAstrawildEndingState InState);
+
 protected:
     UFUNCTION()
     void OnRep_TimeOfDayMinutes();
 
     UFUNCTION()
     void OnRep_WeatherState();
+
+    UFUNCTION()
+    void OnRep_EndingState();
 };

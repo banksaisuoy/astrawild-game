@@ -1,5 +1,6 @@
 #include "AstrawildDialogueComponent.h"
 
+#include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
@@ -132,7 +133,50 @@ bool UAstrawildDialogueComponent::ApplyChoiceConsequences(const FAstrawildDialog
         }
     }
 
+    // 5) Final Run (FR-6): ending route — the one-way world verdict flows through
+    // the game state exactly like every other authority pipeline. Ids are a
+    // closed vocabulary: Ending_BreakCage (The Dawn That Stays) and
+    // Ending_StormSleeps (The Storm That Sleeps). Unknown ids fail closed.
+    if (!Choice.TriggerEndingId.IsNone())
+    {
+        if (UWorld* World = GetWorld())
+        {
+            if (AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>())
+            {
+                const EAstrawildEndingState Ending = ResolveEndingForTriggerId(Choice.TriggerEndingId);
+                if (Ending != EAstrawildEndingState::None)
+                {
+                    GameState->SetEndingState(Ending);
+                }
+                else
+                {
+                    bAllApplied = false;
+                    UE_LOG(LogAstrawild, Warning, TEXT("Dialogue consequence: unknown ending id %s."), *Choice.TriggerEndingId.ToString());
+                }
+            }
+            else
+            {
+                bAllApplied = false;
+                UE_LOG(LogAstrawild, Warning, TEXT("Dialogue consequence: no game state for ending %s."), *Choice.TriggerEndingId.ToString());
+            }
+        }
+    }
+
     return bAllApplied;
+}
+
+EAstrawildEndingState UAstrawildDialogueComponent::ResolveEndingForTriggerId(const FName TriggerEndingId)
+{
+    // Closed vocabulary (FR-6): the two Act 3 endings, nothing else.
+    if (TriggerEndingId == TEXT("Ending_BreakCage"))
+    {
+        return EAstrawildEndingState::TheDawnThatStays;
+    }
+    if (TriggerEndingId == TEXT("Ending_StormSleeps"))
+    {
+        return EAstrawildEndingState::TheStormThatSleeps;
+    }
+    return EAstrawildEndingState::None;
 }
 
 void UAstrawildDialogueComponent::ExportForSave(TArray<FName>& OutFlags) const

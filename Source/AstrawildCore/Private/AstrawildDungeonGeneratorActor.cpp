@@ -46,6 +46,12 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
         Template.bIsBossRoom = true;
         Template.CreatureSpawnOffsets = { FVector(-300.0f, -300.0f, 120.0f) };
         Template.ClearLootTableId = TEXT("Loot_DungeonBoss"); // Wave 3: boss loot table.
+        // Final Run (FR-7): per-dungeon boss loot override (the Sovereign drops
+        // Loot_EyeCore — the Sovereign Core + Maelstrom Glass).
+        if (!BossLootTableId.IsNone())
+        {
+            Template.ClearLootTableId = BossLootTableId;
+        }
     }
     else if (RoomIndex == RoomCount - 2)
     {
@@ -140,6 +146,7 @@ void AAstrawildDungeonGeneratorActor::Generate()
         if (Template.bIsBossRoom)
         {
             Room->BossDefeatEventId = BossDefeatEventId; // Batch 8: per-dungeon quest target.
+            Room->BossSummonSpeciesId = BossSummonSpeciesId; // FR-7: phase-2 adds override.
             Room->SpawnEncounter({ BossDefinitionId });
         }
         else if (!Template.CreatureSpawnOffsets.IsEmpty())

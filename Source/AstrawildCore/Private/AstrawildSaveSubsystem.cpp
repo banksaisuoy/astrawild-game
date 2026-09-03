@@ -87,6 +87,11 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         SaveGame->WorldState.DayNumber = GameState->DayNumber;
         SaveGame->WorldState.Weather = GameState->WeatherState;
         SaveGame->WorldState.Seed = GameState->WorldSeed;
+
+        // Final Run (FR-6, schema v5): the ending verdict persists — a chosen
+        // ending survives save/load and re-asserts its world rules on restore.
+        SaveGame->EndingState = static_cast<int32>(GameState->EndingState);
+        SaveGame->bPostGameUnlocked = GameState->bPostGameActive;
     }
 
     // --- Player (first player — single-player-first architecture) ---
@@ -288,6 +293,23 @@ void UAstrawildSaveSubsystem::MigrateV3ToV4(UAstrawildSaveGame* SaveGame) const
     UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v3 to v4 (additive)."));
 }
 
+void UAstrawildSaveSubsystem::MigrateV4ToV5(UAstrawildSaveGame* SaveGame) const
+{
+    if (!SaveGame || SaveGame->SaveSchemaVersion != 4)
+    {
+        return;
+    }
+
+    // v4 -> v5 (Final Run): purely additive — the Act 3 ending defaults to None
+    // (the story is still in play on legacy saves) and post-game stays locked.
+    // A saved ending re-asserts on load through SetEndingState (weather pin for
+    // "The Dawn That Stays" included).
+    SaveGame->EndingState = 0;
+    SaveGame->bPostGameUnlocked = false;
+    SaveGame->SaveSchemaVersion = 5;
+    UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v4 to v5 (additive — ending = None)."));
+}
+
 bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, const int32 UserIndex)
 {
     if (!World || World->GetNetMode() == NM_Client || !DoesSaveExist(SlotName, UserIndex))
@@ -315,6 +337,7 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         MigrateV1ToV2(SaveGame);
         MigrateV2ToV3(SaveGame);
         MigrateV3ToV4(SaveGame);
+        MigrateV4ToV5(SaveGame);
     }
     else if (SaveGame->SaveSchemaVersion > CurrentSchemaVersion)
     {
@@ -355,6 +378,14 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         }
         GameState->SetWeatherState(SaveGame->WorldState.Weather);
         GameState->SetWorldSeed(SaveGame->WorldState.Seed);
+
+        // Final Run (FR-6, schema v5): restore the ending verdict. SetEndingState
+        // re-asserts the world rules (Clear pin for "The Dawn That Stays") and
+        // flips post-game on — but never overwrites a live ending (one-way rule).
+        // The clamp refuses out-of-range values from corrupt saves (fail-closed).
+        const int32 SavedEnding = FMath::Clamp(SaveGame->EndingState,
+            0, static_cast<int32>(EAstrawildEndingState::Count) - 1);
+        GameState->SetEndingState(static_cast<EAstrawildEndingState>(SavedEnding));
     }
 
     // --- Research ---

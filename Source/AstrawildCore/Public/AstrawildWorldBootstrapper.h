@@ -102,6 +102,12 @@ public:
     /** Batch 8 — Driftwood Landing village center in the Tidebreaker Isles. */
     static FVector2D GetDriftwoodLandingXY();
 
+    /** Final Run (FR-7) — Stormcrest zone center (the Eye gate + Glass Tyrant roam). */
+    static FVector2D GetStormcrestCenterXY();
+
+    /** Final Run (FR-7) — Eye of the Maelstrom dungeon anchor (~400m over Stormcrest). */
+    static FVector2D GetEyeDungeonCenterXY();
+
     /**
      * Pure atmosphere ramp (automation-tested): SunAlpha 0=dawn..0.5=noon..1=dusk
      * on the 06:00-19:00 day span; night samples use bIsNight. Visibility

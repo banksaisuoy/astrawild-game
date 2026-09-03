@@ -64,6 +64,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FName BossDefeatEventId;
 
+    /** Final Run (FR-7): phase-2 summon species override (Eye Sentinels for the Sovereign). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName BossSummonSpeciesId;
+
     /** Sequential room index within the dungeon. */
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
     int32 RoomIndex = 0;
