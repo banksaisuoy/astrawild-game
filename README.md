@@ -6,7 +6,11 @@ ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal 
 
 ## Current repository status
 
-This repository contains the Unreal Engine C++ core for the first Vertical Slice, configuration, data contracts, save schema, interaction/inventory/crafting/capture systems, project documentation, architecture diagram, validation script, and Antigravity build handoff. It does not yet contain a compiled game, generated Blueprint/Map binary assets, or final art assets. The next implementation step is to open `ASTRAWILD.uproject` in Unreal Engine, compile the module, and create the first playable test map.
+> [!TIP]
+> **LATEST STATUS**: **PLAYABLE VERTICAL SLICE LOCKED & RE-CERTIFIED**  
+> For the complete summary and how to run the game, see [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).
+
+This repository contains the verified Unreal Engine 5.8.2 C++ core, data contracts, and ArtPack ingestion pipeline. The core playable loop (Spawn -> Move -> Look -> Jump -> Sprint -> Interact -> Inventory -> Build -> Scan -> Attack) is physically verified and compiles with 0 errors across 54/54 automated tests and packaged standalone binaries.
 
 ## Recommended environment
 

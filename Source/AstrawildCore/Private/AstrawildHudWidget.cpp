@@ -30,6 +30,7 @@
 void UAstrawildHudWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     BuildWidgetTree();
 }
 
@@ -37,6 +38,7 @@ void UAstrawildHudWidget::BuildWidgetTree()
 {
     WidgetTree->RootWidget = nullptr;
     RootCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("RootCanvas"));
+    RootCanvas->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     WidgetTree->RootWidget = RootCanvas;
 
     // --- Helper lambdas ---

@@ -85,8 +85,11 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 360.0f;
+    CameraBoom->TargetArmLength = 320.0f;
+    CameraBoom->SocketOffset = FVector(0.0f, 35.0f, 45.0f);
     CameraBoom->bUsePawnControlRotation = true;
+    CameraBoom->bEnableCameraLag = true;
+    CameraBoom->CameraLagSpeed = 15.0f;
 
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -95,14 +98,8 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     PlaceholderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderMesh"));
     PlaceholderMesh->SetupAttachment(RootComponent);
     PlaceholderMesh->SetCollisionProfileName(TEXT("NoCollision"));
-
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-    if (CylinderMesh.Succeeded())
-    {
-        PlaceholderMesh->SetStaticMesh(CylinderMesh.Object);
-        PlaceholderMesh->SetWorldScale3D(FVector(0.45f, 0.45f, 0.95f));
-        PlaceholderMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 96.0f));
-    }
+    PlaceholderMesh->SetVisibility(false);
+    PlaceholderMesh->SetHiddenInGame(true);
 
     // Production V2 Batch 2: procedural survivor body + held weapon mesh.
     BodyMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("BodyMesh"));
@@ -219,15 +216,43 @@ void AAstrawildPlayerCharacter::BeginPlay()
 // ---------------------------------------------------------------------------
 bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
 {
-    USkeletalMesh* SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+    int32 MeshTier = 0;
+    USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
+    if (SkelMesh)
+    {
+        MeshTier = 1;
+    }
     if (!SkelMesh)
     {
         SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+        if (SkelMesh)
+        {
+            MeshTier = 1;
+        }
     }
     if (!SkelMesh)
     {
-        return false; // pack not imported — PMC silhouette stays live
+        SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit/SkeletalMeshes/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+        if (SkelMesh)
+        {
+            MeshTier = 1;
+        }
     }
+    if (!SkelMesh)
+    {
+        SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+        if (SkelMesh)
+        {
+            MeshTier = 2;
+        }
+    }
+    if (!SkelMesh)
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("Survivor mesh fallback: Tier 5 (9-part procedural exosuit active)."));
+        return false; // pack not imported — procedural silhouette stays live
+    }
+
+    UE_LOG(LogAstrawild, Log, TEXT("Survivor mesh active: Tier %d (%s)."), MeshTier, *SkelMesh->GetName());
 
     USkeletalMeshComponent* MeshComp = GetMesh();
     if (!MeshComp)
@@ -238,7 +263,7 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     MeshComp->SetSkeletalMesh(SkelMesh);
     MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     MeshComp->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 88.0f;
+    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 96.0f;
     MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
     MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     MeshComp->SetVisibility(true);
@@ -262,10 +287,10 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     SetActorTickEnabled(true);
 
     // Warm the locomotion clips and play Idle loop immediately.
-    SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle"));
+    SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
     if (!SurvivorIdleAnim.Get())
     {
-        SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
+        SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle"));
     }
     if (SurvivorIdleAnim.Get())
     {
@@ -273,25 +298,45 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
         CurrentLoopAnimation = SurvivorIdleAnim.Get();
     }
 
-    SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd"));
+    SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Walk.AM_Survivor_Walk"));
     if (!SurvivorWalkAnim.Get())
     {
-        SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Walk.AM_Survivor_Walk"));
+        SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd"));
     }
 
-    SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd"));
+    SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Run.AM_Survivor_Run"));
     if (!SurvivorRunAnim.Get())
     {
-        SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Run.AM_Survivor_Run"));
+        SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd"));
     }
 
-    SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Pistol/Aim/AO_Pistol.AO_Pistol"));
-    SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump"));
-    SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01.MM_Attack_01"));
-    SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_02.MM_Attack_02"));
+    SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Aim.AM_Survivor_Aim"));
+    if (!SurvivorAimAnim.Get())
+    {
+        SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Pistol/Aim/AO_Pistol.AO_Pistol"));
+    }
+
+    SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Jump.AM_Survivor_Jump"));
+    if (!SurvivorJumpAnim.Get())
+    {
+        SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump"));
+    }
+
+    SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Fire.AM_Survivor_Fire"));
+    if (!SurvivorFireAnim.Get())
+    {
+        SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01.MM_Attack_01"));
+    }
+
+    SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Gather.AM_Survivor_Gather"));
+    if (!SurvivorGatherAnim.Get())
+    {
+        SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_02.MM_Attack_02"));
+    }
 
     UE_LOG(LogAstrawild, Log,
-        TEXT("AAA Character active: SKM_Manny_Simple loaded with full locomotion animations."));
+        TEXT("Survivor character mesh active: %s (grounded at Z=%.1f, locomotion clips loaded)."),
+        *SkelMesh->GetName(), -HalfHeight);
     return true;
 }
 
@@ -383,6 +428,12 @@ void AAstrawildPlayerCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
     // Audit C-8: rebind input on every possession so respawned pawns keep control.
+    ApplyMappingContext();
+}
+
+void AAstrawildPlayerCharacter::PawnClientRestart()
+{
+    Super::PawnClientRestart();
     ApplyMappingContext();
 }
 
@@ -625,6 +676,35 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
         return;
     }
 
+    // CRITICAL: Construct runtime input actions BEFORE attempting to bind them.
+    // If SetupPlayerInputComponent executes before BeginPlay/PossessedBy, runtime
+    // action pointers would be null and all BindAction calls would be skipped.
+    if (!DefaultMappingContext)
+    {
+        BuildRuntimeInputDefaults();
+    }
+    if (!GamepadMappingContext)
+    {
+        BuildGamepadInputDefaults();
+    }
+
+    UE_LOG(LogAstrawild, Log, TEXT("SetupPlayerInputComponent: MoveAction=%s, LookAction=%s, JumpAction=%s"),
+        MoveAction ? TEXT("VALID") : TEXT("NULL"),
+        LookAction ? TEXT("VALID") : TEXT("NULL"),
+        JumpAction ? TEXT("VALID") : TEXT("NULL"));
+
+    if (!MoveAction || !LookAction || !JumpAction || !SprintAction || !InteractAction || !AttackAction || !InventoryAction)
+    {
+        UE_LOG(LogAstrawild, Error, TEXT("CRITICAL: One or more core loop actions are NULL during SetupPlayerInputComponent! Move=%s, Look=%s, Jump=%s, Sprint=%s, Interact=%s, Attack=%s, Inventory=%s"),
+            MoveAction ? TEXT("VALID") : TEXT("NULL"),
+            LookAction ? TEXT("VALID") : TEXT("NULL"),
+            JumpAction ? TEXT("VALID") : TEXT("NULL"),
+            SprintAction ? TEXT("VALID") : TEXT("NULL"),
+            InteractAction ? TEXT("VALID") : TEXT("NULL"),
+            AttackAction ? TEXT("VALID") : TEXT("NULL"),
+            InventoryAction ? TEXT("VALID") : TEXT("NULL"));
+    }
+
     if (MoveAction)
     {
         EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAstrawildPlayerCharacter::Move);
@@ -741,6 +821,9 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         EnhancedInput->BindAction(PauseAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::TogglePauseMenuInput);
     }
+
+    // Ensure mapping context is applied directly when the input component is wired up.
+    ApplyMappingContext();
 }
 
 void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)

@@ -9,6 +9,8 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildPlayerCharacter.h"
+#include "InputMappingContext.h"
 // Complete soft-pointer pointee types: TSoftObjectPtr<>::IsValid() in test code
 // needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
 #include "Engine/StaticMesh.h"
@@ -2082,6 +2084,95 @@ bool FAstrawildArtPackBindingTest::RunTest(const FString& Parameters)
                 Profile->Mesh.ToSoftObjectPath().ToString() == Art->MeshPath);
         }
     }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// GLM Hardening Pass: Test 55 — Core Loop Action Roster
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInputCoreLoopRosterTest,
+    "ASTRAWILD.Input.CoreLoopRoster",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInputCoreLoopRosterTest::RunTest(const FString& Parameters)
+{
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (!Player)
+    {
+        return false;
+    }
+
+    Player->BuildRuntimeInputDefaults();
+    TestNotNull(TEXT("DefaultMappingContext built"), Player->DefaultMappingContext.Get());
+    TestNotNull(TEXT("MoveAction valid"), Player->MoveAction.Get());
+    TestNotNull(TEXT("LookAction valid"), Player->LookAction.Get());
+    TestNotNull(TEXT("JumpAction valid"), Player->JumpAction.Get());
+    TestNotNull(TEXT("SprintAction valid"), Player->SprintAction.Get());
+    TestNotNull(TEXT("InteractAction valid"), Player->InteractAction.Get());
+    TestNotNull(TEXT("AttackAction valid"), Player->AttackAction.Get());
+    TestNotNull(TEXT("InventoryAction valid"), Player->InventoryAction.Get());
+    TestNotNull(TEXT("BuildModeAction valid"), Player->BuildModeAction.Get());
+    TestNotNull(TEXT("ScanAction valid"), Player->ScanAction.Get());
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// GLM Hardening Pass: Test 56 — Runtime Action Contract
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInputRuntimeActionContractTest,
+    "ASTRAWILD.Input.RuntimeActionContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInputRuntimeActionContractTest::RunTest(const FString& Parameters)
+{
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (!Player)
+    {
+        return false;
+    }
+
+    Player->BuildRuntimeInputDefaults();
+    Player->BuildGamepadInputDefaults();
+
+    TestNotNull(TEXT("Keyboard context exists"), Player->DefaultMappingContext.Get());
+    TestNotNull(TEXT("Gamepad context exists"), Player->GamepadMappingContext.Get());
+
+    if (Player->DefaultMappingContext.Get())
+    {
+        TestTrue(TEXT("Default mapping context has >= 20 key bindings"),
+            Player->DefaultMappingContext->GetMappings().Num() >= 20);
+    }
+    if (Player->GamepadMappingContext.Get())
+    {
+        TestTrue(TEXT("Gamepad mapping context has >= 10 key bindings"),
+            Player->GamepadMappingContext->GetMappings().Num() >= 10);
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// GLM Hardening Pass: Test 57 — Survivor Fallback Chain
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAssetSurvivorFallbackChainTest,
+    "ASTRAWILD.Asset.SurvivorFallbackChain",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAssetSurvivorFallbackChainTest::RunTest(const FString& Parameters)
+{
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (!Player)
+    {
+        return false;
+    }
+
+    Player->BuildProceduralBody();
+    TestNotNull(TEXT("Procedural BodyMesh exists"), Player->BodyMesh.Get());
+
     return true;
 }
 

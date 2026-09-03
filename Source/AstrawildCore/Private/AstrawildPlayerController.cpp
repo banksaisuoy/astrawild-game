@@ -11,6 +11,7 @@
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchScreenWidget.h"
 #include "AstrawildShopWidget.h"
@@ -36,6 +37,13 @@ void AAstrawildPlayerController::BeginPlay()
         return;
     }
 
+    // Ensure game-only input mode and mouse lock on startup for immediate playable control.
+    FInputModeGameOnly GameInputMode;
+    SetInputMode(GameInputMode);
+    bShowMouseCursor = false;
+    SetIgnoreMoveInput(false);
+    SetIgnoreLookInput(false);
+
     // C++-built HUD — no UMG asset dependency (directive §29/§50).
     const TSubclassOf<UAstrawildHudWidget> WidgetClass = HudWidgetClass
         ? HudWidgetClass
@@ -52,6 +60,20 @@ void AAstrawildPlayerController::BeginPlay()
 void AAstrawildPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+    if (IsLocalController())
+    {
+        FInputModeGameOnly GameInputMode;
+        SetInputMode(GameInputMode);
+        bShowMouseCursor = false;
+        SetIgnoreMoveInput(false);
+        SetIgnoreLookInput(false);
+
+        if (AAstrawildPlayerCharacter* PlayerChar = Cast<AAstrawildPlayerCharacter>(InPawn))
+        {
+            PlayerChar->ApplyMappingContext();
+        }
+    }
 }
 
 void AAstrawildPlayerController::Notify(const FText& Message)

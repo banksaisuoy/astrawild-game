@@ -103,7 +103,14 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
     virtual void PossessedBy(AController* NewController) override;
+    virtual void PawnClientRestart() override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
+
+    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay, PawnClientRestart, and PossessedBy. */
+    void ApplyMappingContext();
+    void BuildRuntimeInputDefaults();
+    void BuildGamepadInputDefaults();
+    void BuildProceduralBody();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
@@ -373,23 +380,12 @@ protected:
 
     void RefreshMovementSpeed();
 
-    /** Production V2 Batch 2: vertex-colored survivor body (mirrors the Echo body idiom). */
-    void BuildProceduralBody();
-
     /** Production V2 Batch 2: rebuild the held weapon mesh when equipment changes (timer-polled). */
     void RefreshHeldWeaponVisual();
 
-    /** Builds a complete default Enhanced Input setup in code (zero-asset playability). */
-    void BuildRuntimeInputDefaults();
-
-    /** Final production run: gamepad companion mappings (coexist with KB/M — M9). */
-    void BuildGamepadInputDefaults();
     // Audit C-1b (latent compile error): every existing call passes 2 arguments while the
     // declaration demanded 3 — default bNegateY so the file compiles (value is unused).
     class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY = false);
-
-    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay and every PossessedBy (audit C-8). */
-    void ApplyMappingContext();
 
     UFUNCTION()
     void OnPlayerDied();
