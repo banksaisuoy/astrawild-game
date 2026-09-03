@@ -147,6 +147,14 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     TArray<UAstrawildEchoDefinition*> GetAllEchoDefinitions() const;
 
+    /** SCP Phase 1 (DataValidator): full item enumeration for reference checks. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildItemDefinition*> GetAllItems() const;
+
+    /** SCP Phase 1 (DataValidator): full building enumeration for reference checks. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildBuildingDefinition*> GetAllBuildings() const;
+
 private:
     UPROPERTY()
     TMap<FName, TObjectPtr<UAstrawildItemDefinition>> Items;

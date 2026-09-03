@@ -1,6 +1,7 @@
 #include "AstrawildSkiffActor.h"
 
 #include "AstrawildCore.h"
+#include "AstrawildErrorReporter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
@@ -129,6 +130,15 @@ void AAstrawildSkiffActor::BeginPlay()
             NoseCone->SetVisibility(false, true); // hull carries its own nose.
             TailFin->SetVisibility(false, true);
             UE_LOG(LogAstrawildWorld, Log, TEXT("Dawn Skiff hull bound to SM_Vehicle_DawnSkiff."));
+        }
+        else
+        {
+            // SCP Phase 2: route the substitution through the asset fallback
+            // layer — the multi-part silhouette stays the visual (it IS the
+            // designed fallback composition), but the miss is now reported
+            // on-disk and counted instead of staying silent.
+            UAstrawildErrorReporterLibrary::ReportWarning(TEXT("AssetFallback"),
+                TEXT("SkiffHull: /Game/Vehicles/SM_Vehicle_DawnSkiff not found — procedural silhouette retained"));
         }
     }
 }

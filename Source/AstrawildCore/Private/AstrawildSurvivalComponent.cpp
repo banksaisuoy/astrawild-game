@@ -2,6 +2,7 @@
 
 #include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
@@ -263,6 +264,19 @@ float UAstrawildSurvivalComponent::ApplyDamage(const float DamageAmount)
             if (Player->AttributeComponent)
             {
                 Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Vigor, 1.0f);
+            }
+        }
+    }
+
+    // SCP Phase 12: worn armor abrades when it absorbs real hits (god-mode
+    // and zero-damage calls above never reach here).
+    if (Applied > 0.0f)
+    {
+        if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->DurabilityComponent)
+            {
+                Player->DurabilityComponent->ApplyArmorWear();
             }
         }
     }

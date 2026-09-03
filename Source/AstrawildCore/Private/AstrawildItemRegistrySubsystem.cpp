@@ -198,6 +198,35 @@ TArray<UAstrawildEchoDefinition*> UAstrawildItemRegistrySubsystem::GetAllEchoDef
     return Out;
 }
 
+// SCP Phase 1 (DataValidator) — full enumerations for reference integrity checks.
+TArray<UAstrawildItemDefinition*> UAstrawildItemRegistrySubsystem::GetAllItems() const
+{
+    TArray<UAstrawildItemDefinition*> Out;
+    Out.Reserve(Items.Num());
+    for (const auto& Pair : Items)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
+TArray<UAstrawildBuildingDefinition*> UAstrawildItemRegistrySubsystem::GetAllBuildings() const
+{
+    TArray<UAstrawildBuildingDefinition*> Out;
+    Out.Reserve(Buildings.Num());
+    for (const auto& Pair : Buildings)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
 // --- Production V2: data-driven content foundation registries ---
 
 void UAstrawildItemRegistrySubsystem::RegisterWeapon(UAstrawildWeaponDefinition* Definition)

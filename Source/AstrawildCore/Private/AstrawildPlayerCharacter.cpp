@@ -10,9 +10,11 @@
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildErrorReporter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameMode.h"
 #include "AstrawildGameplayTags.h"
@@ -128,6 +130,7 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     CombatComponent = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
     BuildingComponent = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
     AttributeComponent = CreateDefaultSubobject<UAstrawildAttributeComponent>(TEXT("Attributes"));
+    DurabilityComponent = CreateDefaultSubobject<UAstrawildDurabilityComponent>(TEXT("Durability"));
 
     // Audit C-3: broad navmesh generation around the player covers the camp, the
     // arena interior and the dungeon approach in the zero-asset world.
@@ -243,6 +246,17 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
         if (SkelMesh)
         {
             MeshTier = 1;
+        }
+    }
+    if (!SkelMesh)
+    {
+        // SCP Phase 2: the PMC survivor silhouette is the designed fallback —
+        // report the miss once so Standalone diagnostics show which art pack
+        // pieces did not resolve, then keep the procedural body.
+        if (!bSkeletalBodyActive)
+        {
+            UAstrawildErrorReporterLibrary::ReportWarning(TEXT("AssetFallback"),
+                TEXT("SurvivorBody: SK_Survivor_Exosuit not found — procedural silhouette retained"));
         }
     }
     if (!SkelMesh)

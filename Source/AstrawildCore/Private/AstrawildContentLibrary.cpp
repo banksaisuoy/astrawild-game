@@ -121,20 +121,32 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_WoodPlank"), TEXT("Dawnwood Plank"), EAstrawildItemCategory::Material, 1.0f, 100));
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_CrystalShard"), TEXT("Dawn Crystal Shard"), EAstrawildItemCategory::Material, 0.3f, 100));
 
+    // SCP Phase 12: resource categories power the specialized-tool yield multipliers
+    // (pick x3 ore, axe x3 wood, sickle x4 fiber — directive Phase 12.1).
+    {
+        if (UAstrawildItemDefinition* WoodItem = Registry->FindItem(TEXT("Item_Wood"))) { WoodItem->HarvestCategory = TEXT("Wood"); }
+        if (UAstrawildItemDefinition* StoneItem = Registry->FindItem(TEXT("Item_Stone"))) { StoneItem->HarvestCategory = TEXT("Ore"); }
+        if (UAstrawildItemDefinition* FiberItem = Registry->FindItem(TEXT("Item_Fiber"))) { FiberItem->HarvestCategory = TEXT("Fiber"); }
+        if (UAstrawildItemDefinition* ShardItem = Registry->FindItem(TEXT("Item_CrystalShard"))) { ShardItem->HarvestCategory = TEXT("Ore"); }
+    }
+
     UAstrawildItemDefinition* Berry = MakeItem(Outer, TEXT("Item_Berry"), TEXT("Glimmer Berry"), EAstrawildItemCategory::Consumable, 0.2f, 50);
     Berry->FoodValue = 15.0f;
     Berry->WaterValue = 5.0f;
     Berry->EchoFeedValue = 6.0f;
     Berry->VendorPrice = 2; // Batch 4 — M-11: Trader Tam ware.
+    Berry->PerishableSeconds = 600.0f; // SCP Phase 12: fresh-picked shelf life.
     Registry->RegisterItem(Berry);
 
     UAstrawildItemDefinition* RawMeat = MakeItem(Outer, TEXT("Item_RawMeat"), TEXT("Raw Echo Meat"), EAstrawildItemCategory::Consumable, 0.7f, 30);
     RawMeat->FoodValue = 8.0f;
     RawMeat->EchoFeedValue = 5.0f;
+    RawMeat->PerishableSeconds = 300.0f; // SCP Phase 12: raw meat spoils fastest — cook it.
     Registry->RegisterItem(RawMeat);
 
     UAstrawildItemDefinition* CookedMeat = MakeItem(Outer, TEXT("Item_CookedMeat"), TEXT("Seared Meat"), EAstrawildItemCategory::Consumable, 0.6f, 30);
     CookedMeat->FoodValue = 30.0f;
+    CookedMeat->PerishableSeconds = 1200.0f; // SCP Phase 12: cooking quadruples shelf life.
     Registry->RegisterItem(CookedMeat);
 
     UAstrawildItemDefinition* WaterFlask = MakeItem(Outer, TEXT("Item_WaterFlask"), TEXT("Dew Flask"), EAstrawildItemCategory::Consumable, 0.9f, 20);
@@ -165,6 +177,7 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     UAstrawildItemDefinition* FeedMix = MakeItem(Outer, TEXT("Item_FeedMix"), TEXT("Echo Feed Mix"), EAstrawildItemCategory::Consumable, 0.3f, 40);
     FeedMix->FoodValue = 5.0f;
     FeedMix->EchoFeedValue = 14.0f;
+    FeedMix->PerishableSeconds = 1800.0f; // SCP Phase 12: preserved mix keeps longer.
     Registry->RegisterItem(FeedMix);
 
     UAstrawildItemDefinition* HerbalSalve = MakeItem(Outer, TEXT("Item_HerbalSalve"), TEXT("Dawnbloom Salve"), EAstrawildItemCategory::Consumable, 0.25f, 20);
@@ -211,6 +224,7 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* DawnwoodClub = MakeItem(Outer, TEXT("Item_DawnwoodClub"), TEXT("Dawnwood Club"), EAstrawildItemCategory::Equipment, 2.5f, 1);
     DawnwoodClub->AttackPower = 6.0f;
+    DawnwoodClub->DurabilityMax = 60.0f; // SCP Phase 12: soft wood wears fast.
     DawnwoodClub->VendorPrice = 5; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(DawnwoodClub);
 
@@ -221,10 +235,51 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* CrystalBlade = MakeItem(Outer, TEXT("Item_CrystalBlade"), TEXT("Dawn Crystal Blade"), EAstrawildItemCategory::Equipment, 3.0f, 1);
     CrystalBlade->AttackPower = 14.0f;
+    CrystalBlade->DurabilityMax = 150.0f; // SCP Phase 12: tempered crystal holds an edge.
     // Batch 3 — Item A: tier-3 weapon carries the Pulse element → attacks apply Shock.
     CrystalBlade->Element = EAstrawildElementType::Pulse;
     CrystalBlade->VendorPrice = 14; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(CrystalBlade);
+
+    // --- SCP Phase 12: specialized harvest tools (weapon-slot equipment). ---
+
+    UAstrawildItemDefinition* FieldPick = MakeItem(Outer, TEXT("Item_FieldPick"), TEXT("Fieldstone Pick"), EAstrawildItemCategory::Equipment, 2.8f, 1);
+    FieldPick->AttackPower = 8.0f;
+    FieldPick->DurabilityMax = 80.0f;
+    FieldPick->HarvestBonusCategory = TEXT("Ore");
+    FieldPick->HarvestMultiplier = 3.0f;
+    FieldPick->Description = FText::FromString(TEXT("CODE_DEFAULT — heavy-headed pick; ore and stone yield x3"));
+    Registry->RegisterItem(FieldPick);
+
+    UAstrawildItemDefinition* FieldAxe = MakeItem(Outer, TEXT("Item_FieldAxe"), TEXT("Dawnwood Axe"), EAstrawildItemCategory::Equipment, 2.6f, 1);
+    FieldAxe->AttackPower = 8.0f;
+    FieldAxe->DurabilityMax = 80.0f;
+    FieldAxe->HarvestBonusCategory = TEXT("Wood");
+    FieldAxe->HarvestMultiplier = 3.0f;
+    FieldAxe->Description = FText::FromString(TEXT("CODE_DEFAULT — broad-bit axe; timber yields x3"));
+    Registry->RegisterItem(FieldAxe);
+
+    UAstrawildItemDefinition* SunSickle = MakeItem(Outer, TEXT("Item_SunSickle"), TEXT("Sunfiber Sickle"), EAstrawildItemCategory::Equipment, 1.4f, 1);
+    SunSickle->AttackPower = 5.0f;
+    SunSickle->DurabilityMax = 60.0f;
+    SunSickle->HarvestBonusCategory = TEXT("Fiber");
+    SunSickle->HarvestMultiplier = 4.0f;
+    SunSickle->Description = FText::FromString(TEXT("CODE_DEFAULT — crescent sickle; fiber and petals yield x4"));
+    Registry->RegisterItem(SunSickle);
+
+    // --- SCP Phase 12: spoilage + repair economy. ---
+
+    UAstrawildItemDefinition* SpoiledOrganics = MakeItem(Outer, TEXT("Item_SpoiledOrganics"), TEXT("Spoiled Organics"), EAstrawildItemCategory::Material, 0.3f, 100);
+    SpoiledOrganics->Description = FText::FromString(TEXT("CODE_DEFAULT — what spoiled food becomes; compost it or feed the farm."));
+    Registry->RegisterItem(SpoiledOrganics);
+
+    UAstrawildItemDefinition* Compost = MakeItem(Outer, TEXT("Item_Compost"), TEXT("Dawn Compost"), EAstrawildItemCategory::Material, 0.5f, 60);
+    Compost->Description = FText::FromString(TEXT("CODE_DEFAULT — broken-down organics; a plot fertilizer."));
+    Registry->RegisterItem(Compost);
+
+    UAstrawildItemDefinition* FieldRepairKit = MakeItem(Outer, TEXT("Item_FieldRepairKit"), TEXT("Field Repair Kit"), EAstrawildItemCategory::Material, 0.8f, 20);
+    FieldRepairKit->Description = FText::FromString(TEXT("CODE_DEFAULT — wraps, wedges and resin; restores one worn item anywhere."));
+    Registry->RegisterItem(FieldRepairKit);
 
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): torso progression. ---
     // Rating feeds ComputeArmorFraction(Rating, K=100) → 17% / 31% / 44% reduction.
@@ -388,6 +443,28 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CrystalBlade"), TEXT("Dawn Crystal Blade"),
         { Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_WoodPlank"), 2), Stack(TEXT("Item_EmberAsh"), 1) },
         { Stack(TEXT("Item_CrystalBlade"), 1) }, 8.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
+
+    // --- SCP Phase 12: tool, repair and compost recipes. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldPick"), TEXT("Fieldstone Pick"),
+        { Stack(TEXT("Item_Stone"), 3), Stack(TEXT("Item_Wood"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_FieldPick"), 1) }, 4.0f, TEXT("Tech_BasicCrafting"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldAxe"), TEXT("Dawnwood Axe"),
+        { Stack(TEXT("Item_Wood"), 3), Stack(TEXT("Item_Stone"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_FieldAxe"), 1) }, 4.0f, TEXT("Tech_BasicCrafting"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_SunSickle"), TEXT("Sunfiber Sickle"),
+        { Stack(TEXT("Item_CrystalShard"), 1), Stack(TEXT("Item_Wood"), 1), Stack(TEXT("Item_Fiber"), 3) },
+        { Stack(TEXT("Item_SunSickle"), 1) }, 3.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldRepairKit"), TEXT("Field Repair Kit"),
+        { Stack(TEXT("Item_Fiber"), 2), Stack(TEXT("Item_WoodPlank"), 1), Stack(TEXT("Item_Dawnbloom"), 1) },
+        { Stack(TEXT("Item_FieldRepairKit"), 1) }, 3.0f, TEXT("Tech_BasicCrafting"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_Compost"), TEXT("Dawn Compost"),
+        { Stack(TEXT("Item_SpoiledOrganics"), 3) },
+        { Stack(TEXT("Item_Compost"), 1) }, 6.0f, TEXT("Tech_Agriculture"), TEXT("Station_Composter")));
 
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): armory progression. ---
 
@@ -727,6 +804,14 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_StorageCrate"), TEXT("Storage Crate"), EAstrawildBuildingCategory::Storage,
         TEXT("Item_Wood"), 6, NAME_None, 250.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    // --- SCP Phase 12: repair + preservation buildings. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_RepairBench"), TEXT("Repair Bench"), EAstrawildBuildingCategory::Workstation,
+        TEXT("Item_WoodPlank"), 4, NAME_None, 320.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::Crafting));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_IceBox"), TEXT("Ice Box"), EAstrawildBuildingCategory::Storage,
+        TEXT("Item_Stone"), 8, TEXT("Tech_Thermal"), 280.0f, EAstrawildPowerRole::Consumer, 0.0f, 2.0f, 0.0f, EAstrawildWorkType::None));
 }
 
 // ---------------------------------------------------------------------------

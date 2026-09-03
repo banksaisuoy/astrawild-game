@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -227,7 +228,19 @@ void AAstrawildResourceNode::Interact_Implementation(AActor* InteractingActor)
         ? ResourceQuantityPerHarvest
         : FMath::Min(ResourceQuantityPerHarvest, RemainingQuantity);
 
-    if (!Inventory->AddItem(ResourceItemId, QuantityToGrant))
+    // SCP Phase 12: specialized tools multiply the yield when their category
+    // matches the resource (pick x3 ore, axe x3 wood, sickle x4 fiber — broken
+    // tools harvest at base rate) and take one point of wear per swing.
+    int32 MultipliedQuantity = QuantityToGrant;
+    UAstrawildDurabilityComponent* Durability = InteractingActor->FindComponentByClass<UAstrawildDurabilityComponent>();
+    if (Durability)
+    {
+        const float YieldMultiplier = Durability->GetHarvestYieldMultiplier(ResourceItemId);
+        MultipliedQuantity = FMath::Max(1, FMath::RoundToInt(QuantityToGrant * YieldMultiplier));
+        Durability->ApplyToolWear();
+    }
+
+    if (!Inventory->AddItem(ResourceItemId, MultipliedQuantity))
     {
         return;
     }

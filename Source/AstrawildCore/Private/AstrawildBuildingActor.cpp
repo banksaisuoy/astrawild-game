@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -359,6 +360,29 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
     // real station. The craft itself stays server-authoritative per-recipe.
     if (Def->Category == EAstrawildBuildingCategory::Workstation)
     {
+        // SCP Phase 12: the Repair Bench repairs every worn piece for bench-cost
+        // materials FIRST (open the crafting screen after, same as any station).
+        if (DefinitionId == TEXT("Building_RepairBench") && Player->DurabilityComponent &&
+            GetLocalRole() == ROLE_Authority)
+        {
+            const TArray<FName> Worn = Player->DurabilityComponent->GetTrackedEquippedItemIds();
+            int32 RepairedCount = 0;
+            for (const FName ItemId : Worn)
+            {
+                const FName Path = Player->DurabilityComponent->RepairItem(ItemId, /*bAtRepairBench=*/true);
+                if (!Path.IsNone())
+                {
+                    ++RepairedCount;
+                }
+            }
+            if (AAstrawildPlayerController* BenchPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+            {
+                BenchPC->Notify(FText::Format(
+                    NSLOCTEXT("ASTRAWILD", "RepairBenchResult", "Repaired {0} piece(s) at the bench."),
+                    FText::AsNumber(RepairedCount)));
+            }
+        }
+
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
         {
             PC->ToggleCraftingScreen();

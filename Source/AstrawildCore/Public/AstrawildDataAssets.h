@@ -214,6 +214,45 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
     FName RobotDefinitionId = NAME_None;
 
+    // --- SCP Phase 12 (additive) — durability, spoilage, harvest specialization ---
+
+    /**
+     * Equipment/tool durability pool (0 = item ignores durability). Weapons lose
+     * 1 per landed hit, tools 1 per harvest, armor 1 per damage taken. At 0 the
+     * item enters the Broken state (weapon damage x0.4, tools cannot harvest at
+     * bonus rates) until repaired at the Repair Bench.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Durability", meta=(ClampMin="0.0"))
+    float DurabilityMax = 0.0f;
+
+    /**
+     * Seconds before one stack of this item spoils (0 = never perishes).
+     * The spoilage subsystem ages every held stack; at the deadline the stack
+     * converts to Item_SpoiledOrganics unless preserved in an Ice Box radius
+     * (x10 slower there).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Perishable", meta=(ClampMin="0.0"))
+    float PerishableSeconds = 0.0f;
+
+    /**
+     * Resource category this item belongs to when harvested ("Ore", "Wood",
+     * "Fiber", "Flora" — set on resource items). Tools carrying a matching
+     * HarvestBonusCategory grant their HarvestMultiplier on yield.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Harvest")
+    FName HarvestCategory = NAME_None;
+
+    /**
+     * Tool specialization category ("Ore" for picks, "Wood" for axes, "Fiber"
+     * for sickles). Matched against the harvested item's HarvestCategory.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Harvest")
+    FName HarvestBonusCategory = NAME_None;
+
+    /** Yield multiplier when the tool category matches the resource (picks x3, sickles x4). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Harvest", meta=(ClampMin="1.0", ClampMax="10.0"))
+    float HarvestMultiplier = 1.0f;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("Item")), ItemId);

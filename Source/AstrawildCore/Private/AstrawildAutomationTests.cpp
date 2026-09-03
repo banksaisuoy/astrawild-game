@@ -5,8 +5,13 @@
 
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildAbilityLibrary.h"
+#include "AstrawildAssetFallback.h"
 #include "AstrawildAttributeComponent.h"
 #include "AstrawildBestiaryData.h"
+#include "AstrawildDataValidator.h"
+#include "AstrawildDurabilityComponent.h"
+#include "AstrawildErrorReporter.h"
+#include "AstrawildSpoilageSubsystem.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
@@ -3322,5 +3327,143 @@ bool FAstrawildAbilityEngineContractTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ===========================================================================
+// SCP (Systems Completion Pack) — plan-vs-repo gap closure contracts
+// ===========================================================================
+
+// --- SCP Phase 1: data validator static tables (Test 85) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDataValidatorStaticTablesTest,
+    "ASTRAWILD.SCP.DataValidator.StaticTables",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDataValidatorStaticTablesTest::RunTest(const FString& Parameters)
+{
+    TArray<FString> Problems;
+    UAstrawildDataValidatorLibrary::ValidateStaticTables(Problems);
+    for (const FString& Problem : Problems)
+    {
+        AddError(Problem);
+    }
+    TestTrue(TEXT("Static tables (bestiary + abilities + element chain) validate clean"),
+        Problems.IsEmpty());
+    return true;
+}
+
+// --- SCP Phase 2: error reporter ring buffer + formatting (Test 86) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildErrorReporterContractTest,
+    "ASTRAWILD.SCP.ErrorReporter.RingBuffer",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildErrorReporterContractTest::RunTest(const FString& Parameters)
+{
+    UAstrawildErrorReporterLibrary::Clear();
+    TestEqual(TEXT("Reporter starts empty"), UAstrawildErrorReporterLibrary::GetRecordCount(), 0);
+
+    UAstrawildErrorReporterLibrary::ReportError(TEXT("TestCategory"), TEXT("Boom"));
+    UAstrawildErrorReporterLibrary::ReportWarning(TEXT("TestCategory"), TEXT("Careful"));
+    UAstrawildErrorReporterLibrary::ReportInfo(TEXT("TestCategory"), TEXT("FYI"));
+    TestEqual(TEXT("Three records held"), UAstrawildErrorReporterLibrary::GetRecordCount(), 3);
+    TestEqual(TEXT("Two non-info records"), UAstrawildErrorReporterLibrary::GetNonInfoCount(), 2);
+
+    // Capacity contract: the buffer drops the OLDEST records beyond the cap.
+    for (int32 Index = 0; Index < UAstrawildErrorReporterLibrary::MaxRecords + 50; ++Index)
+    {
+        UAstrawildErrorReporterLibrary::ReportInfo(TEXT("Flood"), FString::Printf(TEXT("record %d"), Index));
+    }
+    TestEqual(TEXT("Ring buffer bounded at capacity"), UAstrawildErrorReporterLibrary::GetRecordCount(),
+        UAstrawildErrorReporterLibrary::MaxRecords);
+
+    const TArray<FAstrawildErrorRecord> Records = UAstrawildErrorReporterLibrary::GetRecords();
+    TestTrue(TEXT("Oldest records dropped, newest kept"),
+        Records.Last().Message.Equals(FString::Printf(TEXT("record %d"), UAstrawildErrorReporterLibrary::MaxRecords + 49)));
+
+    const FString Report = UAstrawildErrorReporterLibrary::FormatReport(TEXT("HEADER"));
+    TestTrue(TEXT("Report carries the header"), Report.Contains(TEXT("HEADER")));
+    TestTrue(TEXT("Report renders record lines"), Report.Contains(TEXT("Flood")));
+
+    UAstrawildErrorReporterLibrary::Clear();
+    TestEqual(TEXT("Clear resets the trail"), UAstrawildErrorReporterLibrary::GetRecordCount(), 0);
+    return true;
+}
+
+// --- SCP Phase 2: asset fallback shape mapping (Test 87) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAssetFallbackContractTest,
+    "ASTRAWILD.SCP.AssetFallback.ShapePaths",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAssetFallbackContractTest::RunTest(const FString& Parameters)
+{
+    const FString Cube = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Cube);
+    const FString Sphere = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Sphere);
+    const FString Cylinder = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Cylinder);
+    const FString Cone = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Cone);
+
+    TestTrue(TEXT("Cube path is an engine basic shape"), Cube.Contains(TEXT("/Engine/BasicShapes/Cube")));
+    TestTrue(TEXT("Sphere path is an engine basic shape"), Sphere.Contains(TEXT("/Engine/BasicShapes/Sphere")));
+    TestTrue(TEXT("Cylinder path is an engine basic shape"), Cylinder.Contains(TEXT("/Engine/BasicShapes/Cylinder")));
+    TestTrue(TEXT("Cone path is an engine basic shape"), Cone.Contains(TEXT("/Engine/BasicShapes/Cone")));
+    TestTrue(TEXT("Every shape maps to a distinct path"),
+        Cube != Sphere && Cube != Cylinder && Cube != Cone && Sphere != Cylinder && Sphere != Cone);
+
+    // Malformed enum value falls back to the cube (switch default) — never empty.
+    TestFalse(TEXT("Default path never empty"),
+        UAstrawildAssetFallbackLibrary::GetFallbackShapePath(static_cast<EAstrawildFallbackShape>(255)).IsEmpty());
+    return true;
+}
+
+// --- SCP Phase 12: spoilage math (Test 88) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSpoilageMathTest,
+    "ASTRAWILD.SCP.Spoilage.Math",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSpoilageMathTest::RunTest(const FString& Parameters)
+{
+    // Unknown freshness initializes to the full shelf life.
+    TestEqual(TEXT("Fresh stack initializes to shelf life"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(0.0f, 600.0f, 10.0f, false), 590.0f);
+
+    // Normal aging subtracts the elapsed step.
+    TestEqual(TEXT("Aging advances linearly"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(590.0f, 600.0f, 10.0f, false), 580.0f);
+
+    // Ice Box preservation slows aging tenfold.
+    TestEqual(TEXT("Preserved aging is x0.1"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(590.0f, 600.0f, 10.0f, true), 589.0f);
+
+    // Deadline clamps to the sentinel (callers treat <= 0 as conversion).
+    TestTrue(TEXT("Overdue stack hits the deadline sentinel"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(5.0f, 600.0f, 10.0f, false) < 0.0f);
+
+    // Conversion: half the stack, floor of 1 — food never silently vanishes.
+    TestEqual(TEXT("Even stack halves"), UAstrawildSpoilageSubsystem::ComputeSpoiledConversion(10), 5);
+    TestEqual(TEXT("Odd stack floors"), UAstrawildSpoilageSubsystem::ComputeSpoiledConversion(9), 4);
+    TestEqual(TEXT("Single item still yields one"), UAstrawildSpoilageSubsystem::ComputeSpoiledConversion(1), 1);
+    return true;
+}
+
+// --- SCP Phase 12: durability constants + definition wiring (Test 89) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDurabilityContractTest,
+    "ASTRAWILD.SCP.Durability.Contracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDurabilityContractTest::RunTest(const FString& Parameters)
+{
+    // The directive numbers, pinned as contracts: broken weapons hit at 40%,
+    // bench repairs cost 40% of the craft inputs.
+    TestEqual(TEXT("Broken weapon multiplier is 0.4"),
+        UAstrawildDurabilityComponent::BrokenWeaponDamageMultiplier, 0.4f);
+    TestEqual(TEXT("Bench repair cost fraction is 0.4"),
+        UAstrawildDurabilityComponent::BenchRepairCostFraction, 0.4f);
+
+    // Definition wiring: the harvest specialization fields exist and default
+    // to inert values (no behavior change for legacy content).
+    UAstrawildItemDefinition* Item = NewObject<UAstrawildItemDefinition>();
+    TestEqual(TEXT("Legacy items carry no durability"), Item->DurabilityMax, 0.0f);
+    TestEqual(TEXT("Legacy items never perish"), Item->PerishableSeconds, 0.0f);
+    TestTrue(TEXT("Legacy items carry no harvest category"), Item->HarvestCategory.IsNone());
+    TestTrue(TEXT("Legacy tools carry no harvest bonus"), Item->HarvestBonusCategory.IsNone());
+    TestEqual(TEXT("Default harvest multiplier is neutral"), Item->HarvestMultiplier, 1.0f);
+    return true;
+}
 
 #endif // WITH_DEV_AUTOMATION_TESTS

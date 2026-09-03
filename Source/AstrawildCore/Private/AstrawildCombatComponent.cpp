@@ -4,6 +4,7 @@
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
@@ -389,6 +390,13 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
     if (PlayerForSkills && PlayerForSkills->AttributeComponent && TotalDamageDealt > 0.0f)
     {
         PlayerForSkills->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Might, bHeavy ? 4.0f : 2.0f);
+    }
+
+    // SCP Phase 12: weapon wear only on CONNECTED hits (whiffed swings cost
+    // stamina, not durability) — the melee tool path shares the same pool.
+    if (PlayerForSkills && PlayerForSkills->DurabilityComponent && TotalDamageDealt > 0.0f)
+    {
+        PlayerForSkills->DurabilityComponent->ApplyWeaponWear();
     }
 
     OnAttackExecuted.Broadcast(bHeavy, TotalDamageDealt);
@@ -847,6 +855,12 @@ float UAstrawildCombatComponent::GetOutgoingAttackDamage(const bool bHeavy) cons
         if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
         {
             Base *= Attributes->GetMeleeDamageMultiplier();
+        }
+        // SCP Phase 12: broken weapons hit at 40% — the repair-bench loop has
+        // a real mechanical consequence.
+        if (const UAstrawildDurabilityComponent* Durability = Player->DurabilityComponent)
+        {
+            Base *= Durability->GetEquippedWeaponDamageMultiplier();
         }
     }
     return Base;

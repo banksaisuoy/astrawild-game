@@ -14,6 +14,7 @@ class UAstrawildAttributeComponent;
 class UAstrawildCaptureComponent;
 class UAstrawildCombatComponent;
 class UAstrawildCraftingComponent;
+class UAstrawildDurabilityComponent;
 class UAstrawildInventoryComponent;
 class UAstrawildSurvivalComponent;
 class UCameraComponent;
@@ -143,6 +144,10 @@ public:
     /** GDP-3: player growth — five attributes + seven milestone skills. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
     TObjectPtr<UAstrawildAttributeComponent> AttributeComponent;
+
+    /** SCP Phase 12: equipment durability + harvest specialization + repairs. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildDurabilityComponent> DurabilityComponent;
 
     // --- GDP-3: skill windows (public getters — the combat/capture components read them) ---
 

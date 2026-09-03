@@ -150,6 +150,17 @@ public:
      *  activates must stay creditable across sessions — see QuestComponent. */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TMap<FName, int32> DefeatedCreatureCounts;
+
+    // --- SCP (additive v5, no schema bump) — survival depth persistence ---
+
+    /** SCP Phase 12: equipment wear pools (item id -> remaining durability).
+     *  Absent in pre-SCP saves = pristine equipment (identical semantics). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, float> EquipmentDurability;
+
+    /** SCP Phase 12: perishable freshness (item id -> remaining seconds). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, float> FoodFreshness;
 };
 
 UCLASS()

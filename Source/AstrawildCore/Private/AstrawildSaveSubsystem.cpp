@@ -6,6 +6,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDungeonGeneratorActor.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -19,6 +20,7 @@
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPowerSubsystem.h"
+#include "AstrawildSpoilageSubsystem.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
 #include "AstrawildRestPoint.h"
@@ -151,6 +153,18 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         {
             SaveGame->Attributes = PC->AttributeComponent->ToSaveData();
         }
+
+        // SCP Phase 12: equipment wear pools.
+        if (PC->DurabilityComponent)
+        {
+            SaveGame->EquipmentDurability = PC->DurabilityComponent->ExportForSave();
+        }
+    }
+
+    // SCP Phase 12: perishable freshness (world subsystem owns the aging).
+    if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
+    {
+        SaveGame->FoodFreshness = Spoilage->ExportForSave();
     }
 
     // GDP-4: NPC affinity snapshot (every NPC with a stable id).
@@ -545,12 +559,25 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
             PC->AttributeComponent->ImportFromSaveData(SaveGame->Attributes);
         }
 
+        // SCP Phase 12: restore equipment wear (sanitized on import — unknown
+        // ids drop, values clamp to each item's pool).
+        if (PC->DurabilityComponent)
+        {
+            PC->DurabilityComponent->ImportFromSave(SaveGame->EquipmentDurability);
+        }
+
         // GDP-3: apply the restored Vigor to max health immediately (the level-up
         // delegate only fires on live gains, not on import).
         if (PC->SurvivalComponent)
         {
             PC->SurvivalComponent->RefreshVigorMaxHealth();
         }
+    }
+
+    // SCP Phase 12: restore perishable freshness (sanitized import).
+    if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
+    {
+        Spoilage->ImportFromSave(SaveGame->FoodFreshness);
     }
 
     // GDP-4: restore NPC affinity (id lookup; duplicates first-seen-wins).
