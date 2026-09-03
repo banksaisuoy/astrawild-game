@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 67 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 72 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -8,7 +8,9 @@ Every test follows the house rules: **no world, no spawned actors** (pure struct
 CDO reads and static resolvers only — the one exception class reads the
 `AAstrawildSkiffActor` CDO, never a spawned actor), deterministic inputs, and
 one behavioral contract per domain. The Final Run additions (#62-67) pin the
-Act 3 story spine end-to-end at the data level.
+Act 3 story spine end-to-end at the data level; the final-audit regressions
+(#68-72) pin the audit's P0/P1 fixes with behavioral contracts (real matcher
+paths, real import paths).
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
 
@@ -26,7 +28,7 @@ Act 3 story spine end-to-end at the data level.
 | 10 | ASTRAWILD.Equipment.ArmorMath | armor slot math |
 | 11 | ASTRAWILD.Combat.StatusEffectFactory | element→status vocabulary |
 | 12 | ASTRAWILD.Economy.VendorSellValue | vendor sell pricing |
-| 13 | ASTRAWILD.Dungeon.BossElementalMultiplier | boss weakness ×1.5 / resist ×0.75 |
+| 13 | ASTRAWILD.Dungeon.BossElementalMultiplier | boss weakness ×1.5 / resist ×0.80 (unified in FINAL-AUDIT-B) |
 | 14 | ASTRAWILD.Dungeon.BossPhaseThresholds | phase thresholds 0.66/0.33 |
 | 15 | ASTRAWILD.Dungeon.BossAttackDamage | phase/enrage damage scaling |
 | 16 | ASTRAWILD.Zones.TableIntegrity | 12-zone table integrity |
@@ -92,10 +94,20 @@ Act 3 story spine end-to-end at the data level.
 | 66 | ASTRAWILD.Tech.SkiffEngineering | tech/recipe gate: one unlock, three materials, Maelstrom Glass anchor (FR-5/FR-8) |
 | 67 | ASTRAWILD.Skiff.CeilingGate | ceiling resolver 12000/16000; Eye Gate at 15000 sits between them (FR-8) |
 
+## Inventory (68-72: FINAL-AUDIT regressions, landed a5aa74d)
+
+| # | Test | Contract |
+| :-- | :-- | :-- |
+| 68 | ASTRAWILD.Quest.OneShotBackFill | G-1/G-3: discovered-POI + one-shot-boss objectives back-fill from world history; partial counts cap; CollectItem never back-filled; completed objectives skipped |
+| 69 | ASTRAWILD.Quest.DefeatCountImportSafety | G-3: crafted saves cannot mint defeat credit (id-less dropped, negatives dropped, 999 cap) |
+| 70 | ASTRAWILD.Quest.DismantleIsNotPlacement | F-03: drives the REAL objective matcher — BuildingPlaced Amount=-1 (dismantle) never advances placement; +1 does |
+| 71 | ASTRAWILD.Research.ImportSafety | M-3: duplicate tech ids collapse, id-less entries drop, negative RP clamps to zero |
+| 72 | ASTRAWILD.Save.FinalAuditContracts | M-2/H-2: echo health additive field (legacy 0 sentinel + carry + negative gate) + robot chassis round-trip shape |
+
 ## Run instructions (Antigravity, AG-3)
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 67)
-Expected: 67 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 72)
+Expected: 72 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```

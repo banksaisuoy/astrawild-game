@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 3.2 (FINAL COMPLETION RUN — FR redo complete, all batches pushed)
+**Document Version**: 3.3 (FINAL SOURCE COMPLETION PASS — full-repo audit + P0/P1 fixes landed)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
-**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (working branch, ALL batches pushed)
-**Last Updated**: 2026-09-03 (final completion run)
+**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch, ALL batches + FINAL-AUDIT A/B/C/D pushed)
+**Last Updated**: 2026-09-03 (final source completion pass)
 
 ---
 
@@ -108,8 +108,8 @@ dungeons keep running; the ending state persists (save schema V5, `EndingState`)
 
 ```
 main (94a398c) ──┐
-                 ├─ agent/antigravity-ue5-v2 (f31f5e1, PR #4 open) ── glm/final-run (HEAD)
-                 │     ↑ 115 ArtPack LFS assets + GLM hardening + MASTER_CONTROL v2 (absorbed)
+                 ├─ agent/antigravity-ue5-v2 (f31f5e1, PR #4 open) ── final-completion (HEAD, ALL
+                 │     batches + FINAL-AUDIT A/B/C/D pushed)             ← THE integration branch
                  └─ (historical branches: master, release/vertical-slice-v1, PR #1..#3)
 ```
 
@@ -120,17 +120,18 @@ docs/evidence logs = UNVERIFIED claims superseded by re-run on the final SHA.
 **`final-completion` = PR #4 content + re-implemented Final Run work. Merging it into main subsumes PR #4.**
 (The original `glm/final-run` branch never reached GitHub and no longer exists.)
 
-**Push status**: repo is now publicly cloneable, but `git push` requires a PAT that the GLM
-sandbox does not have. Per binding user rule: push after every batch; if no PAT, STOP and request
-one before accumulating more than 1 batch. Delivery path otherwise unchanged (Antigravity can
-pull `final-completion` and push after engine integration).
+**Push status**: every batch through FINAL-AUDIT-C is pushed to `origin/final-completion`
+(the PAT-less era ended — the binding push-after-every-batch rule is being honored live).
+Delivery path: Antigravity pulls `final-completion` (§1 of the HANDOFF) and pushes after
+engine integration.
 
 ## 6. Engine verification evidence ledger (Antigravity-owned)
 
 | Gate | Status | Notes |
 | :--- | :--- | :--- |
 | MSVC build @ 8313c61 | DECLARED PASS (raw log) | superseded — rebuild on final SHA required |
-| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 63 tests now — re-run required |
+| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 72 tests now — re-run required |
+| Final-audit static validation | **PASS 46/46 (this sandbox)** | re-run at AG-2 per HANDOFF §4 |
 | Cook & package | FAILED at 8313c61 (UBT ExitCode 6) per own log | FZ-A1 blocker — re-run on final SHA |
 | Packaged exe runtime | STALE binary evidence (FZ-A2) | re-run on final SHA |
 | PIE playable @ 520c78e | DECLARED (boot-level credible) | re-verify story chain on final SHA |
@@ -160,21 +161,21 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 | W-17 | Skiff | LIVE + Stratos Coil + mesh binding | ceiling gate = Act 3 |
 | W-18 | Save/Load | LIVE + schema V5 + FR-0004..10 | day cap, slot fallback, robot chassis |
 | W-19 | HUD/UI | LIVE + ending banner + boss labels | |
-| W-20 | **Ending + post-game** | **LOST — REDO (FR-5/FR-6)** | spec locked in this doc + registry |
+| W-20 | **Ending + post-game** | **LIVE (FR-5/FR-6 + audit G-2 gate fix)** | ending gated on MQ-17 per canon |
 | W-21 | Content pipeline (ArtSource/LFS/import) | LIVE | 459 LFS objects verified |
-| W-22 | Tests | 63 world-free contracts | ENGINE-UNVERIFIED until run |
+| W-22 | Tests | 72 world-free contracts | ENGINE-UNVERIFIED until run |
 
 ## 8. Verification queue for Antigravity (one-time final integration)
 
 1. `git fetch && git checkout final-completion` (or merge into main — subsumes PR #4)
 2. Build: `Engine\Build\BatchFiles\Build.bat AstrawildEditor Win64 Development -project=<repo>\ASTRAWILD.uproject`
-3. Run automation: 63/63 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`)
+3. Run automation: 72/72 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`)
 4. PIE smoke: MQ chain HUD tracker · save/load round-trip (schema 5 stamp in log) ·
    `AW.FastForward` to MQ-13+ if needed → verify anchor POIs, Eye Gate at 150 m with coil skiff,
    Sovereign fight, ending banner, post-game weather pin (Ending A).
 5. Package: `RunUAT BuildCookRun` — exit 0 required (previous FZ-A1 failure must not recur).
 6. Capture raw logs into `Docs/ENGINE_LOGS/raw/` with the final SHA in the filename.
-7. Push: `git push origin glm/final-run:main` (fast-forward if possible; PR #4 closes as absorbed).
+7. Push: `git push origin final-completion:main` (fast-forward if possible; PR #4 closes as absorbed).
 
 ## 9. Coding & git rules (binding)
 
@@ -233,3 +234,5 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026-09-02 | v2.0 (Antigravity): 136-line control + task registry, M0 in progress |
 | 2026-09-03 | **v3.0 (GLM Final Run)**: sandbox reset recovered (fresh clone); PR #4 audited & subsumed; LFS truth-verified (459/459); 3 source batches landed on glm/final-run (P0/P1 hardening, Act 3 story completion with endings + post-game, world polish); schema V5; 63 tests; static validation suite green; this document supersedes v2.0/v1.7 |
 | 2026-09-03 | **v3.1 (GLM RECOVERY)**: second sandbox reset destroyed the unpushed `glm/final-run` work tree — Final Run source LOST (docs survived in glm-staging). Working branch recreated as `final-completion` from PR #4 head f31f5e1 per binding user rule; control docs restored into repo; registry statuses reset to PLANNED (REDO); push-after-every-batch rule adopted; game design/canon unchanged |
+| 2026-09-03 | **v3.2 (GLM FINAL COMPLETION)**: FR-1..12 redo landed batch-by-batch on final-completion (BATCH-0..5, all pushed) · Act 3 + 2 endings + post-game + schema V5 + 17 building pieces + 11/11 NPC dialogue · 46/46 static checks · 67 tests · READY_FOR_FINAL_BUILD (source-side) declared · content manifest issued (459/459 LFS, 65/65 /Game refs) |
+| 2026-09-03 | **v3.3 (GLM FINAL SOURCE COMPLETION PASS)**: user-ordered full-repo audit (Phases A–V) executed — 5 parallel deep audits (loop/player, echo/save, quest/boss, world/automation, input/UI/MP/perf); **2 CRITICAL + ~13 HIGH + ~25 MEDIUM defects found and fixed** in FINAL-AUDIT-A (1be6e20: drone compile/crash, POI/boss one-shot quest back-fill, MQ-17 ending gate per canon, view-axis ranged aiming, crafting screen wiring, echo owner identity, robot chassis save, camp respawn, CampKitchen spawn, MainMap default map) and FINAL-AUDIT-B (69a1d65: element canon unified across 204 bestiary rows + authored roster + bosses, echo health persistence, species DefeatLoot live, research import sanitize, AI perception-forgotten + fight-back, stranded-party recall, keyboard screen closes, FastForward cheat) · +5 regression contracts (a5aa74d, 72 tests) · docs reconciled to ONE truth (this pass) · canon UNCHANGED (implementation fixed to match canon) · READY_FOR_FINAL_BUILD re-affirmed (source/repository side) |

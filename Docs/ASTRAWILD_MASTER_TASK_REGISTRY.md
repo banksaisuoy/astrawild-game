@@ -33,16 +33,27 @@
 | FR-13 | Validation | validate_final_run.py — **46/46 ALL CHECKS PASSED** at final state | GLM | PASS (static) | none | Scripts/validate_final_run.py | (each batch) | full run output in worklog | none | re-run at AG-2 |
 | FR-14 | Docs | MASTER_CONTROL v3.2 + this registry + HANDOFF + READINESS + TEST_INVENTORY | GLM | UPDATED | FR-1..13 | Docs/*.md | (docs commit) | review | none | Antigravity review |
 
-> Automation suite: **67 world-free contract tests** (57 baseline + 4 hardening from
-> BATCH-1 + 6 Final Run from BATCH-2). Full inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`.
+### A.2 Final source completion pass (FINAL-AUDIT — 2026-09-03, all pushed)
+
+| ID | Category | Description | Owner | Status | Dependency | Files | Commit | Verification | Blocker | Next |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| FA-1 | Audit | Full-repository audit Phases A–O (5 parallel subagent reports: gameplay loop/player, echo/save, quest/boss, world/automation, input/UI/MP/perf) | GLM | COMPLETE | none | /home/z/my-project/audit/*.md (session evidence) | 1be6e20 | audit reports (in sandbox worklog) | none | — |
+| FA-2 | P0/P1 fixes | 11 defects: drone Owner compile/crash (C-1), POI one-shot quest stall (G-1), MQ-17 ending gate (G-2), boss defeat back-fill (G-3), view-axis aiming (F-01), crafting screen wiring (F-02), echo owner identity (H-1), robot chassis save (H-2), camp respawn, CampKitchen spawn, MainMap default map (H-3) | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-1 | 19 files | 1be6e20 | ASTRAWILD.Quest.OneShotBackFill etc. | none | engine test |
+| FA-3 | Medium/low | 20 defects: element canon unification (151 bestiary rows + 4 species + boss resist), echo health persist, species DefeatLoot live, research import sanitize, AI perception + fight-back + stranded recall, worker presence, screen key closes, Thai strings, config cleanups, FastForward cheat, evolution hook | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-2 | 40 files | 69a1d65 | static (validator 46/46) + tests below | none | engine test |
+| FA-4 | Regression | +5 world-free contracts: OneShotBackFill, DefeatCountImportSafety, DismantleIsNotPlacement, Research.ImportSafety, Save.FinalAuditContracts | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-2/3 | AutomationTests.cpp | a5aa74d | static count 72; engine run pending | none | engine test |
+| FA-5 | Docs | Phase Q reconciliation: 72-test truth everywhere, dead glm/final-run references fixed in HANDOFF, control list corrected, readiness gate re-checked | GLM | UPDATED | FA-2..4 | Docs/*.md | (this docs commit) | review | none | Antigravity review |
+
+> Automation suite: **72 world-free contract tests** (57 baseline + 4 hardening from
+> BATCH-1 + 6 Final Run from BATCH-2 + 5 final-audit regressions). Full inventory:
+> `Docs/ASTRAWILD_TEST_INVENTORY.md`.
 
 ## B. Antigravity integration tasks (engine machine)
 
 | ID | Category | Description | Owner | Status | Dependency | Verification | Blocker | Next |
 | :-- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| AG-1 | Git | Pull/merge final-completion; push main; close PR #4 as absorbed | Antigravity | PLANNED | FR-14 | git log / PR state | credentials | execute after AG-2..5 |
+| AG-1 | Git | Pull/merge final-completion; push main; close PR #4 as absorbed | Antigravity | PLANNED | FA-5 | git log / PR state | credentials | execute after AG-2..5 |
 | AG-2 | Build | MSVC compile of final SHA (0 errors) | Antigravity | PLANNED | FR-* | raw build log | UE 5.8.2 machine | run |
-| AG-3 | Tests | 67/67 automation green | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
+| AG-3 | Tests | 72/72 automation green | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
 | AG-4 | Playtest | PIE golden path: MQ chain → Eye → Sovereign → ending A/B → post-game; save/load round-trip; door/crate interactions | Antigravity | PLANNED | AG-3 | raw PIE log + per-checkpoint trace | none | run |
 | AG-5 | Package | Cook+package exit 0; packaged exe boots to MainMap | Antigravity | PLANNED | AG-2 | raw UAT log | FZ-A1 recurrence watch | run |
 | AG-6 | Fix loop | Any engine-only defect → smallest fix on a branch; architectural problems return to GLM | Antigravity | PLANNED | AG-4/5 | fix commits | none | as found |

@@ -1,7 +1,7 @@
 ﻿# ASTRAWILD — FINAL CONTENT MANIFEST
 
-**Document version**: 1.0 · **Issued**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run, Batch 5)
-**Branch**: `final-completion` (99e4105..HEAD — all batches pushed)
+**Document version**: 1.1 · **Issued**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run Batch 5 + Final Source Completion Pass amendment)
+**Branch**: `final-completion` (99e4105..HEAD — all batches + FINAL-AUDIT A/B/C/D pushed)
 **Purpose**: prove that the final repository supplies EVERY piece of UE5 content the
 game needs — from a clean `git clone` + `git lfs pull`, a deterministic build, to a
 playable game with both endings. This manifest is the LAST gate before
@@ -164,7 +164,18 @@ Cross-checked by: `Scripts/validate_final_run.py` §8 (64 refs in the hot files)
 - Quest chain closure: MQ-01→MQ-17 + Maren endings (validator §2/§3).
 - Act 3 world wiring: 8/8 checks (validator §5). Ending state machine: 12/12
   (validator §6). Building catalog: all categories populated (validator §10).
-- Automation suite: **67 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`).
+- Automation suite: **72 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`).
+
+### v1.1 amendment (Final Source Completion Pass — FINAL-AUDIT A/B/C/D)
+
+The final audit landed source fixes only — **no content family, LFS object, asset path or
+code-default changed identity**. The manifest's verification basis (459/459 LFS objects,
+65/65 /Game references, CODE_DEFAULT registries, deterministic 12-zone world) is
+unchanged and re-validated (46/46) at a5aa74d. What the audit DID change that touches
+this manifest's scope: (a) `GameDefaultMap` now points at `/Game/ASTRAWILD/Maps/MainMap`
+(the canon map — was the ThirdPerson template), (b) `.gitattributes` additionally
+reserves `*.uexp/*.ubulk/*.exr` for LFS (none in repo; future-proof), (c) `__pycache__`
+untracked. Statuses and verdict below are re-affirmed as-is.
 
 **MANIFEST VERDICT**: the final repository — as pushed on `final-completion` —
 supplies 100% of the required UE5 content: **459/459 LFS objects verified live on

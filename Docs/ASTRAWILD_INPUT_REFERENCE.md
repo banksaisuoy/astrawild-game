@@ -1,7 +1,7 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (final production run sync — +scan/drone/robot/UI keys, **gamepad support live**; 25 actions)
+**Date: 2026-09-03** (final-audit sync — 26 actions incl. LeftCtrl skiff Descend; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,10 +11,10 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (25 keys → 25 actions)
+## 1. Complete Keybinding Table (26 actions)
 
-`BuildRuntimeInputDefaults` creates **25 runtime actions** (`MakeRuntimeAction` count) and the
-log line matches ("25 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
+`BuildRuntimeInputDefaults` creates **26 runtime actions** (`MakeRuntimeAction` count incl.
+Descend) and the log line matches ("26 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
 inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
