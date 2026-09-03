@@ -69,6 +69,9 @@ private:
     UFUNCTION()
     void HandleGameplayEvent(const FAstrawildGameplayEvent& Event);
 
+    /** FR-3 (Final Run redo): re-entrancy guard for CompleteQuest (see its comment). */
+    bool bBusyCompletingQuest = false;
+
     void ApplyEventToQuest(const FAstrawildGameplayEvent& Event);
     void CompleteQuest(FName QuestId);
     void GrantRewards(const UAstrawildQuestDefinition* Definition);

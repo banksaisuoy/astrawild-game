@@ -172,6 +172,14 @@ public:
 private:
     static constexpr int32 CurrentSchemaVersion = 4;
 
+    /**
+     * FR-2 (Final Run redo): hard cap on day catch-up during load. A corrupted
+     * DayNumber (e.g. 2 billion) used to spin the AdvanceDay loop forever —
+     * the classic boot freeze. Anything beyond current day + this cap is treated
+     * as corruption and clamped (logged).
+     */
+    static constexpr int32 MaxCatchUpDays = 365;
+
     bool MigrateV1ToV2(UAstrawildSaveGame* SaveGame) const;
 
     /** v2 -> v3 is purely additive (new fields default-init) — logged for traceability. */

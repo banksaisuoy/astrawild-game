@@ -56,13 +56,33 @@ void AAstrawildResourceNode::BeginPlay()
     // no-op interact can no longer hide a bootstrap miss.
     ApplyNodeDefinition();
 
+    // FR-4 (Final Run redo): node identity fallback. A map-placed node with an
+    // unknown/missing NodeDefinitionId used to hard-disable itself — and when that
+    // node was the FirstLight harvest target, the very first quest stalled forever
+    // (defect D-1). Fall back to the Dawnwood stand (always registered by the
+    // production content library) so the world stays harvestable; the Warning
+    // still names the actor for the level author to fix.
     if (ResourceItemId.IsNone())
     {
-        UE_LOG(LogAstrawild, Error,
-            TEXT("Resource node %s has no identity (NodeDefinitionId=%s, ResourceItemId=none) — disabling interaction. "
-                 "Spawners must set NodeDefinitionId or ResourceItemId."),
-            *GetName(), *NodeDefinitionId.ToString());
-        SetActorEnableCollision(false);
+        const UWorld* World = GetWorld();
+        const UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+        if (const UAstrawildResourceNodeDefinition* Fallback = Registry ? Registry->FindResourceNode(TEXT("Node_Dawnwood")) : nullptr)
+        {
+            ResourceItemId = Fallback->ResourceItemId;
+            ResourceQuantityPerHarvest = FMath::Max(1, Fallback->QuantityPerHarvest);
+            RemainingQuantity = FMath::Max(1, Fallback->MaxQuantity);
+            RespawnDurationSeconds = FMath::Max(0.0f, Fallback->RespawnDurationSeconds);
+            UE_LOG(LogAstrawild, Warning,
+                TEXT("Resource node %s had no identity (NodeDefinitionId=%s) — fell back to Node_Dawnwood (%s). Fix the spawner."),
+                *GetName(), *NodeDefinitionId.ToString(), *ResourceItemId.ToString());
+        }
+        else
+        {
+            UE_LOG(LogAstrawild, Error,
+                TEXT("Resource node %s has no identity and the Node_Dawnwood fallback is unregistered — disabling interaction."),
+                *GetName());
+            SetActorEnableCollision(false);
+        }
     }
 }
 

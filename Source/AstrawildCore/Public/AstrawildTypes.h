@@ -582,6 +582,18 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     FName OwnerPlayerId = NAME_None;
+
+    /**
+     * FR-2 (Final Run redo): material snapshot so a load whose building definition
+     * was removed from the registry can still refund the player instead of eating
+     * the materials. Additive — older saves deserialize with NAME_None/0 and the
+     * fail-closed path falls back to destroying the ghost building (logged).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName RefundItemId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 RefundItemCount = 0;
 };
 
 /**

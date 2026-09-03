@@ -48,6 +48,19 @@ uint32 UAstrawildSaveSubsystem::ComputeChecksum(const int32 SchemaVersion, const
     return Hash;
 }
 
+namespace
+{
+    /**
+     * FR-2 (Final Run redo): clamp a restored float, treating NaN/Inf as the fallback.
+     * FMath::Clamp alone lets NaN through (NaN comparisons are always false), which
+     * poisons health/stamina/charge for the rest of the session from one bad save.
+     */
+    float SanitizeSavedFloat(const float Value, const float Fallback)
+    {
+        return (FMath::IsNaN(Value) || !FMath::IsFinite(Value)) ? Fallback : Value;
+    }
+}
+
 bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, const int32 UserIndex)
 {
     if (!World || World->GetNetMode() == NM_Client || SlotName.IsEmpty())
@@ -303,12 +316,40 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         MigrateV2ToV3(SaveGame);
         MigrateV3ToV4(SaveGame);
     }
+    else if (SaveGame->SaveSchemaVersion > CurrentSchemaVersion)
+    {
+        // FR-2 (Final Run redo): refuse FUTURE schemas. A save written by a newer
+        // binary deserializes unknown fields as defaults — a silent partial load that
+        // looks fine while eating progress. Fail closed: the file stays on disk; the
+        // player needs the matching binary (LoadLatest falls back to the other slot).
+        UE_LOG(LogAstrawildSave, Error, TEXT("LoadWorld: slot %s schema %d is newer than supported %d — refusing to load."),
+            *SlotName, SaveGame->SaveSchemaVersion, CurrentSchemaVersion);
+        return false;
+    }
 
     // --- World state ---
     if (AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>())
     {
-        GameState->SetTimeOfDayMinutes(SaveGame->WorldState.ElapsedWorldMinutes);
-        while (GameState->DayNumber < SaveGame->WorldState.DayNumber)
+        GameState->SetTimeOfDayMinutes(SanitizeSavedFloat(SaveGame->WorldState.ElapsedWorldMinutes, 0.0f));
+
+        // FR-2 (Final Run redo): corrupted DayNumber (e.g. 2 billion) used to spin the
+        // catch-up loop below for billions of iterations — the classic boot freeze.
+        // Anything beyond current day + MaxCatchUpDays is treated as corruption:
+        // clamped (logged), never trusted, never infinite.
+        int32 TargetDay = SaveGame->WorldState.DayNumber;
+        if (TargetDay < 1)
+        {
+            UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: invalid day %d in slot %s — treating as day 1."), TargetDay, *SlotName);
+            TargetDay = 1;
+        }
+        const int32 MaxReachableDay = FMath::Max(1, GameState->DayNumber) + MaxCatchUpDays;
+        if (TargetDay > MaxReachableDay)
+        {
+            UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: day %d exceeds catch-up cap (current + %d) — clamped. Slot %s is likely corrupt."),
+                TargetDay, MaxCatchUpDays, *SlotName);
+            TargetDay = MaxReachableDay;
+        }
+        while (GameState->DayNumber < TargetDay)
         {
             GameState->AdvanceDay();
         }
@@ -334,12 +375,34 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     {
         if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
         {
-            Player->SetActorTransform(SaveGame->PlayerTransform, false, nullptr, ETeleportType::TeleportPhysics);
+            // FR-2 (Final Run redo): NaN vitals slip through FMath::Clamp — sanitize
+            // every restored stat before it reaches the survival component.
+            FAstrawildSurvivalStats SafeSurvival = SaveGame->PlayerSurvival;
+            SafeSurvival.Health = SanitizeSavedFloat(SafeSurvival.Health, 100.0f);
+            SafeSurvival.MaxHealth = SanitizeSavedFloat(SafeSurvival.MaxHealth, 100.0f);
+            SafeSurvival.Stamina = SanitizeSavedFloat(SafeSurvival.Stamina, 100.0f);
+            SafeSurvival.MaxStamina = SanitizeSavedFloat(SafeSurvival.MaxStamina, 100.0f);
+            SafeSurvival.Hunger = SanitizeSavedFloat(SafeSurvival.Hunger, 100.0f);
+            SafeSurvival.Thirst = SanitizeSavedFloat(SafeSurvival.Thirst, 100.0f);
+            SafeSurvival.Temperature = SanitizeSavedFloat(SafeSurvival.Temperature, 20.0f);
+
+            // FR-2 (Final Run redo): identity-transform guard. A NaN/zero saved
+            // transform (classic "pawn was missing when saving") must NOT teleport
+            // the freshly-possessed pawn to the world origin — keep the spawn point.
+            const FVector SavedLocation = SaveGame->PlayerTransform.GetLocation();
+            if (!SavedLocation.ContainsNaN() && !SavedLocation.IsNearlyZero())
+            {
+                Player->SetActorTransform(SaveGame->PlayerTransform, false, nullptr, ETeleportType::TeleportPhysics);
+            }
+            else
+            {
+                UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: player transform in slot %s is NaN/identity — keeping spawn point."), *SlotName);
+            }
             if (Player->SurvivalComponent)
             {
                 // Audit H-1: restore the saved vitals snapshot instead of FullRestore(),
                 // which silently reset hunger/thirst/health on every load.
-                Player->SurvivalComponent->SetStatsForRestore(SaveGame->PlayerSurvival);
+                Player->SurvivalComponent->SetStatsForRestore(SafeSurvival);
             }
             if (Player->InventoryComponent)
             {
@@ -418,16 +481,56 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     {
         It->Destroy();
     }
+
+    // FR-2 (Final Run redo): fail-closed building restore. The refund inventory is
+    // resolved up front so the loop below stays branch-free on the happy path.
+    UAstrawildInventoryComponent* RefundInventory = nullptr;
+    if (APlayerController* RefundPC = World->GetFirstPlayerController())
+    {
+        if (AAstrawildPlayerCharacter* RefundPlayer = Cast<AAstrawildPlayerCharacter>(RefundPC->GetPawn()))
+        {
+            RefundInventory = RefundPlayer->InventoryComponent;
+        }
+    }
+
+    int32 DroppedBuildings = 0;
     for (const FAstrawildBuildingSaveData& Data : SaveGame->Buildings)
     {
-        FActorSpawnParameters Params;
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-        AAstrawildBuildingActor* Building = World->SpawnActor<AAstrawildBuildingActor>(
-            AAstrawildBuildingActor::StaticClass(), Data.Transform.GetLocation(),
-            Data.Transform.Rotator(), Params);
+        AAstrawildBuildingActor* Building = nullptr;
+        if (!Data.Transform.GetLocation().ContainsNaN())
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+            Building = World->SpawnActor<AAstrawildBuildingActor>(
+                AAstrawildBuildingActor::StaticClass(), Data.Transform.GetLocation(),
+                Data.Transform.Rotator(), Params);
+        }
+
+        if (Building && Building->FromSaveData(Data))
+        {
+            continue; // restored cleanly
+        }
+
+        // Fail-closed: a building whose definition was removed from the registry used
+        // to linger as an unkillable ghost collider blocking the base forever. Destroy
+        // the actor and silently refund the construction material (AddItemSilent —
+        // refunds must not fire ItemCollected and auto-complete CollectItem quests).
         if (Building)
         {
-            Building->FromSaveData(Data);
+            Building->Destroy();
+        }
+        ++DroppedBuildings;
+        UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: building %s (definition %s) failed to restore — destroyed."),
+            *Data.BuildingId.ToString(), *Data.DefinitionId.ToString());
+        if (RefundInventory && !Data.RefundItemId.IsNone() && Data.RefundItemCount > 0)
+        {
+            RefundInventory->AddItemSilent(Data.RefundItemId, Data.RefundItemCount);
+            UE_LOG(LogAstrawildSave, Log, TEXT("LoadWorld: refunded %d x %s for the lost building."),
+                Data.RefundItemCount, *Data.RefundItemId.ToString());
+        }
+        else
+        {
+            UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: lost building carried no refund snapshot (pre-V4.1 save) — material lost."));
         }
     }
 
@@ -590,11 +693,11 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         // Final production run (v3): restore buffered charge AFTER the grid totals
         // are known (SetStoredEnergy clamps to live battery capacity).
         Power->ResolveGridNow();
-        Power->SetStoredEnergy(SaveGame->PowerGrid.StoredEnergy);
+        Power->SetStoredEnergy(SanitizeSavedFloat(SaveGame->PowerGrid.StoredEnergy, 0.0f));
     }
 
-    UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings, %d work sites, %d robots, grid %.0f)."),
-        *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num(), SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->PowerGrid.StoredEnergy);
+    UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings (%d dropped + refunded), %d work sites, %d robots, grid %.0f)."),
+        *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num(), DroppedBuildings, SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->PowerGrid.StoredEnergy);
     return true;
 }
 
@@ -633,10 +736,20 @@ bool UAstrawildSaveSubsystem::LoadLatest(UWorld* World, const int32 UserIndex)
         AutoTime = AutoSave->SavedAtUtc;
     }
 
-    const FString& Chosen = (AutoTime > MainTime) ? FString(AutoSlot) : FString(MainSlot);
+    const FString PreferredSlot = (AutoTime > MainTime) ? FString(AutoSlot) : FString(MainSlot);
+    const FString FallbackSlot = (AutoTime > MainTime) ? FString(MainSlot) : FString(AutoSlot);
     UE_LOG(LogAstrawildSave, Log, TEXT("LoadLatest: choosing slot %s (auto %s vs main %s)."),
-        *Chosen, *AutoTime.ToString(), *MainTime.ToString());
-    return LoadWorld(World, Chosen, UserIndex);
+        *PreferredSlot, *AutoTime.ToString(), *MainTime.ToString());
+    if (LoadWorld(World, PreferredSlot, UserIndex))
+    {
+        return true;
+    }
+
+    // FR-2 (Final Run redo): the chosen (newest) slot failing to load used to abort
+    // the boot outright — checksum mismatches and future schemas now fall back to
+    // the alternative slot instead of stranding the player at a dead title screen.
+    UE_LOG(LogAstrawildSave, Warning, TEXT("LoadLatest: slot %s failed to load — falling back to %s."), *PreferredSlot, *FallbackSlot);
+    return LoadWorld(World, FallbackSlot, UserIndex);
 }
 
 bool UAstrawildSaveSubsystem::SaveSnapshot(const TArray<FAstrawildItemStack>& Inventory, const TArray<FAstrawildEchoInstanceSaveData>& EchoRoster, const TArray<FAstrawildRestPointSaveData>& RestPoints, const FGuid& ActiveRestPointId, const FString& SlotName, const int32 UserIndex)

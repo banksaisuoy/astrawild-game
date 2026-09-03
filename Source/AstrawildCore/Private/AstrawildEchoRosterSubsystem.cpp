@@ -92,7 +92,28 @@ void UAstrawildEchoRosterSubsystem::ExportForSave(TArray<FAstrawildEchoInstanceV
 
 void UAstrawildEchoRosterSubsystem::ImportFromSave(const TArray<FAstrawildEchoInstanceV2>& InRoster)
 {
-    Roster = InRoster;
+    // FR-4 (Final Run redo): save-import sanitize. A crafted/corrupt save could
+    // import duplicated InstanceIds verbatim (doubling party entries) or entries
+    // with a broken guid / missing species that would fail every later lookup.
+    // First-seen-wins on guid; invalid entries are dropped; every repair is logged.
+    Roster.Reset();
+    for (const FAstrawildEchoInstanceV2& Entry : InRoster)
+    {
+        if (!Entry.InstanceId.IsValid() || Entry.DefinitionId.IsNone())
+        {
+            UE_LOG(LogAstrawildAI, Warning, TEXT("ImportFromSave: dropped invalid roster entry (guid valid: %s, species %s)."),
+                Entry.InstanceId.IsValid() ? TEXT("yes") : TEXT("no"), *Entry.DefinitionId.ToString());
+            continue;
+        }
+        if (Roster.ContainsByPredicate(
+            [&Entry](const FAstrawildEchoInstanceV2& Item) { return Item.InstanceId == Entry.InstanceId; }))
+        {
+            UE_LOG(LogAstrawildAI, Warning, TEXT("ImportFromSave: duplicate instance %s — first entry wins."),
+                *Entry.InstanceId.ToString());
+            continue;
+        }
+        Roster.Add(Entry);
+    }
     SpawnedParty.Reset();
     OnRosterChanged.Broadcast(Roster.Num());
 }

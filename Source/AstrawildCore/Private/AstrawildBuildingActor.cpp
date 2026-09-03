@@ -288,6 +288,16 @@ FAstrawildBuildingSaveData AAstrawildBuildingActor::ToSaveData() const
         }
     }
     Data.OwnerPlayerId = OwnerPlayerId;
+
+    // FR-2 (Final Run redo): snapshot the construction cost so a future load whose
+    // definition was removed from the registry can refund the player instead of
+    // eating the material (pre-V4.1 saves deserialize NAME_None/0 and the load path
+    // logs the loss instead of guessing).
+    if (const UAstrawildBuildingDefinition* Def = GetBuildingDefinition())
+    {
+        Data.RefundItemId = Def->RequiredItemId;
+        Data.RefundItemCount = FMath::Max(0, Def->RequiredItemCount);
+    }
     return Data;
 }
 
@@ -298,10 +308,22 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
         return false;
     }
 
+    // FR-2 (Final Run redo): fail-closed. A missing definition previously
+    // "restored" anyway — an invincible ghost with fallback health, unknown scale
+    // and no power identity that blocked the base forever. The caller (SaveSubsystem)
+    // destroys the actor and refunds the material snapshot instead.
+    const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
+    if (!Def)
+    {
+        UE_LOG(LogAstrawildBuilding, Warning, TEXT("FromSaveData: definition %s missing from registry — failing closed."),
+            *Data.DefinitionId.ToString());
+        return false;
+    }
+
     BuildingId = Data.BuildingId;
     DefinitionId = Data.DefinitionId;
     SetActorTransform(Data.Transform);
-    StoredCharge = Data.StoredCharge;
+    StoredCharge = (FMath::IsNaN(Data.StoredCharge) || !FMath::IsFinite(Data.StoredCharge)) ? 0.0f : Data.StoredCharge;
     bIsSwitchedOn = Data.bIsSwitchedOn;
     // Batch 2 — Item C: restore hint power state — the PowerSubsystem's ResolveGridNow()
     // (called by SaveSubsystem::LoadWorld right after the building spawn loop) will
@@ -309,19 +331,15 @@ bool AAstrawildBuildingActor::FromSaveData(const FAstrawildBuildingSaveData& Dat
     bIsPowered = Data.bIsPowered;
     OwnerPlayerId = Data.OwnerPlayerId;
 
-    const UAstrawildBuildingDefinition* Def = GetBuildingDefinition();
-    if (Def)
-    {
-        MaxHealth = FMath::Max(1.0f, Def->MaxHealth);
-        InitializeFromDefinition(Def, OwnerPlayerId);
-        // Audit H-5: apply the saved health AFTER initialization — InitializeFromDefinition
-        // resets CurrentHealth to MaxHealth, which used to heal every damaged building on load.
-        CurrentHealth = FMath::Clamp(Data.CurrentHealth, 1.0f, MaxHealth);
-    }
-    else
-    {
-        CurrentHealth = FMath::Max(1.0f, Data.CurrentHealth);
-    }
+    MaxHealth = FMath::Max(1.0f, Def->MaxHealth);
+    InitializeFromDefinition(Def, OwnerPlayerId);
+    // Audit H-5: apply the saved health AFTER initialization — InitializeFromDefinition
+    // resets CurrentHealth to MaxHealth, which used to heal every damaged building on load.
+    // FR-2: NaN health (corrupt save) falls back to full instead of poisoning the bar.
+    CurrentHealth = (FMath::IsNaN(Data.CurrentHealth) || !FMath::IsFinite(Data.CurrentHealth))
+        ? MaxHealth
+        : FMath::Clamp(Data.CurrentHealth, 1.0f, MaxHealth);
+
     UpdateVisualPowerState();
     return true;
 }

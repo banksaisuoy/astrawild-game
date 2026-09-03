@@ -299,12 +299,23 @@ void UAstrawildQuestComponent::ApplyEventToQuest(const FAstrawildGameplayEvent& 
 
 void UAstrawildQuestComponent::CompleteQuest(const FName QuestId)
 {
+    // FR-3 (Final Run redo): re-entrancy guard. The completion path broadcasts
+    // delegates and chains the next quest synchronously; a future handler that
+    // completes a quest from inside OnQuestStateChanged would re-enter here and
+    // double-grant rewards before the state flag below settles.
+    if (bBusyCompletingQuest)
+    {
+        return;
+    }
+
     FAstrawildQuestSaveData* State = QuestStates.FindByPredicate(
         [&QuestId](const FAstrawildQuestSaveData& Item) { return Item.QuestId == QuestId; });
     if (!State || State->bCompleted)
     {
         return;
     }
+
+    TGuardValue<bool> BusyGuard(bBusyCompletingQuest, true);
 
     State->bCompleted = true;
     State->bActive = false;
@@ -345,11 +356,29 @@ void UAstrawildQuestComponent::GrantRewards(const UAstrawildQuestDefinition* Def
     {
         for (const FAstrawildItemStack& Reward : Definition->RewardItems)
         {
-            Player->InventoryComponent->AddItem(Reward.ItemId, Reward.Quantity);
+            // FR-3 (Final Run redo): negative/zero rewards are data bugs — the
+            // inventory layer now rejects them, but the quest layer logs the bad
+            // definition by name so the data author can fix it instead of the
+            // reward silently never arriving.
+            if (!Reward.IsValid())
+            {
+                UE_LOG(LogAstrawild, Warning, TEXT("GrantRewards: skipped invalid reward %s x%d on quest %s."),
+                    *Reward.ItemId.ToString(), Reward.Quantity, *Definition->QuestId.ToString());
+                continue;
+            }
+            // AddItemSilent (Q-9): a reward firing ItemCollected would let a CollectItem
+            // objective complete itself by paying its own reward — silent grants only.
+            Player->InventoryComponent->AddItemSilent(Reward.ItemId, Reward.Quantity);
         }
     }
 
-    if (Definition->RewardResearchPoints > 0)
+    // FR-3: negative research rewards are the same class of data bug — skip loudly.
+    if (Definition->RewardResearchPoints < 0)
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("GrantRewards: negative RP reward %d on quest %s — skipped."),
+            Definition->RewardResearchPoints, *Definition->QuestId.ToString());
+    }
+    else if (Definition->RewardResearchPoints > 0)
     {
         const UWorld* World = GetWorld();
         if (World && World->GetGameInstance())
@@ -382,23 +411,49 @@ void UAstrawildQuestComponent::ExportForSave(TArray<FAstrawildQuestSaveData>& Ou
 
 void UAstrawildQuestComponent::ImportFromSave(const TArray<FAstrawildQuestSaveData>& InQuests)
 {
-    QuestStates = InQuests;
+    // FR-3 (Final Run redo): save-import sanitize. Duplicated quest ids used to
+    // stack (bloating the save and the HUD list); more than one ACTIVE quest broke
+    // the single-active invariant the objective matcher relies on. First-seen-wins
+    // for ids, first-active-wins for the active slot; every repair is logged.
+    QuestStates.Reset();
     CompletedQuestIds.Reset();
     ActiveQuestId = NAME_None;
 
-    for (const FAstrawildQuestSaveData& State : QuestStates)
+    for (const FAstrawildQuestSaveData& State : InQuests)
     {
+        if (State.QuestId.IsNone())
+        {
+            UE_LOG(LogAstrawild, Warning, TEXT("ImportFromSave: dropped quest state with no id."));
+            continue;
+        }
+        if (QuestStates.ContainsByPredicate(
+            [&State](const FAstrawildQuestSaveData& Item) { return Item.QuestId == State.QuestId; }))
+        {
+            UE_LOG(LogAstrawild, Warning, TEXT("ImportFromSave: duplicate quest %s — first entry wins."), *State.QuestId.ToString());
+            continue;
+        }
+
+        QuestStates.Add(State);
         if (State.bCompleted)
         {
             CompletedQuestIds.AddUnique(State.QuestId);
         }
         else if (State.bActive)
         {
-            ActiveQuestId = State.QuestId;
+            if (ActiveQuestId.IsNone())
+            {
+                ActiveQuestId = State.QuestId;
+            }
+            else
+            {
+                // Demote the extra active quest — exactly one may be active at a time.
+                QuestStates.Last().bActive = false;
+                UE_LOG(LogAstrawild, Warning, TEXT("ImportFromSave: quest %s active past the first active quest — demoted."), *State.QuestId.ToString());
+            }
         }
     }
 
-    // Saved game without any active quest and an unstarted chain: restart the intro quest.
+    // Saved game without any quest state and an unstarted chain: restart the intro quest.
     if (QuestStates.IsEmpty() && !StartingQuestId.IsNone())
     {
         StartQuest(StartingQuestId);

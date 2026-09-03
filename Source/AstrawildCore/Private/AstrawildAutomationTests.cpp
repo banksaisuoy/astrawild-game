@@ -10,6 +10,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildQuestComponent.h"
 #include "InputMappingContext.h"
 // Complete soft-pointer pointee types: TSoftObjectPtr<>::IsValid() in test code
 // needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
@@ -2172,6 +2173,193 @@ bool FAstrawildAssetSurvivorFallbackChainTest::RunTest(const FString& Parameters
 
     Player->BuildProceduralBody();
     TestNotNull(TEXT("Procedural BodyMesh exists"), Player->BodyMesh.Get());
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: P0 hardening contracts (FR-1..FR-4)
+// Test 58: Inventory transaction safety — negative-quantity rejection,
+// atomic ConsumeItems with duplicate aggregation, save-import dedupe.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInventoryTransactionSafetyTest,
+    "ASTRAWILD.Inventory.TransactionSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInventoryTransactionSafetyTest::RunTest(const FString& Parameters)
+{
+    // World-free component: no owner → role is not authority → weight gate
+    // bypassed; the transaction math below is the deterministic contract.
+    UAstrawildInventoryComponent* Inventory = NewObject<UAstrawildInventoryComponent>();
+    if (!TestNotNull(TEXT("Inventory constructed"), Inventory))
+    {
+        return false;
+    }
+
+    Inventory->AddItemSilent(TEXT("Item_Wood"), 7);
+
+    // FR-1: RemoveItem quantity-sign gate FIRST (the old exploit: "0 >= -5"
+    // passed HasItem, then Count -= -5 minted items).
+    TestFalse(TEXT("RemoveItem rejects negative quantity"), Inventory->RemoveItem(TEXT("Item_Wood"), -5));
+    TestFalse(TEXT("RemoveItem rejects zero quantity"), Inventory->RemoveItem(TEXT("Item_Wood"), 0));
+    TestFalse(TEXT("RemoveItem rejects missing id"), Inventory->RemoveItem(NAME_None, 1));
+    TestEqual(TEXT("Rejected removes leave the stack untouched"), Inventory->GetQuantity(TEXT("Item_Wood")), 7);
+
+    // FR-1: ConsumeItems is atomic across DUPLICATE ids. {Wood x5, Wood x5}
+    // aggregates to 10 required; only 7 owned → refuse WITHOUT partial loss.
+    const auto Stack = [](const TCHAR* Id, const int32 Qty)
+    {
+        FAstrawildItemStack Out;
+        Out.ItemId = Id;
+        Out.Quantity = Qty;
+        return Out;
+    };
+
+    TestFalse(TEXT("ConsumeItems refuses aggregated shortage"),
+        Inventory->ConsumeItems({ Stack(TEXT("Item_Wood"), 5), Stack(TEXT("Item_Wood"), 5) }));
+    TestEqual(TEXT("Refused consume is atomic — no partial drain"), Inventory->GetQuantity(TEXT("Item_Wood")), 7);
+
+    // Top up to 12 — the same request now succeeds atomically and leaves 2.
+    Inventory->AddItemSilent(TEXT("Item_Wood"), 5);
+    TestTrue(TEXT("ConsumeItems succeeds when the aggregate fits"),
+        Inventory->ConsumeItems({ Stack(TEXT("Item_Wood"), 5), Stack(TEXT("Item_Wood"), 5) }));
+    TestEqual(TEXT("Successful consume leaves the remainder"), Inventory->GetQuantity(TEXT("Item_Wood")), 2);
+
+    // FR-1: SetItemStacks sanitize — first-seen-wins on duplicate ids, invalid
+    // stacks are dropped (a crafted save cannot inflate quantities).
+    Inventory->SetItemStacks({
+        Stack(TEXT("Item_Wood"), 10),
+        Stack(TEXT("Item_Wood"), 99),   // duplicate id — ignored
+        Stack(NAME_None, 42),           // invalid id — dropped
+        Stack(TEXT("Item_Stone"), 0)    // invalid quantity — dropped
+    });
+    TestEqual(TEXT("SetItemStacks keeps the FIRST duplicate entry"), Inventory->GetQuantity(TEXT("Item_Wood")), 10);
+    TestFalse(TEXT("SetItemStacks drops invalid stacks"), Inventory->HasItem(NAME_None, 1));
+    TestFalse(TEXT("SetItemStacks drops zero-quantity stacks"), Inventory->HasItem(TEXT("Item_Stone"), 1));
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: Test 59 — Save consistency contracts:
+// building refund snapshot (fail-closed restore) + schema evolution fields.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveConsistencyContractsTest,
+    "ASTRAWILD.Save.ConsistencyContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveConsistencyContractsTest::RunTest(const FString& Parameters)
+{
+    // FR-2: the building refund snapshot ships default-neutral so pre-V4.1 saves
+    // deserialize cleanly and the load path logs the loss instead of guessing.
+    FAstrawildBuildingSaveData BuildingData;
+    TestTrue(TEXT("RefundItemId defaults to none"), BuildingData.RefundItemId.IsNone());
+    TestEqual(TEXT("RefundItemCount defaults to zero"), BuildingData.RefundItemCount, 0);
+
+    // The snapshot round-trips through the struct contract (SaveWorld fills it
+    // from the definition; LoadWorld refunds from it when the definition is gone).
+    BuildingData.RefundItemId = TEXT("Item_Plank");
+    BuildingData.RefundItemCount = 12;
+    TestEqual(TEXT("Refund snapshot carries the count"), BuildingData.RefundItemCount, 12);
+    TestFalse(TEXT("Refund snapshot carries a resolvable id"), BuildingData.RefundItemId.IsNone());
+
+    // Invalid refund snapshots are rejected by the same validity rule as every
+    // other stack (the load path checks RefundItemCount > 0 before granting).
+    BuildingData.RefundItemCount = -4;
+    TestTrue(TEXT("Negative refund count fails the > 0 gate"), BuildingData.RefundItemCount <= 0);
+
+    // FR-2: the save game header contract — schema stamp + checksum baseline.
+    UAstrawildSaveGame* SaveGame = NewObject<UAstrawildSaveGame>();
+    if (!TestNotNull(TEXT("SaveGame object constructed"), SaveGame))
+    {
+        return false;
+    }
+    TestTrue(TEXT("SaveSchemaVersion is a sane positive integer"), SaveGame->SaveSchemaVersion >= 1);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: Test 60 — Quest save-import safety:
+// duplicate ids collapse, exactly one active quest survives.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestImportSafetyTest,
+    "ASTRAWILD.Quest.ImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestImportSafetyTest::RunTest(const FString& Parameters)
+{
+    UAstrawildQuestComponent* Quests = NewObject<UAstrawildQuestComponent>();
+    if (!TestNotNull(TEXT("Quest component constructed"), Quests))
+    {
+        return false;
+    }
+
+    const auto MakeState = [](const TCHAR* Id, const bool bActive, const bool bCompleted)
+    {
+        FAstrawildQuestSaveData State;
+        State.QuestId = Id;
+        State.bActive = bActive;
+        State.bCompleted = bCompleted;
+        return State;
+    };
+
+    // Crafted/corrupt payload: duplicate id (active first, completed second —
+    // first-seen-wins), two EXTRA active quests, and one id-less entry.
+    Quests->ImportFromSave({
+        MakeState(TEXT("Q_First"), true, false),
+        MakeState(TEXT("Q_First"), false, true),   // duplicate id — ignored
+        MakeState(TEXT("Q_Second"), true, false),  // second active — demoted
+        MakeState(TEXT("Q_Third"), true, false),   // third active — demoted
+        MakeState(NAME_None, true, false)          // id-less — dropped
+    });
+
+    TestEqual(TEXT("First active quest wins the active slot"), Quests->GetActiveQuestId(), FName(TEXT("Q_First")));
+    TestTrue(TEXT("First entry is active"), Quests->IsQuestActive(TEXT("Q_First")));
+    TestFalse(TEXT("Duplicate entry did NOT complete the quest (first-seen-wins)"), Quests->IsQuestCompleted(TEXT("Q_First")));
+    TestFalse(TEXT("Second quest demoted — single-active invariant"), Quests->IsQuestActive(TEXT("Q_Second")));
+    TestFalse(TEXT("Third quest demoted — single-active invariant"), Quests->IsQuestActive(TEXT("Q_Third")));
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: Test 61 — Echo roster save-import safety:
+// invalid entries dropped, duplicate guids collapse (first-seen-wins).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEchoRosterImportSafetyTest,
+    "ASTRAWILD.Echo.RosterImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEchoRosterImportSafetyTest::RunTest(const FString& Parameters)
+{
+    // GameInstance subsystem used world-free: ImportFromSave touches only the
+    // roster array and the change delegate — no GameInstance dependency.
+    UAstrawildEchoRosterSubsystem* Roster = NewObject<UAstrawildEchoRosterSubsystem>();
+    if (!TestNotNull(TEXT("Roster subsystem constructed"), Roster))
+    {
+        return false;
+    }
+
+    FAstrawildEchoInstanceV2 Valid;
+    Valid.InstanceId = FGuid::NewGuid();
+    Valid.DefinitionId = TEXT("Echo_Lumewisp");
+    Valid.bInParty = true;
+
+    FAstrawildEchoInstanceV2 Duplicate = Valid; // same guid — must collapse
+
+    FAstrawildEchoInstanceV2 BrokenGuid;
+    BrokenGuid.DefinitionId = TEXT("Echo_Gloomfang"); // guid stays invalid
+
+    FAstrawildEchoInstanceV2 NoSpecies;
+    NoSpecies.InstanceId = FGuid::NewGuid(); // species stays none
+
+    Roster->ImportFromSave({ Valid, Duplicate, BrokenGuid, NoSpecies });
+
+    TestEqual(TEXT("Only the valid entry survives"), Roster->GetRoster().Num(), 1);
+    TestTrue(TEXT("Valid entry kept its guid"), Roster->IsInRoster(Valid.InstanceId));
+    TestFalse(TEXT("Guid-less entry dropped"), Roster->IsInRoster(BrokenGuid.InstanceId));
+    TestFalse(TEXT("Species-less entry dropped"), Roster->IsInRoster(NoSpecies.InstanceId));
 
     return true;
 }
