@@ -9,8 +9,10 @@
 #include "AstrawildAttributeComponent.h"
 #include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBestiaryData.h"
+#include "AstrawildComboSubsystem.h"
 #include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataValidator.h"
+#include "AstrawildDifficultySubsystem.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildErrorReporter.h"
 #include "AstrawildMountComponent.h"
@@ -3583,6 +3585,91 @@ bool FAstrawildMountContractTest::RunTest(const FString& Parameters)
 
     // Bond gate: the trust arc number from the directive spec.
     TestEqual(TEXT("Mount bond gate is 25"), Mnt::MountBondGate, 25.0f);
+    return true;
+}
+
+// --- SCP Phase 6: dual-tech reaction table (Test 93) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildComboTableTest,
+    "ASTRAWILD.SCP.Combo.ReactionTable",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildComboTableTest::RunTest(const FString& Parameters)
+{
+    using Combo = UAstrawildComboLibrary;
+
+    // Every element resolves on BOTH player tiers (12 reactions — the
+    // directive's 10-formula minimum exceeded).
+    TestEqual(TEXT("Reaction count is 12"), Combo::GetReactionCount(), 12);
+
+    const EAstrawildElementType Elements[6] =
+    {
+        EAstrawildElementType::Ember, EAstrawildElementType::Frost, EAstrawildElementType::Pulse,
+        EAstrawildElementType::Flora, EAstrawildElementType::Light, EAstrawildElementType::Ash
+    };
+    for (const bool bEmpowered : { false, true })
+    {
+        for (const EAstrawildElementType Element : Elements)
+        {
+            const FAstrawildComboReaction Reaction = Combo::ResolveCombo(bEmpowered, Element);
+            TestTrue(TEXT("Every element x tier resolves"), Reaction.IsValid());
+            TestTrue(TEXT("Every multiplier is meaningful"), Reaction.DamageMultiplier >= 1.8f);
+        }
+    }
+
+    // The directive's signature reaction: empowered + Ember = Steam Explosion
+    // x2.5 with a hitstop status.
+    const FAstrawildComboReaction Steam = Combo::ResolveCombo(true, EAstrawildElementType::Ember);
+    TestTrue(TEXT("Steam Explosion named"), Steam.DisplayName.Equals(TEXT("Steam Explosion")));
+    TestEqual(TEXT("Steam Explosion is x2.5"), Steam.DamageMultiplier, 2.5f);
+    TestTrue(TEXT("Steam Explosion applies hitstop"), Steam.StatusId == TEXT("Status.Hitstop"));
+
+    // Empowered tier strictly out-damages the kinetic tier.
+    for (const EAstrawildElementType Element : Elements)
+    {
+        const FAstrawildComboReaction Kinetic = Combo::ResolveCombo(false, Element);
+        const FAstrawildComboReaction Empowered = Combo::ResolveCombo(true, Element);
+        TestTrue(TEXT("Empowered beats kinetic"), Empowered.DamageMultiplier >= Kinetic.DamageMultiplier);
+    }
+
+    // Window + hitstop numbers pinned.
+    TestEqual(TEXT("Combo window is 3s"), Combo::ComboWindowSeconds, 3.0f);
+    TestEqual(TEXT("Hitstop lasts 1.5s"), Combo::HitstopSeconds, 1.5f);
+    TestEqual(TEXT("Hitstop slows to 15%"), Combo::HitstopSpeedMultiplier, 0.15f);
+    return true;
+}
+
+// --- SCP Phase 3: DDA band math (Test 94) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDifficultyBandTest,
+    "ASTRAWILD.SCP.DDA.SkillBands",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDifficultyBandTest::RunTest(const FString& Parameters)
+{
+    using DDA = UAstrawildDifficultySubsystem;
+
+    // Fresh player: Standard.
+    TestEqual(TEXT("Fresh session is Standard"), DDA::ComputeSkillBand(0, 0, 0), 1);
+
+    // Struggling: deaths dominate (metric <= -2).
+    TestEqual(TEXT("One death is still Standard (hysteresis)"), DDA::ComputeSkillBand(0, 0, 1), 1);
+    TestEqual(TEXT("Two deaths -> Struggling"), DDA::ComputeSkillBand(0, 0, 2), 0);
+    TestEqual(TEXT("Deaths outweigh a few kills"), DDA::ComputeSkillBand(3, 0, 3), 0);
+
+    // Thriving: captures count double, defeats single.
+    TestEqual(TEXT("Two captures -> Thriving"), DDA::ComputeSkillBand(0, 1, 0), 2);
+    TestEqual(TEXT("Two defeats -> Thriving"), DDA::ComputeSkillBand(2, 0, 0), 2);
+    TestEqual(TEXT("One defeat stays Standard (hysteresis)"), DDA::ComputeSkillBand(1, 0, 0), 1);
+
+    // Multipliers: struggling gets help, thriving gets pressure.
+    TestEqual(TEXT("Struggling hostiles x0.85"), DDA::GetHostileStrengthMultiplier(0), 0.85f);
+    TestEqual(TEXT("Standard hostiles x1.0"), DDA::GetHostileStrengthMultiplier(1), 1.0f);
+    TestEqual(TEXT("Thriving hostiles x1.15"), DDA::GetHostileStrengthMultiplier(2), 1.15f);
+    TestEqual(TEXT("Struggling resources x1.15"), DDA::GetResourceYieldMultiplier(0), 1.15f);
+    TestEqual(TEXT("Standard resources x1.0"), DDA::GetResourceYieldMultiplier(1), 1.0f);
+    TestEqual(TEXT("Thriving resources x0.9"), DDA::GetResourceYieldMultiplier(2), 0.9f);
+
+    // Unknown bands fall back to Standard multipliers.
+    TestEqual(TEXT("Unknown band is neutral"), DDA::GetHostileStrengthMultiplier(99), 1.0f);
     return true;
 }
 

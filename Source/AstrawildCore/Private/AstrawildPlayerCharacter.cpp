@@ -10,6 +10,7 @@
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildDifficultySubsystem.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoAIController.h"
@@ -1748,6 +1749,15 @@ void AAstrawildPlayerCharacter::QuickLoad(const FInputActionValue& Value)
 void AAstrawildPlayerCharacter::OnPlayerDied()
 {
     UE_LOG(LogAstrawildCombat, Log, TEXT("Player died — awaiting respawn."));
+
+    // SCP Phase 3: deaths feed the DDA metric (band pull-down).
+    if (UWorld* DDAWorld = GetWorld())
+    {
+        if (UAstrawildDifficultySubsystem* DDA = DDAWorld->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            DDA->NotifyPlayerDeath();
+        }
+    }
 
     // SCP Phase 5: a dead rider falls off the mount (before input disable so
     // the dismount path can run its notify).

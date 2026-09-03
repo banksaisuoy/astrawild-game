@@ -1,6 +1,7 @@
 #include "AstrawildProjectileActor.h"
 
 #include "AstrawildCombatComponent.h"
+#include "AstrawildComboSubsystem.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
@@ -268,7 +269,42 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
     {
         if (!Echo->IsDefeated())
         {
-            Echo->ApplyElementalDamage(DamageAmount, Element);
+            float ComboDamage = DamageAmount;
+            // SCP Phase 6: party Echo ability bolts striking a player-marked
+            // target resolve the Dual-Tech reaction (bonus damage + status).
+            const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get());
+            if (SourceEcho && GetWorld())
+            {
+                if (UAstrawildComboSubsystem* Combos = GetWorld()->GetSubsystem<UAstrawildComboSubsystem>())
+                {
+                    const FAstrawildComboReaction Reaction = Combos->TryResolveEchoAbilityCombo(OtherActor, SourceEcho);
+                    if (Reaction.IsValid())
+                    {
+                        ComboDamage *= Reaction.DamageMultiplier;
+                        if (!Reaction.StatusId.IsNone())
+                        {
+                            // Hitstop reads as a hard brief slow; other ids map
+                            // onto the standard status vocabulary.
+                            FAstrawildStatusEffect ComboStatus;
+                            ComboStatus.StatusId = Reaction.StatusId;
+                            if (Reaction.StatusId == TEXT("Status.Hitstop"))
+                            {
+                                ComboStatus.RemainingSeconds = UAstrawildComboLibrary::HitstopSeconds;
+                                ComboStatus.SpeedMultiplier = UAstrawildComboLibrary::HitstopSpeedMultiplier;
+                                ComboStatus.DamagePerSecond = 0.0f;
+                            }
+                            else
+                            {
+                                const EAstrawildElementType ReactionElement = Element;
+                                ComboStatus = UAstrawildCombatComponent::MakeElementalStatusEffect(ReactionElement, ComboDamage);
+                                ComboStatus.StatusId = Reaction.StatusId;
+                            }
+                            Echo->AddStatusEffect(ComboStatus);
+                        }
+                    }
+                }
+            }
+            Echo->ApplyElementalDamage(ComboDamage, Element);
         }
     }
     else if (AAstrawildEchoBossCharacter* Boss = Cast<AAstrawildEchoBossCharacter>(OtherActor))

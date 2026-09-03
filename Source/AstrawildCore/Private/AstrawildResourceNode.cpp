@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDifficultySubsystem.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -238,6 +239,16 @@ void AAstrawildResourceNode::Interact_Implementation(AActor* InteractingActor)
         const float YieldMultiplier = Durability->GetHarvestYieldMultiplier(ResourceItemId);
         MultipliedQuantity = FMath::Max(1, FMath::RoundToInt(QuantityToGrant * YieldMultiplier));
         Durability->ApplyToolWear();
+    }
+
+    // SCP Phase 3: DDA generosity — struggling players find richer nodes
+    // (x1.15), thriving players lean on efficiency instead (x0.9).
+    if (const UWorld* DDAWorld = GetWorld())
+    {
+        if (const UAstrawildDifficultySubsystem* DDA = DDAWorld->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            MultipliedQuantity = FMath::Max(1, FMath::RoundToInt(MultipliedQuantity * DDA->GetResourceYieldScale()));
+        }
     }
 
     if (!Inventory->AddItem(ResourceItemId, MultipliedQuantity))

@@ -1,6 +1,7 @@
 #include "AstrawildCombatComponent.h"
 
 #include "AstrawildAttributeComponent.h"
+#include "AstrawildComboSubsystem.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
@@ -379,6 +380,17 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             }
             DamageTarget->ApplyDamage(BaseDamage);
             TotalDamageDealt += BaseDamage;
+        }
+
+        // SCP Phase 6: every landed player melee hit drops a combo mark on
+        // the victim — party Echo abilities striking the same target inside
+        // 3s resolve a Dual-Tech reaction.
+        if (UWorld* ComboWorld = GetWorld())
+        {
+            if (UAstrawildComboSubsystem* Combos = ComboWorld->GetSubsystem<UAstrawildComboSubsystem>())
+            {
+                Combos->NotifyPlayerMeleeHit(HitActor, bEmpowered);
+            }
         }
     }
 

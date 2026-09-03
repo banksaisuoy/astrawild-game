@@ -3,6 +3,7 @@
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDifficultySubsystem.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEcosystemSubsystem.h"
@@ -769,7 +770,17 @@ bool AAstrawildEchoAIController::TryAttackTarget(AActor* Target, const float Del
 
     // Element from species definition.
     const EAstrawildElementType Element = IsValid(Echo->EchoDefinition) ? Echo->EchoDefinition->Element : EAstrawildElementType::None;
-    const float Damage = Echo->GetAttackPower() * AttackDamageMultiplier;
+    float Damage = Echo->GetAttackPower() * AttackDamageMultiplier;
+
+    // SCP Phase 3: DDA scales hostile pressure (x0.85 struggling, x1.15
+    // thriving) — one multiplication on the single outgoing damage path.
+    if (const UWorld* DDAWorld = Echo->GetWorld())
+    {
+        if (const UAstrawildDifficultySubsystem* DDA = DDAWorld->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            Damage *= DDA->GetHostileStrengthScale();
+        }
+    }
 
     if (AAstrawildEchoCharacter* TargetEcho = Cast<AAstrawildEchoCharacter>(Target))
     {
