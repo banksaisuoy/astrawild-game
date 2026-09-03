@@ -124,7 +124,11 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
         const float MoodMult = FMath::Lerp(0.5f, 1.0f, Echo->Needs.Mood / 100.0f);
         const float EnergyMult = FMath::Lerp(0.5f, 1.0f, Echo->Needs.Energy / 100.0f);
 
-        WorkAccumulator += DeltaTime * Affinity * PersonalityMult * MoodMult * EnergyMult * PowerMultiplier;
+        // SCP Phase 9: sanity band + illness penalties (Depressed x0.6,
+        // Slacker x0.3) — base care now has a mechanical payoff.
+        const float SanityMult = Echo->SanityComponent ? Echo->SanityComponent->GetWorkOutputMultiplier() : 1.0f;
+
+        WorkAccumulator += DeltaTime * Affinity * PersonalityMult * MoodMult * EnergyMult * SanityMult * PowerMultiplier;
 
         // Working consumes energy.
         Echo->Needs.Energy = FMath::Max(0.0f, Echo->Needs.Energy - DeltaTime * 0.5f);

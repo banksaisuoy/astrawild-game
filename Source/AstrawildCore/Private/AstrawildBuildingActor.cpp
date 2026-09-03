@@ -1,8 +1,11 @@
 #include "AstrawildBuildingActor.h"
 
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDurabilityComponent.h"
+#include "AstrawildEchoCharacter.h"
+#include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -115,6 +118,29 @@ const UAstrawildBuildingDefinition* AAstrawildBuildingActor::GetBuildingDefiniti
     const UWorld* World = GetWorld();
     const UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
     return Registry ? Registry->FindBuilding(DefinitionId) : nullptr;
+}
+
+AAstrawildBuildingActor* AAstrawildBuildingActor::SpawnForDefinition(UWorld* World,
+    const UAstrawildBuildingDefinition* Definition, const FVector& Location, const FRotator& Rotation)
+{
+    if (!World || !IsValid(Definition))
+    {
+        return nullptr;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    // SCP Phase 9: the Base Terminal is the one specialized building — its
+    // subclass carries territory/garrison logic. Placing and save-load both
+    // route through here so the actor class can never diverge between paths.
+    UClass* ActorClass = AAstrawildBuildingActor::StaticClass();
+    if (Definition->DefinitionId == TEXT("Building_BaseTerminal"))
+    {
+        ActorClass = AAstrawildBaseTerminalActor::StaticClass();
+    }
+
+    return World->SpawnActor<AAstrawildBuildingActor>(ActorClass, Location, Rotation, Params);
 }
 
 bool AAstrawildBuildingActor::InitializeFromDefinition(const UAstrawildBuildingDefinition* Definition, const FName InOwnerPlayerId)
@@ -360,6 +386,38 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
     // real station. The craft itself stays server-authoritative per-recipe.
     if (Def->Category == EAstrawildBuildingCategory::Workstation)
     {
+        // SCP Phase 9: the Medicine Bench cures ill party echoes FIRST — one
+        // Cure Tonic per cured creature (crafting screen opens after).
+        if (DefinitionId == TEXT("Building_MedicineBench") && Player->InventoryComponent &&
+            GetLocalRole() == ROLE_Authority)
+        {
+            int32 CuredCount = 0;
+            if (UAstrawildEchoRosterSubsystem* Roster = World ? World->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr)
+            {
+                for (AAstrawildEchoCharacter* Echo : Roster->GetSpawnedParty())
+                {
+                    if (!Echo || !Echo->SanityComponent || !Echo->SanityComponent->IsIll())
+                    {
+                        continue;
+                    }
+                    if (Player->InventoryComponent->HasItem(TEXT("Item_CureTonic"), 1) &&
+                        Player->InventoryComponent->RemoveItem(TEXT("Item_CureTonic"), 1))
+                    {
+                        if (Echo->SanityComponent->ApplyMedicine())
+                        {
+                            ++CuredCount;
+                        }
+                    }
+                }
+            }
+            if (AAstrawildPlayerController* MedPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+            {
+                MedPC->Notify(FText::Format(
+                    NSLOCTEXT("ASTRAWILD", "MedicineBenchResult", "Medicine bench: cured {0} creature(s)."),
+                    FText::AsNumber(CuredCount)));
+            }
+        }
+
         // SCP Phase 12: the Repair Bench repairs every worn piece for bench-cost
         // materials FIRST (open the crafting screen after, same as any station).
         if (DefinitionId == TEXT("Building_RepairBench") && Player->DurabilityComponent &&

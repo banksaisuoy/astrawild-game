@@ -281,6 +281,13 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     FieldRepairKit->Description = FText::FromString(TEXT("CODE_DEFAULT — wraps, wedges and resin; restores one worn item anywhere."));
     Registry->RegisterItem(FieldRepairKit);
 
+    // --- SCP Phase 9: creature healthcare. ---
+
+    UAstrawildItemDefinition* CureTonic = MakeItem(Outer, TEXT("Item_CureTonic"), TEXT("Echo Cure Tonic"), EAstrawildItemCategory::Consumable, 0.3f, 20);
+    CureTonic->HealValue = 25.0f;
+    CureTonic->Description = FText::FromString(TEXT("CODE_DEFAULT — medicine bench brew; clears one creature illness and restores 30 sanity."));
+    Registry->RegisterItem(CureTonic);
+
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): torso progression. ---
     // Rating feeds ComputeArmorFraction(Rating, K=100) → 17% / 31% / 44% reduction.
 
@@ -465,6 +472,12 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_Compost"), TEXT("Dawn Compost"),
         { Stack(TEXT("Item_SpoiledOrganics"), 3) },
         { Stack(TEXT("Item_Compost"), 1) }, 6.0f, TEXT("Tech_Agriculture"), TEXT("Station_Composter")));
+
+    // --- SCP Phase 9: healthcare recipe. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CureTonic"), TEXT("Echo Cure Tonic"),
+        { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Berry"), 1), Stack(TEXT("Item_CrystalShard"), 1) },
+        { Stack(TEXT("Item_CureTonic"), 2) }, 5.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
 
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): armory progression. ---
 
@@ -812,6 +825,20 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_IceBox"), TEXT("Ice Box"), EAstrawildBuildingCategory::Storage,
         TEXT("Item_Stone"), 8, TEXT("Tech_Thermal"), 280.0f, EAstrawildPowerRole::Consumer, 0.0f, 2.0f, 0.0f, EAstrawildWorkType::None));
+
+    // --- SCP Phase 9: base terminal + creature care buildings. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_BaseTerminal"), TEXT("Base Terminal"), EAstrawildBuildingCategory::Decoration,
+        TEXT("Item_CrystalShard"), 4, NAME_None, 500.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_CreatureBed"), TEXT("Creature Bed"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_Fiber"), 6, TEXT("Tech_Husbandry"), 200.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_HotSpring"), TEXT("Hot Spring Basin"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_Stone"), 12, TEXT("Tech_Thermal"), 300.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_MedicineBench"), TEXT("Medicine Bench"), EAstrawildBuildingCategory::Workstation,
+        TEXT("Item_WoodPlank"), 3, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::Crafting));
 }
 
 // ---------------------------------------------------------------------------

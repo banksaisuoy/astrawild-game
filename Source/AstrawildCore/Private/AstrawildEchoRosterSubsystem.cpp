@@ -78,6 +78,22 @@ TArray<AAstrawildEchoCharacter*> UAstrawildEchoRosterSubsystem::GetSpawnedParty(
     return Out;
 }
 
+int32 UAstrawildEchoRosterSubsystem::GetBaseGarrisonCount() const
+{
+    // SCP Phase 9: the garrison is every spawned, healthy party echo that is
+    // currently assigned to a base work site (the Base Terminal cap pool).
+    int32 Count = 0;
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : SpawnedParty)
+    {
+        const AAstrawildEchoCharacter* Echo = Weak.Get();
+        if (Echo && IsValid(Echo) && !Echo->IsDefeated() && Echo->AssignedWorkSite.IsValid())
+        {
+            ++Count;
+        }
+    }
+    return Count;
+}
+
 void UAstrawildEchoRosterSubsystem::ExportForSave(TArray<FAstrawildEchoInstanceV2>& OutRoster) const
 {
     // Refresh stored data from live party actors so transforms/needs are current.

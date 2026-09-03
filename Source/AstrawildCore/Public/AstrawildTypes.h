@@ -544,6 +544,17 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
      */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0"))
     float CurrentHealth = 0.0f;
+
+    /**
+     * SCP Phase 9 (additive, no schema bump): creature sanity at save time.
+     * 0 = legacy sentinel — 100 (healthy) on restore. Absent in pre-SCP saves.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0", ClampMax="100.0"))
+    float Sanity = 0.0f;
+
+    /** SCP Phase 9 (additive): active illness id (NAME_None = healthy). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    FName IllnessId = NAME_None;
 };
 
 /** Quest objective definition + runtime progress (directive §25). */

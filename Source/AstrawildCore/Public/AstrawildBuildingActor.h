@@ -73,6 +73,15 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Building")
     const UAstrawildBuildingDefinition* GetBuildingDefinition() const;
 
+    /**
+     * SCP Phase 9: spawn the correct actor class for a definition — specialized
+     * buildings (Base Terminal) get their subclass so territory logic lives in
+     * the type; everything else spawns the base actor. Shared by placement and
+     * save-load so both paths agree (one source of truth).
+     */
+    static AAstrawildBuildingActor* SpawnForDefinition(UWorld* World,
+        const UAstrawildBuildingDefinition* Definition, const FVector& Location, const FRotator& Rotation);
+
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Building")
     void ApplyBuildingDamage(float DamageAmount);
 

@@ -47,6 +47,10 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     TArray<AAstrawildEchoCharacter*> GetSpawnedParty() const;
 
+    /** SCP Phase 9: spawned party echoes currently assigned to base work (garrison). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    int32 GetBaseGarrisonCount() const;
+
     void ExportForSave(TArray<FAstrawildEchoInstanceV2>& OutRoster) const;
     void ImportFromSave(const TArray<FAstrawildEchoInstanceV2>& InRoster);
 

@@ -8,6 +8,7 @@
 class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
 class AAstrawildWorkSiteActor;
+class UAstrawildCreatureSanityComponent;
 class UPointLightComponent;
 class UStaticMeshComponent;
 class UNavigationInvokerComponent;
@@ -166,6 +167,10 @@ public:
     /** Assigned work site for base jobs (directive §18). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TWeakObjectPtr<AAstrawildWorkSiteActor> AssignedWorkSite;
+
+    /** SCP Phase 9: sanity / illness / healthcare simulation. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Sanity")
+    TObjectPtr<UAstrawildCreatureSanityComponent> SanityComponent;
 
     // ------------------------------------------------------------------
     // GDP-1 — Echo ability engine (server-authoritative, replicated cooldowns).

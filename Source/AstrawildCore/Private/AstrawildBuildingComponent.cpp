@@ -1,5 +1,6 @@
 #include "AstrawildBuildingComponent.h"
 
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -176,6 +177,14 @@ bool UAstrawildBuildingComponent::ValidatePlacementLocation(const FVector& Locat
         return false;
     }
 
+    // SCP Phase 9: once a Base Terminal exists, new pieces must claim inside a
+    // terminal territory (3500cm). With no terminal placed the world stays open
+    // (early game flow preserved).
+    if (!AAstrawildBaseTerminalActor::IsPlacementAllowed(World, Location))
+    {
+        return false;
+    }
+
     // Overlap check against existing blocking geometry.
     FCollisionShape Shape = FCollisionShape::MakeBox(FVector(GridSize * 0.45f, GridSize * 0.45f, 50.0f));
     TArray<FOverlapResult> Overlaps;
@@ -311,10 +320,9 @@ void UAstrawildBuildingComponent::ServerPlaceBuilding_Implementation(const FName
         return;
     }
 
-    FActorSpawnParameters Params;
-    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    AAstrawildBuildingActor* Building = World->SpawnActor<AAstrawildBuildingActor>(
-        AAstrawildBuildingActor::StaticClass(), Location, FRotator(0.0f, Yaw, 0.0f), Params);
+    // SCP Phase 9: route through the factory so Base Terminals spawn their
+    // territory-aware subclass.
+    AAstrawildBuildingActor* Building = AAstrawildBuildingActor::SpawnForDefinition(World, Def, Location, FRotator(0.0f, Yaw, 0.0f));
 
     if (Building && Building->InitializeFromDefinition(Def, Player->GetFName()))
     {

@@ -7,7 +7,9 @@
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildAssetFallback.h"
 #include "AstrawildAttributeComponent.h"
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBestiaryData.h"
+#include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataValidator.h"
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildErrorReporter.h"
@@ -3463,6 +3465,71 @@ bool FAstrawildDurabilityContractTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Legacy items carry no harvest category"), Item->HarvestCategory.IsNone());
     TestTrue(TEXT("Legacy tools carry no harvest bonus"), Item->HarvestBonusCategory.IsNone());
     TestEqual(TEXT("Default harvest multiplier is neutral"), Item->HarvestMultiplier, 1.0f);
+    return true;
+}
+
+// --- SCP Phase 9: sanity math + illness bands (Test 90) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCreatureSanityMathTest,
+    "ASTRAWILD.SCP.Sanity.MathAndIllness",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCreatureSanityMathTest::RunTest(const FString& Parameters)
+{
+    using San = UAstrawildCreatureSanityComponent;
+
+    // Idle + healthy: no change.
+    TestEqual(TEXT("Idle echoes hold steady"), San::ComputeSanityDelta(10.0f, false, false, false, false, false), 0.0f);
+
+    // Working drains (-0.02/s), combat adds pressure.
+    TestEqual(TEXT("Working drains sanity"), San::ComputeSanityDelta(10.0f, true, false, false, false, false), -0.2f);
+    TestEqual(TEXT("Work + combat stacks drains"), San::ComputeSanityDelta(10.0f, true, true, false, false, false), -0.3f);
+
+    // Comfort: bed +0.05/s, hot spring +0.12/s — comfort outweighs stress.
+    TestEqual(TEXT("Bed recovery beats work drain"),
+        San::ComputeSanityDelta(10.0f, true, false, true, false, false), 0.3f);
+    TestEqual(TEXT("Hot spring recovery"), San::ComputeSanityDelta(10.0f, false, false, false, true, false), 1.2f);
+    TestEqual(TEXT("Night rest recovers"), San::ComputeSanityDelta(10.0f, false, false, false, false, true), 0.1f);
+
+    // Illness risk: zero at/above the threshold, monotone in depth + exposure.
+    TestEqual(TEXT("Healthy band carries no risk"), San::ComputeIllnessRisk(30.0f, 600.0f), 0.0f);
+    TestTrue(TEXT("Deep exposure accrues risk"), San::ComputeIllnessRisk(5.0f, 300.0f) > 0.5f);
+    TestTrue(TEXT("Risk grows with exposure"),
+        San::ComputeIllnessRisk(10.0f, 400.0f) > San::ComputeIllnessRisk(10.0f, 100.0f));
+    TestEqual(TEXT("Risk clamps to 1"), San::ComputeIllnessRisk(0.0f, 100000.0f), 1.0f);
+
+    // Illness bands: Ulcer 40%, SprainedAnkle 35%, Slacker 25%.
+    TestTrue(TEXT("Low roll -> Ulcer"), San::SelectIllness(0.10f) == TEXT("Illness_Ulcer"));
+    TestTrue(TEXT("Mid roll -> SprainedAnkle"), San::SelectIllness(0.50f) == TEXT("Illness_SprainedAnkle"));
+    TestTrue(TEXT("High roll -> Slacker"), San::SelectIllness(0.90f) == TEXT("Illness_Slacker"));
+
+    // Modifier table.
+    TestEqual(TEXT("Slacker work x0.3"), San::GetIllnessWorkMultiplier(TEXT("Illness_Slacker")), 0.3f);
+    TestEqual(TEXT("SprainedAnkle speed x0.75"), San::GetIllnessSpeedMultiplier(TEXT("Illness_SprainedAnkle")), 0.75f);
+    TestTrue(TEXT("Ulcer drains health"), San::GetIllnessHealthDrain(TEXT("Illness_Ulcer")) > 0.0f);
+    TestEqual(TEXT("Unknown illness carries no modifiers"), San::GetIllnessWorkMultiplier(TEXT("Illness_Nope")), 1.0f);
+    return true;
+}
+
+// --- SCP Phase 9: base terminal level + garrison caps (Test 91) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBaseTerminalContractTest,
+    "ASTRAWILD.SCP.BaseTerminal.LevelAndGarrison",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBaseTerminalContractTest::RunTest(const FString& Parameters)
+{
+    // Directive Phase 9.1 numbers pinned: territory 3500cm, caps 5/10/20.
+    TestEqual(TEXT("Territory radius is 3500cm"), AAstrawildBaseTerminalActor::TerritoryRadius, 3500.0f);
+
+    TestEqual(TEXT("0-7 buildings -> level 1"), AAstrawildBaseTerminalActor::ComputeBaseLevel(0), 1);
+    TestEqual(TEXT("7 buildings still level 1"), AAstrawildBaseTerminalActor::ComputeBaseLevel(7), 1);
+    TestEqual(TEXT("8 buildings -> level 2"), AAstrawildBaseTerminalActor::ComputeBaseLevel(8), 2);
+    TestEqual(TEXT("15 buildings still level 2"), AAstrawildBaseTerminalActor::ComputeBaseLevel(15), 2);
+    TestEqual(TEXT("16 buildings -> level 3"), AAstrawildBaseTerminalActor::ComputeBaseLevel(16), 3);
+
+    TestEqual(TEXT("Level 1 garrison 5"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(1), 5);
+    TestEqual(TEXT("Level 2 garrison 10"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(2), 10);
+    TestEqual(TEXT("Level 3 garrison 20"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(3), 20);
+    TestEqual(TEXT("Unknown level falls back to 5"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(99), 5);
     return true;
 }
 

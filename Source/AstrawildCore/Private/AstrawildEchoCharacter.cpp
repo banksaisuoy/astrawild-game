@@ -3,6 +3,7 @@
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildCore.h"
 #include "AstrawildCombatComponent.h"
+#include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEcosystemSubsystem.h"
@@ -523,6 +524,9 @@ AAstrawildEchoCharacter::AAstrawildEchoCharacter()
     // Production V2 Batch 2: element identity light — dark until the glow update
     // enables it for party members / nearby wild elementals (light budget stays tiny).
     ElementGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("ElementGlowLight"));
+
+    // SCP Phase 9: sanity/illness simulation (server ticks, replicated state).
+    SanityComponent = CreateDefaultSubobject<UAstrawildCreatureSanityComponent>(TEXT("Sanity"));
     ElementGlowLight->SetupAttachment(GetCapsuleComponent());
     ElementGlowLight->SetCastShadows(false);
     ElementGlowLight->SetIntensity(0.0f);
@@ -857,6 +861,11 @@ float AAstrawildEchoCharacter::GetStatusSpeedMultiplier() const
         {
             Multiplier *= Effect.SpeedMultiplier;
         }
+    }
+    // SCP Phase 9: illness slows stack with combat statuses (SprainedAnkle 0.75).
+    if (SanityComponent)
+    {
+        Multiplier *= SanityComponent->GetSpeedMultiplier();
     }
     return Multiplier;
 }
@@ -1394,6 +1403,11 @@ FAstrawildEchoInstanceV2 AAstrawildEchoCharacter::ToSaveDataV2() const
     // Final-audit M-2: health at save time — a load must not free-heal the party
     // (defeated echoes used to revive on reload).
     Data.CurrentHealth = FMath::Max(0.0f, CurrentHealth);
+    // SCP Phase 9: sanity + illness persist with the party.
+    if (SanityComponent)
+    {
+        SanityComponent->ExportForSave(Data.Sanity, Data.IllnessId);
+    }
     return Data;
 }
 
@@ -1449,6 +1463,12 @@ bool AAstrawildEchoCharacter::FromSaveDataV2(const FAstrawildEchoInstanceV2& Dat
             CurrentHealth = FMath::Min(FMath::Max(1.0f, CurrentHealth > 0.0f ? CurrentHealth : GetMaxHealth()), GetMaxHealth());
         }
         GetCharacterMovement()->MaxWalkSpeed = CachedStats.MoveSpeed;
+    }
+    // SCP Phase 9: sanity + illness restore (sanitized import; legacy saves
+    // without the fields keep the healthy 100 / no-illness defaults).
+    if (SanityComponent)
+    {
+        SanityComponent->ImportFromSave(FMath::IsFinite(Data.Sanity) ? Data.Sanity : 100.0f, Data.IllnessId);
     }
     return true;
 }

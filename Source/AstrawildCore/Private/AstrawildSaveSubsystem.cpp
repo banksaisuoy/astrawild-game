@@ -631,11 +631,23 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         AAstrawildBuildingActor* Building = nullptr;
         if (!Data.Transform.GetLocation().ContainsNaN())
         {
-            FActorSpawnParameters Params;
-            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-            Building = World->SpawnActor<AAstrawildBuildingActor>(
-                AAstrawildBuildingActor::StaticClass(), Data.Transform.GetLocation(),
-                Data.Transform.Rotator(), Params);
+            // SCP Phase 9: save-load routes through the same factory as
+            // placement so Base Terminals restore as their subclass.
+            const UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+            const UAstrawildBuildingDefinition* BuildingDef = Registry ? Registry->FindBuilding(Data.DefinitionId) : nullptr;
+            Building = BuildingDef
+                ? AAstrawildBuildingActor::SpawnForDefinition(World, BuildingDef,
+                    Data.Transform.GetLocation(), Data.Transform.Rotator())
+                : nullptr;
+
+            if (!Building)
+            {
+                FActorSpawnParameters Params;
+                Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+                Building = World->SpawnActor<AAstrawildBuildingActor>(
+                    AAstrawildBuildingActor::StaticClass(), Data.Transform.GetLocation(),
+                    Data.Transform.Rotator(), Params);
+            }
         }
 
         if (Building && Building->FromSaveData(Data))
