@@ -128,3 +128,18 @@ Expected: 72 pass / 0 fail / 0 skip. Any failure → capture the raw log and fil
 | 82 | ASTRAWILD.NPC.AffinityTiers | 0/25/50/75 boundaries, discount ladder, stable id fallback |
 | 83 | ASTRAWILD.NPC.AffinitySave | Payload round-trip + save field defaults empty |
 | 84 | ASTRAWILD.Ability.EngineContracts | End-to-end echo contracts: knowability gates, cooldown queries, combat picks |
+| 85 | ASTRAWILD.SCP.DataValidator.StaticTables | Bestiary + ability + element-chain integrity (SCP-1) |
+| 86 | ASTRAWILD.SCP.ErrorReporter.RingBuffer | Diagnostic trail capacity + formatting (SCP-1) |
+| 87 | ASTRAWILD.SCP.AssetFallback.ShapePaths | Engine basic-shape fallback map (SCP-1) |
+| 88 | ASTRAWILD.SCP.Spoilage.Math | Stack aging + Ice Box preservation + conversion (SCP-1) |
+| 89 | ASTRAWILD.SCP.Durability.Contracts | Wear constants + legacy-inert definition fields (SCP-1) |
+| 90 | ASTRAWILD.SCP.Sanity.MathAndIllness | Sanity rates + illness risk bands + modifiers (SCP-2) |
+| 91 | ASTRAWILD.SCP.BaseTerminal.LevelAndGarrison | Territory 3500 + levels + garrison caps (SCP-2) |
+| 92 | ASTRAWILD.SCP.Mount.SpeciesAndSpeed | Rideable gates + 1.25x speed + socket contract (SCP-3) |
+| 93 | ASTRAWILD.SCP.Combo.ReactionTable | 12 dual-tech reactions + Steam Explosion contract (SCP-4) |
+| 94 | ASTRAWILD.SCP.DDA.SkillBands | Difficulty bands + multipliers (SCP-4) |
+| 95 | ASTRAWILD.SCP.Crop.GrowthMath | Water/fertilizer/season + state ladder (SCP-5) |
+| 96 | ASTRAWILD.SCP.NPC.ScheduleAnchors | Professions + hours + rain shelter + service gating (SCP-5) |
+| 97 | ASTRAWILD.SCP.Turret.RangeAndPolicy | Range/cadence/damage + party-safe targeting (SCP-5) |
+| 98 | ASTRAWILD.SCP.Genetics.Inheritance | Trait effects + deterministic rolls + IVs (SCP-6) |
+| 99 | ASTRAWILD.SCP.Perf.TierLadder | Scalability ladder + hysteresis policy (SCP-6) |

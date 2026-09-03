@@ -95,3 +95,18 @@
 | GDP-3 | Player growth | 5 attributes + XP wiring at combat/capture/craft/survival sites, 7 milestone skills with smart-cast ladder (Y), passive bonuses consumed by existing systems, save round-trip | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
 | GDP-4 | NPC affinity | 0-100 tiers, talk/trade gains with daily gate, up to 15% vendor discount, per-NPC-id persistence | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
 | GDP-5 | Quality | 12 automation contracts (84 total), validator gate 84, docs updated (this pass) | GLM | IMPLEMENTED | `ASTRAWILD.Ability.*`, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*`, `ASTRAWILD.NPC.Affinity*` |
+
+
+## §F SCP — Systems Completion Pack (2026 session)
+
+| ID | System | Phase | Status | Commit |
+|---|---|---|---|---|
+| SCP-1a | DataValidator (static + registry + checksum) | 1.2 | IMPLEMENTED | a7a827f |
+| SCP-1b | AssetFallback + ErrorReporter | 2.1/2.3 | IMPLEMENTED | a7a827f |
+| SCP-1c | Durability + Spoilage + tools + Repair Bench/Ice Box | 12 | IMPLEMENTED | a7a827f |
+| SCP-2 | Base Terminal + Creature Sanity + healthcare | 9 | IMPLEMENTED | 394ac81 |
+| SCP-3 | Mount/Rider + socket contract | 5.3 | IMPLEMENTED | edc6b08 |
+| SCP-4 | Dual-Tech combos + DDA | 6.3/3.2 | IMPLEMENTED | 6cd29e4 |
+| SCP-5 | NPC schedules + crops + offline production + turret | 7/8/11 | IMPLEMENTED | bbe2e3c |
+| SCP-6 | Genetics + Breeding/Incubator + Perf manager | 10/13.1 | IMPLEMENTED | 9864cce |
+| SCP-7 | Object pooling + TeamAgent + RPC limiter | 13.2/4 | DEFERRED | engine-verify first |

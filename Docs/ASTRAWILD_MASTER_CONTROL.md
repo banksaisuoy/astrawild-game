@@ -141,7 +141,7 @@ Input contract grows 26 → 28 actions (T = party ability cast, Y = player smart
 | Gate | Status | Notes |
 | :--- | :--- | :--- |
 | MSVC build @ 8313c61 | DECLARED PASS (raw log) | superseded — rebuild on final SHA required |
-| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 84 tests now — re-run required |
+| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 99 tests now (SCP-1..6) — re-run required |
 | Final-audit static validation | **PASS 46/46 (this sandbox)** | re-run at AG-2 per HANDOFF §4 |
 | Cook & package | FAILED at 8313c61 (UBT ExitCode 6) per own log | FZ-A1 blocker — re-run on final SHA |
 | Packaged exe runtime | STALE binary evidence (FZ-A2) | re-run on final SHA |
@@ -248,3 +248,16 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026-09-03 | **v3.2 (GLM FINAL COMPLETION)**: FR-1..12 redo landed batch-by-batch on final-completion (BATCH-0..5, all pushed) · Act 3 + 2 endings + post-game + schema V5 + 17 building pieces + 11/11 NPC dialogue · 46/46 static checks · 67 tests · READY_FOR_FINAL_BUILD (source-side) declared · content manifest issued (459/459 LFS, 65/65 /Game refs) |
 | 2026-09-03 | **v3.3 (GLM FINAL SOURCE COMPLETION PASS)**: user-ordered full-repo audit (Phases A–V) executed — 5 parallel deep audits (loop/player, echo/save, quest/boss, world/automation, input/UI/MP/perf); **2 CRITICAL + ~13 HIGH + ~25 MEDIUM defects found and fixed** in FINAL-AUDIT-A (1be6e20: drone compile/crash, POI/boss one-shot quest back-fill, MQ-17 ending gate per canon, view-axis ranged aiming, crafting screen wiring, echo owner identity, robot chassis save, camp respawn, CampKitchen spawn, MainMap default map) and FINAL-AUDIT-B (69a1d65: element canon unified across 204 bestiary rows + authored roster + bosses, echo health persistence, species DefeatLoot live, research import sanitize, AI perception-forgotten + fight-back, stranded-party recall, keyboard screen closes, FastForward cheat) · +5 regression contracts (a5aa74d, 72 tests) · docs reconciled to ONE truth (this pass) · canon UNCHANGED (implementation fixed to match canon) · READY_FOR_FINAL_BUILD re-affirmed (source/repository side) |
 | 2026-10-XX | **v3.4 (GLM GAMEPLAY DEPTH PACK)**: user-directed depth expansion — GDP-1 Echo ability engine (44 templates, per-species loadouts, AI casting, T-key party cast) · GDP-2 locomotion classes (Land/Water/Flying, true flight) · GDP-3 player attributes + 7 milestone smart-cast skills (Y) + save fields · GDP-4 NPC affinity tiers with vendor discounts + save fields · 12 new automation contracts (72 → 84) · canon UNCHANGED · READY_FOR_FINAL_BUILD re-affirmed (source/repository side) |
+
+
+### §5c SCP — Systems Completion Pack (v3.5, session 2026)
+
+Plan-vs-repo audit of the vULTIMATE 14-phase directive found 17 missing systems;
+six SCP batches closed 15 of them (source-complete, additive, 99 tests):
+SCP-1 DataValidator/AssetFallback/ErrorReporter + Durability/Spoilage (a7a827f) ·
+SCP-2 Base Terminal + Creature Sanity (394ac81) · SCP-3 Mounting (edc6b08) ·
+SCP-4 Dual-Tech Combos + DDA (6cd29e4) · SCP-5 NPC Schedules + Crops + Offline
+Production + Turrets (bbe2e3c) · SCP-6 Genetics + Performance Manager (9864cce).
+Deferred with reasons: object pooling (engine-verify destroy path first),
+IGenericTeamAgentInterface (co-op perception layer). Full matrix:
+Docs/ASTRAWILD_SYSTEMS_COMPLETION_PACK.md.
