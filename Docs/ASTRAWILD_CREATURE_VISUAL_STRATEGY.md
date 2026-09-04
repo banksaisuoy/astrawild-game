@@ -1,9 +1,9 @@
 ﻿# ASTRAWILD — CREATURE VISUAL STRATEGY (Tier A / B / C)
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect (source-side)
 **Status**: SOURCE-VERIFIED strategy — all deliverables below are `IMPORT_READY` at most; **nothing here is `UE5_VERIFIED`**. Engine import, binding and PIE verification belong to the Antigravity run per `ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b.
-**Origin**: Wayfinder ticket 07 (user directive 2026-09-05 — "create a REAL CREATURE VISUAL STRATEGY as the next post-Batch-2 task").
+**Origin**: Wayfinder ticket 07 (user directive 2026-09-05 — "create a REAL CREATURE VISUAL STRATEGY as the next post-Batch-2 task"). v1.1 (V25-C1): §10 P0 boss-mesh row executed — 4 bespoke boss meshes delivered (A7-A10).
 **Baseline**: `final-completion` @ `a09e566` (post batch-2 acquisition).
 
 ---
@@ -21,9 +21,9 @@ The strategy is a **tiered investment curve**: bespoke art where story pressure 
 | Fact | Value | Source |
 |---|---|---|
 | Total species | **229** = 10 authored starters + 6 production heroes + 3 final-run boss species + 6 evolution targets + 204 bestiary rows | `AstrawildContentLibrary.cpp:1426-1470`, `AstrawildProductionContent.cpp:2343-2366`, `AstrawildBestiaryData.cpp:53-2094`; enforced by `validate_final_run.py` census gate |
-| Species with skinned+animated meshes | **6** (Terraquill, Cindermule, Voltpylon, Bastionbeetle, Mistmender, Deepdelver — each a bespoke `Tools/ArtSourceGen/gen_echo_*.py` with Idle/Move/Hit clips) + 6 evolution targets reusing them as tint/scale variants | `ArtSource/Meshes/Echoes/`, `AstrawildArtPack.cpp:72-84` |
-| Species rendering as procedural bodies | **223** (8 body-plan archetypes × 5 size classes × 2 tints, vertex-colored PMC) | `AstrawildEchoCharacter.cpp:216-381` |
-| Boss visuals | **4 boss fights render as an engine Cone placeholder** (scale 2.4 + sphere weak point) despite full species data — highest-visibility gap in the game | `AstrawildEchoBossCharacter.cpp:32-60` |
+| Species with skinned+animated meshes | **10** (Terraquill, Cindermule, Voltpylon, Bastionbeetle, Mistmender, Deepdelver + the 4 boss meshes DrownedSovereign/GlassTyrant/Dawnfang/EyeSentinel — each a bespoke `Tools/ArtSourceGen/gen_echo_*.py` with Idle/Move/Hit clips) + 6 evolution targets reusing them as tint/scale variants | `ArtSource/Meshes/Echoes/`, `AstrawildArtPack.cpp:72-84` |
+| Species rendering as procedural bodies | **219** (8 body-plan archetypes × 5 size classes × 2 tints, vertex-colored PMC) | `AstrawildEchoCharacter.cpp:216-381` |
+| Boss visuals | **4 boss fights still render as the engine Cone placeholder at runtime** (scale 2.4 + sphere weak point) — the source-side replacement meshes now exist (A7-A10) and await Antigravity import/binding per §9 | `AstrawildEchoBossCharacter.cpp:32-60` |
 | Species ever actually spawned | **~46** (zone-wildlife table + camp spawns + hostile-spawner floors + dungeon pools + one-per-world Auroraling) | `WorldBootstrapper.cpp:64-104,589,638-655,836`; `HostileSpawnerSubsystem.h:36-48` |
 | Body-plan distribution | Quadruped 55 · Amorphous 36 · Floating 28 · Biped 24 · Avian 21 · Serpent 18 · Insectoid 16 · Crystalline 14 | `AstrawildBestiaryData.cpp` rows |
 | Locomotion classes | `Auto / Land / Water / Flying` derived from family+body-plan+zone | `AstrawildTypes.h:1142-1149`, `AstrawildEchoCharacter.cpp:2003-2028` |
@@ -52,10 +52,10 @@ Tier membership is **deterministic and code-greppable** (spawn tables, `SizeClas
 | A4 | **Bastionbeetle** (+BastionbeetleBulwark) | Hero, Verdant Reach | `SK_Echo_Bastionbeetle.glb` **EXISTS** | done |
 | A5 | **Mistmender** (+MistmenderRime) | Hero, Dusk Marsh (flying) | `SK_Echo_Mistmender.glb` **EXISTS** | done |
 | A6 | **Deepdelver** (+DeepdelverAbyssal) | Hero, Stormcrest Highlands | `SK_Echo_Deepdelver.glb` **EXISTS** | done |
-| A7 | **DrownedSovereign** | **MQ-16 FINAL BOSS** (3 phases, Eye of the Maelstrom) | NEW bespoke `gen_boss_drownedsovereign.py` — serpent/lore architecture silhouette, phase-glow materials | **P0** |
-| A8 | **GlassTyrant** | **MQ-14 world boss** (Sunscar) | NEW bespoke `gen_boss_glasstyrant.py` — crystalline shard mass, fracture emissive | **P0** |
-| A9 | **Dawnfang** | **Sunken Vault dungeon boss** (MQ-10) | NEW bespoke `gen_boss_dawnfang.py` — aquatic dragon/serpent hybrid, bioluminescent lateral line | **P0** |
-| A10 | **EyeSentinel** | Eye dungeon adds + Sovereign summons (MQ-15/16) | NEW bespoke `gen_eyesentinel.py` — floating construct, single emissive iris | **P0** |
+| A7 | **DrownedSovereign** | **MQ-16 FINAL BOSS** (3 phases, Eye of the Maelstrom) | `SK_Echo_DrownedSovereign.glb` **EXISTS — IMPORT_READY** (V25-C1) | done |
+| A8 | **GlassTyrant** | **MQ-14 world boss** (Sunscar) | `SK_Echo_GlassTyrant.glb` **EXISTS — IMPORT_READY** (V25-C1) | done |
+| A9 | **Dawnfang** | **Sunken Vault dungeon boss** (MQ-10) | `SK_Echo_Dawnfang.glb` **EXISTS — IMPORT_READY** (V25-C1) | done |
+| A10 | **EyeSentinel** | Eye dungeon adds + Sovereign summons (MQ-15/16) | `SK_Echo_EyeSentinel.glb` **EXISTS — IMPORT_READY** (V25-C1) | done |
 | A11 | **Gloomfang** | MQ-05 hunt target **+ Underlight Warden (dungeon-1 boss)** + night-raid raider | NEW bespoke `gen_gloomfang.py` — low quadruped predator, ash-vent back plates | **P0** |
 | A12 | **Lumewisp** | **Starter companion (MQ-02)** — the first Echo every player bonds with | NEW bespoke `gen_lumewisp.py` — floating light spirit, lantern core | **P0** |
 | A13 | **Sprigling** | MQ-06 capture lesson + Great Migration event | NEW bespoke `gen_sprigling.py` — small biped flora-foal | P1 |
@@ -144,9 +144,10 @@ Everything above is source-side ArtSourceGen/manifest work except where marked e
 
 | Item | Status |
 |---|---|
-| This document | SOURCE-VERIFIED (v1.0) |
+| This document | SOURCE-VERIFIED (v1.1) |
 | 6 hero meshes + evolution variants | IMPORT_READY (existing) |
-| 8 bespoke Tier-A meshes | **MISSING → ArtSourceGen backlog (P0)** |
+| 4 boss meshes (DrownedSovereign / GlassTyrant / Dawnfang / EyeSentinel) | **IMPORT_READY (V25-C1 — this batch)**; engine binding ENGINE-UNVERIFIED |
+| 4 story species meshes (Lumewisp / Sprigling / Gloomfang / Auroraling) | **MISSING → P0 backlog** |
 | Archetype rig library (8 plans) | MISSING → P1 |
 | Tier-C identity strengthening | PARTIAL (tints/ring/point-light live; pattern pass pending) |
 | Engine import/binding of any creature mesh | ENGINE-UNVERIFIED (Antigravity §20b) |

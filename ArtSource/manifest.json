@@ -378,6 +378,33 @@
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Cindermule",
       "validate": "PASS"
     },
+    "SK_Echo_Dawnfang": {
+      "animations": [
+        "AM_Dawnfang_Idle",
+        "AM_Dawnfang_Move",
+        "AM_Dawnfang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 20,
+      "bytes": 310748,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 20,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 21,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Dawnfang.glb",
+      "skins": 1,
+      "species": "Dawnfang",
+      "triangles": 3288,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Dawnfang",
+      "validate": "PASS"
+    },
     "SK_Echo_Deepdelver": {
       "animations": [
         "AM_Deepdelver_Idle",
@@ -403,6 +430,87 @@
       "species": "Deepdelver",
       "triangles": 720,
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Deepdelver",
+      "validate": "PASS"
+    },
+    "SK_Echo_DrownedSovereign": {
+      "animations": [
+        "AM_DrownedSovereign_Idle",
+        "AM_DrownedSovereign_Move",
+        "AM_DrownedSovereign_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 24,
+      "bytes": 358264,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 24,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 25,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_DrownedSovereign.glb",
+      "skins": 1,
+      "species": "DrownedSovereign",
+      "triangles": 4405,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_DrownedSovereign",
+      "validate": "PASS"
+    },
+    "SK_Echo_EyeSentinel": {
+      "animations": [
+        "AM_EyeSentinel_Idle",
+        "AM_EyeSentinel_Move",
+        "AM_EyeSentinel_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 14,
+      "bytes": 177356,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_EyeSentinel.glb",
+      "skins": 1,
+      "species": "EyeSentinel",
+      "triangles": 2243,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_EyeSentinel",
+      "validate": "PASS"
+    },
+    "SK_Echo_GlassTyrant": {
+      "animations": [
+        "AM_GlassTyrant_Idle",
+        "AM_GlassTyrant_Move",
+        "AM_GlassTyrant_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 19,
+      "bytes": 247648,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 19,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 20,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_GlassTyrant.glb",
+      "skins": 1,
+      "species": "GlassTyrant",
+      "triangles": 3052,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_GlassTyrant",
       "validate": "PASS"
     },
     "SK_Echo_Mistmender": {
