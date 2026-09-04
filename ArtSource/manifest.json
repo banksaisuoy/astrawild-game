@@ -324,6 +324,33 @@
       "seconds": 0.9,
       "ue_path": "/Game/Audio/A_Weapon_Singularity_Fire"
     },
+    "SK_Echo_Auroraling": {
+      "animations": [
+        "AM_Auroraling_Idle",
+        "AM_Auroraling_Move",
+        "AM_Auroraling_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 15,
+      "bytes": 185272,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 15,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 16,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Auroraling.glb",
+      "skins": 1,
+      "species": "Auroraling",
+      "triangles": 1813,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Auroraling",
+      "validate": "PASS"
+    },
     "SK_Echo_Bastionbeetle": {
       "animations": [
         "AM_Bastionbeetle_Idle",
@@ -513,6 +540,60 @@
       "ue_path": "/Game/Characters/Echoes/SK_Echo_GlassTyrant",
       "validate": "PASS"
     },
+    "SK_Echo_Gloomfang": {
+      "animations": [
+        "AM_Gloomfang_Idle",
+        "AM_Gloomfang_Move",
+        "AM_Gloomfang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 22,
+      "bytes": 235156,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 22,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 23,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Gloomfang.glb",
+      "skins": 1,
+      "species": "Gloomfang",
+      "triangles": 2310,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Gloomfang",
+      "validate": "PASS"
+    },
+    "SK_Echo_Lumewisp": {
+      "animations": [
+        "AM_Lumewisp_Idle",
+        "AM_Lumewisp_Move",
+        "AM_Lumewisp_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 10,
+      "bytes": 100120,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 10,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 11,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Lumewisp.glb",
+      "skins": 1,
+      "species": "Lumewisp",
+      "triangles": 1013,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Lumewisp",
+      "validate": "PASS"
+    },
     "SK_Echo_Mistmender": {
       "animations": [
         "AM_Mistmender_Idle",
@@ -538,6 +619,33 @@
       "species": "Mistmender",
       "triangles": 580,
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistmender",
+      "validate": "PASS"
+    },
+    "SK_Echo_Sprigling": {
+      "animations": [
+        "AM_Sprigling_Idle",
+        "AM_Sprigling_Move",
+        "AM_Sprigling_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 15,
+      "bytes": 137908,
+      "category": "mesh",
+      "element": "Flora",
+      "joints": 15,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 16,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Sprigling.glb",
+      "skins": 1,
+      "species": "Sprigling",
+      "triangles": 1583,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sprigling",
       "validate": "PASS"
     },
     "SK_Echo_Terraquill": {
