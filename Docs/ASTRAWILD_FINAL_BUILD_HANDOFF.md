@@ -31,9 +31,20 @@ commits (oldest→newest, ALL pushed to origin/final-completion):
   69a1d65  [FINAL-AUDIT-B] Medium/low hardening — 20 defects (element canon unification,
            echo health persist, species DefeatLoot live, research sanitize, AI perception)
   a5aa74d  [FINAL-AUDIT-C] +5 regression contracts (67 → 72 tests)
-  <TIP>    [FINAL-AUDIT-D] This documentation batch — the branch TIP (docs + registry +
-           readiness re-issued at the final state). `git ls-remote origin final-completion`
-           gives the exact tip SHA; `git log --oneline -12` must show the full list above.
+  d20152b  [FINAL-AUDIT-D] Docs: ONE truth + executable handoff
+  baca0f6  [GDP] Gameplay Depth Pack — echo abilities/locomotion/attributes/affinity (84 tests)
+  078c662  [GDP] Docs: manifest v1.2 amendment + GDP playtest additions
+  a7a827f  [SCP-1] Runtime hardening — DataValidator/ErrorReporter/AssetFallback/durability/spoilage
+  394ac81  [SCP-2] Base Terminal + creature sanity & healthcare
+  edc6b08  [SCP-3] Creature mounting (Phase 5)
+  6cd29e4  [SCP-4] Dual-tech combo reactions + dynamic difficulty (Phase 6/3)
+  bbe2e3c  [SCP-5] Living world — NPC schedules, crops, offline production, turrets
+  9864cce  [SCP-6] Breeding genetics + dynamic performance enforcement (99 tests)
+  f9892b6  [SCP-7] Docs: plan-vs-repo audit matrix, master control v3.5 + registry §F
+  <TIP>    [FCR] Final Game Completion Run (this session): registry reconciliation +
+           census gates + GDP/SCP audit fixes + final docs. `git ls-remote origin
+           final-completion` gives the exact tip SHA; `git log --oneline -25` must show
+           the full list above.
 ```
 **PR #4 is subsumed** — merging `final-completion` into `main` closes it (do not re-merge
 PR #4 separately).
@@ -69,7 +80,7 @@ git lfs install
 git checkout final-completion              # the default clone already lands here (origin HEAD follows main; checkout explicitly)
 git pull origin final-completion
 git lfs pull
-python Scripts/validate_final_run.py     # 46/46 static checks must PASS (72-test gate included)
+python Scripts/validate_final_run.py     # ALL static checks must PASS (99-test gate + 15 census equality gates included)
 bash Scripts/validate_repository.sh      # structural ruleset PASS
 ```
 Final-audit note: the earlier text pointed at `glm/final-run`, a branch that never reached
@@ -117,7 +128,7 @@ the UBT log tail BEFORE retrying; that is the artifact GLM needs to diagnose.
 .\Test.ps1
 # outputs E:\AstrawildGame\Automation_Output.txt
 ```
-**PASS = 72/72 `Result={Success}`, 0 `Result={Fail}`.** Contracts to watch:
+**PASS = 99/99 `Result={Success}`, 0 `Result={Fail}`.** Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety` · `ASTRAWILD.Save.SchemaV5Ending` ·
 `ASTRAWILD.Quest.FinalRunChain` · `ASTRAWILD.Echo.FinalRunBosses` ·
 `ASTRAWILD.Tech.SkiffEngineering` · `ASTRAWILD.Dialogue.EndingChoice` ·
@@ -147,7 +158,7 @@ E:\Astrawild_Packaged\Windows\ASTRAWILD.exe
 Editor/PIE: MainMap loads → WorldBootstrapper builds the 12-zone world → camp with
 workbench/campfire/rest point, 2 skiffs, Dawnstead village; HUD shows
 Day 1 08:00, weather Clear, Research: 0 RP, quest tracker "First Light: Wood 0/10 …".
-Log markers (approximate): `Content library defaults registered: 67 items, 49 recipes, 229 Echo…`,
+Log markers (approximate): `Content library registered (live census): 76 items, 56 recipes, 229 Echo species, 26 buildings, 17 technologies, 17 quests, 11 loot tables, 11 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 11 dialogue trees, 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
 `Final Run Act 3 content registered: …`, `Production V2 content registered: …`.
 Packaged exe: same, after the loading screen.
 
@@ -221,7 +232,7 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 72 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 99 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
 - Enhanced Input runtime mapping (26 actions) — verify no duplicate-context warnings in the log.
@@ -232,9 +243,9 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 20. EXACT ANTIGRAVITY FINAL VERIFICATION SEQUENCE
 
 ```text
-1  pull final-completion (§4) + git lfs pull + both static validators PASS (46/46)
+1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 72/72 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 99/99 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
@@ -261,4 +272,4 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **84/84** (was 72).
+6. Automation now expects **99/99** (was 72 → 84 at GDP → 99 at SCP; the validator census gates enforce the final value).

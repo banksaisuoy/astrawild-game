@@ -430,3 +430,23 @@ TArray<UAstrawildResourceNodeDefinition*> UAstrawildItemRegistrySubsystem::GetAl
     }
     return Out;
 }
+
+int32 UAstrawildItemRegistrySubsystem::GetNumQuests() const
+{
+    return Quests.Num();
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumLootTables() const
+{
+    return LootTables.Num();
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumNPCs() const
+{
+    return NPCDefinitions.Num();
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumRobots() const
+{
+    return Robots.Num();
+}

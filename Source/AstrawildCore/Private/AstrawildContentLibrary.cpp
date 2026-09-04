@@ -1443,7 +1443,26 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     // Production V2 retrofits: existing items/techs gain their new data fields.
     ApplyProductionV2Retrofits(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 226 Echo species (16 authored + 6 evolution targets + 204 bestiary), 17 buildings (13 + Floor/Roof/Door/StorageCrate), 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 dialogue trees."));
+    // Final Completion Run (registry reconciliation): the completion summary is derived
+    // LIVE from the registry — never hardcoded. This log line is the engine-side
+    // authoritative content census (docs must cite these numbers, not invent them).
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library registered (live census): %d items, %d recipes, %d Echo species, %d buildings, %d technologies, %d quests, %d loot tables, %d NPCs, %d weapon profiles, %d resource nodes, %d work sites, %d world events, %d POIs, %d biomes, %d dialogue trees, %d robots."),
+        Registry->GetAllItems().Num(),
+        Registry->GetAllRecipes().Num(),
+        Registry->GetAllEchoDefinitions().Num(),
+        Registry->GetAllBuildings().Num(),
+        Registry->GetAllTechnologies().Num(),
+        Registry->GetNumQuests(),
+        Registry->GetNumLootTables(),
+        Registry->GetNumNPCs(),
+        Registry->GetAllWeapons().Num(),
+        Registry->GetAllResourceNodeDefinitions().Num(),
+        Registry->GetAllWorkSiteDefinitions().Num(),
+        Registry->GetAllWorldEvents().Num(),
+        Registry->GetAllPOIs().Num(),
+        Registry->GetAllBiomes().Num(),
+        Registry->GetAllDialogueTrees().Num(),
+        Registry->GetNumRobots());
 }
 
 void UAstrawildContentLibrary::WarmArtPackBindings(UAstrawildItemRegistrySubsystem* Registry)

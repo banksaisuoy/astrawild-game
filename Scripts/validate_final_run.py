@@ -157,6 +157,83 @@ cats = ["Foundation", "Wall", "Floor", "Roof", "Door", "Storage", "Workstation",
 missing_cats = [c for c in cats if f"EAstrawildBuildingCategory::{c}" not in CL]
 check("Building categories populated", not missing_cats, f"missing: {missing_cats}")
 
+# --- 11. Authoritative content census (one truth per metric) ---
+# These EXPECTED values are the single authoritative content counts (Final
+# Completion Run Phase 0). Every active doc MUST cite these exact numbers; the
+# engine-side live census log (ContentLibrary "live census" line) re-derives them
+# at runtime. If source drifts, this gate forces reconciliation instead of
+# letting stale numbers propagate silently.
+BD = read("Source/AstrawildCore/Private/AstrawildBestiaryData.cpp")
+
+def call_ids(source, helper):
+    pat = re.compile(r"\b" + helper + r"\s*\((?:[^()]|\([^)]*\))*?TEXT\(\"([A-Za-z0-9_]+)\"\)")
+    return pat.findall(source)
+
+item_ids = set(call_ids(CL, "MakeItem")) | set(call_ids(PC, "MakeItem"))
+recipe_ids = set(call_ids(CL, "MakeRecipe")) | set(call_ids(PC, "MakeRecipe"))
+building_ids = set(call_ids(CL, "MakeBuilding"))
+weapon_ids = set(call_ids(PC, "MakeWeapon"))
+poi_ids = set(re.findall(r'TEXT\("(POI_[A-Za-z0-9_]+)"\)', PC)) - {"POI_Test"}
+event_ids = set(call_ids(PC, "MakeWorldEvent"))
+site_ids = set(re.findall(r'TEXT\("(Site_[A-Za-z0-9_]+)"\)', PC + CL)) - {"Site_Test"}
+node_ids = set(re.findall(r'TEXT\("(Node_[A-Za-z0-9_]+)"\)', PC + CL)) - {"Node_Test"}
+# robots are created via NewObject + RobotId = TEXT("Robot_X") + RegisterRobot (not a Make helper)
+bestiary_rows = re.findall(r'\{ TEXT\("(Echo_[A-Za-z0-9_]+)"\), TEXT\("', BD)
+hero_ids = set(call_ids(PC, "MakeProductionEcho"))
+evo_targets = {b for _a, b in re.findall(r'\{ TEXT\("(Echo_[A-Za-z0-9_]+)"\),\s*TEXT\("(Echo_[A-Za-z0-9_]+)"\)', PC)}
+starter_ids = set(call_ids(CL, "MakeEcho"))
+species_ids = set(bestiary_rows) | hero_ids | evo_targets | starter_ids
+quest_ids = set(re.findall(r'TEXT\("(Quest_[A-Za-z0-9_]+)"\)', PC + CL)) - {"Quest_Any", "Quest_DoesNotExist"}
+tech_ids = set(re.findall(r'TEXT\("(Tech_[A-Za-z0-9_]+)"\)', PC + CL)) - {"Tech_DoesNotExist", "Tech_TestTech"}
+loot_ids = set(re.findall(r'TEXT\("(Loot_[A-Za-z0-9_]+)"\)', PC + CL)) - {"Loot_Test"}
+npc_ids = set(re.findall(r'TEXT\("(NPC_[A-Za-z0-9_]+)"\)', PC + CL)) - {"NPC_Test"}
+robot_ids = set(re.findall(r'RobotId\s*=\s*TEXT\("(Robot_[A-Za-z0-9_]+)"\)', PC))
+dialogue_ids = set(re.findall(r'TEXT\("(Dialogue_[A-Za-z0-9_]+)"\)', PC + CL))
+
+EXPECTED_CENSUS = {
+    "items": 76,
+    "recipes": 56,
+    "species": 229,
+    "buildings": 26,
+    "techs": 17,
+    "quests": 17,
+    "loot_tables": 11,
+    "npcs": 11,
+    "weapons": 8,
+    "resource_nodes": 10,
+    "work_sites": 4,
+    "world_events": 9,
+    "pois": 13,
+    "dialogue_trees": 11,
+    "robots": 3,
+}
+ACTUAL_CENSUS = {
+    "items": len(item_ids),
+    "recipes": len(recipe_ids),
+    "species": len(species_ids),
+    "buildings": len(building_ids),
+    "techs": len(tech_ids),
+    "quests": len(quest_ids),
+    "loot_tables": len(loot_ids),
+    "npcs": len(npc_ids),
+    "weapons": len(weapon_ids),
+    "resource_nodes": len(node_ids),
+    "work_sites": len(site_ids),
+    "world_events": len(event_ids),
+    "pois": len(poi_ids),
+    "dialogue_trees": len(dialogue_ids),
+    "robots": len(robot_ids),
+}
+for metric, expected in EXPECTED_CENSUS.items():
+    actual = ACTUAL_CENSUS[metric]
+    check(f"Census {metric} == {expected}", actual == expected,
+          f"actual={actual} — update EXPECTED_CENSUS + all active docs together (never edit one side alone)")
+
+# The completion log must be dynamic (no hardcoded counts in log strings).
+check("Completion log derives counts live (no hardcoded census)",
+      "GetAllItems().Num()" in CL and "live census" in CL,
+      "ContentLibrary completion log must count from the registry")
+
 print()
 if FAILURES:
     print(f"FINAL RUN VALIDATION: {len(FAILURES)} FAILURE(S)")

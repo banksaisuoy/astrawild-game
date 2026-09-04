@@ -164,7 +164,7 @@ Cross-checked by: `Scripts/validate_final_run.py` §8 (64 refs in the hot files)
 - Quest chain closure: MQ-01→MQ-17 + Maren endings (validator §2/§3).
 - Act 3 world wiring: 8/8 checks (validator §5). Ending state machine: 12/12
   (validator §6). Building catalog: all categories populated (validator §10).
-- Automation suite: **72 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`).
+- Automation suite: **99 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`, rows 1-99).
 
 ### v1.1 amendment (Final Source Completion Pass — FINAL-AUDIT A/B/C/D)
 

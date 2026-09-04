@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — MASTER TASK REGISTRY
 
-**Companion to**: `Docs/ASTRAWILD_MASTER_CONTROL.md` v3.2
+**Companion to**: `Docs/ASTRAWILD_MASTER_CONTROL.md` v3.6
 **Scope**: every task relevant to the Final Run; no orphans, no duplicates, no undocumented blockers.
 **Statuses**: PLANNED / IN_PROGRESS / IMPLEMENTED / BUILT / TESTED / UE5_VERIFIED / ACCEPTED (+ ENGINE-UNVERIFIED qualifier)
 
@@ -43,9 +43,10 @@
 | FA-4 | Regression | +5 world-free contracts: OneShotBackFill, DefeatCountImportSafety, DismantleIsNotPlacement, Research.ImportSafety, Save.FinalAuditContracts | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-2/3 | AutomationTests.cpp | a5aa74d | static count 72; engine run pending | none | engine test |
 | FA-5 | Docs | Phase Q reconciliation: 72-test truth everywhere, dead glm/final-run references fixed in HANDOFF, control list corrected, readiness gate re-checked | GLM | UPDATED | FA-2..4 | Docs/*.md | (this docs commit) | review | none | Antigravity review |
 
-> Automation suite: **72 world-free contract tests** (57 baseline + 4 hardening from
-> BATCH-1 + 6 Final Run from BATCH-2 + 5 final-audit regressions). Full inventory:
-> `Docs/ASTRAWILD_TEST_INVENTORY.md`.
+> Automation suite: **99 world-free contract tests** (57 baseline + 4 hardening from
+> BATCH-1 + 6 Final Run from BATCH-2 + 5 final-audit regressions + 12 GDP + 15 SCP).
+> Full inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md` (rows 1-99). One authoritative value
+> per metric — enforced by the validator's §11 census gates.
 
 ## B. Antigravity integration tasks (engine machine)
 
@@ -53,7 +54,7 @@
 | :-- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | AG-1 | Git | Pull/merge final-completion; push main; close PR #4 as absorbed | Antigravity | PLANNED | FA-5 | git log / PR state | credentials | execute after AG-2..5 |
 | AG-2 | Build | MSVC compile of final SHA (0 errors) | Antigravity | PLANNED | FR-* | raw build log | UE 5.8.2 machine | run |
-| AG-3 | Tests | 72/72 automation green | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
+| AG-3 | Tests | 99/99 automation green | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
 | AG-4 | Playtest | PIE golden path: MQ chain → Eye → Sovereign → ending A/B → post-game; save/load round-trip; door/crate interactions | Antigravity | PLANNED | AG-3 | raw PIE log + per-checkpoint trace | none | run |
 | AG-5 | Package | Cook+package exit 0; packaged exe boots to MainMap | Antigravity | PLANNED | AG-2 | raw UAT log | FZ-A1 recurrence watch | run |
 | AG-6 | Fix loop | Any engine-only defect → smallest fix on a branch; architectural problems return to GLM | Antigravity | PLANNED | AG-4/5 | fix commits | none | as found |
@@ -63,7 +64,7 @@
 | ID | Category | Description | Owner | Status | Notes |
 | :-- | :--- | :--- | :--- | :--- | :--- |
 | CV-1 | Assets | 115 ArtPack .uasset to Git LFS | Antigravity | ACCEPTED | f31f5e1; GLM verified 459/459 LFS objects resolve |
-| CV-2 | Hardening | GLM source hardening SH-01..04 + 57 tests | Antigravity | TESTED (declared) | c65d734; re-run with 67 at AG-3 |
+| CV-2 | Hardening | GLM source hardening SH-01..04 + 57 tests | Antigravity | TESTED (declared) | c65d734; re-run with 99 at AG-3 |
 | CV-3 | Input | Playable input/camera fix chain 520c78e+df8df83 | Antigravity | TESTED (declared) | re-verify at AG-4 |
 | CV-4 | QA | Gamepad actuation (V-31) | Antigravity | BLOCKED | physical controller hardware |
 | CV-5 | Economy | Duskmoth has no loot / berry faucet thin (FZ-ECO-2/3) | GLM | PLANNED (P2) | balance polish batch — post-engine-verify |
@@ -94,7 +95,7 @@
 | GDP-2 | Locomotion | Land/Water/Flying classes with derivation rule, MOVE_Flying + 3D steering for flyers, sea-zone speed tuning for swimmers | GLM | IMPLEMENTED | Deterministic; covers all 210+ species; ENGINE-UNVERIFIED |
 | GDP-3 | Player growth | 5 attributes + XP wiring at combat/capture/craft/survival sites, 7 milestone skills with smart-cast ladder (Y), passive bonuses consumed by existing systems, save round-trip | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
 | GDP-4 | NPC affinity | 0-100 tiers, talk/trade gains with daily gate, up to 15% vendor discount, per-NPC-id persistence | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
-| GDP-5 | Quality | 12 automation contracts (84 total), validator gate 84, docs updated (this pass) | GLM | IMPLEMENTED | `ASTRAWILD.Ability.*`, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*`, `ASTRAWILD.NPC.Affinity*` |
+| GDP-5 | Quality | 12 automation contracts (84 cumulative at GDP time — now 99 with SCP), validator gate, docs updated | GLM | IMPLEMENTED | `ASTRAWILD.Ability.*`, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*`, `ASTRAWILD.NPC.Affinity*` |
 
 
 ## §F SCP — Systems Completion Pack (2026 session)
@@ -110,3 +111,14 @@
 | SCP-5 | NPC schedules + crops + offline production + turret | 7/8/11 | IMPLEMENTED | bbe2e3c |
 | SCP-6 | Genetics + Breeding/Incubator + Perf manager | 10/13.1 | IMPLEMENTED | 9864cce |
 | SCP-7 | Object pooling + TeamAgent + RPC limiter | 13.2/4 | DEFERRED | engine-verify first |
+
+## §G FINAL GAME COMPLETION RUN (current session — user-ordered autonomous completion)
+
+Directive: continue autonomously until the repository honestly reaches
+READY_FOR_FINAL_BUILD; reconcile every contradictory registry value from actual
+source; audit + fix; keep canon locked; deterministic handoff.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FCR-0 | Registry reconciliation | One authoritative value per metric: test count unified to **99** (from AutomationTests.cpp + validator); content census established (76 items / 56 recipes / 229 species / 26 buildings / 17 techs / 17 quests / 11 loot / 13 POIs / 9 events / 11 NPCs / 11 dialogues / 8 weapons / 10 nodes / 4 sites / 3 robots); census enforced by validator §11 equality gates; live engine census log added (hardcoded stale counts removed from ContentLibrary) | GLM | IMPLEMENTED | commit in this run; ENGINE-UNVERIFIED (log fires at engine boot) |
+| FCR-1 | Source audit | Fresh full audit of GDP+SCP code (a7a827f..f9892b6 — not covered by the prior 5-audit pass) + fix every real defect found | GLM | IN_PROGRESS | see worklog |

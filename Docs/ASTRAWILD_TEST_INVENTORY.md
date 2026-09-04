@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 72 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 99 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -10,7 +10,17 @@ CDO reads and static resolvers only — the one exception class reads the
 one behavioral contract per domain. The Final Run additions (#62-67) pin the
 Act 3 story spine end-to-end at the data level; the final-audit regressions
 (#68-72) pin the audit's P0/P1 fixes with behavioral contracts (real matcher
-paths, real import paths).
+paths, real import paths); the GDP pack (#73-84) pins the depth systems
+(abilities/locomotion/attributes/affinity); the SCP pack (#85-99) pins the
+systems-completion layer (validator/fallback/spoilage/sanity/mount/combos/
+difficulty/crops/schedules/turrets/genetics/perf).
+
+**Count reconciliation (Final Completion Run Phase 0, binding)**: the single
+authoritative test count is **99** — derived from `AutomationTests.cpp`
+(`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
+gate (`Automation tests >= 99`), and listed in this inventory (rows 1-99).
+Historical counts (57/63/67/72/84) describe earlier commits only and appear
+nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
 
@@ -108,8 +118,8 @@ paths, real import paths).
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 72)
-Expected: 72 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 99)
+Expected: 99 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
 
 ## Gameplay Depth Pack contracts (73-84)
@@ -128,6 +138,11 @@ Expected: 72 pass / 0 fail / 0 skip. Any failure → capture the raw log and fil
 | 82 | ASTRAWILD.NPC.AffinityTiers | 0/25/50/75 boundaries, discount ladder, stable id fallback |
 | 83 | ASTRAWILD.NPC.AffinitySave | Payload round-trip + save field defaults empty |
 | 84 | ASTRAWILD.Ability.EngineContracts | End-to-end echo contracts: knowability gates, cooldown queries, combat picks |
+
+## Systems Completion Pack contracts (85-99, landed SCP-1..6)
+
+| # | Test | Covers |
+|---|------|--------|
 | 85 | ASTRAWILD.SCP.DataValidator.StaticTables | Bestiary + ability + element-chain integrity (SCP-1) |
 | 86 | ASTRAWILD.SCP.ErrorReporter.RingBuffer | Diagnostic trail capacity + formatting (SCP-1) |
 | 87 | ASTRAWILD.SCP.AssetFallback.ShapePaths | Engine basic-shape fallback map (SCP-1) |
