@@ -159,3 +159,27 @@ only; per-pack CC0 license verified on each pack page + in-archive License.txt.
 Rejected (documented in the report): Sci-Fi RTS (2D sprite pack — REJECTED_FORMAT), Digital Audio (8-bit aesthetic), UI Audio (duplicate role vs Interface Sounds), RPG Audio (fantasy-specific), Kenney 2D creature/character family (Monster Builder/Animal/Alien UFO/Robot/Fish/Toon/Shape — REJECTED_FORMAT, no 3D creature catalog exists at Kenney), Quaternius newer packs (REJECTED_LICENSE — QAL forbids redistribution). OpenGameArt researched and DEFERRED (machine-parseable per-asset CC0 licenses + anonymous direct downloads verified — viable for a future batch once the downloader gains a per-asset license gate); Quaternius Ultimate Animated Animals DEFERRED (CC0 page, but Google Drive folder delivery is not a direct URL); Poly Haven/ambientCG NOT_ACQUIRED (site-wide CC0 verified, realistic style = P2 upgrade path).
 
 **Batch-2 totals** (approved via wayfinder ticket 03, live user approval): 9 packs / 2,607 accepted files / 32.4 MB — combined with batch 1: **15 packs / 3,678 accepted / 3,360 IMPORT_READY / 75.8 MB** (602 audio + 661 models + 2,396 PNG + 2 TTF + 17 metadata); 54 in-pack duplicates hash-skipped; 172 files rejected by curation; 0 missing dependencies; 0 blocked. Storage: 75.8 MB of the 10 GB soft cap.
+
+## §I DEPTH PASSES (2026 session — user directive "MAKE IT A REAL GAME")
+
+Directive (user, 2026-09-05): ASTRAWILD must become a real, complete game — not a
+technically-complete source project. Batch-2 acquisition is done (§H); the remaining
+sequence is: CREATURE VISUAL STRATEGY → CONTENT INTEGRATION PREP → GAMEPLAY DEPTH
+HARDENING → WORLD DEPTH PASS → NPC/RELATIONSHIP PASS → DUNGEON DEPTH PASS → FINAL
+CONTENT READINESS + SOURCE AUDIT → READY_FOR_FINAL_BUILD. All passes EXTEND the
+existing GDP/SCP architecture (no second architecture, no canon redesign); census
+counts may change only inside coherent batches that update EXPECTED_CENSUS + all
+census docs together; engine-side verification remains Antigravity-exclusive.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| DP-1 | Creature visuals | `Docs/ASTRAWILD_CREATURE_VISUAL_STRATEGY.md` — Tier A/B/C system over the 229 species: 20 bespoke (12 hero+evolution meshes exist, 8 new: 4 bosses + Gloomfang/Lumewisp/Sprigling/Auroraling), ≈55 archetype-rig Tier B via shared ArtSourceGen rig library (8 body plans), ≈154 procedural Tier C with strengthened identity; deterministic tier rules; import/binding per HANDOFF §20b | GLM | COMPLETE | SOURCE-VERIFIED strategy; all mesh work lands as IMPORT_READY via ArtSourceGen only — never .uasset forgery |
+| DP-2 | Integration matrix | `Docs/ASTRAWILD_CONTENT_INTEGRATION_MATRIX.md` — 14-category readiness matrix + per-pack "where is this used" tables + P0/P1 gap rows | GLM | PENDING | next |
+| DP-3 | Echo depth | per-species combat identity + signature abilities, party composition resonance, water mounts, work-role expression | GLM | PENDING | extends AbilityLibrary/RosterSubsystem/MountComponent |
+| DP-4 | Player depth | player-chosen skill loadout (build identity), skill unlock gates, verb-changing upgrades | GLM | PENDING | extends AttributeComponent/PlayerCharacter |
+| DP-5 | Combat depth | weak-point targeting on regular creatures, elemental matchup readability, per-boss special vocabulary | GLM | PENDING | extends CombatComponent/EchoBossCharacter |
+| DP-6 | Base depth | work-site coverage for 11 work types, research branch wiring, production→progression feedback | GLM | PENDING | extends WorkSiteActor/ResearchSubsystem |
+| DP-7 | World depth | zone events for the 7 bare zones, per-zone hazards, zone secrets, traversal differentiators | GLM | PENDING | extends WorldEventSubsystem/ZoneSubsystem/POISubsystem |
+| DP-8 | NPC depth | affinity-gated dialogue evolution, regional knowledge, schedule-aware lines | GLM | PENDING | extends DialogueComponent/NPCCharacter |
+| DP-9 | Dungeon depth | per-dungeon room themes/hazards/traversal mechanics, puzzle room substance, boss differentiation | GLM | PENDING | extends DungeonGenerator/Room actors |
+| DP-10 | Final gate | content readiness matrix verified, final source audit, readiness report + handoff updated, registry no orphans, branch frozen | GLM | PENDING | READY_FOR_FINAL_BUILD only after the 12-point stop condition |

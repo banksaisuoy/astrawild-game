@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 4.0 (FINAL GAME COMPLETION RUN complete + ASSET ACQUISITION PACKS 1+2 — READY_FOR_FINAL_BUILD)
+**Document Version**: 4.1 (DEPTH PASSES begun — creature visual strategy complete; integration matrix + gameplay/world/NPC/dungeon depth passes in flight per TASK_REGISTRY §I)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
 **Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch, ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FINAL COMPLETION RUN + ASSET ACQUISITION PACK pushed)
-**Last Updated**: 2026 (Asset Acquisition Batch 2 — see TASK_REGISTRY §H AA-6..AA-9)
+**Last Updated**: 2026 (Depth Pass DP-1 — creature visual strategy; see TASK_REGISTRY §I)
 
 ---
 
