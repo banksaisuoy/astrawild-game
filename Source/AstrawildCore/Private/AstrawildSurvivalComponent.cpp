@@ -218,6 +218,12 @@ void UAstrawildSurvivalComponent::ApplyStatusTicks(const float DeltaTime)
         {
             Stats.Health = FMath::Max(0.0f, Stats.Health - Effect.DamagePerSecond * DeltaTime);
         }
+        // DP-6: positive regen mirror of the damage tick — the Field Ration's
+        // timed stamina buff rides the same status-effect loop (clamped at max).
+        if (Effect.StaminaRegenPerSecond > 0.0f)
+        {
+            Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Effect.StaminaRegenPerSecond * DeltaTime);
+        }
         if (Effect.RemainingSeconds <= 0.0f)
         {
             // Batch 3 — Item A: broadcast expiry so listeners (movement speed) refresh.

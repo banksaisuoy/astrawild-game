@@ -1634,8 +1634,36 @@ void AAstrawildPlayerCharacter::SmartConsume(const FInputActionValue& Value)
     if (Best && BestScore > 0.0f && InventoryComponent->RemoveItem(Best->ItemId, 1))
     {
         SurvivalComponent->ApplyConsumption(Best->FoodValue, Best->WaterValue, Best->HealValue);
+        ApplyFieldConsumableEffects(Best); // DP-6: field consumables also carry timed verbs.
         UE_LOG(LogAstrawildEconomy, Log, TEXT("Consumed %s (+%.0f food, +%.0f water, +%.0f heal)."),
             *Best->ItemId.ToString(), Best->FoodValue, Best->WaterValue, Best->HealValue);
+    }
+}
+
+void AAstrawildPlayerCharacter::ApplyFieldConsumableEffects(const UAstrawildItemDefinition* ItemDef)
+{
+    if (!ItemDef || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    // DP-6 (production → progression): base-made consumables feed the field with
+    // real verbs — a timed status through the survival component's effect system
+    // and/or the existing capture-focus window (the Hunter's Focus skill verb).
+    if (ItemDef->OnConsumeStatus.StatusId != NAME_None && SurvivalComponent)
+    {
+        SurvivalComponent->AddStatusEffect(ItemDef->OnConsumeStatus);
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Field effect %s active for %.0fs (+%.1f stamina/s)."),
+            *ItemDef->OnConsumeStatus.StatusId.ToString(),
+            ItemDef->OnConsumeStatus.RemainingSeconds,
+            ItemDef->OnConsumeStatus.StaminaRegenPerSecond);
+    }
+    if (ItemDef->CaptureFocusSeconds > 0.0f)
+    {
+        // Refresh, never stack — a tonic drunk mid-focus keeps the longer window.
+        CaptureFocusRemaining = FMath::Max(CaptureFocusRemaining, ItemDef->CaptureFocusSeconds);
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Capture focus granted for %.0fs (+25%% capture chance)."),
+            ItemDef->CaptureFocusSeconds);
     }
 }
 

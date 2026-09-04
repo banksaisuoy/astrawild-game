@@ -743,12 +743,12 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         {
             { TEXT("Site_CampGathering"), CampLocation(-CampRadius, 0.0f) },
             { TEXT("Site_CampFarm"), CampLocation(-CampRadius * 0.7f, CampRadius * 0.7f) },
-            // Final-audit H-2: the Camp Kitchen is the ONLY consume→produce site
-            // (RawMeat in → CookedMeat out — the Production V2 input-buffer
+            // Final-audit H-2: the Camp Kitchen was the FIRST consume→produce
+            // site (RawMeat in → CookedMeat out — the Production V2 input-buffer
             // showcase). Its definition lives in DawnFields, which the generic
-            // placement loop below skips, and it was never in this historical
-            // table — so the entire input-consumption mechanic had ZERO live
-            // instances in the world.
+            // placement loop below skips, so it stays in this historical table.
+            // (DP-6 added four more consume→produce sites — all outside the
+            // camp, so the definition-placed loop below spawns them.)
             { TEXT("Site_CampKitchen"), CampLocation(0.0f, CampRadius) },
         };
         for (const FSitePlacement& Placement : Placements)

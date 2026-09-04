@@ -16,6 +16,7 @@ class UAstrawildCombatComponent;
 class UAstrawildCraftingComponent;
 class UAstrawildDurabilityComponent;
 class UAstrawildInventoryComponent;
+class UAstrawildItemDefinition;
 class UAstrawildSurvivalComponent;
 class UCameraComponent;
 class UInputAction;
@@ -162,6 +163,14 @@ public:
 
     /** Remaining seconds of the Hunter's Focus capture window (+25% chance while active). */
     float GetCaptureFocusRemaining() const { return CaptureFocusRemaining; }
+
+    /**
+     * DP-6: field-consumable timed effects — a consumed item may carry a timed
+     * status payload (applied through the survival component's status-effect
+     * system) and/or grant capture-focus seconds (the Hunter's Focus window).
+     * Called by both consumption paths after ApplyConsumption (server).
+     */
+    void ApplyFieldConsumableEffects(const UAstrawildItemDefinition* ItemDef);
 
     /**
      * Navigation invoker (audit C-3): generates navmesh tiles around the player in

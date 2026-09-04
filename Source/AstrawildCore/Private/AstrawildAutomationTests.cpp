@@ -39,6 +39,7 @@
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
 #include "AstrawildWorldBootstrapper.h"
@@ -50,6 +51,7 @@
 #include "AstrawildTypes.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildZoneSubsystem.h"
+#include "AstrawildContentLibrary.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -3221,6 +3223,168 @@ bool FAstrawildBossSpecialSetsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Set hazard dps stays in the 4-10 band"),
             Params.HazardDamagePerSecond >= 4.0f && Params.HazardDamagePerSecond <= 10.0f);
         TestFalse(TEXT("Set summon species is set"), Params.SummonSpeciesId.IsNone());
+    }
+
+    return true;
+}
+
+// --- DP-6: base depth contracts (Test 106) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBaseDepthTest,
+    "ASTRAWILD.DP6.BaseDepth",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBaseDepthTest::RunTest(const FString& Parameters)
+{
+    // Registry-backed world-free census (house rule: no world, no spawned
+    // actors). The registry's register/find contract is plain C++ data, so the
+    // full CODE_DEFAULT content library builds ownerless through the same
+    // BuildDefaults entry point the world uses — the site/tech/item data this
+    // test pins is the live registry content, not a parallel table.
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    TestTrue(TEXT("Registry builds ownerless"), Registry != nullptr);
+
+    // 1) Work-site coverage: 8 sites cover 8 of the 10 actionable work types.
+    // The DP-6 rows cover Transport / ResearchAssist / PowerGeneration /
+    // Defense (the four highest species-affinity uncovered types) on top of
+    // the original Gathering / Farming / Mining / Cooking camp set; Crafting
+    // Assistance (18 affinity slots) and Construction (0) stay uncovered by
+    // documented design — species work identity has no site demand there yet.
+    const TArray<UAstrawildWorkSiteDefinition*> Sites = Registry->GetAllWorkSiteDefinitions();
+    TestEqual(TEXT("Eight work sites registered"), Sites.Num(), 8);
+
+    TSet<EAstrawildWorkType> CoveredTypes;
+    TSet<FName> SiteIds;
+    for (const UAstrawildWorkSiteDefinition* Site : Sites)
+    {
+        if (!TestTrue(TEXT("Site entry is valid"), Site != nullptr))
+        {
+            continue;
+        }
+        TestTrue(TEXT("Site id is set"), !Site->SiteId.IsNone());
+        SiteIds.Add(Site->SiteId);
+        TestTrue(TEXT("Site carries an actionable work type"), Site->WorkType != EAstrawildWorkType::None);
+        TestTrue(TEXT("Site output item resolves"), Registry->FindItem(Site->OutputItemId) != nullptr);
+        TestTrue(TEXT("Site zone is placed"), Site->Zone != EAstrawildZone::None);
+        TestTrue(TEXT("Site cycle time is positive"), Site->SecondsPerOutput >= 1.0f);
+        for (const FAstrawildItemStack& Input : Site->InputItems)
+        {
+            TestTrue(TEXT("Site input item resolves"), Registry->FindItem(Input.ItemId) != nullptr);
+        }
+        CoveredTypes.Add(Site->WorkType);
+    }
+    TestEqual(TEXT("Site ids are unique"), SiteIds.Num(), 8);
+
+    const EAstrawildWorkType MustCover[] =
+    {
+        EAstrawildWorkType::Gathering, EAstrawildWorkType::Farming, EAstrawildWorkType::Mining,
+        EAstrawildWorkType::Cooking, EAstrawildWorkType::Transport, EAstrawildWorkType::ResearchAssist,
+        EAstrawildWorkType::PowerGeneration, EAstrawildWorkType::Defense
+    };
+    for (const EAstrawildWorkType Type : MustCover)
+    {
+        TestTrue(*FString::Printf(TEXT("Work type %d has site coverage"), static_cast<int32>(Type)),
+            CoveredTypes.Contains(Type));
+    }
+    TestFalse(TEXT("Crafting Assistance stays uncovered by design"), CoveredTypes.Contains(EAstrawildWorkType::Crafting));
+    TestFalse(TEXT("Construction stays uncovered by design"), CoveredTypes.Contains(EAstrawildWorkType::Construction));
+
+    // 2) Research branch wiring: all 17 techs carry a branch and the assignment
+    // pins to the audited data (legacy ten via the ContentLibrary retrofit
+    // table, production seven via MakeTech — each row verified against its
+    // unlock payload, e.g. Skiff Engineering → Exploration: travel tech).
+    const TArray<UAstrawildTechnologyDefinition*> Techs = Registry->GetAllTechnologies();
+    TestEqual(TEXT("Seventeen techs registered"), Techs.Num(), 17);
+
+    struct FBranchCase { FName TechId; EAstrawildResearchBranch Branch; };
+    const FBranchCase BranchCases[] =
+    {
+        { TEXT("Tech_BasicCrafting"), EAstrawildResearchBranch::Tools },
+        { TEXT("Tech_Cooking"), EAstrawildResearchBranch::Survival },
+        { TEXT("Tech_Electrical"), EAstrawildResearchBranch::Energy },
+        { TEXT("Tech_AdvancedEnergy"), EAstrawildResearchBranch::Energy },
+        { TEXT("Tech_Husbandry"), EAstrawildResearchBranch::EchoTech },
+        { TEXT("Tech_Armory"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_Mechanics"), EAstrawildResearchBranch::Tools },
+        { TEXT("Tech_Thermal"), EAstrawildResearchBranch::Survival },
+        { TEXT("Tech_Agriculture"), EAstrawildResearchBranch::EchoTech },
+        { TEXT("Tech_AncientResonance"), EAstrawildResearchBranch::Exploration },
+        { TEXT("Tech_WeaponSystems"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_AdvancedBallistics"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_ExperimentalArsenal"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_ExosuitEngineering"), EAstrawildResearchBranch::Armor },
+        { TEXT("Tech_ScannerArray"), EAstrawildResearchBranch::Scanner },
+        { TEXT("Tech_AutomationII"), EAstrawildResearchBranch::Automation },
+        { TEXT("Tech_SkiffEngineering"), EAstrawildResearchBranch::Exploration },
+    };
+    for (const FBranchCase& Case : BranchCases)
+    {
+        const UAstrawildTechnologyDefinition* Tech = Registry->FindTechnology(Case.TechId);
+        if (TestTrue(*FString::Printf(TEXT("Tech %s resolves"), *Case.TechId.ToString()), Tech != nullptr))
+        {
+            TestEqual(*FString::Printf(TEXT("Tech %s carries its audited branch"), *Case.TechId.ToString()),
+                Tech->Branch, Case.Branch);
+        }
+    }
+
+    // 3) Field consumables: production feeds progression with real verbs.
+    // Field Ration — timed stamina regen through the survival status-effect
+    // system (Status.RationVigor); Pulse Tonic — bottled Hunter's Focus (the
+    // existing capture-focus window). Both also keep the instant food/water
+    // verbs so they are never vendor trash.
+    const UAstrawildItemDefinition* FieldRation = Registry->FindItem(TEXT("Item_FieldRation"));
+    if (TestTrue(TEXT("Field Ration resolves"), FieldRation != nullptr))
+    {
+        TestEqual(TEXT("Field Ration is a consumable"), FieldRation->Category, EAstrawildItemCategory::Consumable);
+        TestTrue(TEXT("Field Ration carries a timed status"), FieldRation->OnConsumeStatus.StatusId != NAME_None);
+        TestTrue(TEXT("Field Ration status lasts a real window"), FieldRation->OnConsumeStatus.RemainingSeconds > 0.0f);
+        TestTrue(TEXT("Field Ration status regenerates stamina"), FieldRation->OnConsumeStatus.StaminaRegenPerSecond > 0.0f);
+        TestTrue(TEXT("Field Ration status never damages"), FieldRation->OnConsumeStatus.DamagePerSecond <= 0.0f);
+        TestTrue(TEXT("Field Ration feeds the player too"), FieldRation->FoodValue > 0.0f);
+    }
+
+    const UAstrawildItemDefinition* PulseTonic = Registry->FindItem(TEXT("Item_PulseTonic"));
+    if (TestTrue(TEXT("Pulse Tonic resolves"), PulseTonic != nullptr))
+    {
+        TestEqual(TEXT("Pulse Tonic is a consumable"), PulseTonic->Category, EAstrawildItemCategory::Consumable);
+        TestTrue(TEXT("Pulse Tonic grants capture focus"), PulseTonic->CaptureFocusSeconds > 0.0f);
+        TestTrue(TEXT("Pulse Tonic carries no damage status"), PulseTonic->OnConsumeStatus.StatusId == NAME_None);
+        TestTrue(TEXT("Pulse Tonic heals and hydrates"), PulseTonic->HealValue > 0.0f && PulseTonic->WaterValue > 0.0f);
+    }
+
+    // Fresh status effects stay regen-free by default (combat statuses keep
+    // the byte-exact pre-DP-6 shape — the new field is additive).
+    const FAstrawildStatusEffect FreshStatus;
+    TestEqual(TEXT("Fresh status has no stamina regen"), FreshStatus.StaminaRegenPerSecond, 0.0f);
+
+    // 4) The loop actually closes: recipes mirror the automated sites and the
+    // depot literally consumes camp output (kitchen meat + farm berries).
+    const UAstrawildRecipeDefinition* RationRecipe = Registry->FindRecipe(TEXT("Recipe_FieldRation"));
+    if (TestTrue(TEXT("Field Ration recipe resolves"), RationRecipe != nullptr))
+    {
+        TestTrue(TEXT("Ration recipe outputs Field Rations"),
+            RationRecipe->Outputs.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_FieldRation"); }));
+    }
+    const UAstrawildRecipeDefinition* TonicRecipe = Registry->FindRecipe(TEXT("Recipe_PulseTonic"));
+    if (TestTrue(TEXT("Pulse Tonic recipe resolves"), TonicRecipe != nullptr))
+    {
+        TestTrue(TEXT("Tonic recipe outputs Pulse Tonics"),
+            TonicRecipe->Outputs.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_PulseTonic"); }));
+    }
+
+    const UAstrawildWorkSiteDefinition* Depot = Registry->FindWorkSite(TEXT("Site_TidebreakerDepot"));
+    if (TestTrue(TEXT("Tidebreaker depot resolves"), Depot != nullptr))
+    {
+        TestTrue(TEXT("Depot outputs Field Rations"), Depot->OutputItemId == TEXT("Item_FieldRation"));
+        TestTrue(TEXT("Depot consumes kitchen meat"),
+            Depot->InputItems.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_CookedMeat"); }));
+        TestTrue(TEXT("Depot consumes farm berries"),
+            Depot->InputItems.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_Berry"); }));
+    }
+    const UAstrawildWorkSiteDefinition* Lab = Registry->FindWorkSite(TEXT("Site_VerdantLab"));
+    if (TestTrue(TEXT("Verdant field lab resolves"), Lab != nullptr))
+    {
+        TestTrue(TEXT("Lab outputs Pulse Tonics"), Lab->OutputItemId == TEXT("Item_PulseTonic"));
     }
 
     return true;

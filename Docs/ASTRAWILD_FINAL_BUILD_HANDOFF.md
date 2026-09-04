@@ -80,7 +80,7 @@ git lfs install
 git checkout final-completion              # the default clone already lands here (origin HEAD follows main; checkout explicitly)
 git pull origin final-completion
 git lfs pull
-python Scripts/validate_final_run.py     # ALL static checks must PASS (105-test gate + 15 census equality gates included)
+python Scripts/validate_final_run.py     # ALL static checks must PASS (106-test gate + 15 census equality gates included)
 bash Scripts/validate_repository.sh      # structural ruleset PASS
 ```
 Final-audit note: the earlier text pointed at `glm/final-run`, a branch that never reached
@@ -128,7 +128,7 @@ the UBT log tail BEFORE retrying; that is the artifact GLM needs to diagnose.
 .\Test.ps1
 # outputs E:\AstrawildGame\Automation_Output.txt
 ```
-**PASS = 105/105 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
+**PASS = 106/106 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety` · `ASTRAWILD.Save.SchemaV5Ending` ·
 `ASTRAWILD.Quest.FinalRunChain` · `ASTRAWILD.Echo.FinalRunBosses` ·
 `ASTRAWILD.Tech.SkiffEngineering` · `ASTRAWILD.Dialogue.EndingChoice` ·
@@ -158,7 +158,7 @@ E:\Astrawild_Packaged\Windows\ASTRAWILD.exe
 Editor/PIE: MainMap loads → WorldBootstrapper builds the 12-zone world → camp with
 workbench/campfire/rest point, 2 skiffs, Dawnstead village; HUD shows
 Day 1 08:00, weather Clear, Research: 0 RP, quest tracker "First Light: Wood 0/10 …".
-Log markers (approximate): `Content library registered (live census): 76 items, 56 recipes, 229 Echo species, 26 buildings, 17 technologies, 17 quests, 11 loot tables, 11 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 11 dialogue trees, 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
+Log markers (approximate): `Content library registered (live census): 78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies, 17 quests, 11 loot tables, 11 NPCs, 8 weapon profiles, 10 resource nodes, 8 work sites, 9 world events, 13 POIs, 12 biomes, 11 dialogue trees, 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
 `Final Run Act 3 content registered: …`, `Production V2 content registered: …`.
 Packaged exe: same, after the loading screen.
 
@@ -232,7 +232,7 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 105 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 106 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
 - Enhanced Input runtime mapping (26 actions) — verify no duplicate-context warnings in the log.
@@ -257,7 +257,7 @@ working tree:
 - **Validators**: pure read-only static checks — any number of runs is safe and
   MUST PASS before every stage transition.
 - **Drift tripwires**: the validator's census equality gates (15 content-count
-  contracts + the exact 105-test gate) fail loudly if a pipeline stage ever
+  contracts + the exact 106-test gate) fail loudly if a pipeline stage ever
   duplicated or dropped content.
 
 A second full execution of the sequence therefore converges to the same state —
@@ -268,7 +268,7 @@ no duplicated assets, no double imports, no corrupted Content.
 ```text
 1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 105/105 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 106/106 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
@@ -358,7 +358,7 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **105/105** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5; the validator gate enforces the exact value — always read the count from the repo, never from memory).
+6. Automation now expects **106/106** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6; the validator gate enforces the exact value — always read the count from the repo, never from memory).
 7. DP-4 skill loadout (ESC pause menu — SKILL LOADOUT section): cycle a slot onto an unlocked
    skill, close the menu, press **Y** — only the bound skills may fire (an unbound unlocked skill
    like Second Wind must stay silent even when hurt); clear every slot and the Y key returns to
@@ -369,6 +369,13 @@ During the PIE golden path, additionally verify:
    element and verify the "WEAKNESS HIT" toast + impact cue; the four bosses must fight with
    DIFFERENT specials (Vault = paired bolts/wide blast, Tyrant = triple-bolt shard volleys,
    Sovereign = triple blasts + triple hazard waves — see `ASTRAWILD.DP5.BossSpecialSets`).
+9. DP-6 base depth: travel to the Tidebreaker Isles / Verdant Reach / Stormcrest Highlands /
+   Hollow Approach and confirm the four new work sites spawn (Cargo Dock, Field Lab, Dynamo
+   Hall, Bulwark Post — definition-placed at zone center + offset); feed the depot its inputs
+   (kitchen meat + berries, E to deposit) with a Transport-affinity Echo assigned and collect
+   Field Rations; use one (inventory screen) and sprint — stamina should visibly out-last the
+   drain for ~90s; use a Pulse Tonic and throw a Resonator — capture chance should read
+   +25% while the 30s focus window runs (see `ASTRAWILD.DP6.BaseDepth`).
 
 ## 20c. TIER-A CREATURE MESH IMPORT + BINDING PATCH (Creature Visual Strategy DP-1)
 

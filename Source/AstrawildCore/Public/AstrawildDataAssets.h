@@ -90,6 +90,25 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food", meta=(ClampMin="0.0", ClampMax="3.0"))
     float EchoFeedValue = 0.0f;
 
+    // --- DP-6 (additive): field-consumable timed effects (production → progression) ---
+
+    /**
+     * Consumable: timed status applied through the survival component's
+     * status-effect system on use (StatusId None = no timed effect). The Field
+     * Ration carries a stamina-regen payload here; combat statuses reuse the
+     * same struct, so the loop is one system, not two.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food")
+    FAstrawildStatusEffect OnConsumeStatus;
+
+    /**
+     * Consumable: seconds of the capture-focus window granted on use (0 = none).
+     * Reuses the Hunter's Focus smart-cast window verb (+25% capture chance
+     * while active) — the Pulse Tonic is a bottled version of that skill.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food", meta=(ClampMin="0.0"))
+    float CaptureFocusSeconds = 0.0f;
+
     /**
      * Batch 4 — M-11: vendor buy price in the NPC's currency item. 0 = not
      * tradeable. Sell value at a vendor is half the buy price (floor 1) via

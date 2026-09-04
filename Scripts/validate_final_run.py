@@ -5,7 +5,7 @@ ASTRAWILD Final Run — static content validator (no engine required).
 Cross-checks every ID referenced in the Final Run content pack against the
 registered content, verifies quest-chain closure, LFS pointer integrity, and
 asset path references. Complements Scripts/validate_repository.sh (structural)
-and the 105 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
+and the 106 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
 """
 import os
 import re
@@ -150,7 +150,7 @@ check(f"Asset path references resolve ({len(refs)} refs)", len(unresolved) == 0,
 # --- 9. Automation test count ---
 TESTS = read("Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
 count = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", TESTS))
-check("Automation tests == 105 (99 + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout + 1 DP-5 boss special sets)", count == 105, f"count={count} — update this gate + all active docs together")
+check("Automation tests == 106 (99 + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout + 1 DP-5 boss special sets + 1 DP-6 base depth)", count == 106, f"count={count} — update this gate + all active docs together")
 
 # --- 10. Building catalog completeness ---
 cats = ["Foundation", "Wall", "Floor", "Roof", "Door", "Storage", "Workstation", "Farm", "Power", "Research"]
@@ -191,8 +191,8 @@ robot_ids = set(re.findall(r'RobotId\s*=\s*TEXT\("(Robot_[A-Za-z0-9_]+)"\)', PC)
 dialogue_ids = set(re.findall(r'TEXT\("(Dialogue_[A-Za-z0-9_]+)"\)', PC + CL))
 
 EXPECTED_CENSUS = {
-    "items": 76,
-    "recipes": 56,
+    "items": 78,
+    "recipes": 58,
     "species": 229,
     "buildings": 26,
     "techs": 17,
@@ -201,7 +201,7 @@ EXPECTED_CENSUS = {
     "npcs": 11,
     "weapons": 8,
     "resource_nodes": 10,
-    "work_sites": 4,
+    "work_sites": 8,
     "world_events": 9,
     "pois": 13,
     "dialogue_trees": 11,

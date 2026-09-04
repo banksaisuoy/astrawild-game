@@ -494,6 +494,13 @@ struct ASTRAWILDCORE_API FAstrawildStatusEffect
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
     float DamagePerSecond = 0.0f;
 
+    /**
+     * DP-6 (additive): optional stamina regen per second while active — the
+     * positive mirror of DamagePerSecond (field-ration buff verb). 0 = none.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
+    float StaminaRegenPerSecond = 0.0f;
+
     /** Optional movement speed multiplier while active. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
     float SpeedMultiplier = 1.0f;

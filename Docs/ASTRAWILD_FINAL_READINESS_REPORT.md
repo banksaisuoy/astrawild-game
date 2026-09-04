@@ -39,7 +39,7 @@ Core loop is closed start-to-ending with no cheat dependency (§D).
 | Every objective has a producer | YES — 12 quest types with live event wiring; new objectives bind to existing publishers (POI discovery, portal LocationReached, HostileDefeated, TechUnlocked, RecipeCrafted, VisitZone) |
 | Survival loop | YES — hunger/thirst/temp/status/death/respawn |
 | Capture→bond→work→automate | YES — Resonator economy, roster, work sites, robots, drone (real loops, not decorative) |
-| Build/power/craft | YES — 26 building pieces (incl. floor/roof/door/storage-crate/terminal/turret/farm/pen/incubator with behaviors), power grid + brownout, 56 recipes, all outputs/inputs obtainable |
+| Build/power/craft | YES — 26 building pieces (incl. floor/roof/door/storage-crate/terminal/turret/farm/pen/incubator with behaviors), power grid + brownout, 58 recipes, all outputs/inputs obtainable |
 | Traversal | YES — walk + skiff (2 pads), Stratos Coil gate for Act 3 |
 | Endgame dungeon + final boss | YES — Eye of the Maelstrom (5 rooms) + Drowned Sovereign (3 phases, enrage, adds, weak points, telegraphs) |
 | Post-game | YES — ending state persists; weather pin (A) / storm kept (B); world events/economy/hunts continue |
@@ -122,7 +122,7 @@ Antigravity records the post-verification SHA here after AG-1..AG-5.
 ## K. Antigravity One-Time Integration Plan
 
 Executable runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 (10 steps:
-pull → build → 105/105 tests → PIE boot+golden path incl. both endings → save round-trip →
+pull → build → 106/106 tests → PIE boot+golden path incl. both endings → save round-trip →
 package → packaged boot → log capture → push/merge + close PR #4 → fix-loop rules).
 Engine-only mechanical bugs: fix locally. Architectural discoveries: return to GLM with logs.
 
@@ -152,7 +152,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 **Gate verdict: READY_FOR_FINAL_BUILD (17/17 + branch record).**
 
 > Reminder: READY_FOR_FINAL_BUILD means SOURCE/REPOSITORY READY. It does NOT mean
-> UE5-VERIFIED — AG-2..AG-5 (build, 105/105 tests, PIE golden path, package) remain the
+> UE5-VERIFIED — AG-2..AG-5 (build, 106/106 tests, PIE golden path, package) remain the
 > engine machine's exclusive gates.
 
 ---

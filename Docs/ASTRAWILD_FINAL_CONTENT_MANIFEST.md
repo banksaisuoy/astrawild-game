@@ -98,14 +98,14 @@ Exosuit → Mannequin → procedural body — the pawn ALWAYS renders.
 
 | CONTENT FAMILY | SINGLE SOURCE OF TRUTH | COUNT | REPLICATION MECHANISM |
 | :--- | :--- | :--- | :--- |
-| Items | `AstrawildContentLibrary.cpp` + `AstrawildProductionContent.cpp` (CODE_DEFAULT, registered into the item registry at subsystem init) | 48 + Final Run 3 = 51 authored ids (12 vendor/loot tables feed more) | authored `.uasset` `UAstrawildItemDefinition` replaces by same-id override — no code change |
+| Items | `AstrawildContentLibrary.cpp` + `AstrawildProductionContent.cpp` (CODE_DEFAULT, registered into the item registry at subsystem init) | ContentLibrary 49 + ProductionContent 29 = 78 authored ids (DP-6 adds the Field Ration + Pulse Tonic; 12 vendor/loot tables feed more) | authored `.uasset` `UAstrawildItemDefinition` replaces by same-id override — no code change |
 | Echo species | ContentLibrary (22) + ProductionContent (12 incl. 3 Act 3 bosses) + BestiaryData (204) | 226 definitions | same-id override on `UAstrawildEchoDefinition` |
 | Quests (MQ-01..17) | ContentLibrary::BuildQuests (12) + ProductionContent (2) + BuildFinalRunContent (5) | 17 | same-id override on `UAstrawildQuestDefinition` |
 | Buildings | ContentLibrary::BuildBuildings | 17 (incl. Floor/Roof/Door/StorageCrate) | same-id override on `UAstrawildBuildingDefinition` |
 | Technologies | ContentLibrary::BuildTechnologies + ProductionContent | 17 | same-id override on `UAstrawildTechnologyDefinition` |
-| Recipes | ContentLibrary + ProductionContent | 45 | same-id override on `UAstrawildRecipeDefinition` |
+| Recipes | ContentLibrary + ProductionContent | 58 (DP-6 adds the Field Ration + Pulse Tonic mirrors) | same-id override on `UAstrawildRecipeDefinition` |
 | NPCs + dialogue trees | ContentLibrary::BuildNPCs (12) + ProductionContent trees (11) | 12 NPCs / 11 trees | same-id override (`UAstrawildNPCDefinition`, `UAstrawildDialogueTreeDefinition`) |
-| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 10 / 9 / 13 / 12 / 8 / 10 / 4 | same-id override per family |
+| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 10 / 9 / 13 / 12 / 8 / 10 / 8 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post) | same-id override per family |
 
 **There is NO `.uda` / `.uabp` / `.usk` requirement anywhere in this project.** UE5
 Data Assets are `.uasset` files of `UPrimaryDataAsset`-derived classes; this project's
@@ -164,7 +164,7 @@ Cross-checked by: `Scripts/validate_final_run.py` §8 (64 refs in the hot files)
 - Quest chain closure: MQ-01→MQ-17 + Maren endings (validator §2/§3).
 - Act 3 world wiring: 8/8 checks (validator §5). Ending state machine: 12/12
   (validator §6). Building catalog: all categories populated (validator §10).
-- Automation suite: **102 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`, rows 1-102).
+- Automation suite: **106 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`, rows 1-106).
 
 ### v1.1 amendment (Final Source Completion Pass — FINAL-AUDIT A/B/C/D)
 

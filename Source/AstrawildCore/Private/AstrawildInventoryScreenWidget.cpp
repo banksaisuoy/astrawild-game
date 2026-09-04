@@ -145,6 +145,7 @@ void UAstrawildInventoryRowWidget::HandleActionClicked()
             {
                 Player->SurvivalComponent->ApplyConsumption(ItemDef->FoodValue, ItemDef->WaterValue, ItemDef->HealValue);
             }
+            Player->ApplyFieldConsumableEffects(ItemDef); // DP-6: timed field verbs (status payload / capture focus).
         }
     }
     else if (ItemDef->Category == EAstrawildItemCategory::Equipment)

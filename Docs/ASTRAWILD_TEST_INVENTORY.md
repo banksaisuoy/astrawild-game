@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 105 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 106 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -19,13 +19,16 @@ pins the party element resonance, the DP-4 contract (#104) pins the
 player skill loadout (bind validation + bound-only smart-cast + the
 empty-loadout legacy fallback), and the DP-5 contract (#105) pins the
 per-boss special sets (canonical id resolution, unknown-id fallback,
-zero-regression default tuning, pairwise-distinct data).
+zero-regression default tuning, pairwise-distinct data), and the DP-6 contract
+(#106) pins the base depth (8-site work-type coverage with two named design
+exceptions, 17/17 research branch assignments, and the field-consumable
+production→progression loop: item verbs, recipe mirrors, site output wiring).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **105** — derived from `AutomationTests.cpp`
+authoritative test count is **106** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 105`), and listed in this inventory (rows 1-105).
-Historical counts (57/63/67/72/84/99/102/103/104) describe earlier commits only and appear
+EXACT gate (`Automation tests == 106`), and listed in this inventory (rows 1-106).
+Historical counts (57/63/67/72/84/99/102/103/104/105) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -185,8 +188,14 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 104 | ASTRAWILD.DP4.SkillLoadout | DP-4: 3-slot player skill loadout — slot bounds / locked-skill / duplicate / None bind validation, rebind replaces the occupant, clear is a safe no-op out of bounds, bound-only smart-cast (unbound unlocked skills suppressed), empty-loadout legacy fallback picks among ALL unlocked skills, save v5 round-trip + pre-DP-4 payload resets to all-empty |
 
-## DP-5 depth contracts (105, landed this run)
+## DP-5 depth contracts (105, landed in the DP-5 batch)
 
 | # | Test | Covers |
 |---|------|--------|
 | 105 | ASTRAWILD.DP5.BossSpecialSets | DP-5: per-boss special sets — the four canonical defeat ids resolve to four distinct sets, unknown/None ids fail closed to the default set, the default set is the byte-exact legacy tuning (7s/1 bolt/1 blast/350cm/1 hazard/6dps/Gloomfang), no two sets share a tuning bundle, and every set stays inside the sane combat band (cooldown 4-10s, 1-4 bolts, 1-3 blasts, 250-500cm, 1-4 hazards, 4-10dps, set summon species) |
+
+## DP-6 depth contracts (106, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 106 | ASTRAWILD.DP6.BaseDepth | DP-6: base depth — registry-backed world-free census (ownerless `BuildDefaults`): 8 work sites registered with unique ids / resolvable outputs+inputs / placed zones, work-type coverage pins the 8 covered types (Gathering/Farming/Mining/Cooking/Transport/ResearchAssist/PowerGeneration/Defense) with Crafting Assistance + Construction named as the two by-design exceptions, all 17 techs resolve with their audited research branch (10 legacy + 7 production rows pinned), Field Ration carries a timed non-damaging stamina-regen status + food value, Pulse Tonic grants capture-focus seconds + heal/water with no status payload, fresh status effects default to zero regen (additive shape), and the loop closes end-to-end (recipes output the consumables; the Tidebreaker depot consumes kitchen meat + farm berries and outputs Field Rations; the Verdant lab outputs Pulse Tonics) |

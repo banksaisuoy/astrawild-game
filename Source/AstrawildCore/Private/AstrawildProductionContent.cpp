@@ -772,6 +772,103 @@ void UAstrawildProductionContent::BuildWorkSites(UAstrawildItemRegistrySubsystem
     CampKitchen->Zone = EAstrawildZone::DawnFields;
     CampKitchen->OffsetFromZoneCenter = FVector2D(0.0f, 1400.0f);
     Registry->RegisterWorkSite(CampKitchen);
+
+    // --- DP-6 (base depth): field consumables — production feeds progression. ---
+    // Base output becomes exploration/combat verbs: the transport depot packs
+    // camp produce into Field Rations (timed stamina regen), the field lab brews
+    // Pulse Tonics (timed capture-focus window). Both effects ride the existing
+    // survival status-effect system / Hunter's Focus window — no new verb types.
+
+    UAstrawildItemDefinition* FieldRation = MakeItem(Registry, TEXT("Item_FieldRation"), TEXT("Field Ration"),
+        EAstrawildItemCategory::Consumable, 0.35f, 30);
+    FieldRation->Description = FText::FromString(TEXT("Trail-packed camp ration. Hearty, keeps for weeks, and steadies the legs on long hauls."));
+    FieldRation->FoodValue = 25.0f;
+    FieldRation->HealValue = 10.0f;
+    FieldRation->PerishableSeconds = 2400.0f; // Preserved field ration — the longest-lasting food.
+    FieldRation->VendorPrice = 3;
+    FieldRation->OnConsumeStatus.StatusId = TEXT("Status.RationVigor");
+    FieldRation->OnConsumeStatus.RemainingSeconds = 90.0f;
+    FieldRation->OnConsumeStatus.StaminaRegenPerSecond = 4.0f; // +~30% over the 14/s baseline for 90s.
+
+    UAstrawildItemDefinition* PulseTonic = MakeItem(Registry, TEXT("Item_PulseTonic"), TEXT("Pulse Tonic"),
+        EAstrawildItemCategory::Consumable, 0.25f, 20);
+    PulseTonic->Description = FText::FromString(TEXT("Effervescent lab tonic. Sharpens the eye for the catch — a brief Hunter's Focus without the skill."));
+    PulseTonic->WaterValue = 12.0f;
+    PulseTonic->HealValue = 15.0f;
+    PulseTonic->VendorPrice = 5;
+    PulseTonic->CaptureFocusSeconds = 30.0f; // Reuses the existing +25% capture-focus window verb.
+
+    // Manual crafting mirrors for both field consumables (campfire/workbench —
+    // the same dual path Seared Meat already has: recipe + automated site).
+    MakeRecipe(Registry, TEXT("Recipe_FieldRation"), TEXT("Field Ration"),
+        { Stack(TEXT("Item_CookedMeat"), 1), Stack(TEXT("Item_Berry"), 2) },
+        { Stack(TEXT("Item_FieldRation"), 1) }, 6.0f, NAME_None, TEXT("Station_Campfire"));
+
+    MakeRecipe(Registry, TEXT("Recipe_PulseTonic"), TEXT("Pulse Tonic"),
+        { Stack(TEXT("Item_Dawnbloom"), 1), Stack(TEXT("Item_CrystalShard"), 1) },
+        { Stack(TEXT("Item_PulseTonic"), 2) }, 6.0f, NAME_None, TEXT("Station_Workbench"));
+
+    // --- DP-6: work-site coverage for the uncovered work types. Species work
+    // affinities already express Transport (67), PowerGeneration (62),
+    // ResearchAssist (51) and Defense (46) — only the sites were missing. All
+    // four live OUTSIDE DawnFields so the bootstrapper's definition-placed loop
+    // spawns them (zone center + offset) without touching the camp table.
+
+    // Sea-zone cargo hub (Skiff Engineering country): haulers pack camp produce
+    // into expedition rations — base output leaves the camp as a field verb.
+    UAstrawildWorkSiteDefinition* TidebreakerDepot = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    TidebreakerDepot->SiteId = TEXT("Site_TidebreakerDepot");
+    TidebreakerDepot->DisplayName = FText::FromString(TEXT("Tidebreaker Cargo Dock"));
+    TidebreakerDepot->WorkType = EAstrawildWorkType::Transport;
+    TidebreakerDepot->OutputItemId = TEXT("Item_FieldRation");
+    TidebreakerDepot->OutputQuantity = 1;
+    TidebreakerDepot->InputItems = { Stack(TEXT("Item_CookedMeat"), 1), Stack(TEXT("Item_Berry"), 2) };
+    TidebreakerDepot->SecondsPerOutput = 16.0f;
+    TidebreakerDepot->Zone = EAstrawildZone::TidebreakerIsles;
+    TidebreakerDepot->OffsetFromZoneCenter = FVector2D(900.0f, -700.0f);
+    Registry->RegisterWorkSite(TidebreakerDepot);
+
+    // Research-assist station: lab hands brew the capture tonic from bloom +
+    // shard stock — the research branch of the base feeds the capture loop.
+    UAstrawildWorkSiteDefinition* VerdantLab = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    VerdantLab->SiteId = TEXT("Site_VerdantLab");
+    VerdantLab->DisplayName = FText::FromString(TEXT("Verdant Reach Field Lab"));
+    VerdantLab->WorkType = EAstrawildWorkType::ResearchAssist;
+    VerdantLab->OutputItemId = TEXT("Item_PulseTonic");
+    VerdantLab->OutputQuantity = 1;
+    VerdantLab->InputItems = { Stack(TEXT("Item_Dawnbloom"), 1), Stack(TEXT("Item_CrystalShard"), 1) };
+    VerdantLab->SecondsPerOutput = 20.0f;
+    VerdantLab->Zone = EAstrawildZone::VerdantReach;
+    VerdantLab->OffsetFromZoneCenter = FVector2D(-800.0f, 600.0f);
+    Registry->RegisterWorkSite(VerdantLab);
+
+    // Power-generation work site: the storm zone's silver charges into cells
+    // the base actually burns (Ridge rig power draw, Pulse Lance ammo).
+    UAstrawildWorkSiteDefinition* StormcrestDynamo = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    StormcrestDynamo->SiteId = TEXT("Site_StormcrestDynamo");
+    StormcrestDynamo->DisplayName = FText::FromString(TEXT("Stormcrest Dynamo Hall"));
+    StormcrestDynamo->WorkType = EAstrawildWorkType::PowerGeneration;
+    StormcrestDynamo->OutputItemId = TEXT("Item_EnergyCell");
+    StormcrestDynamo->OutputQuantity = 2;
+    StormcrestDynamo->InputItems = { Stack(TEXT("Item_StormSilver"), 1) };
+    StormcrestDynamo->SecondsPerOutput = 22.0f;
+    StormcrestDynamo->Zone = EAstrawildZone::StormcrestHighlands;
+    StormcrestDynamo->OffsetFromZoneCenter = FVector2D(600.0f, 900.0f);
+    Registry->RegisterWorkSite(StormcrestDynamo);
+
+    // Defense site at the dungeon approach: the perimeter post rolls salves
+    // for the front line — base production arms the combat loop.
+    UAstrawildWorkSiteDefinition* HollowBulwark = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    HollowBulwark->SiteId = TEXT("Site_HollowBulwark");
+    HollowBulwark->DisplayName = FText::FromString(TEXT("Hollow Approach Bulwark Post"));
+    HollowBulwark->WorkType = EAstrawildWorkType::Defense;
+    HollowBulwark->OutputItemId = TEXT("Item_HerbalSalve");
+    HollowBulwark->OutputQuantity = 1;
+    HollowBulwark->InputItems = { Stack(TEXT("Item_Fiber"), 2), Stack(TEXT("Item_Dawnbloom"), 2) };
+    HollowBulwark->SecondsPerOutput = 18.0f;
+    HollowBulwark->Zone = EAstrawildZone::HollowApproach;
+    HollowBulwark->OffsetFromZoneCenter = FVector2D(-900.0f, -500.0f);
+    Registry->RegisterWorkSite(HollowBulwark);
 }
 
 // ---------------------------------------------------------------------------
@@ -1255,31 +1352,42 @@ void UAstrawildProductionContent::BuildEvolutionTargets(UAstrawildItemRegistrySu
 
 void UAstrawildProductionContent::BuildProductionTechnologies(UAstrawildItemRegistrySubsystem* Registry)
 {
+    // Branch rationale (DP-6 audit — the 9-branch enum is set here and pinned
+    // by test 106): charged arsenal families stay on Weapons; the suit line is
+    // Armor's tiered body; observation gear is Scanner; robotics is Automation;
+    // travel tech rides Exploration with Ancient Resonance.
+
+    // Weapons — the plasma/lumen/arc family extends the Armory arsenal line.
     MakeTech(Registry, TEXT("Tech_WeaponSystems"), TEXT("Weapon Systems"), EAstrawildTechEra::Electrical,
         EAstrawildResearchBranch::Weapons, 20,
         { TEXT("Tech_Armory"), TEXT("Tech_Electrical") },
         { TEXT("Recipe_PlasmaCharger"), TEXT("Recipe_LumenBeam"), TEXT("Recipe_ArcCaster") });
 
+    // Weapons — magrail/skysinger/seeker ordnance stays with the arsenal line.
     MakeTech(Registry, TEXT("Tech_AdvancedBallistics"), TEXT("Advanced Ballistics"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Weapons, 30,
         { TEXT("Tech_WeaponSystems") },
         { TEXT("Recipe_MagrailDriver"), TEXT("Recipe_SkysingerLauncher"), TEXT("Recipe_RailSlugBatch"), TEXT("Recipe_SeekerMissileBatch") });
 
+    // Weapons — prototype starlance/nova kit crowns the arsenal line.
     MakeTech(Registry, TEXT("Tech_ExperimentalArsenal"), TEXT("Experimental Arsenal"), EAstrawildTechEra::Ancient,
         EAstrawildResearchBranch::Weapons, 40,
         { TEXT("Tech_AdvancedBallistics"), TEXT("Tech_AncientResonance") },
         { TEXT("Recipe_StarlancePrototype"), TEXT("Recipe_NovaCell") });
 
+    // Armor — vanguard/bastion/astralforged suits are the armor tree's tiered body.
     MakeTech(Registry, TEXT("Tech_ExosuitEngineering"), TEXT("Exosuit Engineering"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Armor, 25,
         { TEXT("Tech_AdvancedEnergy") },
         { TEXT("Recipe_VanguardHelm"), TEXT("Recipe_VanguardVest"), TEXT("Recipe_BastionHelm"), TEXT("Recipe_BastionPlate"), TEXT("Recipe_AstralforgedExosuit") });
 
+    // Scanner — array/oracle scanners deepen the observation line.
     MakeTech(Registry, TEXT("Tech_ScannerArray"), TEXT("Scanner Array"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Scanner, 18,
         { TEXT("Tech_AdvancedEnergy") },
         { TEXT("Recipe_ArrayScanner"), TEXT("Recipe_OracleScanner") });
 
+    // Automation — drone modules + specialist chassis extend the robotics line.
     MakeTech(Registry, TEXT("Tech_AutomationII"), TEXT("Automation II"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Automation, 22,
         { TEXT("Tech_Mechanics"), TEXT("Tech_AdvancedEnergy") },
@@ -2212,6 +2320,8 @@ void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySub
 
     // --- Skiff Engineering (FR-8 tech + recipe) ---
 
+    // Exploration — skiff travel tech rides the same branch as Ancient
+    // Resonance: lifting the storm ceiling is a travel/exploration verb.
     MakeTech(Registry, TEXT("Tech_SkiffEngineering"), TEXT("Skiff Engineering"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Exploration, 25,
         { TEXT("Tech_AdvancedEnergy") },
