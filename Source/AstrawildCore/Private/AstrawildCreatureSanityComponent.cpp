@@ -110,7 +110,9 @@ void UAstrawildCreatureSanityComponent::TickComponent(float DeltaTime, ELevelTic
         return;
     }
 
-    const AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(GetOwner());
+    // FCR-1-c fix: non-const cast — the Ulcer drain below calls the mutating
+    // ApplyDamage pipeline (a const pointer was a module-wide compile blocker).
+    AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(GetOwner());
     if (!IsValid(Echo) || !Echo->bCaptured || Echo->IsDefeated())
     {
         // Wild echoes are stress-free by design; defeated echoes stop simulating.
@@ -159,13 +161,15 @@ void UAstrawildCreatureSanityComponent::TickComponent(float DeltaTime, ELevelTic
         LowSanityExposure = 0.0f;
     }
 
-    // Illness effects: Ulcer drains health until cured.
+    // Illness effects: Ulcer drains health until cured. FCR-1-c fix: the rate is
+    // per-SECOND — scale by the tick delta (the raw per-tick call doubled the
+    // documented drain at the 0.5s component cadence).
     if (IsIll())
     {
         const float Drain = GetHealthDrainPerSecond();
         if (Drain > 0.0f)
         {
-            Echo->ApplyDamage(Drain);
+            Echo->ApplyDamage(Drain * DeltaTime);
         }
     }
 }

@@ -403,6 +403,20 @@ void AAstrawildWorkSiteActor::CreditOfflineProduction(float OfflineSeconds)
         return;
     }
 
+    // FCR-1-d fix (H-d4): the offline credit must respect the SAME gates as the
+    // live loop — staffing (echoes or a robot) and power. The old check minted
+    // items for unstaffed, unpowered sites while the player was away (~8.6k
+    // fiber / 6.1k berries / 9.6k stone per 48h load with zero workers). A site
+    // that was left running keeps its saved worker/robot assignment; a dead
+    // site produces nothing. Power cannot be "live" while away — the saved
+    // battery state is the honest proxy, so powered sites require the flag.
+    const bool bStaffed = !GetAssignedEchoInstanceIds().IsEmpty() || HasRobot();
+    const bool bPowerOk = !bRequiresPower || IsPowered();
+    if (!bStaffed || !bPowerOk)
+    {
+        return;
+    }
+
     const float EffectiveSeconds = FMath::Min(OfflineSeconds, 48.0f * 3600.0f) * 0.5f;
     int32 CreditedCycles = 0;
 

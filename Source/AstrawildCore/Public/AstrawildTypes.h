@@ -559,6 +559,12 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
     /** SCP Phase 10 (additive): passive traits rolled at breeding (4 slots). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
     TArray<FName> Traits;
+
+    /** FCR-1-d (H-d5, additive): hidden IVs — Health / Attack / Defense / Speed,
+     *  0-31 each (+1%/pt). Rolled at breeding, persisted, consumed by the stat
+     *  getters. Legacy saves default to zero (neutral). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    FVector4 IVs = FVector4::ZeroVector;
 };
 
 /** Quest objective definition + runtime progress (directive §25). */
@@ -1201,4 +1207,13 @@ struct ASTRAWILDCORE_API FAstrawildNPCAffinitySaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0", ClampMax="100.0"))
     float Affinity = 0.0f;
+
+    // FCR-1-b fix (M-b5): the once-per-day affinity gates persist too — a
+    // save/load inside one in-world day used to reset them and let the player
+    // farm +2 per reload. -1 = no gain yet (legacy saves stay compatible).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 LastTalkGainDay = -1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 LastTradeGainDay = -1;
 };

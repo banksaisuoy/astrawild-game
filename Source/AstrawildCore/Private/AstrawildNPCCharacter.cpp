@@ -181,7 +181,7 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     LastInteractedActor = Player;
 
     // GDP-4: talking builds the relationship (+2, once per in-world day).
-    AddAffinity(2.0f);
+    AddAffinity(2.0f, /*bTradeChannel=*/false);
 
     // Production V2 Batch 3 — when the NPC has a dialogue tree, the conversation
     // screen takes over the whole interaction: quest offers migrate into choice
@@ -224,9 +224,20 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     // through the same server-authoritative TryPurchase/TrySell pipeline.
     if (NpcDefinition && !NpcDefinition->ShopLootTableId.IsNone() && !NpcDefinition->CurrencyItemId.IsNone())
     {
-        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        // FCR-1-d fix (H-d7): the trader's shop only trades during work hours —
+        // AreServicesOpenNow previously had ZERO callers, so vendors sold 24/7,
+        // rain or night, contradicting the schedule component's own contract.
+        const bool bServicesOpen = !ScheduleComponent || ScheduleComponent->AreServicesOpenNow();
+        if (bServicesOpen)
         {
-            PC->OpenShop(this);
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+            {
+                PC->OpenShop(this);
+            }
+        }
+        else if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->Notify(FText::FromString(TEXT("The shop is closed - come back during trading hours.")));
         }
     }
 }
@@ -307,8 +318,8 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TryPurchase(AActor* Purchaser, co
     Inventory->RemoveItem(NpcDefinition->CurrencyItemId, TotalCost);
     Inventory->AddItemSilent(ItemId, Quantity);
 
-    // GDP-4: trading deepens the bond (+1, shared once-per-day gate with talking).
-    AddAffinity(1.0f);
+    // GDP-4: trading deepens the bond (+1, its own once-per-day gate).
+    AddAffinity(1.0f, /*bTradeChannel=*/true);
 
     UE_LOG(LogAstrawildEconomy, Log,
         TEXT("Vendor %s sold %d x %s to %s for %d %s."),
@@ -412,6 +423,15 @@ int32 AAstrawildNPCCharacter::GetCurrentWorldDay() const
     return 0;
 }
 
+void AAstrawildNPCCharacter::SetAffinityGateDays(const int32 TalkDay, const int32 TradeDay)
+{
+    // FCR-1-b (M-b5): save-restore entry point — clamped so a corrupted save
+    // cannot pin the gates shut forever or open them into the far future.
+    LastTalkAffinityDay = FMath::Max(-1, TalkDay);
+    LastTradeAffinityDay = FMath::Max(-1, TradeDay);
+}
+
+
 FName AAstrawildNPCCharacter::GetStableNPCId() const
 {
     return NpcDefinition ? NpcDefinition->NpcId : NAME_None;
@@ -442,20 +462,25 @@ float AAstrawildNPCCharacter::GetVendorDiscountFraction() const
     return GetAffinityTier() * 0.05f;
 }
 
-void AAstrawildNPCCharacter::AddAffinity(const float Amount)
+void AAstrawildNPCCharacter::AddAffinity(const float Amount, const bool bTradeChannel)
 {
     if (GetLocalRole() != ROLE_Authority || Amount <= 0.0f)
     {
         return;
     }
 
-    // Once-per-in-world-day gate (same cadence as vendor stock restock).
+    // FCR-1-b fix (H-b3): SEPARATE once-per-day gates for talk (+2) and trade (+1).
+    // The old shared gate meant Interact's +2 always consumed the day, so the
+    // trade grant in TryPurchase was permanently dead (max +2/day, not the
+    // designed +2 talk and +1 trade). Talking AND trading on the same day now
+    // both count (up to +3/day for a chatty merchant).
     const int32 Today = GetCurrentWorldDay();
-    if (LastAffinityGainDay == Today)
+    int32& GateDay = bTradeChannel ? LastTradeAffinityDay : LastTalkAffinityDay;
+    if (GateDay == Today)
     {
         return;
     }
-    LastAffinityGainDay = Today;
+    GateDay = Today;
 
     const float Before = Affinity;
     Affinity = FMath::Clamp(Affinity + Amount, 0.0f, 100.0f);

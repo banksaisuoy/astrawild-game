@@ -138,7 +138,12 @@ void UAstrawildCropComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
     RefreshWatering();
 
-    if (CropState == EAstrawildCropState::Empty || CropState == EAstrawildCropState::Withered)
+    // FCR-1-d fix (H-d1): a HARVESTED plot stops growing — the old fall-through
+    // re-grew the crop from the retained seed for free (infinite 4x/6x yield
+    // loop from a single seed; the E-replant path that charges a seed was
+    // unreachable because the plot was never empty). Replanting requires E.
+    if (CropState == EAstrawildCropState::Empty || CropState == EAstrawildCropState::Withered ||
+        CropState == EAstrawildCropState::Harvested)
     {
         return;
     }

@@ -399,8 +399,25 @@ void AAstrawildPlayerCharacter::CastPartyAbility(const FInputActionValue& Value)
     const FVector PlayerLocation = GetActorLocation();
     int32 Casts = 0;
 
+    // FCR-1-a fix (M-a11): ONE world query, reused by every party echo — the old
+    // per-echo GetAllActorsOfClass was O(N^2) on every keypress (200+ roaming
+    // echoes meant 200 x 200 casts per T-key press).
     TArray<AActor*> Echoes;
     UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+
+    // Pre-filter the hostile candidates once (the inner loop only needs these).
+    TArray<AAstrawildEchoCharacter*> HostileCandidates;
+    HostileCandidates.Reserve(Echoes.Num());
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* CandidateEcho = Cast<AAstrawildEchoCharacter>(Actor);
+        if (CandidateEcho && !CandidateEcho->bCaptured && !CandidateEcho->IsDefeated() &&
+            CandidateEcho->EchoDefinition && CandidateEcho->EchoDefinition->bHostileToPlayers)
+        {
+            HostileCandidates.Add(CandidateEcho);
+        }
+    }
+
     for (AActor* Actor : Echoes)
     {
         AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
@@ -412,20 +429,13 @@ void AAstrawildPlayerCharacter::CastPartyAbility(const FInputActionValue& Value)
         // Nearest hostile to THIS echo is its default cast target.
         AActor* BestTarget = nullptr;
         float BestDist = FLT_MAX;
-        TArray<AActor*> Candidates;
-        UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Candidates);
-        for (AActor* Candidate : Candidates)
+        for (AAstrawildEchoCharacter* CandidateEcho : HostileCandidates)
         {
-            AAstrawildEchoCharacter* CandidateEcho = Cast<AAstrawildEchoCharacter>(Candidate);
-            if (CandidateEcho && !CandidateEcho->bCaptured && !CandidateEcho->IsDefeated() &&
-                CandidateEcho->EchoDefinition && CandidateEcho->EchoDefinition->bHostileToPlayers)
+            const float Dist = FVector::Dist(Echo->GetActorLocation(), CandidateEcho->GetActorLocation());
+            if (Dist < BestDist && Dist < 2000.0f)
             {
-                const float Dist = FVector::Dist(Echo->GetActorLocation(), CandidateEcho->GetActorLocation());
-                if (Dist < BestDist && Dist < 2000.0f)
-                {
-                    BestDist = Dist;
-                    BestTarget = CandidateEcho;
-                }
+                BestDist = Dist;
+                BestTarget = CandidateEcho;
             }
         }
 
@@ -1434,6 +1444,15 @@ void AAstrawildPlayerCharacter::Dodge(const FInputActionValue& Value)
         DodgeDirection = GetActorForwardVector().GetSafeNormal2D();
     }
     CombatComponent->RequestDodge(DodgeDirection);
+
+    // FCR-1-b fix (H-b2): Agility XP — the attribute had ZERO live grant sites, so
+    // it was permanently level 1 (Dash skill and the speed/stamina-regen bonuses
+    // frozen). Every successful dodge roll trains Agility (small, throttled by the
+    // combat component's own dodge cooldown server-side).
+    if (AttributeComponent && GetLocalRole() == ROLE_Authority)
+    {
+        AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Agility, 4.0f);
+    }
 }
 
 void AAstrawildPlayerCharacter::StartBlock(const FInputActionValue& Value)

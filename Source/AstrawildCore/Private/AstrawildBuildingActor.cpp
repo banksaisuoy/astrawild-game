@@ -502,6 +502,9 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
                 if (Offspring && Offspring->InitializeFromDefinition(Template->EchoDefinition))
                 {
                     Offspring->SetInstanceTraits(Genetics.Traits);
+                    // FCR-1-d fix (H-d5): the rolled IVs now PERSIST on the offspring
+                    // (previously rolled then dropped — the IV layer was dead code).
+                    Offspring->InstanceIVs = Genetics.IVs;
                     Offspring->Capture(10.0f);
                     Offspring->OwnerPlayerId = Player->GetFName();
                     if (bWarmHatch)

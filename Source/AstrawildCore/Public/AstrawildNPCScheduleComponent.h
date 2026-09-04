@@ -65,6 +65,15 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Schedule")
     EAstrawildNPCAnchor GetCurrentAnchor() const { return CurrentAnchor; }
 
+    /** FCR-1-d fix (H-d3): re-derive the profession AFTER the NPC definition is
+     *  assigned. Every spawn path assigns NpcDefinition AFTER BeginPlay ran
+     * (SpawnActor completes BeginPlay inside the call), so the BeginPlay
+     * resolution always saw a null definition and every NPC stayed Farmer —
+     * guards never patrolled, traders never got shop hours. The bootstrapper
+     * calls this right after assignment; TickComponent re-resolves lazily as
+     * a safety net for any path that forgets. */
+    void RefreshProfessionFromDefinition();
+
     /** Home anchor location (the spawn vicinity — villages are compact). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Schedule")
     FVector HomeLocation = FVector::ZeroVector;

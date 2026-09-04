@@ -165,37 +165,47 @@ bool UAstrawildMountComponent::MountRider(AAstrawildPlayerCharacter* Player)
 
 void UAstrawildMountComponent::DismountRider()
 {
-    AAstrawildPlayerCharacter* Player = Rider;
-    if (!IsValid(Player) || !IsAuthority())
+    // FCR-1-c fix (H-c2): the old early-return on an invalid Rider left the mount
+    // PERMANENTLY stuck (Rider never cleared, echo never restored, IsMounted()
+    // blocked every future MountRider). Cleanup must complete even when the rider
+    // actor is gone — only the player-side restore is skipped.
+    if (!IsAuthority())
     {
         return;
     }
 
+    AAstrawildPlayerCharacter* Player = Rider;
     AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(GetOwner());
     Rider = nullptr;
     RiderForwardAxis = RiderTurnAxis = RiderVerticalAxis = 0.0f;
 
-    // Dismount beside the creature, back on foot.
-    const FVector ExitLocation = IsValid(Echo)
-        ? Echo->GetActorLocation() + Echo->GetActorRightVector() * 220.0f + FVector(0.0f, 0.0f, 80.0f)
-        : Player->GetActorLocation();
-    Player->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-    Player->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
-    Player->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    if (UCharacterMovementComponent* RiderMovement = Player->GetCharacterMovement())
+    if (IsValid(Player))
     {
-        RiderMovement->SetMovementMode(MOVE_Walking);
+        // Dismount beside the creature, back on foot.
+        const FVector ExitLocation = IsValid(Echo)
+            ? Echo->GetActorLocation() + Echo->GetActorRightVector() * 220.0f + FVector(0.0f, 0.0f, 80.0f)
+            : Player->GetActorLocation();
+        Player->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        Player->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
+        Player->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        if (UCharacterMovementComponent* RiderMovement = Player->GetCharacterMovement())
+        {
+            RiderMovement->SetMovementMode(MOVE_Walking);
+        }
+        Player->SetMountedEcho(nullptr);
     }
-    Player->SetMountedEcho(nullptr);
 
     if (IsValid(Echo))
     {
         if (UCharacterMovementComponent* EchoMovement = Echo->GetCharacterMovement())
         {
-            // Land mounts walk again; flying mounts glide back down.
-            if (bFlyingMount)
+            // FCR-1-a fix (M-a12): a Flying-class species returns to true flight on
+            // dismount (the old MOVE_Falling drop grounded the flyer forever — nothing
+            // ever restored MOVE_Flying). Land mounts walk again.
+            if (bFlyingMount || Echo->GetLocomotionClass() == EAstrawildLocomotionClass::Flying)
             {
-                EchoMovement->SetMovementMode(MOVE_Falling);
+                EchoMovement->SetMovementMode(MOVE_Flying);
+                EchoMovement->MaxFlySpeed = FMath::Max(0.0f, Echo->GetCachedStats().MoveSpeed);
             }
             EchoMovement->MaxWalkSpeed = Echo->GetCachedStats().MoveSpeed;
         }
@@ -204,7 +214,8 @@ void UAstrawildMountComponent::DismountRider()
     }
 
     OnMountStateChanged.Broadcast(false, Player);
-    UE_LOG(LogAstrawildAI, Log, TEXT("Mount: rider dismounted"));
+    UE_LOG(LogAstrawildAI, Log, TEXT("Mount: rider dismounted%s"),
+        IsValid(Player) ? TEXT("") : TEXT(" (rider gone — cleanup only)"));
 }
 
 void UAstrawildMountComponent::ReceiveRiderMove(float ForwardAxis, float TurnAxis)

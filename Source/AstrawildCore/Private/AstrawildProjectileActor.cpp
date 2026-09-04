@@ -269,10 +269,20 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
     {
         if (!Echo->IsDefeated())
         {
+            const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get());
+
+            // FCR-1-a fix (H-a6): party-friendly fire — a bolt from any CAPTURED
+            // (player-owned) echo never damages another captured echo. The T-key
+            // volley fires the whole party at once; the old caster-only exclusion
+            // let stray bolts shred the player's own echoes standing in the line
+            // of fire. Wild (uncaptured) sources still hit captured targets — that
+            // is a hostile attack, exactly as designed.
+            const bool bBothCaptured = SourceEcho && SourceEcho->bCaptured && Echo->bCaptured;
+            if (!bBothCaptured)
+            {
             float ComboDamage = DamageAmount;
             // SCP Phase 6: party Echo ability bolts striking a player-marked
             // target resolve the Dual-Tech reaction (bonus damage + status).
-            const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get());
             if (SourceEcho && GetWorld())
             {
                 if (UAstrawildComboSubsystem* Combos = GetWorld()->GetSubsystem<UAstrawildComboSubsystem>())
@@ -305,6 +315,7 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
                 }
             }
             Echo->ApplyElementalDamage(ComboDamage, Element);
+            }
         }
     }
     else if (AAstrawildEchoBossCharacter* Boss = Cast<AAstrawildEchoBossCharacter>(OtherActor))
@@ -323,10 +334,17 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
     }
     else if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(OtherActor))
     {
-        // Final production run: HOSTILE bolts (boss-fired) hurt players — routed
-        // through the player's mitigation pipeline exactly like a boss melee hit.
+        // Final production run: HOSTILE bolts hurt players — routed through the
+        // player's mitigation pipeline exactly like a boss melee hit.
+        // FCR-1-a fix (H-a4): hostility is decided by the OWNER, not the class —
+        // the old boss-only gate made WILD hostile casters (Gloomfang, Emberfang…)
+        // fire bolts that impacted players and silently vanished. A boss owner OR
+        // any uncaptured hostile-definition echo owner makes the bolt hostile.
         // Player-fired bolts can never reach this branch with the owner as victim.
-        const bool bHostileBolt = Cast<AAstrawildEchoBossCharacter>(OwnerActor.Get()) != nullptr;
+        const AActor* Owner = OwnerActor.Get();
+        const AAstrawildEchoCharacter* OwnerEcho = Cast<AAstrawildEchoCharacter>(Owner);
+        const bool bHostileBolt = (Cast<AAstrawildEchoBossCharacter>(Owner) != nullptr)
+            || (OwnerEcho && !OwnerEcho->bCaptured && OwnerEcho->EchoDefinition && OwnerEcho->EchoDefinition->bHostileToPlayers);
         if (bHostileBolt && Player->IsAlive())
         {
             if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())

@@ -570,6 +570,15 @@ void AAstrawildEchoCharacter::BeginPlay()
 
 void AAstrawildEchoCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    // FCR-1-c fix (H-c3): an echo destroyed while ridden (QuickLoad during a ride,
+    // roster despawn, save-load teardown) used to leave the rider soft-locked —
+    // movement disabled, capsule collision off, no E-dismount target. Force the
+    // mount cleanup BEFORE teardown; the component tolerates an invalid rider.
+    if (MountComponent && MountComponent->IsMounted())
+    {
+        MountComponent->DismountRider();
+    }
+
     UnregisterFromEcosystem();
     Super::EndPlay(EndPlayReason);
 }
@@ -608,7 +617,11 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
         }
 
         // Batch 3 — Item A: status ticks (DoT + expiry + speed multiplier).
-        const float PreviousSpeedMultiplier = GetStatusSpeedMultiplier();
+        // FCR-1-a fix: capture the PREVIOUS COMBINED multiplier (status x locomotion)
+        // BEFORE the ticks — the old status-only capture compared against a product
+        // that already included the CURRENT locomotion value on both sides, making
+        // zone-crossing speed changes (GDP-2 water species) mathematically invisible.
+        const float PreviousCombinedMultiplier = GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier();
         ApplyStatusTicks(DeltaTime);
 
         // GDP-1: ability cooldown countdown (0.25s cadence, replicated for HUD readiness).
@@ -655,9 +668,14 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
         }
 
         // Recompute walk speed when the combined status/locomotion multiplier changed
-        // (Chill/Shock, and GDP-2: water species crossing zone borders).
+        // (Chill/Shock, GDP-2 water species crossing zone borders, and Surge buffs).
+        // FCR-1-c fix: never stomp the MOUNT speed while ridden — the mount component
+        // owns MaxWalk/MaxFly speed for the whole ride (1.25x) and re-applies it on
+        // dismount; the unguarded recompute used to silently revert the ride to base
+        // species speed mid-ride whenever any status/zone multiplier changed.
+        const bool bMounted = MountComponent && MountComponent->IsMounted();
         const float NewSpeedMultiplier = GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier();
-        if (!FMath::IsNearlyEqual(PreviousSpeedMultiplier * GetLocomotionSpeedMultiplier(), NewSpeedMultiplier))
+        if (!bMounted && !FMath::IsNearlyEqual(PreviousCombinedMultiplier, NewSpeedMultiplier))
         {
             if (UCharacterMovementComponent* Movement = GetCharacterMovement())
             {
@@ -715,7 +733,24 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
         RollPersonalityFromDefinition();
     }
 
-    GetCharacterMovement()->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed);
+    // FCR-1-a fix (H-a3): every spawn path creates the pawn BEFORE calling this
+    // method, while AutoPossessAI completes inside SpawnActor — the AIController's
+    // OnPossess therefore saw a NULL EchoDefinition (locomotion defaulted Land)
+    // and MOVE_Flying was never applied: all flying species walked. Applying the
+    // movement mode HERE — after the definition exists — is race-free; the
+    // controller-side application remains as a redundant safety net.
+    if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+    {
+        // Include the locomotion multiplier from the start (FCR-1-a H-a2 companion:
+        // a Water species spawning on dry land starts at x0.85, not x1.0).
+        Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetLocomotionSpeedMultiplier());
+        if (GetLocomotionClass() == EAstrawildLocomotionClass::Flying)
+        {
+            Movement->SetMovementMode(MOVE_Flying);
+            // Species speed, not the engine default 600 (audit follow-up).
+            Movement->MaxFlySpeed = FMath::Max(0.0f, CachedStats.MoveSpeed);
+        }
+    }
 
     // Audit C-9 (final run): re-register now that the species is set — BeginPlay
     // registered this Echo before the definition existed, so the population count
@@ -858,11 +893,16 @@ bool AAstrawildEchoCharacter::HasStatusEffect(const FName StatusId) const
 
 float AAstrawildEchoCharacter::GetStatusSpeedMultiplier() const
 {
-    // Combined multiplicative slow from active statuses (Chill 0.5, Shock 0.3).
+    // Combined multiplicative status effect on speed. Slow effects (Chill 0.5,
+    // Shock 0.3, SprainedAnkle 0.75, hitstop 0.15) multiply below 1.0; GDP-1
+    // Mobility/Surge buffs multiply ABOVE 1.0 (clamped 1.0-2.5 at grant).
+    // FCR-1-a fix: the old filter (only < 1.0) silently no-oped every speed BUFF —
+    // now all non-unit multipliers apply and the product is clamped to a sane
+    // band so a Surge can never stack into an exploit.
     float Multiplier = 1.0f;
     for (const FAstrawildStatusEffect& Effect : StatusEffects)
     {
-        if (Effect.SpeedMultiplier > 0.0f && Effect.SpeedMultiplier < 1.0f)
+        if (Effect.SpeedMultiplier > 0.0f && !FMath::IsNearlyEqual(Effect.SpeedMultiplier, 1.0f))
         {
             Multiplier *= Effect.SpeedMultiplier;
         }
@@ -872,7 +912,7 @@ float AAstrawildEchoCharacter::GetStatusSpeedMultiplier() const
     {
         Multiplier *= SanityComponent->GetSpeedMultiplier();
     }
-    return Multiplier;
+    return FMath::Clamp(Multiplier, 0.05f, 2.5f);
 }
 
 void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
@@ -883,6 +923,7 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
     }
 
     bool bAnyExpired = false;
+    bool bHealthDecreasedThisTick = false;
     for (int32 i = StatusEffects.Num() - 1; i >= 0; --i)
     {
         FAstrawildStatusEffect& Effect = StatusEffects[i];
@@ -890,6 +931,7 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
         if (Effect.DamagePerSecond > 0.0f)
         {
             CurrentHealth = FMath::Max(0.0f, CurrentHealth - Effect.DamagePerSecond * DeltaTime);
+            bHealthDecreasedThisTick = true;
         }
         // GDP-1: negative DPS = heal over time (Blessing-style restore statuses),
         // clamped to max health so ward healing can never inflate a creature.
@@ -906,7 +948,14 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
 
     if (bAnyExpired)
     {
-        OnDamaged.Broadcast(this, CurrentHealth);
+        // FCR-1-a fix (L-a13): a self-healing creature used to BROADCAST OnDamaged
+        // merely because a status expired — the AI's HandleDamaged read that as an
+        // attack and wild self-healers aggroed the nearest player for healing.
+        // Broadcast only when this tick actually REDUCED health (a DoT tick).
+        if (bHealthDecreasedThisTick)
+        {
+            OnDamaged.Broadcast(this, CurrentHealth);
+        }
         if (IsDefeated())
         {
             // DoT can finish a creature — route through the standard defeat pipeline
@@ -990,7 +1039,7 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
         }
     }
 
-    const float MitigatedDamage = FMath::Max(0.0f, Damage - CachedStats.Defense);
+    const float MitigatedDamage = FMath::Max(0.0f, Damage - GetDefense());
     if (MitigatedDamage <= 0.0f)
     {
         return 0.0f;
@@ -1030,11 +1079,15 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
             // runtime consumer — killing creatures yielded nothing. The nearest
             // living player (the killer, single-player-first) now collects it; the
             // grant goes through AddItem so genuine ItemCollected quests advance.
-            if (!bCaptured && EchoDefinition->DefeatLoot.Num() > 0)
+            // FCR-1-a fix (H-a7): the same killer lookup feeds PARTY XP — every
+            // healthy party echo of the killer in a generous combat radius shares
+            // kill XP scaled to the defeated creature's max health (growth loop:
+            // fight -> XP -> level -> abilities unlock).
+            if (!bCaptured)
             {
+                AAstrawildPlayerCharacter* Killer = nullptr;
                 if (UWorld* World = GetWorld())
                 {
-                    AAstrawildPlayerCharacter* Killer = nullptr;
                     float BestDistSq = FMath::Square(2500.0f);
                     for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
                     {
@@ -1050,14 +1103,31 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
                             Killer = Player;
                         }
                     }
-                    if (Killer && Killer->InventoryComponent)
+
+                    if (Killer)
                     {
-                        for (const FAstrawildItemStack& Drop : EchoDefinition->DefeatLoot)
+                        const FName KillerId = Killer->GetFName();
+                        const float KillXP = FMath::Max(5.0f, GetMaxHealth() * 0.15f);
+                        for (TActorIterator<AAstrawildEchoCharacter> XpIt(World); XpIt; ++XpIt)
                         {
-                            if (Drop.IsValid())
+                            AAstrawildEchoCharacter* PartyEcho = *XpIt;
+                            if (PartyEcho && PartyEcho != this && PartyEcho->bCaptured &&
+                                !PartyEcho->IsDefeated() && PartyEcho->OwnerPlayerId == KillerId &&
+                                FVector::DistSquared(GetActorLocation(), PartyEcho->GetActorLocation()) < FMath::Square(4000.0f))
                             {
-                                Killer->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
+                                PartyEcho->AddExperience(KillXP);
                             }
+                        }
+                    }
+                }
+
+                if (Killer && Killer->InventoryComponent && EchoDefinition->DefeatLoot.Num() > 0)
+                {
+                    for (const FAstrawildItemStack& Drop : EchoDefinition->DefeatLoot)
+                    {
+                        if (Drop.IsValid())
+                        {
+                            Killer->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
                         }
                     }
                 }
@@ -1096,14 +1166,25 @@ float AAstrawildEchoCharacter::GetHealthFraction() const
 float AAstrawildEchoCharacter::GetMaxHealth() const
 {
     // +10% per level above 1 (growth, directive §4); Sturdy traits stack on top.
+    // FCR-1-d (H-d5): health IV (+1% per point, 0-31) — rolled at breeding.
     const float TraitHealth = UAstrawildGeneticsLibrary::ComputeTraitHealthMultiplier(InstanceTraits);
-    return FMath::Max(1.0f, CachedStats.MaxHealth * (1.0f + 0.1f * (Level - 1)) * TraitHealth);
+    const float IvHealth = UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.X);
+    return FMath::Max(1.0f, CachedStats.MaxHealth * (1.0f + 0.1f * (Level - 1)) * TraitHealth * IvHealth);
 }
 
 float AAstrawildEchoCharacter::GetAttackPower() const
 {
     const float TraitAttack = UAstrawildGeneticsLibrary::ComputeTraitAttackMultiplier(InstanceTraits);
-    return CachedStats.AttackPower * (1.0f + 0.08f * (Level - 1)) * TraitAttack;
+    const float IvAttack = UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.Y);
+    return CachedStats.AttackPower * (1.0f + 0.08f * (Level - 1)) * TraitAttack * IvAttack;
+}
+
+float AAstrawildEchoCharacter::GetDefense() const
+{
+    // FCR-1-d (H-d5): defense IV — consumed at the elemental mitigation site
+    // (the old pipeline read CachedStats.Defense raw, so defense IVs did nothing).
+    const float IvDefense = UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.Z);
+    return CachedStats.Defense * IvDefense;
 }
 
 float AAstrawildEchoCharacter::ComputeCaptureChance() const
@@ -1139,7 +1220,16 @@ float AAstrawildEchoCharacter::ComputeCaptureChance() const
         SituationalBonus += 0.05f;
     }
 
-    return FMath::Clamp(Base + WeakenBonus + TrustBonus + SituationalBonus, 0.02f, 0.95f);
+    // FCR-1-d fix (H-d6): Trait_Lucky is live — its authored +10% capture bonus
+    // was never folded into the roll (GetTraitCaptureBonus had zero combat
+    // callers), making the trait pure flavor.
+    float LuckyBonus = 0.0f;
+    for (const FName& TraitId : InstanceTraits)
+    {
+        LuckyBonus += UAstrawildGeneticsLibrary::GetTraitCaptureBonus(TraitId);
+    }
+
+    return FMath::Clamp(Base + WeakenBonus + TrustBonus + SituationalBonus + LuckyBonus, 0.02f, 0.95f);
 }
 
 bool AAstrawildEchoCharacter::IsCurrentlyActiveTime() const
@@ -1219,10 +1309,12 @@ void AAstrawildEchoCharacter::SetInstanceTraits(const TArray<FName>& InTraits)
 
     // Swift traits speed the base movement budget (speed recompute reads
     // CachedStats on the next multiplier change or restore — force it now).
+    // FCR-1-d (H-d5): the speed IV rides along (+1% per point).
     if (UCharacterMovementComponent* Movement = GetCharacterMovement())
     {
         Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed *
             UAstrawildGeneticsLibrary::ComputeTraitSpeedMultiplier(InstanceTraits) *
+            UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.W) *
             GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier());
     }
 }
@@ -1297,6 +1389,11 @@ float AAstrawildEchoCharacter::Feed(const FName FoodItemId, const float FeedValu
     Bond = FMath::Clamp(Bond + TrustGain * 0.25f, 0.0f, 100.0f);
     Needs.Hunger = FMath::Clamp(Needs.Hunger + 30.0f * Multiplier, 0.0f, 100.0f);
     Needs.Mood = FMath::Clamp(Needs.Mood + 10.0f * Multiplier, 0.0f, 100.0f);
+
+    // FCR-1-a fix (H-a7): feeding now also grows the echo — AddExperience previously
+    // had ZERO callers, so every echo was frozen at level 1 and 38 of the 44 ability
+    // templates (UnlockLevel >= 2) were permanently unreachable. Care feeds growth.
+    AddExperience(10.0f * Multiplier);
 
     if (UWorld* World = GetWorld())
     {
@@ -1440,6 +1537,9 @@ FAstrawildEchoInstanceV2 AAstrawildEchoCharacter::ToSaveDataV2() const
     }
     // SCP Phase 10: breeding traits persist with the instance.
     Data.Traits = InstanceTraits;
+    // FCR-1-d (H-d5): IVs ride the instance payload (additive; pre-SCP-10 saves
+    // default to zero = neutral multipliers).
+    Data.IVs = InstanceIVs;
     return Data;
 }
 
@@ -1498,13 +1598,24 @@ bool AAstrawildEchoCharacter::FromSaveDataV2(const FAstrawildEchoInstanceV2& Dat
     }
     // SCP Phase 9: sanity + illness restore (sanitized import; legacy saves
     // without the fields keep the healthy 100 / no-illness defaults).
+    // FCR-1-c fix: the legacy sentinel is 0.0f (finite!) — the old IsFinite gate
+    // mapped every pre-SCP save to Sanity 0 (Depressed + immediate illness risk).
+    // A positive value restores; anything else (0 / NaN / negative) is legacy → 100.
     if (SanityComponent)
     {
-        SanityComponent->ImportFromSave(FMath::IsFinite(Data.Sanity) ? Data.Sanity : 100.0f, Data.IllnessId);
+        SanityComponent->ImportFromSave(Data.Sanity > 0.0f ? Data.Sanity : 100.0f, Data.IllnessId);
     }
     // SCP Phase 10: restore breeding traits + reapply their stat effects
     // (only known trait ids survive — edited saves cannot inject effects).
+    // FCR-1-d (H-d5): IVs round-trip too, sanitized component-wise to [0, 31]
+    // (NaN/negative components read as 0 — a corrupt save cannot mint stats).
     {
+        const FVector4 SafeIVs(
+            FMath::Clamp(FMath::IsFinite(Data.IVs.X) ? Data.IVs.X : 0.0f, 0.0f, 31.0f),
+            FMath::Clamp(FMath::IsFinite(Data.IVs.Y) ? Data.IVs.Y : 0.0f, 0.0f, 31.0f),
+            FMath::Clamp(FMath::IsFinite(Data.IVs.Z) ? Data.IVs.Z : 0.0f, 0.0f, 31.0f),
+            FMath::Clamp(FMath::IsFinite(Data.IVs.W) ? Data.IVs.W : 0.0f, 0.0f, 31.0f));
+        InstanceIVs = SafeIVs;
         TArray<FName> SafeTraits;
         const TArray<FName>& Pool = UAstrawildGeneticsLibrary::GetTraitPool();
         for (const FName& Candidate : Data.Traits)
@@ -1740,17 +1851,33 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
 
     case EAstrawildAbilityCategory::Debuff:
     {
+        // FCR-1-a fix (H-a5): the debuff now also lands on PLAYER targets. The old
+        // echo-only cast made every AI debuff pick silently fail against the player
+        // (the wild AI's PRIMARY target), with a 4Hz retry loop and no cooldown.
         AAstrawildEchoCharacter* TargetEcho = Cast<AAstrawildEchoCharacter>(TargetActor);
-        if (TargetEcho && !TargetEcho->IsDefeated() &&
-            FVector::Dist(GetActorLocation(), TargetEcho->GetActorLocation()) <= Data->Range)
+        AAstrawildPlayerCharacter* TargetPlayer = Cast<AAstrawildPlayerCharacter>(TargetActor);
+        const bool bInRange = IsValid(TargetActor) &&
+            FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation()) <= Data->Range;
+        if (bInRange)
         {
             FAstrawildStatusEffect Effect;
             Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Chill");
             Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
             Effect.DamagePerSecond = FMath::Max(0.0f, Data->Power);
             Effect.SpeedMultiplier = FMath::Clamp(Data->StatusSpeedMultiplier, 0.2f, 1.0f);
-            TargetEcho->AddStatusEffect(Effect);
-            bResolved = true;
+            if (TargetEcho && !TargetEcho->IsDefeated())
+            {
+                TargetEcho->AddStatusEffect(Effect);
+                bResolved = true;
+            }
+            else if (TargetPlayer && TargetPlayer->IsAlive())
+            {
+                if (UAstrawildSurvivalComponent* Survival = TargetPlayer->FindComponentByClass<UAstrawildSurvivalComponent>())
+                {
+                    Survival->AddStatusEffect(Effect);
+                    bResolved = true;
+                }
+            }
         }
         break;
     }

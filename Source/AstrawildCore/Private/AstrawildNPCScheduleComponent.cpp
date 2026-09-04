@@ -110,6 +110,24 @@ bool UAstrawildNPCScheduleComponent::IsRaining() const
         State == EAstrawildWeatherState::Storm;
 }
 
+void UAstrawildNPCScheduleComponent::RefreshProfessionFromDefinition()
+{
+    // FCR-1-d fix (H-d3): called after NpcDefinition is assigned (and lazily
+    // from TickComponent until a definition resolves).
+    const AAstrawildNPCCharacter* NPC = Cast<AAstrawildNPCCharacter>(GetOwner());
+    if (NPC && IsValid(NPC->NpcDefinition))
+    {
+        const EAstrawildNPCProfession Resolved = ResolveProfession(static_cast<uint8>(NPC->NpcDefinition->Role));
+        if (Resolved != Profession)
+        {
+            Profession = Resolved;
+            // The anchor may change with the profession — re-derive immediately.
+            CurrentAnchor = ResolveAnchor(Profession, GetCurrentHour(), IsRaining());
+            MoveToAnchor();
+        }
+    }
+}
+
 void UAstrawildNPCScheduleComponent::BeginPlay()
 {
     Super::BeginPlay();
@@ -122,7 +140,11 @@ void UAstrawildNPCScheduleComponent::BeginPlay()
         {
             Profession = ResolveProfession(static_cast<uint8>(NPC->NpcDefinition->Role));
         }
-        if (!HomeLocation.IsZero())
+        // FCR-1-d fix (H-d2): the guard was INVERTED — with the ZeroVector default
+        // the home anchor was NEVER initialized, so every sleep/evening/rain/work
+        // destination resolved to the WORLD ORIGIN and all NPCs marched to the
+        // map corner. Initialize when unset; designer values are preserved.
+        if (HomeLocation.IsZero())
         {
             HomeLocation = NPC->GetActorLocation();
         }
@@ -190,6 +212,10 @@ void UAstrawildNPCScheduleComponent::TickComponent(float DeltaTime, ELevelTick T
     {
         return;
     }
+
+    // FCR-1-d fix (H-d3) safety net: definitions are assigned AFTER BeginPlay on
+    // every spawn path — keep resolving until it sticks (cheap: one IsValid).
+    RefreshProfessionFromDefinition();
 
     const EAstrawildNPCAnchor NewAnchor = ResolveAnchor(Profession, GetCurrentHour(), IsRaining());
     if (NewAnchor != CurrentAnchor)

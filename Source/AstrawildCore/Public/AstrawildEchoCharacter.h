@@ -181,6 +181,13 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Genetics")
     TArray<FName> InstanceTraits;
 
+    /** SCP Phase 10 / FCR-1-d fix (H-d5): hidden IVs rolled at breeding —
+     *  Health / Attack / Defense / Speed, 0-31 each, +1% per point. Stored on the
+     *  instance and consumed by the stat getters (previously rolled then dropped:
+     *  the directive's IV layer was dead code). Wild echoes stay 0 = neutral. */
+    UPROPERTY()
+    FVector4 InstanceIVs = FVector4::ZeroVector;
+
     /** Assign breeding traits + apply their stat effects (server). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Genetics")
     void SetInstanceTraits(const TArray<FName>& InTraits);
@@ -286,6 +293,9 @@ public:
     /** Max health including level scaling. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     float GetMaxHealth() const;
+
+    /** FCR-1-d (H-d5): defense incl. the defense IV (elemental mitigation site). */
+    float GetDefense() const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     float GetAttackPower() const;

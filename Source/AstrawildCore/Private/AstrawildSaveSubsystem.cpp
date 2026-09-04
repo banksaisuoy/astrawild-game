@@ -148,16 +148,19 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
             Dialogue->ExportForSave(SaveGame->DialogueFlags);
         }
 
-        // GDP-3: player attribute levels/XP.
-        if (PC->AttributeComponent)
+        // GDP-3 + SCP Phase 12 (FCR-1 fix): AttributeComponent/DurabilityComponent are
+        // PAWN members — re-derive the pawn here (the earlier cast scope closed above).
+        if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
         {
-            SaveGame->Attributes = PC->AttributeComponent->ToSaveData();
-        }
+            if (Player->AttributeComponent)
+            {
+                SaveGame->Attributes = Player->AttributeComponent->ToSaveData();
+            }
 
-        // SCP Phase 12: equipment wear pools.
-        if (PC->DurabilityComponent)
-        {
-            SaveGame->EquipmentDurability = PC->DurabilityComponent->ExportForSave();
+            if (Player->DurabilityComponent)
+            {
+                SaveGame->EquipmentDurability = Player->DurabilityComponent->ExportForSave();
+            }
         }
     }
 
@@ -168,6 +171,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
     }
 
     // GDP-4: NPC affinity snapshot (every NPC with a stable id).
+    // FCR-1-b fix (M-b5): the per-day gate stamps persist too — reloading inside
+    // one in-world day must NOT reopen the talk/trade affinity faucets.
     SaveGame->NPCAffinities.Reset();
     for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
     {
@@ -177,6 +182,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
             FAstrawildNPCAffinitySaveData Row;
             Row.NPCId = Npc->GetStableNPCId();
             Row.Affinity = FMath::Clamp(Npc->Affinity, 0.0f, 100.0f);
+            Row.LastTalkGainDay = Npc->GetLastTalkAffinityDay();
+            Row.LastTradeGainDay = Npc->GetLastTradeAffinityDay();
             SaveGame->NPCAffinities.Add(Row);
         }
     }
@@ -552,25 +559,30 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
             Dialogue->ImportFromSave(SaveGame->DialogueFlags);
         }
 
-        // GDP-3: restore attribute levels/XP (sanitized import — duplicates dropped,
-        // levels clamped; old saves without the array keep fresh 1/0 states).
-        if (PC->AttributeComponent)
+        // GDP-3 + SCP Phase 12 (FCR-1 fix): pawn members — re-derive the pawn (the
+        // earlier cast scope closed above).
+        if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
         {
-            PC->AttributeComponent->ImportFromSaveData(SaveGame->Attributes);
-        }
+            // GDP-3: restore attribute levels/XP (sanitized import — duplicates dropped,
+            // levels clamped; old saves without the array keep fresh 1/0 states).
+            if (Player->AttributeComponent)
+            {
+                Player->AttributeComponent->ImportFromSaveData(SaveGame->Attributes);
+            }
 
-        // SCP Phase 12: restore equipment wear (sanitized on import — unknown
-        // ids drop, values clamp to each item's pool).
-        if (PC->DurabilityComponent)
-        {
-            PC->DurabilityComponent->ImportFromSave(SaveGame->EquipmentDurability);
-        }
+            // SCP Phase 12: restore equipment wear (sanitized on import — unknown
+            // ids drop, values clamp to each item's pool).
+            if (Player->DurabilityComponent)
+            {
+                Player->DurabilityComponent->ImportFromSave(SaveGame->EquipmentDurability);
+            }
 
-        // GDP-3: apply the restored Vigor to max health immediately (the level-up
-        // delegate only fires on live gains, not on import).
-        if (PC->SurvivalComponent)
-        {
-            PC->SurvivalComponent->RefreshVigorMaxHealth();
+            // GDP-3: apply the restored Vigor to max health immediately (the level-up
+            // delegate only fires on live gains, not on import).
+            if (Player->SurvivalComponent)
+            {
+                Player->SurvivalComponent->RefreshVigorMaxHealth();
+            }
         }
     }
 
@@ -602,6 +614,9 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
                 if (Row.NPCId == Id)
                 {
                     Npc->Affinity = FMath::Clamp(Row.Affinity, 0.0f, 100.0f);
+                    // FCR-1-b fix (M-b5): restore the per-day gate stamps with the
+                    // affinity (legacy saves: -1 defaults = faucets open, correct).
+                    Npc->SetAffinityGateDays(Row.LastTalkGainDay, Row.LastTradeGainDay);
                     break;
                 }
             }

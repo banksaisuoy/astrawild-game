@@ -134,9 +134,15 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
     FName GetStableNPCId() const;
 
-    /** Server-side affinity grant with the once-per-in-world-day gate. */
+    /** Server-side affinity grant with per-channel once-per-in-world-day gates
+     *  (FCR-1-b H-b3: talk +2 and trade +1 have SEPARATE gates). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC|Affinity")
-    void AddAffinity(float Amount);
+    void AddAffinity(float Amount, bool bTradeChannel = false);
+
+    /** FCR-1-b (M-b5): save-side accessors for the per-day gate stamps. */
+    int32 GetLastTalkAffinityDay() const { return LastTalkAffinityDay; }
+    int32 GetLastTradeAffinityDay() const { return LastTradeAffinityDay; }
+    void SetAffinityGateDays(int32 TalkDay, int32 TradeDay);
 
 protected:
     virtual void BeginPlay() override;
@@ -146,9 +152,14 @@ private:
     double LastInteractedTime = -BIG_NUMBER;
     TWeakObjectPtr<AActor> LastInteractedActor;
 
-    /** GDP-4: in-world day of the last affinity gain (once-per-day gate). */
+    /** GDP-4: in-world day of the last TALK affinity gain (once-per-day gate).
+     *  FCR-1-b fix: split into talk/trade gates so trading actually counts. */
     UPROPERTY()
-    int32 LastAffinityGainDay = -1;
+    int32 LastTalkAffinityDay = -1;
+
+    /** GDP-4 (FCR-1-b): in-world day of the last TRADE affinity gain. */
+    UPROPERTY()
+    int32 LastTradeAffinityDay = -1;
 
     /** Current in-world day (absolute minutes / 1440). */
     int32 GetCurrentWorldDay() const;
