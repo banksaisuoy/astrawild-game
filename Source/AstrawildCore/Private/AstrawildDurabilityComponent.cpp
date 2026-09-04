@@ -112,8 +112,16 @@ void UAstrawildDurabilityComponent::ApplyToolWear()
 
 void UAstrawildDurabilityComponent::ApplyArmorWear()
 {
+    // FCR-1-c fix (L-c16): armor wear covers PROTECTIVE slots only — the tracked
+    // list includes the WEAPON, which takes hits at its own wear site; taking a
+    // hit used to double-wear the weapon in the same fight.
     for (const FName ItemId : GetTrackedEquippedItemIds())
     {
+        const UAstrawildInventoryComponent* Inventory = GetOwnerInventory();
+        if (Inventory && ItemId == Inventory->EquippedItemId)
+        {
+            continue; // weapon wears on CONNECTED HITS, not on damage taken
+        }
         // Shield wear follows the same rule (it is worn protective gear).
         WearItem(ItemId, 1.0f);
     }
@@ -294,8 +302,12 @@ FName UAstrawildDurabilityComponent::RepairItem(FName ItemId, bool bAtRepairBenc
     }
 
     // Field path: one repair kit restores any single item to full.
+    // FCR-1-c fix (L-c15): at a bench, the kit is NOT silently consumed — the
+    // bench ran out of affordable materials and the player never consented to
+    // spending a scarce field kit. Standing at a bench with no materials now
+    // simply fails (the player can gather or use a kit deliberately in the field).
     static const FName RepairKitId = TEXT("Item_FieldRepairKit");
-    if (Inventory->HasItem(RepairKitId, 1) && Inventory->RemoveItem(RepairKitId, 1))
+    if (!bAtRepairBench && Inventory->HasItem(RepairKitId, 1) && Inventory->RemoveItem(RepairKitId, 1))
     {
         DurabilityPools.Add(ItemId, Item->DurabilityMax);
         UE_LOG(LogAstrawild, Log, TEXT("Durability: %s repaired with a field kit"), *ItemId.ToString());

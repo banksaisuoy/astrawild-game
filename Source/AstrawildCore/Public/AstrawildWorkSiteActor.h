@@ -172,6 +172,14 @@ private:
     /** Consume one cycle's inputs from the buffer (false when insufficient → stall). */
     bool ConsumeCycleInputs();
 
+    /** FCR-1-d (L-d16): UTC ticks this site's offline window was credited through
+     *  (crash between load and autosave cannot double-credit). 0 = never. */
+    int64 LastOfflineCreditUtcTicks = 0;
+
+public:
+    /** FCR-1-d (L-d16): save-subsystem read accessor for the credit window start. */
+    int64 GetOfflineCreditUtcTicks() const { return LastOfflineCreditUtcTicks; }
+
     /** Deposit matching inputs from a player inventory into the buffer (server). */
     int32 DepositInputsFromInventory(class UAstrawildInventoryComponent* Inventory);
 

@@ -395,7 +395,9 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
     }
 
     // GDP-3: Power Strike spent on this swing + Might XP for connecting hits.
-    if (bEmpowered && PlayerForSkills)
+    // FCR-1-b fix (L-b7): the empowered swing is consumed only when the swing
+    // CONNECTED — a whiffed swing no longer burns the buff.
+    if (bEmpowered && PlayerForSkills && TotalDamageDealt > 0.0f)
     {
         PlayerForSkills->ConsumeEmpoweredMelee();
     }
@@ -460,6 +462,17 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
     }
 
     LastRangedAttackTime = World->GetTimeSeconds();
+
+    // FCR-1-c fix (M-c7): every ranged shot WEARS the weapon (the durability
+    // spec says "melee or ranged"; only melee ever called ApplyWeaponWear).
+    // Applied once here — the beam/arc/projective branches all pass through.
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->DurabilityComponent && GetEquippedWeaponDefinition())
+        {
+            Player->DurabilityComponent->ApplyWeaponWear();
+        }
+    }
 
     // Muzzle: slightly in front of the player's eyes, aimed along the view.
     // Final-audit F-01: the pawn uses orient-to-movement (bUseControllerRotationYaw
@@ -795,6 +808,16 @@ float UAstrawildCombatComponent::GetRangedDamage() const
     if (const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition())
     {
         Damage = FMath::Max(1.0f, WeaponDef->DamagePerHit) + GetEquippedWeaponAttackPower();
+        // FCR-1-c fix (M-c7): a BROKEN ranged weapon hits at x0.4 exactly like
+        // melee (the durability spec says "melee or ranged"; the ranged pipeline
+        // previously ignored the multiplier entirely).
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->DurabilityComponent)
+            {
+                Damage *= Player->DurabilityComponent->GetEquippedWeaponDamageMultiplier();
+            }
+        }
     }
     else
     {

@@ -9,6 +9,11 @@ namespace
 {
     /** Context ids already reported this session — one diagnostic per site. */
     TSet<FName> ReportedContexts;
+
+    // FCR-1-c fix (L-c13): the fallback counters/report set are shared mutable
+    // state — the paired ErrorReporter is thread-safe, this was not. A resolve
+    // off the game thread could race the TSet into heap corruption.
+    FCriticalSection FallbackCountersLock;
 }
 
 int32 UAstrawildAssetFallbackLibrary::FallbackCount = 0;
@@ -37,12 +42,14 @@ UStaticMesh* UAstrawildAssetFallbackLibrary::ResolveMeshWithFallback(const FSoft
     // Try the intended asset first (safe for empty paths — returns null).
     if (UStaticMesh* Mesh = Cast<UStaticMesh>(Path.ResolveObject()))
     {
+        FScopeLock Lock(&FallbackCountersLock);
         ++DirectResolveCount;
         return Mesh;
     }
 
     if (UStaticMesh* Mesh = Cast<UStaticMesh>(Path.TryLoad()))
     {
+        FScopeLock Lock(&FallbackCountersLock);
         ++DirectResolveCount;
         return Mesh;
     }
@@ -61,16 +68,20 @@ UStaticMesh* UAstrawildAssetFallbackLibrary::ResolveMeshWithFallback(const FSoft
         return nullptr;
     }
 
-    ++FallbackCount;
-
-    // One diagnostic line per context — keeps the report readable when a whole
-    // pack is missing (single line, not one per scattered instance).
-    if (!ReportedContexts.Contains(ContextId))
+    // FCR-1-c (L-c13): counter + report-set under the same lock.
     {
-        ReportedContexts.Add(ContextId);
-        UAstrawildErrorReporterLibrary::ReportWarning(TEXT("AssetFallback"),
-            FString::Printf(TEXT("Context %s: asset %s missing — substituted %s"),
-                *ContextId.ToString(), *Path.ToString(), *FallbackPath));
+        FScopeLock Lock(&FallbackCountersLock);
+        ++FallbackCount;
+
+        // One diagnostic line per context — keeps the report readable when a whole
+        // pack is missing (single line, not one per scattered instance).
+        if (!ReportedContexts.Contains(ContextId))
+        {
+            ReportedContexts.Add(ContextId);
+            UAstrawildErrorReporterLibrary::ReportWarning(TEXT("AssetFallback"),
+                FString::Printf(TEXT("Context %s: asset %s missing — substituted %s"),
+                    *ContextId.ToString(), *Path.ToString(), *FallbackPath));
+        }
     }
 
     return FallbackMesh;

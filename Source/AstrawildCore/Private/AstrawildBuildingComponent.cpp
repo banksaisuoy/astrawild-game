@@ -333,6 +333,18 @@ void UAstrawildBuildingComponent::ServerPlaceBuilding_Implementation(const FName
         }
         UE_LOG(LogAstrawildBuilding, Log, TEXT("Building placed: %s at %s."), *DefinitionId.ToString(), *Location.ToCompactString());
     }
+    else
+    {
+        // FCR-1-c fix (L-c19): spawn/init failure refunds the consumed materials —
+        // the location-rejection path above already did; this branch silently
+        // ate them. Silent add per the refund rule (no false ItemCollected).
+        if (Player->InventoryComponent)
+        {
+            Player->InventoryComponent->AddItemSilent(Def->RequiredItemId, Def->RequiredItemCount);
+        }
+        UE_LOG(LogAstrawildBuilding, Warning, TEXT("Building placement failed at spawn/init — materials refunded (%s x%d)."),
+            *DefinitionId.ToString(), Def->RequiredItemCount);
+    }
 }
 
 void UAstrawildBuildingComponent::CancelPlacement()

@@ -14,6 +14,7 @@
 #include "AstrawildGameState.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
@@ -972,8 +973,13 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
                     if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
                     {
                         const bool bWasHostile = EchoDefinition->bHostileToPlayers;
+                        // FCR-1-d fix (M-d8): a CAPTURED echo dying is player pressure
+                        // (distinct event) — not a skill signal. Wild passives keep the
+                        // EchoDefeated tag; DDA leans IN to help after party losses.
+                        const FNativeGameplayTag DefeatTag = bWasHostile ? TAG_Astrawild_Event_HostileDefeated
+                            : (bCaptured ? TAG_Astrawild_Event_PartyEchoDefeated : TAG_Astrawild_Event_EchoDefeated);
                         EventBus->PublishEvent(
-                            bWasHostile ? TAG_Astrawild_Event_HostileDefeated : TAG_Astrawild_Event_EchoDefeated,
+                            DefeatTag,
                             GetInstigator(),
                             EchoDefinition->DefinitionId,
                             1,
@@ -1143,8 +1149,11 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
                 if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
                 {
                     const bool bWasHostile = IsValid(EchoDefinition) && EchoDefinition->bHostileToPlayers;
+                    // FCR-1-d fix (M-d8): same party-pressure routing as the DoT path.
+                    const FNativeGameplayTag DefeatTag = bWasHostile ? TAG_Astrawild_Event_HostileDefeated
+                        : (bCaptured ? TAG_Astrawild_Event_PartyEchoDefeated : TAG_Astrawild_Event_EchoDefeated);
                     EventBus->PublishEvent(
-                        bWasHostile ? TAG_Astrawild_Event_HostileDefeated : TAG_Astrawild_Event_EchoDefeated,
+                        DefeatTag,
                         GetInstigator() ? GetInstigator() : nullptr,
                         EchoDefinition->DefinitionId,
                         1,
@@ -1842,8 +1851,15 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
             Direction.Rotation(), Params);
         if (Bolt)
         {
-            Bolt->LaunchFromWeapon(Direction, ScaledPower, Data->Element, this, 3200.0f,
-                0.45f, 3.0f, TargetActor, 2400.0f);
+            // FCR-1-a fixes (M-a9 + L-a15): the AUTHORED status payload rides the
+            // bolt, and the bolt's LETIME derives from the ability's range (the
+            // old fixed 3.0s x 3200uu flew 9600uu — far past any authored range).
+            const float FlightSpeed = 3200.0f;
+            const float Lifetime = FMath::Clamp(Data->Range / FlightSpeed, 0.35f, 3.0f);
+            Bolt->SetStatusPayload(Data->StatusId, Data->StatusSeconds, Data->StatusSpeedMultiplier,
+                FMath::Max(0.0f, Data->Power * 0.25f));
+            Bolt->LaunchFromWeapon(Direction, ScaledPower, Data->Element, this, FlightSpeed,
+                0.45f, Lifetime, TargetActor, 2400.0f);
             bResolved = true;
         }
         break;
@@ -1954,6 +1970,23 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
     {
         AbilityCooldowns.Add(AbilityId, Data->CooldownSeconds);
         OnAbilityExecuted.Broadcast(this, AbilityId, true);
+        // FCR-1-a fix (M-a10): the delegate had zero subscribers — feed the
+        // player-facing toast directly for OWNED echoes (mirrors the capture
+        // toast pattern; the delegate stays for future subsystem consumers).
+        if (bCaptured && GetWorld())
+        {
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetWorld()->GetFirstPlayerController()))
+            {
+                if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
+                {
+                    if (Player->GetFName() == OwnerPlayerId)
+                    {
+                        PC->Notify(FText::FromString(FString::Printf(TEXT("%s: %s"),
+                            *EchoDefinition->DisplayName.ToString(), *Data->DisplayName.ToString())));
+                    }
+                }
+            }
+        }
         UE_LOG(LogAstrawild, Log, TEXT("%s (Lv %d) cast %s."), *GetName(), Level, *AbilityId.ToString());
     }
     else

@@ -108,7 +108,24 @@ void UAstrawildSpoilageSubsystem::AdvanceSpoilage(float DeltaSeconds)
         return;
     }
 
-    bPlayerPreserved = QueryPreservedNearPlayer();
+    // FCR-1-c fix (M-c10): preservation is PER-PLAYER and the scan is one pass.
+    // The old single global flag let ANY player standing near an IceBox preserve
+    // EVERY player's food, and the nested building x player TActorIterator pair
+    // re-entered the actor iterator every 5s. Collect the IceBoxes once, then
+    // test each player against the (small) list.
+    static constexpr float PreservationRadiusSq = 900.0f * 900.0f;
+    static const FName IceBoxId = TEXT("Building_IceBox");
+    TArray<FVector> IceBoxLocations;
+    for (TActorIterator<AAstrawildBuildingActor> BoxIt(World); BoxIt; ++BoxIt)
+    {
+        const AAstrawildBuildingActor* Building = *BoxIt;
+        if (IsValid(Building) && Building->DefinitionId == IceBoxId)
+        {
+            IceBoxLocations.Add(Building->GetActorLocation());
+        }
+    }
+
+    bPlayerPreserved = false; // legacy aggregate: ANY player preserved this tick.
 
     for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
     {
@@ -117,6 +134,18 @@ void UAstrawildSpoilageSubsystem::AdvanceSpoilage(float DeltaSeconds)
         {
             continue;
         }
+
+        // This player's own preservation state.
+        bool bThisPlayerPreserved = false;
+        for (const FVector& BoxLocation : IceBoxLocations)
+        {
+            if (FVector::DistSquared(BoxLocation, Player->GetActorLocation()) <= PreservationRadiusSq)
+            {
+                bThisPlayerPreserved = true;
+                break;
+            }
+        }
+        bPlayerPreserved = bPlayerPreserved || bThisPlayerPreserved;
 
         UAstrawildInventoryComponent* Inventory = Player->InventoryComponent;
         const TArray<FAstrawildItemStack> Stacks = Inventory->GetItemStacks();
@@ -130,7 +159,7 @@ void UAstrawildSpoilageSubsystem::AdvanceSpoilage(float DeltaSeconds)
             }
 
             const float Remaining = ComputeSpoilStep(GetFreshness(Stack.ItemId),
-                Item->PerishableSeconds, DeltaSeconds, bPlayerPreserved);
+                Item->PerishableSeconds, DeltaSeconds, bThisPlayerPreserved);
 
             if (Remaining > 0.0f)
             {

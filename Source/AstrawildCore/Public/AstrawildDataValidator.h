@@ -81,6 +81,10 @@ public:
     int32 GetLastProblemCount() const { return LastProblemCount; }
 
 private:
+    /** FCR-1-c (M-c11): the deferred validation body (one tick after world begin,
+     *  after the registry's own OnWorldBeginPlay has built its content). */
+    void RunDeferredValidation();
+
     bool bLastValidationClean = false;
     int32 LastProblemCount = 0;
 };

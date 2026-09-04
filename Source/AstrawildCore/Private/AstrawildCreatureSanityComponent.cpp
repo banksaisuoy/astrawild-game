@@ -16,6 +16,26 @@ UAstrawildCreatureSanityComponent::UAstrawildCreatureSanityComponent()
     SetIsReplicatedByDefault(true);
 }
 
+void UAstrawildCreatureSanityComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // FCR-1-c fix (M-c6): the combat window is keyed to REAL damage events —
+    // the old "wounded state" heuristic (health below 99.9%) kept ANY wounded
+    // echo permanently "in combat", so Ulcer patients spiraled (drain -> wounded
+    // -> combat drain -> sanity 0) with no recovery path. The damage feed resets
+    // the 20s window exactly like the AI controller's HandleDamaged.
+    if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(GetOwner()))
+    {
+        Echo->OnDamaged.AddDynamic(this, &UAstrawildCreatureSanityComponent::HandleOwnerDamaged);
+    }
+}
+
+void UAstrawildCreatureSanityComponent::HandleOwnerDamaged(AAstrawildEchoCharacter* Echo, float NewHealth)
+{
+    SecondsSinceCombat = 0.0f;
+}
+
 void UAstrawildCreatureSanityComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -119,15 +139,10 @@ void UAstrawildCreatureSanityComponent::TickComponent(float DeltaTime, ELevelTic
         return;
     }
 
-    // Combat drain window: 20 seconds after the last damage event.
-    if (Echo->CurrentHealth < Echo->GetMaxHealth() * 0.999f)
-    {
-        SecondsSinceCombat = 0.0f;
-    }
-    else
-    {
-        SecondsSinceCombat += DeltaTime;
-    }
+    // Combat drain window: 20 seconds after the last DAMAGE EVENT (reset by
+    // HandleOwnerDamaged via the OnDamaged feed — FCR-1-c M-c6). The wounded-state
+    // heuristic is gone: it kept Ulcer patients permanently "in combat" and spiraled.
+    SecondsSinceCombat += DeltaTime;
     const bool bInCombat = SecondsSinceCombat < 20.0f;
     const bool bWorking = Echo->AssignedWorkSite.IsValid();
 

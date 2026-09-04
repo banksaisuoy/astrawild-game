@@ -490,8 +490,19 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
             {
                 // Roll genetics from the template's traits (self-pairing keeps
                 // the 70/30 inheritance rules meaningful).
+                // FCR-1-d fix (M-d9): DETERMINISTIC seed derived from the template
+                // instance (id + level + traits) — the old FMath::Rand() made the
+                // same parents produce different genetics on every reload of the
+                // same save. (Known simplification, documented in the SCP doc:
+                // the hatch template is the current highest-bond party echo.)
+                uint32 Seed = static_cast<uint32>(GetTypeHash(Template->InstanceId));
+                for (const FName& Trait : Template->InstanceTraits)
+                {
+                    Seed ^= GetTypeHash(Trait) * 0x9E3779B9u + 0x61C88647u;
+                }
+                Seed += static_cast<uint32>(Template->Level);
                 const FAstrawildGeneticsProfile Genetics = UAstrawildGeneticsLibrary::RollOffspring(
-                    Template->InstanceTraits, Template->InstanceTraits, FMath::Rand());
+                    Template->InstanceTraits, Template->InstanceTraits, static_cast<int32>(Seed));
 
                 // Spawn the offspring from the parent's species.
                 FActorSpawnParameters SpawnParams;
@@ -511,13 +522,25 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
                     {
                         Offspring->Level = 2;
                     }
-                    Roster->AddToRoster(Offspring);
-
-                    Result = FText::Format(
-                        NSLOCTEXT("ASTRAWILD", "IncubatorHatch", "Hatched a {0}! Traits: {1}."),
-                        FText::FromName(Template->EchoDefinition->DefinitionId),
-                        FText::FromString(FString::JoinBy(Genetics.Traits, TEXT(", "),
-                            [](const FName& Trait) { return Trait.ToString(); })));
+                    // FCR-1-d fix (L-d13): the roster cap (100) is a REAL failure —
+                    // the old path consumed the egg, spawned and captured the
+                    // offspring, then silently dropped it from the roster. Refund
+                    // the egg and refuse the hatch cleanly.
+                    if (Roster->AddToRoster(Offspring))
+                    {
+                        Result = FText::Format(
+                            NSLOCTEXT("ASTRAWILD", "IncubatorHatch", "Hatched a {0}! Traits: {1}."),
+                            FText::FromName(Template->EchoDefinition->DefinitionId),
+                            FText::FromString(FString::JoinBy(Genetics.Traits, TEXT(", "),
+                                [](const FName& Trait) { return Trait.ToString(); })));
+                    }
+                    else
+                    {
+                        Offspring->Destroy();
+                        Player->InventoryComponent->AddItemSilent(TEXT("Item_EchoEgg"), 1);
+                        Result = NSLOCTEXT("ASTRAWILD", "IncubatorRosterFull",
+                            "The roster is full (100) — the egg is kept. Release or station an Echo first.");
+                    }
                 }
                 else
                 {

@@ -83,19 +83,37 @@ void UAstrawildPerformanceManager::ApplyTier(int32 NewTier)
 
     // Write the engine knobs — identical to the scalability system's variables
     // so every responder (foliage, shadows, LODs) follows immediately.
+    // FCR-1-d fix (M-d10): variables the USER pinned (console / command line /
+    // higher priority than a game setting) are never stomped — the old blind
+    // write overrode manual tuning while still logging "tier -> X" (state desync),
+    // and a manual-Low user could be RAISED by a "step down".
     IConsoleManager& Console = IConsoleManager::Get();
+
+    auto UserPinned = [](IConsoleVariable* Var) -> bool
+    {
+        return Var && (Var->GetFlags() & ECVF_SetByMask) > ECVF_SetByGameSetting;
+    };
 
     if (IConsoleVariable* ViewDistance = Console.FindConsoleVariable(TEXT("r.ViewDistanceScale")))
     {
-        ViewDistance->Set(GetViewDistanceScaleForTier(CurrentTier), ECVF_SetByGameSetting);
+        if (!UserPinned(ViewDistance))
+        {
+            ViewDistance->Set(GetViewDistanceScaleForTier(CurrentTier), ECVF_SetByGameSetting);
+        }
     }
     if (IConsoleVariable* Foliage = Console.FindConsoleVariable(TEXT("foliage.SpawnDensityScale")))
     {
-        Foliage->Set(GetFoliageDensityScaleForTier(CurrentTier), ECVF_SetByGameSetting);
+        if (!UserPinned(Foliage))
+        {
+            Foliage->Set(GetFoliageDensityScaleForTier(CurrentTier), ECVF_SetByGameSetting);
+        }
     }
     if (IConsoleVariable* Shadows = Console.FindConsoleVariable(TEXT("sg.ShadowQuality")))
     {
-        Shadows->Set(GetShadowQualityForTier(CurrentTier), ECVF_SetByGameSetting);
+        if (!UserPinned(Shadows))
+        {
+            Shadows->Set(GetShadowQualityForTier(CurrentTier), ECVF_SetByGameSetting);
+        }
     }
 
     const TCHAR* TierNames[] = { TEXT("Low"), TEXT("Medium"), TEXT("High") };

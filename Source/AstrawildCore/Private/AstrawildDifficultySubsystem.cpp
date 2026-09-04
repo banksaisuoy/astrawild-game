@@ -20,12 +20,14 @@ bool UAstrawildDifficultySubsystem::IsTickable() const
     return World && World->IsGameWorld() && World->GetNetMode() != NM_Client;
 }
 
-int32 UAstrawildDifficultySubsystem::ComputeSkillBand(int32 HostileDefeats, int32 Captures, int32 Deaths)
+int32 UAstrawildDifficultySubsystem::ComputeSkillBand(int32 HostileDefeats, int32 Captures, int32 Deaths, int32 PartyLosses)
 {
     // Weighted skill metric: a capture demonstrates the full loop (weaken,
     // feed, throw) so it counts double; deaths cost triple because they
     // represent a full reset of pressure.
-    const int32 Metric = HostileDefeats + (Captures * 2) - (Deaths * 3);
+    // FCR-1-d (M-d8): party losses pull the metric down at half the weight of a
+    // player death (pressure without a full reset).
+    const int32 Metric = HostileDefeats + (Captures * 2) - (Deaths * 3) - (PartyLosses * 2);
 
     // Hysteresis band: [-1..+1] stays Standard so the difficulty does not
     // oscillate on single events.
@@ -87,9 +89,15 @@ void UAstrawildDifficultySubsystem::HandleGameplayEvent(const FAstrawildGameplay
     {
         NotifyCapture();
     }
+    else if (Event.EventTag == TAG_Astrawild_Event_PartyEchoDefeated)
+    {
+        // FCR-1-d fix (M-d8): a captured echo dying is PRESSURE — the world leans
+        // in to help (metric down), not a skill demonstration pushing it up.
+        NotifyPartyLoss();
+    }
     else if (Event.EventTag == TAG_Astrawild_Event_EchoDefeated)
     {
-        // Party losses count as pressure, not player death — half weight.
+        // Wild (uncaptured) echo defeats remain a skill signal — hunting is play.
         NotifyHostileDefeated();
     }
 }
@@ -113,7 +121,7 @@ void UAstrawildDifficultySubsystem::Tick(float DeltaTime)
 
 void UAstrawildDifficultySubsystem::RefreshBand()
 {
-    const int32 NewBand = ComputeSkillBand(HostileDefeatCount, CaptureCount, DeathCount);
+    const int32 NewBand = ComputeSkillBand(HostileDefeatCount, CaptureCount, DeathCount, PartyLossCount);
     if (NewBand != SkillBand)
     {
         const TCHAR* BandNames[] = { TEXT("Struggling"), TEXT("Standard"), TEXT("Thriving") };

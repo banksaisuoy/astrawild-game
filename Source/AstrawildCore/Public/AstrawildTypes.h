@@ -856,6 +856,12 @@ struct ASTRAWILDCORE_API FAstrawildWorkSiteSaveData
     /** Output produced per completed work cycle (definition default 1). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="1"))
     int32 OutputQuantity = 1;
+
+    /** FCR-1-d fix (L-d16, additive): UTC ticks this site's offline production
+     *  was credited THROUGH — a crash between load and the next autosave used
+     *  to re-credit the same window on reload. 0 = never credited (legacy). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int64 LastOfflineCreditUtcTicks = 0;
 };
 
 /** Utility drone snapshot (save schema v3). */

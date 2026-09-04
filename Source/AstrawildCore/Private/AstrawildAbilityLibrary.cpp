@@ -287,32 +287,49 @@ TArray<FName> UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(EAstrawildEleme
 
     TArray<FName> Result;
 
-    // Two element-flavored picks (explicit switch — enum order is not load-bearing).
+    // The FULL element kit — four element-flavored picks per element (explicit
+    // switch — enum order is not load-bearing). FCR-1-a fix (M-a8): the old
+    // two-pick derivation left half of every element kit unreachable from ANY
+    // loadout path (10 dead templates); with the full kit, level gates stagger
+    // the unlocks and every element template is live (6 abilities per species:
+    // 4 element + 1 role + 1 family).
     switch (Element)
     {
     case EAstrawildElementType::Light:
         Result.Add(TEXT("Ability_Dawnflash"));
         Result.Add(TEXT("Ability_PhotonVeil"));
+        Result.Add(TEXT("Ability_LumenBurst"));
+        Result.Add(TEXT("Ability_RestoringGleam"));
         break;
     case EAstrawildElementType::Ash:
         Result.Add(TEXT("Ability_GravelSpit"));
         Result.Add(TEXT("Ability_DustScreen"));
+        Result.Add(TEXT("Ability_StoneSkin"));
+        Result.Add(TEXT("Ability_SiftHeal"));
         break;
     case EAstrawildElementType::Flora:
         Result.Add(TEXT("Ability_ThornLash"));
         Result.Add(TEXT("Ability_RootSnare"));
+        Result.Add(TEXT("Ability_BloomGuard"));
+        Result.Add(TEXT("Ability_SapSurge"));
         break;
     case EAstrawildElementType::Ember:
         Result.Add(TEXT("Ability_CinderBolt"));
         Result.Add(TEXT("Ability_HeatHaze"));
+        Result.Add(TEXT("Ability_FlareNova"));
+        Result.Add(TEXT("Ability_WarmBlood"));
         break;
     case EAstrawildElementType::Frost:
         Result.Add(TEXT("Ability_ShardShot"));
         Result.Add(TEXT("Ability_DeepFreeze"));
+        Result.Add(TEXT("Ability_GlacialWall"));
+        Result.Add(TEXT("Ability_Snowmelt"));
         break;
     case EAstrawildElementType::Pulse:
         Result.Add(TEXT("Ability_ArcBolt"));
         Result.Add(TEXT("Ability_StormLatch"));
+        Result.Add(TEXT("Ability_Overload"));
+        Result.Add(TEXT("Ability_Galvanize"));
         break;
     case EAstrawildElementType::None:
     default:

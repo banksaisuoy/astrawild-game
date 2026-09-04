@@ -391,11 +391,23 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
     PendingOutputs.Reset();
 
     // GDP-3: Masterwork refund + Craft XP on timed-craft completion.
+    // FCR-1-b fix (L-b9): the refund grant is CHECKED — a pack that filled up
+    // during the timed craft used to silently lose the refund ingredients.
     if (bMasterworkPendingRefund && Inventory)
     {
+        int32 LostRefunds = 0;
         for (const FAstrawildItemStack& Refund : PendingRefundInputs)
         {
-            Inventory->AddItem(Refund.ItemId, Refund.Quantity);
+            if (!Inventory->AddItem(Refund.ItemId, Refund.Quantity))
+            {
+                ++LostRefunds;
+            }
+        }
+        if (LostRefunds > 0)
+        {
+            UE_LOG(LogAstrawildEconomy, Warning,
+                TEXT("Masterwork refund: %d ingredient line(s) did not fit and were dropped (pack full) for %s"),
+                LostRefunds, *CompletedRecipe.ToString());
         }
         UE_LOG(LogAstrawildEconomy, Log, TEXT("Masterwork! Ingredients refunded: %s"), *CompletedRecipe.ToString());
     }

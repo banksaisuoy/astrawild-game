@@ -98,6 +98,9 @@ private:
     /** Mature clock for the wither window. */
     float MatureSeconds = 0.0f;
 
+    /** FCR-1-d (L-d14): last tick delta — the watering decay scales with it. */
+    float LastTickDelta = 1.0f;
+
     bool IsAuthority() const;
     void RefreshWatering();
     int32 GetCurrentMonth() const;

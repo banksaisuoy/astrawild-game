@@ -118,7 +118,7 @@ public:
      */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Attribute|Skill")
     EAstrawildPlayerSkillId PickBestReadySkill(float HealthFraction, int32 NearbyEnemies,
-        bool bEnemyInMelee, bool bMoving) const;
+        bool bEnemyInMelee, bool bMoving, bool bWeakenedPreyNear = false) const;
 
     // ------------------------------------------------------------------
     // Save/load (schema v5 additive)

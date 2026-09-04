@@ -117,19 +117,24 @@ void UAstrawildCropComponent::RefreshWatering()
 {
     // Rain refreshes a 90-second watering window; the player can also water by
     // using a Dew Flask while looking at the plot (interact branch).
+    // FCR-1-d fix (L-d14): decay scales with the ACTUAL tick delta — the old
+    // hardcoded 1.0f silently coupled the window to a 1s tick interval.
     if (IsRaining())
     {
         WateredSecondsRemaining = 90.0f;
     }
     else
     {
-        WateredSecondsRemaining = FMath::Max(0.0f, WateredSecondsRemaining - 1.0f);
+        WateredSecondsRemaining = FMath::Max(0.0f, WateredSecondsRemaining - LastTickDelta);
     }
 }
 
 void UAstrawildCropComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    // FCR-1-d (L-d14): record the tick delta for the watering decay.
+    LastTickDelta = FMath::Max(0.0f, DeltaTime);
 
     if (!IsAuthority())
     {

@@ -39,7 +39,7 @@ public:
      * captures push up; the neutral band spans [-1, +1] so the system does not
      * flap around zero.
      */
-    static int32 ComputeSkillBand(int32 HostileDefeats, int32 Captures, int32 Deaths);
+    static int32 ComputeSkillBand(int32 HostileDefeats, int32 Captures, int32 Deaths, int32 PartyLosses = 0);
 
     /** Hostile HP/damage multiplier for a band. */
     static float GetHostileStrengthMultiplier(int32 Band);
@@ -64,6 +64,8 @@ public:
     void NotifyHostileDefeated() { ++HostileDefeatCount; }
     void NotifyCapture() { ++CaptureCount; }
     void NotifyPlayerDeath() { ++DeathCount; }
+    /** FCR-1-d (M-d8): party echo loss = pressure (help the player), not skill. */
+    void NotifyPartyLoss() { ++PartyLossCount; }
 
 protected:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
@@ -79,6 +81,9 @@ private:
     int32 HostileDefeatCount = 0;
     int32 CaptureCount = 0;
     int32 DeathCount = 0;
+
+    /** FCR-1-d (M-d8): captured-echo deaths — metric pressure (half weight). */
+    int32 PartyLossCount = 0;
     int32 SkillBand = 1;
 
     float RefreshAccumulator = 0.0f;

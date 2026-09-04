@@ -174,11 +174,17 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
     // FCR-1-b fix (M-b5): the per-day gate stamps persist too — reloading inside
     // one in-world day must NOT reopen the talk/trade affinity faucets.
     SaveGame->NPCAffinities.Reset();
+    // FCR-1-b fix (L-b10): export dedupes by stable id (first actor wins) to
+    // match the import's SeenNpcIds skip — duplicate-id NPCs no longer silently
+    // reset affinity to 0 on load (only the first row restored before).
+    TSet<FName> ExportedNpcIds;
     for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
     {
         AAstrawildNPCCharacter* Npc = *NpcIt;
-        if (Npc && !Npc->GetStableNPCId().IsNone() && Npc->Affinity > 0.0f)
+        if (Npc && !Npc->GetStableNPCId().IsNone() && Npc->Affinity > 0.0f &&
+            !ExportedNpcIds.Contains(Npc->GetStableNPCId()))
         {
+            ExportedNpcIds.Add(Npc->GetStableNPCId());
             FAstrawildNPCAffinitySaveData Row;
             Row.NPCId = Npc->GetStableNPCId();
             Row.Affinity = FMath::Clamp(Npc->Affinity, 0.0f, 100.0f);
@@ -720,8 +726,16 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
 
         // SCP Phase 8: offline production — credit elapsed wall time between
         // save and load (capped 48h at half rate inside the site itself).
+        // FCR-1-d fix (L-d16): the window is measured from the site's CREDITED-
+        // THROUGH stamp when present — a crash between load and the next autosave
+        // used to re-credit the same window on reload (SaveGame->SavedAtUtc had
+        // not moved yet). The site stamps itself on every credit; the next save
+        // persists the stamp.
+        const FDateTime WindowStart = SiteIt->GetOfflineCreditUtcTicks() > 0
+            ? FDateTime(SiteIt->GetOfflineCreditUtcTicks())
+            : SaveGame->SavedAtUtc;
         const float OfflineSeconds = static_cast<float>(
-            FMath::Max(0.0, (FDateTime::UtcNow() - SaveGame->SavedAtUtc).GetTotalSeconds()));
+            FMath::Max(0.0, (FDateTime::UtcNow() - WindowStart).GetTotalSeconds()));
         SiteIt->CreditOfflineProduction(OfflineSeconds);
 
         if (World->GetGameInstance())

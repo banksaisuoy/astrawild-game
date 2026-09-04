@@ -470,6 +470,7 @@ void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
 
     int32 NearbyEnemies = 0;
     bool bEnemyInMelee = false;
+    bool bWeakenedPreyNear = false;
     TArray<AActor*> Echoes;
     UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
     for (AActor* Actor : Echoes)
@@ -488,12 +489,18 @@ void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
             {
                 bEnemyInMelee = true;
             }
+            // FCR-1-b (M-b4): weakened hostile in capture reach — Hunter's Focus
+            // pre-capture priority signal.
+            if (Dist < 500.0f && Echo->GetHealthFraction() < 0.5f)
+            {
+                bWeakenedPreyNear = true;
+            }
         }
     }
 
     const bool bMoving = GetVelocity().SizeSquared() > 4000.0f;
     const EAstrawildPlayerSkillId Skill = AttributeComponent->PickBestReadySkill(
-        HealthFraction, NearbyEnemies, bEnemyInMelee, bMoving);
+        HealthFraction, NearbyEnemies, bEnemyInMelee, bMoving, bWeakenedPreyNear);
 
     if (Skill == EAstrawildPlayerSkillId::None)
     {
@@ -519,7 +526,10 @@ void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
             for (AActor* Actor : Echoes)
             {
                 AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+                // FCR-1-b fix (L-b8): the sweep hits HOSTILES only (the nearby-enemy
+                // scan's filter) — passive creatures no longer eat the 350cm sweep.
                 if (Echo && !Echo->bCaptured && !Echo->IsDefeated() &&
+                    Echo->EchoDefinition && Echo->EchoDefinition->bHostileToPlayers &&
                     FVector::Dist(PlayerLocation, Echo->GetActorLocation()) <= 350.0f)
                 {
                     Echo->ApplyElementalDamage(BaseDamage, EAstrawildElementType::None);

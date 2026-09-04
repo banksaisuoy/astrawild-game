@@ -2,7 +2,9 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildEchoCharacter.h"
+#include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
 #include "AstrawildInventoryComponent.h"
@@ -373,6 +375,8 @@ FAstrawildWorkSiteSaveData AAstrawildWorkSiteActor::ExportForSave() const
     // Production V2 (schema v4): buffer + per-cycle output persist across saves.
     Data.InputBuffer = InputBuffer;
     Data.OutputQuantity = FMath::Max(1, OutputQuantity);
+    // FCR-1-d (L-d16): the credited-through stamp persists (crash-safe re-credit).
+    Data.LastOfflineCreditUtcTicks = LastOfflineCreditUtcTicks;
     return Data;
 }
 
@@ -391,6 +395,8 @@ void AAstrawildWorkSiteActor::ImportFromSave(const FAstrawildWorkSiteSaveData& D
     // Production V2 (schema v4): buffer + per-cycle output restore.
     InputBuffer = Data.InputBuffer;
     OutputQuantity = FMath::Max(1, Data.OutputQuantity);
+    // FCR-1-d (L-d16): restore the credited-through stamp (0 = legacy/never).
+    LastOfflineCreditUtcTicks = FMath::Max<int64>(0, Data.LastOfflineCreditUtcTicks);
 }
 
 void AAstrawildWorkSiteActor::CreditOfflineProduction(float OfflineSeconds)
@@ -437,8 +443,16 @@ void AAstrawildWorkSiteActor::CreditOfflineProduction(float OfflineSeconds)
     if (CreditedCycles > 0)
     {
         StoredOutput += CreditedCycles * FMath::Max(1, OutputQuantity);
+        // FCR-1-d fix (L-d16): stamp the credited-through time so a crash between
+        // load and the next autosave cannot re-credit this window on reload.
+        LastOfflineCreditUtcTicks = FDateTime::UtcNow().GetTicks();
         UE_LOG(LogAstrawildBuilding, Log, TEXT("Offline production: site %s credited %d cycles (%d x %s)."),
             *SiteId.ToString(), CreditedCycles, CreditedCycles * FMath::Max(1, OutputQuantity), *OutputItemId.ToString());
+    }
+    else
+    {
+        // Nothing credited (gates/stall) — still stamp so the window is consumed.
+        LastOfflineCreditUtcTicks = FDateTime::UtcNow().GetTicks();
     }
 }
 
@@ -526,6 +540,37 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
     }
 
     // 2) Assign the nearest idle captured Echo of this player.
+    // FCR-1-c fix (M-c8): the garrison cap is ENFORCED — GetBaseGarrisonCount had
+    // zero gate callers, so the 5/10/20 terminal caps were display-only. With a
+    // terminal standing, a full garrison refuses new assignments (upgrade the
+    // terminal for more); terminal-less starter camps keep working as before.
+    if (UWorld* W = GetWorld())
+    {
+        int32 BestCap = 0;
+        bool bHasTerminal = false;
+        for (TActorIterator<AAstrawildBaseTerminalActor> TermIt(W); TermIt; ++TermIt)
+        {
+            if (AAstrawildBaseTerminalActor* Terminal = *TermIt)
+            {
+                bHasTerminal = true;
+                BestCap = FMath::Max(BestCap, Terminal->GetGarrisonCap());
+            }
+        }
+        if (bHasTerminal && W->GetGameInstance())
+        {
+            if (UAstrawildEchoRosterSubsystem* Roster = W->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+            {
+                if (Roster->GetBaseGarrisonCount() >= BestCap)
+                {
+                    Notify(FText::FromString(FString::Printf(
+                        TEXT("Garrison full (%d/%d) — upgrade the Base Terminal to station more Echoes."),
+                        Roster->GetBaseGarrisonCount(), BestCap)));
+                    return;
+                }
+            }
+        }
+    }
+
     const FName OwnerId = Player->GetFName();
     AAstrawildEchoCharacter* Best = nullptr;
     float BestDistance = 4000.0f;

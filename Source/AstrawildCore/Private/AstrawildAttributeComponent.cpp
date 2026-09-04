@@ -183,7 +183,8 @@ TArray<EAstrawildPlayerSkillId> UAstrawildAttributeComponent::GetUnlockedSkills(
 }
 
 EAstrawildPlayerSkillId UAstrawildAttributeComponent::PickBestReadySkill(const float HealthFraction,
-    const int32 NearbyEnemies, const bool bEnemyInMelee, const bool bMoving) const
+    const int32 NearbyEnemies, const bool bEnemyInMelee, const bool bMoving,
+    const bool bWeakenedPreyNear) const
 {
     auto Ready = [this](const EAstrawildPlayerSkillId Skill)
     {
@@ -196,6 +197,14 @@ EAstrawildPlayerSkillId UAstrawildAttributeComponent::PickBestReadySkill(const f
     {
         return EAstrawildPlayerSkillId::SecondWind;
     }
+    // FCR-1-b fix (M-b4): a WEAKENED hostile in capture reach outranks everything
+    // below — the old condition (no enemies at all) made Hunter's Focus pickable
+    // only when there was nothing to capture, exactly backwards for a pre-capture
+    // buff (+25% capture window).
+    if (bWeakenedPreyNear && Ready(EAstrawildPlayerSkillId::HuntersFocus))
+    {
+        return EAstrawildPlayerSkillId::HuntersFocus;
+    }
     if (NearbyEnemies >= 3 && Ready(EAstrawildPlayerSkillId::Whirlwind))
     {
         return EAstrawildPlayerSkillId::Whirlwind;
@@ -203,10 +212,6 @@ EAstrawildPlayerSkillId UAstrawildAttributeComponent::PickBestReadySkill(const f
     if (bEnemyInMelee && Ready(EAstrawildPlayerSkillId::PowerStrike))
     {
         return EAstrawildPlayerSkillId::PowerStrike;
-    }
-    if (Ready(EAstrawildPlayerSkillId::HuntersFocus) && !bEnemyInMelee && NearbyEnemies == 0)
-    {
-        return EAstrawildPlayerSkillId::HuntersFocus;
     }
     if (bMoving && Ready(EAstrawildPlayerSkillId::Dash))
     {
@@ -274,6 +279,10 @@ int32 UAstrawildAttributeComponent::ImportFromSaveData(const TArray<FAstrawildAt
         FAstrawildAttributeStat* Stat = GetStat(Row.Type);
         if (!Stat)
         {
+            // FCR-1-b fix (L-b6): a corrupt/unknown attribute type IS a repair —
+            // the row is dropped, so it must be counted (the old bare continue
+            // undercounted the repair report).
+            ++Repairs;
             continue;
         }
         const int32 ClampedLevel = FMath::Clamp(Row.Level, 1, MaxAttributeLevel);

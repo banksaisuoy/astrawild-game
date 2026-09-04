@@ -96,6 +96,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_ItemCollected, "Event.ItemCollected")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoCaptured, "Event.EchoCaptured");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_EchoDefeated, "Event.EchoDefeated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_HostileDefeated, "Event.HostileDefeated");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_PartyEchoDefeated, "Event.PartyEchoDefeated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_BuildingPlaced, "Event.BuildingPlaced");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_TechUnlocked, "Event.TechUnlocked");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Astrawild_Event_LocationReached, "Event.LocationReached");

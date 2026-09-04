@@ -307,8 +307,47 @@ void UAstrawildDataValidationSubsystem::OnWorldBeginPlay(UWorld& InWorld)
         return;
     }
 
+    // FCR-1-c fix (M-c11): world-begin-play subsystem ordering is NOT guaranteed —
+    // the registry may not have built its content yet, and validating an EMPTY
+    // registry is vacuously CLEAN (zero problems, checksum 00000000): a false
+    // all-clear. Defer one tick so the registry's own OnWorldBeginPlay completes
+    // first; if the registry is still empty after that, report it as a problem.
+    if (Registry->GetAllItems().IsEmpty())
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("DataValidator: registry empty at world begin — deferring validation one tick."));
+        if (UWorld* WorldMutable = &InWorld)
+        {
+            WorldMutable->GetTimerManager().SetTimerForNextTick(
+                FTimerDelegate::CreateUObject(this, &UAstrawildDataValidationSubsystem::RunDeferredValidation));
+        }
+        return;
+    }
+
+    RunDeferredValidation();
+}
+
+void UAstrawildDataValidationSubsystem::RunDeferredValidation()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+    if (!Registry)
+    {
+        return;
+    }
+
     TArray<FString> Problems;
-    const bool bClean = UAstrawildDataValidatorLibrary::ValidateAll(Registry, Problems);
+    // FCR-1-c (M-c11): an empty registry after the deferral is a validation
+    // FAILURE, never a silent pass.
+    if (Registry->GetAllItems().IsEmpty())
+    {
+        Problems.Add(TEXT("Registry: EMPTY after world begin — content never registered (validation cannot pass vacuously)"));
+    }
+
+    const bool bClean = UAstrawildDataValidatorLibrary::ValidateAll(Registry, Problems) && Problems.IsEmpty();
     LastProblemCount = Problems.Num();
     bLastValidationClean = bClean;
 

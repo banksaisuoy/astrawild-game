@@ -97,8 +97,13 @@ public:
     void ImportFromSave(float InSanity, FName InIllnessId);
 
 protected:
+    virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    /** FCR-1-c (M-c6): damage-feed reset for the 20s combat window. */
+    UFUNCTION()
+    void HandleOwnerDamaged(class AAstrawildEchoCharacter* Echo, float NewHealth);
 
 private:
     /** Seconds currently spent below the illness threshold (risk accumulator). */

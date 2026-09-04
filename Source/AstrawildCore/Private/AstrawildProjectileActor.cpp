@@ -9,6 +9,7 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildVfxActor.h"
 #include "Components/SphereComponent.h"
@@ -242,6 +243,16 @@ void AAstrawildProjectileActor::SetWeaponVfxAssets(const UAstrawildWeaponDefinit
     }
 }
 
+void AAstrawildProjectileActor::SetStatusPayload(FName InStatusId, float InStatusSeconds, float InStatusSpeedMultiplier, float InStatusDamagePerSecond)
+{
+    // FCR-1-a (M-a9): authored ability payload — sanitized (positive seconds,
+    // speed clamped to a sane band).
+    StatusPayloadId = InStatusId;
+    StatusPayloadSeconds = FMath::Max(0.0f, InStatusSeconds);
+    StatusPayloadSpeedMultiplier = FMath::Clamp(InStatusSpeedMultiplier, 0.2f, 2.5f);
+    StatusPayloadDamagePerSecond = FMath::Max(0.0f, InStatusDamagePerSecond);
+}
+
 void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AActor* OtherActor, UPrimitiveComponent* /*OtherComp*/, FVector /*NormalImpulse*/, const FHitResult& /*Hit*/)
 {
     // CP-05: impact burst on every machine that sees the contact (visual only,
@@ -291,6 +302,15 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
                     if (Reaction.IsValid())
                     {
                         ComboDamage *= Reaction.DamageMultiplier;
+                        // FCR-1-d fix (L-d15): the Dual-Tech toast reaches the
+                        // PLAYER (GetLastComboName had zero consumers — reactions
+                        // happened invisibly).
+                        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(
+                                GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr))
+                        {
+                            PC->Notify(FText::FromString(FString::Printf(TEXT("Dual-Tech: %s (x%.1f)"),
+                                *Reaction.DisplayName, Reaction.DamageMultiplier)));
+                        }
                         if (!Reaction.StatusId.IsNone())
                         {
                             // Hitstop reads as a hard brief slow; other ids map
@@ -315,6 +335,19 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
                 }
             }
             Echo->ApplyElementalDamage(ComboDamage, Element);
+
+            // FCR-1-a fix (M-a9): the AUTHORED ability status lands on hit (the
+            // old offensive path discarded Data->StatusId/Seconds/Speed — blind,
+            // fear, rally, chill variants never happened as authored).
+            if (!StatusPayloadId.IsNone() && StatusPayloadSeconds > 0.0f)
+            {
+                FAstrawildStatusEffect Payload;
+                Payload.StatusId = StatusPayloadId;
+                Payload.RemainingSeconds = StatusPayloadSeconds;
+                Payload.DamagePerSecond = StatusPayloadDamagePerSecond;
+                Payload.SpeedMultiplier = StatusPayloadSpeedMultiplier;
+                Echo->AddStatusEffect(Payload);
+            }
             }
         }
     }
@@ -322,14 +355,42 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
     {
         if (!Boss->IsDefeated())
         {
-            Boss->ApplyElementalBossDamage(DamageAmount, Element);
+            // FCR-1-d fix (M-d11): Dual-Tech reactions resolve against BOSSES and
+            // damage targets too — the old echo-only resolution made the entire
+            // combo system dead in every boss fight (where it matters most).
+            float BossDamage = DamageAmount;
+            if (const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get()))
+            {
+                if (UAstrawildComboSubsystem* Combos = GetWorld() ? GetWorld()->GetSubsystem<UAstrawildComboSubsystem>() : nullptr)
+                {
+                    const FAstrawildComboReaction Reaction = Combos->TryResolveEchoAbilityCombo(OtherActor, SourceEcho);
+                    if (Reaction.IsValid())
+                    {
+                        BossDamage *= Reaction.DamageMultiplier;
+                    }
+                }
+            }
+            Boss->ApplyElementalBossDamage(BossDamage, Element);
         }
     }
     else if (AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(OtherActor))
     {
         if (!DamageTarget->IsDefeated())
         {
-            DamageTarget->ApplyDamage(DamageAmount);
+            // FCR-1-d fix (M-d11): same combo resolution for damage targets.
+            float TargetDamage = DamageAmount;
+            if (const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get()))
+            {
+                if (UAstrawildComboSubsystem* Combos = GetWorld() ? GetWorld()->GetSubsystem<UAstrawildComboSubsystem>() : nullptr)
+                {
+                    const FAstrawildComboReaction Reaction = Combos->TryResolveEchoAbilityCombo(OtherActor, SourceEcho);
+                    if (Reaction.IsValid())
+                    {
+                        TargetDamage *= Reaction.DamageMultiplier;
+                    }
+                }
+            }
+            DamageTarget->ApplyDamage(TargetDamage);
         }
     }
     else if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(OtherActor))
