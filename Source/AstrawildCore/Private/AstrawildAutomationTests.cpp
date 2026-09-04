@@ -3866,4 +3866,80 @@ bool FAstrawildPerformanceTierTest::RunTest(const FString& Parameters)
     return true;
 }
 
+
+// --- FCR-1 regression contracts (Tests 100-102: final completion run fixes) ---
+
+// Test 100 — FCR-1-d (M-d8): party losses pull difficulty DOWN, not up.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDDAPartyLossTest,
+    "ASTRAWILD.FCR.DDA.PartyLossDirection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDDAPartyLossTest::RunTest(const FString& Parameters)
+{
+    using DDA = UAstrawildDifficultySubsystem;
+
+    // Two party echo losses (metric -4) lean the game IN to help — the old code
+    // counted them as hostile defeats, pushing difficulty UP on your own
+    // creatures dying (exactly backwards).
+    TestEqual(TEXT("Two party losses -> Struggling"), DDA::ComputeSkillBand(0, 0, 0, 2), 0);
+    TestEqual(TEXT("One party loss stays Standard (hysteresis)"), DDA::ComputeSkillBand(0, 0, 0, 1), 1);
+    // Party loss weight is half a player death: 1 loss cancels 1 capture's thrust.
+    TestEqual(TEXT("One loss cancels a capture's thrust"),
+        DDA::ComputeSkillBand(0, 1, 0, 1), 1);
+    // Player deaths still dominate pressure.
+    TestEqual(TEXT("Deaths and losses stack"), DDA::ComputeSkillBand(0, 0, 1, 1), 0);
+    return true;
+}
+
+// Test 101 — FCR-1-a (M-a8): full element kits — no dead ability templates.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityKitReachabilityTest,
+    "ASTRAWILD.FCR.Ability.FullElementKits",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityKitReachabilityTest::RunTest(const FString& Parameters)
+{
+    // Every element derives its FULL four-ability kit — the previously dead
+    // templates (LumenBurst, StoneSkin, BloomGuard, FlareNova, GlacialWall,
+    // Overload ...) are all reachable from the derived loadout path.
+    struct FKitCase { EAstrawildElementType Element; FName A; FName B; FName C; FName D; };
+    const FKitCase Cases[] = {
+        { EAstrawildElementType::Light,  TEXT("Ability_Dawnflash"),     TEXT("Ability_PhotonVeil"),   TEXT("Ability_LumenBurst"),    TEXT("Ability_RestoringGleam") },
+        { EAstrawildElementType::Ash,    TEXT("Ability_GravelSpit"),    TEXT("Ability_DustScreen"),   TEXT("Ability_StoneSkin"),     TEXT("Ability_SiftHeal") },
+        { EAstrawildElementType::Flora,  TEXT("Ability_ThornLash"),     TEXT("Ability_RootSnare"),    TEXT("Ability_BloomGuard"),    TEXT("Ability_SapSurge") },
+        { EAstrawildElementType::Ember,  TEXT("Ability_CinderBolt"),    TEXT("Ability_HeatHaze"),     TEXT("Ability_FlareNova"),     TEXT("Ability_WarmBlood") },
+        { EAstrawildElementType::Frost,  TEXT("Ability_ShardShot"),     TEXT("Ability_DeepFreeze"),   TEXT("Ability_GlacialWall"),   TEXT("Ability_Snowmelt") },
+        { EAstrawildElementType::Pulse,  TEXT("Ability_ArcBolt"),       TEXT("Ability_StormLatch"),   TEXT("Ability_Overload"),      TEXT("Ability_Galvanize") },
+    };
+    for (const FKitCase& Case : Cases)
+    {
+        const TArray<FName> Kit = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+            Case.Element, EAstrawildEchoRole::Base, EAstrawildEchoFamily::Beast);
+        TestEqual(*FString::Printf(TEXT("Kit %d has 6 entries"), static_cast<int32>(Case.Element)), Kit.Num(), 6);
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.A.ToString()), Kit.Contains(Case.A));
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.B.ToString()), Kit.Contains(Case.B));
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.C.ToString()), Kit.Contains(Case.C));
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.D.ToString()), Kit.Contains(Case.D));
+    }
+    return true;
+}
+
+// Test 102 — FCR-1-d (H-d5): IV multipliers are consumed by the stat getters' contracts.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildGeneticsIVBoundsTest,
+    "ASTRAWILD.FCR.Genetics.IVConsumptionBounds",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildGeneticsIVBoundsTest::RunTest(const FString& Parameters)
+{
+    using Gen = UAstrawildGeneticsLibrary;
+    // The IV layer is now LIVE (rolled at breeding, persisted, consumed by
+    // GetMaxHealth/GetAttackPower/GetDefense/speed): 0 = neutral, 31 = +31%.
+    TestEqual(TEXT("IV 0 is neutral"), Gen::ComputeIVStatMultiplier(0.0f), 1.0f);
+    TestEqual(TEXT("IV 31 is +31%"), Gen::ComputeIVStatMultiplier(31.0f), 1.31f);
+    TestEqual(TEXT("IV 15 is +15%"), Gen::ComputeIVStatMultiplier(15.0f), 1.15f);
+    // Negative/oversized inputs clamp (corrupt saves cannot mint stats).
+    TestEqual(TEXT("Negative IV clamps to neutral"), Gen::ComputeIVStatMultiplier(-5.0f), 1.0f);
+    TestEqual(TEXT("Oversized IV clamps to 1.31"), Gen::ComputeIVStatMultiplier(99.0f), 1.31f);
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

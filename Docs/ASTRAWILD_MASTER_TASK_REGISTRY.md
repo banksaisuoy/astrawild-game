@@ -43,9 +43,9 @@
 | FA-4 | Regression | +5 world-free contracts: OneShotBackFill, DefeatCountImportSafety, DismantleIsNotPlacement, Research.ImportSafety, Save.FinalAuditContracts | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-2/3 | AutomationTests.cpp | a5aa74d | static count 72; engine run pending | none | engine test |
 | FA-5 | Docs | Phase Q reconciliation: 72-test truth everywhere, dead glm/final-run references fixed in HANDOFF, control list corrected, readiness gate re-checked | GLM | UPDATED | FA-2..4 | Docs/*.md | (this docs commit) | review | none | Antigravity review |
 
-> Automation suite: **99 world-free contract tests** (57 baseline + 4 hardening from
+> Automation suite: **102 world-free contract tests** (57 baseline + 4 hardening from
 > BATCH-1 + 6 Final Run from BATCH-2 + 5 final-audit regressions + 12 GDP + 15 SCP).
-> Full inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md` (rows 1-99). One authoritative value
+> Full inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md` (rows 1-102). One authoritative value
 > per metric — enforced by the validator's §11 census gates.
 
 ## B. Antigravity integration tasks (engine machine)
@@ -54,7 +54,7 @@
 | :-- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | AG-1 | Git | Pull/merge final-completion; push main; close PR #4 as absorbed | Antigravity | PLANNED | FA-5 | git log / PR state | credentials | execute after AG-2..5 |
 | AG-2 | Build | MSVC compile of final SHA (0 errors) | Antigravity | PLANNED | FR-* | raw build log | UE 5.8.2 machine | run |
-| AG-3 | Tests | 99/99 automation green | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
+| AG-3 | Tests | 102/102 automation green | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
 | AG-4 | Playtest | PIE golden path: MQ chain → Eye → Sovereign → ending A/B → post-game; save/load round-trip; door/crate interactions | Antigravity | PLANNED | AG-3 | raw PIE log + per-checkpoint trace | none | run |
 | AG-5 | Package | Cook+package exit 0; packaged exe boots to MainMap | Antigravity | PLANNED | AG-2 | raw UAT log | FZ-A1 recurrence watch | run |
 | AG-6 | Fix loop | Any engine-only defect → smallest fix on a branch; architectural problems return to GLM | Antigravity | PLANNED | AG-4/5 | fix commits | none | as found |
@@ -120,5 +120,5 @@ source; audit + fix; keep canon locked; deterministic handoff.
 
 | ID | Area | Deliverable | Owner | Status | Notes |
 |----|------|-------------|-------|--------|-------|
-| FCR-0 | Registry reconciliation | One authoritative value per metric: test count unified to **99** (from AutomationTests.cpp + validator); content census established (76 items / 56 recipes / 229 species / 26 buildings / 17 techs / 17 quests / 11 loot / 13 POIs / 9 events / 11 NPCs / 11 dialogues / 8 weapons / 10 nodes / 4 sites / 3 robots); census enforced by validator §11 equality gates; live engine census log added (hardcoded stale counts removed from ContentLibrary) | GLM | IMPLEMENTED | commit in this run; ENGINE-UNVERIFIED (log fires at engine boot) |
+| FCR-0 | Registry reconciliation | One authoritative value per metric: test count unified to **102** (from AutomationTests.cpp + validator); content census established (76 items / 56 recipes / 229 species / 26 buildings / 17 techs / 17 quests / 11 loot / 13 POIs / 9 events / 11 NPCs / 11 dialogues / 8 weapons / 10 nodes / 4 sites / 3 robots); census enforced by validator §11 equality gates; live engine census log added (hardcoded stale counts removed from ContentLibrary) | GLM | IMPLEMENTED | commit in this run; ENGINE-UNVERIFIED (log fires at engine boot) |
 | FCR-1 | Source audit | Fresh full audit of GDP+SCP code (a7a827f..f9892b6 — not covered by the prior 5-audit pass) + fix every real defect found | GLM | IN_PROGRESS | see worklog |

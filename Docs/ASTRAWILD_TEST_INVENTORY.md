@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 99 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 102 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -12,14 +12,15 @@ Act 3 story spine end-to-end at the data level; the final-audit regressions
 (#68-72) pin the audit's P0/P1 fixes with behavioral contracts (real matcher
 paths, real import paths); the GDP pack (#73-84) pins the depth systems
 (abilities/locomotion/attributes/affinity); the SCP pack (#85-99) pins the
-systems-completion layer (validator/fallback/spoilage/sanity/mount/combos/
+systems-completion layer, and the FCR regressions (#100-102) pin this run's
+DDA/ability-kit/IV fixes (validator/fallback/spoilage/sanity/mount/combos/
 difficulty/crops/schedules/turrets/genetics/perf).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **99** — derived from `AutomationTests.cpp`
+authoritative test count is **102** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-gate (`Automation tests >= 99`), and listed in this inventory (rows 1-99).
-Historical counts (57/63/67/72/84) describe earlier commits only and appear
+EXACT gate (`Automation tests == 102`), and listed in this inventory (rows 1-102).
+Historical counts (57/63/67/72/84/99) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -118,8 +119,8 @@ nowhere as current-state claims.
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 99)
-Expected: 99 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 102)
+Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
 
 ## Gameplay Depth Pack contracts (73-84)
@@ -158,3 +159,11 @@ Expected: 99 pass / 0 fail / 0 skip. Any failure → capture the raw log and fil
 | 97 | ASTRAWILD.SCP.Turret.RangeAndPolicy | Range/cadence/damage + party-safe targeting (SCP-5) |
 | 98 | ASTRAWILD.SCP.Genetics.Inheritance | Trait effects + deterministic rolls + IVs (SCP-6) |
 | 99 | ASTRAWILD.SCP.Perf.TierLadder | Scalability ladder + hysteresis policy (SCP-6) |
+
+## FCR regression contracts (100-102, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 100 | ASTRAWILD.FCR.DDA.PartyLossDirection | M-d8: party echo losses pull the band DOWN (2 losses -> Struggling); weight = half a player death |
+| 101 | ASTRAWILD.FCR.Ability.FullElementKits | M-a8: every element derives its full 4-ability kit — 6 entries incl. the previously dead templates |
+| 102 | ASTRAWILD.FCR.Genetics.IVConsumptionBounds | H-d5: IV multiplier bounds (0 neutral / 31 = +31%, negatives & oversized clamp) — the IV layer is live |

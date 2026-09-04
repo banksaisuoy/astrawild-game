@@ -16,7 +16,7 @@ content family carries a single CODE_DEFAULT source of truth. Engine verificatio
 > [!NOTE]
 > **REDO LANDED (2026-09-03)**: every pillar below was re-implemented on branch
 > `final-completion` and pushed batch-by-batch (BATCH-0..5). The static validator runs
-> ALL CHECKS PASSED (now 64 checks incl. the 15 census equality gates) and the automation suite holds 99 world-free contract tests
+> ALL CHECKS PASSED (now 64 checks incl. the 15 census equality gates) and the automation suite holds 102 world-free contract tests
 > (inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`). Specs remain LOCKED as MASTER_CONTROL
 > v3.6 — the redo changed no design.
 
@@ -78,14 +78,14 @@ Side content: 23 SQ roster remains staged (deferred by design, MASTER_CONTROL D)
 ## G. Automation Readiness
 
 - `Scripts/validate_repository.sh` v2 — PASS (structural ruleset).
-- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×528 files, 64 asset-path refs, 99-test gate, building catalog, + the 15 authoritative census equality gates).
-- 99 world-free automation contracts (57 baseline + 4 hardening + 6 Final-Run + 5 audit regressions + 12 GDP + 15 SCP) — never yet executed in an engine (AG-3).
+- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×528 files, 64 asset-path refs, 102-test gate, building catalog, + the 15 authoritative census equality gates).
+- 102 world-free automation contracts (57 baseline + 4 hardening + 6 Final-Run + 5 audit regressions + 12 GDP + 15 SCP + 3 FCR) — never yet executed in an engine (AG-3).
 - Deterministic content: single code-default library, same-id .uasset override contract, ArtSource generators + AwPipeline importer.
 - Git: 3 Final-Run commits, conventional messages, FR-id traceability; push BLOCKED (no credentials) — delivery via Antigravity pull.
 
 ## H. Known Engine-Unverified Items
 
-1. The 99-test suite has never run in a real engine.
+1. The 102-test suite has never run in a real engine.
 2. Build/cook/package at the Final-Run SHA (previous attempt failed UBT at 8313c61 — FZ-A1).
 3. PIE golden path MQ-13..17 + endings (cheat-assisted jump is acceptable for verification).
 4. Save v4→v5 migration on a real old save.
@@ -115,7 +115,7 @@ Antigravity records the post-verification SHA here after AG-1..AG-5.
 ## K. Antigravity One-Time Integration Plan
 
 Executable runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 (10 steps:
-pull → build → 99/99 tests → PIE boot+golden path incl. both endings → save round-trip →
+pull → build → 102/102 tests → PIE boot+golden path incl. both endings → save round-trip →
 package → packaged boot → log capture → push/merge + close PR #4 → fix-loop rules).
 Engine-only mechanical bugs: fix locally. Architectural discoveries: return to GLM with logs.
 
@@ -136,7 +136,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 | 11 | Save V5 model complete | **PASS** | AUD-2 checklist a–k: item-loss class fixed (chassis/drone refund/echo health); additive defeat counters |
 | 12 | Content/LFS manifest complete | **PASS** | FINAL_CONTENT_MANIFEST v1.1 (459/459 LFS live-verified) |
 | 13 | Asset paths validated | **PASS** | 65/65 /Game references resolve (validator) |
-| 14 | Tests complete at source level | **PASS** | 99 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP (ENGINE-UNVERIFIED) |
+| 14 | Tests complete at source level | **PASS** | 102 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP (ENGINE-UNVERIFIED) |
 | 15 | Final handoff executable | **PASS** | HANDOFF §1–20: live branch + SHAs, no dead references, corrected controls |
 | 16 | No duplicate gameplay architectures | **PASS** | one Echo platform (authored + bestiary share it); crafting screen single surface; no second combat/save stack |
 | 17 | No active contradictory documentation | **PASS** | ONE test count (99) in all active docs; ONE content census (validator §11 gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL |
@@ -145,7 +145,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 **Gate verdict: READY_FOR_FINAL_BUILD (17/17 + branch record).**
 
 > Reminder: READY_FOR_FINAL_BUILD means SOURCE/REPOSITORY READY. It does NOT mean
-> UE5-VERIFIED — AG-2..AG-5 (build, 99/99 tests, PIE golden path, package) remain the
+> UE5-VERIFIED — AG-2..AG-5 (build, 102/102 tests, PIE golden path, package) remain the
 > engine machine's exclusive gates.
 
 ---
