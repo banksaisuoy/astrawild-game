@@ -1,6 +1,7 @@
 #include "AstrawildEchoCharacter.h"
 
 #include "AstrawildAbilityLibrary.h"
+#include "AstrawildArtPack.h"
 #include "AstrawildCore.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCreatureSanityComponent.h"
@@ -31,11 +32,32 @@
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ProceduralMeshComponent.h"
 #include "Materials/Material.h"
+#include "Sound/SoundBase.h"
 #include "UObject/ConstructorHelpers.h"
+
+namespace
+{
+    // DP-5: wild-game weak-point cadence (deliberately rarer than the boss's
+    // 12s/5s choreography — hunting big game is about patience, not dance
+    // steps). Direct hits during the window land x1.5 BEFORE the defense
+    // subtraction; DoT ticks never route through that path.
+    constexpr float EchoWeakPointPeriodSeconds = 20.0f;
+    constexpr float EchoWeakPointWindowSeconds = 4.0f;
+    constexpr float EchoWeakPointDamageMultiplier = 1.5f;
+
+    // The pulse the existing element light plays while the window is open
+    // (~2.4x the steady glow — readable at combat range without a new component).
+    constexpr float EchoWeakPointGlowIntensity = 4.6f;
+
+    // Weakness-toast routing radius: only a player this close to the victim
+    // gets the HUD line (the attacker, by definition, is inside it).
+    constexpr float EchoWeaknessNotifyRadius = 3000.0f;
+}
 
 // ---------------------------------------------------------------------------
 // Batch 8 — procedural body construction (The Grand Menagerie).
@@ -455,14 +477,35 @@ void AAstrawildEchoCharacter::UpdateElementGlow()
     // Runs everywhere (local cosmetic): captured Echoes always glow; wild
     // elementals glow only near a player pawn — the active light count stays
     // bounded no matter how many of the 200+ species roam the world.
-    if (!ElementGlowLight || !EchoDefinition || EchoDefinition->Element == EAstrawildElementType::None || IsDefeated())
+    if (!ElementGlowLight)
     {
-        if (ElementGlowLight)
-        {
-            ElementGlowLight->SetIntensity(0.0f);
-        }
         return;
     }
+
+    // DP-5: an open weak-point window OVERRIDES every glow gate below — the
+    // existing element light pulses bright (species tint, or the weakness tint
+    // when the species carries no element of its own) so the 4s window reads
+    // clearly at combat range. No new component type: same light, new state.
+    if (bWeakPointExposed && !IsDefeated())
+    {
+        const bool bHasOwnElement = IsValid(EchoDefinition) && EchoDefinition->Element != EAstrawildElementType::None;
+        const EAstrawildElementType TintElement = bHasOwnElement
+            ? EchoDefinition->Element
+            : (IsValid(EchoDefinition) ? EchoDefinition->WeaknessElement : EAstrawildElementType::None);
+        ElementGlowLight->SetLightColor(FAstrawildVfxPalette::GetElementTint(TintElement));
+        ElementGlowLight->SetIntensity(EchoWeakPointGlowIntensity);
+        return;
+    }
+
+    if (!EchoDefinition || EchoDefinition->Element == EAstrawildElementType::None || IsDefeated())
+    {
+        ElementGlowLight->SetIntensity(0.0f);
+        return;
+    }
+
+    // Window just closed: restore the steady species tint (the pulse may have
+    // swapped it) before the normal gates decide the intensity below.
+    ElementGlowLight->SetLightColor(FAstrawildVfxPalette::GetElementTint(EchoDefinition->Element));
 
     if (bCaptured)
     {
@@ -551,6 +594,7 @@ void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(AAstrawildEchoCharacter, OwnerPlayerId);
     DOREPLIFETIME(AAstrawildEchoCharacter, StatusEffects);
     DOREPLIFETIME(AAstrawildEchoCharacter, AbilityCooldowns);
+    DOREPLIFETIME(AAstrawildEchoCharacter, bWeakPointExposed);
 }
 
 void AAstrawildEchoCharacter::BeginPlay()
@@ -602,6 +646,10 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
     // Needs + bond simulate server-side only (directive §28), throttled by LOD tier.
     if (GetLocalRole() == ROLE_Authority && !IsDefeated())
     {
+        // DP-5: wild-game weak-point window — the server owns the cadence. Only
+        // Large/Huge species ever tick this (fail-closed for everything else).
+        TickWeakPointWindow(DeltaTime);
+
         HandleNeedsDecay(DeltaTime);
 
         // Production V2 (Master Plan §6): party passive auras — captured Echoes
@@ -728,6 +776,14 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
     CurrentHealth = FMath::Max(1.0f, CachedStats.MaxHealth);
     Trust = FMath::Max(0.0f, Trust);
     InstanceId = OptionalInstanceId.IsValid() ? OptionalInstanceId : FGuid::NewGuid();
+
+    // DP-5: weak-point eligibility is a pure size-class fact — only Large/Huge
+    // wild game exposes (Tiny/Small/Medium never do; bosses use their own
+    // boss-class weak point and never route here).
+    bWeakPointEligible = InDefinition->SizeClass == EAstrawildSizeClass::Large
+        || InDefinition->SizeClass == EAstrawildSizeClass::Huge;
+    bWeakPointExposed = false;
+    WeakPointElapsed = 0.0f;
 
     if (Personality == EAstrawildPersonality::Curious && !bCaptured)
     {
@@ -1016,6 +1072,97 @@ bool AAstrawildEchoCharacter::ApplyDamage(const float DamageAmount)
     return ApplyElementalDamage(DamageAmount, EAstrawildElementType::None) > 0.0f;
 }
 
+// --- DP-5: wild-game weak-point windows + weakness-hit readability ---
+
+void AAstrawildEchoCharacter::TickWeakPointWindow(const float DeltaTime)
+{
+    if (!bWeakPointEligible)
+    {
+        return;
+    }
+
+    WeakPointElapsed += DeltaTime;
+    if (bWeakPointExposed)
+    {
+        if (WeakPointElapsed >= EchoWeakPointWindowSeconds)
+        {
+            bWeakPointExposed = false;
+            WeakPointElapsed = 0.0f;
+        }
+    }
+    else if (WeakPointElapsed >= EchoWeakPointPeriodSeconds)
+    {
+        bWeakPointExposed = true;
+        WeakPointElapsed = 0.0f;
+        // The glow pulse itself is local-cosmetic (UpdateElementGlow on every
+        // machine, refreshed by OnRep the moment this replicates).
+        UE_LOG(LogAstrawildAI, Verbose, TEXT("%s exposes a weak point for %.1fs."),
+            *GetName(), EchoWeakPointWindowSeconds);
+    }
+}
+
+void AAstrawildEchoCharacter::OnRep_bWeakPointExposed()
+{
+    // Clients mirror the window the instant it replicates instead of waiting
+    // for the next 1s glow cadence pass.
+    UpdateElementGlow();
+}
+
+void AAstrawildEchoCharacter::NotifyWeaknessHit(const float AppliedDamage)
+{
+    // 1) The Blueprint-consumable multicast (HUD/UMG/audio mods can bind this).
+    OnWeaknessHit.Broadcast(this, AppliedDamage);
+
+    const FText ElementName = IsValid(EchoDefinition)
+        ? UEnum::GetDisplayValueAsText(EchoDefinition->WeaknessElement)
+        : FText::FromString(TEXT("Weakness"));
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Weakness hit on %s: %.1f applied (%s strike, x1.5)."),
+        *GetName(), AppliedDamage, *ElementName.ToString());
+
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // 2) Audio cue: the ArtPack-bound energy impact sound — the SAME binding
+    // the weapons use (no new /Game/ reference; LoadSynchronous short-circuits
+    // once the asset is resident, matching the weapon impact path).
+    const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+    if (USoundBase* ImpactSound = Cue.LoadSynchronous())
+    {
+        UGameplayStatics::PlaySoundAtLocation(World, ImpactSound, GetActorLocation());
+    }
+
+    // 3) Attacker-facing HUD toast, routed through the established
+    // Notify -> PushNotification path (the same route the DP-4 loadout
+    // toasts ride). The nearest player inside notify range is, by definition,
+    // the attacker in single-player/listen-server play; remote clients can
+    // bind OnWeaknessHit above instead.
+    AAstrawildPlayerController* NearestPC = nullptr;
+    float BestDistanceSq = EchoWeaknessNotifyRadius * EchoWeaknessNotifyRadius;
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get());
+        const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+        if (!PC || !Pawn)
+        {
+            continue;
+        }
+        const float DistanceSq = FVector::DistSquared(GetActorLocation(), Pawn->GetActorLocation());
+        if (DistanceSq < BestDistanceSq)
+        {
+            BestDistanceSq = DistanceSq;
+            NearestPC = PC;
+        }
+    }
+    if (NearestPC)
+    {
+        NearestPC->Notify(FText::FromString(FString::Printf(
+            TEXT("WEAKNESS HIT — %s strikes true (x1.5 damage)."), *ElementName.ToString())));
+    }
+}
+
 float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, const EAstrawildElementType InElement)
 {
     if (GetLocalRole() != ROLE_Authority || DamageAmount <= 0.0f || IsDefeated())
@@ -1044,16 +1191,27 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
     }
 
     // Elemental interactions (directive §9): weakness x1.5, matching element resisted.
+    // DP-5: the weakness branch is now READABLE — see NotifyWeaknessHit below.
+    bool bWeaknessHit = false;
     if (IsValid(EchoDefinition))
     {
         if (InElement != EAstrawildElementType::None && InElement == EchoDefinition->WeaknessElement)
         {
             Damage *= 1.5f;
+            bWeaknessHit = true;
         }
         else if (InElement != EAstrawildElementType::None && InElement == EchoDefinition->Element)
         {
             Damage *= (1.0f - EchoDefinition->ElementalResistance);
         }
+    }
+
+    // DP-5: wild-game weak-point window — direct hits (this path only; DoT
+    // ticks route through ApplyStatusTicks and never see this) land x1.5
+    // BEFORE the defense subtraction, stacking with the weakness multiplier.
+    if (bWeakPointExposed)
+    {
+        Damage *= EchoWeakPointDamageMultiplier;
     }
 
     const float MitigatedDamage = FMath::Max(0.0f, Damage - GetDefense());
@@ -1064,6 +1222,13 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
 
     CurrentHealth = FMath::Max(0.0f, CurrentHealth - MitigatedDamage);
     OnDamaged.Broadcast(this, CurrentHealth);
+
+    // DP-5: weakness-hit readability — multicast + toast + impact cue + log,
+    // fired only when the x1.5 branch actually landed damage.
+    if (bWeaknessHit)
+    {
+        NotifyWeaknessHit(MitigatedDamage);
+    }
 
     // Batch 3 — Item A: apply the element's status effect (Burn/Chill/Poison/Shock)
     // through the shared factory. One vocabulary for player weapons and Echo attacks.

@@ -1268,3 +1268,58 @@ struct ASTRAWILDCORE_API FAstrawildNPCAffinitySaveData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     int32 LastTradeGainDay = -1;
 };
+
+/**
+ * DP-5 — which of the four canonical boss special sets drives an encounter's
+ * specials. Resolved purely from DefeatEventTargetId (the stable per-boss
+ * identity); unknown ids fall back to the Underlight Warden set, which is the
+ * pre-DP-5 shared pipeline behavior. Appended-only (no save serialization).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildBossSpecialSet : uint8
+{
+    UnderlightWarden UMETA(DisplayName="Underlight Warden (default)"),
+    SunkenVault UMETA(DisplayName="Sunken Vault"),
+    GlassTyrant UMETA(DisplayName="Glass Tyrant"),
+    EyeOfTheMaelstrom UMETA(DisplayName="Eye of the Maelstrom")
+};
+
+/**
+ * DP-5 — pure tuning bundle for one boss special set. The shared
+ * TickSpecials pipeline reads these values; every set recombines the SAME
+ * primitives (energy bolts, telegraphed blasts, arena hazards, phase-2
+ * summons) — no new special mechanic types.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildBossSpecialSetParams
+{
+    GENERATED_BODY()
+
+    /** Seconds between special volleys (phase 3 halves this — enrage pressure). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1.0"))
+    float SpecialAttackCooldownSeconds = 7.0f;
+
+    /** Energy bolts per volley (fanned around the target). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="5"))
+    int32 BoltCount = 1;
+
+    /** Telegraphed blasts per volley (phase 2+; the first sits on the player, the rest ring around them). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="3"))
+    int32 BlastCount = 1;
+
+    /** AoE blast radius (cm). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="50.0"))
+    float SpecialBlastRadius = 350.0f;
+
+    /** Hazards spawned per hazard wave (phase 2+, ring around the arena center). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="6"))
+    int32 HazardWaveCount = 1;
+
+    /** Damage per second of each spawned arena hazard. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="0.0"))
+    float HazardDamagePerSecond = 6.0f;
+
+    /** Phase-2 summon species override (the room's explicit FR-7 override still wins). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials")
+    FName SummonSpeciesId = TEXT("Echo_Gloomfang");
+};

@@ -172,7 +172,7 @@ Input contract grows 26 → 28 actions (T = party ability cast, Y = player smart
 | Gate | Status | Notes |
 | :--- | :--- | :--- |
 | MSVC build @ 8313c61 | DECLARED PASS (raw log) | superseded — rebuild on final SHA required |
-| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 104 tests now (99 SCP-era + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout) — re-run required |
+| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 105 tests now (99 SCP-era + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout + 1 DP-5 boss special sets) — re-run required |
 | Final-audit static validation | **PASS 46/46 (this sandbox)** | re-run at AG-2 per HANDOFF §4 |
 | Cook & package | FAILED at 8313c61 (UBT ExitCode 6) per own log | FZ-A1 blocker — re-run on final SHA |
 | Packaged exe runtime | STALE binary evidence (FZ-A2) | re-run on final SHA |
@@ -253,7 +253,7 @@ engine integration pass (§8) converts this to GAME-COMPLETE or returns engine-s
 
 - Door visual state on pure clients (bIsSwitchedOn has no OnRep) — single-player/listen-server correct.
 - Imported skiff mesh orientation (glTF Y-up→Z-up assumption) — cosmetic; collision hull unaffected.
-- 104 automation tests never executed in a real engine.
+- 105 automation tests never executed in a real engine.
 - Package/cook success at the final SHA (FZ-A1 failure was at 8313c61).
 - Dungeon generator float-precision at 400 m altitude (Eye) — probes use world height; watch PIE log.
 - Dedicated-server co-op paths (H-9 batch) remain single-player-first as designed.
@@ -289,7 +289,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 ### §5c SCP — Systems Completion Pack (v3.5, session 2026)
 
 Plan-vs-repo audit of the vULTIMATE 14-phase directive found 17 missing systems;
-six SCP batches closed 15 of them (source-complete, additive; 99 tests at SCP time — 102 at FCR, 103 after DP-3, 104 at DP-4):
+six SCP batches closed 15 of them (source-complete, additive; 99 tests at SCP time — 102 at FCR, 103 after DP-3, 104 at DP-4, 105 at DP-5):
 SCP-1 DataValidator/AssetFallback/ErrorReporter + Durability/Spoilage (a7a827f) ·
 SCP-2 Base Terminal + Creature Sanity (394ac81) · SCP-3 Mounting (edc6b08) ·
 SCP-4 Dual-Tech Combos + DDA (6cd29e4) · SCP-5 NPC Schedules + Crops + Offline

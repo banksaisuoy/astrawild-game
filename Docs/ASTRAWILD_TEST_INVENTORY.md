@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 104 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 105 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -15,15 +15,17 @@ paths, real import paths); the GDP pack (#73-84) pins the depth systems
 systems-completion layer, the FCR regressions (#100-102) pin that run's
 DDA/ability-kit/IV fixes (validator/fallback/spoilage/sanity/mount/combos/
 difficulty/crops/schedules/turrets/genetics/perf), the DP-3 contract (#103)
-pins the party element resonance, and the DP-4 contract (#104) pins the
+pins the party element resonance, the DP-4 contract (#104) pins the
 player skill loadout (bind validation + bound-only smart-cast + the
-empty-loadout legacy fallback).
+empty-loadout legacy fallback), and the DP-5 contract (#105) pins the
+per-boss special sets (canonical id resolution, unknown-id fallback,
+zero-regression default tuning, pairwise-distinct data).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **104** — derived from `AutomationTests.cpp`
+authoritative test count is **105** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 104`), and listed in this inventory (rows 1-104).
-Historical counts (57/63/67/72/84/99/102/103) describe earlier commits only and appear
+EXACT gate (`Automation tests == 105`), and listed in this inventory (rows 1-105).
+Historical counts (57/63/67/72/84/99/102/103/104) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -182,3 +184,9 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 | # | Test | Covers |
 |---|------|--------|
 | 104 | ASTRAWILD.DP4.SkillLoadout | DP-4: 3-slot player skill loadout — slot bounds / locked-skill / duplicate / None bind validation, rebind replaces the occupant, clear is a safe no-op out of bounds, bound-only smart-cast (unbound unlocked skills suppressed), empty-loadout legacy fallback picks among ALL unlocked skills, save v5 round-trip + pre-DP-4 payload resets to all-empty |
+
+## DP-5 depth contracts (105, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 105 | ASTRAWILD.DP5.BossSpecialSets | DP-5: per-boss special sets — the four canonical defeat ids resolve to four distinct sets, unknown/None ids fail closed to the default set, the default set is the byte-exact legacy tuning (7s/1 bolt/1 blast/350cm/1 hazard/6dps/Gloomfang), no two sets share a tuning bundle, and every set stays inside the sane combat band (cooldown 4-10s, 1-4 bolts, 1-3 blasts, 250-500cm, 1-4 hazards, 4-10dps, set summon species) |

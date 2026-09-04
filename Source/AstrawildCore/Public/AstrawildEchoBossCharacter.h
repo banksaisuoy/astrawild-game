@@ -152,6 +152,22 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="2.0"))
     float HazardIntervalSeconds = 9.0f;
 
+    /** DP-5: energy bolts per special volley (fanned around the target — set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="5"))
+    int32 BoltCount = 1;
+
+    /** DP-5: telegraphed blasts per special volley (the first sits on the player, the rest ring around them — set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="3"))
+    int32 BlastCount = 1;
+
+    /** DP-5: hazards spawned per hazard wave (ring around the arena center — set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="6"))
+    int32 HazardWaveCount = 1;
+
+    /** DP-5: damage per second of each arena hazard this boss spawns (set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="0.0"))
+    float HazardDamagePerSecond = 6.0f;
+
     /** Hazards spawn on a ring of this radius around the arena center (cm). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="100.0"))
     float HazardSpawnRadius = 650.0f;
@@ -167,6 +183,41 @@ public:
     /** Damage multiplier while the weak point is exposed. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|WeakPoint", meta=(ClampMin="1.0", ClampMax="5.0"))
     float WeakPointDamageMultiplier = 2.0f;
+
+    // --- DP-5: per-boss special sets (data-driven, shared pipeline) ---
+
+    /**
+     * DP-5: the special set driving this encounter's specials, resolved once
+     * from DefeatEventTargetId (server tuning — the parameters are read by the
+     * shared TickSpecials pipeline, never replicated).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss|Specials")
+    EAstrawildBossSpecialSet SpecialSet = EAstrawildBossSpecialSet::UnderlightWarden;
+
+    /**
+     * DP-5: resolve the special set from a defeat id. The four canonical ids
+     * map to four distinct sets; every other id fails closed to the
+     * Underlight Warden set (the pre-DP-5 shared-pipeline behavior).
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
+    static EAstrawildBossSpecialSet ResolveBossSpecialSet(FName DefeatEventTargetId);
+
+    /**
+     * DP-5: pure tuning table for one special set (bolt count/cadence, blast
+     * count/radius, hazard wave count/dps, summon species) — the same four
+     * primitives recombined per boss, no new mechanic types.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
+    static FAstrawildBossSpecialSetParams GetBossSpecialSetParams(EAstrawildBossSpecialSet Set);
+
+    /**
+     * DP-5: resolve the set from the CURRENT DefeatEventTargetId and apply its
+     * tuning onto this encounter (server; idempotent). Called at the end of
+     * InitializeFromBossDefinition and again wherever a spawn path finalizes
+     * DefeatEventTargetId (dungeon boss room + the Tyrant world spawn).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Boss")
+    void ApplyBossSpecialSet();
 
     // --- Replicated encounter state ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss", Replicated)
@@ -305,7 +356,7 @@ private:
     void TickSpecials(float DeltaTime);
     void TickWeakPoint(float DeltaTime);
     void TickPendingBlasts(float DeltaTime);
-    void FireEnergyBolt(class AAstrawildPlayerCharacter* Target);
+    void FireEnergyBolt(class AAstrawildPlayerCharacter* Target, int32 VolleyIndex);
     void SpawnArenaHazard();
     void CleanupEncounterFx();
 

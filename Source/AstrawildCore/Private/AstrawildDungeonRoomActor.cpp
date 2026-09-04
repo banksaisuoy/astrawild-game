@@ -97,6 +97,10 @@ void AAstrawildDungeonRoomActor::SpawnEncounter(const TArray<FName>& CreatureDef
                 }
             }
             Boss->DefeatEventTargetId = BossDefeatEventId; // Batch 8: per-dungeon quest target.
+            // DP-5: resolve the per-boss special set from the now-final defeat
+            // id BEFORE the FR-7 summon override below — an explicit room
+            // override always beats the set's default summons.
+            Boss->ApplyBossSpecialSet();
             // Final-audit (AUD-3 loot note): room bosses are rewarded by the room's
             // ClearLootTableId on clear — the species DefeatLoot path is disabled
             // so the Sovereign does not triple-drop its SovereignCore.

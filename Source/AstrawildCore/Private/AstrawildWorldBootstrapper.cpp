@@ -895,6 +895,9 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
             }
             Tyrant->BossSpeciesId = TEXT("Echo_GlassTyrant");
             Tyrant->DefeatEventTargetId = TEXT("Creature_GlassTyrant"); // MQ-14 credit.
+            // DP-5: the world boss resolves its own special set from the final
+            // defeat id (glass shard volleys + Glassgolem adds).
+            Tyrant->ApplyBossSpecialSet();
             UE_LOG(LogAstrawildAI, Log, TEXT("Act 3: Glass Tyrant world boss spawned over Stormcrest."));
         }
     }

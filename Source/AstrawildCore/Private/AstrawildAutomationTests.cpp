@@ -3139,6 +3139,93 @@ bool FAstrawildSkillLoadoutTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// --- DP-5: per-boss special set contracts (Test 105) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBossSpecialSetsTest,
+    "ASTRAWILD.DP5.BossSpecialSets",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBossSpecialSetsTest::RunTest(const FString& Parameters)
+{
+    // Canonical ids resolve to four DISTINCT sets — the shared special pipeline
+    // finally reads different data per boss.
+    TestEqual(TEXT("Warden id resolves the Underlight Warden set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_UnderlightWarden")),
+        EAstrawildBossSpecialSet::UnderlightWarden);
+    TestEqual(TEXT("Colossus id resolves the Sunken Vault set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_VaultColossus")),
+        EAstrawildBossSpecialSet::SunkenVault);
+    TestEqual(TEXT("Tyrant id resolves the Glass Tyrant set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_GlassTyrant")),
+        EAstrawildBossSpecialSet::GlassTyrant);
+    TestEqual(TEXT("Sovereign id resolves the Eye of the Maelstrom set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_DrownedSovereign")),
+        EAstrawildBossSpecialSet::EyeOfTheMaelstrom);
+
+    // Unknown ids fail closed to the default set (the legacy shared pipeline).
+    TestEqual(TEXT("Unknown id falls back to the default set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_DoesNotExist")),
+        EAstrawildBossSpecialSet::UnderlightWarden);
+    TestEqual(TEXT("None id falls back to the default set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(NAME_None),
+        EAstrawildBossSpecialSet::UnderlightWarden);
+
+    // The default set is the byte-exact legacy tuning (zero-regression).
+    const FAstrawildBossSpecialSetParams Legacy =
+        AAstrawildEchoBossCharacter::GetBossSpecialSetParams(EAstrawildBossSpecialSet::UnderlightWarden);
+    TestEqual(TEXT("Legacy set keeps the 7s special cooldown"), Legacy.SpecialAttackCooldownSeconds, 7.0f);
+    TestEqual(TEXT("Legacy set keeps one bolt"), Legacy.BoltCount, 1);
+    TestEqual(TEXT("Legacy set keeps one blast"), Legacy.BlastCount, 1);
+    TestEqual(TEXT("Legacy set keeps the 350cm blast radius"), Legacy.SpecialBlastRadius, 350.0f);
+    TestEqual(TEXT("Legacy set keeps one hazard per wave"), Legacy.HazardWaveCount, 1);
+    TestEqual(TEXT("Legacy set keeps the 6dps hazards"), Legacy.HazardDamagePerSecond, 6.0f);
+    TestTrue(TEXT("Legacy set keeps the Gloomfang summons"), Legacy.SummonSpeciesId == TEXT("Echo_Gloomfang"));
+
+    // Pairwise distinctness: no two sets carry the same tuning bundle (the
+    // identical-special-pipeline gap stays closed by data, not by trust).
+    const EAstrawildBossSpecialSet Sets[4] =
+    {
+        EAstrawildBossSpecialSet::UnderlightWarden,
+        EAstrawildBossSpecialSet::SunkenVault,
+        EAstrawildBossSpecialSet::GlassTyrant,
+        EAstrawildBossSpecialSet::EyeOfTheMaelstrom
+    };
+    const auto ParamsKey = [](const FAstrawildBossSpecialSetParams& P)
+    {
+        return FString::Printf(TEXT("%.1f|%d|%d|%.0f|%d|%.1f|%s"),
+            P.SpecialAttackCooldownSeconds, P.BoltCount, P.BlastCount, P.SpecialBlastRadius,
+            P.HazardWaveCount, P.HazardDamagePerSecond, *P.SummonSpeciesId.ToString());
+    };
+    TSet<FString> Keys;
+    for (const EAstrawildBossSpecialSet Set : Sets)
+    {
+        Keys.Add(ParamsKey(AAstrawildEchoBossCharacter::GetBossSpecialSetParams(Set)));
+    }
+    TestEqual(TEXT("All four sets tune differently"), Keys.Num(), 4);
+
+    // Sanity band: every set stays a boss fight, not a spam machine or a
+    // pushover (cooldown 4-10s, 1-4 bolts, 1-3 blasts, 250-500cm, 1-4 hazards,
+    // 4-10 dps, a real summon species).
+    for (const EAstrawildBossSpecialSet Set : Sets)
+    {
+        const FAstrawildBossSpecialSetParams Params = AAstrawildEchoBossCharacter::GetBossSpecialSetParams(Set);
+        TestTrue(TEXT("Set cooldown stays in the 4-10s band"),
+            Params.SpecialAttackCooldownSeconds >= 4.0f && Params.SpecialAttackCooldownSeconds <= 10.0f);
+        TestTrue(TEXT("Set bolt count stays in the 1-4 band"),
+            Params.BoltCount >= 1 && Params.BoltCount <= 4);
+        TestTrue(TEXT("Set blast count stays in the 1-3 band"),
+            Params.BlastCount >= 1 && Params.BlastCount <= 3);
+        TestTrue(TEXT("Set blast radius stays in the 250-500cm band"),
+            Params.SpecialBlastRadius >= 250.0f && Params.SpecialBlastRadius <= 500.0f);
+        TestTrue(TEXT("Set hazard wave stays in the 1-4 band"),
+            Params.HazardWaveCount >= 1 && Params.HazardWaveCount <= 4);
+        TestTrue(TEXT("Set hazard dps stays in the 4-10 band"),
+            Params.HazardDamagePerSecond >= 4.0f && Params.HazardDamagePerSecond <= 10.0f);
+        TestFalse(TEXT("Set summon species is set"), Params.SummonSpeciesId.IsNone());
+    }
+
+    return true;
+}
+
 // --- GDP-1: combat pick ladder (Test 75) ---
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityCombatPickTest,
     "ASTRAWILD.Ability.CombatPick",

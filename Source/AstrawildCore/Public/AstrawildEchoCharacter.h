@@ -25,6 +25,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoLevelUp, AAstrawildEc
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoCommandReceived, AAstrawildEchoCharacter*, Echo, EAstrawildEchoCommand, Command);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoAIStateChanged, AAstrawildEchoCharacter*, Echo, EAstrawildEchoAIState, NewState);
 
+/**
+ * DP-5: fired on the server when an elemental hit lands on the species'
+ * WEAKNESS element (the existing x1.5 branch) and actually deals damage.
+ * Blueprint/UMG consumers plus the built-in feedback surfaces (HUD toast,
+ * impact cue, log) all hang off this one readability event.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoWeaknessHit, AAstrawildEchoCharacter*, Echo, float, AppliedDamage);
+
 /** GDP-1: fired on every ability resolve attempt (success or deny — UI toasts listen). */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAstrawildEchoAbilityExecuted, AAstrawildEchoCharacter*, Echo, FName, AbilityId, bool, bSuccess);
 
@@ -111,6 +119,10 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoAbilityExecuted OnAbilityExecuted;
 
+    /** DP-5: weakness-hit readability broadcast (server-side, with damage). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoWeaknessHit OnWeaknessHit;
+
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TObjectPtr<UAstrawildEchoDefinition> EchoDefinition;
 
@@ -164,6 +176,19 @@ public:
      */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
     TArray<FAstrawildStatusEffect> StatusEffects;
+
+    /**
+     * DP-5: the wild-game weak-point window is OPEN. Only Large/Huge species
+     * ever set this (bWeakPointEligible — decided from the definition); bosses
+     * have their own boss-class weak point and never route here. Replicated so
+     * clients mirror the glow pulse (OnRep refreshes the light immediately).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|WeakPoint", ReplicatedUsing=OnRep_bWeakPointExposed)
+    bool bWeakPointExposed = false;
+
+    /** DP-5: true when this species may expose a weak point (Large/Huge size class). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|WeakPoint")
+    bool CanExposeWeakPoint() const { return bWeakPointEligible; }
 
     /** Assigned work site for base jobs (directive §18). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
@@ -417,6 +442,21 @@ protected:
 
 private:
     FAstrawildEchoStats CachedStats;
+
+    /** DP-5: size-class gate for the weak-point window — true only for Large/Huge species (fail-closed everywhere else). */
+    bool bWeakPointEligible = false;
+
+    /** DP-5: server-side weak-point cadence countdown (period and window constants live in the cpp). */
+    float WeakPointElapsed = 0.0f;
+
+    /** DP-5: server timer that opens/closes the weak-point window (authoritative, gated by bWeakPointEligible). */
+    void TickWeakPointWindow(float DeltaTime);
+
+    /** DP-5: feedback fan-out for a landed weakness hit (multicast + toast + audio + log, server). */
+    void NotifyWeaknessHit(float AppliedDamage);
+
+    UFUNCTION()
+    void OnRep_bWeakPointExposed();
 
     /** Batch 3 — Item B: server-side stagger countdown (client feedback via replicated CurrentAIState). */
     float StaggerRemainingSeconds = 0.0f;

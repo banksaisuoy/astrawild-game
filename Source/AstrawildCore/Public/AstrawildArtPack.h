@@ -80,6 +80,17 @@ namespace AstrawildArtPack
 		extern ASTRAWILDCORE_API const TCHAR* ProjectileTrail;
 	}
 
+	/** Shared weapon audio paths (authored per CP-06 — see the Paths table in the cpp). */
+	namespace Sfx
+	{
+		/**
+		 * DP-5: the bound energy impact cue, reused as the weakness-hit
+		 * feedback sound. Points at the EXISTING binding — no new
+		 * /Game/ reference is introduced (validator check 8 stays clean).
+		 */
+		extern ASTRAWILDCORE_API const TCHAR* WeaknessHitImpact;
+	}
+
 	/** All 8 production weapon bindings (may contain null paths when a weapon has no art yet). */
 	ASTRAWILDCORE_API const TArray<FWeaponArt>& GetWeaponArt();
 

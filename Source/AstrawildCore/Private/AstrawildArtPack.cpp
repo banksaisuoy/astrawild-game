@@ -9,6 +9,13 @@ namespace AstrawildArtPack
 		const TCHAR* ProjectileTrail = TEXT("/Game/VFX/NS_AW_Weap_Trail");
 	}
 
+	namespace Sfx
+	{
+		// DP-5: reuses the existing CP-06 energy impact binding verbatim
+		// (no new /Game/ path — validator check 8 reads the same ref).
+		const TCHAR* WeaknessHitImpact = TEXT("/Game/Audio/A_Weapon_Impact_Energy");
+	}
+
 	namespace Paths
 	{
 		// Meshes (mirrored from ArtSource/manifest.json ue_path values)
