@@ -99,13 +99,13 @@ Exosuit → Mannequin → procedural body — the pawn ALWAYS renders.
 | CONTENT FAMILY | SINGLE SOURCE OF TRUTH | COUNT | REPLICATION MECHANISM |
 | :--- | :--- | :--- | :--- |
 | Items | `AstrawildContentLibrary.cpp` + `AstrawildProductionContent.cpp` (CODE_DEFAULT, registered into the item registry at subsystem init) | ContentLibrary 49 + ProductionContent 29 = 78 authored ids (DP-6 adds the Field Ration + Pulse Tonic; 12 vendor/loot tables feed more) | authored `.uasset` `UAstrawildItemDefinition` replaces by same-id override — no code change |
-| Echo species | ContentLibrary (22) + ProductionContent (12 incl. 3 Act 3 bosses) + BestiaryData (204) | 226 definitions | same-id override on `UAstrawildEchoDefinition` |
+| Echo species | ContentLibrary (10 authored starters) + ProductionContent (9 incl. the 3 Act 3 bosses) + 6 evolution targets + BestiaryData (204) | **229 definitions** (census-enforced) | same-id override on `UAstrawildEchoDefinition` |
 | Quests (MQ-01..17) | ContentLibrary::BuildQuests (12) + ProductionContent (2) + BuildFinalRunContent (5) | 17 | same-id override on `UAstrawildQuestDefinition` |
-| Buildings | ContentLibrary::BuildBuildings | 17 (incl. Floor/Roof/Door/StorageCrate) | same-id override on `UAstrawildBuildingDefinition` |
+| Buildings | ContentLibrary::BuildBuildings | 26 (incl. Floor/Roof/Door/StorageCrate + terminal/turret/farm/pen/incubator) | same-id override on `UAstrawildBuildingDefinition` |
 | Technologies | ContentLibrary::BuildTechnologies + ProductionContent | 17 | same-id override on `UAstrawildTechnologyDefinition` |
 | Recipes | ContentLibrary + ProductionContent | 58 (DP-6 adds the Field Ration + Pulse Tonic mirrors) | same-id override on `UAstrawildRecipeDefinition` |
-| NPCs + dialogue trees | ContentLibrary::BuildNPCs (12) + ProductionContent trees (11) | 12 NPCs / 11 trees | same-id override (`UAstrawildNPCDefinition`, `UAstrawildDialogueTreeDefinition`) |
-| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 10 / 16 / 17 / 12 / 8 / 10 / 8 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post; DP-7: +7 zone events for the bare zones, +4 scanner-gated secret POIs) | same-id override per family |
+| NPCs + dialogue trees | ContentLibrary::BuildNPCs (11) + ProductionContent trees (11) | 11 NPCs / 11 trees | same-id override (`UAstrawildNPCDefinition`, `UAstrawildDialogueTreeDefinition`) |
+| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 11 / 16 / 17 / 12 / 8 / 10 / 8 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post; DP-7: +7 zone events for the bare zones, +4 scanner-gated secret POIs) | same-id override per family |
 
 **There is NO `.uda` / `.uabp` / `.usk` requirement anywhere in this project.** UE5
 Data Assets are `.uasset` files of `UPrimaryDataAsset`-derived classes; this project's
@@ -176,6 +176,19 @@ this manifest's scope: (a) `GameDefaultMap` now points at `/Game/ASTRAWILD/Maps/
 (the canon map — was the ThirdPerson template), (b) `.gitattributes` additionally
 reserves `*.uexp/*.ubulk/*.exr` for LFS (none in repo; future-proof), (c) `__pycache__`
 untracked. Statuses and verdict below are re-affirmed as-is.
+
+### DP-10 re-verification note (Depth Passes — final gate)
+
+Both validators re-ran **ALL CHECKS PASSED at the DP-10 final-gate tip** —
+`validate_final_run.py` now runs 61 checks (the 109-test exact gate + the 15 census
+equality gates + LFS/asset-path/content checks). §7 counts were re-synced to the
+validator census at this gate: species 226 → **229** (per-file breakdown corrected:
+10 + 9 + 6 evolution targets + 204), buildings 17 → **26**, NPCs 12 → **11**, loot
+tables 10 → **11** — the earlier values were stale current-state claims (each census
+delta itself was historical: the DP-6/DP-7 rows already carried the item/recipe/site/
+event/POI updates). Zero gameplay code, zero assets, zero LFS objects changed in the
+depth passes' documentation gate — the manifest's verification basis (459/459 LFS,
+65/65 /Game refs, CODE_DEFAULT registries) is unchanged.
 
 **MANIFEST VERDICT**: the final repository — as pushed on `final-completion` —
 supplies 100% of the required UE5 content: **459/459 LFS objects verified live on

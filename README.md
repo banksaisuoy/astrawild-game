@@ -1,5 +1,14 @@
 # ASTRAWILD — Echoes of the First Dawn
 
+> [!NOTE]
+> **Current status (DP-10 final gate, 2026)**: the repository is source-complete on branch
+> `final-completion` — 109 world-free automation contracts, full 12-zone world, 229 Echo
+> species, MQ-01..17 + two endings, save schema V5, ready for the one-time engine
+> integration run. The canonical control doc is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v5.0)**;
+> the engine runbook is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The narrative text below
+> this note is the Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54
+> tests" snapshot refers to the 2026-09-01 Antigravity V2 session).
+
 **Current world (Batch 7): The Shattered Vale** — six 800 m zones (Dawn Fields, Dusk Marsh, Glimmerwood, Ember Ridge, Frostveil Expanse, Hollow Approach) over a 2.4 km × 1.6 km procedural terrain, each zone with its own wildlife, resources, landmarks and signature light. Runtime world needs zero assets; an optional editor Landscape path ships in `Content/Heightmaps/`.
 
 ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal Engine. The first milestone is a playable Vertical Slice: one small region, three prototype Echo creatures, exploration, combat, capture, crafting, a small base, and reliable save/load.

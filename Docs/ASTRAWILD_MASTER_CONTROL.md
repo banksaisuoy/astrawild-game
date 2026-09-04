@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 4.1 (DEPTH PASSES begun — creature visual strategy complete; integration matrix + gameplay/world/NPC/dungeon depth passes in flight per TASK_REGISTRY §I)
+**Document Version**: 5.0 (DEPTH PASSES COMPLETE (DP-1..DP-10): ready for final integration)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
-**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch, ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FINAL COMPLETION RUN + ASSET ACQUISITION PACK pushed)
-**Last Updated**: 2026 (Depth Pass DP-1 — creature visual strategy; see TASK_REGISTRY §I)
+**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch: ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FCR + ASSET ACQUISITION (26a7c7b, a09e566) + DEPTH PASSES DP-1..DP-9 (981250d → 018a95a) + DP-10 final gate (this commit) — all pushed)
+**Last Updated**: 2026 (DP-10 FINAL GATE — full source audit PASS + readiness matrix/report/handoff re-verified; registry §I closed, no orphans; see TASK_REGISTRY §I)
 
 ---
 
@@ -73,7 +73,7 @@ A declared PASS without a raw log is a CLAIM, not evidence.
 | :--- | :--- | :--- |
 | **GLM** | Lead Programmer | C++, architecture, save/load, quests, AI, economy, tests; this document |
 | **Qwen** | Technical Art (optional) | Materials/meshes/animation polish — never blocks the project |
-| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 63-test automation run, playtest, package, push |
+| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 109-test automation run, playtest, package, push |
 | **Sonnet/Reviewers** | Auditors | Findings are inputs; only REAL BUG / STALE DOC / UNPROVEN CLAIM classes act on |
 
 ## 2. THE FINAL GAME (locked definition)
@@ -210,13 +210,13 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 | W-19 | HUD/UI | LIVE + ending banner + boss labels | |
 | W-20 | **Ending + post-game** | **LIVE (FR-5/FR-6 + audit G-2 gate fix)** | ending gated on MQ-17 per canon |
 | W-21 | Content pipeline (ArtSource/LFS/import) | LIVE | 459 LFS objects verified |
-| W-22 | Tests | 102 world-free contracts | ENGINE-UNVERIFIED until run |
+| W-22 | Tests | 109 world-free contracts | ENGINE-UNVERIFIED until run |
 
 ## 8. Verification queue for Antigravity (one-time final integration)
 
 1. `git fetch && git checkout final-completion` (or merge into main — subsumes PR #4)
 2. Build: `Engine\Build\BatchFiles\Build.bat AstrawildEditor Win64 Development -project=<repo>\ASTRAWILD.uproject`
-3. Run automation: 102/102 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, and the 15 SCP contracts: `ASTRAWILD.SCP.*` — full list in `ASTRAWILD_TEST_INVENTORY.md` rows 1-102)
+3. Run automation: 109/109 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, and the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*` — full list in `ASTRAWILD_TEST_INVENTORY.md` rows 1-109; the count is read from the repo, never from memory)
 4. PIE smoke: MQ chain HUD tracker · save/load round-trip (schema 5 stamp in log) ·
    `AW.FastForward` to MQ-13+ if needed → verify anchor POIs, Eye Gate at 150 m with coil skiff,
    Sovereign fight, ending banner, post-game weather pin (Ending A).
@@ -244,7 +244,7 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | Save persistence model | YES — schema V5, every major system persisted |
 | UI player-accessible | YES — HUD/screens incl. ending banner |
 | AI complete source paths | YES (echo/hostile/boss) |
-| Automation deterministic | YES — scripts + 102 contracts + this document |
+| Automation deterministic | YES — scripts + 109 contracts + this document |
 | Documentation single control | YES — this file |
 | Task registry | YES — ASTRAWILD_MASTER_TASK_REGISTRY.md |
 | P0 source blockers | NONE KNOWN (static level) |
@@ -289,6 +289,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026 | **v3.7 (GLM FCR — Phase 1 audit + fixes)**: 5-agent deep audit of the GDP+SCP code (never previously audited) found 2 CRITICAL compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects — ALL verified against source and fixed in FCR-1-A (9bca989: save subsystem pawn-member compile errors, sanity const violation, flying locomotion possess race, party friendly fire, wild bolt damage, echo XP wiring, NPC origin march, offline mint, crop infinite yield, mount stuck states, IVs/Lucky live, shop hours) and FCR-1-B (30e9e44: dead ability kits, status payloads, DDA party direction, combo boss resolution, garrison enforcement, per-player spoilage, validator empty guard, perf user-pin respect) + FCR-1-C (this commit: +3 regression contracts, suite 102, exact validator gate); R2/R7 full-repo sweeps clean; input/recipe/quest-producer cross-checks clean |
 | 2026 | **v3.8 (GLM FCR — Phases 2-18 COMPLETE)**: mechanical verification sweep of every player-facing pillar (Phases 2-12 ALL PASS) · cross-cutting invariants clean (R2/R7 sweeps, input map 28 actions no-dup, zero dead recipe stacks, all objective types have producers) · performance tick scan clean · Phase 17 deferred review: CV-5 economy CLOSED (Duskmoth loot), CV-4/CV-6/SCP-7 stay deferred with reasons (none block READY) · pipeline idempotency contract issued (HANDOFF §20a) · suite 102 with exact gate · **READY_FOR_FINAL_BUILD re-affirmed at the final FCR SHA** — one-time engine integration (AG-1..6) remains the exclusive conversion gate |
 | 2026 | **v4.0 (GLM ASSET ACQUISITION BATCH 2 — wayfinder charted, live user-approved)**: acquisition decision layer charted as a wayfinder map (`.scratch/` outside repo, 6 decision tickets; gap-analysis + OGA-policy research resolved by parallel subagents — Kenney full-catalog walk 214 packs, OGA YES-WITH-CONSTRAINTS) → batch-2 approved 9 CC0 packs (Particle/UI-SciFi/Survival/City-Industrial/Modular-Space/Modular-Dungeon/Animated-Characters/Skyboxes/Crosshair) · pipeline extended (Textures category with sub-path-preserving dests, FBX/TTF validators, rel-path curation, incremental manifest merge) · flat-dest collision bug caught in-run and fixed (0 BLOCKED at close) · 2,607 new files / 32.4MB, combined 15 packs / 3,678 / 3,360 IMPORT_READY / 75.8MB · idempotency re-proven · HANDOFF §20b acquired-asset checklist issued for the engine run · READY_FOR_FINAL_BUILD unchanged (IMPORT_READY ≠ UE5_VERIFIED) |
+| 2026 | **v5.0 (GLM DP-10 FINAL GATE — DEPTH PASSES COMPLETE)**: full source audit at tip 018a95a — both validators PASS (validate_repository.sh v2 + validate_final_run.py 61 checks incl. the 109-test gate and the 15 census equality gates); doc-consistency sweep executed (stale current-state counts corrected across the matrix/manifest/registry/readiness/handoff — historical/dated rows untouched); content readiness matrix re-verified at 14 categories (Tier-A meshes IMPORT_READY, skill loadout live, affinity-gated dialogue, themed dungeons — statuses stay honest, nothing BOUND); readiness report re-affirms **READY_FOR_FINAL_BUILD (source-side)** with the residual ledger (Tier-B rig library P1 / engine import+binding queue §20b+§20c / tone-weapon-particle-ACS decisions awaiting engine evidence); HANDOFF coherence pass (109 tests as repo truth, §20b+§20c referenced from the §20 sequence, 12 golden-path verify items, 12-point stop-condition list from the user directive); registry §I closed — DP-1..DP-10 all COMPLETE, no orphans; branch frozen for the Antigravity one-time integration run |
 
 
 ### §5c SCP — Systems Completion Pack (v3.5, session 2026)
@@ -302,3 +303,24 @@ Production + Turrets (bbe2e3c) · SCP-6 Genetics + Performance Manager (9864cce)
 Deferred with reasons: object pooling (engine-verify destroy path first),
 IGenericTeamAgentInterface (co-op perception layer). Full matrix:
 Docs/ASTRAWILD_SYSTEMS_COMPLETION_PACK.md.
+
+### §5d DEPTH PASSES (v4.1–v5.0, 2026 session — user directive "MAKE IT A REAL GAME", closed at DP-10)
+
+DP-1 creature visual strategy + 14 bespoke Tier-A echo meshes (981250d, c4012a0,
+d9ebf86) + boss opt-in skeletal path with cone fallback (675e5b4, binding patch in
+HANDOFF §20c) · DP-2 content integration matrix 14 categories (a2e7783) ·
+DP-3 echo depth: locomotion signature abilities + 15-pair party element resonance +
+water mounts (ffc7eca, +test 103) · DP-4 player 3-slot skill loadout (e6607b6, +test 104) ·
+DP-5 combat depth: weak-point windows + weakness-hit feedback + per-boss special sets
+(8771519, +test 105) · DP-6 base depth: 4 work sites + research-branch pin + field
+consumables (89bd714, +test 106; census items 78 / recipes 58 / sites 8) · DP-7 world
+depth: 7 zone events + per-zone hazard identity + 4 scanner-gated secrets (0087047,
++test 107; census events 16 / POIs 17) · DP-8 NPC depth: affinity-gated dialogue
+evolution + regional knowledge (0710dd0, +test 108) · DP-9 dungeon depth: themed rooms +
+resonance-pillar puzzles + room hazards (018a95a, +test 109) · DP-10 final gate (this
+commit): both validators PASS, doc-consistency sweep, matrix/readiness/handoff
+re-verified, registry §I closed. Residual ledger: Tier-B archetype rig library (~55
+species, P1 art backlog with procedural material-identity degradation), engine-side
+import/binding queue (§20b/§20c), and the tone/weapon/particle/ACS decisions that
+await engine evidence. NOTHING here is engine-verified — AG-2..AG-5 (§8) remain the
+exclusive conversion gates.

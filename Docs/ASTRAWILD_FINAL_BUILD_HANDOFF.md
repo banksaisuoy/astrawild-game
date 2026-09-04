@@ -41,10 +41,29 @@ commits (oldest→newest, ALL pushed to origin/final-completion):
   bbe2e3c  [SCP-5] Living world — NPC schedules, crops, offline production, turrets
   9864cce  [SCP-6] Breeding genetics + dynamic performance enforcement (99 tests)
   f9892b6  [SCP-7] Docs: plan-vs-repo audit matrix, master control v3.5 + registry §F
-  <TIP>    [FCR] Final Game Completion Run (this session): registry reconciliation +
-           census gates + GDP/SCP audit fixes + final docs. `git ls-remote origin
-           final-completion` gives the exact tip SHA; `git log --oneline -25` must show
-           the full list above.
+  8a3a0da  [FCR-0] Registry reconciliation — one authoritative value per metric
+  9bca989  [FCR-1-A] Audit fixes: 2 compile blockers + 13 HIGH defects (GDP+SCP deep audit)
+  30e9e44  [FCR-1-B] Audit fixes batch B: 10 MEDIUM + 11 LOW defects
+  aea01ed  [FCR-1-C] +3 regression contracts (99 -> 102 tests) + exact test gate + docs sync
+  43429a7  [FCR-FINAL] Phases 2-18 complete — READY_FOR_FINAL_BUILD re-affirmed
+  26a7c7b  [AA] Asset Acquisition Pack — 6 CC0 Kenney packs (1071 source files, 43.4MB)
+  a09e566  [AA-2] Asset Acquisition Batch 2 — 9 CC0 Kenney packs (2607 files, 32.4MB)
+  981250d  [DP-1] Creature Visual Strategy — Tier A/B/C over 229 species + registry §I ledger
+  a2e7783  [DP-2] Content Integration Matrix — 14-category readiness + per-pack tables
+  c4012a0  [DP-1x] Tier-A boss meshes ×4 — DrownedSovereign/GlassTyrant/Dawnfang/EyeSentinel
+  d9ebf86  [DP-1x] Tier-A story meshes ×4 — Lumewisp/Sprigling/Gloomfang/Auroraling
+  675e5b4  [DP-1b] Boss opt-in skeletal body + §20c binding-patch sequence (this file)
+  ffc7eca  [DP-3] Echo depth — locomotion signature abilities + party resonance + water mounts (+test 103)
+  e6607b6  [DP-4] Player skill loadout — 3-slot bound actives (+test 104)
+  8771519  [DP-5] Combat depth — weak points + weakness feedback + boss special sets (+test 105)
+  89bd714  [DP-6] Base depth — 4 work sites + field consumables (+test 106)
+  0087047  [DP-7] World depth — 7 zone events + hazards + 4 secret POIs (+test 107)
+  0710dd0  [DP-8] NPC depth — affinity-gated dialogue + regional knowledge (+test 108)
+  018a95a  [DP-9] Dungeon depth — room themes + puzzle rooms + room hazards (+test 109)
+  <TIP>    [DP-10] Final gate — source audit PASS + readiness matrix/report/handoff/master-
+           control v5.0 + registry closed (this docs batch; `git ls-remote origin
+           final-completion` gives the exact tip SHA; `git log --oneline -30` must show
+           the full list above).
 ```
 **PR #4 is subsumed** — merging `final-completion` into `main` closes it (do not re-merge
 PR #4 separately).
@@ -88,7 +107,7 @@ GitHub and no longer exists. The live integration branch is **`final-completion`
 
 ## 5. CONTENT PREP COMMAND
 
-None required beyond LFS pull — all 115+ ArtPack assets are committed (§3), and the code
+None required beyond LFS pull — all ArtPack assets are committed (§3), and the code
 content library is self-registering (CODE_DEFAULT definitions at world begin-play).
 Optional asset regeneration (only if ArtSource changes):
 ```powershell
@@ -273,7 +292,7 @@ no duplicated assets, no double imports, no corrupted Content.
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
    ending A (check: weather clears, banner shows, save) → load the save (banner persists) →
-   ending B on a second save (storm stays)
+   ending B on a second save (storm stays) + the 12 golden-path verify items below (GDP + DP-3..DP-9)
 6  Test_RealSaveLoad.ps1 (3-cycle persistence)   → raw log
 7  Build_Package.ps1 exit 0 (§10)                → raw UAT log
 8  Packaged exe boots to MainMap, input works    → raw RUNTIME_<sha>.log
@@ -281,6 +300,18 @@ no duplicated assets, no double imports, no corrupted Content.
 10 any engine-only defect: smallest fix on a branch; anything architectural → back to GLM
    with the logs; do NOT redesign systems
 ```
+
+**Asset sub-sequences inside this run (not optional, not blockers)** — both execute
+inside the step 4-5 PIE window, in this order, with their own report-back rules:
+
+- **§20b acquired-asset checklist** (Kenney imports + fitness/retarget/tone checks +
+  decision reporting) — run AFTER the baseline `import_all.py` pass and BEFORE any
+  binding decision; its 6 steps are self-contained.
+- **§20c Tier-A creature-mesh import + binding patch** (14 bespoke echo meshes, 8 of
+  them new) — run AFTER the §20b baseline pass: import → commit `.uasset`s (LFS) →
+  apply the verbatim `GetEchoArt()` binding rows → re-run both validators → PIE
+  spot-check. The cone placeholder stays until the mesh resolves — that is the
+  contract, not a defect.
 
 **Completion declaration**: when 1–9 pass, ASTRAWILD is GAME-COMPLETE (source-complete +
 engine-verified + packaged). Record the final SHA + log manifest in
@@ -294,8 +325,10 @@ engine-verified content. Verify them during the ONE-TIME integration run as foll
 all steps ride the EXISTING Interchange importer; do not build a second importer.
 
 1. **Baseline first (unchanged contract)**: run the standard `import_all.py` pass
-   BEFORE any Kenney import — the 112-asset procedural contract, soft-path fallbacks
-   and zero-asset boot guarantee must be intact (§20a idempotency).
+   BEFORE any Kenney import — the flat-contract procedural import (120 files on disk at
+   DP-10: the 112-asset contract + the 8 DP-1 Tier-A echo meshes — §20c imports those
+   exactly like the 6 heroes), soft-path fallbacks and zero-asset boot guarantee must
+   be intact (§20a idempotency).
 2. **Import the Kenney sources** (Interchange, `replace_existing=True`,
    `does_asset_exist` guards — suggested destinations, binding decisions are yours):
    - `ArtSource/Audio/Kenney_*/Wav/*.wav` → `/Game/Audio/Kenney/<Pack>/` — import
@@ -448,3 +481,39 @@ Sequence (engine machine, after the §20b baseline pass):
 5. **Report back** per the §20b step-6 split: mesh scale/animation findings are
    mechanical defects (smallest fix, branch); anything about the tier design
    itself routes back to the GLM wayfinder map (ticket 07 follow-ups).
+
+## 21. SOURCE-SIDE STOP CONDITIONS (user directive "MAKE IT A REAL GAME" — 12 points)
+
+The source-side run that produced this branch ends only when all 12 hold — they were
+the final arbiter before `READY_FOR_FINAL_BUILD` was declared (registry §I DP-10;
+status at the DP-10 final gate):
+
+1. Planned depth work complete — DP-1..DP-10 all COMPLETE in registry §I (no orphans).
+2. Wayfinder visual gaps addressed — every P0/P1 gap from the gap analysis is either
+   acquired (IMPORT_READY), authored (14 Tier-A meshes), or carries a documented
+   fallback (integration matrix §4).
+3. Content pipeline deterministic — import_all.py idempotency contract (§20a) +
+   acquisition tooling idempotency re-proven.
+4. Creature visual strategy complete — strategy doc v1.2 issued; Tier-A bespoke set
+   complete (14 meshes IMPORT_READY); Tier-B library is the documented P1 residual.
+5. World has meaningful content density — 12 zones, ≥1 anchored event + hazard identity
+   per zone (DP-7), 17 POIs incl. 4 scanner-gated secrets, 8 work sites (DP-6).
+6. NPCs useful — schedules, shops, affinity tiers + affinity-gated dialogue evolution
+   and regional knowledge (DP-8).
+7. Player progression meaningful — attributes, 7 milestone skills, 3-slot skill
+   loadout (DP-4), T0→T5 gear, 17 techs with branch wiring pinned 17/17.
+8. Echoes have meaningful abilities/roles — 44+ ability templates + locomotion
+   signatures (DP-3), party resonance, water mounts, weak-point windows (DP-5).
+9. Final story fully playable — MQ-01..17 + two endings + post-game (source-side,
+   engine walk pending AG-4).
+10. Content manifest complete — FINAL_CONTENT_MANIFEST (459/459 LFS, 65/65 /Game refs,
+    every content family has a CODE_DEFAULT single source of truth).
+11. Final source audit passes — both validators ALL PASS at tip; doc-consistency sweep
+    executed at DP-10; census values unified across live docs.
+12. FINAL_BUILD_HANDOFF executable — this document: one executable path, counts read
+    from the repo (never memory), §20b/§20c sub-sequences included, 12 golden-path
+    verify items, stop conditions reflected.
+
+All 12 hold at the DP-10 final-gate commit → **READY_FOR_FINAL_BUILD** (source-side).
+Engine-side verification (AG-1..6) remains the exclusive conversion gate — nothing in
+this document claims it.

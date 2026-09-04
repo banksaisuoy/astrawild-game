@@ -192,7 +192,7 @@
 - **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
 - **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
 - **Attribution Required**: False
-- **ASTRAWILD Usage**: NPC/villager body candidate (12 NPCs, 2 villages) + locomotion animation reference (idle/run/jump); rig-retarget compatibility to be checked in engine
+- **ASTRAWILD Usage**: NPC/villager body candidate (11 NPCs, 2 villages) + locomotion animation reference (idle/run/jump); rig-retarget compatibility to be checked in engine
 - **Files**: 5 accepted — 1.8 MB
 - **SHA256 (pack zip)**: `fdadced07a0454c9b7f0b46507be6144a072b4d03b4ffa37f225893c76c62845`
 - **Date Checked**: 2026-09-04
