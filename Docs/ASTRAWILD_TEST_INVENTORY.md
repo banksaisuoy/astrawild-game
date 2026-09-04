@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 108 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 109 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -30,13 +30,19 @@ secret POIs), and the DP-8 contract (#108) pins the NPC depth (the affinity
 gate evaluation: default-0 never gates, fail-closed without a talking NPC,
 the inclusive 25/50/75 tier boundaries, flag-pair AND semantics, and the four
 evolved trees' gated replies pinned through the live registry census —
-NPC/dialogue counts stay 11/11: depth, not clones).
+NPC/dialogue counts stay 11/11: depth, not clones), and the DP-9 contract
+(#109) pins the dungeon depth (theme resolution per dungeon id — the 3
+canonical dungeons resolve 3 distinct themes with pairwise-distinct shell
+tints/proportions/walls/hazards and ArtPack-resolvable dressing vocabulary;
+the resonance-pillar sequence verbs — correct order advances to completion,
+wrong order resets, window expiry resets; the unthemed default stays the
+legacy shell).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **108** — derived from `AutomationTests.cpp`
+authoritative test count is **109** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 108`), and listed in this inventory (rows 1-108).
-Historical counts (57/63/67/72/84/99/102/103/104/105/106/107) describe earlier commits only and appear
+EXACT gate (`Automation tests == 109`), and listed in this inventory (rows 1-109).
+Historical counts (57/63/67/72/84/99/102/103/104/105/106/107/108) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -135,8 +141,8 @@ nowhere as current-state claims.
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 102)
-Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 109)
+Expected: 109 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
 
 ## Gameplay Depth Pack contracts (73-84)
@@ -214,8 +220,14 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 107 | ASTRAWILD.DP7.WorldDepth | DP-7: world depth — per-zone hazard identity from the pure static zone table (all 12 zones carry an explicit hazard row; the thermal offset + stamina-regen penalty helpers mirror the enum for Cold/Heat/AshLung; hazard-free zones stay fully neutral with zero pressure; Dawn Fields stays gentle by design; Frostveil reads colder than Dawn Fields — the layering contract the survival tick consumes; Hollow Approach is the ash-lung identity), the 7 previously-bare zones each anchor at least one of the 16 registered world events (live registry census, ownerless `BuildDefaults`; every new event pins its zone, balance band, cooldown, day-gate, no night-gate, and payload resolution — species boost ids, bonus node ids, loot tables), and the 17-POI census with 6 scanner-gated secrets (the 4 new DP-7 caches + 2 legacy signal sources all gated, SignalSource-typed, high-threat-zone-placed, with real loot + research rewards) |
 
-## DP-8 depth contracts (108, landed this run)
+## DP-8 depth contracts (108, landed in the DP-8 batch)
 
 | # | Test | Covers |
 |---|------|--------|
 | 108 | ASTRAWILD.DP8.AffinityDialogue | DP-8: NPC depth — the affinity-gated dialogue evolution gate: the pure resolver (threshold 0 never gates — the fresh additive default keeps every pre-DP-8 tree byte-identical; below threshold fails; the threshold is inclusive so the 25/50/75 tier boundaries resolve exactly on Acquaintance/Friend/Confidant), component evaluation fail-closed (a gated reply hides when no talking NPC can be resolved, exactly like the quest conditions; a default-0 reply stays visible in the same state), the live talking-NPC path (a world-free NPC at 24 misses the 50 gate, at 50 passes, and clearing the NPC fails the gate closed again), AND semantics with the flag conditions, the four evolved trees pinned through the ownerless `BuildDefaults` registry (Tam Friend-50 supply line, Rowan Confidant-75 old doors, Nima Friend-50 rare goods, Sela Acquaintance-25 patrol chart — each gated reply one-time via forbidden flag and paying real consequences: research points / shop bridge / item grants, existing verbs only), and the census pin that NPC/dialogue counts stay 11/11 (depth, not clones) |
+
+## DP-9 depth contracts (109, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 109 | ASTRAWILD.DP9.DungeonIdentity | DP-9: dungeon depth — theme resolution per dungeon id (the 3 canonical dungeon ids resolve 3 DISTINCT themes; unknown/empty ids fail closed to None so identity never breaks a dungeon), the theme profile table the rooms consume (pairwise-distinct shell tints; Underlight tighter than the Vault which reads wider than the Eye; Eye monolith walls taller than the Underlight's oppressive slabs; only the Eye pulses its accent light; the per-dungeon hazard identity is exactly AshLung/Waterlogged/EnergyPulse with mild bands — ash lung ≤ 8/s, waterlogged 0.5-1.0×, pulses 5s+ cadence / ≤ 6 dps / dissipating within the cadence; dressing vocabulary resolves through the EXISTING ArtPack biome/node tables with sane budgets; only the Vault carries the flooded-floor accent; only the Eye carries the ancient-tech node accent; the unthemed default stays the legacy shell — no hazard, no walls, no light, unscaled footprint), and the resonance-pillar sequence verbs (3 pillars, 20-90s window; correct order advances → advances → completes; skipping ahead / re-attuning / out-of-range / degenerate / stale inputs reset; window expiry is inclusive at the boundary and a zero window never expires; the room-hazard status ids are stable) |

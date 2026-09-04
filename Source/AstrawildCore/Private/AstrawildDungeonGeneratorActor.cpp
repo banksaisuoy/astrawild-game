@@ -63,7 +63,12 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
     {
         Template.RoomTypeId = TEXT("Puzzle");
         Template.HalfExtents = FVector(600.0f, 600.0f, 300.0f);
-        Template.CreatureSpawnOffsets = { FVector(0.0f, 300.0f, 120.0f) }; // Light guard.
+        // DP-9: resonance-pillar room — the light guard stands off the pillar
+        // line (pillar III sits at +0.42 * half-extents-Y), watching the puzzle.
+        Template.CreatureSpawnOffsets = { FVector(300.0f, -300.0f, 120.0f) };
+        // DP-9: the room only clears when the attunement sequence is solved
+        // (AND the guard defeated) — the gate unseals through the existing path.
+        Template.bRequiresPuzzleSolve = true;
     }
     else
     {
@@ -71,6 +76,18 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
         Template.HalfExtents = FVector(650.0f, 650.0f, 320.0f);
         Template.CreatureSpawnOffsets = { FVector(-200.0f, -200.0f, 120.0f), FVector(200.0f, 200.0f, 120.0f) };
     }
+
+    // DP-9 (dungeon depth): per-dungeon identity rides on NEW template fields —
+    // the theme resolves from the STABLE DungeonId (the save mapping key), so
+    // the bootstrapper literals stay byte-identical. Room footprints scale by
+    // the theme profile (Underlight tighter, Sunken Vault wider, Eye standard
+    // with tall shells); unknown ids fail closed to the unthemed legacy shell.
+    Template.Theme = AAstrawildDungeonRoomActor::ResolveDungeonTheme(DungeonId);
+    const FAstrawildDungeonThemeProfile ThemeProfile = AAstrawildDungeonRoomActor::MakeThemeProfile(Template.Theme);
+    Template.HalfExtents = FVector(
+        Template.HalfExtents.X * ThemeProfile.ExtentScale.X,
+        Template.HalfExtents.Y * ThemeProfile.ExtentScale.Y,
+        Template.HalfExtents.Z);
 
     return Template;
 }

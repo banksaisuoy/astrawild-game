@@ -36,6 +36,7 @@
 #include "Engine/StaticMesh.h"
 #include "Sound/SoundBase.h"
 #include "AstrawildDialogueComponent.h"
+#include "AstrawildDungeonRoomActor.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
@@ -3730,6 +3731,162 @@ bool FAstrawildAffinityDialogueTest::RunTest(const FString& Parameters)
     // 6) Depth without clones: the census pins stay 11 NPCs / 11 trees.
     TestEqual(TEXT("Eleven dialogue trees (census unchanged)"), Registry->GetAllDialogueTrees().Num(), 11);
     TestEqual(TEXT("Eleven NPCs (census unchanged)"), Registry->GetNumNPCs(), 11);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DP-9 — dungeon depth: per-dungeon room identity (themes + pillar sequence)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDungeonIdentityTest,
+    "ASTRAWILD.DP9.DungeonIdentity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDungeonIdentityTest::RunTest(const FString& Parameters)
+{
+    using Room = AAstrawildDungeonRoomActor;
+
+    // 1) Theme resolution per dungeon id: the 3 canonical dungeons resolve 3
+    // DISTINCT themes; unknown/empty ids fail closed to None (the unthemed
+    // legacy shell — identity never breaks a dungeon).
+    const FName CanonicalIds[] = {
+        TEXT("Dungeon_HollowUnderlight"), TEXT("Dungeon_SunkenVault"), TEXT("Dungeon_EyeOfTheMaelstrom")
+    };
+    const EAstrawildDungeonTheme ExpectedThemes[] = {
+        EAstrawildDungeonTheme::HollowUnderlight, EAstrawildDungeonTheme::SunkenVault,
+        EAstrawildDungeonTheme::MaelstromEye
+    };
+    TSet<int32> DistinctThemes;
+    for (int32 i = 0; i < 3; ++i)
+    {
+        const EAstrawildDungeonTheme Resolved = Room::ResolveDungeonTheme(CanonicalIds[i]);
+        TestEqual(*FString::Printf(TEXT("Dungeon %s resolves its theme"), *CanonicalIds[i].ToString()),
+            Resolved, ExpectedThemes[i]);
+        DistinctThemes.Add(static_cast<int32>(Resolved));
+    }
+    TestEqual(TEXT("The three canonical dungeons resolve three distinct themes"), DistinctThemes.Num(), 3);
+    TestEqual(TEXT("Unknown dungeon id fails closed to None"),
+        Room::ResolveDungeonTheme(TEXT("Dungeon_DoesNotExist")), EAstrawildDungeonTheme::None);
+    TestEqual(TEXT("Empty dungeon id fails closed to None"),
+        Room::ResolveDungeonTheme(NAME_None), EAstrawildDungeonTheme::None);
+
+    // 2) Theme profiles — pairwise-distinct identity data the rooms consume:
+    // tints, shell proportions, wall heights, hazards and dressing vocabulary.
+    const FAstrawildDungeonThemeProfile Underlight = Room::MakeThemeProfile(EAstrawildDungeonTheme::HollowUnderlight);
+    const FAstrawildDungeonThemeProfile Vault = Room::MakeThemeProfile(EAstrawildDungeonTheme::SunkenVault);
+    const FAstrawildDungeonThemeProfile Eye = Room::MakeThemeProfile(EAstrawildDungeonTheme::MaelstromEye);
+    const FAstrawildDungeonThemeProfile Unthemed = Room::MakeThemeProfile(EAstrawildDungeonTheme::None);
+
+    // Shell tints pairwise distinct (each dungeon reads differently in-room).
+    TestTrue(TEXT("Underlight tint is the darkest of the three"),
+        Underlight.ShellTint.R < Vault.ShellTint.R && Underlight.ShellTint.R < Eye.ShellTint.R);
+    TestTrue(TEXT("Vault and Eye tints differ"),
+        !FMath::IsNearlyEqual(Vault.ShellTint.G, Eye.ShellTint.G) &&
+        !FMath::IsNearlyEqual(Vault.ShellTint.B, Eye.ShellTint.B));
+
+    // Structural identity: Underlight tight, Sunken Vault wide, Eye tall monoliths.
+    TestTrue(TEXT("Underlight rooms read tighter than the Vault"),
+        Underlight.ExtentScale.X < Vault.ExtentScale.X && Underlight.ExtentScale.Y < Vault.ExtentScale.Y);
+    TestTrue(TEXT("Vault rooms read wider than the Eye"),
+        Vault.ExtentScale.X > Eye.ExtentScale.X);
+    TestTrue(TEXT("Eye side walls read taller than the Underlight's oppressive slabs"),
+        Eye.SideWallHeight > Underlight.SideWallHeight);
+    TestTrue(TEXT("Every themed shell carries real walls"),
+        Underlight.SideWallHeight > 0.0f && Vault.SideWallHeight > 0.0f && Eye.SideWallHeight > 0.0f);
+
+    // Accent light identity: the Eye pulses, the other two stay steady.
+    TestTrue(TEXT("Only the Eye pulses its accent light"),
+        Eye.AccentLightPulseRate > 0.0f && Underlight.AccentLightPulseRate == 0.0f && Vault.AccentLightPulseRate == 0.0f);
+
+    // Hazard identity per dungeon — three distinct verbs from the existing vocabulary.
+    TestEqual(TEXT("Underlight hazard is the room-level ash lung"),
+        Underlight.Hazard, EAstrawildRoomHazardType::AshLung);
+    TestEqual(TEXT("Sunken Vault hazard is the waterlogged slow"),
+        Vault.Hazard, EAstrawildRoomHazardType::Waterlogged);
+    TestEqual(TEXT("Eye hazard is the energy pulse tiles"),
+        Eye.Hazard, EAstrawildRoomHazardType::EnergyPulse);
+
+    // Hazard bands (mild by design — identity pressure, not a death sentence).
+    TestTrue(TEXT("Room ash lung is mild and non-lethal"),
+        Underlight.HazardPressure > 0.0f && Underlight.HazardPressure <= 8.0f);
+    TestTrue(TEXT("Waterlogged slows but never cripples"),
+        Vault.HazardSpeedMultiplier >= 0.5f && Vault.HazardSpeedMultiplier < 1.0f);
+    TestTrue(TEXT("Energy pulses are periodic, small and dissipate"),
+        Eye.HazardPulseInterval >= 5.0f && Eye.HazardTileCount >= 1 && Eye.HazardTileCount <= 4 &&
+        Eye.HazardTileDamagePerSecond > 0.0f && Eye.HazardTileDamagePerSecond <= 6.0f &&
+        Eye.HazardTileLifetime > 0.0f && Eye.HazardTileLifetime < Eye.HazardPulseInterval);
+
+    // Dressing vocabulary resolves through the EXISTING ArtPack binding tables
+    // (no new /Game/ paths — validator check 8 stays byte-clean).
+    const FAstrawildDungeonThemeProfile AllThemed[] = { Underlight, Vault, Eye };
+    for (const FAstrawildDungeonThemeProfile& Profile : AllThemed)
+    {
+        const AstrawildArtPack::FBiomeArt* RockArt = AstrawildArtPack::FindBiomeArt(Profile.RockBiomeId);
+        if (TestTrue(TEXT("Theme rock biome id resolves in the ArtPack table"), RockArt != nullptr))
+        {
+            TestTrue(TEXT("Theme rock vocabulary is non-empty"), RockArt->RockMeshPaths.Num() > 0);
+        }
+        const AstrawildArtPack::FBiomeArt* FloraArt = AstrawildArtPack::FindBiomeArt(Profile.FloraBiomeId);
+        if (TestTrue(TEXT("Theme flora biome id resolves in the ArtPack table"), FloraArt != nullptr))
+        {
+            TestTrue(TEXT("Theme flora vocabulary is non-empty"), FloraArt->GrassMeshPaths.Num() > 0);
+        }
+        TestTrue(TEXT("Theme dressing budget is sane"),
+            Profile.RockCount >= 4 && Profile.RockCount <= 16 && Profile.FloraCount >= 4 && Profile.FloraCount <= 16);
+    }
+    TestTrue(TEXT("Only the Eye carries the ancient-tech accent"),
+        Underlight.TechNodeArtId.IsNone() && Vault.TechNodeArtId.IsNone() && !Eye.TechNodeArtId.IsNone());
+    TestTrue(TEXT("The Eye tech accent resolves in the ArtPack node table"),
+        AstrawildArtPack::FindNodeArt(Eye.TechNodeArtId) != nullptr);
+    TestTrue(TEXT("Only the Sunken Vault carries the flooded-floor accent"),
+        !Underlight.bWaterFloorAccent && Vault.bWaterFloorAccent && !Eye.bWaterFloorAccent);
+
+    // The unthemed default stays the legacy shell (fail-closed identity).
+    TestEqual(TEXT("Unthemed profile carries no hazard"), Unthemed.Hazard, EAstrawildRoomHazardType::None);
+    TestEqual(TEXT("Unthemed profile builds no walls"), Unthemed.SideWallHeight, 0.0f);
+    TestEqual(TEXT("Unthemed profile lights nothing"), Unthemed.AccentLightIntensity, 0.0f);
+    TestTrue(TEXT("Unthemed footprint stays unscaled"), Unthemed.ExtentScale.Equals(FVector(1.0f, 1.0f, 1.0f), 1e-4f));
+
+    // 3) Resonance-pillar sequence (the puzzle room's mechanic — pure verbs).
+    TestEqual(TEXT("Puzzle rooms carry three resonance pillars"), Room::GetPuzzlePillarCount(), 3);
+    TestTrue(TEXT("The attunement window is generous but finite"),
+        Room::GetPuzzleSequenceWindowSeconds() >= 20.0f && Room::GetPuzzleSequenceWindowSeconds() <= 90.0f);
+
+    // Correct order: advance, advance, complete.
+    TestEqual(TEXT("First pillar in order advances"),
+        Room::EvaluatePillarActivation(0, 0, 3), Room::EPillarActivityResult::Advanced);
+    TestEqual(TEXT("Second pillar in order advances"),
+        Room::EvaluatePillarActivation(1, 1, 3), Room::EPillarActivityResult::Advanced);
+    TestEqual(TEXT("Final pillar in order completes"),
+        Room::EvaluatePillarActivation(2, 2, 3), Room::EPillarActivityResult::Completed);
+
+    // Wrong order resets (the whole sequence restarts — retryable, no stall).
+    TestEqual(TEXT("Skipping ahead resets"),
+        Room::EvaluatePillarActivation(1, 0, 3), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Re-attuning the same pillar resets"),
+        Room::EvaluatePillarActivation(0, 1, 3), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Out-of-range pillar resets"),
+        Room::EvaluatePillarActivation(7, 0, 3), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Degenerate pillar count resets"),
+        Room::EvaluatePillarActivation(0, 0, 0), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Already-complete sequence resets (stale input)"),
+        Room::EvaluatePillarActivation(0, 3, 3), Room::EPillarActivityResult::ResetRequired);
+
+    // Window expiry contract: inclusive at the boundary, fresh below it.
+    TestFalse(TEXT("Fresh window has not expired"),
+        Room::IsPillarSequenceExpired(1.0f, Room::GetPuzzleSequenceWindowSeconds()));
+    TestTrue(TEXT("Window expires exactly at the boundary"),
+        Room::IsPillarSequenceExpired(Room::GetPuzzleSequenceWindowSeconds(), Room::GetPuzzleSequenceWindowSeconds()));
+    TestTrue(TEXT("Overdue window has expired"),
+        Room::IsPillarSequenceExpired(Room::GetPuzzleSequenceWindowSeconds() + 0.1f, Room::GetPuzzleSequenceWindowSeconds()));
+    TestFalse(TEXT("A zero window never expires (fail-open)"),
+        Room::IsPillarSequenceExpired(1000.0f, 0.0f));
+
+    // 4) Room-hazard status ids are stable (the room tick and the clear path
+    // agree — the survival vocabulary's plain-FName idiom).
+    TestEqual(TEXT("Room ash-lung status id is stable"), Room::GetRoomAshLungStatusId(), FName(TEXT("AshLung")));
+    TestEqual(TEXT("Room waterlogged status id is stable"), Room::GetRoomWaterloggedStatusId(), FName(TEXT("Waterlogged")));
 
     return true;
 }

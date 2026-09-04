@@ -118,7 +118,16 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
         // DP-7 (world depth): ash-lung zones suppress passive regen — the
         // Hollow Approach's ash-choked air tires anyone standing in it. Clamped
         // at zero so a hazard can never turn regen into a hidden drain.
-        Regen = FMath::Max(0.0f, Regen - GetZoneHazardStaminaRegenPenalty());
+        // DP-9 (dungeon depth): active statuses may carry the same suppression
+        // verb at room level (the Underlight's uncleared-room ash lung) — summed
+        // with the zone penalty under the SAME clamp (the status vocabulary's
+        // additive StaminaRegenPenaltyPerSecond field, default 0).
+        float StatusRegenPenalty = 0.0f;
+        for (const FAstrawildStatusEffect& Effect : StatusEffects)
+        {
+            StatusRegenPenalty += FMath::Max(0.0f, Effect.StaminaRegenPenaltyPerSecond);
+        }
+        Regen = FMath::Max(0.0f, Regen - GetZoneHazardStaminaRegenPenalty() - StatusRegenPenalty);
         Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Regen * DeltaTime);
     }
 
@@ -444,6 +453,26 @@ bool UAstrawildSurvivalComponent::HasStatusEffect(const FName StatusId) const
 {
     return StatusEffects.ContainsByPredicate(
         [&StatusId](const FAstrawildStatusEffect& Item) { return Item.StatusId == StatusId; });
+}
+
+void UAstrawildSurvivalComponent::RemoveStatusEffect(const FName StatusId)
+{
+    // DP-9 (dungeon depth): room-level hazards clear their status when the room
+    // clears. REVIEW-3 semantics — broadcast the removal (listeners such as
+    // movement speed refresh) exactly like the natural-expiry path does.
+    if (GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    for (int32 i = StatusEffects.Num() - 1; i >= 0; --i)
+    {
+        if (StatusEffects[i].StatusId == StatusId)
+        {
+            StatusEffects.RemoveAt(i);
+            OnStatusEffectRemoved.Broadcast(StatusId);
+        }
+    }
 }
 
 float UAstrawildSurvivalComponent::GetStatusSpeedMultiplier() const

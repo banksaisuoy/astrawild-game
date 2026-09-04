@@ -501,6 +501,16 @@ struct ASTRAWILDCORE_API FAstrawildStatusEffect
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
     float StaminaRegenPerSecond = 0.0f;
 
+    /**
+     * DP-9 (additive): optional passive stamina-regen suppression per second
+     * while active — the room-level ash-lung verb (Hollow Underlight uncleared
+     * rooms). Mirrors the DP-7 zone ash-lung contract exactly: consumed by the
+     * passive regen branch CLAMPED at zero net regen, so a status can never
+     * turn regen into a hidden drain. 0 = none.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
+    float StaminaRegenPenaltyPerSecond = 0.0f;
+
     /** Optional movement speed multiplier while active. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
     float SpeedMultiplier = 1.0f;

@@ -80,7 +80,7 @@ git lfs install
 git checkout final-completion              # the default clone already lands here (origin HEAD follows main; checkout explicitly)
 git pull origin final-completion
 git lfs pull
-python Scripts/validate_final_run.py     # ALL static checks must PASS (108-test gate + 15 census equality gates included)
+python Scripts/validate_final_run.py     # ALL static checks must PASS (109-test gate + 15 census equality gates included)
 bash Scripts/validate_repository.sh      # structural ruleset PASS
 ```
 Final-audit note: the earlier text pointed at `glm/final-run`, a branch that never reached
@@ -128,7 +128,7 @@ the UBT log tail BEFORE retrying; that is the artifact GLM needs to diagnose.
 .\Test.ps1
 # outputs E:\AstrawildGame\Automation_Output.txt
 ```
-**PASS = 108/108 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
+**PASS = 109/109 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety` · `ASTRAWILD.Save.SchemaV5Ending` ·
 `ASTRAWILD.Quest.FinalRunChain` · `ASTRAWILD.Echo.FinalRunBosses` ·
 `ASTRAWILD.Tech.SkiffEngineering` · `ASTRAWILD.Dialogue.EndingChoice` ·
@@ -232,7 +232,7 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 108 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 109 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
 - Enhanced Input runtime mapping (26 actions) — verify no duplicate-context warnings in the log.
@@ -257,7 +257,7 @@ working tree:
 - **Validators**: pure read-only static checks — any number of runs is safe and
   MUST PASS before every stage transition.
 - **Drift tripwires**: the validator's census equality gates (15 content-count
-  contracts + the exact 108-test gate) fail loudly if a pipeline stage ever
+  contracts + the exact 109-test gate) fail loudly if a pipeline stage ever
   duplicated or dropped content.
 
 A second full execution of the sequence therefore converges to the same state —
@@ -268,7 +268,7 @@ no duplicated assets, no double imports, no corrupted Content.
 ```text
 1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 108/108 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 109/109 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
@@ -358,7 +358,7 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **108/108** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8; the validator gate enforces the exact value — always read the count from the repo, never from memory).
+6. Automation now expects **109/109** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9; the validator gate enforces the exact value — always read the count from the repo, never from memory).
 7. DP-4 skill loadout (ESC pause menu — SKILL LOADOUT section): cycle a slot onto an unlocked
    skill, close the menu, press **Y** — only the bound skills may fire (an unbound unlocked skill
    like Second Wind must stay silent even when hurt); clear every slot and the Y key returns to
@@ -394,6 +394,16 @@ During the PIE golden path, additionally verify:
    deep-lore reply appears (dungeon gates + scanner vaults + one-time research). Re-entering
    the same conversation after a tier-up must show the new replies WITHOUT a relog (the gate
    reads the live affinity; see `ASTRAWILD.DP8.AffinityDialogue`).
+12. DP-9 dungeon depth: walk the three dungeons and confirm they read DIFFERENTLY in-room —
+   the Underlight's dark tight halls + ember light + cliff-shard dressing (stamina visibly
+   regenerates slower inside uncleared rooms — the room ash lung, gone the moment the room
+   clears), the Sunken Vault's wide flooded halls + glow-reeds (movement visibly slowed while
+   wading an uncleared room, removed on clear), the Eye's tall monolith shells + pulsing
+   storm light + periodic energy-tile discharges in uncleared rooms. In each dungeon's
+   PUZZLE room: attune the three resonance pillars I → II → III in order (wrong order resets
+   all three; run out the ~45s window and it also resets) AND defeat the light guard — the
+   gate only unseals after both. Clearing a room must visibly shed its hazard (regen/speed
+   return immediately; see `ASTRAWILD.DP9.DungeonIdentity`).
 
 ## 20c. TIER-A CREATURE MESH IMPORT + BINDING PATCH (Creature Visual Strategy DP-1)
 

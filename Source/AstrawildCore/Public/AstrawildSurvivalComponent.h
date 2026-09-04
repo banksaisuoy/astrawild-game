@@ -139,6 +139,15 @@ public:
     bool HasStatusEffect(FName StatusId) const;
 
     /**
+     * DP-9 (dungeon depth): server-side removal of a live status by id — room
+     * hazards clear their effect when the owning room clears (the natural expiry
+     * stays the backup). Broadcasts OnStatusEffectRemoved so speed listeners
+     * refresh (REVIEW-3 semantics).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void RemoveStatusEffect(FName StatusId);
+
+    /**
      * Batch 3 — Item A: combined movement multiplier from every active speed-affecting
      * status (Chill 0.5, Shock 0.3, ...). 1.0 when nothing slows the player.
      */
