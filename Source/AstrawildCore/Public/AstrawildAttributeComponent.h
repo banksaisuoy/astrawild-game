@@ -115,10 +115,48 @@ public:
      * Deterministic "best skill for right now" — the single Y-key cast:
      * SecondWind when hurt, Whirlwind when swarmed, PowerStrike in melee,
      * HuntersFocus before a capture window, Dash as mobility filler.
+     *
+     * DP-4 CONTRACT: when the player bound at least one loadout slot the
+     * ladder considers ONLY the bound skills (build identity); an all-empty
+     * loadout (fresh component / pre-DP-4 saves) considers every unlocked
+     * skill exactly as before DP-4 — the zero-regression default.
      */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Attribute|Skill")
     EAstrawildPlayerSkillId PickBestReadySkill(float HealthFraction, int32 NearbyEnemies,
         bool bEnemyInMelee, bool bMoving, bool bWeakenedPreyNear = false) const;
+
+    // ------------------------------------------------------------------
+    // DP-4: player skill loadout (build identity)
+    // ------------------------------------------------------------------
+
+    /**
+     * Bind a skill to loadout slot 0-2 (a non-empty loadout narrows the
+     * smart-cast ladder to the bound skills). Validates: slot bounds, the
+     * skill is unlocked by the CURRENT attribute milestones, and no duplicate
+     * binding (a skill already occupying ANY slot is rejected — clear that
+     * slot first). Rebinding a slot replaces its previous occupant. Masterwork
+     * is a pure passive (never on the ladder), so binding it only reserves a
+     * slot. Server-authoritative when owned; ownerless components (tests)
+     * pass through — the same rule as AddAttributeXP.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Attribute|Skill")
+    bool BindSkillToSlot(int32 Slot, EAstrawildPlayerSkillId Skill);
+
+    /** Empty a loadout slot (0-2; out-of-bounds is a safe no-op). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Attribute|Skill")
+    void ClearSlot(int32 Slot);
+
+    /** True when the skill occupies any loadout slot. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Attribute|Skill")
+    bool IsSkillBound(EAstrawildPlayerSkillId Skill) const;
+
+    /**
+     * The 3-slot loadout (index = slot; None = empty slot). All-None means
+     * no loadout — the smart-cast ladder then considers every unlocked skill
+     * exactly as before DP-4 (fresh components, pre-DP-4 saves).
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Attribute|Skill")
+    TArray<EAstrawildPlayerSkillId> GetBoundSkills() const;
 
     // ------------------------------------------------------------------
     // Save/load (schema v5 additive)
@@ -138,6 +176,9 @@ protected:
     static constexpr int32 MaxAttributeLevel = 10;
     static constexpr float BaseXPPerLevel = 100.0f;
 
+    /** DP-4: loadout slot count — the fixed 3-slot build-identity surface. */
+    static constexpr int32 SkillSlotCount = 3;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Attribute")
     FAstrawildAttributeStat Might;
 
@@ -155,6 +196,13 @@ protected:
 
     /** Live skill cooldowns (seconds remaining) — transient combat state. */
     TMap<EAstrawildPlayerSkillId, float> SkillCooldowns;
+
+    /**
+     * DP-4: the player-chosen loadout — fixed 3 entries, None = empty slot.
+     * Serialized with the attribute payload (ToSaveData/ImportFromSaveData).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Attribute")
+    TArray<EAstrawildPlayerSkillId> BoundSkills;
 
 private:
     FAstrawildAttributeStat* GetStat(EAstrawildAttributeType Attribute);

@@ -1206,6 +1206,20 @@ struct ASTRAWILDCORE_API FAstrawildAttributeStat
     float XP = 0.0f;
 };
 
+/** GDP-3: active player skills unlocked by attribute milestones. */
+UENUM(BlueprintType)
+enum class EAstrawildPlayerSkillId : uint8
+{
+    None UMETA(DisplayName="None"),
+    PowerStrike UMETA(DisplayName="Power Strike (Might 3)"),
+    Whirlwind UMETA(DisplayName="Whirlwind (Might 6)"),
+    Dash UMETA(DisplayName="Dash (Agility 3)"),
+    SecondWind UMETA(DisplayName="Second Wind (Vigor 4)"),
+    HuntersFocus UMETA(DisplayName="Hunter's Focus (Instinct 4)"),
+    Masterwork UMETA(DisplayName="Masterwork (Craft 5)"),
+    Overcharge UMETA(DisplayName="Overcharge (Instinct 7)")
+};
+
 /** GDP-3: save payload for one attribute (additive schema v5 field). */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildAttributeSaveData
@@ -1220,20 +1234,17 @@ struct ASTRAWILDCORE_API FAstrawildAttributeSaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0"))
     float XP = 0.0f;
-};
 
-/** GDP-3: active player skills unlocked by attribute milestones. */
-UENUM(BlueprintType)
-enum class EAstrawildPlayerSkillId : uint8
-{
-    None UMETA(DisplayName="None"),
-    PowerStrike UMETA(DisplayName="Power Strike (Might 3)"),
-    Whirlwind UMETA(DisplayName="Whirlwind (Might 6)"),
-    Dash UMETA(DisplayName="Dash (Agility 3)"),
-    SecondWind UMETA(DisplayName="Second Wind (Vigor 4)"),
-    HuntersFocus UMETA(DisplayName="Hunter's Focus (Instinct 4)"),
-    Masterwork UMETA(DisplayName="Masterwork (Craft 5)"),
-    Overcharge UMETA(DisplayName="Overcharge (Instinct 7)")
+    /**
+     * DP-4: the player's 3-slot skill loadout rides on the FIRST row of the
+     * attribute payload (index = slot, None = empty slot). Additive v5 field —
+     * pre-DP-4 rows deserialize with an empty array, which reads as an
+     * all-empty loadout (legacy smart-cast behavior). (The enum above is the
+     * pre-existing skill id — this batch only moved its declaration above the
+     * struct so the field can reference it; pure reorder, no semantic change.)
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<EAstrawildPlayerSkillId> BoundSkills;
 };
 
 /** GDP-4: NPC relationship persistence (additive schema v5 field). */

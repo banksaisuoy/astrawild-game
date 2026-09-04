@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 102 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 104 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -12,15 +12,18 @@ Act 3 story spine end-to-end at the data level; the final-audit regressions
 (#68-72) pin the audit's P0/P1 fixes with behavioral contracts (real matcher
 paths, real import paths); the GDP pack (#73-84) pins the depth systems
 (abilities/locomotion/attributes/affinity); the SCP pack (#85-99) pins the
-systems-completion layer, and the FCR regressions (#100-102) pin this run's
+systems-completion layer, the FCR regressions (#100-102) pin that run's
 DDA/ability-kit/IV fixes (validator/fallback/spoilage/sanity/mount/combos/
-difficulty/crops/schedules/turrets/genetics/perf).
+difficulty/crops/schedules/turrets/genetics/perf), the DP-3 contract (#103)
+pins the party element resonance, and the DP-4 contract (#104) pins the
+player skill loadout (bind validation + bound-only smart-cast + the
+empty-loadout legacy fallback).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **103** — derived from `AutomationTests.cpp`
+authoritative test count is **104** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 103`), and listed in this inventory (rows 1-103).
-Historical counts (57/63/67/72/84/99) describe earlier commits only and appear
+EXACT gate (`Automation tests == 104`), and listed in this inventory (rows 1-104).
+Historical counts (57/63/67/72/84/99/102/103) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -168,8 +171,14 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 | 101 | ASTRAWILD.FCR.Ability.FullElementKits | M-a8: every element derives its full 4-ability kit — 6 entries incl. the previously dead templates |
 | 102 | ASTRAWILD.FCR.Genetics.IVConsumptionBounds | H-d5: IV multiplier bounds (0 neutral / 31 = +31%, negatives & oversized clamp) — the IV layer is live |
 
-## DP-3 depth contracts (103, landed this run)
+## DP-3 depth contracts (103, landed in the DP-3 batch)
 
 | # | Test | Covers |
 |---|------|--------|
 | 103 | ASTRAWILD.DP3.Resonance.PairResolution | DP-3: 15-pair element resonance — themed rows resolve symmetrically, None/same never resonate, three-element parties resolve the canon-dominant pair, every row carries exactly one modest bonus axis in the 8-12% band |
+
+## DP-4 depth contracts (104, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 104 | ASTRAWILD.DP4.SkillLoadout | DP-4: 3-slot player skill loadout — slot bounds / locked-skill / duplicate / None bind validation, rebind replaces the occupant, clear is a safe no-op out of bounds, bound-only smart-cast (unbound unlocked skills suppressed), empty-loadout legacy fallback picks among ALL unlocked skills, save v5 round-trip + pre-DP-4 payload resets to all-empty |

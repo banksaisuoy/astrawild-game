@@ -3048,6 +3048,97 @@ bool FAstrawildPartyResonanceTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// --- DP-4: player skill loadout contracts (Test 104) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSkillLoadoutTest,
+    "ASTRAWILD.DP4.SkillLoadout",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSkillLoadoutTest::RunTest(const FString& Parameters)
+{
+    using S = EAstrawildPlayerSkillId;
+
+    // Fresh component: a 3-slot loadout with every slot empty.
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Fresh loadout has three slots"), Attributes->GetBoundSkills().Num(), 3);
+    TestFalse(TEXT("Fresh loadout binds nothing"), Attributes->IsSkillBound(S::PowerStrike));
+
+    // Bind validation: slot bounds.
+    TestFalse(TEXT("Slot -1 rejected"), Attributes->BindSkillToSlot(-1, S::PowerStrike));
+    TestFalse(TEXT("Slot 3 rejected"), Attributes->BindSkillToSlot(3, S::PowerStrike));
+
+    // Bind validation: locked skills (and None) rejected on a Might-1 component.
+    TestFalse(TEXT("Locked skill rejected"), Attributes->BindSkillToSlot(0, S::PowerStrike));
+    TestFalse(TEXT("None never binds"), Attributes->BindSkillToSlot(0, S::None));
+
+    // Might 10 / Agility 10 / Vigor 10 unlock PowerStrike, Whirlwind, Dash and
+    // SecondWind — the second one proves unbound-but-unlocked suppression below.
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 1000.0f);
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Agility, 1000.0f);
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Vigor, 1000.0f);
+    }
+    TestEqual(TEXT("Might 10 reached"), Attributes->GetLevel(EAstrawildAttributeType::Might), 10);
+    TestEqual(TEXT("Agility 10 reached"), Attributes->GetLevel(EAstrawildAttributeType::Agility), 10);
+
+    // Unlocked skill accepted; the slot reports it.
+    TestTrue(TEXT("Unlocked PowerStrike binds to slot 0"), Attributes->BindSkillToSlot(0, S::PowerStrike));
+    TestTrue(TEXT("Bound skill is reported bound"), Attributes->IsSkillBound(S::PowerStrike));
+    TestEqual(TEXT("Slot 0 carries PowerStrike"), Attributes->GetBoundSkills()[0], S::PowerStrike);
+
+    // Duplicate binding rejected (PowerStrike already occupies slot 0).
+    TestFalse(TEXT("Duplicate binding rejected"), Attributes->BindSkillToSlot(1, S::PowerStrike));
+    TestTrue(TEXT("A second skill binds to slot 1"), Attributes->BindSkillToSlot(1, S::Whirlwind));
+
+    // Rebinding a slot replaces its occupant (no duplicates introduced).
+    TestTrue(TEXT("Slot 0 rebinding replaces the occupant"), Attributes->BindSkillToSlot(0, S::Dash));
+    TestFalse(TEXT("Evicted skill is no longer bound"), Attributes->IsSkillBound(S::PowerStrike));
+    TestEqual(TEXT("Slot 0 now carries Dash"), Attributes->GetBoundSkills()[0], S::Dash);
+
+    // Clearing: in-bounds empties the slot; out-of-bounds is a safe no-op.
+    Attributes->ClearSlot(1);
+    TestEqual(TEXT("Cleared slot reports None"), Attributes->GetBoundSkills()[1], S::None);
+    Attributes->ClearSlot(-1);
+    Attributes->ClearSlot(7);
+    TestEqual(TEXT("Out-of-bounds clear is a safe no-op"), Attributes->GetBoundSkills()[0], S::Dash);
+
+    // Bound-only cast: with ONLY Dash bound, the hurt-player ladder cannot pick
+    // the (unlocked, unbound) SecondWind even at 20% health — and Dash stays
+    // reachable through the moving branch.
+    TestEqual(TEXT("Unbound SecondWind is not picked while hurt"),
+        Attributes->PickBestReadySkill(0.2f, 0, false, false), S::None);
+    TestEqual(TEXT("Bound Dash still picked while moving"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true), S::Dash);
+
+    // Empty-loadout fallback (zero-regression): unlocked skills but NO
+    // bindings pick among ALL unlocked skills (the legacy ladder).
+    UAstrawildAttributeComponent* Legacy = NewObject<UAstrawildAttributeComponent>();
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Legacy->AddAttributeXP(EAstrawildAttributeType::Vigor, 1000.0f);
+        Legacy->AddAttributeXP(EAstrawildAttributeType::Agility, 1000.0f);
+    }
+    TestEqual(TEXT("Empty loadout keeps the legacy SecondWind pick"),
+        Legacy->PickBestReadySkill(0.2f, 0, false, false), S::SecondWind);
+
+    // Save round-trip: the loadout rides the attribute payload (v5 additive)
+    // and survives intact; a pre-DP-4 payload (rows without a loadout) resets
+    // the loadout to all-empty — the legacy smart-cast contract.
+    TestEqual(TEXT("Loadout round-trip repairs nothing"), Attributes->ImportFromSaveData(Attributes->ToSaveData()), 0);
+    TestEqual(TEXT("Rounded loadout keeps Dash in slot 0"), Attributes->GetBoundSkills()[0], S::Dash);
+
+    TArray<FAstrawildAttributeSaveData> PreDP4;
+    FAstrawildAttributeSaveData LegacyRow;
+    LegacyRow.Type = EAstrawildAttributeType::Might;
+    LegacyRow.Level = 10;
+    PreDP4.Add(LegacyRow);
+    TestEqual(TEXT("Pre-DP-4 payload imports clean"), Attributes->ImportFromSaveData(PreDP4), 0);
+    TestEqual(TEXT("Pre-DP-4 loadout still has three slots"), Attributes->GetBoundSkills().Num(), 3);
+    TestFalse(TEXT("Pre-DP-4 payload clears the loadout"), Attributes->IsSkillBound(S::Dash));
+
+    return true;
+}
+
 // --- GDP-1: combat pick ladder (Test 75) ---
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityCombatPickTest,
     "ASTRAWILD.Ability.CombatPick",

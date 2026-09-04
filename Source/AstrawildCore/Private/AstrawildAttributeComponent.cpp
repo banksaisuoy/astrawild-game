@@ -7,6 +7,9 @@ UAstrawildAttributeComponent::UAstrawildAttributeComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(true);
+    // DP-4: the loadout is born as three empty slots — all-None keeps the
+    // smart-cast ladder on its legacy all-unlocked behavior.
+    BoundSkills.Init(EAstrawildPlayerSkillId::None, SkillSlotCount);
 }
 
 // Replication note: raw stats are read server-side by the owning player's
@@ -186,10 +189,17 @@ EAstrawildPlayerSkillId UAstrawildAttributeComponent::PickBestReadySkill(const f
     const int32 NearbyEnemies, const bool bEnemyInMelee, const bool bMoving,
     const bool bWeakenedPreyNear) const
 {
-    auto Ready = [this](const EAstrawildPlayerSkillId Skill)
+    // DP-4: a player-chosen loadout narrows the ladder to the bound skills
+    // (build identity); an all-empty loadout (fresh component / pre-DP-4
+    // saves) considers every unlocked skill exactly as before — the
+    // zero-regression default (see the header contract).
+    const bool bHasLoadout = BoundSkills.ContainsByPredicate(
+        [](const EAstrawildPlayerSkillId Skill) { return Skill != EAstrawildPlayerSkillId::None; });
+    auto Ready = [this, bHasLoadout](const EAstrawildPlayerSkillId Skill)
     {
-        return IsSkillUnlockedByAttributes(Skill, Might.Level, Vigor.Level, Agility.Level,
-            Instinct.Level, Craft.Level) && GetSkillCooldownRemaining(Skill) <= 0.0f;
+        return (!bHasLoadout || BoundSkills.Contains(Skill)) &&
+            IsSkillUnlockedByAttributes(Skill, Might.Level, Vigor.Level, Agility.Level,
+                Instinct.Level, Craft.Level) && GetSkillCooldownRemaining(Skill) <= 0.0f;
     };
 
     // Deterministic priority ladder — the smart-cast reads the battlefield.
@@ -259,6 +269,12 @@ TArray<FAstrawildAttributeSaveData> UAstrawildAttributeComponent::ToSaveData() c
     Push(EAstrawildAttributeType::Agility, Agility);
     Push(EAstrawildAttributeType::Instinct, Instinct);
     Push(EAstrawildAttributeType::Craft, Craft);
+    // DP-4: the loadout rides on the FIRST row (Might) of the payload —
+    // pre-DP-4 readers ignore the extra field, pre-DP-4 saves have none.
+    if (!Data.IsEmpty() && BoundSkills.Num() == SkillSlotCount)
+    {
+        Data[0].BoundSkills = BoundSkills;
+    }
     return Data;
 }
 
@@ -295,6 +311,50 @@ int32 UAstrawildAttributeComponent::ImportFromSaveData(const TArray<FAstrawildAt
         Stat->XP = ClampedXP;
     }
 
+    // DP-4: the loadout rides on the first row carrying a non-empty
+    // BoundSkills array (ToSaveData writes it on the Might row; first-seen
+    // wins, like the attribute rows themselves). Sanitized into the 3-slot
+    // shape: valid unlocked ids keep their slot, duplicates / overflow /
+    // no-longer-unlocked entries drop and count as repairs (None is the
+    // empty-slot encoding, not a repair). A payload without the field
+    // (pre-DP-4 saves) resets the loadout to all-empty — the legacy
+    // smart-cast contract.
+    bool bLoadoutFound = false;
+    for (const FAstrawildAttributeSaveData& Row : Data)
+    {
+        if (Row.BoundSkills.IsEmpty())
+        {
+            continue;
+        }
+        bLoadoutFound = true;
+        TArray<EAstrawildPlayerSkillId> Sanitized;
+        Sanitized.Init(EAstrawildPlayerSkillId::None, SkillSlotCount);
+        TSet<EAstrawildPlayerSkillId> SeenSkills;
+        for (int32 SlotIndex = 0; SlotIndex < Row.BoundSkills.Num(); ++SlotIndex)
+        {
+            const EAstrawildPlayerSkillId RowSkill = Row.BoundSkills[SlotIndex];
+            if (RowSkill == EAstrawildPlayerSkillId::None)
+            {
+                continue;
+            }
+            if (SlotIndex >= SkillSlotCount || SeenSkills.Contains(RowSkill) ||
+                !IsSkillUnlockedByAttributes(RowSkill, Might.Level, Vigor.Level, Agility.Level,
+                    Instinct.Level, Craft.Level))
+            {
+                ++Repairs; // Duplicate, overflow, or no-longer-unlocked binding.
+                continue;
+            }
+            SeenSkills.Add(RowSkill);
+            Sanitized[SlotIndex] = RowSkill;
+        }
+        BoundSkills = Sanitized;
+        break;
+    }
+    if (!bLoadoutFound)
+    {
+        BoundSkills.Init(EAstrawildPlayerSkillId::None, SkillSlotCount);
+    }
+
     if (Repairs > 0)
     {
         UE_LOG(LogAstrawild, Warning, TEXT("Attribute import repaired %d rows (clamped/deduped)."), Repairs);
@@ -309,4 +369,57 @@ void UAstrawildAttributeComponent::StartSkillCooldown(const EAstrawildPlayerSkil
     {
         SkillCooldowns.Add(Skill, Cooldown);
     }
+}
+
+bool UAstrawildAttributeComponent::BindSkillToSlot(const int32 Slot, const EAstrawildPlayerSkillId Skill)
+{
+    // Server-authoritative when owned (ownerless test components pass
+    // through) — the same rule as AddAttributeXP.
+    if (GetOwner() && GetOwnerRole() != ROLE_Authority)
+    {
+        return false;
+    }
+    if (!BoundSkills.IsValidIndex(Slot))
+    {
+        return false; // Slot bounds: 0-2 only.
+    }
+    // The skill must be unlocked by the CURRENT milestones — this also
+    // rejects None and any out-of-range id (they never pass a milestone).
+    if (!IsSkillUnlockedByAttributes(Skill, Might.Level, Vigor.Level, Agility.Level,
+        Instinct.Level, Craft.Level))
+    {
+        return false;
+    }
+    if (BoundSkills.Contains(Skill))
+    {
+        return false; // No duplicate bindings — clear the other slot first.
+    }
+
+    BoundSkills[Slot] = Skill; // Rebinding replaces the previous occupant.
+    UE_LOG(LogAstrawild, Log, TEXT("Skill loadout: slot %d bound to %s (%s)."),
+        Slot, *UEnum::GetValueAsString(Skill), *GetNameSafe(GetOwner()));
+    return true;
+}
+
+void UAstrawildAttributeComponent::ClearSlot(const int32 Slot)
+{
+    // Server-authoritative when owned (mirrors BindSkillToSlot).
+    if (GetOwner() && GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+    if (BoundSkills.IsValidIndex(Slot))
+    {
+        BoundSkills[Slot] = EAstrawildPlayerSkillId::None;
+    }
+}
+
+bool UAstrawildAttributeComponent::IsSkillBound(const EAstrawildPlayerSkillId Skill) const
+{
+    return Skill != EAstrawildPlayerSkillId::None && BoundSkills.Contains(Skill);
+}
+
+TArray<EAstrawildPlayerSkillId> UAstrawildAttributeComponent::GetBoundSkills() const
+{
+    return BoundSkills;
 }

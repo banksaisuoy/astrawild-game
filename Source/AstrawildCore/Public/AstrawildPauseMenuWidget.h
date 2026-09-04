@@ -15,11 +15,21 @@ class UVerticalBox;
  *   ┌ ASTRAWILD — Paused ┐
  *   │ [Resume]           │
  *   │ [Save Now]         │
+ *   │ SKILL LOADOUT [Y]  │
+ *   │ [Slot 1: —]        │
+ *   │ [Slot 2: —]        │
+ *   │ [Slot 3: —]        │
  *   │ [Quit To Desktop]  │
  *   └────────────────────┘
  *
  * ESC toggles (AAstrawildPlayerController::TogglePauseMenu). Quit routes through
  * the engine's quit path so PIE ends cleanly and packaged builds exit.
+ *
+ * DP-4: the SKILL LOADOUT section is the player-chosen build identity —
+ * clicking a slot button cycles it through the unlocked skills (skills bound
+ * in other slots are skipped), wrapping to empty. Any non-empty loadout
+ * narrows the Y-key smart-cast ladder to the bound skills; all-empty keeps
+ * the legacy all-unlocked smart-cast (see UAstrawildAttributeComponent).
  */
 UCLASS()
 class ASTRAWILDCORE_API UAstrawildPauseMenuWidget : public UUserWidget
@@ -46,6 +56,23 @@ private:
     UFUNCTION()
     void HandleQuitClicked();
 
+    /** DP-4: slot button clicks — OnClicked delegates cannot carry the slot
+     *  index, so each slot routes through its own thunk. */
+    UFUNCTION()
+    void HandleSkillSlot0Clicked();
+
+    UFUNCTION()
+    void HandleSkillSlot1Clicked();
+
+    UFUNCTION()
+    void HandleSkillSlot2Clicked();
+
+    /** DP-4: cycle one loadout slot to its next unlocked, unbound skill. */
+    void CycleSkillSlot(int32 SlotIndex);
+
+    /** DP-4: rebuild the slot button labels from the live loadout state. */
+    void RefreshSkillSlotLabels();
+
     UPROPERTY()
     TObjectPtr<UCanvasPanel> RootCanvas;
 
@@ -63,4 +90,16 @@ private:
 
     UPROPERTY()
     TObjectPtr<UButton> QuitButton;
+
+    /** DP-4: the loadout section caption. */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> SkillLoadoutText;
+
+    /** DP-4: the three loadout slot buttons (index = slot). */
+    UPROPERTY()
+    TArray<TObjectPtr<UButton>> SkillSlotButtons;
+
+    /** DP-4: the labels inside the slot buttons (refreshed on every cycle). */
+    UPROPERTY()
+    TArray<TObjectPtr<UTextBlock>> SkillSlotLabels;
 };

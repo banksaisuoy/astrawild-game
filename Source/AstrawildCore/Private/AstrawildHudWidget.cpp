@@ -395,13 +395,23 @@ void UAstrawildHudWidget::RefreshState()
         }
 
         int32 UnlockedSkills = 0;
+        int32 BoundSkillCount = 0;
         if (Pawn->AttributeComponent)
         {
             UnlockedSkills = Pawn->AttributeComponent->GetUnlockedSkills().Num();
+            for (const EAstrawildPlayerSkillId BoundSkill : Pawn->AttributeComponent->GetBoundSkills())
+            {
+                if (BoundSkill != EAstrawildPlayerSkillId::None)
+                {
+                    ++BoundSkillCount;
+                }
+            }
         }
 
-        AbilityText->SetText(FText::FromString(FString::Printf(TEXT("[T] Echo abilities ready: %d/%d | [Y] Skills: %d"),
-            FMath::Max(0, ReadyEchoAbilities), PartySize, UnlockedSkills)));
+        // DP-4: the bound count makes the player's loadout (build identity)
+        // readable at a glance — 0 bound = the legacy all-unlocked smart-cast.
+        AbilityText->SetText(FText::FromString(FString::Printf(TEXT("[T] Echo abilities ready: %d/%d | [Y] Skills: %d unlocked, %d/3 bound"),
+            FMath::Max(0, ReadyEchoAbilities), PartySize, UnlockedSkills, BoundSkillCount)));
     }
 
     // Equipment readout (wave 3): weapon ATK + shield block.
