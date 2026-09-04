@@ -63,6 +63,7 @@ from typing import Dict, List, Optional
 
 AUDIO_CATEGORY = "Audio"
 MODEL_CATEGORY = "Models"
+TEXTURE_CATEGORY = "Textures"
 
 CREATOR = "Kenney"
 CREATOR_URL = "https://kenney.nl"
@@ -77,7 +78,11 @@ REDISTRIBUTION = "Permitted (CC0 — no restrictions)"
 LICENSE_VERIFIED_NOTE = (
     "Verified per pack page at kenney.nl: the license table row links to "
     "https://creativecommons.org/publicdomain/zero/1.0/ ('Creative Commons CC0') "
-    "and the page meta description states 'free, CC0 licensed!'."
+    "and the page meta description states 'free, CC0 licensed!'. Batch 1 (6 packs) "
+    "verified 2025-09-04 before acquisition; batch 2 (9 packs) verified the same way "
+    "during the wayfinder gap analysis (full catalog walk of all 14 pagination pages, "
+    "21 candidate pack pages read, per-page license rows + CC0 legal-code links "
+    "confirmed, zip sizes measured via HTTP HEAD) and re-checked on acquisition day."
 )
 
 
@@ -171,6 +176,119 @@ APPROVED_PACKS: List[Pack] = [
         keep_exts=(".glb", ".png", ".txt"),
         notes="GLB + shared Textures/colormap.png dependency (URIs resolve relative to the GLB folder). FBX/OBJ duplicates and preview images dropped.",
     ),
+    # ---------------- batch 2 (approved via wayfinder ticket 03) ----------------
+    Pack(
+        slug="particle-pack",
+        name="Particle Pack",
+        dest_dir="Kenney_ParticlePack",
+        category=TEXTURE_CATEGORY,
+        source_url="https://kenney.nl/assets/particle-pack",
+        download_url="https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
+        asset_count_claim=80,
+        usage="Combat VFX sprite library: muzzle flashes, impact sparks, smoke puffs, glows and particle textures feeding upgraded Niagara systems (CombatComponent FX pool + AstrawildVfxActor fallback art)",
+        keep_exts=(".png", ".txt"),
+        exclude_patterns=("preview", "black background"),
+        notes="Transparent-background PNG sprites only (the PNG (Black background) folder is a baked-black-bg duplicate set for tools without alpha support — redundant in UE where Niagara sprites use the alpha channel directly). Preview.png and XML metadata skipped. UE usage: Niagara sprite/flipbook textures (base + pre-rotated frames).",
+    ),
+    Pack(
+        slug="ui-pack-sci-fi",
+        name="UI Pack: Sci-Fi",
+        dest_dir="Kenney_UIPackSciFi",
+        category=TEXTURE_CATEGORY,
+        source_url="https://kenney.nl/assets/ui-pack-sci-fi",
+        download_url="https://kenney.nl/media/pages/assets/ui-pack-sci-fi/b67c2acd31-1724181109/kenney_ui-pack-space-expansion.zip",
+        asset_count_claim=130,
+        usage="Sci-fi UI art: panels, buttons, sliders and icons for the 7 C++ UMG widget classes (HUD, inventory, research, shop, dialogue, pause)",
+        keep_exts=(".png", ".ttf", ".txt"),
+        exclude_patterns=("preview", "sample", "vector"),
+        notes="PNG art preserving style/state subfolders (Blue/Green/Grey/Red/Yellow/Extra x Default/Double — state variants reuse base filenames, so the sub-path is part of the asset identity); Kenney Future/Narrow TTF fonts kept for UMG; SVG vector sources skipped. Publisher download file is kenney_ui-pack-space-expansion.zip (Space Expansion naming).",
+    ),
+    Pack(
+        slug="survival-kit",
+        name="Survival Kit",
+        dest_dir="Kenney_SurvivalKit",
+        category=MODEL_CATEGORY,
+        source_url="https://kenney.nl/assets/survival-kit",
+        download_url="https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+        asset_count_claim=80,
+        usage="Survival-frontier props: camps, fires, crates, tools and shelters across all 12 zones; POI dressing and village outskirts (Dawn Fields, Verdant Reach)",
+        keep_exts=(".glb", ".txt"),
+        notes="GLB only (self-contained, v2.0 with animations as claimed on page). FBX/OBJ format duplicates and preview images dropped.",
+    ),
+    Pack(
+        slug="city-kit-industrial",
+        name="City Kit (Industrial)",
+        dest_dir="Kenney_CityKitIndustrial",
+        category=MODEL_CATEGORY,
+        source_url="https://kenney.nl/assets/city-kit-industrial",
+        download_url="https://kenney.nl/media/pages/assets/city-kit-industrial/0ec35b139d-1788171848/kenney_city-kit-industrial_2.0.zip",
+        asset_count_claim=40,
+        usage="Industrial/research props: containers, cranes, pipes and warehouse shells for Ember Ridge, Stormcrest, research POIs and the Dawnstead industrial quarter",
+        keep_exts=(".glb", ".txt"),
+        notes="GLB only (self-contained, v2.0 with variations). FBX/OBJ format duplicates and preview images dropped.",
+    ),
+    Pack(
+        slug="modular-space-kit",
+        name="Modular Space Kit",
+        dest_dir="Kenney_ModularSpaceKit",
+        category=MODEL_CATEGORY,
+        source_url="https://kenney.nl/assets/modular-space-kit",
+        download_url="https://kenney.nl/media/pages/assets/modular-space-kit/8261428a47-1771146076/kenney_modular-space-kit_1.0.zip",
+        asset_count_claim=40,
+        usage="Modular snapping sci-fi interior tiles for the 3 dungeons and Hollow Approach ruined-ancient-tech layouts (distinct from the classic Space Kit dressing pack)",
+        keep_exts=(".glb", ".txt"),
+        notes="GLB only (self-contained, v1.0 with variations/animations as claimed on page). FBX/OBJ format duplicates and preview images dropped.",
+    ),
+    Pack(
+        slug="modular-dungeon-kit",
+        name="Modular Dungeon Kit",
+        dest_dir="Kenney_ModularDungeonKit",
+        category=MODEL_CATEGORY,
+        source_url="https://kenney.nl/assets/modular-dungeon-kit",
+        download_url="https://kenney.nl/media/pages/assets/modular-dungeon-kit/7bed87605b-1771926065/kenney_modular-dungeon-kit_1.0.zip",
+        asset_count_claim=40,
+        usage="Stone/ancient modular dungeon tiles for the 3 dungeons' ruin segments and Sunscar ruins",
+        keep_exts=(".glb", ".txt"),
+        notes="GLB only (self-contained, v1.0 with variations/animations as claimed on page). FBX/OBJ format duplicates and preview images dropped.",
+    ),
+    Pack(
+        slug="animated-characters-survivors",
+        name="Animated Characters: Survivors",
+        dest_dir="Kenney_AnimatedCharactersSurvivors",
+        category=MODEL_CATEGORY,
+        source_url="https://kenney.nl/assets/animated-characters-survivors",
+        download_url="https://kenney.nl/media/pages/assets/animated-characters-survivors/27b16052a7-1774772958/kenney_animated-characters-survivors.zip",
+        asset_count_claim=8,
+        usage="NPC/villager body candidate (12 NPCs, 2 villages) + locomotion animation reference (idle/run/jump); rig-retarget compatibility to be checked in engine",
+        keep_exts=(".fbx", ".txt"),
+        notes="Classic Kenney character pack: ONE medium-detail humanoid FBX (Model/characterMedium.fbx) + 3 FBX animations; 2D skin sprites and SVG sources skipped. Research correction: this is NOT a GLB multi-rigged-character pack (inference was wrong — corrected at acquisition against the actual zip). Value = retarget reference + NPC body candidate.",
+    ),
+    Pack(
+        slug="skyboxes",
+        name="Skyboxes",
+        dest_dir="Kenney_Skyboxes",
+        category=TEXTURE_CATEGORY,
+        source_url="https://kenney.nl/assets/skyboxes",
+        download_url="https://kenney.nl/media/pages/assets/skyboxes/6736ff5c10-1784123473/kenney_skyboxes.zip",
+        asset_count_claim=5,
+        usage="Alien sky dome art for 12-zone atmosphere variants (day/dusk/night/storm/space equirectangular textures)",
+        keep_exts=(".png", ".txt"),
+        exclude_patterns=("preview", "sample"),
+        notes="PNG equirectangular sky textures (Skyboxes/skybox-*.png — day/morning/night/alien/space); Sample renders and Preview.png skipped. Import as long-lat in engine.",
+    ),
+    Pack(
+        slug="crosshair-pack",
+        name="Crosshair Pack",
+        dest_dir="Kenney_CrosshairPack",
+        category=TEXTURE_CATEGORY,
+        source_url="https://kenney.nl/assets/crosshair-pack",
+        download_url="https://kenney.nl/media/pages/assets/crosshair-pack/5ef74bd405-1785950072/kenney_crosshair-pack.zip",
+        asset_count_claim=200,
+        usage="Reticle art replacing the text-glyph crosshair in HudWidget (hip-fire/aim states already coded)",
+        keep_exts=(".png", ".txt"),
+        exclude_patterns=("tilesheet", "preview"),
+        notes="PNG reticles (64x64) preserving style subfolders (Dark/Glow/Light/Outline — families reuse base filenames, so the sub-path is part of the identity). Tilesheet atlases skipped (duplicates of the individual PNGs); Preview.png and SVG variants skipped.",
+    ),
 ]
 
 # Packs evaluated and NOT accepted (documented in the report + manifest).
@@ -207,18 +325,47 @@ REJECTED_PACKS = [
         "status": "REJECTED_QUALITY",
         "reason": "Fantasy-specific sounds (coins, potions, spells) — weak fit for sci-fi survival; no consuming system.",
     },
+    {
+        "slug": "kenney-2d-creature-family",
+        "name": "Kenney 2D creature/character packs (Monster Builder, Animal Pack, Animal Pack Remastered, Alien UFO, Robot, Fish, Toon Characters, Shape Characters)",
+        "source_url": "https://kenney.nl/assets",
+        "status": "REJECTED_FORMAT",
+        "reason": "All 2D sprite packs — ASTRAWILD needs 3D meshes for creatures/NPCs; the hoped-for 3D creature catalog does not exist at Kenney (verified during the batch-2 gap analysis, full catalog walk).",
+    },
+    {
+        "slug": "quaternius-qal-packs",
+        "name": "Quaternius newer packs (Sci-Fi Essentials Kit, MegaKits, Universal Animation Library 2)",
+        "source_url": "https://quaternius.com",
+        "status": "REJECTED_LICENSE",
+        "reason": "Custom QAL v1.0 license — free commercial use but redistribution prohibited, which forbids committing the assets into this repository; only Quaternius 'Ultimate'-series pages explicitly stating CC0 are eligible.",
+    },
 ]
 
 OTHER_SOURCES_EVALUATED = [
     {
         "source": "opengameart.org",
         "status": "DEFERRED",
-        "reason": "Priority-1 Kenney packs covered every current acquisition need. OpenGameArt requires per-file license verification (mixed CC0/CC-BY/unclear); kept as a future source for the same pipeline.",
+        "reason": "Researched during batch-2 planning: per-asset licenses are machine-parseable (CC0-filterable, 2,807 CC0 3D assets) and anonymous direct downloads verified — viable as a future batch once the downloader gains a per-asset license gate and a curated allowlist; not needed for this batch (Kenney covered the gaps).",
     },
     {
         "source": "github.com/KenneyNL",
         "status": "NOT_NEEDED",
         "reason": "Official publisher downloads from kenney.nl are preferred and were available for every approved pack; no GitHub mirror required.",
+    },
+    {
+        "source": "quaternius.com",
+        "status": "DEFERRED",
+        "reason": "Ultimate Animated Animal Pack page states CC0 (creature-mesh candidate), but delivery is a Google Drive folder rather than a direct download URL — needs a manual fetch plus validator pass, or a Drive-aware pipeline extension, and per-pack CC0 re-verification at download time; newer Quaternius packs use QAL (redistribution prohibited) and are excluded.",
+    },
+    {
+        "source": "polyhaven.com / ambientcg.com",
+        "status": "NOT_ACQUIRED",
+        "reason": "Site-wide CC0 verified on their license pages; realistic-style HDRIs/PBR textures are a P2 upgrade path, not a current gap — deliberately not acquired (FEWER + BETTER).",
+    },
+    {
+        "source": "kaylousberg.itch.io (KayKit)",
+        "status": "DEFERRED",
+        "reason": "itch.io downloads are click-through pages, not plain direct URLs; per-pack license pages not yet verified.",
     },
 ]
 
@@ -427,6 +574,36 @@ def validate_png(path: Path) -> Dict:
             raise ValueError("missing IHDR")
         w, h = struct.unpack(">II", ihdr[8:16])
         return {"width": w, "height": h}
+
+
+def validate_fbx(path: Path) -> Dict:
+    """Container-level FBX integrity: binary/ASCII magic + size.
+
+    Triangle counts and rig data are NOT parsed outside the engine — the
+    import itself is the real validation (IMPORT_READY, never UE5_VERIFIED).
+    """
+    with open(path, "rb") as f:
+        head = f.read(32)
+    if head.startswith(b"Kaydara FBX Binary"):
+        kind = "binary"
+    elif head.lstrip().startswith(b";FBX"):
+        kind = "ascii"
+    else:
+        raise ValueError("bad FBX magic (neither Kaydara binary nor ASCII FBX header)")
+    return {"format": "FBX", "kind": kind, "size_bytes": path.stat().st_size,
+            "note": "container magic verified; mesh/rig data validated at engine import"}
+
+
+def validate_ttf(path: Path) -> Dict:
+    """Font container integrity: TrueType/OpenType/Collections magic."""
+    with open(path, "rb") as f:
+        head = f.read(4)
+    if head in (b"\x00\x01\x00\x00", b"OTTO", b"true", b"ttcf"):
+        kind = {b"\x00\x01\x00\x00": "TrueType", b"OTTO": "OpenType with CFF",
+                b"true": "TrueType (apple)", b"ttcf": "Font Collection"}[head]
+    else:
+        raise ValueError("bad font magic (not TrueType/OpenType)")
+    return {"format": "TTF", "kind": kind, "size_bytes": path.stat().st_size}
 
 
 def probe_ogg(path: Path) -> Dict:
@@ -640,7 +817,26 @@ class Acquisition:
             if low == "license.txt":
                 return base / "License.txt"
             return base / fname
-        # model packs: collapse multi-format folders into GLB/
+        # texture packs: preserve the archive sub-path (style/state subfolders
+        # reuse the same base filenames — a flat destination would collide);
+        # a leading container folder (PNG/, PNG (Transparent)/, Skyboxes/, …)
+        # is stripped so the destination root stays the pack's PNG/ folder.
+        if pack.category == TEXTURE_CATEGORY:
+            if low == "license.txt":
+                return base / "License.txt"
+            if low.endswith(".ttf"):
+                return base / "Fonts" / fname
+            if low.endswith(".txt") and len(parts) == 1:
+                return base / fname       # root-level publisher metadata (Size.txt etc.)
+            sub = parts
+            if len(parts) > 1 and parts[0].lower().split(" ")[0] in (
+                    "png", "assets", "textures", "sprites", "skyboxes"):
+                sub = parts[1:]
+            return base / "PNG" / Path(*sub)
+        # model packs: collapse multi-format folders into GLB/ (FBX-only packs
+        # keep their sources in FBX/)
+        if low.endswith(".fbx"):
+            return base / "FBX" / fname
         if low.endswith((".glb", ".gltf")):
             return base / "GLB" / fname
         if low == "license.txt":
@@ -752,7 +948,7 @@ class Acquisition:
             if ext not in pack.keep_exts:
                 result["files_format_skipped"] += 1       # duplicate formats / previews
                 continue
-            if any(pat in low for pat in pack.exclude_patterns):
+            if any(pat in rel.lower() for pat in pack.exclude_patterns):
                 rec = FileRecord(
                     pack=pack.slug, pack_name=pack.name, rel_source=rel, dest="",
                     file_type=ext.lstrip("."), size_bytes=full.stat().st_size,
@@ -761,6 +957,70 @@ class Acquisition:
                     note="excluded by pack curation rule (see pack notes)")
                 self.records.append(rec)
                 result["files_rejected"] += 1
+                continue
+
+            # ---- texture packs: direct 2D art (validated, no dependency closure) ----
+            if pack.category == TEXTURE_CATEGORY and ext == ".png":
+                try:
+                    info = validate_png(full)
+                except Exception as e:  # noqa: BLE001
+                    self.records.append(FileRecord(
+                        pack=pack.slug, pack_name=pack.name, rel_source=rel, dest="",
+                        file_type="png", size_bytes=full.stat().st_size, sha256="",
+                        status="REJECTED_FORMAT", usage=usage_for(low, pack.usage),
+                        note=f"PNG validation failed: {e}"))
+                    result["files_rejected"] += 1
+                    continue
+                rec = self.commit(pack, full, rel, usage_for(low, pack.usage),
+                                  "validated 2D art source (direct asset — no dependency closure)",
+                                  import_ready=True, validation=info)
+                if rec.status == "IMPORT_READY":
+                    result["files_accepted"] += 1
+                else:
+                    result["files_rejected"] += 1
+                continue
+
+            # ---- fonts (publisher TTFs committed as import-ready sources) ----
+            if ext == ".ttf":
+                try:
+                    info = validate_ttf(full)
+                except Exception as e:  # noqa: BLE001
+                    self.records.append(FileRecord(
+                        pack=pack.slug, pack_name=pack.name, rel_source=rel, dest="",
+                        file_type="ttf", size_bytes=full.stat().st_size, sha256="",
+                        status="REJECTED_FORMAT", usage=usage_for(low, pack.usage),
+                        note=f"font validation failed: {e}"))
+                    result["files_rejected"] += 1
+                    continue
+                rec = self.commit(pack, full, rel, "sci-fi UI font (UMG typography)",
+                                  "publisher font file (CC0 via pack page), UMG-usable",
+                                  import_ready=True, validation=info)
+                if rec.status == "IMPORT_READY":
+                    result["files_accepted"] += 1
+                else:
+                    result["files_rejected"] += 1
+                continue
+
+            # ---- FBX model/animation sources (packs without a GLB variant) ----
+            if ext == ".fbx":
+                try:
+                    info = validate_fbx(full)
+                except Exception as e:  # noqa: BLE001
+                    self.records.append(FileRecord(
+                        pack=pack.slug, pack_name=pack.name, rel_source=rel, dest="",
+                        file_type="fbx", size_bytes=full.stat().st_size, sha256="",
+                        status="REJECTED_FORMAT", usage=usage_for(low, pack.usage),
+                        note=f"FBX validation failed: {e}"))
+                    result["files_rejected"] += 1
+                    continue
+                rec = self.commit(pack, full, rel, usage_for(low, pack.usage),
+                                  "FBX model/animation source (pack ships no GLB variant); "
+                                  "mesh/rig data validated at engine import",
+                                  import_ready=True, validation=info)
+                if rec.status == "IMPORT_READY":
+                    result["files_accepted"] += 1
+                else:
+                    result["files_rejected"] += 1
                 continue
 
             # ---- audio packs: OGG original + converted WAV ----
@@ -816,9 +1076,13 @@ class Acquisition:
 
             # ---- license / metadata ----
             if ext == ".txt":
-                rec = self.commit(pack, full, rel, "pack license file (CC0 statement)",
-                                  "publisher License.txt preserved for provenance",
-                                  import_ready=False, validation={}, status="ACCEPTED")
+                is_license = low == "license.txt"
+                rec = self.commit(
+                    pack, full, rel,
+                    "pack license file (CC0 statement)" if is_license else "publisher metadata file",
+                    "publisher License.txt preserved for provenance" if is_license else
+                    "publisher metadata file (provenance, not a game asset)",
+                    import_ready=False, validation={}, status="ACCEPTED")
                 if rec.status in ("ACCEPTED", "IMPORT_READY"):
                     result["files_accepted"] += 1
                 else:
@@ -873,40 +1137,43 @@ class Acquisition:
             else:
                 result["files_rejected"] += 1
 
-        # texture dependencies only (preview PNGs are counted as skipped here)
-        for full in members:
-            rel = full.relative_to(extract_dir).as_posix()
-            if full.suffix.lower() != ".png":
-                continue
-            if rel not in dep_targets:
-                result["files_format_skipped"] += 1   # preview image — not a game asset
-                continue
-            try:
-                info = validate_png(full)
-                rec = self.commit(pack, full, rel,
-                                  usage_for(full.name.lower(), pack.usage),
-                                  "texture dependency of selected GLB models",
-                                  import_ready=True, validation=info)
-                if rec.status == "IMPORT_READY":
-                    result["files_accepted"] += 1
-                else:
+        # texture dependencies only — model packs exclusively (texture packs commit
+        # their PNGs directly in the member loop above, so this pass must not
+        # double-count them as skipped previews)
+        if pack.category == MODEL_CATEGORY:
+            for full in members:
+                rel = full.relative_to(extract_dir).as_posix()
+                if full.suffix.lower() != ".png":
+                    continue
+                if rel not in dep_targets:
+                    result["files_format_skipped"] += 1   # preview image — not a game asset
+                    continue
+                try:
+                    info = validate_png(full)
+                    rec = self.commit(pack, full, rel,
+                                      usage_for(full.name.lower(), pack.usage),
+                                      "texture dependency of selected GLB models",
+                                      import_ready=True, validation=info)
+                    if rec.status == "IMPORT_READY":
+                        result["files_accepted"] += 1
+                    else:
+                        result["files_rejected"] += 1
+                except Exception as e:  # noqa: BLE001
+                    self.records.append(FileRecord(
+                        pack=pack.slug, pack_name=pack.name, rel_source=rel, dest="",
+                        file_type="png", size_bytes=full.stat().st_size, sha256="",
+                        status="REJECTED_FORMAT", usage=usage_for(full.name.lower(), pack.usage),
+                        note=f"PNG validation failed: {e}"))
                     result["files_rejected"] += 1
-            except Exception as e:  # noqa: BLE001
-                self.records.append(FileRecord(
-                    pack=pack.slug, pack_name=pack.name, rel_source=rel, dest="",
-                    file_type="png", size_bytes=full.stat().st_size, sha256="",
-                    status="REJECTED_FORMAT", usage=usage_for(full.name.lower(), pack.usage),
-                    note=f"PNG validation failed: {e}"))
-                result["files_rejected"] += 1
 
-        # unresolved deps -> MISSING_DEPENDENCY records
-        for dep_rel in sorted(dep_targets):
-            if not (extract_dir / dep_rel).exists():
-                self.records.append(FileRecord(
-                    pack=pack.slug, pack_name=pack.name, rel_source=dep_rel, dest="",
-                    file_type="dependency", size_bytes=0, sha256="",
-                    status="MISSING_DEPENDENCY", usage="model texture dependency",
-                    note="referenced by a GLB but not present in the archive"))
+            # unresolved deps -> MISSING_DEPENDENCY records (model packs only)
+            for dep_rel in sorted(dep_targets):
+                if not (extract_dir / dep_rel).exists():
+                    self.records.append(FileRecord(
+                        pack=pack.slug, pack_name=pack.name, rel_source=dep_rel, dest="",
+                        file_type="dependency", size_bytes=0, sha256="",
+                        status="MISSING_DEPENDENCY", usage="model texture dependency",
+                        note="referenced by a GLB but not present in the archive"))
 
         # per-file size accounting for accepted records of this pack
         result["size_accepted_bytes"] = sum(
@@ -950,8 +1217,7 @@ def file_record_json(rec: FileRecord) -> Dict:
     }
 
 
-def compute_stats(acq: Acquisition) -> Dict:
-    files = [file_record_json(r) for r in acq.records]
+def stats_of(files: List[Dict]) -> Dict:
     accepted = [f for f in files if f["status"] in ("ACCEPTED", "IMPORT_READY")]
     return {
         "total_records": len(files),
@@ -964,14 +1230,63 @@ def compute_stats(acq: Acquisition) -> Dict:
         "blocked": sum(1 for f in files if f["status"] == "BLOCKED"),
         "accepted_bytes": sum(f["size_bytes"] for f in accepted),
         "audio_files": sum(1 for f in accepted if f["file_type"] in ("ogg", "wav")),
-        "model_files": sum(1 for f in accepted if f["file_type"] in ("glb", "gltf")),
-        "texture_files": sum(1 for f in accepted if f["file_type"] == "png"),
+        "model_files": sum(1 for f in accepted if f["file_type"] in ("glb", "gltf", "fbx")),
+        "texture_files": sum(1 for f in accepted if f["file_type"] in ("png", "ttf")),
     }
 
 
-def write_manifests(acq: Acquisition, now_iso: str) -> Dict:
-    files = [file_record_json(r) for r in acq.records]
-    stats = compute_stats(acq)
+def compute_stats(acq: Acquisition) -> Dict:
+    return stats_of([file_record_json(r) for r in acq.records])
+
+
+def load_previous_state(acq: Acquisition) -> tuple:
+    """Incremental-run support: carry file records and accepted pack results
+    from the previous manifest for packs NOT re-processed this run, so a
+    `--packs` subset still produces the single authoritative manifest.
+
+    Replacement rule: a pack's previous records are dropped iff this run
+    produced at least one record for it (fresh state wins — including the
+    case where fresh curation now rejects what an older run accepted).
+    Records of packs no longer in APPROVED_PACKS are dropped entirely.
+    """
+    recorded_names = {r.pack_name for r in acq.records}
+    current_names = {p.name for p in APPROVED_PACKS}
+    current_slugs = {p.slug for p in APPROVED_PACKS}
+    carried_files: List[Dict] = []
+    carried_packs: List[Dict] = []
+    root_path = acq.repo / "ASSET_MANIFEST.json"
+    sess_path = acq.repo / "Docs" / "ASSET_ACQUISITION_MANIFEST.json"
+    if root_path.exists():
+        try:
+            prev = json.loads(root_path.read_text(encoding="utf-8"))
+            for f in prev.get("files", []):
+                name = f.get("pack")
+                if name in recorded_names or name not in current_names:
+                    continue
+                carried_files.append(f)
+        except Exception:  # noqa: BLE001 — unreadable previous manifest: start fresh
+            carried_files = []
+    if sess_path.exists():
+        try:
+            prev = json.loads(sess_path.read_text(encoding="utf-8"))
+            for p in prev.get("packs_accepted", []):
+                if p.get("pack") in recorded_names or p.get("slug") not in current_slugs:
+                    continue
+                carried_packs.append(p)
+        except Exception:  # noqa: BLE001
+            carried_packs = []
+    return carried_files, carried_packs
+
+
+def write_manifests(acq: Acquisition, now_iso: str) -> tuple:
+    run_files = [file_record_json(r) for r in acq.records]
+    carried_files, carried_packs = load_previous_state(acq)
+    files = run_files + carried_files
+    stats = stats_of(files)
+    packs_accepted = ([p for p in acq.pack_results if p["status"] == "ACCEPTED"]
+                      + carried_packs)
+    packs_accepted.sort(key=lambda p: next(
+        (i for i, ap in enumerate(APPROVED_PACKS) if ap.slug == p.get("slug")), 999))
     root_manifest = {
         "schema": "astrawild-asset-manifest/1",
         "generated": now_iso,
@@ -994,7 +1309,7 @@ def write_manifests(acq: Acquisition, now_iso: str) -> Dict:
         "schema": "astrawild-asset-acquisition-manifest/1",
         "generated": now_iso,
         "generator": "Scripts/download_assets.py",
-        "packs_accepted": [p for p in acq.pack_results if p["status"] == "ACCEPTED"],
+        "packs_accepted": packs_accepted,
         "packs_rejected": REJECTED_PACKS,
         "other_sources_evaluated": OTHER_SOURCES_EVALUATED,
         "stats": stats,
@@ -1004,10 +1319,11 @@ def write_manifests(acq: Acquisition, now_iso: str) -> Dict:
     docs.mkdir(exist_ok=True)
     (docs / "ASSET_ACQUISITION_MANIFEST.json").write_text(
         json.dumps(session_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    return stats
+    return stats, files, packs_accepted
 
 
-def write_credits(acq: Acquisition, now_iso: str) -> None:
+def write_credits(acq: Acquisition, now_iso: str, files: List[Dict],
+                  packs_accepted: List[Dict]) -> None:
     lines = [
         "# ASTRAWILD — Asset Credits (CC0 sources)",
         "",
@@ -1027,11 +1343,9 @@ def write_credits(acq: Acquisition, now_iso: str) -> None:
         "---",
         "",
     ]
-    for p in acq.pack_results:
-        if p["status"] != "ACCEPTED":
-            continue
-        pack_files = [r for r in acq.records
-                      if r.pack == p["slug"] and r.status in ("ACCEPTED", "IMPORT_READY")]
+    for p in packs_accepted:
+        pack_files = [f for f in files
+                      if f["pack"] == p["pack"] and f["status"] in ("ACCEPTED", "IMPORT_READY")]
         lines += [
             f"## {p['pack']}",
             "",
@@ -1062,7 +1376,8 @@ def write_credits(acq: Acquisition, now_iso: str) -> None:
     (acq.repo / "ASSETS_CREDITS.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-def write_report(acq: Acquisition, now_iso: str, stats: Dict) -> None:
+def write_report(acq: Acquisition, now_iso: str, stats: Dict,
+                files: List[Dict], packs_accepted: List[Dict]) -> None:
     lines = [
         "# ASTRAWILD — Asset Acquisition Report",
         "",
@@ -1075,19 +1390,21 @@ def write_report(acq: Acquisition, now_iso: str, stats: Dict) -> None:
         "",
         "| Source | Result |",
         "| :--- | :--- |",
-        "| kenney.nl (Priority 1, official publisher) | 10 pack pages probed; 7 candidates evaluated; 6 accepted; 4 packs rejected with documented reasons |",
+        "| kenney.nl (Priority 1, official publisher — batch 1) | 10 pack pages probed; 7 candidates evaluated; 6 accepted; 4 packs rejected with documented reasons |",
+        "| kenney.nl (Priority 1 — batch 2 gap analysis) | full catalog walk: all 14 pagination pages enumerated (214 packs); 21 candidate pack pages read individually; 9 more packs accepted (this run); 2D creature/character family rejected (format); zip sizes measured via HTTP HEAD |",
         "| github.com/KenneyNL | not needed — official publisher downloads available for every pack |",
-        "| opengameart.org (Priority 2) | deferred — Kenney covered the current needs; per-file license verification required |",
+        "| quaternius.com | deferred — Ultimate-series CC0 pages exist, but delivery is a Google Drive folder (not a direct URL); newer packs use QAL (redistribution prohibited) |",
+        "| opengameart.org (Priority 2) | deferred — researched and viable (machine-parseable per-asset licenses, anonymous direct downloads), needs a downloader license-gate extension first |",
+        "| polyhaven.com / ambientcg.com | site-wide CC0 verified; realistic PBR/HDRIs are a P2 upgrade path — deliberately not acquired |",
         "",
         "## 2. Packs accepted",
         "",
         "| Pack | Category | Files accepted | Size | Pack status |",
         "| :--- | :--- | ---: | ---: | :--- |",
     ]
-    for p in acq.pack_results:
-        if p["status"] == "ACCEPTED":
-            lines.append(f"| {p['pack']} | {p['category']} | {p['files_accepted']} | "
-                         f"{human_size(p['size_accepted_bytes'])} | ACCEPTED (sources IMPORT_READY) |")
+    for p in packs_accepted:
+        lines.append(f"| {p['pack']} | {p['category']} | {p['files_accepted']} | "
+                     f"{human_size(p['size_accepted_bytes'])} | ACCEPTED (sources IMPORT_READY) |")
     lines += [
         "",
         "## 3. Packs rejected (with reasons)",
@@ -1152,8 +1469,10 @@ def write_report(acq: Acquisition, now_iso: str, stats: Dict) -> None:
         "",
         "## 8. Repository integration (what changed)",
         "",
-        "- New sources under `ArtSource/Audio/Kenney_*/` (Ogg/ + Wav/ + License.txt) and",
-        "  `ArtSource/Models/Kenney_*/` (GLB/ + License.txt).",
+        "- New sources under `ArtSource/Audio/Kenney_*/` (Ogg/ + Wav/ + License.txt),",
+        "  `ArtSource/Models/Kenney_*/` (GLB/ + License.txt) and — new in batch 2 —",
+        "  `ArtSource/Textures/Kenney_*/` (PNG/ + License.txt: particles, sci-fi UI,",
+        "  crosshairs, skyboxes).",
         "- The existing UE import pipeline (`Content/Python/AwPipeline/import_all.py`) only",
         "  auto-imports the FLAT `ArtSource/Audio/*.wav` and `ArtSource/Textures/*.png` folders,",
         "  so the new pack subfolders are NOT auto-imported — current bindings and fallback",
@@ -1181,6 +1500,24 @@ def write_report(acq: Acquisition, now_iso: str, stats: Dict) -> None:
         "     (dungeon corridor/structure/pipe/platform dressing; turret candidates)",
         "   - `ArtSource/Models/Kenney_BlasterKit/GLB/*.glb` → `/Game/Weapons/Meshes/Kenney/`",
         "     (CANDIDATE_REPLACEMENT held-weapon meshes + shared colormap texture)",
+        "   - `ArtSource/Models/Kenney_SurvivalKit/GLB/*.glb` → `/Game/Environment/Kenney/SurvivalKit/`",
+        "     (camp/fire/crate/tool dressing for POIs, villages and all 12 zones)",
+        "   - `ArtSource/Models/Kenney_CityKitIndustrial/GLB/*.glb` → `/Game/Environment/Kenney/Industrial/`",
+        "     (containers, cranes, pipes, warehouse shells for Ember Ridge/Stormcrest/research POIs)",
+        "   - `ArtSource/Models/Kenney_ModularSpaceKit/GLB/*.glb` → `/Game/Environment/Kenney/ModularSpaceKit/`",
+        "     (modular sci-fi interior tiles for the 3 dungeons + Hollow Approach)",
+        "   - `ArtSource/Models/Kenney_ModularDungeonKit/GLB/*.glb` → `/Game/Environment/Kenney/ModularDungeonKit/`",
+        "     (stone/ancient tiles for dungeon ruin segments + Sunscar)",
+        "   - `ArtSource/Models/Kenney_AnimatedCharactersSurvivors/GLB/*.glb` → `/Game/Characters/Kenney/Survivors/`",
+        "     (NPC body candidates + locomotion reference; check rig retarget to SK_Survivor_Exosuit)",
+        "   - `ArtSource/Textures/Kenney_ParticlePack/PNG/*.png` → `/Game/FX/Kenney/ParticlePack/`",
+        "     (Niagara sprite textures for muzzle/impact/spark/smoke; see HANDOFF tone check)",
+        "   - `ArtSource/Textures/Kenney_UIPackSciFi/PNG/*.png` → `/Game/UI/Kenney/SciFi/`",
+        "     (panels/buttons/icons for the 7 UMG widget classes)",
+        "   - `ArtSource/Textures/Kenney_CrosshairPack/PNG/*.png` → `/Game/UI/Kenney/Crosshairs/`",
+        "     (real reticles for HudWidget hip-fire/aim states)",
+        "   - `ArtSource/Textures/Kenney_Skyboxes/PNG/*.png` → `/Game/Environment/Kenney/Skyboxes/`",
+        "     (equirectangular sky textures — import as long-lat, sky dome material candidates)",
         "   - `ArtSource/Audio/Kenney_*/Wav/*.wav` → `/Game/Audio/Kenney/<Pack>/`",
         "     (SoundWave library for impact/UI/sci-fi feedback extension)",
         "3. Extend `Content/Python/AwPipeline/import_all.py` mappings ONLY when binding is",
@@ -1245,9 +1582,9 @@ def main() -> int:
 
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     if not args.dry_run:
-        stats = write_manifests(acq, now_iso)
-        write_credits(acq, now_iso)
-        write_report(acq, now_iso, stats)
+        stats, m_files, m_packs = write_manifests(acq, now_iso)
+        write_credits(acq, now_iso, m_files, m_packs)
+        write_report(acq, now_iso, stats, m_files, m_packs)
         log(f"manifest: {repo_root / 'ASSET_MANIFEST.json'}")
         log(f"credits:  {repo_root / 'ASSETS_CREDITS.md'}")
         log(f"report:   {repo_root / 'Docs' / 'ASSET_ACQUISITION_REPORT.md'}")

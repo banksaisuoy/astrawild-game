@@ -99,6 +99,132 @@
 - **SHA256 (pack zip)**: `91e3093e95427d59625e7e2ce2d0399b861600160fd0b4ada7714796b67cea8c`
 - **Date Checked**: 2026-09-04
 
+## Particle Pack
+
+- **Asset / Pack**: Particle Pack (slug `particle-pack`, 80 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/particle-pack
+- **Download**: https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Combat VFX sprite library: muzzle flashes, impact sparks, smoke puffs, glows and particle textures feeding upgraded Niagara systems (CombatComponent FX pool + AstrawildVfxActor fallback art)
+- **Files**: 97 accepted — 5.1 MB
+- **SHA256 (pack zip)**: `b631d4b07f7002549fdcf155f01141ad482f79f3440e4e301eed49ce5f1d8958`
+- **Date Checked**: 2026-09-04
+
+## UI Pack: Sci-Fi
+
+- **Asset / Pack**: UI Pack: Sci-Fi (slug `ui-pack-sci-fi`, 130 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/ui-pack-sci-fi
+- **Download**: https://kenney.nl/media/pages/assets/ui-pack-sci-fi/b67c2acd31-1724181109/kenney_ui-pack-space-expansion.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Sci-fi UI art: panels, buttons, sliders and icons for the 7 C++ UMG widget classes (HUD, inventory, research, shop, dialogue, pause)
+- **Files**: 693 accepted — 376.8 KB
+- **SHA256 (pack zip)**: `4ae5a4949b71ba6c08bfb4d4708b3880915782f7deae7bc5872e1d56f0a668af`
+- **Date Checked**: 2026-09-04
+
+## Survival Kit
+
+- **Asset / Pack**: Survival Kit (slug `survival-kit`, 80 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/survival-kit
+- **Download**: https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Survival-frontier props: camps, fires, crates, tools and shelters across all 12 zones; POI dressing and village outskirts (Dawn Fields, Verdant Reach)
+- **Files**: 82 accepted — 1.2 MB
+- **SHA256 (pack zip)**: `c3586341b5932c87eb43d75d915434f47daed168b17ed36a03e8ca9977c7443e`
+- **Date Checked**: 2026-09-04
+
+## City Kit (Industrial)
+
+- **Asset / Pack**: City Kit (Industrial) (slug `city-kit-industrial`, 40 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/city-kit-industrial
+- **Download**: https://kenney.nl/media/pages/assets/city-kit-industrial/0ec35b139d-1788171848/kenney_city-kit-industrial_2.0.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Industrial/research props: containers, cranes, pipes and warehouse shells for Ember Ridge, Stormcrest, research POIs and the Dawnstead industrial quarter
+- **Files**: 39 accepted — 3.0 MB
+- **SHA256 (pack zip)**: `5b381164e5760f3830a2dbee43b972deee38b2a695d091b56e238ab2910c96d2`
+- **Date Checked**: 2026-09-04
+
+## Modular Space Kit
+
+- **Asset / Pack**: Modular Space Kit (slug `modular-space-kit`, 40 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/modular-space-kit
+- **Download**: https://kenney.nl/media/pages/assets/modular-space-kit/8261428a47-1771146076/kenney_modular-space-kit_1.0.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Modular snapping sci-fi interior tiles for the 3 dungeons and Hollow Approach ruined-ancient-tech layouts (distinct from the classic Space Kit dressing pack)
+- **Files**: 42 accepted — 7.7 MB
+- **SHA256 (pack zip)**: `f394f7fd9eaf29c9de7e090e55b69926f699841af33b0b116f5cc0088de8a4dc`
+- **Date Checked**: 2026-09-04
+
+## Modular Dungeon Kit
+
+- **Asset / Pack**: Modular Dungeon Kit (slug `modular-dungeon-kit`, 40 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/modular-dungeon-kit
+- **Download**: https://kenney.nl/media/pages/assets/modular-dungeon-kit/7bed87605b-1771926065/kenney_modular-dungeon-kit_1.0.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Stone/ancient modular dungeon tiles for the 3 dungeons' ruin segments and Sunscar ruins
+- **Files**: 41 accepted — 7.1 MB
+- **SHA256 (pack zip)**: `dd0aa6776db8912283cdca60161dee6a8839bbda3558eba2ea501419eb5b4623`
+- **Date Checked**: 2026-09-04
+
+## Animated Characters: Survivors
+
+- **Asset / Pack**: Animated Characters: Survivors (slug `animated-characters-survivors`, 8 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/animated-characters-survivors
+- **Download**: https://kenney.nl/media/pages/assets/animated-characters-survivors/27b16052a7-1774772958/kenney_animated-characters-survivors.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: NPC/villager body candidate (12 NPCs, 2 villages) + locomotion animation reference (idle/run/jump); rig-retarget compatibility to be checked in engine
+- **Files**: 5 accepted — 1.8 MB
+- **SHA256 (pack zip)**: `fdadced07a0454c9b7f0b46507be6144a072b4d03b4ffa37f225893c76c62845`
+- **Date Checked**: 2026-09-04
+
+## Skyboxes
+
+- **Asset / Pack**: Skyboxes (slug `skyboxes`, 5 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/skyboxes
+- **Download**: https://kenney.nl/media/pages/assets/skyboxes/6736ff5c10-1784123473/kenney_skyboxes.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Alien sky dome art for 12-zone atmosphere variants (day/dusk/night/storm/space equirectangular textures)
+- **Files**: 6 accepted — 4.5 MB
+- **SHA256 (pack zip)**: `ff339713105fe1b777ecafa0b66094e8fb1431cfcf88df761b9ad015aadf4028`
+- **Date Checked**: 2026-09-04
+
+## Crosshair Pack
+
+- **Asset / Pack**: Crosshair Pack (slug `crosshair-pack`, 200 assets claimed on the page)
+- **Creator**: Kenney
+- **Source**: https://kenney.nl/assets/crosshair-pack
+- **Download**: https://kenney.nl/media/pages/assets/crosshair-pack/5ef74bd405-1785950072/kenney_crosshair-pack.zip
+- **License**: CC0 1.0 Universal (Public Domain Dedication) (LICENSE_VERIFIED)
+- **License URL**: https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution Required**: False
+- **ASTRAWILD Usage**: Reticle art replacing the text-glyph crosshair in HudWidget (hip-fire/aim states already coded)
+- **Files**: 1602 accepted — 1.5 MB
+- **SHA256 (pack zip)**: `26cf8f3e135f8c9a3354a8a6e6c2576e78bd8e2db01c841f93ab43ad3205a78f`
+- **Date Checked**: 2026-09-04
+
 ---
 
 ## Rejected / not acquired
@@ -107,5 +233,10 @@
 - **Digital Audio** — REJECTED_QUALITY: Retro 8-bit aesthetic — does not fit the sci-fi survival frontier audio identity.
 - **UI Audio** — REJECTED_QUALITY: Duplicate role — superseded by Interface Sounds (newer, larger pack covering the same UI feedback category); accepting both would create near-duplicate libraries.
 - **RPG Audio** — REJECTED_QUALITY: Fantasy-specific sounds (coins, potions, spells) — weak fit for sci-fi survival; no consuming system.
-- **opengameart.org** — DEFERRED: Priority-1 Kenney packs covered every current acquisition need. OpenGameArt requires per-file license verification (mixed CC0/CC-BY/unclear); kept as a future source for the same pipeline.
+- **Kenney 2D creature/character packs (Monster Builder, Animal Pack, Animal Pack Remastered, Alien UFO, Robot, Fish, Toon Characters, Shape Characters)** — REJECTED_FORMAT: All 2D sprite packs — ASTRAWILD needs 3D meshes for creatures/NPCs; the hoped-for 3D creature catalog does not exist at Kenney (verified during the batch-2 gap analysis, full catalog walk).
+- **Quaternius newer packs (Sci-Fi Essentials Kit, MegaKits, Universal Animation Library 2)** — REJECTED_LICENSE: Custom QAL v1.0 license — free commercial use but redistribution prohibited, which forbids committing the assets into this repository; only Quaternius 'Ultimate'-series pages explicitly stating CC0 are eligible.
+- **opengameart.org** — DEFERRED: Researched during batch-2 planning: per-asset licenses are machine-parseable (CC0-filterable, 2,807 CC0 3D assets) and anonymous direct downloads verified — viable as a future batch once the downloader gains a per-asset license gate and a curated allowlist; not needed for this batch (Kenney covered the gaps).
 - **github.com/KenneyNL** — NOT_NEEDED: Official publisher downloads from kenney.nl are preferred and were available for every approved pack; no GitHub mirror required.
+- **quaternius.com** — DEFERRED: Ultimate Animated Animal Pack page states CC0 (creature-mesh candidate), but delivery is a Google Drive folder rather than a direct download URL — needs a manual fetch plus validator pass, or a Drive-aware pipeline extension, and per-pack CC0 re-verification at download time; newer Quaternius packs use QAL (redistribution prohibited) and are excluded.
+- **polyhaven.com / ambientcg.com** — NOT_ACQUIRED: Site-wide CC0 verified on their license pages; realistic-style HDRIs/PBR textures are a P2 upgrade path, not a current gap — deliberately not acquired (FEWER + BETTER).
+- **kaylousberg.itch.io (KayKit)** — DEFERRED: itch.io downloads are click-through pages, not plain direct URLs; per-pack license pages not yet verified.

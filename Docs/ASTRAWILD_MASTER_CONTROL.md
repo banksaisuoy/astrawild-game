@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 3.9 (FINAL GAME COMPLETION RUN complete + ASSET ACQUISITION PACK — READY_FOR_FINAL_BUILD)
+**Document Version**: 4.0 (FINAL GAME COMPLETION RUN complete + ASSET ACQUISITION PACKS 1+2 — READY_FOR_FINAL_BUILD)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
 **Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch, ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FINAL COMPLETION RUN + ASSET ACQUISITION PACK pushed)
-**Last Updated**: 2026 (Asset Acquisition Pack — see TASK_REGISTRY §H)
+**Last Updated**: 2026 (Asset Acquisition Batch 2 — see TASK_REGISTRY §H AA-6..AA-9)
 
 ---
 
@@ -38,6 +38,20 @@
 > Status is IMPORT_READY (NOT UE5_VERIFIED) — import/binding decisions belong to the
 > Antigravity integration run per `Docs/ASSET_ACQUISITION_REPORT.md` §9. Both static
 > validators re-ran PASS at the acquisition commit. Full ledger: TASK_REGISTRY §H.
+
+> [!NOTE]
+> **ASSET ACQUISITION BATCH 2 (v4.0 — wayfinder-approved, live user authorization)**:
+> 9 more verified-CC0 Kenney packs closing the P0 gaps from the acquisition gap analysis —
+> Particle Pack (96 transparent VFX sprites), UI Pack: Sci-Fi (690 PNGs + 2 fonts),
+> Survival Kit (80 GLB), City Kit Industrial (38), Modular Space/Dungeon Kits (41+40 dungeon
+> tiles), Animated Characters: Survivors (4 FBX retarget reference), Skyboxes (5 equirect),
+> Crosshair Pack (1,600 reticles) → `ArtSource/Textures/Kenney_*/` (new category) and
+> `ArtSource/Models/Kenney_*/`. Batch-2: 2,607 files / 32.4 MB; **combined 15 packs /
+> 3,678 accepted / 3,360 IMPORT_READY / 75.8 MB**. 54 in-pack hash-duplicates skipped,
+> 172 curation rejects, 0 missing deps, 0 blocked. Same guardrails as v3.9: no code, no
+> bindings, no existing asset touched, subfolders outside the flat auto-import, IMPORT_READY
+> ≠ UE5_VERIFIED. Quaternius (Drive delivery/QAL), OGA (needs license gate), Poly Haven/
+> ambientCG (P2) all deferred-with-reasons. Full ledger: TASK_REGISTRY §H AA-6..AA-9.
 
 ---
 
@@ -269,6 +283,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026 | **v3.6 (GLM FINAL GAME COMPLETION RUN — Phase 0)**: registry reconciliation executed against actual source — test count unified to **102** everywhere; authoritative content census established (76 items / 56 recipes / 229 species / 26 buildings / 17 techs / 17 quests / 11 loot / 13 POIs / 9 events / 11 NPCs / 11 dialogues / 8 weapons / 10 nodes / 4 sites / 3 robots) and enforced by new validator §11 equality gates; ContentLibrary completion log converted to a LIVE registry census (hardcoded counts removed — source defect fixed); registry gained GetNumQuests/GetNumLootTables/GetNumNPCs/GetNumRobots accessors; TEST_INVENTORY/READINESS/REGISTRY synchronized to the one truth |
 | 2026 | **v3.7 (GLM FCR — Phase 1 audit + fixes)**: 5-agent deep audit of the GDP+SCP code (never previously audited) found 2 CRITICAL compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects — ALL verified against source and fixed in FCR-1-A (9bca989: save subsystem pawn-member compile errors, sanity const violation, flying locomotion possess race, party friendly fire, wild bolt damage, echo XP wiring, NPC origin march, offline mint, crop infinite yield, mount stuck states, IVs/Lucky live, shop hours) and FCR-1-B (30e9e44: dead ability kits, status payloads, DDA party direction, combo boss resolution, garrison enforcement, per-player spoilage, validator empty guard, perf user-pin respect) + FCR-1-C (this commit: +3 regression contracts, suite 102, exact validator gate); R2/R7 full-repo sweeps clean; input/recipe/quest-producer cross-checks clean |
 | 2026 | **v3.8 (GLM FCR — Phases 2-18 COMPLETE)**: mechanical verification sweep of every player-facing pillar (Phases 2-12 ALL PASS) · cross-cutting invariants clean (R2/R7 sweeps, input map 28 actions no-dup, zero dead recipe stacks, all objective types have producers) · performance tick scan clean · Phase 17 deferred review: CV-5 economy CLOSED (Duskmoth loot), CV-4/CV-6/SCP-7 stay deferred with reasons (none block READY) · pipeline idempotency contract issued (HANDOFF §20a) · suite 102 with exact gate · **READY_FOR_FINAL_BUILD re-affirmed at the final FCR SHA** — one-time engine integration (AG-1..6) remains the exclusive conversion gate |
+| 2026 | **v4.0 (GLM ASSET ACQUISITION BATCH 2 — wayfinder charted, live user-approved)**: acquisition decision layer charted as a wayfinder map (`.scratch/` outside repo, 6 decision tickets; gap-analysis + OGA-policy research resolved by parallel subagents — Kenney full-catalog walk 214 packs, OGA YES-WITH-CONSTRAINTS) → batch-2 approved 9 CC0 packs (Particle/UI-SciFi/Survival/City-Industrial/Modular-Space/Modular-Dungeon/Animated-Characters/Skyboxes/Crosshair) · pipeline extended (Textures category with sub-path-preserving dests, FBX/TTF validators, rel-path curation, incremental manifest merge) · flat-dest collision bug caught in-run and fixed (0 BLOCKED at close) · 2,607 new files / 32.4MB, combined 15 packs / 3,678 / 3,360 IMPORT_READY / 75.8MB · idempotency re-proven · HANDOFF §20b acquired-asset checklist issued for the engine run · READY_FOR_FINAL_BUILD unchanged (IMPORT_READY ≠ UE5_VERIFIED) |
 
 
 ### §5c SCP — Systems Completion Pack (v3.5, session 2026)

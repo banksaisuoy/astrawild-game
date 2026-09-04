@@ -286,6 +286,69 @@ no duplicated assets, no double imports, no corrupted Content.
 engine-verified + packaged). Record the final SHA + log manifest in
 `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md` §J.
 
+## 20b. ACQUIRED-SOURCE ASSET CHECKLIST (AA batches 1+2 — Antigravity verification)
+
+The 15 Kenney CC0 packs (3,678 accepted source files, 75.8 MB — `ASSET_MANIFEST.json`
+is the authoritative per-file record with SHA256s) are IMPORT-READY sources, NOT
+engine-verified content. Verify them during the ONE-TIME integration run as follows —
+all steps ride the EXISTING Interchange importer; do not build a second importer.
+
+1. **Baseline first (unchanged contract)**: run the standard `import_all.py` pass
+   BEFORE any Kenney import — the 112-asset procedural contract, soft-path fallbacks
+   and zero-asset boot guarantee must be intact (§20a idempotency).
+2. **Import the Kenney sources** (Interchange, `replace_existing=True`,
+   `does_asset_exist` guards — suggested destinations, binding decisions are yours):
+   - `ArtSource/Audio/Kenney_*/Wav/*.wav` → `/Game/Audio/Kenney/<Pack>/` — import
+     BEFORE any audio binding steps. **602 WAVs will lengthen the first cook —
+     expected, not an error.** Do NOT import the `Ogg/` originals (provenance only).
+   - `ArtSource/Models/Kenney_NatureKit|SpaceKit|SurvivalKit|CityKitIndustrial|
+     ModularSpaceKit|ModularDungeonKit/GLB/*.glb` →
+     `/Game/Environment/Kenney/<Pack>/` (dressing/dungeon-tile candidates).
+   - `ArtSource/Models/Kenney_BlasterKit/GLB/*.glb` → `/Game/Weapons/Meshes/Kenney/`
+     (CANDIDATE_REPLACEMENT pool — see step 5 before any rebind).
+   - `ArtSource/Models/Kenney_AnimatedCharactersSurvivors/FBX/*.fbx` →
+     `/Game/Characters/Kenney/Survivors/` — import `characterMedium.fbx` as a
+     **Skeletal Mesh**, then the idle/run/jump FBX as animations; **retarget
+     compatibility to SK_Survivor_Exosuit is an explicit check** (the pack ships its
+     own rig — mismatch is a valid finding, not a defect of the source).
+   - `ArtSource/Textures/Kenney_ParticlePack/PNG/*.png` → `/Game/FX/Kenney/ParticlePack/`
+     — then **fitness check**: load 2–3 sprites into a test Niagara flipbook/sprite
+     emitter BEFORE any combat-VFX binding. Kenney ships palette PNGs (indexed color
+     with tRNS alpha); if the engine imports them without usable alpha, record it and
+     stop that binding (do not batch-convert — report back).
+   - `ArtSource/Textures/Kenney_UIPackSciFi/PNG/**` → `/Game/UI/Kenney/SciFi/`
+     (subfolders carry the asset identity: color family × Default/Double state) and
+     `Fonts/*.ttf` → `/Game/UI/Fonts/` (offline font import for UMG).
+   - `ArtSource/Textures/Kenney_CrosshairPack/PNG/**` → `/Game/UI/Kenney/Crosshairs/`
+     (pick a handful for HudWidget hip/aim states — 1,600 are a library, not a
+     to-do list).
+   - `ArtSource/Textures/Kenney_Skyboxes/PNG/*.png` →
+     `/Game/Environment/Kenney/Skyboxes/` (equirectangular — import as long-lat,
+     cube-map conversion optional).
+3. **Tone check (feeds the GLM wayfinder map, ticket "Kenney Tone Usage Policy")**:
+   build ONE cheap PIE scene mixing Kenney Nature/Space props with the existing
+   procedural assets in a representative zone; screenshot at gameplay camera
+   distance, next to the same scene procedural-only. The keep/constrain/reject
+   verdict for the low-poly style against the bioluminescent frontier is a HUMAN
+   decision — send both screenshots back with observations; do not decide unilaterally.
+4. **CANDIDATE_REPLACEMENT comparison (feeds map ticket "Weapon Replacement
+   Decision")**: side-by-side in PIE, procedural weapon mesh vs Kenney blaster per
+   weapon archetype; criteria = readability at combat distance, silhouette clarity,
+   energy-weapon material tone, consistency with the tone verdict from step 3.
+   **Rebind ONLY if the comparison clearly favors Kenney — never auto-replace; the
+   procedural sources stay on disk regardless.**
+5. **Import-order + size expectations**: audio → models → textures is a safe order;
+   ~3,400 new import-ready files total (602 WAV + 657 GLB + 4 FBX + 2,396 PNG +
+   2 TTF). First-cook time increase is expected; cook failures on specific files
+   are engine-side findings (record the file + error, skip it, continue).
+6. **Reporting back**: observations that are DECISIONS (tone verdict, weapon
+   keep/rebind, particle fitness) route back to the GLM wayfinder map as ticket
+   answers (see `Docs/ASSET_ACQUISITION_REPORT.md` §9 for the import-side summary);
+   mechanical defects (a file that will not import, a corrupted asset) are
+   engine-side fixes per §20 rule 10 — smallest fix, branch, never redesign.
+   Kenney mirror packs exist on OpenGameArt — if sourcing extra copies, do NOT
+   re-import over these (different bytes, same content: SHA256 will differ).
+
 
 ## GDP Playtest Additions (v3.4)
 
