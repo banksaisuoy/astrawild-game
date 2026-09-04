@@ -195,6 +195,20 @@ private:
      *  while standing still is free). */
     bool IsOwnerMoving() const;
     class UAstrawildWeatherSubsystem* GetWeatherSubsystem() const;
+
+    /**
+     * DP-7 (world depth): thermal offset of the ambient hazard of the zone the
+     * owner currently stands in (pure zone-table lookup; 0 outside the world or
+     * in hazard-free zones). Layered ON TOP of the global weather offset.
+     */
+    float GetZoneHazardTemperatureOffset() const;
+
+    /**
+     * DP-7: passive stamina-regen penalty of the owner's current zone (ash
+     * lung; 0 for every non-respiratory hazard). Consumed by the regen branch
+     * of the authority tick, clamped so the net regen never goes negative.
+     */
+    float GetZoneHazardStaminaRegenPenalty() const;
     // Final production run (PHASE 12): advanced-equipment integration helpers.
     float GetEquippedInsulation() const;
 

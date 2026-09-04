@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 106 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 107 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -17,18 +17,22 @@ DDA/ability-kit/IV fixes (validator/fallback/spoilage/sanity/mount/combos/
 difficulty/crops/schedules/turrets/genetics/perf), the DP-3 contract (#103)
 pins the party element resonance, the DP-4 contract (#104) pins the
 player skill loadout (bind validation + bound-only smart-cast + the
-empty-loadout legacy fallback), and the DP-5 contract (#105) pins the
+empty-loadout legacy fallback), the DP-5 contract (#105) pins the
 per-boss special sets (canonical id resolution, unknown-id fallback,
 zero-regression default tuning, pairwise-distinct data), and the DP-6 contract
 (#106) pins the base depth (8-site work-type coverage with two named design
 exceptions, 17/17 research branch assignments, and the field-consumable
-production→progression loop: item verbs, recipe mirrors, site output wiring).
+production→progression loop: item verbs, recipe mirrors, site output wiring),
+and the DP-7 contract (#107) pins the world depth (per-zone hazard identity
+with pure consumption helpers, the 7 previously-bare zones each anchoring an
+event built from the existing effect vocabulary, and the 4 scanner-gated
+secret POIs).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **106** — derived from `AutomationTests.cpp`
+authoritative test count is **107** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 106`), and listed in this inventory (rows 1-106).
-Historical counts (57/63/67/72/84/99/102/103/104/105) describe earlier commits only and appear
+EXACT gate (`Automation tests == 107`), and listed in this inventory (rows 1-107).
+Historical counts (57/63/67/72/84/99/102/103/104/105/106) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -194,8 +198,14 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 105 | ASTRAWILD.DP5.BossSpecialSets | DP-5: per-boss special sets — the four canonical defeat ids resolve to four distinct sets, unknown/None ids fail closed to the default set, the default set is the byte-exact legacy tuning (7s/1 bolt/1 blast/350cm/1 hazard/6dps/Gloomfang), no two sets share a tuning bundle, and every set stays inside the sane combat band (cooldown 4-10s, 1-4 bolts, 1-3 blasts, 250-500cm, 1-4 hazards, 4-10dps, set summon species) |
 
-## DP-6 depth contracts (106, landed this run)
+## DP-6 depth contracts (106, landed in the DP-6 batch)
 
 | # | Test | Covers |
 |---|------|--------|
 | 106 | ASTRAWILD.DP6.BaseDepth | DP-6: base depth — registry-backed world-free census (ownerless `BuildDefaults`): 8 work sites registered with unique ids / resolvable outputs+inputs / placed zones, work-type coverage pins the 8 covered types (Gathering/Farming/Mining/Cooking/Transport/ResearchAssist/PowerGeneration/Defense) with Crafting Assistance + Construction named as the two by-design exceptions, all 17 techs resolve with their audited research branch (10 legacy + 7 production rows pinned), Field Ration carries a timed non-damaging stamina-regen status + food value, Pulse Tonic grants capture-focus seconds + heal/water with no status payload, fresh status effects default to zero regen (additive shape), and the loop closes end-to-end (recipes output the consumables; the Tidebreaker depot consumes kitchen meat + farm berries and outputs Field Rations; the Verdant lab outputs Pulse Tonics) |
+
+## DP-7 depth contracts (107, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 107 | ASTRAWILD.DP7.WorldDepth | DP-7: world depth — per-zone hazard identity from the pure static zone table (all 12 zones carry an explicit hazard row; the thermal offset + stamina-regen penalty helpers mirror the enum for Cold/Heat/AshLung; hazard-free zones stay fully neutral with zero pressure; Dawn Fields stays gentle by design; Frostveil reads colder than Dawn Fields — the layering contract the survival tick consumes; Hollow Approach is the ash-lung identity), the 7 previously-bare zones each anchor at least one of the 16 registered world events (live registry census, ownerless `BuildDefaults`; every new event pins its zone, balance band, cooldown, day-gate, no night-gate, and payload resolution — species boost ids, bonus node ids, loot tables), and the 17-POI census with 6 scanner-gated secrets (the 4 new DP-7 caches + 2 legacy signal sources all gated, SignalSource-typed, high-threat-zone-placed, with real loot + research rewards) |

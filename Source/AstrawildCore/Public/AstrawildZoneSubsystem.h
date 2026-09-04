@@ -62,6 +62,28 @@ struct ASTRAWILDCORE_API FAstrawildZoneDescriptor
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Zone")
     int32 ThreatLevel = 1;
 
+    /**
+     * DP-7 (world depth): the zone's ambient hazard identity. Additive field —
+     * additive descriptor fields are save-safe per the Types.h conventions
+     * (the descriptor is static table data, never serialized into a save).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Zone")
+    EAstrawildZoneHazard HazardType = EAstrawildZoneHazard::None;
+
+    /**
+     * DP-7: hazard magnitude — °C of thermal pressure for Cold/Heat zones
+     * (layered on top of the global weather offset), or points/second of
+     * passive stamina-regen suppression for ash-lung zones. 0 = gentle.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Zone", meta=(ClampMin="0.0"))
+    float HazardPressure = 0.0f;
+
+    /** DP-7: thermal offset this zone's hazard adds on top of the global weather offset (°C). Pure, deterministic. */
+    float GetHazardTemperatureOffsetCelsius() const;
+
+    /** DP-7: passive stamina-regen penalty from this zone's hazard (points/second; ash lung). Pure, deterministic. */
+    float GetHazardStaminaRegenPenalty() const;
+
     FVector2D GetCenter() const { return Bounds.GetCenter(); }
 
     float GetSizeX() const { return Bounds.Max.X - Bounds.Min.X; }

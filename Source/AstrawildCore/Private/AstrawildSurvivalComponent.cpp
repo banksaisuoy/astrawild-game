@@ -7,6 +7,7 @@
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildWeatherSubsystem.h"
+#include "AstrawildZoneSubsystem.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
 
@@ -114,6 +115,10 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
                 Regen *= Attributes->GetStaminaRegenMultiplier();
             }
         }
+        // DP-7 (world depth): ash-lung zones suppress passive regen — the
+        // Hollow Approach's ash-choked air tires anyone standing in it. Clamped
+        // at zero so a hazard can never turn regen into a hidden drain.
+        Regen = FMath::Max(0.0f, Regen - GetZoneHazardStaminaRegenPenalty());
         Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Regen * DeltaTime);
     }
 
@@ -164,8 +169,40 @@ void UAstrawildSurvivalComponent::UpdateTemperature()
 {
     UAstrawildWeatherSubsystem* Weather = GetWeatherSubsystem();
     const float WeatherOffset = Weather ? Weather->GetTemperatureOffsetCelsius() : 0.0f;
-    // Base temperate climate 20C + weather offset (time-of-day modulation could be added).
-    Stats.Temperature = 20.0f + WeatherOffset;
+    // DP-7 (world depth): per-zone hazard pressure layers ON TOP of the global
+    // weather offset — Frostveil reads colder than Dawn Fields under the same
+    // sky, the Sunscar hotter. Thermal hazards ride the existing cold/heat
+    // threshold + insulation bands below (no new damage verb); non-thermal
+    // hazards (ash lung) contribute 0 here and act on stamina regen instead.
+    const float ZoneOffset = GetZoneHazardTemperatureOffset();
+    // Base temperate climate 20C + weather offset + zone hazard (time-of-day modulation could be added).
+    Stats.Temperature = 20.0f + WeatherOffset + ZoneOffset;
+}
+
+float UAstrawildSurvivalComponent::GetZoneHazardTemperatureOffset() const
+{
+    // Pure zone-table lookup (rect containment — the same resolution the zone
+    // sweep/HUD banner use); zones without a thermal hazard return 0.
+    const AActor* Owner = GetOwner();
+    if (!Owner)
+    {
+        return 0.0f;
+    }
+    const FAstrawildZoneDescriptor* Zone =
+        UAstrawildZoneSubsystem::FindZone(UAstrawildZoneSubsystem::GetZoneAt(Owner->GetActorLocation()));
+    return Zone ? Zone->GetHazardTemperatureOffsetCelsius() : 0.0f;
+}
+
+float UAstrawildSurvivalComponent::GetZoneHazardStaminaRegenPenalty() const
+{
+    const AActor* Owner = GetOwner();
+    if (!Owner)
+    {
+        return 0.0f;
+    }
+    const FAstrawildZoneDescriptor* Zone =
+        UAstrawildZoneSubsystem::FindZone(UAstrawildZoneSubsystem::GetZoneAt(Owner->GetActorLocation()));
+    return Zone ? Zone->GetHazardStaminaRegenPenalty() : 0.0f;
 }
 
 UAstrawildWeatherSubsystem* UAstrawildSurvivalComponent::GetWeatherSubsystem() const

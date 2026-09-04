@@ -92,7 +92,7 @@ Exosuit → Mannequin → procedural body — the pawn ALWAYS renders.
 | `/Game/ASTRAWILD/Maps/MainMap` | World (level) | authored (in-repo) | LFS pointer→object verified | .uproject default; packaged game entry | playable world entry | LFS_OK |
 | `/Game/ThirdPerson/Lvl_ThirdPerson` | World (level) | UE5 template | LFS pointer→object verified | editor template/test level | template reference | OPTIONAL |
 | **12 zones of the Shattered Vale** (Dawn Fields, Dusk Marsh, Ember Ridge, Frostveil, Glimmerwood, Hollow Approach, Azure Shallows, Tidebreaker Isles, Sunscar, Stormcrest, Verdant Reach, Pearlsea) | **runtime world generation** — 12 procedural terrain tiles (800 m × 800 m, 4×3 grid) from the replicated world seed + zone table | C++: WorldBootstrapper + ZoneSubsystem | — | world build (directive §21; validator §4 zone checks) | the entire overworld | PROCEDURAL — **no 12 separate .umap files are required**; zones are data (ZoneSubsystem table) + generated terrain |
-| Villages (Dawnstead, Driftwood Landing), dungeons ×3, POI markers ×13, portals, skiff pads ×2 | runtime actors | C++: WorldBootstrapper Spawn* passes | — | world build | all gameplay locations | PROCEDURAL |
+| Villages (Dawnstead, Driftwood Landing), dungeons ×3, POI markers ×17, portals, skiff pads ×2 | runtime actors | C++: WorldBootstrapper Spawn* passes | — | world build | all gameplay locations | PROCEDURAL |
 
 ## §7. DATA — every data-driven definition has a single source of truth
 
@@ -105,7 +105,7 @@ Exosuit → Mannequin → procedural body — the pawn ALWAYS renders.
 | Technologies | ContentLibrary::BuildTechnologies + ProductionContent | 17 | same-id override on `UAstrawildTechnologyDefinition` |
 | Recipes | ContentLibrary + ProductionContent | 58 (DP-6 adds the Field Ration + Pulse Tonic mirrors) | same-id override on `UAstrawildRecipeDefinition` |
 | NPCs + dialogue trees | ContentLibrary::BuildNPCs (12) + ProductionContent trees (11) | 12 NPCs / 11 trees | same-id override (`UAstrawildNPCDefinition`, `UAstrawildDialogueTreeDefinition`) |
-| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 10 / 9 / 13 / 12 / 8 / 10 / 8 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post) | same-id override per family |
+| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 10 / 16 / 17 / 12 / 8 / 10 / 8 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post; DP-7: +7 zone events for the bare zones, +4 scanner-gated secret POIs) | same-id override per family |
 
 **There is NO `.uda` / `.uabp` / `.usk` requirement anywhere in this project.** UE5
 Data Assets are `.uasset` files of `UPrimaryDataAsset`-derived classes; this project's
@@ -164,7 +164,7 @@ Cross-checked by: `Scripts/validate_final_run.py` §8 (64 refs in the hot files)
 - Quest chain closure: MQ-01→MQ-17 + Maren endings (validator §2/§3).
 - Act 3 world wiring: 8/8 checks (validator §5). Ending state machine: 12/12
   (validator §6). Building catalog: all categories populated (validator §10).
-- Automation suite: **106 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`, rows 1-106).
+- Automation suite: **107 tests** (inventory doc: `ASTRAWILD_TEST_INVENTORY.md`, rows 1-107).
 
 ### v1.1 amendment (Final Source Completion Pass — FINAL-AUDIT A/B/C/D)
 

@@ -3390,6 +3390,230 @@ bool FAstrawildBaseDepthTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// DP-7 — world depth: per-zone hazard identity + bare-zone events + secrets
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWorldDepthTest,
+    "ASTRAWILD.DP7.WorldDepth",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWorldDepthTest::RunTest(const FString& Parameters)
+{
+    // 1) Per-zone hazard identity — the pure static zone table (world-free).
+    // Every zone carries an explicit hazard row; the two pure consumption
+    // helpers agree with the enum; the layering contract holds (thermal
+    // pressure shifts the ambient temperature ON TOP of global weather).
+    const TArray<FAstrawildZoneDescriptor>& Zones = UAstrawildZoneSubsystem::GetAllZones();
+    TestEqual(TEXT("Twelve zones in the hazard table"), Zones.Num(), 12);
+
+    const FAstrawildZoneDescriptor* DawnFields = nullptr;
+    const FAstrawildZoneDescriptor* Frostveil = nullptr;
+    const FAstrawildZoneDescriptor* HollowApproach = nullptr;
+    TSet<FName> HazardZoneIds;
+    for (const FAstrawildZoneDescriptor& Desc : Zones)
+    {
+        TestTrue(TEXT("Zone hazard pressure stays non-negative"), Desc.HazardPressure >= 0.0f);
+        TestTrue(TEXT("Zone hazard pressure stays inside the honest band"), Desc.HazardPressure <= 20.0f);
+
+        // The pure helpers mirror the enum (the survival tick consumes these).
+        const float Thermal = Desc.GetHazardTemperatureOffsetCelsius();
+        const float RegenPenalty = Desc.GetHazardStaminaRegenPenalty();
+        switch (Desc.HazardType)
+        {
+        case EAstrawildZoneHazard::ColdPressure:
+            TestEqual(*FString::Printf(TEXT("Cold zone %s offsets by -pressure"), *Desc.ZoneId.ToString()),
+                Thermal, -Desc.HazardPressure);
+            TestEqual(*FString::Printf(TEXT("Cold zone %s never suppresses regen"), *Desc.ZoneId.ToString()),
+                RegenPenalty, 0.0f);
+            HazardZoneIds.Add(Desc.ZoneId);
+            break;
+        case EAstrawildZoneHazard::HeatPressure:
+            TestEqual(*FString::Printf(TEXT("Heat zone %s offsets by +pressure"), *Desc.ZoneId.ToString()),
+                Thermal, Desc.HazardPressure);
+            TestEqual(*FString::Printf(TEXT("Heat zone %s never suppresses regen"), *Desc.ZoneId.ToString()),
+                RegenPenalty, 0.0f);
+            HazardZoneIds.Add(Desc.ZoneId);
+            break;
+        case EAstrawildZoneHazard::AshLung:
+            TestEqual(*FString::Printf(TEXT("Ash-lung zone %s never shifts temperature"), *Desc.ZoneId.ToString()),
+                Thermal, 0.0f);
+            TestEqual(*FString::Printf(TEXT("Ash-lung zone %s suppresses regen by pressure"), *Desc.ZoneId.ToString()),
+                RegenPenalty, Desc.HazardPressure);
+            HazardZoneIds.Add(Desc.ZoneId);
+            break;
+        default:
+            TestEqual(*FString::Printf(TEXT("Hazard-free zone %s stays neutral"), *Desc.ZoneId.ToString()),
+                Thermal, 0.0f);
+            TestEqual(*FString::Printf(TEXT("Hazard-free zone %s has no regen penalty"), *Desc.ZoneId.ToString()),
+                RegenPenalty, 0.0f);
+            TestEqual(*FString::Printf(TEXT("Hazard-free zone %s carries zero pressure"), *Desc.ZoneId.ToString()),
+                Desc.HazardPressure, 0.0f);
+            break;
+        }
+
+        if (Desc.Zone == EAstrawildZone::DawnFields) { DawnFields = &Desc; }
+        if (Desc.Zone == EAstrawildZone::FrostveilExpanse) { Frostveil = &Desc; }
+        if (Desc.Zone == EAstrawildZone::HollowApproach) { HollowApproach = &Desc; }
+    }
+    // Ten of twelve zones carry a real hazard identity (the two gentle zones —
+    // Dawn Fields + Glimmerwood — stay hazard-free by design).
+    TestEqual(TEXT("Ten zones carry a hazard identity"), HazardZoneIds.Num(), 10);
+
+    if (TestTrue(TEXT("Dawn Fields descriptor resolves"), DawnFields != nullptr))
+    {
+        TestEqual(TEXT("Dawn Fields stays gentle by design (no hazard)"),
+            DawnFields->HazardType, EAstrawildZoneHazard::None);
+        TestEqual(TEXT("Dawn Fields hazard pressure is zero"), DawnFields->HazardPressure, 0.0f);
+    }
+    if (TestTrue(TEXT("Frostveil descriptor resolves"), Frostveil != nullptr))
+    {
+        TestEqual(TEXT("Frostveil is the cold identity"), Frostveil->HazardType, EAstrawildZoneHazard::ColdPressure);
+        // The layering contract: under the SAME sky, Frostveil reads colder
+        // than Dawn Fields (survival adds this to base + weather).
+        TestTrue(TEXT("Frostveil reads colder than Dawn Fields"),
+            DawnFields != nullptr &&
+            Frostveil->GetHazardTemperatureOffsetCelsius() < DawnFields->GetHazardTemperatureOffsetCelsius());
+        TestTrue(TEXT("Frostveil cold pressure is real"), Frostveil->HazardPressure >= 8.0f);
+    }
+    if (TestTrue(TEXT("Hollow Approach descriptor resolves"), HollowApproach != nullptr))
+    {
+        TestEqual(TEXT("Hollow Approach is the ash-lung identity"),
+            HollowApproach->HazardType, EAstrawildZoneHazard::AshLung);
+        TestTrue(TEXT("Ash lung pressure is real but sub-lethal"),
+            HollowApproach->HazardPressure > 0.0f && HollowApproach->HazardPressure < 10.0f);
+    }
+
+    // 2) Registry-backed events census (ownerless BuildDefaults — same pattern
+    // as test 106): every previously-bare zone now anchors at least one event
+    // built ONLY from the existing effect vocabulary.
+    UAstrawildItemRegistrySubsystem* EventRegistry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(EventRegistry);
+    const TArray<UAstrawildWorldEventDefinition*> Events = EventRegistry->GetAllWorldEvents();
+    TestEqual(TEXT("Sixteen world events registered"), Events.Num(), 16);
+
+    const EAstrawildZone BareZones[] =
+    {
+        EAstrawildZone::DuskMarsh, EAstrawildZone::EmberRidge, EAstrawildZone::SunscarDesert,
+        EAstrawildZone::AzureShallows, EAstrawildZone::TidebreakerIsles,
+        EAstrawildZone::StormcrestHighlands, EAstrawildZone::PearlseaReef
+    };
+    for (const EAstrawildZone Zone : BareZones)
+    {
+        int32 Anchored = 0;
+        for (const UAstrawildWorldEventDefinition* Event : Events)
+        {
+            if (Event && Event->Zone == Zone)
+            {
+                ++Anchored;
+            }
+        }
+        TestTrue(*FString::Printf(TEXT("Zone %d anchors at least one world event"), static_cast<int32>(Zone)),
+            Anchored >= 1);
+    }
+
+    struct FZoneEventCase { FName EventId; EAstrawildZone Zone; };
+    const FZoneEventCase ZoneEvents[] =
+    {
+        { TEXT("Event_MistTide"), EAstrawildZone::DuskMarsh },
+        { TEXT("Event_CinderFall"), EAstrawildZone::EmberRidge },
+        { TEXT("Event_DuneBuriedCache"), EAstrawildZone::SunscarDesert },
+        { TEXT("Event_ReefBloom"), EAstrawildZone::AzureShallows },
+        { TEXT("Event_WreckSurge"), EAstrawildZone::TidebreakerIsles },
+        { TEXT("Event_StormFront"), EAstrawildZone::StormcrestHighlands },
+        { TEXT("Event_Pearlsong"), EAstrawildZone::PearlseaReef },
+    };
+    for (const FZoneEventCase& Case : ZoneEvents)
+    {
+        const UAstrawildWorldEventDefinition* Event = EventRegistry->FindWorldEvent(Case.EventId);
+        if (TestTrue(*FString::Printf(TEXT("Event %s resolves"), *Case.EventId.ToString()), Event != nullptr))
+        {
+            TestEqual(*FString::Printf(TEXT("Event %s anchors its bare zone"), *Case.EventId.ToString()),
+                Event->Zone, Case.Zone);
+            // Balance idiom of the legacy rows: sane weight, real cooldown,
+            // day-gated progression, night-gate stays reserved for camp raids.
+            TestTrue(*FString::Printf(TEXT("Event %s weight sits in the balance band"), *Case.EventId.ToString()),
+                Event->RarityWeight > 0.0f && Event->RarityWeight <= 2.0f);
+            TestTrue(*FString::Printf(TEXT("Event %s carries a real cooldown"), *Case.EventId.ToString()),
+                Event->CooldownGameHours > 0.0f);
+            TestTrue(*FString::Printf(TEXT("Event %s is day-gated for progression"), *Case.EventId.ToString()),
+                Event->MinDay >= 2);
+            TestFalse(*FString::Printf(TEXT("Event %s does not night-gate"), *Case.EventId.ToString()),
+                Event->bRequiresNight);
+            TestTrue(*FString::Printf(TEXT("Event %s carries an authored description"), *Case.EventId.ToString()),
+                !Event->Description.ToString().IsEmpty());
+            // Every payload resolves in the live registry (no dangling ids).
+            if (!Event->SpeciesBoostId.IsNone())
+            {
+                TestTrue(*FString::Printf(TEXT("Event %s boost species resolves"), *Case.EventId.ToString()),
+                    EventRegistry->FindEcho(Event->SpeciesBoostId) != nullptr);
+                TestTrue(*FString::Printf(TEXT("Event %s boost count is sane"), *Case.EventId.ToString()),
+                    Event->SpeciesBoostCount >= 1 && Event->SpeciesBoostCount <= 4);
+            }
+            for (const FName NodeId : Event->BonusNodeIds)
+            {
+                TestTrue(*FString::Printf(TEXT("Event %s bonus node resolves"), *Case.EventId.ToString()),
+                    EventRegistry->FindResourceNode(NodeId) != nullptr);
+            }
+            if (!Event->RewardLootTableId.IsNone())
+            {
+                TestTrue(*FString::Printf(TEXT("Event %s loot table resolves"), *Case.EventId.ToString()),
+                    EventRegistry->FindLootTable(Event->RewardLootTableId) != nullptr);
+            }
+        }
+    }
+
+    // 3) Scanner-gated zone secrets — the live POI census, not a parallel table.
+    const TArray<UAstrawildPOIDefinition*> Pois = EventRegistry->GetAllPOIs();
+    TestEqual(TEXT("Seventeen POIs registered"), Pois.Num(), 17);
+
+    int32 GatedCount = 0;
+    TSet<FName> PoiIds;
+    for (const UAstrawildPOIDefinition* Poi : Pois)
+    {
+        if (Poi && Poi->bRequiresSignalScanner)
+        {
+            ++GatedCount;
+        }
+        if (Poi)
+        {
+            PoiIds.Add(Poi->PoiId);
+        }
+    }
+    TestEqual(TEXT("Six scanner-gated secret POIs exist (2 legacy + 4 DP-7)"), GatedCount, 6);
+    TestEqual(TEXT("POI ids are unique"), PoiIds.Num(), Pois.Num());
+
+    const FName SecretIds[] =
+    {
+        TEXT("POI_HollowUndergateVault"), TEXT("POI_SunscarMachineCoffin"),
+        TEXT("POI_TidebreakerHoldRoom"), TEXT("POI_PearlseaTidecache")
+    };
+    const EAstrawildZone SecretZones[] =
+    {
+        EAstrawildZone::HollowApproach, EAstrawildZone::SunscarDesert,
+        EAstrawildZone::TidebreakerIsles, EAstrawildZone::PearlseaReef
+    };
+    for (int32 i = 0; i < 4; ++i)
+    {
+        const UAstrawildPOIDefinition* Secret = EventRegistry->FindPOI(SecretIds[i]);
+        if (TestTrue(*FString::Printf(TEXT("Secret %s resolves"), *SecretIds[i].ToString()), Secret != nullptr))
+        {
+            TestTrue(*FString::Printf(TEXT("Secret %s mirrors the Frostveil scanner gate"), *SecretIds[i].ToString()),
+                Secret->bRequiresSignalScanner);
+            TestEqual(*FString::Printf(TEXT("Secret %s is a signal source"), *SecretIds[i].ToString()),
+                Secret->Type, EAstrawildPOIType::SignalSource);
+            TestEqual(*FString::Printf(TEXT("Secret %s sits in its high-threat zone"), *SecretIds[i].ToString()),
+                Secret->Zone, SecretZones[i]);
+            TestTrue(*FString::Printf(TEXT("Secret %s pays real research"), *SecretIds[i].ToString()),
+                Secret->ResearchReward >= 5);
+            TestTrue(*FString::Printf(TEXT("Secret %s loot table resolves"), *SecretIds[i].ToString()),
+                EventRegistry->FindLootTable(Secret->RewardLootTableId) != nullptr);
+        }
+    }
+
+    return true;
+}
+
 // --- GDP-1: combat pick ladder (Test 75) ---
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityCombatPickTest,
     "ASTRAWILD.Ability.CombatPick",

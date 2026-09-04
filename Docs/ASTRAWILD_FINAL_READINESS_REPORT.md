@@ -122,7 +122,7 @@ Antigravity records the post-verification SHA here after AG-1..AG-5.
 ## K. Antigravity One-Time Integration Plan
 
 Executable runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 (10 steps:
-pull → build → 106/106 tests → PIE boot+golden path incl. both endings → save round-trip →
+pull → build → 107/107 tests → PIE boot+golden path incl. both endings → save round-trip →
 package → packaged boot → log capture → push/merge + close PR #4 → fix-loop rules).
 Engine-only mechanical bugs: fix locally. Architectural discoveries: return to GLM with logs.
 
@@ -152,7 +152,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 **Gate verdict: READY_FOR_FINAL_BUILD (17/17 + branch record).**
 
 > Reminder: READY_FOR_FINAL_BUILD means SOURCE/REPOSITORY READY. It does NOT mean
-> UE5-VERIFIED — AG-2..AG-5 (build, 106/106 tests, PIE golden path, package) remain the
+> UE5-VERIFIED — AG-2..AG-5 (build, 107/107 tests, PIE golden path, package) remain the
 > engine machine's exclusive gates.
 
 ---

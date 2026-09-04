@@ -1330,3 +1330,25 @@ struct ASTRAWILDCORE_API FAstrawildBossSpecialSetParams
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials")
     FName SummonSpeciesId = TEXT("Echo_Gloomfang");
 };
+
+/**
+ * DP-7 (world depth) — per-zone hazard identity. Each surface zone carries one
+ * ambient pressure the survival tick consumes while the player stands in that
+ * zone, LAYERED ON TOP of the global weather offset (Frostveil reads colder
+ * than Dawn Fields under the same sky; the Sunscar reads hotter):
+ * - ColdPressure/HeatPressure: thermal — shift the ambient temperature by
+ *   ±HazardPressure °C, riding the existing cold/heat threshold + insulation
+ *   bands (no new damage verb).
+ * - AshLung: respiratory — suppress passive stamina regen by HazardPressure
+ *   points/second (non-lethal breathing pressure, clamped at zero net regen).
+ * Appended-only enum, save-safe (consumed live from the zone descriptor; never
+ * serialized into a save).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildZoneHazard : uint8
+{
+    None UMETA(DisplayName="No ambient hazard"),
+    ColdPressure UMETA(DisplayName="Cold pressure (colder than weather)"),
+    HeatPressure UMETA(DisplayName="Heat pressure (hotter than weather)"),
+    AshLung UMETA(DisplayName="Ash lung (stamina regen suppression)")
+};

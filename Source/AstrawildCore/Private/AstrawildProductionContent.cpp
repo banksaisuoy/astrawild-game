@@ -872,7 +872,8 @@ void UAstrawildProductionContent::BuildWorkSites(UAstrawildItemRegistrySubsystem
 }
 
 // ---------------------------------------------------------------------------
-// World events — 9 data-driven archetypes (Master Plan §19)
+// World events — 16 data-driven archetypes (Master Plan §19; DP-7 gives the
+// seven previously-bare zones their own reasons to visit)
 // ---------------------------------------------------------------------------
 
 void UAstrawildProductionContent::BuildWorldEvents(UAstrawildItemRegistrySubsystem* Registry)
@@ -940,6 +941,71 @@ void UAstrawildProductionContent::BuildWorldEvents(UAstrawildItemRegistrySubsyst
         EAstrawildWorldEventKind::BossStirring, 0.5f, 36.0f, 6, 30, EAstrawildZone::HollowApproach, false);
     BossStirring->ResearchPointReward = 4;
     BossStirring->Description = FText::FromString(TEXT("The Underlight Warden shifts in its sleep — the whole zone holds its breath."));
+
+    // --- DP-7 (world depth): one anchored event per previously-bare zone. ---
+    // All seven reuse the EXISTING effect vocabulary (forced weather / research
+    // points / loot table / species boost / bonus nodes) — the Kind labels are
+    // the existing archetypes, only the payloads are new. Balance mirrors the
+    // rows above: weights 0.5-1.0, cooldowns 12-36h, MinDay 2-4, durations
+    // 0/60/90/120min, night-gate stays reserved for camp raids.
+
+    // Dusk Marsh: the fog tide rolls in off the muck and the flora wakes in it.
+    UAstrawildWorldEventDefinition* MistTide = MakeWorldEvent(Registry, TEXT("Event_MistTide"), TEXT("Mist Tide"),
+        EAstrawildWorldEventKind::StormSurge, 1.0f, 20.0f, 2, 90, EAstrawildZone::DuskMarsh, false);
+    MistTide->ForcedWeather = EAstrawildWeatherState::Fog;
+    MistTide->bForcesWeather = true;
+    MistTide->SpeciesBoostId = TEXT("Echo_Sprigling");
+    MistTide->SpeciesBoostCount = 3;
+    MistTide->Description = FText::FromString(TEXT("A fog tide swallows the Dusk Marsh — the reeds bloom and Spriglings drift through the white."));
+
+    // Ember Ridge: the caldera exhales — cinders fall and the vents open.
+    UAstrawildWorldEventDefinition* CinderFall = MakeWorldEvent(Registry, TEXT("Event_CinderFall"), TEXT("Cinder Fall"),
+        EAstrawildWorldEventKind::ResourceSurge, 0.9f, 18.0f, 3, 60, EAstrawildZone::EmberRidge, false);
+    CinderFall->SpeciesBoostId = TEXT("Echo_Emberfang");
+    CinderFall->SpeciesBoostCount = 2;
+    CinderFall->BonusNodeIds = { TEXT("Node_EmberAsh"), TEXT("Node_EmberAsh"), TEXT("Node_EmberAsh") };
+    CinderFall->Description = FText::FromString(TEXT("Cinders fall over Ember Ridge — the ash vents crack open and the Emberfangs hunt the glow."));
+
+    // Sunscar: the dunes give up a buried cache (instant — the find is the event).
+    UAstrawildWorldEventDefinition* DuneCache = MakeWorldEvent(Registry, TEXT("Event_DuneBuriedCache"), TEXT("Dune-Buried Cache"),
+        EAstrawildWorldEventKind::SupplyDrop, 0.6f, 24.0f, 3, 0, EAstrawildZone::SunscarDesert, false);
+    DuneCache->RewardLootTableId = TEXT("Loot_POIAncient");
+    DuneCache->ResearchPointReward = 3;
+    DuneCache->Description = FText::FromString(TEXT("The wind uncovers pre-collapse machine bones in the Sunscar — a cache the dune glass sealed."));
+
+    // Azure Shallows: the reef blooms and the shallows teem.
+    UAstrawildWorldEventDefinition* ReefBloom = MakeWorldEvent(Registry, TEXT("Event_ReefBloom"), TEXT("Reef Bloom"),
+        EAstrawildWorldEventKind::Migration, 0.9f, 20.0f, 2, 120, EAstrawildZone::AzureShallows, false);
+    ReefBloom->SpeciesBoostId = TEXT("Echo_Brinefin");
+    ReefBloom->SpeciesBoostCount = 4;
+    ReefBloom->BonusNodeIds = { TEXT("Node_SeaPearl"), TEXT("Node_SeaPearl"), TEXT("Node_SeaPearl") };
+    ReefBloom->Description = FText::FromString(TEXT("A reef bloom brightens the Azure Shallows — Brinefins school in the clear water and the pearl beds show."));
+
+    // Tidebreaker Isles: the surge cracks a drowned hold and wakes its guardian.
+    UAstrawildWorldEventDefinition* WreckSurge = MakeWorldEvent(Registry, TEXT("Event_WreckSurge"), TEXT("Wreck Surge"),
+        EAstrawildWorldEventKind::SupplyDrop, 0.7f, 22.0f, 3, 60, EAstrawildZone::TidebreakerIsles, false);
+    WreckSurge->RewardLootTableId = TEXT("Loot_POIRuin");
+    WreckSurge->SpeciesBoostId = TEXT("Echo_Dawnfang");
+    WreckSurge->SpeciesBoostCount = 2;
+    WreckSurge->Description = FText::FromString(TEXT("A wreck surge hammers the Tidebreaker Isles — cargo washes ashore and something rises with it."));
+
+    // Stormcrest: the storm front parks on the highlands and the thunder herds run.
+    UAstrawildWorldEventDefinition* StormFront = MakeWorldEvent(Registry, TEXT("Event_StormFront"), TEXT("Storm Front"),
+        EAstrawildWorldEventKind::StormSurge, 1.0f, 12.0f, 2, 90, EAstrawildZone::StormcrestHighlands, false);
+    StormFront->ForcedWeather = EAstrawildWeatherState::Storm;
+    StormFront->bForcesWeather = true;
+    StormFront->SpeciesBoostId = TEXT("Echo_Magmawing");
+    StormFront->SpeciesBoostCount = 3;
+    StormFront->Description = FText::FromString(TEXT("A storm front parks over Stormcrest — pulse-charged Magmawings ride the downdrafts above the tors."));
+
+    // Pearlsea: the reef sings and its rarest resident surfaces (the deep-reef
+    // answer to the Glimmerwood's Rare Echo Bloom).
+    UAstrawildWorldEventDefinition* Pearlsong = MakeWorldEvent(Registry, TEXT("Event_Pearlsong"), TEXT("Pearlsong"),
+        EAstrawildWorldEventKind::RareEchoBloom, 0.5f, 36.0f, 4, 90, EAstrawildZone::PearlseaReef, false);
+    Pearlsong->SpeciesBoostId = TEXT("Echo_Pearlcrest");
+    Pearlsong->SpeciesBoostCount = 1;
+    Pearlsong->ResearchPointReward = 3;
+    Pearlsong->Description = FText::FromString(TEXT("The Pearlsea sings — a Pearlcrest surfaces in the coral cathedrals, briefly, for anyone patient enough to be there."));
 }
 
 // ---------------------------------------------------------------------------
@@ -1014,6 +1080,31 @@ void UAstrawildProductionContent::BuildPOIs(UAstrawildItemRegistrySubsystem* Reg
         TEXT("A drowned surveyor's ring — it still tracks something deep under the race."),
         EAstrawildPOIType::Ruin, EAstrawildZone::AzureShallows, FVector2D(2400.0f, -1600.0f), 1200.0f,
         TEXT("Loot_VendorDriftwood"), 5);
+
+    // --- DP-7 (world depth): scanner-gated zone secrets — one hidden cache per
+    // high-threat region, mirroring the Frostveil Signal Source gating pattern
+    // (bRequiresSignalScanner — only players carrying the ancient signal tracker
+    // ever see them on the sweep). Real loot + research on first discovery. ---
+
+    MakePOI(Registry, TEXT("POI_HollowUndergateVault"), TEXT("The Undergate Vault"),
+        TEXT("The scanner pins a strongbox under the ashfall — pre-collapse, still charged, facing the gate."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::HollowApproach, FVector2D(2800.0f, -1600.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    MakePOI(Registry, TEXT("POI_SunscarMachineCoffin"), TEXT("The Machine Coffin"),
+        TEXT("Beneath the singing dune glass, machine bones keep their charge in a box the sun never reaches."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::SunscarDesert, FVector2D(3200.0f, -2400.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    MakePOI(Registry, TEXT("POI_TidebreakerHoldRoom"), TEXT("The Hold Room"),
+        TEXT("Every wreck kept one room dry. The scanner says this one kept it that way on purpose."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::TidebreakerIsles, FVector2D(-2600.0f, 1200.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    MakePOI(Registry, TEXT("POI_PearlseaTidecache"), TEXT("The Tidecache"),
+        TEXT("A coral-sealed cache the reef grew around — the tide hides it, the scanner hums to it."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::PearlseaReef, FVector2D(2600.0f, 1800.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
 }
 
 // ---------------------------------------------------------------------------
