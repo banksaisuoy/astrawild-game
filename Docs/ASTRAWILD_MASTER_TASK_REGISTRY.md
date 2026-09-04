@@ -135,3 +135,21 @@ source; audit + fix; keep canon locked; deterministic handoff.
 | FCR-12 | Test quality (Phase 15) | 102 tests, exact validator gate, 3 new FCR regressions, no tautologies (all drive real code paths) | GLM | COMPLETE | |
 | FCR-13 | Performance audit (Phase 16) | tick scan clean (turret cadence-gated, spoilage one-pass); O(N^2) CastPartyAbility hoisted; perf manager respects user pins | GLM | COMPLETE | |
 | FCR-14 | Deferred review (Phase 17) | CV-4 gamepad BLOCKED (hardware) stays · CV-5 economy CLOSED (Duskmoth loot) · CV-6 co-op P3 stays by design · SCP-7 pooling/TeamAgent/RPC stays deferred (no static evidence it is required; ownership checks already prevent friendly fire) | GLM | COMPLETE | no deferred item blocks READY_FOR_FINAL_BUILD |
+
+## §H ASSET ACQUISITION PACK (2026 session — free CC0 source assets)
+
+Directive: acquire, validate, deduplicate, organize and document legally usable
+FREE assets (Kenney priority-1) that materially improve ASTRAWILD's
+visual/audio quality — WITHOUT touching gameplay code, bindings or the
+existing ArtSource contract. Sources: kenney.nl official publisher downloads
+only; per-pack CC0 license verified on each pack page + in-archive License.txt.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| AA-1 | Pipeline | Reusable acquisition tooling `Scripts/download_assets.py` + `Scripts/download_assets.ps1`: approved-URL-only downloader (retry/partial-detection/zip integrity), SHA256 dedup, path-traversal/symlink/zip-bomb-safe extraction, WAV/OGG/GLB/GLTF/PNG format validators, OGG→WAV 16-bit PCM conversion (originals preserved), idempotent commit (never overwrite; differing content = BLOCKED) | GLM | IMPLEMENTED | 6 packs processed; second-run idempotency verified (identical stats, no duplicates) |
+| AA-2 | Audio | Kenney CC0 packs: Impact Sounds (130), Interface Sounds (100), Sci-fi Sounds (73) → `ArtSource/Audio/Kenney_*/` (Ogg originals + Wav conversions + License.txt) | GLM | IMPORT_READY | UE5 imports the WAVs; OGG kept as provenance (UE5 does not import OGG) |
+| AA-3 | Models | Kenney CC0 packs: Nature Kit (314 GLB — biome/farm/village/ruins dressing), Space Kit (107 GLB — dungeon/ancient-tech dressing, turret candidates), Blaster Kit (40 GLB + colormap — CANDIDATE_REPLACEMENT weapon pool) → `ArtSource/Models/Kenney_*/GLB/` | GLM | IMPORT_READY | FBX/OBJ/DAE/STL format duplicates + 2D previews dropped at selection; space-kit character/vehicle/rocket models excluded (deferred scope) |
+| AA-4 | Documentation | `ASSETS_CREDITS.md` + `ASSET_MANIFEST.json` (root), `Docs/ASSET_ACQUISITION_REPORT.md` + `Docs/ASSET_ACQUISITION_MANIFEST.json`, `Docs/ThirdPartyLicenses.md` rows for all 6 packs | GLM | COMPLETE | 1,071 accepted records / 763 import-ready / 43.4 MB; 4 in-pack duplicates detected+skipped; 61 files rejected by curation; 0 missing dependencies; 0 blocked |
+| AA-5 | Guardrails | No `.uasset`/`.umap` fabricated; existing ArtSource assets untouched (never auto-replaced); pack subfolders are outside the flat auto-import folders so `import_all.py` contract unchanged; both static validators re-run PASS at the acquisition commit | GLM | VERIFIED (static) | Engine import/binding belongs to the Antigravity one-time integration (IMPORT_READY ≠ UE5_VERIFIED) |
+
+Rejected (documented in the report): Sci-Fi RTS (2D sprite pack — REJECTED_FORMAT), Digital Audio (8-bit aesthetic), UI Audio (duplicate role vs Interface Sounds), RPG Audio (fantasy-specific). OpenGameArt deferred (per-file license verification; future source).

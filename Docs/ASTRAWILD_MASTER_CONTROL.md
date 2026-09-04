@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 3.8 (FINAL GAME COMPLETION RUN — all phases complete, READY_FOR_FINAL_BUILD)
+**Document Version**: 3.9 (FINAL GAME COMPLETION RUN complete + ASSET ACQUISITION PACK — READY_FOR_FINAL_BUILD)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
-**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch, ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FINAL COMPLETION RUN pushed)
-**Last Updated**: 2026 (Final Game Completion Run)
+**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch, ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FINAL COMPLETION RUN + ASSET ACQUISITION PACK pushed)
+**Last Updated**: 2026 (Asset Acquisition Pack — see TASK_REGISTRY §H)
 
 ---
 
@@ -26,6 +26,18 @@
 > AG-2..5 (HANDOFF §20). Game definition, story canon and specs stay LOCKED as v3.0 —
 > this run changed no design, only re-landed and completed it.
 > **Push rule (binding, user-issued — honored)**: push after every completed batch.
+
+> [!NOTE]
+> **ASSET ACQUISITION PACK (v3.9)**: 6 verified-CC0 Kenney packs (Impact/Interface/Sci-fi
+> Sounds + Nature/Space/Blaster Kits) acquired into `ArtSource/Audio/Kenney_*/` and
+> `ArtSource/Models/Kenney_*/` — 1,071 source files (43.4 MB), LICENSE_VERIFIED, deduped,
+> format-validated (WAV PCM/GLB/JSON+deps), idempotent tooling in
+> `Scripts/download_assets.py|.ps1`. **No gameplay code, soft-path binding or existing
+> ArtSource asset was touched**; new pack subfolders sit OUTSIDE the flat auto-import
+> folders, so the `import_all.py` contract and the zero-asset boot guarantee are unchanged.
+> Status is IMPORT_READY (NOT UE5_VERIFIED) — import/binding decisions belong to the
+> Antigravity integration run per `Docs/ASSET_ACQUISITION_REPORT.md` §9. Both static
+> validators re-ran PASS at the acquisition commit. Full ledger: TASK_REGISTRY §H.
 
 ---
 
