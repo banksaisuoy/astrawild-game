@@ -115,7 +115,7 @@ Each archetype ships `SK_Plan_<Name>.glb` with 3 authored clips (`Idle/Move/Hit`
 
 1. Import order: audio → models → textures (existing §20b contract unchanged).
 2. `ArtSource/Meshes/Echoes/*.glb` (incl. `Bosses/`, `Plans/`) → `Content/Characters/Echoes/` via `import_all.py` (Interchange, idempotent `does_asset_exist` guards).
-3. Binding: extend the existing `AstrawildArtPack::GetEchoArt()` table — the **only** binding table; definitions keep soft refs with automatic PMC fallback so a missing import never breaks spawn.
+3. Binding: extend the existing `AstrawildArtPack::GetEchoArt()` table — the **only** binding table; definitions keep soft refs with automatic PMC fallback so a missing import never breaks spawn. Repo contract is **assets-first, binding-second** (how the 6 heroes landed): the 8 new rows land on the engine machine AFTER the imported `.uasset`s are committed — the verbatim row patch + sequence is packaged in HANDOFF §20c. `AAstrawildEchoBossCharacter` already carries the opt-in path source-side (cone hides the moment the boss mesh resolves).
 4. Boss meshes: replace the Cone placeholder path in `AstrawildEchoBossCharacter` visual setup only after import succeeds (keep cone as fallback — same never-auto-replace rule as weapons, ticket 06).
 5. Verify in PIE: per-zone silhouette separation spot-check + the 6 hero meshes + 4 boss meshes at gameplay camera distance. Record results in the Antigravity report-back (§20b reporting split).
 6. Quaternius policy: if a direct-URL CC0 Ultimate pack becomes acquirable (batch 3+), its meshes are **reference/dressing only** under the Kenney supporting-content policy (ticket 05) — they do not define Echo identity.

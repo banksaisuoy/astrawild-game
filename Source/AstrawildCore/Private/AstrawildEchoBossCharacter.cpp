@@ -16,6 +16,8 @@
 #include "AstrawildSurvivalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -191,6 +193,23 @@ float AAstrawildEchoBossCharacter::ComputeBossAttackDamage(
 
 // --- Batch 6: definition-driven stats ---
 
+namespace
+{
+    // Size-class canon (mirrors AAstrawildEchoCharacter's BodyScaleForSize — the
+    // one scale table every creature body respects, procedural or skeletal).
+    float BossBodyScaleForSize(const EAstrawildSizeClass SizeClass)
+    {
+        switch (SizeClass)
+        {
+        case EAstrawildSizeClass::Tiny:   return 0.45f;
+        case EAstrawildSizeClass::Small:  return 0.7f;
+        case EAstrawildSizeClass::Large:  return 1.4f;
+        case EAstrawildSizeClass::Huge:   return 1.9f;
+        default:                          return 1.0f;
+        }
+    }
+}
+
 void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildEchoDefinition* Definition)
 {
     if (!Definition)
@@ -209,9 +228,66 @@ void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildE
     BaseDamage = FMath::Max(5.0f, Definition->BaseStats.AttackPower * BossDamageScale);
     CurrentHealth = MaxHealth;
 
-    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss initialized from %s: HP %.0f, ATK %.0f, weakness %d, element %d."),
+    // Creature Visual Strategy DP-1: opt-in Tier-A boss mesh. The skinned body
+    // activates only when the imported mesh actually resolves (engine import per
+    // HANDOFF §20b); until then the cone placeholder stays — the fallback is the
+    // contract, never a broken visual.
+    BossIdleAnimation = Definition->IdleAnimation;
+    BossMoveAnimation = Definition->MoveAnimation;
+    USkeletalMesh* BossMesh = Definition->SkeletalMesh.LoadSynchronous();
+    if (BossMesh)
+    {
+        BossBodyMesh = NewObject<USkeletalMeshComponent>(this, TEXT("BossBodyMesh"));
+        if (BossBodyMesh)
+        {
+            BossBodyMesh->SetupAttachment(GetCapsuleComponent());
+            BossBodyMesh->SetSkeletalMesh(BossMesh);
+            BossBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            BossBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            // Size-class canon (mirrors AAstrawildEchoCharacter's BodyScaleForSize).
+            const float SizeScale = BossBodyScaleForSize(Definition->SizeClass);
+            const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 160.0f;
+            BossBodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
+            BossBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+            BossBodyMesh->SetRelativeScale3D(FVector(SizeScale));
+            BossBodyMesh->RegisterComponent();
+            if (PlaceholderMesh)
+            {
+                PlaceholderMesh->SetVisibility(false);
+            }
+            BossIdleAnimation.LoadSynchronous();
+            BossMoveAnimation.LoadSynchronous();
+            UpdateBossBodyAnimation();
+            if (UWorld* World = GetWorld())
+            {
+                World->GetTimerManager().SetTimer(BossAnimTimerHandle, this,
+                    &AAstrawildEchoBossCharacter::UpdateBossBodyAnimation, 0.25f, true);
+            }
+        }
+    }
+
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss initialized from %s: HP %.0f, ATK %.0f, weakness %d, element %d, skinned body %s."),
         *BossSpeciesId.ToString(), MaxHealth, BaseDamage,
-        static_cast<int32>(WeaknessElement), static_cast<int32>(BossElement));
+        static_cast<int32>(WeaknessElement), static_cast<int32>(BossElement),
+        BossBodyMesh ? TEXT("active") : TEXT("cone fallback"));
+}
+
+void AAstrawildEchoBossCharacter::UpdateBossBodyAnimation()
+{
+    if (!BossBodyMesh)
+    {
+        return;
+    }
+    // Bosses prowl slowly — idle/move selection follows movement speed exactly
+    // like the Echo single-node cadence, without per-tick cost.
+    UAnimSequenceBase* Target = GetVelocity().Size() < 60.0f
+        ? BossIdleAnimation.Get()
+        : BossMoveAnimation.Get();
+    if (Target && Target != CurrentBossLoopAnimation)
+    {
+        BossBodyMesh->PlayAnimation(Target, true);
+        CurrentBossLoopAnimation = Target;
+    }
 }
 
 // --- Batch 6: status effects on the boss ---

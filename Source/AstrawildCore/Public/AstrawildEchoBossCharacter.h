@@ -7,7 +7,9 @@
 
 class AAstrawildBossHazardActor;
 class AAstrawildBossTelegraphActor;
+class UAnimSequenceBase;
 class UStaticMeshComponent;
+class USkeletalMeshComponent;
 class UAstrawildEchoDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildBossPhaseChanged, int32, NewPhase, float, HealthFractionAtTransition);
@@ -43,6 +45,15 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss")
     TObjectPtr<UStaticMeshComponent> PlaceholderMesh;
+
+    /**
+     * Tier-A boss mesh (Creature Visual Strategy DP-1): replaces the cone the
+     * moment the imported skeletal mesh resolves (InitializeFromBossDefinition).
+     * Until engine import the cone stays — never auto-replace a working visual
+     * (same rule as the weapon CANDIDATE_REPLACEMENT policy).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss")
+    TObjectPtr<USkeletalMeshComponent> BossBodyMesh;
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Boss")
     FAstrawildBossPhaseChanged OnPhaseChanged;
@@ -239,6 +250,20 @@ public:
     static float ComputeBossAttackDamage(float Base, int32 Phase, bool bIsEnraged, float EnrageMultiplier);
 
 private:
+    /** Idle/move clip selection for the opt-in skeletal body (single-node mode). */
+    void UpdateBossBodyAnimation();
+
+    UPROPERTY(Transient)
+    TSoftObjectPtr<UAnimSequenceBase> BossIdleAnimation;
+
+    UPROPERTY(Transient)
+    TSoftObjectPtr<UAnimSequenceBase> BossMoveAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> CurrentBossLoopAnimation;
+
+    FTimerHandle BossAnimTimerHandle;
+
     double LastAttackTime = -BIG_NUMBER;
     double LastSpecialAttackTime = -BIG_NUMBER;
     double LastHazardTime = -BIG_NUMBER;
