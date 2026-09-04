@@ -240,6 +240,29 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 - The final audit changed the element weakness of 151 bestiary rows + 4 authored species and
   unified the boss resist to ×0.80 — combat feel needs the PIE pass more than ever.
 
+## 20a. PIPELINE IDEMPOTENCY CONTRACT (Phase 14 — deterministic by construction)
+
+The full chain §4→§11 (CLONE → LFS PULL → VALIDATORS → CONTENT PREP → ASSET IMPORT
+→ PROJECT GENERATION → BUILD → TEST → PACKAGE) is safe to run TWICE on the same
+working tree:
+
+- **Asset import (§6)**: `import_all.py` guards every task with
+  `does_asset_exist()` — a second run re-imports NOTHING, only re-loads assets and
+  re-applies the same texture/material properties (same values = no change).
+  Collision safety additionally uses `replace_existing=True`.
+- **Project generation (§7)**: UnrealVersionSelector regenerates the identical
+  `.sln`; UBT re-links only what changed (no-op when clean).
+- **Build (§8) / Test (§9) / Package (§10)**: standard UBT/UAT incremental steps —
+  a clean re-run is a no-op or an overwrite-in-place, never a duplication.
+- **Validators**: pure read-only static checks — any number of runs is safe and
+  MUST PASS before every stage transition.
+- **Drift tripwires**: the validator's census equality gates (15 content-count
+  contracts + the exact 102-test gate) fail loudly if a pipeline stage ever
+  duplicated or dropped content.
+
+A second full execution of the sequence therefore converges to the same state —
+no duplicated assets, no double imports, no corrupted Content.
+
 ## 20. EXACT ANTIGRAVITY FINAL VERIFICATION SEQUENCE
 
 ```text

@@ -67,7 +67,7 @@
 | CV-2 | Hardening | GLM source hardening SH-01..04 + 57 tests | Antigravity | TESTED (declared) | c65d734; re-run with 99 at AG-3 |
 | CV-3 | Input | Playable input/camera fix chain 520c78e+df8df83 | Antigravity | TESTED (declared) | re-verify at AG-4 |
 | CV-4 | QA | Gamepad actuation (V-31) | Antigravity | BLOCKED | physical controller hardware |
-| CV-5 | Economy | Duskmoth has no loot / berry faucet thin (FZ-ECO-2/3) | GLM | PLANNED (P2) | balance polish batch — post-engine-verify |
+| CV-5 | Economy | Duskmoth has no loot / berry faucet thin (FZ-ECO-2/3) | GLM | CLOSED (source) | FCR Phase 17: Duskmoth DefeatLoot added (Dawnbloom x1 + Fiber x2); numeric balance stays PIE-tuning |
 | CV-6 | MP | Dedicated-server co-op (H-9) | GLM | PLANNED (P3) | single-player-first by design; portals/skiff client paths early-return |
 | CV-7 | Docs | Historical doc banners | GLM | ACCEPTED | HISTORICAL/SUPERSEDED stamps per MASTER_CONTROL §12 |
 
@@ -121,4 +121,17 @@ source; audit + fix; keep canon locked; deterministic handoff.
 | ID | Area | Deliverable | Owner | Status | Notes |
 |----|------|-------------|-------|--------|-------|
 | FCR-0 | Registry reconciliation | One authoritative value per metric: test count unified to **102** (from AutomationTests.cpp + validator); content census established (76 items / 56 recipes / 229 species / 26 buildings / 17 techs / 17 quests / 11 loot / 13 POIs / 9 events / 11 NPCs / 11 dialogues / 8 weapons / 10 nodes / 4 sites / 3 robots); census enforced by validator §11 equality gates; live engine census log added (hardcoded stale counts removed from ContentLibrary) | GLM | IMPLEMENTED | commit in this run; ENGINE-UNVERIFIED (log fires at engine boot) |
-| FCR-1 | Source audit | Fresh full audit of GDP+SCP code (a7a827f..f9892b6 — not covered by the prior 5-audit pass) + fix every real defect found | GLM | IN_PROGRESS | see worklog |
+| FCR-1 | Source audit | Fresh full audit of GDP+SCP code (baca0f6 + a7a827f..f9892b6 — not covered by the prior 5-audit pass) + fix every real defect found | GLM | COMPLETE | 5 parallel agents found 2 CRITICAL + 17 HIGH + 13 MEDIUM + 15 LOW; every one verified against source and fixed in FCR-1-A (9bca989) / FCR-1-B (30e9e44) / FCR-1-C (aea01ed: +3 regression contracts, suite 102) |
+| FCR-2 | Player experience verification (Phase 2 checklist) | movement/camera/sprint/stamina/jump/dodge/interact/melee/ranged/scan/capture/inventory/equipment/consume/build/dismantle/repair/death/respawn/save/load/pause — 28 runtime actions, no duplicate bindings | GLM | VERIFIED (static) | mechanical checklist ALL PASS + input map integrity |
+| FCR-3 | Survival/inventory/crafting verification (Phase 3) | all pillars present; exploit paths closed by FCR-1 fixes (negative-qty, offline mint, crop regrow, refund gaps); zero dead recipe stacks | GLM | VERIFIED (static) | recipe cross-check script |
+| FCR-4 | Echo platform verification (Phase 4) | ONE architecture confirmed (single AAstrawildEchoCharacter, no duplicates); capture→work→save loop live; locomotion possess-race fixed | GLM | VERIFIED (static) | R2 sweep + audits |
+| FCR-5 | Combat verification (Phase 5) | full matrix present; friendly fire + wild bolt damage + combo boss resolution fixed this run | GLM | VERIFIED (static) | |
+| FCR-6 | Base/power/automation (Phase 6) | BUILD→POWER→ASSIGN→WORK→PRODUCTION→OUTPUT→STORAGE chain live; garrison caps enforced; offline gates closed | GLM | VERIFIED (static) | |
+| FCR-7 | World 12 zones (Phase 7) | zone data + runtime generation + transitions verified (prior audits + validator) | GLM | VERIFIED (static) | |
+| FCR-8 | NPC/quest/story (Phases 8-9) | MQ-01..17 + endings A/B + post-game; all 11 objective types have matchers + producers; schedule origin-march + profession + shop-hours fixed this run | GLM | VERIFIED (static) | |
+| FCR-9 | Dungeons/bosses/skiff (Phases 10-11) | 3 dungeons, 4 bosses, skiff + Stratos Coil gate verified | GLM | VERIFIED (static) | |
+| FCR-10 | UI/UX (Phase 12) | all player-facing screens present; ability/combo toasts wired this run | GLM | VERIFIED (static) | |
+| FCR-11 | Content + pipeline (Phases 13-14) | manifest current (459 LFS + ArtSource direct); import idempotent (does_asset_exist guards); pipeline idempotency contract documented (HANDOFF §20a) | GLM | VERIFIED (static) | |
+| FCR-12 | Test quality (Phase 15) | 102 tests, exact validator gate, 3 new FCR regressions, no tautologies (all drive real code paths) | GLM | COMPLETE | |
+| FCR-13 | Performance audit (Phase 16) | tick scan clean (turret cadence-gated, spoilage one-pass); O(N^2) CastPartyAbility hoisted; perf manager respects user pins | GLM | COMPLETE | |
+| FCR-14 | Deferred review (Phase 17) | CV-4 gamepad BLOCKED (hardware) stays · CV-5 economy CLOSED (Duskmoth loot) · CV-6 co-op P3 stays by design · SCP-7 pooling/TeamAgent/RPC stays deferred (no static evidence it is required; ownership checks already prevent friendly fire) | GLM | COMPLETE | no deferred item blocks READY_FOR_FINAL_BUILD |

@@ -1,12 +1,16 @@
 ﻿# ASTRAWILD — FINAL READINESS REPORT
 
-**Report date**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run)
-**Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + 99e4105..HEAD, all pushed)
+**Report date**: 2026 (FINAL GAME COMPLETION RUN — updated at the final FCR batch) · **Author**: GLM 5.3
+**Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + all Final Run / FINAL-AUDIT / GDP / SCP / FCR batches pushed)
 **Top-level status**: **READY_FOR_FINAL_BUILD** — the final content manifest
-(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`, Batch 5) has been issued: 459/459 LFS
+(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) has been issued: 459/459 LFS
 objects verified live on GitHub, all 65 hardcoded /Game/ references resolve, every
-content family carries a single CODE_DEFAULT source of truth. Engine verification
-(AG-2..5 per HANDOFF §20) is the sole remaining gate.
+content family carries a single CODE_DEFAULT source of truth, the authoritative
+content census is machine-enforced (validator §11 equality gates), the automation
+suite holds 102 world-free contracts behind an exact gate, and the FINAL GAME
+COMPLETION RUN's five-agent deep audit of the GDP+SCP layer found and fixed
+2 compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects (FCR-1-A/B/C).
+Engine verification (AG-2..5 per HANDOFF §20) is the sole remaining gate.
 
 > Evidence discipline: everything below is *source-side* (static) unless explicitly marked
 > with an engine-evidence class. GLM has no UE5 in its sandbox; nothing here claims a
@@ -18,7 +22,7 @@ content family carries a single CODE_DEFAULT source of truth. Engine verificatio
 > `final-completion` and pushed batch-by-batch (BATCH-0..5). The static validator runs
 > ALL CHECKS PASSED (now 64 checks incl. the 15 census equality gates) and the automation suite holds 102 world-free contract tests
 > (inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`). Specs remain LOCKED as MASTER_CONTROL
-> v3.6 — the redo changed no design.
+> v3.7 — the redo changed no design.
 
 ## A. Game Canon
 
@@ -105,11 +109,14 @@ element-canon rewrite (151 bestiary rows) changes combat matchups and needs the 
 
 ## J. Final Commit
 
-`final-completion` HEAD = FINAL-AUDIT-D (this documentation batch — the branch tip;
-`git ls-remote origin final-completion` gives the exact SHA).
+`final-completion` HEAD = the FCR final batch (this documentation batch — the branch
+tip; `git ls-remote origin final-completion` gives the exact SHA).
 Source-complete chain: main 94a398c → PR #4 f31f5e1 → 99e4105 → 61c45e6 → 93ee929 →
 b9c1bd6 → 1d65587 → 4622464 → **1be6e20 (FINAL-AUDIT-A)** → **69a1d65 (FINAL-AUDIT-B)** →
-**a5aa74d (FINAL-AUDIT-C)** → FINAL-AUDIT-D (docs, this commit).
+**a5aa74d (FINAL-AUDIT-C)** → d20152b (D) → baca0f6/078c662 (GDP) → a7a827f..f9892b6
+(SCP-1..7) → **8a3a0da (FCR-0 census)** → **9bca989 (FCR-1-A compile+HIGH fixes)** →
+**30e9e44 (FCR-1-B MEDIUM+LOW fixes)** → **aea01ed (FCR-1-C regressions 102)** →
+FCR final (this commit: Phase 17-18 close-out).
 Antigravity records the post-verification SHA here after AG-1..AG-5.
 
 ## K. Antigravity One-Time Integration Plan
@@ -140,7 +147,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 | 15 | Final handoff executable | **PASS** | HANDOFF §1–20: live branch + SHAs, no dead references, corrected controls |
 | 16 | No duplicate gameplay architectures | **PASS** | one Echo platform (authored + bestiary share it); crafting screen single surface; no second combat/save stack |
 | 17 | No active contradictory documentation | **PASS** | ONE test count (99) in all active docs; ONE content census (validator §11 gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL |
-| 18 | Final branch/commit recorded | **PASS** | §J + HANDOFF §1 (tip = FINAL-AUDIT-D) |
+| 18 | Final branch/commit recorded | **PASS** | §J + HANDOFF §1 (tip = FCR final batch) |
 
 **Gate verdict: READY_FOR_FINAL_BUILD (17/17 + branch record).**
 

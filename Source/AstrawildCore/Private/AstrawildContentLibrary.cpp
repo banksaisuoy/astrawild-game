@@ -630,6 +630,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     ResearchWork.WorkType = EAstrawildWorkType::ResearchAssist;
     ResearchWork.Affinity = 1.6f;
     Duskmoth->WorkAffinities.Add(ResearchWork);
+    // CV-5 closure (FCR Phase 17): Duskmoth carried no DefeatLoot — the starter
+    // area's most-hunted passive dropped nothing. Moth wings and meadow fiber.
+    Duskmoth->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 1));
+    Duskmoth->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 2));
     // GDP-1: signature loadout — the soporific cloud + a lashing vine.
     Duskmoth->AbilityIds = { TEXT("Ability_DuskmothPowder"), TEXT("Ability_ThornLash") };
     Registry->RegisterEcho(Duskmoth);
