@@ -3614,6 +3614,126 @@ bool FAstrawildWorldDepthTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// DP-8 — NPC depth: affinity-gated dialogue evolution (gate evaluation)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAffinityDialogueTest,
+    "ASTRAWILD.DP8.AffinityDialogue",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAffinityDialogueTest::RunTest(const FString& Parameters)
+{
+    using DialogueComp = UAstrawildDialogueComponent;
+
+    // 1) Pure gate resolver: a threshold of 0 never gates (the fresh default —
+    // every pre-DP-8 tree stays byte-identical); otherwise the affinity must
+    // REACH the threshold (>=), with the tier boundaries resolving exactly on
+    // 25 / 50 / 75.
+    TestTrue(TEXT("Default threshold 0 never gates"), DialogueComp::MeetsAffinityGate(0, 0.0f));
+    TestTrue(TEXT("Threshold 0 stays ungated at max affinity"), DialogueComp::MeetsAffinityGate(0, 100.0f));
+    TestFalse(TEXT("Affinity below the threshold fails"), DialogueComp::MeetsAffinityGate(50, 49.9f));
+    TestTrue(TEXT("Threshold is inclusive (>=)"), DialogueComp::MeetsAffinityGate(50, 50.0f));
+    TestTrue(TEXT("Affinity above the threshold passes"), DialogueComp::MeetsAffinityGate(50, 75.0f));
+    TestTrue(TEXT("Acquaintance boundary resolves at 25"),
+        DialogueComp::MeetsAffinityGate(25, 25.0f) && !DialogueComp::MeetsAffinityGate(25, 24.9f));
+    TestTrue(TEXT("Confidant boundary resolves at 75"),
+        DialogueComp::MeetsAffinityGate(75, 75.0f) && !DialogueComp::MeetsAffinityGate(75, 74.9f));
+
+    // 2) Component evaluation — fail-closed like the quest conditions: a
+    // gated reply hides when no talking NPC can be resolved, while a default-0
+    // reply stays visible in the exact same world-free state.
+    UAstrawildDialogueComponent* Comp = NewObject<UAstrawildDialogueComponent>();
+
+    FAstrawildDialogueChoice Gated;
+    Gated.Text = FText::FromString(TEXT("Friend-only reply"));
+    Gated.RequiredMinAffinity = 50;
+    TestFalse(TEXT("Affinity gate fails without a talking NPC (fail-closed)"),
+        Comp->EvaluateChoiceConditions(Gated));
+
+    FAstrawildDialogueChoice Ungated;
+    Ungated.Text = FText::FromString(TEXT("Anyone reply"));
+    TestTrue(TEXT("Default-0 gate never hides a choice"),
+        Comp->EvaluateChoiceConditions(Ungated));
+
+    // 3) Live talking-NPC path (world-free actor — the affinity-tier test's
+    // pattern): below the threshold the reply hides, on the boundary it
+    // appears, and dropping the NPC fails the gate closed again.
+    AAstrawildNPCCharacter* Npc = NewObject<AAstrawildNPCCharacter>();
+    Npc->Affinity = 24.0f;
+    Comp->SetTalkingNpc(Npc);
+    TestTrue(TEXT("Talking NPC resolves"), Comp->GetTalkingNpc() == Npc);
+    TestFalse(TEXT("Stranger affinity misses the Friend gate"),
+        Comp->EvaluateChoiceConditions(Gated));
+    Npc->Affinity = 50.0f;
+    TestTrue(TEXT("Friend affinity meets the Friend gate"),
+        Comp->EvaluateChoiceConditions(Gated));
+    Comp->SetTalkingNpc(nullptr);
+    TestFalse(TEXT("Clearing the talking NPC fails the gate closed"),
+        Comp->EvaluateChoiceConditions(Gated));
+
+    // 4) AND semantics: the affinity gate composes with the flag conditions
+    // exactly like the quest/flag pair does.
+    FAstrawildDialogueChoice Strict;
+    Strict.RequiredFlagId = TEXT("Flag_Trusted");
+    Strict.RequiredMinAffinity = 25;
+    Comp->SetStoryFlag(TEXT("Flag_Trusted"));
+    Npc->Affinity = 10.0f;
+    Comp->SetTalkingNpc(Npc);
+    TestFalse(TEXT("Flag set but affinity low fails the pair"),
+        Comp->EvaluateChoiceConditions(Strict));
+    Npc->Affinity = 25.0f;
+    TestTrue(TEXT("Flag set and affinity met passes the pair"),
+        Comp->EvaluateChoiceConditions(Strict));
+
+    // 5) The evolved trees pin their tiers through the live registry
+    // (ownerless BuildDefaults — the test-106/107 census pattern).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+
+    struct FGatedRow { FName TreeId; FName NodeId; int32 MinAffinity; };
+    const FGatedRow GatedRows[] = {
+        { TEXT("Dialogue_TraderTam"),  TEXT("hello"), 50 }, // Friend supply line (shop bridge).
+        { TEXT("Dialogue_ElderRowan"), TEXT("hello"), 75 }, // Confidant old doors (deep lore).
+        { TEXT("Dialogue_FisherNima"), TEXT("hello"), 50 }, // Friend rare goods (shop bridge).
+        { TEXT("Dialogue_GuardSela"),  TEXT("hello"), 25 }, // Acquaintance patrol chart.
+    };
+    for (const FGatedRow& Row : GatedRows)
+    {
+        const UAstrawildDialogueTreeDefinition* Tree = Registry->FindDialogueTree(Row.TreeId);
+        if (TestTrue(*FString::Printf(TEXT("Tree %s resolves"), *Row.TreeId.ToString()), Tree != nullptr))
+        {
+            const FAstrawildDialogueNode* Node = Tree->FindNode(Row.NodeId);
+            if (TestTrue(*FString::Printf(TEXT("Tree %s entry node resolves"), *Row.TreeId.ToString()), Node != nullptr))
+            {
+                bool bFoundGated = false;
+                for (const FAstrawildDialogueChoice& Choice : Node->Choices)
+                {
+                    if (Choice.RequiredMinAffinity == Row.MinAffinity)
+                    {
+                        bFoundGated = true;
+                        // Honest content contract: gated beats are one-time
+                        // (forbidden flag) and pay real consequences — no
+                        // new consequence types, existing verbs only.
+                        TestTrue(*FString::Printf(TEXT("Tree %s gated reply is one-time"), *Row.TreeId.ToString()),
+                            !Choice.ForbiddenFlagId.IsNone() && !Choice.SetFlagId.IsNone());
+                        TestTrue(*FString::Printf(TEXT("Tree %s gated reply pays real content"), *Row.TreeId.ToString()),
+                            Choice.GiveResearchPoints > 0 || Choice.bOpenShop || !Choice.GiveItemId.IsNone());
+                    }
+                }
+                TestTrue(*FString::Printf(TEXT("Tree %s carries its %d-affinity gated reply"),
+                    *Row.TreeId.ToString(), Row.MinAffinity), bFoundGated);
+            }
+        }
+    }
+
+    // 6) Depth without clones: the census pins stay 11 NPCs / 11 trees.
+    TestEqual(TEXT("Eleven dialogue trees (census unchanged)"), Registry->GetAllDialogueTrees().Num(), 11);
+    TestEqual(TEXT("Eleven NPCs (census unchanged)"), Registry->GetNumNPCs(), 11);
+
+    return true;
+}
+
 // --- GDP-1: combat pick ladder (Test 75) ---
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityCombatPickTest,
     "ASTRAWILD.Ability.CombatPick",

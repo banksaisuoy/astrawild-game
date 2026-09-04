@@ -1314,9 +1314,10 @@ struct ASTRAWILDCORE_API FAstrawildDialogueLine
 };
 
 /**
- * A player reply. Conditions are ANDed (all must pass; NAME_None = ignored);
- * consequences apply in a fixed order (quest start, flag, items, research)
- * before the conversation continues to GotoNodeId.
+ * A player reply. Conditions are ANDed (all must pass; NAME_None = ignored,
+ * RequiredMinAffinity 0 = ignored) and the affinity gate resolves against the
+ * TALKING NPC; consequences apply in a fixed order (quest start, flag, items,
+ * research) before the conversation continues to GotoNodeId.
  */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildDialogueChoice
@@ -1343,6 +1344,18 @@ struct ASTRAWILDCORE_API FAstrawildDialogueChoice
     /** Story flag that must NOT be set (hide follow-ups after one-time beats). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition")
     FName ForbiddenFlagId = NAME_None;
+
+    /**
+     * DP-8 (NPC depth): minimum affinity with the TALKING NPC required for
+     * this reply to appear. 0 = no gate (every pre-DP-8 tree stays
+     * byte-identical — fresh default is save-safe). Fail-closed beside the
+     * quest/flag conditions: a positive threshold hides the reply whenever the
+     * NPC's live affinity is below it or the NPC cannot be resolved. Author
+     * against the tier boundaries (NPCCharacter.cpp): 25 Acquaintance /
+     * 50 Friend / 75 Confidant.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition", meta=(ClampMin="0", ClampMax="100"))
+    int32 RequiredMinAffinity = 0;
 
     // --- Consequences ---
 

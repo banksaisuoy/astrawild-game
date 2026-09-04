@@ -117,7 +117,7 @@ No cheat-command dependency anywhere in the chain.
   229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 11 NPCs,
   11 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots**.
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
-  superseded. The automation suite holds **107 world-free contract tests**.
+  superseded. The automation suite holds **108 world-free contract tests**.
 
 ## 4. Final story canon (IMPLEMENTED — was frozen spec v1.7 §11)
 
@@ -174,7 +174,7 @@ Input contract grows 26 → 28 actions (T = party ability cast, Y = player smart
 | Gate | Status | Notes |
 | :--- | :--- | :--- |
 | MSVC build @ 8313c61 | DECLARED PASS (raw log) | superseded — rebuild on final SHA required |
-| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 107 tests now (99 SCP-era + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout + 1 DP-5 boss special sets + 1 DP-6 base depth + 1 DP-7 world depth) — re-run required |
+| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 108 tests now (99 SCP-era + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout + 1 DP-5 boss special sets + 1 DP-6 base depth + 1 DP-7 world depth + 1 DP-8 affinity dialogue) — re-run required |
 | Final-audit static validation | **PASS 46/46 (this sandbox)** | re-run at AG-2 per HANDOFF §4 |
 | Cook & package | FAILED at 8313c61 (UBT ExitCode 6) per own log | FZ-A1 blocker — re-run on final SHA |
 | Packaged exe runtime | STALE binary evidence (FZ-A2) | re-run on final SHA |
@@ -255,7 +255,7 @@ engine integration pass (§8) converts this to GAME-COMPLETE or returns engine-s
 
 - Door visual state on pure clients (bIsSwitchedOn has no OnRep) — single-player/listen-server correct.
 - Imported skiff mesh orientation (glTF Y-up→Z-up assumption) — cosmetic; collision hull unaffected.
-- 107 automation tests never executed in a real engine.
+- 108 automation tests never executed in a real engine.
 - Package/cook success at the final SHA (FZ-A1 failure was at 8313c61).
 - Dungeon generator float-precision at 400 m altitude (Eye) — probes use world height; watch PIE log.
 - Dedicated-server co-op paths (H-9 batch) remain single-player-first as designed.
@@ -291,7 +291,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 ### §5c SCP — Systems Completion Pack (v3.5, session 2026)
 
 Plan-vs-repo audit of the vULTIMATE 14-phase directive found 17 missing systems;
-six SCP batches closed 15 of them (source-complete, additive; 99 tests at SCP time — 102 at FCR, 103 after DP-3, 104 at DP-4, 105 at DP-5, 106 at DP-6, 107 at DP-7):
+six SCP batches closed 15 of them (source-complete, additive; 99 tests at SCP time — 102 at FCR, 103 after DP-3, 104 at DP-4, 105 at DP-5, 106 at DP-6, 107 at DP-7, 108 at DP-8):
 SCP-1 DataValidator/AssetFallback/ErrorReporter + Durability/Spoilage (a7a827f) ·
 SCP-2 Base Terminal + Creature Sanity (394ac81) · SCP-3 Mounting (edc6b08) ·
 SCP-4 Dual-Tech Combos + DDA (6cd29e4) · SCP-5 NPC Schedules + Crops + Offline

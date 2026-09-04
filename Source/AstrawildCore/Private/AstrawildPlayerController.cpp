@@ -174,6 +174,14 @@ void AAstrawildPlayerController::OpenDialogue(AAstrawildNPCCharacter* Npc)
         return;
     }
 
+    // DP-8 (NPC depth): the dialogue component remembers who is being talked
+    // to so affinity-gated replies evaluate against the LIVE relationship
+    // while the screen is open (cleared in CloseDialogue).
+    if (DialogueComponent)
+    {
+        DialogueComponent->SetTalkingNpc(Npc);
+    }
+
     DialogueWidget->InitializeDialogue(Npc, Tree);
     DialogueWidget->AddToViewport(10); // Above the HUD, same layer as the other screens.
 
@@ -189,6 +197,13 @@ void AAstrawildPlayerController::CloseDialogue()
     if (DialogueWidget)
     {
         DialogueWidget->RemoveFromParent();
+    }
+
+    // DP-8: the conversation is over — drop the talking NPC so no stale
+    // affinity state leaks into any later evaluation.
+    if (DialogueComponent)
+    {
+        DialogueComponent->SetTalkingNpc(nullptr);
     }
 
     SetInputMode(FInputModeGameOnly());

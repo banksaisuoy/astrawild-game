@@ -3,6 +3,7 @@
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildQuestComponent.h"
@@ -67,7 +68,46 @@ bool UAstrawildDialogueComponent::EvaluateChoiceConditions(const FAstrawildDialo
         return false;
     }
 
+    // DP-8 (NPC depth): affinity gate — the TALKING NPC's live relationship
+    // decides whether the reply exists, so conversations evolve as the player
+    // earns trust (talk +2 / trade +1 per day). A threshold of 0 never gates
+    // (every pre-DP-8 tree stays byte-identical); a positive threshold fails
+    // closed exactly like the quest conditions above when the NPC cannot be
+    // resolved — a gate is a condition, not optional flavor.
+    if (Choice.RequiredMinAffinity > 0)
+    {
+        const AAstrawildNPCCharacter* Npc = TalkingNpc.Get();
+        if (!Npc || !MeetsAffinityGate(Choice.RequiredMinAffinity, Npc->Affinity))
+        {
+            return false;
+        }
+    }
+
     return true;
+}
+
+bool UAstrawildDialogueComponent::MeetsAffinityGate(const int32 RequiredMinAffinity, const float NpcAffinity)
+{
+    // Pure contract (automation-tested): 0 = ungated (default), otherwise the
+    // live affinity must REACH the threshold (>=). Authoring convention maps
+    // tiers to thresholds: 25 Acquaintance / 50 Friend / 75 Confidant.
+    if (RequiredMinAffinity <= 0)
+    {
+        return true;
+    }
+    return NpcAffinity >= static_cast<float>(RequiredMinAffinity);
+}
+
+void UAstrawildDialogueComponent::SetTalkingNpc(AAstrawildNPCCharacter* Npc)
+{
+    // Called by the player controller's OpenDialogue/CloseDialogue. Weak
+    // reference: a mid-conversation NPC death simply fails the gate closed.
+    TalkingNpc = Npc;
+}
+
+AAstrawildNPCCharacter* UAstrawildDialogueComponent::GetTalkingNpc() const
+{
+    return TalkingNpc.Get();
 }
 
 bool UAstrawildDialogueComponent::ApplyChoiceConsequences(const FAstrawildDialogueChoice& Choice)

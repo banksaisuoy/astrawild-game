@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 107 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 108 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -26,13 +26,17 @@ production→progression loop: item verbs, recipe mirrors, site output wiring),
 and the DP-7 contract (#107) pins the world depth (per-zone hazard identity
 with pure consumption helpers, the 7 previously-bare zones each anchoring an
 event built from the existing effect vocabulary, and the 4 scanner-gated
-secret POIs).
+secret POIs), and the DP-8 contract (#108) pins the NPC depth (the affinity
+gate evaluation: default-0 never gates, fail-closed without a talking NPC,
+the inclusive 25/50/75 tier boundaries, flag-pair AND semantics, and the four
+evolved trees' gated replies pinned through the live registry census —
+NPC/dialogue counts stay 11/11: depth, not clones).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **107** — derived from `AutomationTests.cpp`
+authoritative test count is **108** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 107`), and listed in this inventory (rows 1-107).
-Historical counts (57/63/67/72/84/99/102/103/104/105/106) describe earlier commits only and appear
+EXACT gate (`Automation tests == 108`), and listed in this inventory (rows 1-108).
+Historical counts (57/63/67/72/84/99/102/103/104/105/106/107) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
@@ -204,8 +208,14 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 106 | ASTRAWILD.DP6.BaseDepth | DP-6: base depth — registry-backed world-free census (ownerless `BuildDefaults`): 8 work sites registered with unique ids / resolvable outputs+inputs / placed zones, work-type coverage pins the 8 covered types (Gathering/Farming/Mining/Cooking/Transport/ResearchAssist/PowerGeneration/Defense) with Crafting Assistance + Construction named as the two by-design exceptions, all 17 techs resolve with their audited research branch (10 legacy + 7 production rows pinned), Field Ration carries a timed non-damaging stamina-regen status + food value, Pulse Tonic grants capture-focus seconds + heal/water with no status payload, fresh status effects default to zero regen (additive shape), and the loop closes end-to-end (recipes output the consumables; the Tidebreaker depot consumes kitchen meat + farm berries and outputs Field Rations; the Verdant lab outputs Pulse Tonics) |
 
-## DP-7 depth contracts (107, landed this run)
+## DP-7 depth contracts (107, landed in the DP-7 batch)
 
 | # | Test | Covers |
 |---|------|--------|
 | 107 | ASTRAWILD.DP7.WorldDepth | DP-7: world depth — per-zone hazard identity from the pure static zone table (all 12 zones carry an explicit hazard row; the thermal offset + stamina-regen penalty helpers mirror the enum for Cold/Heat/AshLung; hazard-free zones stay fully neutral with zero pressure; Dawn Fields stays gentle by design; Frostveil reads colder than Dawn Fields — the layering contract the survival tick consumes; Hollow Approach is the ash-lung identity), the 7 previously-bare zones each anchor at least one of the 16 registered world events (live registry census, ownerless `BuildDefaults`; every new event pins its zone, balance band, cooldown, day-gate, no night-gate, and payload resolution — species boost ids, bonus node ids, loot tables), and the 17-POI census with 6 scanner-gated secrets (the 4 new DP-7 caches + 2 legacy signal sources all gated, SignalSource-typed, high-threat-zone-placed, with real loot + research rewards) |
+
+## DP-8 depth contracts (108, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 108 | ASTRAWILD.DP8.AffinityDialogue | DP-8: NPC depth — the affinity-gated dialogue evolution gate: the pure resolver (threshold 0 never gates — the fresh additive default keeps every pre-DP-8 tree byte-identical; below threshold fails; the threshold is inclusive so the 25/50/75 tier boundaries resolve exactly on Acquaintance/Friend/Confidant), component evaluation fail-closed (a gated reply hides when no talking NPC can be resolved, exactly like the quest conditions; a default-0 reply stays visible in the same state), the live talking-NPC path (a world-free NPC at 24 misses the 50 gate, at 50 passes, and clearing the NPC fails the gate closed again), AND semantics with the flag conditions, the four evolved trees pinned through the ownerless `BuildDefaults` registry (Tam Friend-50 supply line, Rowan Confidant-75 old doors, Nima Friend-50 rare goods, Sela Acquaintance-25 patrol chart — each gated reply one-time via forbidden flag and paying real consequences: research points / shop bridge / item grants, existing verbs only), and the census pin that NPC/dialogue counts stay 11/11 (depth, not clones) |

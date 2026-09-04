@@ -1726,6 +1726,10 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
     Registry->RegisterDialogueTree(Maren);
 
     // --- Trader Tam (Dawnstead vendor) — shop hand-off + one-time Gloomfang tip ---
+    // DP-8 (NPC depth): the tree evolves with the relationship — trade-route
+    // knowledge is free (a merchant sells maps with everything), while the
+    // supply-line beat only exists at Friend (affinity >= 50) and bridges
+    // straight into the shop (bOpenShop — the existing vendor hand-off verb).
     UAstrawildDialogueTreeDefinition* Tam = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Tam->DialogueId = TEXT("Dialogue_TraderTam");
     Tam->EntryNodeId = TEXT("hello");
@@ -1747,6 +1751,26 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             Choice.SetFlagId = TEXT("Tam_GloomfangTip");
             Choice.GiveResearchPoints = 10;
             Choice.GotoNodeId = TEXT("gloomfang");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line (free): the trade-route resource map.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Where do your goods come from?"));
+            Choice.GotoNodeId = TEXT("sources");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Friend tier (>= 50) — the supply-line
+            // beat. Honest content: a real Storm Front warning + one-time
+            // research notes + the shop bridge (bOpenShop on the follow-up).
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Your supply line — anything I should know?"));
+            Choice.RequiredMinAffinity = 50; // Friend
+            Choice.ForbiddenFlagId = TEXT("Tam_SupplyLineTip");
+            Choice.SetFlagId = TEXT("Tam_SupplyLineTip");
+            Choice.GiveResearchPoints = 10;
+            Choice.GotoNodeId = TEXT("supplyline");
             Node.Choices.Add(Choice);
         }
         {
@@ -1779,9 +1803,74 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         }
         Tam->Nodes.Add(Node);
     }
+    {
+        // DP-8 knowledge node: the trade-route map — which zone holds which
+        // rare material (all pinned by the zone resource tables).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("sources");
+        Node.Lines = {
+            Line(nullptr, TEXT("Dune glass out of the Sunscar, storm silver down from Stormcrest, ember ash over the Ridge — that's the shape of my trade.")),
+            Line(nullptr, TEXT("The old world's alloy? Hollow Approach, sleeping in hidden veins. And keep an ear on the Frostveil — when a star falls out there, rare metal scatters with it."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse wares"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tam->Nodes.Add(Node);
+    }
+    {
+        // DP-8 affinity evolution: Friend-tier supply-line beat — the storm
+        // front parking over Stormcrest halts the silver caravans (the real
+        // Event_StormFront: forced storm + Magmawing pulse herd). The
+        // follow-up bridges straight into the shop.
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("supplyline");
+        Node.Lines = {
+            Line(nullptr, TEXT("For a friend? Then hear it plain. When a storm front parks over Stormcrest, the silver caravans halt — and the thunder herds ride the downdrafts with it.")),
+            Line(nullptr, TEXT("I sit on my stock until it blows over, and I price what survives. The delivery manifest is yours to look through — take what's useful before the next front moves in."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the delivery manifest"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tam->Nodes.Add(Node);
+    }
     Registry->RegisterDialogueTree(Tam);
 
     // --- Elder Rowan (Dawnstead) — Wings over the Vale offer + old-world lore ---
+    // DP-8 (NPC depth): the Elder shares his map of the far lands with anyone
+    // (that is what elders are for), but the old doors — where the dungeon
+    // gates and sealed vaults sit — only a Confidant hears (affinity >= 75).
     UAstrawildDialogueTreeDefinition* Rowan = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Rowan->DialogueId = TEXT("Dialogue_ElderRowan");
     Rowan->EntryNodeId = TEXT("hello");
@@ -1793,6 +1882,27 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Ask about the old world"));
             Choice.GotoNodeId = TEXT("oldworld");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line (free): the far-lands resource map.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What should I know of the far lands?"));
+            Choice.GotoNodeId = TEXT("farlands");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Confidant tier (>= 75) — the old doors.
+            // Deep lore + quest hint: the dungeon gates and the four
+            // scanner-sealed vaults (all real world content) + one-time
+            // research for the archive haul.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("The old doors — where are they?"));
+            Choice.RequiredMinAffinity = 75; // Confidant
+            Choice.ForbiddenFlagId = TEXT("Rowan_OldDoorsTold");
+            Choice.SetFlagId = TEXT("Rowan_OldDoorsTold");
+            Choice.GiveResearchPoints = 12;
+            Choice.GotoNodeId = TEXT("doors");
             Node.Choices.Add(Choice);
         }
         {
@@ -1818,6 +1928,53 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         Node.Lines = {
             Line(nullptr, TEXT("Before the quiet, they crossed the sky in machines that sang. What's left of their roads still hums at dusk.")),
             Line(nullptr, TEXT("We do not dig where it hums. You, I think, will."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    {
+        // DP-8 knowledge node: the far-lands map — where the rare materials
+        // actually sit (pinned by the zone resource tables).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("farlands");
+        Node.Lines = {
+            Line(nullptr, TEXT("Glass-sand in the Sunscar's dunes. Silver in Stormcrest's tors. Ash in the Ridge's vents, crystal in the Glimmerwood's spires.")),
+            Line(nullptr, TEXT("And in the Frostveil — when a star falls into the snowfields, the metal it scatters is the rarest the Vale still gives. I have watched three fall in my lifetime."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    {
+        // DP-8 affinity evolution: Confidant-tier deep lore — the old doors:
+        // the three dungeon gates + the four scanner-sealed vaults, all real
+        // world content (bootstrapper dungeons + the DP-7 secrets).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("doors");
+        Node.Lines = {
+            Line(nullptr, TEXT("Three doors matter. The Underlight gate past the Hollow Approach. The Sunken Vault under the Tidebreakers' west isle. And the Eye Gate, floating above Stormcrest — past any stock skiff; only the Stratos Coil reaches it.")),
+            Line(nullptr, TEXT("Four more sleep sealed: a vault under the Hollow, a machine coffin in the Sunscar, a hold room in the drowned isles, a tidecache in the Pearlsea's coral. An ancient signal tracker's sweep wakes them on your map — take my notes for the bench."))
         };
         {
             FAstrawildDialogueChoice Choice;
@@ -1914,6 +2071,11 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
     Registry->RegisterDialogueTree(Kael);
 
     // --- Guard Captain Sela (Dawnstead) — night-raid survival lore + one-time watch advice ---
+    // DP-8 (NPC depth): the hazard map is public safety information (guards
+    // drill it into anyone walking out the gate), while the patrol chart —
+    // where the dungeon gates actually sit — only leaves her mouth at
+    // Acquaintance (affinity >= 25): strangers get the fence, neighbours get
+    // the watch.
     UAstrawildDialogueTreeDefinition* Sela = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Sela->DialogueId = TEXT("Dialogue_GuardSela");
     Sela->EntryNodeId = TEXT("hello");
@@ -1925,6 +2087,26 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Ask about the night raids"));
             Choice.GotoNodeId = TEXT("raids");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line (free): the per-zone hazard map.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Which lands press hardest?"));
+            Choice.GotoNodeId = TEXT("hazards");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Acquaintance tier (>= 25) — patrol
+            // knowledge. Honest content: where the three dungeon gates sit +
+            // the storm watch + one-time research for the patrol chart.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Share your patrol knowledge"));
+            Choice.RequiredMinAffinity = 25; // Acquaintance
+            Choice.ForbiddenFlagId = TEXT("Sela_PatrolTip");
+            Choice.SetFlagId = TEXT("Sela_PatrolTip");
+            Choice.GiveResearchPoints = 8;
+            Choice.GotoNodeId = TEXT("patrol");
             Node.Choices.Add(Choice);
         }
         {
@@ -1950,6 +2132,53 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         Node.Lines = {
             Line(nullptr, TEXT("When the sky goes amber, they come — Gloomfangs bold, Ashfangs hungry, worse behind them on the storm nights.")),
             Line(nullptr, TEXT("A fence slows them. A powered fence stops them. Get your generator humming before dusk, not after."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    {
+        // DP-8 knowledge node: the hazard map — how each wild land presses
+        // the body (all pinned by the DP-7 zone hazard table).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hazards");
+        Node.Lines = {
+            Line(nullptr, TEXT("Frostveil reads twelve degrees colder than these fields under the same sky — dress for it or turn back. The Sunscar burns hottest at noon, and the Ridge simmers over its caldera all day.")),
+            Line(nullptr, TEXT("The Hollow is the trap: its ash tires the lungs without drawing blood. Keep fights short in there — men who duel in the ash come back slow."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    {
+        // DP-8 affinity evolution: Acquaintance-tier patrol chart — where the
+        // three dungeon gates sit + what the storm watch looks for (all real
+        // bootstrapper content).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("patrol");
+        Node.Lines = {
+            Line(nullptr, TEXT("The Underlight gate sits past the Hollow Approach — my watch ends at the ash line. The Sunken Vault's door is under the Tidebreakers' west isle; Kael's skiff runs it. The Eye Gate floats above Stormcrest — above any stock skiff.")),
+            Line(nullptr, TEXT("And when a storm front parks on Stormcrest, the thunder herds ride the downdrafts — we watch for the Magmawings first. Here, the patrol chart. Your bench can lift the timings from it."))
         };
         {
             FAstrawildDialogueChoice Choice;
@@ -2235,6 +2464,8 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
     Registry->RegisterDialogueTree(Bram);
 
     // --- Farmer Jori (Dawnstead) — Sprigling husbandry tip ---
+    // DP-8 (NPC depth): knowledge line — what the wild weathers mean for
+    // anyone who works the ground (zone events read as almanac, not omen).
     UAstrawildDialogueTreeDefinition* Jori = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Jori->DialogueId = TEXT("Dialogue_FarmerJori");
     Jori->EntryNodeId = TEXT("hello");
@@ -2249,6 +2480,17 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             Choice.SetFlagId = TEXT("Jori_HusbandryTip");
             Choice.GiveResearchPoints = 6;
             Choice.GotoNodeId = TEXT("husbandry");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line: the weather almanac — what the new zone
+            // events mean (all real Event_* payloads).
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What do the wild weathers mean?"));
+            Choice.ForbiddenFlagId = TEXT("Jori_WeatherTip");
+            Choice.SetFlagId = TEXT("Jori_WeatherTip");
+            Choice.GiveResearchPoints = 6;
+            Choice.GotoNodeId = TEXT("weathers");
             Node.Choices.Add(Choice);
         }
         {
@@ -2274,9 +2516,29 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         }
         Jori->Nodes.Add(Node);
     }
+    {
+        // DP-8 knowledge node: the weather almanac — zone events as the
+        // farmer reads them (Mist Tide / Cinder Fall / Storm Front payloads).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("weathers");
+        Node.Lines = {
+            Line(nullptr, TEXT("When a mist tide rolls over the Dusk Marsh, the Spriglings bloom threefold in the white — best taming day you'll ever see. I'd trade a season's harvest for one of those days.")),
+            Line(nullptr, TEXT("Cinders over the Ridge crack the ash vents open — that's gathering weather, if you can stand the heat. And a front parked on Stormcrest means the thunder herds run. The old almanac's in the shed if your bench wants it."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Jori->Nodes.Add(Node);
+    }
     Registry->RegisterDialogueTree(Jori);
 
     // --- Fisher Nima (Driftwood Landing vendor) — tide table + shop ---
+    // DP-8 (NPC depth): rare-goods beat exists only at Friend (affinity >= 50)
+    // — a fisherwoman tells her FRIENDS when the rare catches move, and the
+    // follow-up bridges into her catch (bOpenShop — the existing verb).
     UAstrawildDialogueTreeDefinition* Nima = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Nima->DialogueId = TEXT("Dialogue_FisherNima");
     Nima->EntryNodeId = TEXT("hello");
@@ -2298,6 +2560,19 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             Node.Choices.Add(Choice);
         }
         {
+            // DP-8 affinity evolution: Friend tier (>= 50) — the rare-goods
+            // line. Honest content: when Reef Bloom / Pearlsong fire (real
+            // events) + one-time research + the shop bridge.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Any rare goods moving through the reef?"));
+            Choice.RequiredMinAffinity = 50; // Friend
+            Choice.ForbiddenFlagId = TEXT("Nima_RareGoodsTip");
+            Choice.SetFlagId = TEXT("Nima_RareGoodsTip");
+            Choice.GiveResearchPoints = 10;
+            Choice.GotoNodeId = TEXT("raregoods");
+            Node.Choices.Add(Choice);
+        }
+        {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Leave"));
             Choice.bEndDialogue = true;
@@ -2315,6 +2590,30 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Browse the catch"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    {
+        // DP-8 affinity evolution: Friend-tier rare-goods beat — when the
+        // reef blooms and when the Pearlsea sings (Reef Bloom + Pearlsong,
+        // the real zone events) + the rare-catch shop bridge.
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("raregoods");
+        Node.Lines = {
+            Line(nullptr, TEXT("For a friend? Watch the water. When the reef blooms, the Azure Shallows clear and the pearl beds show themselves — Brinefins school right over them.")),
+            Line(nullptr, TEXT("Rarer still: when the Pearlsea sings, a Pearlcrest surfaces in the coral cathedrals — brief, and only for the patient. I keep the good bin aside when either runs. Marked prices, marked down. Have a look."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the rare bin"));
             Choice.bOpenShop = true;
             Choice.bEndDialogue = true;
             Node.Choices.Add(Choice);

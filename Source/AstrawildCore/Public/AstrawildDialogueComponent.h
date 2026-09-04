@@ -12,7 +12,8 @@
  * conversation screen needs:
  *
  *   EvaluateChoiceConditions — filters the visible replies (quest state +
- *                              story flags; all conditions AND).
+ *                              story flags + the DP-8 affinity gate; all
+ *                              conditions AND).
  *   ApplyChoiceConsequences  — routes through the SAME authority pipelines
  *                              dialogue must never bypass: StartQuest on the
  *                              quest component, server inventory adds,
@@ -20,6 +21,11 @@
  *
  * Lives on the PlayerController next to UAstrawildQuestComponent so flags
  * survive death/respawn and persist in the save (TArray<FName> DialogueFlags).
+ *
+ * DP-8 (NPC depth): the component also tracks which NPC the player is talking
+ * to (set/cleared by OpenDialogue/CloseDialogue — transient, never saved) so
+ * the affinity gate can read the LIVE relationship while a conversation is
+ * open. The gate logic itself is a pure static (automation-tested).
  */
 UCLASS(ClassGroup=(ASTRAWILD), meta=(BlueprintSpawnableComponent))
 class ASTRAWILDCORE_API UAstrawildDialogueComponent : public UActorComponent
@@ -44,11 +50,32 @@ public:
     // --- Pure choice evaluation (automation-tested) ---
 
     /**
-     * All conditions are AND. NAME_None conditions are ignored. QuestState is
-     * resolved through the sibling quest component when the ids are set.
+     * All conditions are AND. NAME_None conditions are ignored; a
+     * RequiredMinAffinity of 0 is ignored. QuestState is resolved through the
+     * sibling quest component when the ids are set; the affinity gate is
+     * resolved against the talking NPC (fail-closed when it cannot be
+     * resolved — a gate is a condition, not optional flavor).
      */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dialogue")
     bool EvaluateChoiceConditions(const FAstrawildDialogueChoice& Choice) const;
+
+    /**
+     * DP-8 (NPC depth): pure affinity-gate resolver (automation-tested).
+     * Threshold <= 0 never gates (pre-DP-8 trees stay byte-identical);
+     * otherwise the talking NPC's affinity must reach the threshold. Tier
+     * boundaries: 25 Acquaintance / 50 Friend / 75 Confidant.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dialogue")
+    static bool MeetsAffinityGate(int32 RequiredMinAffinity, float NpcAffinity);
+
+    // --- Talking-NPC tracking (DP-8 affinity gate source) ---
+
+    /** Set while a conversation screen is open (OpenDialogue); cleared on close. */
+    void SetTalkingNpc(class AAstrawildNPCCharacter* Npc);
+
+    /** The NPC the player is currently talking to (nullptr outside conversations). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dialogue")
+    class AAstrawildNPCCharacter* GetTalkingNpc() const;
 
     // --- Consequences ---
 
@@ -82,4 +109,7 @@ private:
     /** Set story flags (idempotent set semantics). */
     UPROPERTY()
     TArray<FName> StoryFlags;
+
+    /** DP-8: the NPC behind the open conversation screen (transient — never saved). */
+    TWeakObjectPtr<class AAstrawildNPCCharacter> TalkingNpc;
 };
