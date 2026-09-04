@@ -17,9 +17,9 @@ DDA/ability-kit/IV fixes (validator/fallback/spoilage/sanity/mount/combos/
 difficulty/crops/schedules/turrets/genetics/perf).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **102** — derived from `AutomationTests.cpp`
+authoritative test count is **103** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 102`), and listed in this inventory (rows 1-102).
+EXACT gate (`Automation tests == 103`), and listed in this inventory (rows 1-103).
 Historical counts (57/63/67/72/84/99) describe earlier commits only and appear
 nowhere as current-state claims.
 
@@ -167,3 +167,9 @@ Expected: 102 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 | 100 | ASTRAWILD.FCR.DDA.PartyLossDirection | M-d8: party echo losses pull the band DOWN (2 losses -> Struggling); weight = half a player death |
 | 101 | ASTRAWILD.FCR.Ability.FullElementKits | M-a8: every element derives its full 4-ability kit — 6 entries incl. the previously dead templates |
 | 102 | ASTRAWILD.FCR.Genetics.IVConsumptionBounds | H-d5: IV multiplier bounds (0 neutral / 31 = +31%, negatives & oversized clamp) — the IV layer is live |
+
+## DP-3 depth contracts (103, landed this run)
+
+| # | Test | Covers |
+|---|------|--------|
+| 103 | ASTRAWILD.DP3.Resonance.PairResolution | DP-3: 15-pair element resonance — themed rows resolve symmetrically, None/same never resonate, three-element parties resolve the canon-dominant pair, every row carries exactly one modest bonus axis in the 8-12% band |

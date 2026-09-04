@@ -150,7 +150,7 @@ check(f"Asset path references resolve ({len(refs)} refs)", len(unresolved) == 0,
 # --- 9. Automation test count ---
 TESTS = read("Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
 count = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", TESTS))
-check("Automation tests == 102 (99 + 3 FCR regressions)", count == 102, f"count={count} — update this gate + all active docs together")
+check("Automation tests == 103 (99 + 3 FCR regressions + 1 DP-3 resonance)", count == 103, f"count={count} — update this gate + all active docs together")
 
 # --- 10. Building catalog completeness ---
 cats = ["Foundation", "Wall", "Floor", "Roof", "Door", "Storage", "Workstation", "Farm", "Power", "Research"]

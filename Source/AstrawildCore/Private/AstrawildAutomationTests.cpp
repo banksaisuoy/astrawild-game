@@ -2923,7 +2923,7 @@ bool FAstrawildAbilityLibraryIntegrityTest::RunTest(const FString& Parameters)
         AddError(Problem);
     }
     TestTrue(TEXT("Ability table validates clean"), Problems.IsEmpty());
-    TestEqual(TEXT("Ability table holds 44 templates"), UAstrawildAbilityLibrary::GetAbilityCount(), 44);
+    TestEqual(TEXT("Ability table holds 53 templates"), UAstrawildAbilityLibrary::GetAbilityCount(), 53);
     TestTrue(TEXT("Signature ability resolves"), UAstrawildAbilityLibrary::IsKnownAbility(TEXT("Ability_LumewispDawn")));
     TestFalse(TEXT("Unknown id rejected"), UAstrawildAbilityLibrary::IsKnownAbility(TEXT("Ability_Nope")));
 
@@ -2975,6 +2975,75 @@ bool FAstrawildAbilityDerivedLoadoutTest::RunTest(const FString& Parameters)
     const TArray<FName> B = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
         EAstrawildElementType::Ember, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Dragon);
     TestTrue(TEXT("Derivation is deterministic"), A == B);
+
+    // DP-3: Water/Flying locomotion appends exactly one signature (7 entries);
+    // the legacy three-argument path (pinned above) stays at six.
+    const TArray<FName> WaterLoadout = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Frost, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Aquatic,
+        EAstrawildLocomotionClass::Water);
+    TestEqual(TEXT("Water movers carry a locomotion signature"), WaterLoadout.Num(), 7);
+    const TArray<FName> FlyingLoadout = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Light, EAstrawildEchoRole::Support, EAstrawildEchoFamily::Avian,
+        EAstrawildLocomotionClass::Flying);
+    TestEqual(TEXT("Flying movers carry a locomotion signature"), FlyingLoadout.Num(), 7);
+
+    return true;
+}
+
+// --- DP-3: party element resonance contracts (Test 103) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPartyResonanceTest,
+    "ASTRAWILD.DP3.Resonance.PairResolution",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPartyResonanceTest::RunTest(const FString& Parameters)
+{
+    // Known pairs resolve with themed identity; the lookup is symmetric.
+    const FAstrawildPartyResonance SteamVeil = AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::Frost, EAstrawildElementType::Ember);
+    TestTrue(TEXT("Frost+Ember resolves Steam Veil"), SteamVeil.ResonanceId == TEXT("Resonance_SteamVeil"));
+    const FAstrawildPartyResonance Reversed = AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::Ember, EAstrawildElementType::Frost);
+    TestTrue(TEXT("Pair lookup is symmetric"), Reversed.ResonanceId == SteamVeil.ResonanceId);
+
+    // None or identical elements never resonate (fail-closed).
+    TestFalse(TEXT("None element never resonates"), AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::None, EAstrawildElementType::Ember).IsValid());
+    TestFalse(TEXT("Same element never resonates"), AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::Ember, EAstrawildElementType::Ember).IsValid());
+
+    // Party resolution: duplicates collapse; with three distinct elements the
+    // FIRST pair in canon table order wins (deterministic dominance).
+    TArray<EAstrawildElementType> Trio;
+    Trio.Add(EAstrawildElementType::Ember);
+    Trio.Add(EAstrawildElementType::Ember);
+    Trio.Add(EAstrawildElementType::Frost);
+    Trio.Add(EAstrawildElementType::Pulse);
+    const FAstrawildPartyResonance TrioRow = AAstrawildEchoCharacter::ResolvePartyResonanceForElements(Trio);
+    TestTrue(TEXT("Three-element party resolves the canon-dominant pair"),
+        TrioRow.ResonanceId == TEXT("Resonance_Superconductor"));
+
+    // Full-table sweep: every distinct pair resolves, carries exactly ONE
+    // modest bonus axis, and stays inside the 8-12% passive band.
+    const EAstrawildElementType Elements[6] =
+    {
+        EAstrawildElementType::Light, EAstrawildElementType::Ash, EAstrawildElementType::Flora,
+        EAstrawildElementType::Frost, EAstrawildElementType::Pulse, EAstrawildElementType::Ember
+    };
+    for (int32 A = 0; A < 6; ++A)
+    {
+        for (int32 B = A + 1; B < 6; ++B)
+        {
+            const FAstrawildPartyResonance Row = AAstrawildEchoCharacter::ResolvePartyResonance(Elements[A], Elements[B]);
+            TestTrue(TEXT("Every element pair resolves a row"), Row.IsValid());
+            const int32 Axes = (Row.DamageMitigation > 0.0f ? 1 : 0)
+                + (Row.AbilityPowerBonus > 0.0f ? 1 : 0)
+                + (Row.StatusPotencyBonus > 0.0f ? 1 : 0);
+            TestEqual(TEXT("Resonance carries exactly one bonus axis"), Axes, 1);
+            const float Magnitude = Row.DamageMitigation + Row.AbilityPowerBonus + Row.StatusPotencyBonus;
+            TestTrue(TEXT("Resonance magnitude stays in the modest band"),
+                Magnitude >= 0.05f && Magnitude <= 0.15f);
+        }
+    }
 
     return true;
 }
@@ -3550,7 +3619,8 @@ bool FAstrawildMountContractTest::RunTest(const FString& Parameters)
 {
     using Mnt = UAstrawildMountComponent;
 
-    // Species gates: classic mount families + quadruped/avian plans + Medium+.
+    // Species gates: classic mount families + quadruped/avian plans + Medium+;
+    // DP-3 opens the sea-rider gate (Aquatic quadrupeds/serpents).
     TestTrue(TEXT("Beast quadruped large is rideable"),
         Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
     TestTrue(TEXT("Avian mount is rideable"),
@@ -3563,6 +3633,12 @@ bool FAstrawildMountContractTest::RunTest(const FString& Parameters)
         Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Small));
     TestFalse(TEXT("Serpent bodies carry no saddle"),
         Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Large));
+    TestTrue(TEXT("DP-3: aquatic serpents are sea-riders"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Large));
+    TestTrue(TEXT("DP-3: aquatic quadrupeds are sea-riders"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
+    TestFalse(TEXT("DP-3: tiny sea-riders still refuse a saddle"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Small));
     TestFalse(TEXT("Flora Kindred are companions, not mounts"),
         Mnt::IsRideableSpecies(EAstrawildEchoFamily::Flora, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
     TestFalse(TEXT("Floating wisps carry no rider"),

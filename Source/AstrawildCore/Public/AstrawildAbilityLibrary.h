@@ -10,10 +10,14 @@ class UAstrawildEchoDefinition;
 /**
  * GDP-1 — "Every creature fights like itself": the Echo ability library.
  *
- * 44 code-default abilities. Authored species (ContentLibrary) reference curated
+ * 53 code-default abilities. Authored species (ContentLibrary) reference curated
  * signature abilities by id through UAstrawildEchoDefinition::AbilityIds; every
  * other species derives a deterministic loadout from element + role + family, so
  * all 210 species cast something that fits their identity with zero extra data.
+ *
+ * DP-3 adds the locomotion layer: Water-class species append one water-flavored
+ * signature and Flying-class species one aerial signature (7 abilities instead
+ * of 6 — see the ComputeDerivedAbilityIds overload).
  *
  * Registration follows the ContentLibrary contract: idempotent, world-free, and
  * replaceable later by .uasset definitions that reuse the same ids.
@@ -35,7 +39,7 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ability")
     static bool IsKnownAbility(FName AbilityId);
 
-    /** Number of registered ability templates (44). */
+    /** Number of registered ability templates (53). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ability")
     static int32 GetAbilityCount();
 
@@ -48,10 +52,21 @@ public:
 
     /**
      * Deterministic derived loadout for a species that did not author one:
-     * 2 element-flavored abilities + 1 role ability + 1 family signature.
+     * 4 element-flavored abilities + 1 role ability + 1 family signature. The
+     * land-default path (kept for the legacy three-argument call sites and the
+     * kit-reachability contracts): no locomotion signature is appended.
      */
     static TArray<FName> ComputeDerivedAbilityIds(EAstrawildElementType Element, EAstrawildEchoRole Role,
         EAstrawildEchoFamily Family);
+
+    /**
+     * DP-3 — same derivation plus the locomotion signature: Water-class species
+     * append one water-flavored pick, Flying-class species one aerial pick
+     * (7 total; every other locomotion stays at 6). The pick is deterministic
+     * per element so every template in the locomotion sets is reachable.
+     */
+    static TArray<FName> ComputeDerivedAbilityIds(EAstrawildElementType Element, EAstrawildEchoRole Role,
+        EAstrawildEchoFamily Family, EAstrawildLocomotionClass Locomotion);
 
     /**
      * Best ability to cast right now given what the Echo knows, what is ready,

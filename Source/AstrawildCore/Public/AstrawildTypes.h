@@ -1137,6 +1137,40 @@ struct ASTRAWILDCORE_API FAstrawildAbilityData
     float StatusSpeedMultiplier = 1.0f;
 };
 
+/**
+ * DP-3: one element-pair party resonance row. When the active party holds at
+ * least two DIFFERENT elements, the dominant pair (first in canon table order)
+ * grants this named bonus to every captured party Echo of that owner — an
+ * additive layer beside the four species passives, never stacking with them.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildPartyResonance
+{
+    GENERATED_BODY()
+
+    /** Stable resonance id (Resonance_XXX). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance")
+    FName ResonanceId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance")
+    FText DisplayName;
+
+    /** Fraction of incoming damage removed from every party Echo (0.08 = 8%). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance", meta=(ClampMin="0.0", ClampMax="0.5"))
+    float DamageMitigation = 0.0f;
+
+    /** Fraction added to offensive/restore ability power of party Echoes (0.10 = 10%). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance", meta=(ClampMin="0.0", ClampMax="0.5"))
+    float AbilityPowerBonus = 0.0f;
+
+    /** Fraction added to debuff status damage/duration applied by party Echoes (0.10 = 10%). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance", meta=(ClampMin="0.0", ClampMax="0.5"))
+    float StatusPotencyBonus = 0.0f;
+
+    /** False when no pair is present (the default row carries no id). */
+    bool IsValid() const { return !ResonanceId.IsNone(); }
+};
+
 /** GDP-2: how a species moves through the world. */
 UENUM(BlueprintType)
 enum class EAstrawildLocomotionClass : uint8

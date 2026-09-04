@@ -1,6 +1,7 @@
 #include "AstrawildAbilityLibrary.h"
 
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildLog.h"
 #include "Misc/ScopeLock.h"
 
@@ -226,6 +227,59 @@ void UAstrawildAbilityLibrary::BuildDefaults()
             EAstrawildAbilityCategory::Offensive, EAstrawildElementType::Frost, 90.0f, 20.0f, 1200.0f, 20,
             TEXT("Chill"), 6.0f, 0.6f));
 
+    // ------------------------------------------------------------------
+    // DP-3 — locomotion signatures (6): species that move through water or
+    // air fight like it. Water picks ride the Frost/Pulse/Light-aligned
+    // water flavor of the six-element canon; aerial picks read as wind,
+    // thermals and stooping dives. The derivation appends exactly one of
+    // these per Water/Flying-class species (element-keyed so all six are
+    // reachable), keeping every land species at the classic six.
+    // ------------------------------------------------------------------
+
+    // Water — cutting currents, dragging depths, luminous brine.
+    Table.Add(TEXT("Ability_TideSlash"),
+        MakeAbility(TEXT("Ability_TideSlash"), TEXT("Tide Slash"), TEXT("A crescent of pressurized water that cuts like a blade of frost."),
+            EAstrawildAbilityCategory::Offensive, EAstrawildElementType::Frost, 46.0f, 8.0f, 800.0f, 6));
+    Table.Add(TEXT("Ability_UndertowDrag"),
+        MakeAbility(TEXT("Ability_UndertowDrag"), TEXT("Undertow Drag"), TEXT("A charged current seizes the target and drags its stride under."),
+            EAstrawildAbilityCategory::Debuff, EAstrawildElementType::Pulse, 10.0f, 12.0f, 700.0f, 8,
+            TEXT("Chill"), 6.0f, 0.55f));
+    Table.Add(TEXT("Ability_BrineShield"),
+        MakeAbility(TEXT("Ability_BrineShield"), TEXT("Brine Shield"), TEXT("A luminous shell of salt water hardens against the next blows."),
+            EAstrawildAbilityCategory::Defensive, EAstrawildElementType::Light, 0.0f, 17.0f, 0.0f, 5,
+            TEXT("Shell"), 6.5f));
+
+    // Aerial — stooping dives, gale wings, sun-warmed thermals.
+    Table.Add(TEXT("Ability_TalonDive"),
+        MakeAbility(TEXT("Ability_TalonDive"), TEXT("Talon Dive"), TEXT("Stoops from height and strikes with locked talons."),
+            EAstrawildAbilityCategory::Offensive, EAstrawildElementType::None, 50.0f, 10.0f, 1100.0f, 7));
+    Table.Add(TEXT("Ability_WingbeatGale"),
+        MakeAbility(TEXT("Ability_WingbeatGale"), TEXT("Wingbeat Gale"), TEXT("One thunderclap of wings staggers everything beneath them."),
+            EAstrawildAbilityCategory::Debuff, EAstrawildElementType::Pulse, 8.0f, 11.0f, 650.0f, 6,
+            TEXT("Chill"), 5.0f, 0.6f));
+    Table.Add(TEXT("Ability_UpdraftSpiral"),
+        MakeAbility(TEXT("Ability_UpdraftSpiral"), TEXT("Updraft Spiral"), TEXT("Catches a sun-warmed thermal and climbs in a tightening spiral."),
+            EAstrawildAbilityCategory::Mobility, EAstrawildElementType::None, 0.0f, 12.0f, 0.0f, 5,
+            TEXT("Surge"), 5.0f, 1.55f));
+
+    // ------------------------------------------------------------------
+    // DP-3 — family-flavor signatures (3): identity axes the original eight
+    // family signatures left unvoiced. Referenced by the authored production
+    // roster (Voltpylon/Mistmender/The Drowned Sovereign) and available to
+    // future .uasset species through the same ids.
+    // ------------------------------------------------------------------
+    Table.Add(TEXT("Ability_OverclockDrive"),
+        MakeAbility(TEXT("Ability_OverclockDrive"), TEXT("Overclock Drive"), TEXT("Construct gear-trains spin past their rating — a shrieking sprint."),
+            EAstrawildAbilityCategory::Mobility, EAstrawildElementType::None, 0.0f, 14.0f, 0.0f, 8,
+            TEXT("Surge"), 5.0f, 1.5f));
+    Table.Add(TEXT("Ability_PhaseShift"),
+        MakeAbility(TEXT("Ability_PhaseShift"), TEXT("Phase Shift"), TEXT("The spirit steps half out of the world; blows pass through it."),
+            EAstrawildAbilityCategory::Defensive, EAstrawildElementType::None, 0.0f, 15.0f, 0.0f, 7,
+            TEXT("Shell"), 5.0f));
+    Table.Add(TEXT("Ability_RelicBurst"),
+        MakeAbility(TEXT("Ability_RelicBurst"), TEXT("Relic Burst"), TEXT("An ancient relic discharges its stored dawn in a single blinding ring."),
+            EAstrawildAbilityCategory::Offensive, EAstrawildElementType::Light, 62.0f, 16.0f, 850.0f, 12));
+
     GAbilityTableBuilt = true;
     UE_LOG(LogAstrawild, Log, TEXT("Ability library built: %d ability templates."), Table.Num());
 }
@@ -267,9 +321,14 @@ TArray<FName> UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(const UAstrawild
         }
     }
 
-    // Then the derived loadout for anything the author did not cover.
+    // Then the derived loadout for anything the author did not cover. DP-3:
+    // the derivation now sees the species' resolved locomotion class so
+    // Water/Flying movers also learn their locomotion signature.
+    const EAstrawildLocomotionClass Locomotion = (Definition->Locomotion != EAstrawildLocomotionClass::Auto)
+        ? Definition->Locomotion
+        : AAstrawildEchoCharacter::DeriveLocomotionClass(Definition->Family, Definition->BodyPlan, Definition->HomeZone);
     const TArray<FName> Derived = ComputeDerivedAbilityIds(
-        Definition->Element, Definition->Role, Definition->Family);
+        Definition->Element, Definition->Role, Definition->Family, Locomotion);
     for (const FName& Id : Derived)
     {
         if (!Result.Contains(Id))
@@ -282,6 +341,15 @@ TArray<FName> UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(const UAstrawild
 
 TArray<FName> UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(EAstrawildElementType Element,
     EAstrawildEchoRole Role, EAstrawildEchoFamily Family)
+{
+    // Legacy land-default path: identical to the overload below minus the
+    // locomotion signature (the kit-reachability contracts and the T-key
+    // party-cast path pin this exact six-entry shape).
+    return ComputeDerivedAbilityIds(Element, Role, Family, EAstrawildLocomotionClass::Land);
+}
+
+TArray<FName> UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(EAstrawildElementType Element,
+    EAstrawildEchoRole Role, EAstrawildEchoFamily Family, EAstrawildLocomotionClass Locomotion)
 {
     BuildDefaults();
 
@@ -362,6 +430,36 @@ TArray<FName> UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(EAstrawildEleme
     case EAstrawildEchoFamily::Avian:      Result.Add(TEXT("Ability_AvianDivebomb")); break;
     case EAstrawildEchoFamily::Ancient:    Result.Add(TEXT("Ability_SpiritWard")); break;
     default: break;
+    }
+
+    // DP-3 — the locomotion signature (7th pick): Water movers add one
+    // water-flavored template, Flying movers one aerial template, keyed by
+    // element so every template in both sets is reachable. Land movers stay
+    // at the classic six; authored AbilityIds always lead (dedup upstream).
+    switch (Locomotion)
+    {
+    case EAstrawildLocomotionClass::Water:
+        switch (Element)
+        {
+        case EAstrawildElementType::Pulse: Result.Add(TEXT("Ability_UndertowDrag")); break;
+        case EAstrawildElementType::Light: Result.Add(TEXT("Ability_BrineShield")); break;
+        case EAstrawildElementType::Frost:
+        default:                           Result.Add(TEXT("Ability_TideSlash")); break;
+        }
+        break;
+    case EAstrawildLocomotionClass::Flying:
+        switch (Element)
+        {
+        case EAstrawildElementType::Pulse: Result.Add(TEXT("Ability_WingbeatGale")); break;
+        case EAstrawildElementType::Light: Result.Add(TEXT("Ability_UpdraftSpiral")); break;
+        case EAstrawildElementType::Frost:
+        default:                           Result.Add(TEXT("Ability_TalonDive")); break;
+        }
+        break;
+    case EAstrawildLocomotionClass::Land:
+    case EAstrawildLocomotionClass::Auto:
+    default:
+        break;
     }
 
     return Result;
@@ -505,8 +603,8 @@ void UAstrawildAbilityLibrary::ValidateTable(TArray<FString>& OutProblems)
         }
     }
 
-    if (Table.Num() != 44)
+    if (Table.Num() != 53)
     {
-        OutProblems.Add(FString::Printf(TEXT("Ability table expected 44 templates, found %d"), Table.Num()));
+        OutProblems.Add(FString::Printf(TEXT("Ability table expected 53 templates, found %d"), Table.Num()));
     }
 }

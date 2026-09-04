@@ -4,9 +4,20 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildZoneSubsystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
+
+namespace
+{
+    /** DP-3: water mounts swim exactly where the sea zones are (pure zone query). */
+    bool MountInSeaZone(const AAstrawildEchoCharacter* Echo)
+    {
+        return IsValid(Echo) && UAstrawildZoneSubsystem::IsSeaZone(
+            UAstrawildZoneSubsystem::GetZoneAt(Echo->GetActorLocation()));
+    }
+}
 
 UAstrawildMountComponent::UAstrawildMountComponent()
 {
@@ -40,20 +51,25 @@ bool UAstrawildMountComponent::IsRideableSpecies(EAstrawildEchoFamily Family, EA
     }
 
     // Body plan gate: quadrupeds and true avians carry a saddle; bipeds,
-    // serpents, amorphous blobs and floating wisps do not.
-    if (BodyPlan != EAstrawildBodyPlan::Quadruped && BodyPlan != EAstrawildBodyPlan::Avian)
+    // amorphous blobs and floating wisps do not. DP-3 exception: aquatic
+    // serpents — dolphin-wyrms and sea-striders carry a rider through the
+    // shallows the way their quadruped kin carry one on land.
+    const bool bAquaticSerpent = (Family == EAstrawildEchoFamily::Aquatic && BodyPlan == EAstrawildBodyPlan::Serpent);
+    if (BodyPlan != EAstrawildBodyPlan::Quadruped && BodyPlan != EAstrawildBodyPlan::Avian && !bAquaticSerpent)
     {
         return false;
     }
 
-    // Family gate: the classic mount families. Flora Kindred and Spirits are
-    // companion casters, Construct/Ancient are tech encounters.
+    // Family gate: the classic mount families plus the DP-3 sea-riders. Flora
+    // Kindred and Spirits are companion casters, Construct/Ancient are tech
+    // encounters.
     switch (Family)
     {
     case EAstrawildEchoFamily::Beast:
     case EAstrawildEchoFamily::Dragon:
     case EAstrawildEchoFamily::Avian:
     case EAstrawildEchoFamily::Insectoid:
+    case EAstrawildEchoFamily::Aquatic:
         return true;
     default:
         return false;
@@ -126,15 +142,24 @@ bool UAstrawildMountComponent::MountRider(AAstrawildPlayerCharacter* Player)
     RiderForwardAxis = RiderTurnAxis = RiderVerticalAxis = 0.0f;
 
     // Flying mounts (avian family or derived flying locomotion) enter MOVE_Flying.
+    // DP-3: water-locomotion species enter MOVE_Swimming when mounted in a sea
+    // zone (the transition logic keeps shore riding on legs).
     bFlyingMount = (Echo->GetLocomotionClass() == EAstrawildLocomotionClass::Flying);
+    bWaterMount = (Echo->GetLocomotionClass() == EAstrawildLocomotionClass::Water);
     if (UCharacterMovementComponent* EchoMovement = Echo->GetCharacterMovement())
     {
+        const float MountSpeed = ComputeMountSpeed(Echo->GetCachedStats().MoveSpeed);
+        EchoMovement->MaxWalkSpeed = MountSpeed;
+        EchoMovement->MaxFlySpeed = MountSpeed;
+        EchoMovement->MaxSwimSpeed = MountSpeed;
         if (bFlyingMount)
         {
             EchoMovement->SetMovementMode(MOVE_Flying);
         }
-        EchoMovement->MaxWalkSpeed = ComputeMountSpeed(Echo->GetCachedStats().MoveSpeed);
-        EchoMovement->MaxFlySpeed = ComputeMountSpeed(Echo->GetCachedStats().MoveSpeed);
+        else if (bWaterMount && MountInSeaZone(Echo))
+        {
+            EchoMovement->SetMovementMode(MOVE_Swimming);
+        }
     }
 
     // Seat the rider (skiff pilot pattern): attach above the back, capsule
@@ -158,7 +183,8 @@ bool UAstrawildMountComponent::MountRider(AAstrawildPlayerCharacter* Player)
 
     OnMountStateChanged.Broadcast(true, Player);
     UE_LOG(LogAstrawildAI, Log, TEXT("Mount: %s boarded %s (%s)"),
-        *Player->GetName(), *Echo->GetName(), bFlyingMount ? TEXT("flying") : TEXT("land"));
+        *Player->GetName(), *Echo->GetName(),
+        bFlyingMount ? TEXT("flying") : (bWaterMount ? TEXT("sea-riding") : TEXT("land")));
 
     return true;
 }
@@ -201,13 +227,19 @@ void UAstrawildMountComponent::DismountRider()
         {
             // FCR-1-a fix (M-a12): a Flying-class species returns to true flight on
             // dismount (the old MOVE_Falling drop grounded the flyer forever — nothing
-            // ever restored MOVE_Flying). Land mounts walk again.
+            // ever restored MOVE_Flying). Land mounts walk again; DP-3: a swimming
+            // water mount returns to shore legs when the rider leaves.
             if (bFlyingMount || Echo->GetLocomotionClass() == EAstrawildLocomotionClass::Flying)
             {
                 EchoMovement->SetMovementMode(MOVE_Flying);
                 EchoMovement->MaxFlySpeed = FMath::Max(0.0f, Echo->GetCachedStats().MoveSpeed);
             }
+            else if (bWaterMount && EchoMovement->IsSwimming())
+            {
+                EchoMovement->SetMovementMode(MOVE_Walking);
+            }
             EchoMovement->MaxWalkSpeed = Echo->GetCachedStats().MoveSpeed;
+            EchoMovement->MaxSwimSpeed = FMath::Max(200.0f, Echo->GetCachedStats().MoveSpeed);
         }
         // Return to follower duty right away.
         Echo->SetAIState(EAstrawildEchoAIState::Idle);
@@ -260,6 +292,24 @@ void UAstrawildMountComponent::DriveMountedMovement(float DeltaTime)
     {
         // SPACE/CTRL altitude on flying mounts (skiff parity).
         EchoMovement->AddInputVector(FVector::UpVector * RiderVerticalAxis, false);
+    }
+    else if (bWaterMount)
+    {
+        // DP-3: water mounts transition with the waterline — swimming through
+        // the sea zones (SPACE surfaces / CTRL dives), walking the shore.
+        const bool bInSea = MountInSeaZone(Echo);
+        if (bInSea && EchoMovement->MovementMode != MOVE_Swimming)
+        {
+            EchoMovement->SetMovementMode(MOVE_Swimming);
+        }
+        else if (!bInSea && EchoMovement->MovementMode == MOVE_Swimming)
+        {
+            EchoMovement->SetMovementMode(MOVE_Walking);
+        }
+        if (EchoMovement->MovementMode == MOVE_Swimming)
+        {
+            EchoMovement->AddInputVector(FVector::UpVector * RiderVerticalAxis, false);
+        }
     }
 
     // Keep the rider glued in case of external teleport/push.

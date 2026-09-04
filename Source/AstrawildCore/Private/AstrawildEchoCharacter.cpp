@@ -1032,6 +1032,17 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
         Damage *= 0.5f;
     }
 
+    // DP-3: party element resonance (Aurora Veil / Steam Veil rows) — a captured
+    // party echo standing in a two-element party shrugs a fraction of every hit.
+    if (bCaptured)
+    {
+        const FAstrawildPartyResonance Resonance = GetOwnerPartyResonance();
+        if (Resonance.IsValid())
+        {
+            Damage *= (1.0f - FMath::Clamp(Resonance.DamageMitigation, 0.0f, 0.5f));
+        }
+    }
+
     // Elemental interactions (directive §9): weakness x1.5, matching element resisted.
     if (IsValid(EchoDefinition))
     {
@@ -1747,6 +1758,171 @@ bool AAstrawildEchoCharacter::HasPlayerPartyPassive(const UWorld* World, const A
 }
 
 // ===========================================================================
+// DP-3 — party element resonance (15-pair static table)
+// ===========================================================================
+
+namespace
+{
+    /** One authored resonance row; A < B in canon element order (table order IS the dominance order). */
+    struct FResonanceRow
+    {
+        EAstrawildElementType A;
+        EAstrawildElementType B;
+        const TCHAR* Id;
+        const TCHAR* Name;
+        float DamageMitigation;
+        float AbilityPowerBonus;
+        float StatusPotencyBonus;
+    };
+
+    // DP-3 — the element-pair resonance canon: 6 elements -> 15 unordered pairs,
+    // one modest named bonus each (5 mitigation / 5 ability power / 5 status
+    // potency — the same 8-12% band as the four species passives). The table is
+    // ordered by canon element order (Light, Ash, Flora, Frost, Pulse, Ember);
+    // with three distinct elements standing together the FIRST pair present
+    // wins, so a party always resolves exactly one deterministic resonance.
+    const FResonanceRow GPartyResonanceTable[] = {
+        { EAstrawildElementType::Light, EAstrawildElementType::Ash,   TEXT("Resonance_Prismfall"),       TEXT("Prismfall"),       0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Flora, TEXT("Resonance_Sunbloom"),        TEXT("Sunbloom"),        0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Frost, TEXT("Resonance_AuroraVeil"),      TEXT("Aurora Veil"),     0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Pulse, TEXT("Resonance_Overcharge"),      TEXT("Overcharge"),      0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Ember, TEXT("Resonance_Dawnfire"),        TEXT("Dawnfire"),        0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Flora, TEXT("Resonance_VerdantLoam"),     TEXT("Verdant Loam"),    0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Frost, TEXT("Resonance_Rimefield"),       TEXT("Rimefield"),       0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Pulse, TEXT("Resonance_MagnetiteShell"),  TEXT("Magnetite Shell"), 0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Ember, TEXT("Resonance_BankedCoals"),     TEXT("Banked Coals"),    0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Flora, EAstrawildElementType::Frost, TEXT("Resonance_HoarfrostBloom"),  TEXT("Hoarfrost Bloom"), 0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Flora, EAstrawildElementType::Pulse, TEXT("Resonance_GalvanicBloom"),   TEXT("Galvanic Bloom"),  0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Flora, EAstrawildElementType::Ember, TEXT("Resonance_Wildfire"),        TEXT("Wildfire"),        0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Frost, EAstrawildElementType::Pulse, TEXT("Resonance_Superconductor"),  TEXT("Superconductor"),  0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Frost, EAstrawildElementType::Ember, TEXT("Resonance_SteamVeil"),       TEXT("Steam Veil"),      0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Pulse, EAstrawildElementType::Ember, TEXT("Resonance_PlasmaArc"),       TEXT("Plasma Arc"),      0.00f, 0.10f, 0.00f },
+    };
+
+    FAstrawildPartyResonance MakeResonance(const FResonanceRow& Row)
+    {
+        FAstrawildPartyResonance Resonance;
+        Resonance.ResonanceId = Row.Id;
+        Resonance.DisplayName = FText::FromString(Row.Name);
+        Resonance.DamageMitigation = Row.DamageMitigation;
+        Resonance.AbilityPowerBonus = Row.AbilityPowerBonus;
+        Resonance.StatusPotencyBonus = Row.StatusPotencyBonus;
+        return Resonance;
+    }
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::ResolvePartyResonance(const EAstrawildElementType ElementA,
+    const EAstrawildElementType ElementB)
+{
+    // Symmetric pure lookup — the pair order never matters, None never resonates.
+    if (ElementA == EAstrawildElementType::None || ElementB == EAstrawildElementType::None ||
+        ElementA == ElementB)
+    {
+        return FAstrawildPartyResonance();
+    }
+    for (const FResonanceRow& Row : GPartyResonanceTable)
+    {
+        if ((Row.A == ElementA && Row.B == ElementB) || (Row.A == ElementB && Row.B == ElementA))
+        {
+            return MakeResonance(Row);
+        }
+    }
+    return FAstrawildPartyResonance();
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::ResolvePartyResonanceForElements(
+    const TArray<EAstrawildElementType>& PartyElements)
+{
+    // Distinct elements only (duplicates never form a pair); the FIRST row in
+    // canon table order with both elements present is the dominant resonance —
+    // the outcome is deterministic regardless of input order.
+    TArray<EAstrawildElementType> Distinct;
+    for (const EAstrawildElementType Element : PartyElements)
+    {
+        if (Element != EAstrawildElementType::None && !Distinct.Contains(Element))
+        {
+            Distinct.Add(Element);
+        }
+    }
+    if (Distinct.Num() < 2)
+    {
+        return FAstrawildPartyResonance();
+    }
+    for (const FResonanceRow& Row : GPartyResonanceTable)
+    {
+        if (Distinct.Contains(Row.A) && Distinct.Contains(Row.B))
+        {
+            return MakeResonance(Row);
+        }
+    }
+    return FAstrawildPartyResonance();
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::GetActivePartyResonance(const UWorld* World,
+    const AActor* Player, const float Radius)
+{
+    // Static party query, mirroring HasPlayerPartyPassive exactly: captured,
+    // healthy Echoes of this player within Radius contribute their element.
+    // Null-world fail-closed (invalid row) so tests and menu contexts are safe.
+    if (!World || !Player)
+    {
+        return FAstrawildPartyResonance();
+    }
+    const FName PlayerId = Player->GetFName();
+    if (PlayerId.IsNone())
+    {
+        return FAstrawildPartyResonance();
+    }
+    TArray<EAstrawildElementType> PartyElements;
+    for (TActorIterator<AAstrawildEchoCharacter> It(const_cast<UWorld*>(World)); It; ++It)
+    {
+        const AAstrawildEchoCharacter* Echo = *It;
+        if (!Echo || !Echo->bCaptured || Echo->IsDefeated() || !IsValid(Echo->EchoDefinition))
+        {
+            continue;
+        }
+        if (Echo->OwnerPlayerId != PlayerId)
+        {
+            continue;
+        }
+        if (FVector::Dist(Echo->GetActorLocation(), Player->GetActorLocation()) > Radius)
+        {
+            continue;
+        }
+        if (Echo->EchoDefinition->Element != EAstrawildElementType::None &&
+            !PartyElements.Contains(Echo->EchoDefinition->Element))
+        {
+            PartyElements.Add(Echo->EchoDefinition->Element);
+        }
+    }
+    return ResolvePartyResonanceForElements(PartyElements);
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::GetOwnerPartyResonance() const
+{
+    // Per-echo convenience for the damage/ability hooks: an unowned or wild
+    // Echo never carries a resonance (fail-closed, no world scan needed then).
+    if (!bCaptured || OwnerPlayerId == NAME_None)
+    {
+        return FAstrawildPartyResonance();
+    }
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return FAstrawildPartyResonance();
+    }
+    for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
+    {
+        const AAstrawildPlayerCharacter* Player = *It;
+        if (Player && Player->GetFName() == OwnerPlayerId)
+        {
+            return GetActivePartyResonance(World, Player);
+        }
+    }
+    return FAstrawildPartyResonance();
+}
+
+// ===========================================================================
 // GDP-1 — Echo ability engine
 // ===========================================================================
 
@@ -1823,6 +1999,11 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
         return false;
     }
 
+    // DP-3: the owner's party resonance rides every cast of a captured party
+    // echo (ability power on offensive/restore, potency on debuffs); wild
+    // echoes and solo companions resolve no row and cast unmodified.
+    const FAstrawildPartyResonance Resonance = bCaptured ? GetOwnerPartyResonance() : FAstrawildPartyResonance();
+
     UWorld* World = GetWorld();
     if (!World || IsDefeated())
     {
@@ -1836,7 +2017,8 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
     case EAstrawildAbilityCategory::Offensive:
     {
         // Level-scaled bolt down the projectile pipeline (homing when we have a target).
-        const float ScaledPower = Data->Power * (1.0f + 0.05f * FMath::Max(0, Level - 1));
+        const float ScaledPower = Data->Power * (1.0f + 0.05f * FMath::Max(0, Level - 1))
+            * (1.0f + FMath::Clamp(Resonance.AbilityPowerBonus, 0.0f, 0.5f));
         FVector Direction = GetActorForwardVector();
         if (TargetActor)
         {
@@ -1881,6 +2063,11 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
             Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
             Effect.DamagePerSecond = FMath::Max(0.0f, Data->Power);
             Effect.SpeedMultiplier = FMath::Clamp(Data->StatusSpeedMultiplier, 0.2f, 1.0f);
+            if (Resonance.IsValid() && Resonance.StatusPotencyBonus > 0.0f)
+            {
+                Effect.DamagePerSecond *= (1.0f + FMath::Clamp(Resonance.StatusPotencyBonus, 0.0f, 0.5f));
+                Effect.RemainingSeconds *= (1.0f + FMath::Clamp(Resonance.StatusPotencyBonus, 0.0f, 0.5f));
+            }
             if (TargetEcho && !TargetEcho->IsDefeated())
             {
                 TargetEcho->AddStatusEffect(Effect);
@@ -1928,6 +2115,13 @@ bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* Targ
             Ward.RemainingSeconds = 1.0f;
             Ward.DamagePerSecond = -Data->Power;
             Ward.SpeedMultiplier = 1.0f;
+        }
+
+        if (Resonance.IsValid() && Resonance.AbilityPowerBonus > 0.0f)
+        {
+            // Negative DoT = heal; a resonant caster's ward heals deeper (party-wide
+            // copies carry the same amplified magnitude).
+            Ward.DamagePerSecond *= (1.0f + FMath::Clamp(Resonance.AbilityPowerBonus, 0.0f, 0.5f));
         }
 
         AddStatusEffect(Ward);

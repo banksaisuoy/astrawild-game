@@ -284,6 +284,21 @@ public:
     static bool HasPlayerPartyPassive(const class UWorld* World, const class AActor* Player,
         EAstrawildEchoPassive Passive, float Radius = 1500.0f);
 
+    /**
+     * DP-3: the element-pair party resonance row for a player's active party —
+     * captured, healthy Echoes of this owner within Radius contribute their
+     * element; when at least two DIFFERENT elements stand together the dominant
+     * pair (first in canon table order) resolves. Invalid row otherwise.
+     */
+    static FAstrawildPartyResonance GetActivePartyResonance(const class UWorld* World, const class AActor* Player,
+        float Radius = 1500.0f);
+
+    /** DP-3: pure symmetric pair lookup (invalid row when either element is None or equal). */
+    static FAstrawildPartyResonance ResolvePartyResonance(EAstrawildElementType ElementA, EAstrawildElementType ElementB);
+
+    /** DP-3: pure resolver over the elements present in a party (dominant pair = canon table order). Public for tests. */
+    static FAstrawildPartyResonance ResolvePartyResonanceForElements(const TArray<EAstrawildElementType>& PartyElements);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
 
@@ -418,6 +433,9 @@ private:
     class UAstrawildEcosystemSubsystem* GetEcosystem() const;
     /** Batch 3 — Item A: server tick of DoT/expiry/speed for StatusEffects. */
     void ApplyStatusTicks(float DeltaTime);
+
+    /** DP-3: resonance row for this echo's owner party (invalid when not a captured party echo). */
+    FAstrawildPartyResonance GetOwnerPartyResonance() const;
 
     /**
      * Navigation invoker (audit C-3): the zero-asset world has no authored navmesh —

@@ -1090,14 +1090,18 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
         { Stack(TEXT("Item_EmberAsh"), 2) });
 
     // Voltpylon — the power-plant Echo (generation affinity + stamina aura).
-    MakeProductionEcho(Registry, TEXT("Echo_Voltpylon"), TEXT("Voltpylon"),
+    // DP-3: authored Construct signature — the overclock sprint.
+    if (UAstrawildEchoDefinition* Voltpylon = MakeProductionEcho(Registry, TEXT("Echo_Voltpylon"), TEXT("Voltpylon"),
         EAstrawildElementType::Pulse, EAstrawildEchoRole::Base, 140.0f, 20.0f, 20.0f, 340.0f,
         EAstrawildPersonality::Energetic, EAstrawildActivityPattern::Nocturnal,
         { TEXT("Item_VoltCore") }, 0.5f, EAstrawildElementType::Light,
         EAstrawildEchoFamily::Construct, EAstrawildBodyPlan::Biped, EAstrawildSizeClass::Medium,
         EAstrawildZone::Glimmerwood, EAstrawildRarity::Rare, EAstrawildEchoPassive::PlayerStamina,
         { { EAstrawildWorkType::PowerGeneration, 1.8f }, { EAstrawildWorkType::Crafting, 1.1f } },
-        { Stack(TEXT("Item_VoltCore"), 1) });
+        { Stack(TEXT("Item_VoltCore"), 1) }))
+    {
+        Voltpylon->AbilityIds = { TEXT("Ability_OverclockDrive") };
+    }
 
     // Bastionbeetle — the base defense wall.
     MakeProductionEcho(Registry, TEXT("Echo_Bastionbeetle"), TEXT("Bastionbeetle"),
@@ -1110,14 +1114,18 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
         { Stack(TEXT("Item_ChitinPlate"), 2) });
 
     // Mistmender — the healing aura companion.
-    MakeProductionEcho(Registry, TEXT("Echo_Mistmender"), TEXT("Mistmender"),
+    // DP-3: authored Spirit signature — the phase-shift escape.
+    if (UAstrawildEchoDefinition* Mistmender = MakeProductionEcho(Registry, TEXT("Echo_Mistmender"), TEXT("Mistmender"),
         EAstrawildElementType::Light, EAstrawildEchoRole::Support, 130.0f, 12.0f, 16.0f, 400.0f,
         EAstrawildPersonality::Social, EAstrawildActivityPattern::Crepuscular,
         { TEXT("Item_Dawnbloom"), TEXT("Item_HerbalSalve") }, 0.4f, EAstrawildElementType::None,
         EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Small,
         EAstrawildZone::DuskMarsh, EAstrawildRarity::Rare, EAstrawildEchoPassive::PartyHeal,
         { { EAstrawildWorkType::Farming, 1.3f }, { EAstrawildWorkType::ResearchAssist, 1.5f } },
-        { Stack(TEXT("Item_Dawnbloom"), 1) });
+        { Stack(TEXT("Item_Dawnbloom"), 1) }))
+    {
+        Mistmender->AbilityIds = { TEXT("Ability_PhaseShift") };
+    }
 
     // Deepdelver — the mining specialist.
     MakeProductionEcho(Registry, TEXT("Echo_Deepdelver"), TEXT("Deepdelver"),
@@ -2187,14 +2195,20 @@ void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySub
 
     // The Drowned Sovereign — the final boss (MQ-16). 400 HP base × the boss
     // health scale (5.0) = 2000 HP, three phases, weak to Dawn Light.
-    MakeProductionEcho(Registry, TEXT("Echo_DrownedSovereign"), TEXT("The Drowned Sovereign"),
+    // DP-3: authored Ancient signature — the relic-burst (canon row; bosses
+    // run their own choreography, the id rides for data parity like
+    // Ability_SovereignTide above it).
+    if (UAstrawildEchoDefinition* Sovereign = MakeProductionEcho(Registry, TEXT("Echo_DrownedSovereign"), TEXT("The Drowned Sovereign"),
         EAstrawildElementType::Pulse, EAstrawildEchoRole::Combat,
         400.0f, 46.0f, 26.0f, 430.0f,
         EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Diurnal,
         { }, 0.95f, EAstrawildElementType::Light,
         EAstrawildEchoFamily::Ancient, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Huge,
         EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Legendary, EAstrawildEchoPassive::None,
-        { }, { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 3) });
+        { }, { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 3) }))
+    {
+        Sovereign->AbilityIds = { TEXT("Ability_RelicBurst"), TEXT("Ability_SovereignTide") };
+    }
 
     // --- Skiff Engineering (FR-8 tech + recipe) ---
 

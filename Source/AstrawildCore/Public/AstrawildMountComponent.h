@@ -17,11 +17,14 @@ class AAstrawildPlayerCharacter;
  *    equivalent offset table until skeletal rigs ship the sockets),
  *  - movement input is forwarded from the rider (the skiff pilot pattern),
  *  - land mounts sprint at 1.25x species speed, avian mounts fly
- *    (SPACE climb / CTRL descend, ceiling-gated),
+ *    (SPACE climb / CTRL descend, ceiling-gated), aquatic mounts swim
+ *    (DP-3: sea zones engage MOVE_Swimming — SPACE surfaces / CTRL dives;
+ *    the shore walks),
  *  - riding is transient state (never persisted — remount on load).
  *
  * Eligibility: captured + owner match + Bond >= 25 + rideable family/body/
- * size (Beast/Dragon/Avian/Insectoid quadrupeds/avian plans, Medium+).
+ * size (Beast/Dragon/Avian/Insectoid quadrupeds/avian plans + Aquatic
+ * quadruped/serpent sea-riders, Medium+).
  */
 UCLASS(ClassGroup=(ASTRAWILD), meta=(BlueprintSpawnableComponent))
 class ASTRAWILDCORE_API UAstrawildMountComponent : public UActorComponent
@@ -100,8 +103,11 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Mount", meta=(AllowPrivateAccess = "true"), Replicated)
     TObjectPtr<AAstrawildPlayerCharacter> Rider;
 
-    /** Mount movement mode cached at mount time (land vs flying). */
+    /** Mount movement mode cached at mount time (land vs flying vs swimming). */
     bool bFlyingMount = false;
+
+    /** DP-3: true when the mount is a Water-locomotion species (sea-riding). */
+    bool bWaterMount = false;
 
     float RiderForwardAxis = 0.0f;
     float RiderTurnAxis = 0.0f;
