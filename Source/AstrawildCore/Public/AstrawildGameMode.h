@@ -36,6 +36,7 @@ public:
     /** Queue a respawn for a controller (server). */
     void RequestPlayerRespawn(AController* Controller, float DelaySeconds);
 
+    virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override; // LCP-6
     virtual void BeginPlay() override;
     virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 

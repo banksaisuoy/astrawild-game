@@ -54,6 +54,10 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> ResearchText;
 
+    /** LCP-6: persistent session-mode line — SINGLE PLAYER / LAN HOST / LAN CLIENT (PART 6). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> SessionModeText;
+
     /** Audit C-6: build-mode readout (center, above the prompt). */
     UPROPERTY()
     TObjectPtr<UTextBlock> BuildText;

@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 117 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 119 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -39,9 +39,9 @@ wrong order resets, window expiry resets; the unthemed default stays the
 legacy shell).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **117** — derived from `AutomationTests.cpp`
+authoritative test count is **119** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 117`), and listed in this inventory (rows 1-117).
+EXACT gate (`Automation tests == 119`), and listed in this inventory (rows 1-119).
 Historical counts (57/63/67/72/84/99/102/103/104/105/106/107/108) describe earlier commits only and appear
 nowhere as current-state claims.
 
@@ -141,8 +141,8 @@ nowhere as current-state claims.
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 117)
-Expected: 117 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 119)
+Expected: 119 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
 
 ## Gameplay Depth Pack contracts (73-84)
@@ -259,3 +259,10 @@ Expected: 117 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 116 | ASTRAWILD.LCP5.ClientStateSyncSurface | LCP-5: the client state-sync surface (reflection) — the QuestComponent replicates its three state props (QuestStates/ActiveQuestId/CompletedQuestIds → the owning client's HUD tracker reads live progression), the GameState carries the research mirror (GameInstance subsystems never replicate — clients import on OnRep), and the research subsystem exposes the server-side SyncMirrorToGameState + NotifyPlayersResearchUnlocked (every mutation point syncs; every unlock toasts all screens per PART 18) |
 | 117 | ASTRAWILD.LCP5.ResearchMirrorRoundTrip | LCP-5: the mirror snapshot round-trip — FAstrawildResearchSaveData export→replicate→import is lossless through the existing sanitized import (fresh mirrors are pristine; duplicates drop; the RP total and unlock set survive a full loop) |
+
+## LCP-6 LAN co-op contracts (118-119, landed in the LCP-6 batch)
+
+| # | Test | Covers |
+|---|------|--------|
+| 118 | ASTRAWILD.LCP6.BeaconProtocol | LCP-6: the discovery beacon protocol — encode/decode round-trip (port + player count), every malformed input fails CLOSED (wrong magic, truncated, extra fields, version mismatch, zero/oversize port, zero/over-cap players, empty garbage — a foreign or hostile datagram never reaches the session list), and the protocol constants pin the personal-LAN scope (beacon port 45861, game port 7777, max 4 players) |
+| 119 | ASTRAWILD.LCP6.AddressParsing | LCP-6: direct-connect address parsing (the PART 6 fallback) — host[:port] with default port 7777, whitespace trimming, and the fail-closed set (empty, whitespace-only, leading/trailing colon, zero/oversize port); session identity equality (host+port, insensitive to live player count) |

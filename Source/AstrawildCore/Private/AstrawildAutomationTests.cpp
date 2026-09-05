@@ -35,6 +35,7 @@
 // needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
 #include "Engine/StaticMesh.h"
 #include "Sound/SoundBase.h"
+#include "AstrawildLANSessionSubsystem.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDungeonRoomActor.h"
 #include "AstrawildWorldBootstrapper.h"
@@ -5200,6 +5201,89 @@ bool FAstrawildLCP5ResearchMirrorRoundTripTest::RunTest(const FString& Parameter
     ClientMirrorPool->ExportForSave(RoundTripped);
     TestEqual(TEXT("Round-trip keeps the RP total"), RoundTripped.ResearchPoints, 42);
     TestEqual(TEXT("Round-trip keeps the unlock count"), RoundTripped.UnlockedTechIds.Num(), 2);
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-6 — LAN CO-OP: session flow / beacon protocol contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP6BeaconProtocolTest,
+    "ASTRAWILD.LCP6.BeaconProtocol",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP6BeaconProtocolTest::RunTest(const FString& Parameters)
+{
+    using Lan = UAstrawildLANSessionSubsystem;
+
+    // 1) Encode/decode round-trip (the exact pair the host beacon and client
+    // listener use — discovery is one datagram, both directions pure).
+    const FString Payload = Lan::EncodeBeaconPayload(7777, 2);
+    int32 ListenPort = 0;
+    int32 PlayerCount = 0;
+    TestTrue(TEXT("Round-trip decodes"), Lan::DecodeBeaconPayload(Payload, ListenPort, PlayerCount));
+    TestEqual(TEXT("Round-trip port"), ListenPort, 7777);
+    TestEqual(TEXT("Round-trip players"), PlayerCount, 2);
+
+    // 2) Every malformed input fails CLOSED — a foreign or hostile datagram
+    // never reaches the session list:
+    TestFalse(TEXT("Wrong magic rejected"), Lan::DecodeBeaconPayload(TEXT("OTHER1|1|7777|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Truncated rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Extra fields rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777|2|9"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Version mismatch rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|2|7777|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Zero port rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|0|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Oversize port rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|65536|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Zero players rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777|0"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Over-cap players rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777|9"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Garbage rejected"), Lan::DecodeBeaconPayload(TEXT(""), ListenPort, PlayerCount));
+
+    // 3) Protocol constants pin the personal-LAN scope:
+    TestEqual(TEXT("Beacon port contract"), Lan::BeaconPort, 45861);
+    TestEqual(TEXT("Default game port contract"), Lan::DefaultGamePort, 7777);
+    TestEqual(TEXT("Max players contract (PART 1)"), Lan::MaxLanPlayers, 4);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP6AddressParsingTest,
+    "ASTRAWILD.LCP6.AddressParsing",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP6AddressParsingTest::RunTest(const FString& Parameters)
+{
+    // Direct-connect parsing (the PART 6 fallback path):
+    FString Host;
+    int32 Port = 0;
+
+    TestTrue(TEXT("Host with port parses"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:7777"), Host, Port));
+    TestEqual(TEXT("Host extracted"), Host, FString(TEXT("192.168.1.5")));
+    TestEqual(TEXT("Port extracted"), Port, 7777);
+
+    TestTrue(TEXT("Bare host parses with the default port"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5"), Host, Port));
+    TestEqual(TEXT("Bare host kept"), Host, FString(TEXT("192.168.1.5")));
+    TestEqual(TEXT("Default port applied"), Port, 7777);
+
+    TestTrue(TEXT("Whitespace trims"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("  10.0.0.4:9000  "), Host, Port));
+    TestEqual(TEXT("Trimmed host"), Host, FString(TEXT("10.0.0.4")));
+    TestEqual(TEXT("Trimmed port"), Port, 9000);
+
+    // Fail-closed set:
+    TestFalse(TEXT("Empty address rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT(""), Host, Port));
+    TestFalse(TEXT("Whitespace-only rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("   "), Host, Port));
+    TestFalse(TEXT("Leading colon rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT(":7777"), Host, Port));
+    TestFalse(TEXT("Trailing colon rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:"), Host, Port));
+    TestFalse(TEXT("Zero port rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:0"), Host, Port));
+    TestFalse(TEXT("Oversize port rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:99999"), Host, Port));
+
+    // Session-info equality (the discovery dedupe key):
+    FAstrawildLanSessionInfo A;
+    A.HostAddress = TEXT("192.168.1.5");
+    A.HostPort = 7777;
+    FAstrawildLanSessionInfo B = A;
+    B.PlayerCount = 3; // player count changes do NOT change the session identity
+    TestTrue(TEXT("Same host+port = same session"), A == B);
+    B.HostPort = 9000;
+    TestFalse(TEXT("Different port = different session"), A == B);
     return true;
 }
 

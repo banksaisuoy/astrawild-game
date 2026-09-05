@@ -26,7 +26,10 @@ public class AstrawildCore : ModuleRules
                 // Batch 7 — The Shattered Vale: runtime procedural terrain tiles.
                 "ProceduralMeshComponent",
                 // Content Pack CP-05 — weapon Niagara bindings (muzzle/impact/trail).
-                "Niagara"
+                "Niagara",
+                // LCP-6 — LAN discovery beacon (UDP broadcast; gameplay networking
+                // stays the engine's IpConnection replication).
+                "Sockets"
             }
         );
 

@@ -10,6 +10,10 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
+#include "Components/EditableTextBox.h"
+#include "AstrawildLANSessionSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/World.h"
@@ -20,7 +24,7 @@ namespace
     constexpr float PausePanelWidth = 340.0f;
     // DP-4: 3 menu buttons + the loadout caption + 3 slot buttons — the pause
     // panel grew with the skill loadout section.
-    constexpr float PauseMenuHeight = 340.0f;
+    constexpr float PauseMenuHeight = 520.0f; // LCP-6: + LAN CO-OP panel
     constexpr int32 SkillLoadoutSlots = 3;
 }
 
@@ -51,6 +55,7 @@ void UAstrawildPauseMenuWidget::NativeConstruct()
     Super::NativeConstruct();
     BuildWidgetTree();
     RefreshSkillSlotLabels();
+    RefreshLanStatus(); // LCP-6
 }
 
 void UAstrawildPauseMenuWidget::BuildWidgetTree()
@@ -115,6 +120,31 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     SkillSlotButtons[1]->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleSkillSlot1Clicked);
     SkillSlotButtons[2]->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleSkillSlot2Clicked);
 
+    // LCP-6: the LAN CO-OP panel — host a game, find + join one, or connect
+    // directly by address (PART 6). The status line always names the active
+    // mode so it is OBVIOUS who is hosting.
+    LanTitleText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("PauseLanTitle"));
+    LanTitleText->SetColorAndOpacity(FSlateColor(FLinearColor(0.55f, 0.95f, 0.85f, 1.0f)));
+    LanTitleText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 13));
+    LanTitleText->SetText(FText::FromString(TEXT("LAN CO-OP (4 PLAYERS)")));
+
+    LanStatusText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("PauseLanStatus"));
+    LanStatusText->SetColorAndOpacity(FSlateColor(FLinearColor(0.8f, 0.84f, 0.9f, 1.0f)));
+    LanStatusText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 11));
+    LanStatusText->SetAutoWrapText(true);
+
+    LanHostButton = MakeMenuButton(TEXT("PauseLanHost"), TEXT("Host LAN Game"), FLinearColor(0.16f, 0.45f, 0.38f, 1.0f));
+    LanHostButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleLanHostClicked);
+
+    LanFindJoinButton = MakeMenuButton(TEXT("PauseLanFindJoin"), TEXT("Find + Join LAN Game"), FLinearColor(0.2f, 0.35f, 0.5f, 1.0f));
+    LanFindJoinButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleLanFindJoinClicked);
+
+    LanAddressBox = WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(), TEXT("PauseLanAddress"));
+    LanAddressBox->SetHintText(FText::FromString(TEXT("host IP (e.g. 192.168.1.5:7777)")));
+
+    LanDirectConnectButton = MakeMenuButton(TEXT("PauseLanDirect"), TEXT("Direct Connect"), FLinearColor(0.34f, 0.3f, 0.45f, 1.0f));
+    LanDirectConnectButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleLanDirectConnectClicked);
+
     if (UVerticalBoxSlot* BtnSlot1 = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(ResumeButton)))
     {
         BtnSlot1->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
@@ -137,6 +167,36 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
             SlotBtnSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
             SlotBtnSlot->SetPadding(FMargin(0.0f, 3.0f));
         }
+    }
+    if (UVerticalBoxSlot* LanTitleSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanTitleText)))
+    {
+        LanTitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        LanTitleSlot->SetPadding(FMargin(0.0f, 12.0f, 0.0f, 2.0f));
+    }
+    if (UVerticalBoxSlot* LanStatusSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanStatusText)))
+    {
+        LanStatusSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        LanStatusSlot->SetPadding(FMargin(0.0f, 2.0f));
+    }
+    if (UVerticalBoxSlot* LanHostSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanHostButton)))
+    {
+        LanHostSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        LanHostSlot->SetPadding(FMargin(0.0f, 3.0f));
+    }
+    if (UVerticalBoxSlot* LanFindSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanFindJoinButton)))
+    {
+        LanFindSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        LanFindSlot->SetPadding(FMargin(0.0f, 3.0f));
+    }
+    if (UVerticalBoxSlot* LanAddrSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanAddressBox)))
+    {
+        LanAddrSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        LanAddrSlot->SetPadding(FMargin(0.0f, 3.0f));
+    }
+    if (UVerticalBoxSlot* LanDirectSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanDirectConnectButton)))
+    {
+        LanDirectSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        LanDirectSlot->SetPadding(FMargin(0.0f, 3.0f));
     }
     if (UVerticalBoxSlot* BtnSlot3 = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(QuitButton)))
     {
@@ -313,5 +373,100 @@ void UAstrawildPauseMenuWidget::RefreshSkillSlotLabels()
             ? FText::FromString(FString::Printf(TEXT("Skill Slot %d: — empty"), SlotIndex + 1))
             : FText::FromString(FString::Printf(TEXT("Skill Slot %d: %s"), SlotIndex + 1,
                 *UEnum::GetDisplayValueAsText(Skill).ToString())));
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// LCP-6 — LAN CO-OP panel
+// ---------------------------------------------------------------------------
+
+UAstrawildLANSessionSubsystem* UAstrawildPauseMenuWidget::GetLanSubsystem() const
+{
+    const UWorld* World = GetWorld();
+    const UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+    return GameInstance ? GameInstance->GetSubsystem<UAstrawildLANSessionSubsystem>() : nullptr;
+}
+
+void UAstrawildPauseMenuWidget::RefreshLanStatus()
+{
+    if (!LanStatusText)
+    {
+        return;
+    }
+    const FString Mode = UAstrawildLANSessionSubsystem::DescribeSessionMode(this);
+    if (UAstrawildLANSessionSubsystem* Lan = GetLanSubsystem())
+    {
+        const int32 Found = Lan->GetDiscoveredSessions().Num();
+        LanStatusText->SetText(FText::FromString(Found > 0
+            ? FString::Printf(TEXT("%s — %d LAN game(s) found"), *Mode, Found)
+            : Mode));
+    }
+    else
+    {
+        LanStatusText->SetText(FText::FromString(Mode));
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleLanHostClicked()
+{
+    if (UAstrawildLANSessionSubsystem* Lan = GetLanSubsystem())
+    {
+        if (Lan->HostLANGame())
+        {
+            if (LanStatusText)
+            {
+                LanStatusText->SetText(FText::FromString(TEXT("HOSTING — re-entering as listen server (world saved + auto-loaded)...")));
+            }
+        }
+        else if (LanStatusText)
+        {
+            LanStatusText->SetText(FText::FromString(TEXT("Cannot host from here (already a client).")));
+        }
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleLanFindJoinClicked()
+{
+    if (UAstrawildLANSessionSubsystem* Lan = GetLanSubsystem())
+    {
+        Lan->StartLanDiscovery();
+        const TArray<FAstrawildLanSessionInfo> Sessions = Lan->GetDiscoveredSessions();
+        if (!Sessions.IsEmpty())
+        {
+            Lan->JoinSession(Sessions[0]);
+            if (LanStatusText)
+            {
+                LanStatusText->SetText(FText::FromString(FString::Printf(TEXT("Joining %s:%d..."),
+                    *Sessions[0].HostAddress, Sessions[0].HostPort)));
+            }
+        }
+        else if (LanStatusText)
+        {
+            LanStatusText->SetText(FText::FromString(TEXT("Searching — the beacon broadcasts 1/s; click Find + Join again in a second.")));
+        }
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleLanDirectConnectClicked()
+{
+    if (!LanAddressBox)
+    {
+        return;
+    }
+    const FString Address = LanAddressBox->GetText().ToString();
+    if (UAstrawildLANSessionSubsystem* Lan = GetLanSubsystem())
+    {
+        if (Lan->ConnectDirect(Address))
+        {
+            if (LanStatusText)
+            {
+                LanStatusText->SetText(FText::FromString(FString::Printf(TEXT("Connecting to %s..."), *Address)));
+            }
+        }
+        else if (LanStatusText)
+        {
+            LanStatusText->SetText(FText::FromString(TEXT("Address malformed — use 192.168.x.x or 192.168.x.x:7777")));
+        }
     }
 }

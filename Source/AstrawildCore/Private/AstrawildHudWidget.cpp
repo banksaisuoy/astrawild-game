@@ -1,4 +1,5 @@
 #include "AstrawildHudWidget.h"
+#include "AstrawildLANSessionSubsystem.h" // LCP-6: session mode line
 
 #include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingComponent.h"
@@ -92,6 +93,11 @@ void UAstrawildHudWidget::BuildWidgetTree()
     // at the Research Desk (previously research state was invisible).
     ResearchText = MakeText(TEXT("ResearchText"), FLinearColor(0.70f, 0.90f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(ResearchText), FVector2D(0.5f, 0.085f), FVector2D(0.5f, 0.085f), FVector2D(-110.0f, 0.0f), FVector2D(220.0f, 20.0f));
+
+    // LCP-6 (PART 6): the active session mode is ALWAYS visible — a quiet
+    // top-left line naming the mode (host authority included).
+    SessionModeText = MakeText(TEXT("SessionModeText"), FLinearColor(0.55f, 0.75f, 0.7f, 1.0f), 12);
+    AnchorSlot(RootCanvas->AddChildToCanvas(SessionModeText), FVector2D(0.02f, 0.02f), FVector2D(0.02f, 0.02f), FVector2D::ZeroVector, FVector2D(340.0f, 16.0f));
 
     // --- Batch 7: Shattered Vale zone banner (title + flavor + discovery count) ---
     ZoneBannerText = MakeText(TEXT("ZoneBannerText"), FLinearColor(0.95f, 0.92f, 0.80f, 1.0f), 19);
@@ -310,6 +316,11 @@ void UAstrawildHudWidget::RefreshState()
         {
             if (World->GetGameInstance())
             {
+                if (SessionModeText)
+                {
+                    // LCP-6 (PART 6): the active session mode is always visible.
+                    SessionModeText->SetText(FText::FromString(UAstrawildLANSessionSubsystem::DescribeSessionMode(this)));
+                }
                 if (const UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
                 {
                     ResearchText->SetText(FText::FromString(FString::Printf(TEXT("Research: %d RP"),

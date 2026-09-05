@@ -223,7 +223,7 @@ Target: **4 players maximum** — reliability over scale.
 | LCP-3 | Interaction & trade routing: `ServerInteract`, `ClientOpenVendorShop`/`ClientOpenVendorDialogue`/`ClientNotify`, shop trade RPC, capture intent, cheat host-gate | **DONE** (+2: LCP3.ServerRoutingSurface / LCP3.DialogueValidation) |
 | LCP-4 | Per-player persistence: additive per-player save blocks + roster owner partition + stable PlayerKey + late-join/reconnect restore | **DONE** (+2: LCP4.RosterPartition / LCP4.CoopSaveBlock) |
 | LCP-5 | Client state sync: QuestComponent replication, research + roster mirrors on GameState, client notifications | **DONE** (+2: LCP5.ClientStateSyncSurface / LCP5.ResearchMirrorRoundTrip; roster mirror deferred — no client roster UI exists, party echoes replicate as actors) |
-| LCP-6 | LAN session flow: LANSessionSubsystem (host/find/join/direct), beacon encode/decode, pause menu panel, HUD mode line | +2 |
+| LCP-6 | LAN session flow: `UAstrawildLANSessionSubsystem` (host/find/join/direct IP) + pause menu LAN panel + HUD mode line | **DONE** (+2: LCP6.BeaconProtocol / LCP6.AddressParsing) |
 | LCP-7 | Free-asset ledger doc + approved Quaternius acquisition (separate concern, same session) | — |
 | LCP-8 | Final gate: validators, HANDOFF §22 LAN acceptance, READINESS re-affirm, registry close, worklog | — |
 

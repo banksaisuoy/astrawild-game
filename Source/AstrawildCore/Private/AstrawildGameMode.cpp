@@ -10,6 +10,7 @@
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildWorldBootstrapper.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h" // LCP-6: HasOption
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerStart.h"
@@ -24,6 +25,20 @@ AAstrawildGameMode::AAstrawildGameMode()
     DefaultPawnClass = AAstrawildPlayerCharacter::StaticClass();
     GameStateClass = AAstrawildGameState::StaticClass();
     PlayerControllerClass = AAstrawildPlayerController::StaticClass();
+}
+
+void AAstrawildGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+    Super::InitGame(MapName, Options, ErrorMessage);
+
+    // LCP-6: the LAN host travel URL carries "autoload" so the rehosted listen
+    // world continues from the save written before the ServerTravel (the H-3
+    // "continue game" machinery — normally off for PIE iteration).
+    if (UGameplayStatics::HasOption(Options, TEXT("autoload")))
+    {
+        bAutoLoadLatestOnBeginPlay = true;
+        UE_LOG(LogAstrawildNetwork, Log, TEXT("LCP-6: autoload requested via travel options."));
+    }
 }
 
 void AAstrawildGameMode::BeginPlay()

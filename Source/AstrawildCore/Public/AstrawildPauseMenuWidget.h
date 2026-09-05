@@ -70,6 +70,23 @@ private:
     /** DP-4: cycle one loadout slot to its next unlocked, unbound skill. */
     void CycleSkillSlot(int32 SlotIndex);
 
+    // --- LCP-6 handlers ---
+
+    UFUNCTION()
+    void HandleLanHostClicked();
+
+    UFUNCTION()
+    void HandleLanFindJoinClicked();
+
+    UFUNCTION()
+    void HandleLanDirectConnectClicked();
+
+    /** LCP-6: session state line (found games / errors / mode). */
+    void RefreshLanStatus();
+
+    /** LCP-6: the owning game instance's LAN session subsystem. */
+    class UAstrawildLANSessionSubsystem* GetLanSubsystem() const;
+
     /** DP-4: rebuild the slot button labels from the live loadout state. */
     void RefreshSkillSlotLabels();
 
@@ -102,4 +119,24 @@ private:
     /** DP-4: the labels inside the slot buttons (refreshed on every cycle). */
     UPROPERTY()
     TArray<TObjectPtr<UTextBlock>> SkillSlotLabels;
+
+    // --- LCP-6: LAN CO-OP panel (host / find + join / direct connect) ---
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> LanTitleText;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> LanStatusText;
+
+    UPROPERTY()
+    TObjectPtr<UButton> LanHostButton;
+
+    UPROPERTY()
+    TObjectPtr<UButton> LanFindJoinButton;
+
+    UPROPERTY()
+    TObjectPtr<UButton> LanDirectConnectButton;
+
+    UPROPERTY()
+    TObjectPtr<class UEditableTextBox> LanAddressBox;
 };
