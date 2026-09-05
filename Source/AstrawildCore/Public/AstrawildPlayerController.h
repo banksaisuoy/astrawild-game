@@ -14,6 +14,7 @@ class UAstrawildResearchScreenWidget;
 class UAstrawildShopWidget;
 class UAstrawildDialogueWidget;
 class UAstrawildDialogueComponent;
+class UAstrawildJournalScreenWidget;
 
 /**
  * ASTRAWILD player controller: hosts the quest component (survives respawn) and
@@ -176,6 +177,19 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsPauseMenuOpen() const;
 
+    // --- PCR: Field Journal / (Roster + Map arrive in PCR-2/PCR-3) ---
+
+    /** PCR-1 (PG-1): Field Journal screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildJournalScreenWidget> JournalScreenClass;
+
+    /** PCR-1: toggle the Field Journal (bestiary) screen — key P. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleJournalScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsJournalOpen() const;
+
     /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsAnyScreenOpen() const;
@@ -204,4 +218,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildPauseMenuWidget> PauseMenuWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildJournalScreenWidget> JournalScreen;
 };

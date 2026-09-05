@@ -775,6 +775,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     DeployRobotAction = MakeRuntimeAction(TEXT("AWD_DeployRobot"), static_cast<uint8>(EInputActionValueType::Boolean));
     InventoryAction = MakeRuntimeAction(TEXT("AWD_Inventory"), static_cast<uint8>(EInputActionValueType::Boolean));
     ResearchAction = MakeRuntimeAction(TEXT("AWD_Research"), static_cast<uint8>(EInputActionValueType::Boolean));
+    JournalAction = MakeRuntimeAction(TEXT("AWD_Journal"), static_cast<uint8>(EInputActionValueType::Boolean));
     PauseAction = MakeRuntimeAction(TEXT("AWD_Pause"), static_cast<uint8>(EInputActionValueType::Boolean));
 
     RuntimeMappingContext = NewObject<UInputMappingContext>(this, TEXT("AWD_DefaultIMC"));
@@ -846,6 +847,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(DeployRobotAction, EKeys::J);
     Context->MapKey(InventoryAction, EKeys::Tab);
     Context->MapKey(ResearchAction, EKeys::K);
+    Context->MapKey(JournalAction, EKeys::P);
     Context->MapKey(PauseAction, EKeys::Escape);
     // Batch 8 — skiff descend: CTRL held (SPACE climbs through JumpAction).
     DescendAction = MakeRuntimeAction(TEXT("AWD_Descend"), static_cast<uint8>(EInputActionValueType::Boolean));
@@ -1075,6 +1077,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (ResearchAction)
     {
         EnhancedInput->BindAction(ResearchAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleResearchScreenInput);
+    }
+    if (JournalAction)
+    {
+        EnhancedInput->BindAction(JournalAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleJournalScreenInput);
     }
     if (PauseAction)
     {
@@ -2594,6 +2600,14 @@ void AAstrawildPlayerCharacter::ToggleResearchScreenInput(const FInputActionValu
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
     {
         PC->ToggleResearchScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleJournalScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleJournalScreen();
     }
 }
 

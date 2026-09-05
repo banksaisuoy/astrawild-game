@@ -1,7 +1,7 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-09-03** (final-audit sync — 28 actions incl. LeftCtrl skiff Descend; screens close with their advertised keys; crafting stations open the crafting screen on E)
+**Date: 2026-09-03** (PCR-1 sync — 29 actions incl. AWD_Journal Field Journal screen on P; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,11 +11,10 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (28 actions)
+## 1. Complete Keybinding Table (29 actions)
 
-`BuildRuntimeInputDefaults` creates **26 runtime actions** (`MakeRuntimeAction` count incl.
-Descend) and the log line matches ("28 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
-inputs listed separately).
+`BuildRuntimeInputDefaults` creates **29 runtime actions** (`MakeRuntimeAction` count incl.
+Descend). Key count = physical keyboard keys (mouse inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
 |---|---|---|---|---|---|
@@ -40,6 +39,7 @@ inputs listed separately).
 | **J** | Deploy Robot (`AWD_DeployRobot`) | Started | `DeployRobot` | **Robotics (final run):** consumes `Item_UtilityRobot` → mans the nearest unmanned work site (flat rate, power-gated) | |
 | **TAB** | Inventory (`AWD_Inventory`) | Started | `ToggleInventoryScreenInput` | **UI (final run):** pack screen — stacks/weight/6-slot loadout, Use/Equip buttons | Closes other screens |
 | **K** | Research (`AWD_Research`) | Started | `ToggleResearchScreenInput` | **UI (final run):** research tree screen — costs/prereqs/unlock buttons | Also opens from the Research Desk [E] |
+| **P** | Field Journal (`AWD_Journal`) | Started | `ToggleJournalScreenInput` | **UI (PCR-1):** Field Journal bestiary screen — every species' scan/food/habitat/weakness knowledge, observation %, encounter count, collection totals | Undiscovered species read "???" (the collection pull); gamepad reaches it via the pause-menu button |
 | **Escape** | Pause (`AWD_Pause`) | Started | `TogglePauseMenuInput` | **UI (final run):** pause menu — Resume / Save Now / Quit To Desktop (world paused) | Also on gamepad Start |
 | **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema v3) | Server/authority only |
 | **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world (work sites, battery, drones, robots included) | Server/authority only |

@@ -266,3 +266,9 @@ Expected: 119 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 118 | ASTRAWILD.LCP6.BeaconProtocol | LCP-6: the discovery beacon protocol — encode/decode round-trip (port + player count), every malformed input fails CLOSED (wrong magic, truncated, extra fields, version mismatch, zero/oversize port, zero/over-cap players, empty garbage — a foreign or hostile datagram never reaches the session list), and the protocol constants pin the personal-LAN scope (beacon port 45861, game port 7777, max 4 players) |
 | 119 | ASTRAWILD.LCP6.AddressParsing | LCP-6: direct-connect address parsing (the PART 6 fallback) — host[:port] with default port 7777, whitespace trimming, and the fail-closed set (empty, whitespace-only, leading/trailing colon, zero/oversize port); session identity equality (host+port, insensitive to live player count) |
+
+## PCR Product Completion Run contracts (120+, landed in the PCR batches)
+
+| # | Test | Covers |
+|---|------|--------|
+| 120 | ASTRAWILD.PCR1.JournalScreen | PCR-1 (PG-1): Field Journal (bestiary) screen — the pure knowledge-classification rules the screen renders (fresh entry Unknown; any progress/encounter/scan reveals as Observed; all four knowledge flags = Studied, the capture-bonus state), and the surface wiring reflection contract (controller ToggleJournalScreen/IsJournalOpen, character JournalAction, pause-menu JournalButton, JournalSubsystem GetEntry/GetAllEntries — the API that previously had ZERO UI consumers) |

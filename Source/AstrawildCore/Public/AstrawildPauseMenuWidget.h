@@ -53,6 +53,10 @@ private:
     UFUNCTION()
     void HandleSaveClicked();
 
+    /** PCR-1: open the Field Journal (bestiary) — the gamepad-reachable path (P on KB/M). */
+    UFUNCTION()
+    void HandleJournalClicked();
+
     UFUNCTION()
     void HandleQuitClicked();
 
@@ -104,6 +108,10 @@ private:
 
     UPROPERTY()
     TObjectPtr<UButton> SaveButton;
+
+    /** PCR-1: Field Journal entry point for gamepad players (keyboard: P). */
+    UPROPERTY()
+    TObjectPtr<UButton> JournalButton;
 
     UPROPERTY()
     TObjectPtr<UButton> QuitButton;

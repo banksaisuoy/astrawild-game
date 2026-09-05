@@ -271,6 +271,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> ResearchAction;
 
+    /** PCR-1: toggle the Field Journal (bestiary) screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> JournalAction;
+
     /** Toggle the pause menu (loop stage QUIT). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> PauseAction;
@@ -448,6 +452,7 @@ protected:
     void DeployRobot(const FInputActionValue& Value);
     void ToggleInventoryScreenInput(const FInputActionValue& Value);
     void ToggleResearchScreenInput(const FInputActionValue& Value);
+    void ToggleJournalScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
 
     // Batch 8 — skiff flight inputs (routed to the piloted skiff).

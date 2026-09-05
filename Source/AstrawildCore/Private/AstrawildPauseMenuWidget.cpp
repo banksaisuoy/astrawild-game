@@ -93,6 +93,10 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     SaveButton = MakeMenuButton(TEXT("PauseSave"), TEXT("Save Now"), FLinearColor(0.2f, 0.3f, 0.5f, 1.0f));
     SaveButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleSaveClicked);
 
+    // PCR-1: the Field Journal entry (gamepad-reachable; P on keyboard).
+    JournalButton = MakeMenuButton(TEXT("PauseJournal"), TEXT("Field Journal [P]"), FLinearColor(0.28f, 0.45f, 0.3f, 1.0f));
+    JournalButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleJournalClicked);
+
     QuitButton = MakeMenuButton(TEXT("PauseQuit"), TEXT("Quit To Desktop"), FLinearColor(0.5f, 0.2f, 0.16f, 1.0f));
     QuitButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleQuitClicked);
 
@@ -154,6 +158,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     {
         BtnSlot2->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         BtnSlot2->SetPadding(FMargin(0.0f, 6.0f));
+    }
+    if (UVerticalBoxSlot* JournalSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(JournalButton)))
+    {
+        JournalSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        JournalSlot->SetPadding(FMargin(0.0f, 6.0f));
     }
     if (UVerticalBoxSlot* LoadoutTitleSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SkillLoadoutText)))
     {
@@ -225,6 +234,22 @@ void UAstrawildPauseMenuWidget::HandleResumeClicked()
     if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
     {
         PC->TogglePauseMenu();
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleJournalClicked()
+{
+    // PCR-1: close the pause menu first (it holds SetPause + UIOnly input),
+    // then hand the screen to the journal — TogglePauseMenu closes the
+    // journal as a sibling only when the journal is ALREADY open, so the
+    // order here is safe for both first-open and reopen cases.
+    if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+    {
+        if (PC->IsPauseMenuOpen())
+        {
+            PC->TogglePauseMenu();
+        }
+        PC->ToggleJournalScreen();
     }
 }
 

@@ -10,6 +10,7 @@
 #include "AstrawildHudWidget.h"
 #include "AstrawildInventoryScreenWidget.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildJournalScreenWidget.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
@@ -239,6 +240,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleCraftingScreen();
     }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
@@ -301,6 +306,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     {
         ToggleCraftingScreen();
     }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
@@ -362,6 +371,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     if (IsResearchOpen())
     {
         ToggleResearchScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -428,6 +441,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     {
         ToggleCraftingScreen();
     }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
 
     if (bOpen)
     {
@@ -468,9 +485,77 @@ bool AAstrawildPlayerController::IsPauseMenuOpen() const
     return PauseMenuWidget && PauseMenuWidget->IsInViewport();
 }
 
+// --- PCR-1 (PG-1): the Field Journal (bestiary) screen ---
+
+void AAstrawildPlayerController::ToggleJournalScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsJournalOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!JournalScreen)
+        {
+            const TSubclassOf<UAstrawildJournalScreenWidget> WidgetClass = JournalScreenClass
+                ? JournalScreenClass
+                : TSubclassOf<UAstrawildJournalScreenWidget>(UAstrawildJournalScreenWidget::StaticClass());
+            JournalScreen = CreateWidget<UAstrawildJournalScreenWidget>(this, WidgetClass);
+        }
+        if (JournalScreen)
+        {
+            JournalScreen->RefreshJournal();
+            JournalScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so P/ESC close without a mouse click.
+            JournalScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (JournalScreen)
+        {
+            JournalScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsJournalOpen() const
+{
+    return JournalScreen && JournalScreen->IsInViewport();
+}
+
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen();
 }
 
 

@@ -57,6 +57,9 @@
 #include "AstrawildVfxActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "AstrawildContentLibrary.h"
+#include "AstrawildJournalScreenWidget.h"
+#include "AstrawildJournalSubsystem.h"
+#include "AstrawildPauseMenuWidget.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -5284,6 +5287,73 @@ bool FAstrawildLCP6AddressParsingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Same host+port = same session"), A == B);
     B.HostPort = 9000;
     TestFalse(TEXT("Different port = different session"), A == B);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-1 (PG-1): Field Journal (bestiary) screen contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR1JournalScreenTest,
+    "ASTRAWILD.PCR1.JournalScreen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR1JournalScreenTest::RunTest(const FString& Parameters)
+{
+    using EKnowledgeState = UAstrawildJournalScreenWidget::EKnowledgeState;
+
+    // 1) Knowledge classification — the pure rules the screen renders
+    // (pinned world-free so a changed rule fails before any engine run):
+    FAstrawildJournalEntry Unknown;
+    Unknown.EchoDefinitionId = TEXT("Echo_UnknownSpecies");
+    TestTrue(TEXT("Fresh entry is Unknown"), UAstrawildJournalScreenWidget::ClassifyKnowledgeState(Unknown) == EKnowledgeState::Unknown);
+    TestFalse(TEXT("Fresh entry is not discovered"), UAstrawildJournalScreenWidget::IsEntryDiscovered(Unknown));
+
+    FAstrawildJournalEntry ProgressOnly = Unknown;
+    ProgressOnly.EchoDefinitionId = TEXT("Echo_ProgressSpecies");
+    ProgressOnly.ObservationProgress = 41.0f;
+    TestTrue(TEXT("Partial observation is Observed (revealed)"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(ProgressOnly) == EKnowledgeState::Observed);
+    TestTrue(TEXT("Partial observation is discovered"), UAstrawildJournalScreenWidget::IsEntryDiscovered(ProgressOnly));
+
+    FAstrawildJournalEntry EncountersOnly = Unknown;
+    EncountersOnly.TimesEncountered = 3;
+    TestTrue(TEXT("Encounter count alone reveals the species"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(EncountersOnly) == EKnowledgeState::Observed);
+
+    FAstrawildJournalEntry FullyStudied = ProgressOnly;
+    FullyStudied.bScanned = true;
+    FullyStudied.bFoodDiscovered = true;
+    FullyStudied.bHabitatDiscovered = true;
+    FullyStudied.bWeaknessDiscovered = true;
+    TestTrue(TEXT("All four knowledge flags = Studied (capture-bonus state)"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(FullyStudied) == EKnowledgeState::Studied);
+
+    FAstrawildJournalEntry ScannedOnly = Unknown;
+    ScannedOnly.bScanned = true;
+    TestTrue(TEXT("Scan alone reveals, but is not Studied"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(ScannedOnly) == EKnowledgeState::Observed);
+    TestTrue(TEXT("Scanned entry is discovered"), UAstrawildJournalScreenWidget::IsEntryDiscovered(ScannedOnly));
+
+    // 2) Surface wiring — the screen + its entry points exist by name
+    // (reflection contract: a dropped/renamed toggle or button fails here):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleJournalScreen"), PCClass->FindFunctionByName(TEXT("ToggleJournalScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsJournalOpen"), PCClass->FindFunctionByName(TEXT("IsJournalOpen")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the journal input action"),
+        CharClass->FindPropertyByName(TEXT("JournalAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the journal button"),
+        PauseClass->FindPropertyByName(TEXT("JournalButton")) != nullptr);
+
+    // 3) The journal data source itself (the surface's whole reason to exist):
+    //    JournalSubsystem exposes the entry API the screen consumes.
+    UClass* JournalClass = UAstrawildJournalSubsystem::StaticClass();
+    TestTrue(TEXT("JournalSubsystem exposes GetEntry"), JournalClass->FindFunctionByName(TEXT("GetEntry")) != nullptr);
+    TestTrue(TEXT("JournalSubsystem exposes GetAllEntries"), JournalClass->FindFunctionByName(TEXT("GetAllEntries")) != nullptr);
     return true;
 }
 
