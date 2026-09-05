@@ -61,6 +61,7 @@
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildPauseMenuWidget.h"
 #include "AstrawildRosterScreenWidget.h"
+#include "AstrawildMapScreenWidget.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -5437,6 +5438,61 @@ bool FAstrawildPCR2RosterScreenTest::RunTest(const FString& Parameters)
         RowClass->FindPropertyByName(TEXT("bBenched")) != nullptr);
     TestFalse(TEXT("Legacy default is unbenched (pre-PCR saves load unchanged)"),
         FAstrawildEchoInstanceV2().bBenched);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-3 (PG-3): World Map screen contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR3MapScreenTest,
+    "ASTRAWILD.PCR3.MapScreen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR3MapScreenTest::RunTest(const FString& Parameters)
+{
+    // 1) The world→map projection (pure math — pinned world-free):
+    //    uniform scale, centered letterbox, corners map to corners.
+    const FBox2D Bounds(FVector2D(0.0f, 0.0f), FVector2D(320000.0f, 240000.0f)); // 3.2km x 2.4km
+    const FVector2D MapSize(720.0f, 520.0f);
+
+    const FVector2D MinCorner = UAstrawildMapScreenWidget::ProjectWorldToMap(Bounds.Min, Bounds, MapSize);
+    const FVector2D MaxCorner = UAstrawildMapScreenWidget::ProjectWorldToMap(Bounds.Max, Bounds, MapSize);
+    TestEqual(TEXT("World min maps to map min"), MinCorner, FVector2D(0.0f, 0.0f));
+    TestEqual(TEXT("World max maps to map max"), MaxCorner, MapSize);
+
+    const FVector2D Center = UAstrawildMapScreenWidget::ProjectWorldToMap(Bounds.GetCenter(), Bounds, MapSize);
+    TestEqual(TEXT("World center maps to map center"), Center, MapSize * 0.5f);
+
+    // Uniform scale: the 4:3 world must stay 4:3 on the map (never stretched).
+    const FVector2D Quarter = UAstrawildMapScreenWidget::ProjectWorldToMap(FVector2D(80000.0f, 60000.0f), Bounds, MapSize);
+    TestEqual(TEXT("Quarter point maps proportionally"), Quarter, MapSize * 0.25f);
+
+    // Degenerate bounds never divide by zero (fail-closed to the corner).
+    const FBox2D Empty(FVector2D::ZeroVector, FVector2D::ZeroVector);
+    TestEqual(TEXT("Degenerate bounds project to zero"),
+        UAstrawildMapScreenWidget::ProjectWorldToMap(FVector2D(100.0f, 100.0f), Empty, MapSize), FVector2D::ZeroVector);
+
+    // 2) Wiring (reflection contract — dropped/renamed surfaces fail here):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleMapScreen"), PCClass->FindFunctionByName(TEXT("ToggleMapScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsMapOpen"), PCClass->FindFunctionByName(TEXT("IsMapOpen")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the map input action"),
+        CharClass->FindPropertyByName(TEXT("MapAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the map button"),
+        PauseClass->FindPropertyByName(TEXT("MapButton")) != nullptr);
+
+    // 3) The map's data sources (read-only snapshot surfaces):
+    UClass* EventClass = UAstrawildWorldEventSubsystem::StaticClass();
+    TestTrue(TEXT("WorldEventSubsystem exposes GetActiveRuntimeEvents for map pins"),
+        EventClass->FindFunctionByName(TEXT("GetActiveRuntimeEvents")) != nullptr);
+    UClass* POIClass = UAstrawildPOISubsystem::StaticClass();
+    TestTrue(TEXT("POISubsystem exposes IsPOIDiscovered (undiscovered POIs stay hidden)"),
+        POIClass->FindFunctionByName(TEXT("IsPOIDiscovered")) != nullptr);
     return true;
 }
 

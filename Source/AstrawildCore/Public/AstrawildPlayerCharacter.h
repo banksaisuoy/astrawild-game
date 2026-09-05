@@ -279,6 +279,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> RosterAction;
 
+    /** PCR-3: toggle the world map screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> MapAction;
+
     /** Toggle the pause menu (loop stage QUIT). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> PauseAction;
@@ -458,6 +462,7 @@ protected:
     void ToggleResearchScreenInput(const FInputActionValue& Value);
     void ToggleJournalScreenInput(const FInputActionValue& Value);
     void ToggleRosterScreenInput(const FInputActionValue& Value);
+    void ToggleMapScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
 
     // Batch 8 — skiff flight inputs (routed to the piloted skiff).

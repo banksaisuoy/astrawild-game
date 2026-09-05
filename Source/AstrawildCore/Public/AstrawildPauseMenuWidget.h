@@ -61,6 +61,10 @@ private:
     UFUNCTION()
     void HandleRosterClicked();
 
+    /** PCR-3: open the world map — the gamepad-reachable path (M on KB/M). */
+    UFUNCTION()
+    void HandleMapClicked();
+
     UFUNCTION()
     void HandleQuitClicked();
 
@@ -120,6 +124,10 @@ private:
     /** PCR-2: Echo Roster entry point for gamepad players (keyboard: L). */
     UPROPERTY()
     TObjectPtr<UButton> RosterButton;
+
+    /** PCR-3: World Map entry point for gamepad players (keyboard: M). */
+    UPROPERTY()
+    TObjectPtr<UButton> MapButton;
 
     UPROPERTY()
     TObjectPtr<UButton> QuitButton;

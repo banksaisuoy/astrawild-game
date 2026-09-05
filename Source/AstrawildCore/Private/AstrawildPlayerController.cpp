@@ -12,6 +12,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalScreenWidget.h"
 #include "AstrawildRosterScreenWidget.h"
+#include "AstrawildMapScreenWidget.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
@@ -255,6 +256,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleRosterScreen();
     }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
 
     if (bOpen)
     {
@@ -324,6 +329,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     if (IsRosterOpen())
     {
         ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
     }
 
     if (bOpen)
@@ -395,6 +404,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     {
         ToggleRosterScreen();
     }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
 
     if (bOpen)
     {
@@ -463,6 +476,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsRosterOpen())
     {
         ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
     }
 
     if (bOpen)
@@ -533,6 +550,10 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     if (IsRosterOpen())
     {
         ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -605,6 +626,10 @@ void AAstrawildPlayerController::ToggleRosterScreen()
     if (IsJournalOpen())
     {
         ToggleJournalScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -693,6 +718,82 @@ void AAstrawildPlayerController::ServerSetEchoBenched_Implementation(const FGuid
     }
 }
 
+// --- PCR-3 (PG-3): the world map screen ---
+
+void AAstrawildPlayerController::ToggleMapScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsMapOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!MapScreen)
+        {
+            const TSubclassOf<UAstrawildMapScreenWidget> WidgetClass = MapScreenClass
+                ? MapScreenClass
+                : TSubclassOf<UAstrawildMapScreenWidget>(UAstrawildMapScreenWidget::StaticClass());
+            MapScreen = CreateWidget<UAstrawildMapScreenWidget>(this, WidgetClass);
+        }
+        if (MapScreen)
+        {
+            MapScreen->RefreshMap();
+            MapScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so M/ESC close without a mouse click.
+            MapScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (MapScreen)
+        {
+            MapScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsMapOpen() const
+{
+    return MapScreen && MapScreen->IsInViewport();
+}
+
 void AAstrawildPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -703,7 +804,7 @@ void AAstrawildPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen();
 }
 
 

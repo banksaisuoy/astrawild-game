@@ -16,6 +16,7 @@ class UAstrawildDialogueWidget;
 class UAstrawildDialogueComponent;
 class UAstrawildJournalScreenWidget;
 class UAstrawildRosterScreenWidget;
+class UAstrawildMapScreenWidget;
 
 #include "AstrawildTypes.h"
 
@@ -180,7 +181,7 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsPauseMenuOpen() const;
 
-    // --- PCR: Field Journal / (Map arrives in PCR-3) ---
+    // --- PCR: Field Journal / Echo Roster / World Map screens ---
 
     /** PCR-1 (PG-1): Field Journal screen class override point (defaults to the pure-C++ widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
@@ -228,6 +229,17 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerSetEchoBenched(const FGuid& InstanceId, bool bBenched);
 
+    /** PCR-3 (PG-3): World Map screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildMapScreenWidget> MapScreenClass;
+
+    /** PCR-3: toggle the world map screen — key M. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleMapScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsMapOpen() const;
+
     /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsAnyScreenOpen() const;
@@ -265,4 +277,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildRosterScreenWidget> RosterScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildMapScreenWidget> MapScreen;
 };

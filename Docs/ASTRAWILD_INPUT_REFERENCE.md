@@ -1,7 +1,7 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-09-03** (PCR-2 sync — 30 actions incl. AWD_Journal Field Journal on P + AWD_Roster Echo Roster on L; screens close with their advertised keys; crafting stations open the crafting screen on E)
+**Date: 2026-09-03** (PCR-3 sync — 31 actions incl. AWD_Journal Field Journal on P + AWD_Roster Echo Roster on L + AWD_Map World Map on M; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,9 +11,9 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (30 actions)
+## 1. Complete Keybinding Table (31 actions)
 
-`BuildRuntimeInputDefaults` creates **30 runtime actions** (`MakeRuntimeAction` count incl.
+`BuildRuntimeInputDefaults` creates **31 runtime actions** (`MakeRuntimeAction` count incl.
 Descend). Key count = physical keyboard keys (mouse inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
@@ -41,6 +41,7 @@ Descend). Key count = physical keyboard keys (mouse inputs listed separately).
 | **K** | Research (`AWD_Research`) | Started | `ToggleResearchScreenInput` | **UI (final run):** research tree screen — costs/prereqs/unlock buttons | Also opens from the Research Desk [E] |
 | **P** | Field Journal (`AWD_Journal`) | Started | `ToggleJournalScreenInput` | **UI (PCR-1):** Field Journal bestiary screen — every species' scan/food/habitat/weakness knowledge, observation %, encounter count, collection totals | Undiscovered species read "???" (the collection pull); gamepad reaches it via the pause-menu button |
 | **L** | Echo Roster (`AWD_Roster`) | Started | `ToggleRosterScreenInput` | **UI (PCR-2):** captured-Echo roster — identity/level/bond/top-work per Echo + Bench/Deploy ring management (server-authoritative; replicated mirror for LAN clients) | Ring = MaxPartySize (3); gamepad reaches it via the pause-menu button |
+| **M** | World Map (`AWD_Map`) | Started | `ToggleMapScreenInput` | **UI (PCR-3):** world map — 12-zone grid (name/threat/hazard tint), discovered-POI dots, villages, dungeons, active world-event pins, player marker, active-objective line + quest-target POI highlight | Read-only snapshot (reopen to refresh); undiscovered POIs stay hidden; gamepad reaches it via the pause-menu button |
 | **Escape** | Pause (`AWD_Pause`) | Started | `TogglePauseMenuInput` | **UI (final run):** pause menu — Resume / Save Now / Quit To Desktop (world paused) | Also on gamepad Start |
 | **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema v3) | Server/authority only |
 | **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world (work sites, battery, drones, robots included) | Server/authority only |
