@@ -1,5 +1,9 @@
 #include "AstrawildQuestComponent.h"
 
+#include "AstrawildPlayerController.h" // LCP-5: completion toast
+
+#include "Net/UnrealNetwork.h" // LCP-5: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -19,6 +23,9 @@ UAstrawildQuestComponent::UAstrawildQuestComponent()
     // (early-outs instantly when no such objective is active — see TickComponent).
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickInterval = 1.0f;
+
+    // LCP-5: the owning client's HUD tracker reads this component — replicate.
+    SetIsReplicatedByDefault(true);
 }
 
 void UAstrawildQuestComponent::BeginPlay()
@@ -354,6 +361,13 @@ void UAstrawildQuestComponent::CompleteQuest(const FName QuestId)
     OnQuestStateChanged.Broadcast(QuestId, true);
     UE_LOG(LogAstrawild, Log, TEXT("Quest completed: %s."), *QuestId.ToString());
 
+    // LCP-5 (PART 18 feedback): quest completion toasts reach the owning
+    // player wherever their screen lives (host toast / remote ClientNotify).
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetOwner()))
+    {
+        PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Quest complete: %s"), *QuestId.ToString())));
+    }
+
     // Chain the next quest (directive §25 quest chain).
     if (Definition && !Definition->NextQuestId.IsNone())
     {
@@ -575,4 +589,13 @@ void UAstrawildQuestComponent::ImportFromSave(const TArray<FAstrawildQuestSaveDa
     {
         StartQuest(StartingQuestId);
     }
+}
+
+void UAstrawildQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    // LCP-5: read-only mirror for the owning client's HUD/screens.
+    DOREPLIFETIME(UAstrawildQuestComponent, QuestStates);
+    DOREPLIFETIME(UAstrawildQuestComponent, ActiveQuestId);
+    DOREPLIFETIME(UAstrawildQuestComponent, CompletedQuestIds);
 }

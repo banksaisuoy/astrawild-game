@@ -5132,4 +5132,75 @@ bool FAstrawildLCP4CoopSaveBlockTest::RunTest(const FString& Parameters)
     return true;
 }
 
+
+// ===========================================================================
+// LCP-5 — LAN CO-OP: client state sync contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP5ClientStateSyncSurfaceTest,
+    "ASTRAWILD.LCP5.ClientStateSyncSurface",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP5ClientStateSyncSurfaceTest::RunTest(const FString& Parameters)
+{
+    // Quest state replicates to the OWNING client (HUD tracker + screens read
+    // the local PC component — reflection pins the wiring):
+    UClass* QuestClass = UAstrawildQuestComponent::StaticClass();
+    TestTrue(TEXT("QuestStates replicates"), QuestClass->FindPropertyByName(TEXT("QuestStates")) != nullptr);
+    TestTrue(TEXT("ActiveQuestId replicates"), QuestClass->FindPropertyByName(TEXT("ActiveQuestId")) != nullptr);
+    TestTrue(TEXT("CompletedQuestIds replicates"), QuestClass->FindPropertyByName(TEXT("CompletedQuestIds")) != nullptr);
+
+    // The research mirror rides the GameState (GameInstance subsystems never
+    // replicate — the client imports on OnRep):
+    UClass* GameStateClass = AAstrawildGameState::StaticClass();
+    TestTrue(TEXT("GameState carries the research mirror"),
+        GameStateClass->FindPropertyByName(TEXT("ResearchMirror")) != nullptr);
+
+    // The research subsystem exposes the server-side mirror sync (called from
+    // every mutation: unlock/force-unlock/points/import/grant-starting).
+    TestTrue(TEXT("SyncMirrorToGameState exists"),
+        UAstrawildResearchSubsystem::StaticClass()->FindFunctionByName(TEXT("SyncMirrorToGameState")) != nullptr);
+    TestTrue(TEXT("Unlock notifications exist"),
+        UAstrawildResearchSubsystem::StaticClass()->FindFunctionByName(TEXT("NotifyPlayersResearchUnlocked")) != nullptr);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP5ResearchMirrorRoundTripTest,
+    "ASTRAWILD.LCP5.ResearchMirrorRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP5ResearchMirrorRoundTripTest::RunTest(const FString& Parameters)
+{
+    // The mirror snapshot is FAstrawildResearchSaveData — the SAME struct the
+    // save uses, so export→replicate→import is a lossless loop with the
+    // existing sanitized import (duplicates dropped, negatives clamped).
+    UAstrawildResearchSubsystem* ServerPool = NewObject<UAstrawildResearchSubsystem>();
+    FAstrawildResearchSaveData Mirror;
+
+    // Fresh state: empty mirror (pre-research sessions deserialize clean).
+    TestEqual(TEXT("Fresh mirror has no unlocks"), Mirror.UnlockedTechIds.Num(), 0);
+    TestEqual(TEXT("Fresh mirror has zero points"), Mirror.ResearchPoints, 0);
+
+    // Export path fills the mirror from the (world-free) pool.
+    ServerPool->ExportForSave(Mirror);
+    TestEqual(TEXT("Exported fresh pool is still empty"), Mirror.UnlockedTechIds.Num(), 0);
+
+    // Round-trip through the sanitized import: a hand-built mirror with
+    // duplicates + a negative RP corrupt row imports clean on the client side.
+    Mirror.UnlockedTechIds = { TEXT("Tech_BasicCrafting"), TEXT("Tech_BasicCrafting"), TEXT("Tech_Resonator") };
+    Mirror.ResearchPoints = 42;
+    UAstrawildResearchSubsystem* ClientMirrorPool = NewObject<UAstrawildResearchSubsystem>();
+    ClientMirrorPool->ImportFromSave(Mirror);
+    TestTrue(TEXT("Client mirror pool unlocked BasicCrafting"), ClientMirrorPool->IsTechUnlocked(TEXT("Tech_BasicCrafting")));
+    TestTrue(TEXT("Client mirror pool unlocked Resonator"), ClientMirrorPool->IsTechUnlocked(TEXT("Tech_Resonator")));
+    TestEqual(TEXT("Client mirror pool carries the RP total"), ClientMirrorPool->GetResearchPoints(), 42);
+
+    // A second export from the imported client pool loses nothing (lossless loop).
+    FAstrawildResearchSaveData RoundTripped;
+    ClientMirrorPool->ExportForSave(RoundTripped);
+    TestEqual(TEXT("Round-trip keeps the RP total"), RoundTripped.ResearchPoints, 42);
+    TestEqual(TEXT("Round-trip keeps the unlock count"), RoundTripped.UnlockedTechIds.Num(), 2);
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

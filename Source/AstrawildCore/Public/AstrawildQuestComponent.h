@@ -36,6 +36,7 @@ public:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-5
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Quest")
     bool StartQuest(FName QuestId);
@@ -91,13 +92,19 @@ public:
     void CompleteQuest(FName QuestId);
 
 private:
-    UPROPERTY()
+    /**
+     * LCP-5: quest state replicates to the OWNING client (the component lives
+     * on the PlayerController, which replicates to its connection) so the HUD
+     * tracker + screens read live progression. Mutations stay server-side —
+     * the event bus only ticks there; clients receive data, never authority.
+     */
+    UPROPERTY(Replicated)
     TArray<FAstrawildQuestSaveData> QuestStates;
 
-    UPROPERTY()
+    UPROPERTY(Replicated)
     FName ActiveQuestId = NAME_None;
 
-    UPROPERTY()
+    UPROPERTY(Replicated)
     TArray<FName> CompletedQuestIds;
 
     UFUNCTION()

@@ -46,6 +46,21 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World", Replicated)
     bool bWorldSeedSynced = false;
 
+    // --- LCP-5: LAN co-op shared-state mirrors ---
+
+    /**
+     * LCP-5: replicated snapshot of the HOST-authoritative research pool (RP +
+     * unlocked tech ids). GameInstance subsystems do NOT replicate — clients
+     * import this into their local research subsystem on OnRep so every screen
+     * reads the shared truth. Written server-side after each research mutation.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Research", ReplicatedUsing=OnRep_ResearchMirror)
+    FAstrawildResearchSaveData ResearchMirror;
+
+    /** LCP-5: client-side import of the replicated research snapshot (local subsystem mirror). */
+    UFUNCTION()
+    void OnRep_ResearchMirror();
+
     // --- Final Run (FR-6): Act 3 ending state ---
 
     /** One-way ending verdict (save schema v5). None = story in play. */

@@ -1,5 +1,8 @@
 #include "AstrawildResearchSubsystem.h"
 
+#include "AstrawildPlayerController.h" // LCP-5: unlock notifications
+#include "AstrawildGameState.h" // LCP-5: mirror
+
 #include "AstrawildDataAssets.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
@@ -27,6 +30,7 @@ void UAstrawildResearchSubsystem::AddResearchPoints(const int32 Amount)
     }
     ResearchPoints += Amount;
     OnResearchPointsChanged.Broadcast(ResearchPoints);
+    SyncMirrorToGameState(); // LCP-5: remote client screens stay current
     UE_LOG(LogAstrawildEconomy, Log, TEXT("Research points +%d (total %d)."), Amount, ResearchPoints);
 }
 
@@ -85,6 +89,8 @@ bool UAstrawildResearchSubsystem::TryUnlockTech(const FName TechId)
     UnlockedTechIds.Add(TechId);
     OnTechUnlocked.Broadcast(TechId, Tech);
     OnResearchPointsChanged.Broadcast(ResearchPoints);
+    SyncMirrorToGameState();      // LCP-5: remote client mirrors
+    NotifyPlayersResearchUnlocked(TechId); // LCP-5: every screen hears it
 
     // Publish event for quests (directive §25 event-driven progression).
     if (UWorld* World = GetWorld())
@@ -116,6 +122,8 @@ bool UAstrawildResearchSubsystem::ForceUnlockTech(const FName TechId)
     UnlockedTechIds.Add(TechId);
     OnTechUnlocked.Broadcast(TechId, Tech);
     OnResearchPointsChanged.Broadcast(ResearchPoints);
+    SyncMirrorToGameState();      // LCP-5: remote client mirrors
+    NotifyPlayersResearchUnlocked(TechId); // LCP-5: every screen hears it
 
     // Publish the same quest-facing event as TryUnlockTech (directive §25).
     if (UWorld* World = GetWorld())
@@ -166,6 +174,7 @@ void UAstrawildResearchSubsystem::GrantStartingTechnologies()
     {
         UE_LOG(LogAstrawildEconomy, Log, TEXT("Granted %d starting technologies (free root nodes)."), Granted);
     }
+    SyncMirrorToGameState(); // LCP-5: fresh-session mirror
 }
 
 FName UAstrawildResearchSubsystem::GetNextUnlockableTechId(int32& OutCost, FText& OutDisplayName) const
@@ -232,4 +241,38 @@ void UAstrawildResearchSubsystem::ImportFromSave(const FAstrawildResearchSaveDat
         UE_LOG(LogAstrawildEconomy, Warning, TEXT("ImportFromSave: negative research points clamped to 0 (was %d)."), InData.ResearchPoints);
     }
     OnResearchPointsChanged.Broadcast(ResearchPoints);
+    SyncMirrorToGameState(); // LCP-5: post-load mirror
+}
+
+void UAstrawildResearchSubsystem::SyncMirrorToGameState()
+{
+    // LCP-5: replicate the shared pool snapshot (host write → client mirror).
+    UWorld* World = GetWorld();
+    if (!World || World->GetNetMode() == NM_Client)
+    {
+        return; // clients import through AAstrawildGameState::OnRep_ResearchMirror
+    }
+    if (AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>())
+    {
+        ExportForSave(GameState->ResearchMirror);
+    }
+}
+
+void UAstrawildResearchSubsystem::NotifyPlayersResearchUnlocked(const FName TechId)
+{
+    // LCP-5: PART 18 feedback — research unlocks reach EVERY screen (host
+    // toast + remote clients via the ClientNotify routing).
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    const FText Message = FText::FromString(FString::Printf(TEXT("Research unlocked: %s"), *TechId.ToString()));
+    for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+    {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(*It))
+        {
+            PC->NotifyPlayer(Message);
+        }
+    }
 }

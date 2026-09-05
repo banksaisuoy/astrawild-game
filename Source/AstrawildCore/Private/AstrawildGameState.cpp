@@ -1,5 +1,7 @@
 #include "AstrawildGameState.h"
 
+#include "AstrawildResearchSubsystem.h" // LCP-5: research mirror import
+
 #include "Net/UnrealNetwork.h"
 #include "AstrawildCore.h"
 
@@ -16,6 +18,7 @@ void AAstrawildGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(AAstrawildGameState, WeatherState);
     DOREPLIFETIME(AAstrawildGameState, WorldSeed);
     DOREPLIFETIME(AAstrawildGameState, bWorldSeedSynced);
+    DOREPLIFETIME(AAstrawildGameState, ResearchMirror); // LCP-5
     DOREPLIFETIME(AAstrawildGameState, EndingState);
     DOREPLIFETIME(AAstrawildGameState, bPostGameActive);
 }
@@ -153,4 +156,23 @@ void AAstrawildGameState::OnRep_TimeOfDayMinutes()
 void AAstrawildGameState::OnRep_WeatherState()
 {
     // Hook for client-side presentation (VFX, audio). No-op by default.
+}
+
+void AAstrawildGameState::OnRep_ResearchMirror()
+{
+    // LCP-5: clients mirror the host's authoritative research pool into their
+    // LOCAL GameInstance subsystem — every read path (HUD, research screen)
+    // keeps working unchanged. Clients never mutate the authoritative pool.
+    UWorld* World = GetWorld();
+    if (!World || World->GetNetMode() != NM_Client)
+    {
+        return;
+    }
+    if (UGameInstance* GameInstance = World->GetGameInstance())
+    {
+        if (UAstrawildResearchSubsystem* Research = GameInstance->GetSubsystem<UAstrawildResearchSubsystem>())
+        {
+            Research->ImportFromSave(ResearchMirror);
+        }
+    }
 }
