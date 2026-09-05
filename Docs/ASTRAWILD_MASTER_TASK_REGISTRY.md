@@ -234,3 +234,26 @@ quest completion/boss rewards/Echo ownership/building ownership; 4-player perfor
 target only; free assets = license-verified CC0-or-clearly-permitted only; no UE5
 integration in this sandbox (Antigravity one-time final run remains the exclusive
 engine gate, now with §22).
+
+---
+
+## §K PRODUCT COMPLETION RUN (PCR — current session, user directive "FINAL PRODUCT COMPLETION RUN — DO NOT STOP AT SOURCE-COMPLETE")
+
+Directive (user, this session): the real goal is a COMPLETE, VARIED, VISUALLY
+CREDIBLE, FUN ASTRAWILD that Antigravity finishes in ONE engine pass. Documentation
+status is NOT the stop condition — audit the actual product, then close every
+remaining source-side gap with player value. Baseline audit at 4e52548 produced
+`Docs/ASTRAWILD_PRODUCT_GAP_MATRIX.md` (PG-1..PG-6; the actionable set — everything
+else audited as a verified non-gap). LCP-era freeze lifted for PCR batches only;
+canon UNCHANGED; census content counts must stay unchanged (screens/art/hunts ride
+existing content). Engine gates unchanged (AG-2..5 + §22).
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| PCR-0 | Audit + matrix | PRODUCT_GAP_MATRIX (PG-1 bestiary UI / PG-2 roster UI / PG-3 map UI / PG-4 Tier-B library / PG-5 post-game hunts / PG-6 doc-claim sync) + §K opened + MASTER_CONTROL v7.0 header | GLM | COMPLETE | docs-only batch; both validators re-ran PASS at baseline |
+| PCR-1 | PG-1 Field Journal screen | `AstrawildJournalScreenWidget` — species codex (scanned/food/habitat/weakness knowledge, observation %, encounters, capture-bonus hint, totals), key **P**, pause-menu button, HUD hint line, gamepad-reachable | GLM | PENDING | +test 120; JournalSubsystem gains a Registry-side species total + GetJournalSummary surface if needed |
+| PCR-2 | PG-2 Echo Roster screen | `AstrawildRosterScreenWidget` — per-Echo row (element/role/level/bond/abilities/work affinities + party membership toggle), key **L**, pause-menu button, co-op owner filtering | GLM | PENDING | +test 121; party membership mutation stays server-authoritative in co-op (Server RPC reuse) |
+| PCR-3 | PG-3 World Map screen | `AstrawildMapScreenWidget` — 12-zone grid (name/threat/hazard tint), discovered POIs, villages, dungeons, active world-event pulses, player marker, quest-target zone highlight, key **M** | GLM | PENDING | +test 122; pure read-only view (no map ping networking in v1) |
+| PCR-4 | PG-4 part 1 | Tier-B shared rig-kit refactor + Quadruped/Amorphous/Floating/Biped archetype generators + zone-signature species variant bakes | GLM | PENDING | ArtSourceGen batch; GLBs + manifest; no Content/ commits |
+| PCR-5 | PG-4 part 2 + PG-5 | Avian/Serpent/Insectoid/Crystalline archetypes + remaining rule members (~55 species total) + convention-path opt-in binding (definition-driven; zero engine-side code patch) + post-game hunt system (repeatable cull/capture contracts from existing item tables; village bounty surface; per-player save) | GLM | PENDING | +tests 123/124; census gates MUST stay unchanged (rewards reuse existing items) |
+| PCR-6 | Final gate | validators PASS ×2 + census equality re-run + doc-consistency sweep (test counts, hunt-claim sync, residual ledger rewrite, HANDOFF Tier-B import expectations + 3 new screens) + READINESS §P + MASTER_CONTROL v7.1 + registry §K close + FREEZE | GLM | PENDING | stop condition: PG-1..PG-6 closed or engine-side-dispositioned |

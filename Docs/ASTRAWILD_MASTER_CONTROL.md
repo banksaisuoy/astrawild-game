@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 6.1 (LAN CO-OP PACK COMPLETE: LCP-1..LCP-8 closed — READY_FOR_FINAL_BUILD re-declared with the expanded stop conditions)
+**Document Version**: 7.0 (PRODUCT COMPLETION RUN opened: PCR-0 audited the product at the LCP-8 gate — gap matrix `ASTRAWILD_PRODUCT_GAP_MATRIX.md` (PG-1..PG-6), registry §K opened, LCP-era freeze lifted for PCR batches only; canonical canon/census/engine gates unchanged)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
 **Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch: ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FCR + ASSET ACQUISITION (26a7c7b, a09e566) + DEPTH PASSES DP-1..DP-10 (981250d → 00354da) + LAN CO-OP PACK LCP-1.. (this commit onward) — all pushed)
-**Last Updated**: 2026 (LCP-1 — scope reopened by user directive: ASTRAWILD is now a PRIVATE PERSONAL 4-PLAYER LAN CO-OP GAME; see §1b + `ASTRAWILD_LAN_COOP_SPEC.md`; DP-era freeze lifted for LCP batches only)
+**Last Updated**: 2026 (PCR-0 — product audit re-opened by the user's FINAL PRODUCT COMPLETION RUN directive: documentation status is NOT the stop condition; see `ASTRAWILD_PRODUCT_GAP_MATRIX.md` + registry §K; LCP-era freeze lifted for PCR batches only)
 
 ---
 
@@ -266,14 +266,16 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | **LAN 4-player source support** | **YES (source-side)** — LCP-1..8 complete: client world, interaction/trade routing, per-player persistence + reconnect, client state sync, LAN session flow; ENGINE-UNVERIFIED until §22 |
 | **Free-asset ledger (verified licenses)** | YES — `Docs/ASTRAWILD_FREE_ASSET_LEDGER.md` (15 CC0 Kenney + 6 CC0 Quaternius packs, 3,942 files total, per-file SHA-256 manifests, LICENSE_UNCLEAR never enters) |
 
-**Overall status (v6.1): READY_FOR_FINAL_BUILD (source-side, LAN scope closed).**
-Declared at DP-10 (00354da), suspended by the user's LAN CO-OP scope decision,
-RE-DECLARED at the LCP-8 gate: LAN 4-player source support (LCP-2..6),
-per-player co-op persistence (LCP-4) and the verified-license free-asset
-ledger (LCP-7) all landed; the 13+2-point stop conditions (HANDOFF §21/§21b)
-hold. The one-time engine integration pass (§8 + the new §22 LAN acceptance
-test — host + 3 clients) converts this to GAME-COMPLETE or returns
-engine-specific defects. Nothing in this document claims engine verification.
+**Overall status (v7.0): IN PROGRESS-PCR.**
+Declared READY_FOR_FINAL_BUILD at DP-10 (00354da), suspended by the LAN CO-OP
+scope decision, re-declared at LCP-8 (4e52548). The user's FINAL PRODUCT
+COMPLETION RUN directive (this session) audits the product itself and found
+six player-valued source-side gaps (PG-1 Field Journal UI / PG-2 Roster UI /
+PG-3 Map UI / PG-4 Tier-B archetype library / PG-5 post-game hunts / PG-6 doc
+sync) — the verdict is suspended again until registry §K closes at the PCR-6
+gate, which then re-declares with the §21/§21b stop conditions plus the three
+new screens and the Tier-B/hunt ledger. Nothing in this document claims
+engine verification.
 
 ## 11. Known engine-unverified items (honest ledger)
 
@@ -314,6 +316,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026 | **v5.0 (GLM DP-10 FINAL GATE — DEPTH PASSES COMPLETE)**: full source audit at tip 018a95a — both validators PASS (validate_repository.sh v2 + validate_final_run.py 61 checks incl. the 109-test gate and the 15 census equality gates); doc-consistency sweep executed (stale current-state counts corrected across the matrix/manifest/registry/readiness/handoff — historical/dated rows untouched); content readiness matrix re-verified at 14 categories (Tier-A meshes IMPORT_READY, skill loadout live, affinity-gated dialogue, themed dungeons — statuses stay honest, nothing BOUND); readiness report re-affirms **READY_FOR_FINAL_BUILD (source-side)** with the residual ledger (Tier-B rig library P1 / engine import+binding queue §20b+§20c / tone-weapon-particle-ACS decisions awaiting engine evidence); HANDOFF coherence pass (109 tests as repo truth, §20b+§20c referenced from the §20 sequence, 12 golden-path verify items, 12-point stop-condition list from the user directive); registry §I closed — DP-1..DP-10 all COMPLETE, no orphans; branch frozen for the Antigravity one-time integration run |
 | 2026 | **v6.1 (GLM LCP-8 — LAN CO-OP PACK COMPLETE, READY_FOR_FINAL_BUILD re-declared)**: LCP-2 client world (deterministic cosmetic build from the replicated seed + replicated gameplay actors incl. the DP-9 client-shell fix) · LCP-3 interaction/trade routing (ServerInteract choke point, first Client RPCs, fail-closed dialogue/trade validation, mount/pilot input relays, cheat client gate) · LCP-4 per-player persistence (coop save blocks, roster owner partition, stable player keys, late-join/reconnect) · LCP-5 client state sync (quest replication, research mirror, unlock/completion feedback everywhere) · LCP-6 LAN session flow (UDP beacon, pause panel, HUD mode line, travel-autoload) · LCP-7 free-asset ledger + 6 CC0 Quaternius Ultimate packs (264 files, dual license gates, Drive-crawl downloader) · LCP-8 this gate — suite 109→119, validators PASS ×2, HANDOFF §21b+§22, READINESS §O, registry §J closed; engine queue = AG-2..5 + §22 |
 | 2026 | **v6.0 (GLM LCP-1 — LAN CO-OP PACK OPENED)**: user-issued product decision reopens scope: ASTRAWILD is a private 4-player LAN co-op game (listen server, host-authoritative, free-asset production mode) — §1b added, `ASTRAWILD_LAN_COOP_SPEC.md` issued (full PART-3 source audit: 43 replicated props / 14 classes, 8 Server RPCs, 0 Client RPCs; client-visible world BROKEN-for-clients, co-op save MISSING, session flow MISSING, quest/research client sync PARTIAL — every verdict source-grounded), MULTIPLAYER.md refreshed to the audit truth, registry §I reopened with the LCP-1..LCP-8 ledger; DP-era freeze lifted for LCP batches only; depth-pass canon UNCHANGED; engine gates unchanged (AG-2..5 + new §22 LAN acceptance) |
+| 2026 | **v7.0 (GLM PCR-0 — PRODUCT COMPLETION RUN opened)**: user directive "do not stop at source-complete" — full product audit at 4e52548 (Source/Content/ArtSource/Docs + widget census + input map + Journal/Roster/POI/Zone APIs + binding model + validator gates) produced `ASTRAWILD_PRODUCT_GAP_MATRIX.md`: PG-1 Field Journal UI (JournalSubsystem has data+save, zero UI consumers), PG-2 Echo Roster UI (roster has no screen; LCP-5 already noted "no client roster UI exists"), PG-3 World Map UI (12 zones/17 POIs/villages/dungeons/events, no map), PG-4 Tier-B archetype mesh library (the explicit READINESS §M-a MISSING residual — ~55 species), PG-5 post-game hunt system (active docs claim "hunts" continue post-game; zero hunt code exists — honesty gap), PG-6 doc-claim sync. Everything else verified as a non-gap (audio/VFX hooks live, affinity/farming/genetics/mounts live, save V5 complete, §20c binding queue correct, LAN closed). Registry §K opened (PCR-0..PCR-6); verdict suspended → IN PROGRESS-PCR; canon/census/engine gates unchanged |
 
 
 ### §5c SCP — Systems Completion Pack (v3.5, session 2026)
