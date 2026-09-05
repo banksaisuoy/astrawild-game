@@ -170,3 +170,51 @@ void AAstrawildGameMode::HandleAutosave()
         SaveSubsystem->SaveWorld(World, TEXT("ASTRAWILD_Auto"));
     }
 }
+
+
+void AAstrawildGameMode::PostLogin(AController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
+
+    // LCP-4: late join / reconnect restore. Runs on the LISTEN HOST only (the
+    // GameMode exists solely on the server). The first player (host) restored
+    // through LoadWorld's legacy block; everyone else restores here.
+    if (!HasAuthority())
+    {
+        return;
+    }
+    APlayerController* PC = Cast<APlayerController>(NewPlayer);
+    if (!PC || PC == GetWorld()->GetFirstPlayerController())
+    {
+        return; // host + non-player controllers ( spectator/dev ) skip
+    }
+    UWorld* World = GetWorld();
+    if (!World || !World->GetGameInstance())
+    {
+        return;
+    }
+    if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+    {
+        SaveSubsystem->TryRestoreLateJoinPlayer(PC);
+    }
+}
+
+void AAstrawildGameMode::Logout(AController* Exiting)
+{
+    // LCP-4: snapshot before the controller + pawn go away so a reconnect
+    // within the session restores exactly (inventory/roster/quests/position).
+    if (HasAuthority())
+    {
+        if (APlayerController* PC = Cast<APlayerController>(Exiting))
+        {
+            if (UWorld* World = GetWorld(); World && World->GetGameInstance())
+            {
+                if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+                {
+                    SaveSubsystem->SnapshotPlayerForSession(PC);
+                }
+            }
+        }
+    }
+    Super::Logout(Exiting);
+}

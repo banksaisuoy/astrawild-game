@@ -1447,12 +1447,15 @@ void AAstrawildPlayerCharacter::ExecuteInteractIntent(AActor* InteractableActor)
         {
             if (CaptureComponent->TryCapture(Echo))
             {
-                // Join the roster + party (directive §4/§10).
+                // Join the roster + party (directive §4/§10). LCP-4: the entry
+                // carries the STABLE owner key (per-player roster partition).
                 if (UGameInstance* GameInstance = GetGameInstance())
                 {
                     if (UAstrawildEchoRosterSubsystem* Roster = GameInstance->GetSubsystem<UAstrawildEchoRosterSubsystem>())
                     {
-                        Roster->AddToRoster(Echo);
+                        const FName PlayerKey = Cast<AAstrawildPlayerController>(GetController())
+                            ? Cast<AAstrawildPlayerController>(GetController())->GetPlayerKey() : NAME_None;
+                        Roster->AddToRoster(Echo, PlayerKey);
                     }
                 }
             }

@@ -5029,4 +5029,107 @@ bool FAstrawildLCP3DialogueValidationTest::RunTest(const FString& Parameters)
     return true;
 }
 
+
+// ===========================================================================
+// LCP-4 — LAN CO-OP: per-player persistence contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP4RosterPartitionTest,
+    "ASTRAWILD.LCP4.RosterPartition",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP4RosterPartitionTest::RunTest(const FString& Parameters)
+{
+    using Roster = UAstrawildEchoRosterSubsystem;
+
+    // 1) The partition rule (pure static — the exact predicate the party spawn
+    // and per-player views use): exact key match wins; the LEGACY pair
+    // (NAME_None row + NAME_None query) stays the single-player behavior;
+    // anything else belongs to another player.
+    FAstrawildEchoInstanceV2 Row;
+    Row.InstanceId = FGuid::NewGuid();
+    Row.DefinitionId = TEXT("Echo_Lumewisp");
+    TestTrue(TEXT("Legacy None row matches legacy query"), Roster::IsRosterRowOwnedBy(Row, NAME_None));
+
+    Row.OwnerPlayerKey = TEXT("Bank");
+    TestTrue(TEXT("Exact key match owns the row"), Roster::IsRosterRowOwnedBy(Row, TEXT("Bank")));
+    TestFalse(TEXT("Another player never owns the row"), Roster::IsRosterRowOwnedBy(Row, TEXT("Nima")));
+    TestFalse(TEXT("Legacy query never takes a named row"), Roster::IsRosterRowOwnedBy(Row, NAME_None));
+
+    FAstrawildEchoInstanceV2 LegacyRow;
+    LegacyRow.InstanceId = FGuid::NewGuid();
+    LegacyRow.DefinitionId = TEXT("Echo_Sprigling");
+    TestFalse(TEXT("Named player never takes a legacy row"), Roster::IsRosterRowOwnedBy(LegacyRow, TEXT("Bank")));
+
+    // 2) The live partition over a shared pool (world-free subsystem import):
+    // one pool, three owners (host legacy + two co-op players).
+    UAstrawildEchoRosterSubsystem* Subsystem = NewObject<UAstrawildEchoRosterSubsystem>();
+    TArray<FAstrawildEchoInstanceV2> Pool;
+    for (int32 i = 0; i < 6; ++i)
+    {
+        FAstrawildEchoInstanceV2 Entry;
+        Entry.InstanceId = FGuid::NewGuid();
+        Entry.DefinitionId = TEXT("Echo_Lumewisp");
+        Entry.OwnerPlayerKey = (i % 3 == 0) ? NAME_None
+            : (i % 3 == 1) ? TEXT("Bank") : TEXT("Nima");
+        Entry.bInParty = (i < 3);
+        Pool.Add(Entry);
+    }
+    Subsystem->ImportFromSave(Pool);
+    TestEqual(TEXT("Imported pool keeps all 6 rows"), Subsystem->GetRosterSize(), 6);
+
+    TestEqual(TEXT("Legacy slice = 2 rows"), Subsystem->GetRosterForPlayer(NAME_None).Num(), 2);
+    TestEqual(TEXT("Bank slice = 2 rows"), Subsystem->GetRosterForPlayer(TEXT("Bank")).Num(), 2);
+    TestEqual(TEXT("Nima slice = 2 rows"), Subsystem->GetRosterForPlayer(TEXT("Nima")).Num(), 2);
+    TestEqual(TEXT("Unknown player slice = 0 rows"), Subsystem->GetRosterForPlayer(TEXT("Stranger")).Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP4CoopSaveBlockTest,
+    "ASTRAWILD.LCP4.CoopSaveBlock",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP4CoopSaveBlockTest::RunTest(const FString& Parameters)
+{
+    // 1) Fresh block = fresh state everywhere (pre-LCP saves deserialize empty
+    // blocks — a co-op joiner without a block starts clean, never garbage).
+    FAstrawildCoopPlayerSaveBlock Fresh;
+    TestTrue(TEXT("Fresh key is None"), Fresh.PlayerKey.IsNone());
+    TestEqual(TEXT("Fresh inventory empty"), Fresh.Inventory.Num(), 0);
+    TestTrue(TEXT("Fresh equips are None"),
+        Fresh.EquippedWeaponId.IsNone() && Fresh.EquippedShieldId.IsNone() &&
+        Fresh.EquippedArmorId.IsNone() && Fresh.EquippedHelmetId.IsNone() &&
+        Fresh.EquippedExosuitId.IsNone() && Fresh.EquippedScannerId.IsNone());
+    TestEqual(TEXT("Fresh quests empty"), Fresh.Quests.Num(), 0);
+    TestEqual(TEXT("Fresh flags empty"), Fresh.DialogueFlags.Num(), 0);
+    TestEqual(TEXT("Fresh attributes empty"), Fresh.Attributes.Num(), 0);
+    TestEqual(TEXT("Fresh defeats empty"), Fresh.DefeatedCreatureCounts.Num(), 0);
+    TestEqual(TEXT("Fresh durability empty"), Fresh.EquipmentDurability.Num(), 0);
+
+    // 2) Key matching contract (the exact predicate SaveWorld/LoadWorld/late-join
+    // use): one block per player, matched by exact key; no cross-player bleed.
+    FAstrawildCoopPlayerSaveBlock BlockBank;
+    BlockBank.PlayerKey = TEXT("Bank");
+    FAstrawildCoopPlayerSaveBlock BlockNima;
+    BlockNima.PlayerKey = TEXT("Nima");
+    TArray<FAstrawildCoopPlayerSaveBlock> Blocks = { BlockBank, BlockNima };
+
+    const FName Query = TEXT("Bank");
+    const FAstrawildCoopPlayerSaveBlock* Matched = Blocks.FindByPredicate(
+        [&Query](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == Query; });
+    TestTrue(TEXT("Exact key match finds the block"), Matched != nullptr && Matched->PlayerKey == TEXT("Bank"));
+    const FName Missing = TEXT("Stranger");
+    TestNull(TEXT("Unknown key matches nothing"),
+        Blocks.FindByPredicate([&Missing](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == Missing; }));
+
+    // 3) The save object carries the co-op array (reflection — schema wiring).
+    UClass* SaveClass = UAstrawildSaveGame::StaticClass();
+    TestTrue(TEXT("SaveGame has the CoopPlayers array"),
+        SaveClass->FindPropertyByName(TEXT("CoopPlayers")) != nullptr);
+    // And the roster rows carry the stable owner key.
+    TestTrue(TEXT("Echo instance rows carry OwnerPlayerKey"),
+        FAstrawildEchoInstanceV2::StaticStruct()->FindPropertyByName(TEXT("OwnerPlayerKey")) != nullptr);
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

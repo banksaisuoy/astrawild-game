@@ -15,6 +15,7 @@
 #include "AstrawildPauseMenuWidget.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
+#include "GameFramework/PlayerState.h" // LCP-4: player key
 #include "AstrawildResearchScreenWidget.h"
 #include "AstrawildShopWidget.h"
 #include "Blueprint/UserWidget.h"
@@ -582,4 +583,22 @@ void AAstrawildPlayerController::ServerSubmitDialogueChoice_Implementation(AAstr
         return; // the client may have shown a stale/filtered list; the server disagrees — no-op
     }
     DialogueComponent->ApplyChoiceConsequences(*Choice);
+}
+
+FName AAstrawildPlayerController::GetPlayerKey() const
+{
+    // Stable identity: player name first (set in the session flow / engine
+    // login), session-unique slot id as the fallback (join order). Documented
+    // caveat in LAN_COOP_SPEC §5: reconnect across sessions restores by NAME —
+    // unnamed slots restore only within a matching join order.
+    if (const APlayerState* PS = GetPlayerState())
+    {
+        const FString Name = PS->GetPlayerName();
+        if (!Name.IsEmpty())
+        {
+            return FName(*Name);
+        }
+        return FName(*FString::Printf(TEXT("PlayerSlot_%d"), PS->GetPlayerId()));
+    }
+    return FName(*FString::Printf(TEXT("PlayerSlot_%d"), NetPlayerIndex));
 }

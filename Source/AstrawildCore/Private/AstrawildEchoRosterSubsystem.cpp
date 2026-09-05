@@ -1,5 +1,7 @@
 #include "AstrawildEchoRosterSubsystem.h"
 
+#include "AstrawildPlayerController.h" // LCP-4: owner key
+
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -8,7 +10,7 @@
 #include "Engine/GameInstance.h"
 #include "GameFramework/PlayerController.h"
 
-bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo)
+bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo, const FName PlayerKey)
 {
     if (!IsValid(Echo) || !Echo->bCaptured || !Echo->InstanceId.IsValid())
     {
@@ -29,7 +31,11 @@ bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo)
         return false;
     }
 
-    Roster.Add(Echo->ToSaveDataV2());
+    FAstrawildEchoInstanceV2 NewEntry = Echo->ToSaveDataV2();
+    // LCP-4: stamp the STABLE owner key (the live actor's OwnerPlayerId stays
+    // the pawn-name convention the H-1 consumers compare against).
+    NewEntry.OwnerPlayerKey = PlayerKey;
+    Roster.Add(NewEntry);
 
     // Track spawned party actor (capped).
     if (SpawnedParty.Num() < MaxPartySize)
@@ -163,6 +169,12 @@ int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
     int32 Spawned = 0;
     SpawnedParty.Reset();
 
+    // LCP-4: each player's party spawns from THEIR roster slice. The legacy
+    // NAME_None key (single-player / pre-LCP saves) keeps the whole-legacy-pool
+    // behavior — host/standalone flows are byte-identical.
+    const AAstrawildPlayerController* AstrawildOwner = Cast<AAstrawildPlayerController>(Owner);
+    const FName OwnerKey = AstrawildOwner ? AstrawildOwner->GetPlayerKey() : NAME_None;
+
     for (const FAstrawildEchoInstanceV2& Entry : Roster)
     {
         if (static_cast<int32>(SpawnedParty.Num()) >= MaxPartySize)
@@ -172,6 +184,10 @@ int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
         if (!Entry.bInParty || !Entry.InstanceId.IsValid() || Entry.DefinitionId.IsNone())
         {
             continue;
+        }
+        if (!IsRosterRowOwnedBy(Entry, OwnerKey))
+        {
+            continue; // another player's Echo — never spawns in this party ring
         }
 
         UAstrawildEchoDefinition* Definition = Registry->FindEcho(Entry.DefinitionId);
@@ -306,4 +322,26 @@ bool UAstrawildEchoRosterSubsystem::EvolveInstance(const FGuid& InstanceId)
         }
     }
     return true;
+}
+
+
+bool UAstrawildEchoRosterSubsystem::IsRosterRowOwnedBy(const FAstrawildEchoInstanceV2& Row, const FName PlayerKey)
+{
+    // Exact key match, or the legacy pair (undefined row + undefined query) —
+    // single-player saves load with NAME_None rows and the host's query key is
+    // never None in co-op, so legacy rows only ever match the legacy query.
+    return Row.OwnerPlayerKey == PlayerKey;
+}
+
+TArray<FAstrawildEchoInstanceV2> UAstrawildEchoRosterSubsystem::GetRosterForPlayer(const FName PlayerKey) const
+{
+    TArray<FAstrawildEchoInstanceV2> Out;
+    for (const FAstrawildEchoInstanceV2& Row : Roster)
+    {
+        if (IsRosterRowOwnedBy(Row, PlayerKey))
+        {
+            Out.Add(Row);
+        }
+    }
+    return Out;
 }

@@ -161,6 +161,12 @@ public:
     /** SCP Phase 12: perishable freshness (item id -> remaining seconds). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TMap<FName, float> FoodFreshness;
+
+    // --- LCP-4 (LAN co-op, additive v5 payload — no schema bump) ---
+
+    /** One block per non-host LAN player, keyed by the stable player key (empty = single-player / pre-LCP saves). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildCoopPlayerSaveBlock> CoopPlayers;
 };
 
 UCLASS()
@@ -201,6 +207,27 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Save")
     int32 GetCurrentSchemaVersion() const { return CurrentSchemaVersion; }
 
+    // --- LCP-4: LAN co-op per-player persistence ---
+
+    /**
+     * LCP-4: build the per-player block for a connected non-host player
+     * (host machine only; the data lives on the server-side pawn/components).
+     */
+    FAstrawildCoopPlayerSaveBlock BuildCoopPlayerBlock(APlayerController* PC) const;
+
+    /** LCP-4: apply one per-player block to a connected controller (host machine only). */
+    void ApplyCoopPlayerBlock(APlayerController* PC, const FAstrawildCoopPlayerSaveBlock& Block);
+
+    /**
+     * LCP-4: late-join / reconnect restore — checks the in-session player
+     * cache first, then the LATEST save's CoopPlayers blocks. Returns true
+     * when a block matched and applied (host machine only).
+     */
+    bool TryRestoreLateJoinPlayer(APlayerController* PC);
+
+    /** LCP-4: snapshot a connected player's block into the in-session cache (disconnects, autosaves). */
+    void SnapshotPlayerForSession(APlayerController* PC);
+
     /** FNV-1a integrity hash for the save header fields. */
     static uint32 ComputeChecksum(int32 SchemaVersion, const FDateTime& SavedAtUtc);
 
@@ -226,4 +253,11 @@ private:
     /** v4 -> v5 (Final Run): purely additive — ending state defaults to None
      *  (story in play) and post-game stays locked on legacy saves. */
     void MigrateV4ToV5(UAstrawildSaveGame* SaveGame) const;
+
+    /**
+     * LCP-4: in-session per-player blocks (reconnect restore source). Lives on
+     * the HOST's GameInstance subsystem — never on clients (PART 7: the host
+     * owns the authoritative world save; clients never write world state).
+     */
+    TMap<FName, FAstrawildCoopPlayerSaveBlock> SessionPlayerBlocks;
 };

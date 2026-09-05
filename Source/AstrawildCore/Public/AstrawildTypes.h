@@ -577,6 +577,15 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
     TArray<FName> Traits;
 
+    /**
+     * LCP-4 (additive, LAN co-op): STABLE owner key for roster partition and
+     * per-player save blocks (player name / slot id — NOT the live pawn name,
+     * which stays on the actor's OwnerPlayerId for the H-1 consumer contract).
+     * NAME_None = legacy/host-owned row (single-player saves stay loadable).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    FName OwnerPlayerKey = NAME_None;
+
     /** FCR-1-d (H-d5, additive): hidden IVs — Health / Attack / Defense / Speed,
      *  0-31 each (+1%/pt). Rolled at breeding, persisted, consumed by the stat
      *  getters. Legacy saves default to zero (neutral). */
@@ -1284,6 +1293,73 @@ struct ASTRAWILDCORE_API FAstrawildNPCAffinitySaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     int32 LastTradeGainDay = -1;
+};
+
+/**
+ * LCP-4 (LAN co-op, additive v5 payload — no schema bump): one block per
+ * non-host player. The HOST player keeps the legacy singular fields
+ * (byte-identical single-player behavior); players 2..4 persist here, keyed
+ * by the STABLE player key (player name / slot id). The world block (quests
+ * chain of record, roster with owner keys, research, buildings, affinity...)
+ * stays shared/host-authoritative — this block carries each individual's
+ * inventory, equipment, vitals, position, growth, quest VIEW, dialogue flags
+ * and equipment wear. Absent in pre-LCP saves = fresh states.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildCoopPlayerSaveBlock
+{
+    GENERATED_BODY()
+
+    /** Stable per-player identity (player name; slot fallback). NAME_None rows never match a live player. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName PlayerKey = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FAstrawildItemStack> Inventory;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedWeaponId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedShieldId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedArmorId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedHelmetId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedExosuitId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedScannerId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FAstrawildSurvivalStats Survival;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FTransform Transform;
+
+    /** GDP-3 attributes + skill loadout (rides the rows). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FAstrawildAttributeSaveData> Attributes;
+
+    /** Per-player quest state view (the host's chain remains the world record). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FAstrawildQuestSaveData> Quests;
+
+    /** Per-player lifetime defeat counters (one-shot back-fill source). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TMap<FName, int32> DefeatedCreatureCounts;
+
+    /** Per-player story flags (dialogue component state). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FName> DialogueFlags;
+
+    /** Per-player equipment wear pools. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TMap<FName, float> EquipmentDurability;
 };
 
 /**

@@ -164,6 +164,33 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         }
     }
 
+    // LCP-4 (LAN co-op): one block per CONNECTED non-host player. The host
+    // block above stays the legacy singular fields — single-player saves are
+    // byte-identical. Each remote player's server-side pawn/components carry
+    // their authoritative state (clients never write world state, PART 7).
+    {
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            APlayerController* PC = Cast<APlayerController>(*It);
+            if (!PC || PC == World->GetFirstPlayerController())
+            {
+                continue; // host handled by the legacy block above
+            }
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+            {
+                SaveGame->CoopPlayers.Add(BuildCoopPlayerBlock(AstrawildPC));
+            }
+        }
+        // Keep the in-session cache fresh for reconnect restores (host + co-op players).
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(*It))
+            {
+                SnapshotPlayerForSession(AstrawildPC);
+            }
+        }
+    }
+
     // SCP Phase 12: perishable freshness (world subsystem owns the aging).
     if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
     {
@@ -879,6 +906,39 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         Power->ResolveGridNow();
     }
 
+    // LCP-4 (LAN co-op): restore every CONNECTED non-host player whose block
+    // is present. Late joins (a client connecting after this load) restore
+    // through TryRestoreLateJoinPlayer at PostLogin instead.
+    {
+        int32 RestoredPlayers = 0;
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            APlayerController* PC = Cast<APlayerController>(*It);
+            if (!PC || PC == World->GetFirstPlayerController())
+            {
+                continue;
+            }
+            AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+            if (!AstrawildPC)
+            {
+                continue;
+            }
+            const FName PlayerKey = AstrawildPC->GetPlayerKey();
+            const FAstrawildCoopPlayerSaveBlock* Block = SaveGame->CoopPlayers.FindByPredicate(
+                [&PlayerKey](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == PlayerKey; });
+            if (Block)
+            {
+                ApplyCoopPlayerBlock(AstrawildPC, *Block);
+                SnapshotPlayerForSession(AstrawildPC); // reconnect cache
+                ++RestoredPlayers;
+            }
+        }
+        if (RestoredPlayers > 0)
+        {
+            UE_LOG(LogAstrawildSave, Log, TEXT("LCP-4: restored %d co-op player blocks from slot %s."), RestoredPlayers, *SlotName);
+        }
+    }
+
     UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings (%d dropped + refunded), %d work sites, %d robots, grid %.0f)."),
         *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num(), DroppedBuildings, SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->PowerGrid.StoredEnergy);
     return true;
@@ -1006,4 +1066,193 @@ bool UAstrawildSaveSubsystem::DeleteSave(const FString& SlotName, const int32 Us
         return false;
     }
     return UGameplayStatics::DeleteGameInSlot(SlotName, UserIndex);
+}
+
+
+// ===========================================================================
+// LCP-4 — LAN co-op per-player persistence
+// ===========================================================================
+
+FAstrawildCoopPlayerSaveBlock UAstrawildSaveSubsystem::BuildCoopPlayerBlock(APlayerController* PC) const
+{
+    FAstrawildCoopPlayerSaveBlock Block;
+    Block.PlayerKey = NAME_None;
+    if (const AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+    {
+        Block.PlayerKey = AstrawildPC->GetPlayerKey();
+    }
+
+    AAstrawildPlayerCharacter* Player = PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+    if (Player)
+    {
+        Block.Transform = Player->GetActorTransform();
+        if (Player->SurvivalComponent)
+        {
+            Block.Survival = Player->SurvivalComponent->GetStats();
+        }
+        if (Player->InventoryComponent)
+        {
+            Block.Inventory = Player->InventoryComponent->GetItemStacks();
+            Block.EquippedWeaponId = Player->InventoryComponent->EquippedItemId;
+            Block.EquippedShieldId = Player->InventoryComponent->EquippedShieldItemId;
+            Block.EquippedArmorId = Player->InventoryComponent->EquippedArmorItemId;
+            Block.EquippedHelmetId = Player->InventoryComponent->EquippedHelmetItemId;
+            Block.EquippedExosuitId = Player->InventoryComponent->EquippedExosuitItemId;
+            Block.EquippedScannerId = Player->InventoryComponent->EquippedScannerItemId;
+        }
+        if (Player->AttributeComponent)
+        {
+            Block.Attributes = Player->AttributeComponent->ToSaveData();
+        }
+        if (Player->DurabilityComponent)
+        {
+            Block.EquipmentDurability = Player->DurabilityComponent->ExportForSave();
+        }
+    }
+
+    if (PC)
+    {
+        if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quests->ExportForSave(Block.Quests);
+            Quests->ExportDefeatCounts(Block.DefeatedCreatureCounts);
+        }
+        if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+        {
+            Dialogue->ExportForSave(Block.DialogueFlags);
+        }
+    }
+    return Block;
+}
+
+void UAstrawildSaveSubsystem::ApplyCoopPlayerBlock(APlayerController* PC, const FAstrawildCoopPlayerSaveBlock& Block)
+{
+    if (!PC || Block.PlayerKey.IsNone())
+    {
+        return;
+    }
+
+    AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn());
+    if (Player)
+    {
+        // Identity-transform guard (same rule as the host restore).
+        const FVector SavedLocation = Block.Transform.GetLocation();
+        if (!SavedLocation.ContainsNaN() && !SavedLocation.IsNearlyZero())
+        {
+            Player->SetActorTransform(Block.Transform, false, nullptr, ETeleportType::TeleportPhysics);
+        }
+
+        if (Player->SurvivalComponent)
+        {
+            // Sanitize vitals with the same policy as the host restore (NaN never survives).
+            FAstrawildSurvivalStats SafeSurvival = Block.Survival;
+            SafeSurvival.Health = SanitizeSavedFloat(SafeSurvival.Health, 100.0f);
+            SafeSurvival.MaxHealth = SanitizeSavedFloat(SafeSurvival.MaxHealth, 100.0f);
+            SafeSurvival.Stamina = SanitizeSavedFloat(SafeSurvival.Stamina, 100.0f);
+            SafeSurvival.MaxStamina = SanitizeSavedFloat(SafeSurvival.MaxStamina, 100.0f);
+            SafeSurvival.Hunger = SanitizeSavedFloat(SafeSurvival.Hunger, 100.0f);
+            SafeSurvival.Thirst = SanitizeSavedFloat(SafeSurvival.Thirst, 100.0f);
+            SafeSurvival.Temperature = SanitizeSavedFloat(SafeSurvival.Temperature, 20.0f);
+            Player->SurvivalComponent->SetStatsForRestore(SafeSurvival);
+        }
+
+        if (Player->InventoryComponent)
+        {
+            Player->InventoryComponent->SetItemStacks(Block.Inventory);
+            Player->InventoryComponent->EquippedItemId = Block.EquippedWeaponId;
+            Player->InventoryComponent->EquippedShieldItemId = Block.EquippedShieldId;
+            Player->InventoryComponent->EquippedArmorItemId = Block.EquippedArmorId;
+            Player->InventoryComponent->EquippedHelmetItemId = Block.EquippedHelmetId;
+            Player->InventoryComponent->EquippedExosuitItemId = Block.EquippedExosuitId;
+            Player->InventoryComponent->EquippedScannerItemId = Block.EquippedScannerId;
+        }
+
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->ImportFromSaveData(Block.Attributes);
+        }
+
+        if (Player->DurabilityComponent)
+        {
+            Player->DurabilityComponent->ImportFromSave(Block.EquipmentDurability);
+        }
+    }
+
+    if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+    {
+        Quests->ImportFromSave(Block.Quests);
+        Quests->ImportDefeatCounts(Block.DefeatedCreatureCounts);
+    }
+    if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+    {
+        Dialogue->ImportFromSave(Block.DialogueFlags);
+    }
+}
+
+void UAstrawildSaveSubsystem::SnapshotPlayerForSession(APlayerController* PC)
+{
+    if (!PC)
+    {
+        return;
+    }
+    const AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+    if (!AstrawildPC || AstrawildPC->GetPlayerKey().IsNone())
+    {
+        return;
+    }
+    SessionPlayerBlocks.FindOrAdd(AstrawildPC->GetPlayerKey()) = BuildCoopPlayerBlock(AstrawildPC);
+}
+
+bool UAstrawildSaveSubsystem::TryRestoreLateJoinPlayer(APlayerController* PC)
+{
+    if (!PC)
+    {
+        return false;
+    }
+    AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+    if (!AstrawildPC)
+    {
+        return false;
+    }
+    const FName PlayerKey = AstrawildPC->GetPlayerKey();
+
+    // 1) In-session cache (reconnect while the world lives).
+    if (const FAstrawildCoopPlayerSaveBlock* Cached = SessionPlayerBlocks.Find(PlayerKey))
+    {
+        ApplyCoopPlayerBlock(AstrawildPC, *Cached);
+        UE_LOG(LogAstrawildSave, Log, TEXT("LCP-4: session-cache restore for player %s."), *PlayerKey.ToString());
+        return true;
+    }
+
+    // 2) Latest disk save co-op blocks (late join after a load happened earlier).
+    if (UWorld* World = PC->GetWorld())
+    {
+        UAstrawildSaveGame* Latest = nullptr;
+        static const TCHAR* Slots[] = { TEXT("ASTRAWILD_Auto"), TEXT("ASTRAWILD_Main") };
+        for (const TCHAR* Slot : Slots)
+        {
+            if (DoesSaveExist(Slot, 0))
+            {
+                if (UAstrawildSaveGame* Candidate = Cast<UAstrawildSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0)))
+                {
+                    if (!Latest || Candidate->SavedAtUtc > Latest->SavedAtUtc)
+                    {
+                        Latest = Candidate;
+                    }
+                }
+            }
+        }
+        if (Latest)
+        {
+            if (const FAstrawildCoopPlayerSaveBlock* Block = Latest->CoopPlayers.FindByPredicate(
+                [&PlayerKey](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == PlayerKey; }))
+            {
+                ApplyCoopPlayerBlock(AstrawildPC, *Block);
+                SnapshotPlayerForSession(AstrawildPC);
+                UE_LOG(LogAstrawildSave, Log, TEXT("LCP-4: disk-save restore for late joiner %s."), *PlayerKey.ToString());
+                return true;
+            }
+        }
+    }
+    return false;
 }

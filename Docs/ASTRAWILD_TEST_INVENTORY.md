@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 113 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 115 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -39,9 +39,9 @@ wrong order resets, window expiry resets; the unthemed default stays the
 legacy shell).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **113** — derived from `AutomationTests.cpp`
+authoritative test count is **115** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 113`), and listed in this inventory (rows 1-113).
+EXACT gate (`Automation tests == 115`), and listed in this inventory (rows 1-115).
 Historical counts (57/63/67/72/84/99/102/103/104/105/106/107/108) describe earlier commits only and appear
 nowhere as current-state claims.
 
@@ -141,8 +141,8 @@ nowhere as current-state claims.
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 113)
-Expected: 113 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 115)
+Expected: 115 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
 
 ## Gameplay Depth Pack contracts (73-84)
@@ -245,3 +245,10 @@ Expected: 113 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 |---|------|--------|
 | 112 | ASTRAWILD.LCP3.ServerRoutingSurface | LCP-3: the interaction/trade routing surface exists exactly as designed (reflection contract): PlayerCharacter ServerInteract (the single interact-intent choke point for remote clients) + ServerSkiffPilotInput/ServerMountRiderInput (the pilot/rider input relays — Unreliable, send-on-change with tracked vertical state) + the replicated mount/pilot identity properties; PlayerController ClientNotify/ClientOpenVendorShop/ClientOpenVendorDialogue/ClientOpenCraftingScreen (the FIRST Client RPCs in the module — screen opens + HUD feedback reach remote screens) + ServerVendorTrade + ServerSubmitDialogueChoice |
 | 113 | ASTRAWILD.LCP3.DialogueValidation | LCP-3: fail-closed structural validation of remotely submitted dialogue choices — ResolveValidatedChoice resolves valid node+index pairs to the exact choice struct and fails closed on null tree, unknown node, None node id, negative index, out-of-range index, and empty nodes (a modified client can never reach a hidden choice through the RPC) |
+
+## LCP-4 LAN co-op contracts (114-115, landed in the LCP-4 batch)
+
+| # | Test | Covers |
+|---|------|--------|
+| 114 | ASTRAWILD.LCP4.RosterPartition | LCP-4: per-player roster partition — the pure ownership predicate (exact key match; the legacy NAME_None pair stays single-player behavior; named players never take each other's rows or legacy rows) + the live partition over a shared imported pool (one pool, three owners, exact slice sizes, unknown players get zero rows) |
+| 115 | ASTRAWILD.LCP4.CoopSaveBlock | LCP-4: per-player save blocks — fresh blocks are pristine everywhere (pre-LCP saves deserialize as clean states), the exact-key block matching SaveWorld/LoadWorld/late-join restore uses (no cross-player bleed, unknown keys match nothing), and the reflection wiring (UAstrawildSaveGame carries the CoopPlayers array; roster rows carry OwnerPlayerKey) |

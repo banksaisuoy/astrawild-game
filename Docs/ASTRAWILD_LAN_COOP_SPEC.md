@@ -111,8 +111,16 @@ No engine claim is made anywhere in this table.)
 | Player death / respawn / stats / XP | **Per-player individual** |
 | World save file | **Host-owned** (clients never write world state) |
 
-Documented exceptions: none at time of writing. Any future exception must be
-recorded here before implementation.
+Documented exceptions (v1, deliberate):
+- **NPC affinity is party-shared** (one relationship value per NPC across all
+  players — the GDP-4 per-NPC-id design kept world-side). Shared village
+  relationships fit the 4-friends fantasy; per-player affinity is a future
+  option, not a v1 need.
+- **Perishable freshness is world-shared** (the spoilage subsystem ages item
+  ids globally). Cosmetic-level divergence in co-op; not progression-critical.
+- **Roster ownership is a stable key** (player name / slot), while the LIVE
+  actor's `OwnerPlayerId` stays the pawn-name convention the final-audit H-1
+  consumers (party passives/commands/work assignment/combat exclusion) rely on.
 
 No MMO guild systems. No party manager UI beyond the existing party mechanics.
 
@@ -213,7 +221,7 @@ Target: **4 players maximum** — reliability over scale.
 | LCP-1 | THIS document + MASTER_CONTROL v6.0 + MULTIPLAYER audit refresh + registry reopen (docs-only) | — |
 | LCP-2 | Client world build: bootstrapper client path (seeded deterministic cosmetic layer), gameplay actors replicate (nodes/NPCs/stations/rest points/POI markers/villages) | **DONE** (+2: LCP2.ClientWorldPolicy / LCP2.DressingGate) |
 | LCP-3 | Interaction & trade routing: `ServerInteract`, `ClientOpenVendorShop`/`ClientOpenVendorDialogue`/`ClientNotify`, shop trade RPC, capture intent, cheat host-gate | **DONE** (+2: LCP3.ServerRoutingSurface / LCP3.DialogueValidation) |
-| LCP-4 | Per-player persistence: save V6 additive per-player blocks, roster `OwnerPlayerId` partition, stable player keys, reconnect restore | +2 |
+| LCP-4 | Per-player persistence: additive per-player save blocks + roster owner partition + stable PlayerKey + late-join/reconnect restore | **DONE** (+2: LCP4.RosterPartition / LCP4.CoopSaveBlock) |
 | LCP-5 | Client state sync: QuestComponent replication, research + roster mirrors on GameState, client notifications | +2 |
 | LCP-6 | LAN session flow: LANSessionSubsystem (host/find/join/direct), beacon encode/decode, pause menu panel, HUD mode line | +2 |
 | LCP-7 | Free-asset ledger doc + approved Quaternius acquisition (separate concern, same session) | — |

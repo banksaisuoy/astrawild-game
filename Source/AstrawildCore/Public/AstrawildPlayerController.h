@@ -66,6 +66,14 @@ public:
     /** LCP-3: delivery helper - whatever machine owns this controller's screen gets the message. */
     void NotifyPlayer(const FText& Message);
 
+    /**
+     * LCP-4: STABLE per-player identity for roster partition + per-player save
+     * blocks: the PlayerState name when set, else a session-unique slot id.
+     * NOT the pawn object name (session-unique but unstable across saves).
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Player")
+    FName GetPlayerKey() const;
+
     /** LCP-3: server -> owning client shop open (remote vendor interaction). */
     UFUNCTION(Client, Reliable)
     void ClientOpenVendorShop(class AAstrawildNPCCharacter* Vendor);
