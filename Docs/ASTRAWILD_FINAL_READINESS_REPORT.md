@@ -184,13 +184,13 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 
 - **SOURCE-VERIFIED** — work that exists and is validated as source on disk in this
   sandbox: the acquired CC0 packs (per-file SHA256 + license), the 14 bespoke Tier-A
-  echo GLBs (validate_glb PASS + manifest records), the strategy/matrix docs. Claimed
-  exactly to that extent and no further.
+  + 39 variant-baked Tier-B echo GLBs (validate_glb PASS + manifest records), the
+  strategy/matrix docs. Claimed exactly to that extent and no further.
 - **STATIC-VERIFIED** — code + data machine-checked without an engine: the full C++
   module under both validators (`validate_repository.sh` v2 ruleset,
-  `validate_final_run.py` 61 checks incl. the 119-test exact gate and the 15 census
-  equality gates) and the world-free automation contracts. Never executed, never
-  rendered.
+  `validate_final_run.py` 61+ checks incl. the 124-test exact gate, the 15 census
+  equality gates and the 39-species Tier-B coherence gate) and the world-free
+  automation contracts. Never executed, never rendered.
 - **ENGINE-UNVERIFIED** — everything that requires UE5.8.2/MSVC on the Antigravity
   machine: compile, the 124-test run, PIE golden path, import/binding/cook, packaged
   boot. No document in this repository may claim any of these; AG-2..AG-5 (HANDOFF
