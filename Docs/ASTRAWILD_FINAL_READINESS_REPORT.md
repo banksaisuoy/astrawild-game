@@ -176,7 +176,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 
 | # | Residual | Class | Status | Disposition |
 | :-- | :--- | :--- | :--- | :--- |
-| a | **Tier-B archetype rig library** — ~55 spawned-wild/Huge/Epic+ species still render on procedural PMC bodies (8 body plans × 5 size classes + strengthened material identity: element emissive palette, family surface, pattern/accent variation, rarity ring) | SOURCE-SIDE (P1 art backlog) | **MISSING** (graceful degradation — the procedural material-identity rules keep every species distinguishable in the interim; promotion rule per strategy §3) | Future ArtSourceGen batch after engine feedback; not required for the final build — the strategy doc (`ASTRAWILD_CREATURE_VISUAL_STRATEGY.md` §10) owns the backlog |
+| a | **Tier-B archetype rig library** | SOURCE-SIDE | **EXECUTED at PCR-4** — 39 unique variant-baked GLBs (every zone signature + dungeon pools + monolith/colossus line + Huge species; 4.8 MB; validate_glb PASS ×39; LFS + manifest), definition-driven convention-path binding (zero engine-side patch); the PMC body stays until the §20b baseline import pass (the documented opt-in contract — not a defect). Remaining Tier-C species (~165) keep PMC bodies by design (strategy §7 material identity) |
 | b | **Engine-side import/binding queue** — Kenney pack imports + fitness/retarget checks (HANDOFF §20b) and the Tier-A/boss creature-mesh binding patch (HANDOFF §20c, assets-first/binding-second) | ENGINE-SIDE | **IMPORT_READY → ENGINE_UNVERIFIED** | Executes only in the Antigravity one-time integration run (AG-2..5); zero-asset boot + procedural fallbacks guarantee the game is complete without it |
 | c | **Open visual decisions awaiting engine evidence** — Kenney tone verdict (keep/constrain/reject), weapon replacement (procedural vs Blaster, compare-first), particle sprite fitness (tRNS alpha), ACS retarget compatibility, skybox-space consumer, UI family/reticle picks | ENGINE/HITL | **UNDECIDED (pre-committed verdict rules)** | Decision queue D1-D7 in the integration matrix §4b; each has a pre-committed fallback (keep procedural) so none can block the build |
 
@@ -242,3 +242,40 @@ Residual (LAN-specific, none blocks READY):
 **Re-declared verdict: READY_FOR_FINAL_BUILD (source-side, LAN scope closed).**
 The engine-side conversion queue is now §20 (build/automation/PIE/package) +
 §22 (LAN acceptance) — Antigravity-exclusive as ever.
+
+
+---
+
+## P. PCR gate re-declaration (PRODUCT COMPLETION RUN — this session)
+
+The user's FINAL PRODUCT COMPLETION RUN directive re-opened the source scope
+after LCP-8: documentation status was NOT the stop condition. The PCR batches
+audited the product itself and closed every player-valued gap:
+
+| PCR | Scope | Status |
+| :--- | :--- | :--- |
+| PCR-0 | Product audit + gap matrix (PG-1..PG-6) + registry §K opened | COMPLETE |
+| PCR-1 | PG-1 Field Journal (bestiary) screen | COMPLETE |
+| PCR-2 | PG-2 Echo Roster screen + bench/deploy ring management + roster mirror + ExportForSave ownership defect fix | COMPLETE |
+| PCR-3 | PG-3 World Map screen | COMPLETE |
+| PCR-4 | PG-4 Tier-B archetype mesh library (39 unique GLBs + convention binding) | COMPLETE |
+| PCR-5 | PG-5 post-game hunt system (Hunt Board) | COMPLETE |
+| PCR-6 | This gate: matrix closure + residual rewrite + re-declaration | COMPLETE |
+
+Checks: both validators ALL PASS at tip (124-test exact gate; 15 census equality
+gates UNCHANGED — screens/art/hunts ride existing content; the 39-species
+Tier-B coherence gate); input contract 28→32 actions; every active doc carries
+ONE test count (124); the post-game "hunts" claim is now backed by the hunt
+subsystem; the LCP-5 roster-mirror exception was superseded by the PCR-2 screen.
+
+Residual (PCR-specific, none blocks READY):
+- All PCR source work is **ENGINE-UNVERIFIED** until the AG-2..AG-5 + §22 run.
+- The four new screens (Journal/Roster/Map/Hunt) need PIE spot-checks in the
+  engine queue (HUD correctness at 4-player distances, map marker positions).
+- The 39 Tier-B GLBs import with the §20b baseline pass (Interchange, flat
+  folder — same as the Tier-A contract); the PMC fallback stays active until
+  then by design.
+
+**Re-declared verdict: READY_FOR_FINAL_BUILD (source-side, product-completion
+scope closed).** Engine conversion queue: §20 (build/automation/PIE/package)
++ §22 (LAN acceptance, host + 3 clients).

@@ -1,7 +1,7 @@
 ﻿# ASTRAWILD — PRODUCT GAP MATRIX (FINAL PRODUCT COMPLETION RUN)
 
 **Run**: PCR (Product Completion Run) — opened by user directive "FINAL PRODUCT
-COMPLETION RUN — DO NOT STOP AT SOURCE-COMPLETE".
+COMPLETION RUN — DO NOT STOP AT SOURCE-COMPLETE". **CLOSED at PCR-6: PG-1..PG-6 all delivered (see §4 below).**
 **Baseline**: `final-completion` @ 4e52548 (LCP-8 gate — READY_FOR_FINAL_BUILD
 re-declared, docs-side). This run audits the PRODUCT (not the paperwork) and
 closes every remaining source-side gap with player value.
@@ -65,3 +65,22 @@ LAN LCP-1..8 closed; performance static scans done (FCR/DP gates).
 Stop condition for the run: PG-1..PG-6 all closed or carry documented
 engine-side dispositions, both validators PASS, census gates unchanged
 (unless a batch legitimately adds content — then all docs move together).
+
+---
+
+## 4. CLOSURE LEDGER (PCR-6 — every gap dispositioned)
+
+| ID | Disposition | Delivered by |
+| :-- | :--- | :--- |
+| PG-1 | **CLOSED** — Field Journal (bestiary) screen: 229-species codex, knowledge flags, observation %, encounter counts, registry-derived totals, "???" collection pull, key P + pause button + gamepad path (test 120) | PCR-1 (8dab302) |
+| PG-2 | **CLOSED** — Echo Roster screen: bench/deploy party-ring management, bBenched additive field (save-safe), replicated per-player roster mirror for LAN clients, server-authoritative mutations + **ExportForSave ownership-strip defect fix** (co-op saves used to orphan spawned rows) (test 121) | PCR-2 (3c6ab2a) |
+| PG-3 | **CLOSED** — World Map screen: 12-zone grid with threat/hazard tints, discovered-POI dots (undiscovered stay hidden), villages, dungeons, active-event pins, player marker, objective line + quest-target highlight, pure projection (test 122) | PCR-3 (9adbaa6) |
+| PG-4 | **CLOSED** — Tier-B archetype mesh library: 8 body-plan builders, 39 unique variant-baked GLBs (every zone signature + dungeon pools + monolith/colossus + Huge; 4.8 MB, validate_glb PASS ×39, LFS + manifest), definition-driven convention-path binding with ZERO engine-side patching (test 123 + validator §9b) — the READINESS §M-a "MISSING" residual is executed | PCR-4 (ea14f65) |
+| PG-5 | **CLOSED** — Post-game hunt system: 8 repeatable cull contracts (existing species + existing items — census unchanged), event-bus defeat progress, server-authoritative claims with round reset, additive save rows, Hunt Board screen key U (test 124) — the "hunts keep running" doc claim is now TRUE | PCR-5 (7c42eca) |
+| PG-6 | **CLOSED** — doc-claim sync: every active doc carries ONE test count (124), the hunt claim is backed by a system, the residual ledger rewritten (READINESS §P), the strategy §10 backlog marks P1/P1.5 EXECUTED, LAN_COOP_SPEC's roster-mirror exception superseded | PCR-1..PCR-6 |
+
+**Stop condition check**: PG-1..PG-6 all closed; both validators PASS (124-test gate,
+15 census gates unchanged, 39-species Tier-B coherence gate); no known source-side
+product gap remains. The engine-side queue is unchanged: AG-2..AG-5 (§20) + §22
+LAN acceptance, now including the 39 Tier-B GLB imports (riding the §20b baseline
+pass — no code patch needed) and PIE spot-checks for the four new screens.
