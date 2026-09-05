@@ -1317,6 +1317,29 @@ struct ASTRAWILDCORE_API FAstrawildNPCAffinitySaveData
  * and equipment wear. Absent in pre-LCP saves = fresh states.
  */
 USTRUCT(BlueprintType)
+/**
+ * PCR-5 (PG-5): post-game hunt progress row (additive, no schema bump — rides
+ * the world save as one flat array keyed by the stable player key; pre-PCR
+ * saves deserialize with zero rows = no hunt history, nothing lost).
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildHuntSaveRow
+{
+    GENERATED_BODY()
+
+    /** Stable per-player key (LCP-4 GetPlayerKey; NAME_None = single-player row). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Hunt")
+    FName PlayerKey = NAME_None;
+
+    /** Hunt contract id. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Hunt")
+    FName HuntId = NAME_None;
+
+    /** Defeats counted toward the current round (resets on claim). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Hunt", meta=(ClampMin="0"))
+    int32 Defeats = 0;
+};
+
 struct ASTRAWILDCORE_API FAstrawildCoopPlayerSaveBlock
 {
     GENERATED_BODY()

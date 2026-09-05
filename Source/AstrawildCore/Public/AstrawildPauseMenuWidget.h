@@ -65,6 +65,10 @@ private:
     UFUNCTION()
     void HandleMapClicked();
 
+    /** PCR-5: open the Hunt Board — the gamepad-reachable path (U on KB/M). */
+    UFUNCTION()
+    void HandleHuntClicked();
+
     UFUNCTION()
     void HandleQuitClicked();
 
@@ -128,6 +132,10 @@ private:
     /** PCR-3: World Map entry point for gamepad players (keyboard: M). */
     UPROPERTY()
     TObjectPtr<UButton> MapButton;
+
+    /** PCR-5: Hunt Board entry point for gamepad players (keyboard: U). */
+    UPROPERTY()
+    TObjectPtr<UButton> HuntButton;
 
     UPROPERTY()
     TObjectPtr<UButton> QuitButton;

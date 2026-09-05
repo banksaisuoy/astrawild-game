@@ -150,7 +150,7 @@ check(f"Asset path references resolve ({len(refs)} refs)", len(unresolved) == 0,
 # --- 9. Automation test count ---
 TESTS = read("Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
 count = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", TESTS))
-check("Automation tests == 123 (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 session flow + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B library)", count == 123, f"count={count} — update this gate + all active docs together")
+check("Automation tests == 124 (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 session flow + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts)", count == 124, f"count={count} — update this gate + all active docs together")
 
 # --- 9b. PCR-4/PCR-5: Tier-B archetype library coherence ---
 ARTPACK = read("Source/AstrawildCore/Private/AstrawildArtPack.cpp")

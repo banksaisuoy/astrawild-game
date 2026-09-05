@@ -9,6 +9,7 @@
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildHuntSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInventoryComponent.h"
@@ -302,6 +303,10 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
     if (const UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
     {
         WorldEvents->ExportForSave(SaveGame->WorldEvents);
+        if (UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>())
+        {
+            Hunts->ExportForSave(SaveGame->Hunts);
+        }
     }
     if (const UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
     {
@@ -868,6 +873,10 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
     {
         WorldEvents->ImportFromSave(SaveGame->WorldEvents);
+        if (UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>())
+        {
+            Hunts->ImportFromSave(SaveGame->Hunts);
+        }
     }
     if (UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
     {

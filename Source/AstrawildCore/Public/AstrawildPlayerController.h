@@ -17,6 +17,7 @@ class UAstrawildDialogueComponent;
 class UAstrawildJournalScreenWidget;
 class UAstrawildRosterScreenWidget;
 class UAstrawildMapScreenWidget;
+class UAstrawildHuntScreenWidget;
 
 #include "AstrawildTypes.h"
 
@@ -240,6 +241,27 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsMapOpen() const;
 
+    /** PCR-5 (PG-5): Hunt Board screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildHuntScreenWidget> HuntScreenClass;
+
+    /** PCR-5: toggle the Hunt Board (post-game repeatable cull contracts) — key U. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleHuntScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsHuntOpen() const;
+
+    /**
+     * PCR-5: claim a completed hunt round. Local authority mutates directly;
+     * a remote client routes through the validated server RPC.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Hunt")
+    bool RequestClaimHunt(FName HuntId);
+
+    UFUNCTION(Server, Reliable)
+    void ServerClaimHunt(FName HuntId);
+
     /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsAnyScreenOpen() const;
@@ -280,4 +302,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildMapScreenWidget> MapScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildHuntScreenWidget> HuntScreen;
 };

@@ -167,6 +167,10 @@ public:
     /** One block per non-host LAN player, keyed by the stable player key (empty = single-player / pre-LCP saves). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TArray<FAstrawildCoopPlayerSaveBlock> CoopPlayers;
+
+    /** PCR-5: post-game hunt progress rows (additive v5 payload — no schema bump). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Save")
+    TArray<FAstrawildHuntSaveRow> Hunts;
 };
 
 UCLASS()

@@ -13,6 +13,8 @@
 #include "AstrawildJournalScreenWidget.h"
 #include "AstrawildRosterScreenWidget.h"
 #include "AstrawildMapScreenWidget.h"
+#include "AstrawildHuntScreenWidget.h"
+#include "AstrawildHuntSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
@@ -260,6 +262,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleMapScreen();
     }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
 
     if (bOpen)
     {
@@ -333,6 +339,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     if (IsMapOpen())
     {
         ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
     }
 
     if (bOpen)
@@ -408,6 +418,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     {
         ToggleMapScreen();
     }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
 
     if (bOpen)
     {
@@ -480,6 +494,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsMapOpen())
     {
         ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
     }
 
     if (bOpen)
@@ -554,6 +572,10 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     if (IsMapOpen())
     {
         ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -630,6 +652,10 @@ void AAstrawildPlayerController::ToggleRosterScreen()
     if (IsMapOpen())
     {
         ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -756,6 +782,10 @@ void AAstrawildPlayerController::ToggleMapScreen()
     {
         TogglePauseMenu();
     }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
 
     if (bOpen)
     {
@@ -802,9 +832,122 @@ void AAstrawildPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProp
     DOREPLIFETIME(AAstrawildPlayerController, RosterMirror);
 }
 
+// --- PCR-5 (PG-5): the Hunt Board screen ---
+
+void AAstrawildPlayerController::ToggleHuntScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsHuntOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!HuntScreen)
+        {
+            const TSubclassOf<UAstrawildHuntScreenWidget> WidgetClass = HuntScreenClass
+                ? HuntScreenClass
+                : TSubclassOf<UAstrawildHuntScreenWidget>(UAstrawildHuntScreenWidget::StaticClass());
+            HuntScreen = CreateWidget<UAstrawildHuntScreenWidget>(this, WidgetClass);
+        }
+        if (HuntScreen)
+        {
+            HuntScreen->RefreshHunts();
+            HuntScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so U/ESC close without a mouse click.
+            HuntScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (HuntScreen)
+        {
+            HuntScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsHuntOpen() const
+{
+    return HuntScreen && HuntScreen->IsInViewport();
+}
+
+bool AAstrawildPlayerController::RequestClaimHunt(const FName HuntId)
+{
+    if (!IsLocalController())
+    {
+        return false;
+    }
+
+    UWorld* World = GetWorld();
+    if (World && World->GetNetMode() != NM_Client && HasAuthority())
+    {
+        UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>();
+        return Hunts ? Hunts->ClaimHunt(HuntId, GetPlayerKey(), GetPawn()) : false;
+    }
+
+    ServerClaimHunt(HuntId);
+    return true; // accepted for routing; the server validates the claim
+}
+
+void AAstrawildPlayerController::ServerClaimHunt_Implementation(const FName HuntId)
+{
+    // Fail-closed server validation: ClaimHunt re-checks completion + authority.
+    UWorld* World = GetWorld();
+    UAstrawildHuntSubsystem* Hunts = World ? World->GetSubsystem<UAstrawildHuntSubsystem>() : nullptr;
+    if (!Hunts || !Hunts->ClaimHunt(HuntId, GetPlayerKey(), GetPawn()))
+    {
+        NotifyPlayer(FText::FromString(TEXT("That hunt is not complete yet.")));
+    }
+    else
+    {
+        NotifyPlayer(FText::FromString(TEXT("Hunt reward claimed.")));
+    }
+}
+
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen();
 }
 
 

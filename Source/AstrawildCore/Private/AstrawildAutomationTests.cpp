@@ -63,6 +63,8 @@
 #include "AstrawildPauseMenuWidget.h"
 #include "AstrawildRosterScreenWidget.h"
 #include "AstrawildMapScreenWidget.h"
+#include "AstrawildHuntScreenWidget.h"
+#include "AstrawildHuntSubsystem.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -5560,6 +5562,79 @@ bool FAstrawildPCR4TierBLibraryTest::RunTest(const FString& Parameters)
         }
     }
     TestEqual(TEXT("All 39 Tier-B species carry the convention binding"), Bound, 39);
+    return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// PCR-5 (PG-5): post-game hunt system contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR5HuntSystemTest,
+    "ASTRAWILD.PCR5.HuntSystem",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR5HuntSystemTest::RunTest(const FString& Parameters)
+{
+    // 1) The contract table (pure — world-free): 8 repeatable cull contracts,
+    //    every row reusing an EXISTING species + EXISTING reward item.
+    TArray<FName> HuntIds;
+    UAstrawildHuntSubsystem* Probe = nullptr; // table is static — use the pure lookup
+    // (StaticClass-free zone: the subsystem exposes pure statics via FindContract.)
+    UAstrawildHuntSubsystem::FHuntContract Contract;
+    TestTrue(TEXT("Hunt_Hunt table resolves"), UAstrawildHuntSubsystem::FindContract(TEXT("Hunt_DuskmothCull"), Contract));
+    TestEqual(TEXT("Duskmoth contract requires 5"), Contract.RequiredDefeats, 5);
+    TestEqual(TEXT("Duskmoth contract targets the species"), Contract.SpeciesId, FName(TEXT("Echo_Duskmoth")));
+    TestEqual(TEXT("Duskmoth contract rewards an existing item"), Contract.RewardItemId, FName(TEXT("Item_DawnShard")));
+    TestEqual(TEXT("Duskmoth contract reward quantity"), Contract.RewardQuantity, 3);
+
+    TestFalse(TEXT("Unknown hunt id fails closed"), UAstrawildHuntSubsystem::FindContract(TEXT("Hunt_Nonsense"), Contract));
+
+    const int32 KnownHuntCount = 8;
+    const TCHAR* KnownHunts[] = {
+        TEXT("Hunt_DuskmothCull"), TEXT("Hunt_StonehideCull"), TEXT("Hunt_EmberfangCull"),
+        TEXT("Hunt_RimefangCull"), TEXT("Hunt_BrinefinCull"), TEXT("Hunt_SunhideCull"),
+        TEXT("Hunt_VerdantbloomCull"), TEXT("Hunt_MonolithCull"),
+    };
+    for (const TCHAR* HuntId : KnownHunts)
+    {
+        TestTrue(FString::Printf(TEXT("Contract exists: %s"), HuntId),
+            UAstrawildHuntSubsystem::FindContract(HuntId, Contract));
+    }
+
+    // 2) The hunt save row (additive, no schema bump): fresh rows are pristine.
+    FAstrawildHuntSaveRow FreshRow;
+    TestTrue(TEXT("Fresh hunt row has no defeats"), FreshRow.Defeats == 0);
+    TestTrue(TEXT("Fresh hunt row has no player key"), FreshRow.PlayerKey.IsNone());
+    UClass* RowStruct = FAstrawildHuntSaveRow::StaticStruct();
+    TestTrue(TEXT("Save row carries the fields"), RowStruct->FindPropertyByName(TEXT("PlayerKey")) != nullptr
+        && RowStruct->FindPropertyByName(TEXT("HuntId")) != nullptr
+        && RowStruct->FindPropertyByName(TEXT("Defeats")) != nullptr);
+
+    // 3) Surface wiring (reflection contract):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleHuntScreen"), PCClass->FindFunctionByName(TEXT("ToggleHuntScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsHuntOpen"), PCClass->FindFunctionByName(TEXT("IsHuntOpen")) != nullptr);
+    TestTrue(TEXT("Controller exposes RequestClaimHunt (local-authority path)"),
+        PCClass->FindFunctionByName(TEXT("RequestClaimHunt")) != nullptr);
+    TestTrue(TEXT("Controller exposes ServerClaimHunt (validated client path)"),
+        PCClass->FindFunctionByName(TEXT("ServerClaimHunt")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the hunt input action"),
+        CharClass->FindPropertyByName(TEXT("HuntAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the hunt button"),
+        PauseClass->FindPropertyByName(TEXT("HuntButton")) != nullptr);
+
+    // 4) The subsystem surface (the save plumbing rides the world save).
+    UClass* HuntClass = UAstrawildHuntSubsystem::StaticClass();
+    TestTrue(TEXT("Hunt subsystem exposes GetHuntProgress"), HuntClass->FindFunctionByName(TEXT("GetHuntProgress")) != nullptr);
+    TestTrue(TEXT("Hunt subsystem exposes IsHuntComplete"), HuntClass->FindFunctionByName(TEXT("IsHuntComplete")) != nullptr);
+    TestTrue(TEXT("Hunt subsystem exposes ClaimHunt"), HuntClass->FindFunctionByName(TEXT("ClaimHunt")) != nullptr);
+    TestTrue(TEXT("Save game object carries the Hunts array"),
+        UAstrawildSaveGame::StaticClass()->FindPropertyByName(TEXT("Hunts")) != nullptr);
     return true;
 }
 

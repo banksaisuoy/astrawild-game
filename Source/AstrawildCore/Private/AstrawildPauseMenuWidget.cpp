@@ -105,6 +105,10 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     MapButton = MakeMenuButton(TEXT("PauseMap"), TEXT("World Map [M]"), FLinearColor(0.45f, 0.4f, 0.22f, 1.0f));
     MapButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleMapClicked);
 
+    // PCR-5: the Hunt Board entry (gamepad-reachable; U on keyboard).
+    HuntButton = MakeMenuButton(TEXT("PauseHunt"), TEXT("Hunt Board [U]"), FLinearColor(0.5f, 0.35f, 0.2f, 1.0f));
+    HuntButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleHuntClicked);
+
     QuitButton = MakeMenuButton(TEXT("PauseQuit"), TEXT("Quit To Desktop"), FLinearColor(0.5f, 0.2f, 0.16f, 1.0f));
     QuitButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleQuitClicked);
 
@@ -181,6 +185,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     {
         MapSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         MapSlot->SetPadding(FMargin(0.0f, 6.0f));
+    }
+    if (UVerticalBoxSlot* HuntSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(HuntButton)))
+    {
+        HuntSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        HuntSlot->SetPadding(FMargin(0.0f, 6.0f));
     }
     if (UVerticalBoxSlot* LoadoutTitleSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SkillLoadoutText)))
     {
@@ -294,6 +303,19 @@ void UAstrawildPauseMenuWidget::HandleMapClicked()
             PC->TogglePauseMenu();
         }
         PC->ToggleMapScreen();
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleHuntClicked()
+{
+    // PCR-5: same close-then-open sequence as the other screen buttons.
+    if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+    {
+        if (PC->IsPauseMenuOpen())
+        {
+            PC->TogglePauseMenu();
+        }
+        PC->ToggleHuntScreen();
     }
 }
 
