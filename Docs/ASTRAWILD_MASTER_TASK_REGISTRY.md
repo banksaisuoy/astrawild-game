@@ -267,3 +267,25 @@ the product-completion scope closed; the Antigravity one-time integration now
 runs §20 (build + 124 automation + PIE golden path incl. the new screens +
 package, with the 39 Tier-B GLBs importing on the §20b baseline pass) + §22
 (LAN acceptance: host + 3 clients).
+
+## §L FINAL PLAYER-FACING PRESENTATION PASS (FPP — current session, user directive "FINAL PLAYER-FACING GAMEPLAY PRESENTATION PASS + finish the remaining work")
+
+Directive: NOT more systems — make every important existing system actually
+player-facing, understandable and visually actionable; no content inflation;
+player rules doc; then freeze source development.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FPP-0 | Presentation audit (5-way, parallel) | Player-skill / Echo-ability / boss / progression+feedback / rulebook-data audits against the live repo with file:line evidence | GLM + 5 audit agents | COMPLETE | Found: 1× P0 (crafting screen cannot open — abstract class + no WBP), skill descriptions/level-up/cooldown invisible, journal/roster zero ability rendering + wrong own-echo prompt + silent bond gates, boss hit-confirm/melee-telegraph/defeat feedback missing + HUD first-found boss bar + bosses not journal-observable, craft/loot/power/supply-drop feedback silent + raw-id/actor-name leaks |
+| FPP-1 | Dead-end fixes (smallest compatible, no new systems) | Crafting screen concrete native UI (P0) + skill presentation (description table, pause slot name/desc/READY-recharging, GROWTH line, level-up + new-skill toast, Y no-ready/cast toasts, Masterwork passive label + refund toast) + journal/roster ability kits/passive/rideable lines + weakness element + own-echo prompt truth + mount bond-gate toast + boss presentation (weakness/weak-point HIT toast+SFX, 0.5s melee windup + whiff window, element-tinted telegraph lights, weak-point pulse, phase/enrage/defeat/loot toasts + defeat sound, boss bar nearest-within-4000cm) + boss journal observation (shared ObserveCandidate) + feedback toasts (craft refusal/success both paths, kill loot, supply drop, brownout/restore, quest Title, bond 25/40) + WorkSite display names | GLM | COMPLETE | +test 125 FPP1.PresentationContract + validator gate 124→125; census UNCHANGED (zero content inflation); commit cca4cfc |
+| FPP-2 | Player rules + doc sync | `Docs/ASTRAWILD_PLAYER_RULES.md` (START/SURVIVAL/COMBAT/ECHO/CRAFTING/BUILDING/RESEARCH/WORLD/QUEST/BOSS/ENDGAME/POST-GAME/CONTROLS — every number from live source) + MASTER_CONTROL v8.0 + READINESS §Q + HANDOFF §13/§18/§19/§20 (stale journal-UI note fixed, 32 actions, gamepad note, landscape-material manual step, V2-29 evidence note) + queue STATUS NOTE + manifest/registry sync | GLM | COMPLETE | test count 125 single truth across active docs |
+| FPP-3 | Final source freeze | SOURCE_PRODUCT_FROZEN declared (MASTER_CONTROL v8.0 overall status + READINESS top status + §Q); final SHA recorded in HANDOFF §1; post-freeze work = evidence-driven engine fixes only | GLM | COMPLETE | Stop condition: skills player-facing · Echo abilities understandable · boss presentation paths · explicit progression · reward feedback · no known player-facing dead ends · PLAYER_RULES exists · docs synchronized |
+
+**§L closing note:** FPP-0..FPP-3 all COMPLETE — the presentation pass closed
+every real player-facing dead end the audits found, with zero new systems and
+zero content inflation. **SOURCE_PRODUCT_FROZEN.** The one remaining work item
+is the Antigravity engine integration: HANDOFF §20 (build + 125 automation +
+PIE golden path incl. FPP-1 verification items + package + the §20b/§20c
+import sub-sequences + the landscape-material manual step in §19) + §22 (LAN
+acceptance). Post-freeze changes are evidence-driven only (actual integration
+failures / runtime bugs / engine-discovered visual defects).

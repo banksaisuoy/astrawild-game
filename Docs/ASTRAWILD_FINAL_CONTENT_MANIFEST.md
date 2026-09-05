@@ -209,3 +209,28 @@ family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
 - **NPC affinity**: runtime values + save fields — no assets.
 - Input contract: 26 -> 28 actions (T party-cast, Y smart-cast). Save schema: still V5 (additive fields only).
 - Verdict: READY_FOR_FINAL_BUILD re-affirmed (source/repository side).
+
+## FPP Amendment (v1.4 — Final Player-Facing Presentation Pass)
+
+- **No content-family, LFS-object, asset-path, or code-default change.** FPP-1
+  is presentation-layer source only (UI strings/toasts/telegraph visuals/one
+  concrete UMG base class). It introduces ZERO new `/Game/` references (the
+  boss feedback cues reuse the existing `AstrawildArtPack::Sfx` binding), so
+  the manifest's verification basis (459/459 LFS objects, all hardcoded asset
+  references resolving, CODE_DEFAULT registries) is unchanged and re-validated
+  — `validate_final_run.py` ALL CHECKS PASS at the FPP gate (125-test exact
+  gate, 15 census equality gates unchanged: 78 items / 58 recipes / 229
+  species / 26 buildings / 17 techs / 17 quests / 11 loot tables / 11 NPCs /
+  8 weapons / 10 nodes / 8 sites / 16 events / 17 POIs / 11 dialogue trees /
+  3 robots / 12 zones / 4 bosses).
+- **Crafting screen**: `UAstrawildCraftingScreenWidget` is now a concrete
+  native-C++ screen (was `UCLASS(Abstract)` with no WBP — un-instantiable).
+  Pure C++ Slate construction, no `.uasset` requirement; a WBP subclass can
+  still restyle it later (BP_* events preserved).
+- **Player-facing rulebook**: `Docs/ASTRAWILD_PLAYER_RULES.md` (documentation,
+  not content). Input contract stays 32 actions; save schema stays V5
+  (presentation pass adds no save fields).
+- Test suite: 124 → **125** (`ASTRAWILD.FPP1.PresentationContract`).
+- Verdict: **SOURCE_PRODUCT_FROZEN** (source-side; READY_FOR_FINAL_BUILD
+  carried through). Engine verification (AG-2..5 + §22) is the sole remaining
+  gate.

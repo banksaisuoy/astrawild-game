@@ -1,10 +1,10 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 7.3 (PRODUCT COMPLETION RUN COMPLETE: PCR-0..PCR-6 closed — PG-1 Field Journal UI / PG-2 Roster UI + mirror + ownership defect fix / PG-3 Map UI / PG-4 Tier-B library (39 GLBs) / PG-5 hunt system / PG-6 doc sync; READY_FOR_FINAL_BUILD re-declared with the product-completion scope closed; see the gap matrix closure ledger)
+**Document Version**: 8.0 (FINAL PLAYER-FACING PRESENTATION PASS COMPLETE — FPP-1 closed every player-facing dead end found by the 5-way presentation audit: crafting-screen P0 (UCLASS(Abstract) + no WBP = the crafting UI could not open at all — now a concrete native-C++ screen), player-skill descriptions/level-up/cooldown presentation, journal+roster ability/rideable lines, boss weakness/melee-windup/phase/defeat feedback, HUD boss-bar engagement gating, boss bestiary observation, craft/loot/power/bond/supply-drop feedback toasts; +test 125 FPP1.PresentationContract; census UNCHANGED; PLAYER_RULES.md issued. **SOURCE_PRODUCT_FROZEN** — the only remaining work is the one-time Antigravity engine integration, §20 + §22, and evidence-driven fixes to actual engine defects. See registry §L.)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
-**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch: ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FCR + ASSET ACQUISITION (26a7c7b, a09e566) + DEPTH PASSES DP-1..DP-10 (981250d → 00354da) + LAN CO-OP PACK LCP-1.. (this commit onward) — all pushed)
-**Last Updated**: 2026 (PCR-0 — product audit re-opened by the user's FINAL PRODUCT COMPLETION RUN directive: documentation status is NOT the stop condition; see `ASTRAWILD_PRODUCT_GAP_MATRIX.md` + registry §K; LCP-era freeze lifted for PCR batches only)
+**Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch: ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FCR + ASSET ACQUISITION (26a7c7b, a09e566) + DEPTH PASSES DP-1..DP-10 (981250d → 00354da) + LAN CO-OP PACK LCP-1..LCP-8 + PRODUCT COMPLETION RUN PCR-0..PCR-6 + PRESENTATION PASS FPP-1 (this commit onward) — all pushed)
+**Last Updated**: 2026 (FPP-1 — the final source-side pass per the user's PLAYER-FACING PRESENTATION directive; the branch is FROZEN for the Antigravity one-time engine run)
 
 ---
 
@@ -73,7 +73,7 @@ A declared PASS without a raw log is a CLAIM, not evidence.
 | :--- | :--- | :--- |
 | **GLM** | Lead Programmer | C++, architecture, save/load, quests, AI, economy, tests; this document |
 | **Qwen** | Technical Art (optional) | Materials/meshes/animation polish — never blocks the project |
-| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 124-test automation run, playtest, package, push |
+| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 125-test automation run, playtest, package, push |
 | **Sonnet/Reviewers** | Auditors | Findings are inputs; only REAL BUG / STALE DOC / UNPROVEN CLAIM classes act on |
 
 ## 1b. Supported multiplayer target (v6.0 — user product decision, binding)
@@ -135,7 +135,7 @@ No cheat-command dependency anywhere in the chain.
   229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 11 NPCs,
   11 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots**.
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
-  superseded. The automation suite holds **124 world-free contract tests** (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 LAN co-op + 1 PCR-1 Field Journal + 1 PCR-2 Echo Roster + 1 PCR-3 World Map + 1 PCR-4 Tier-B library + 1 PCR-5 hunt system).
+  superseded. The automation suite holds **125 world-free contract tests** (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 LAN co-op + 1 PCR-1 Field Journal + 1 PCR-2 Echo Roster + 1 PCR-3 World Map + 1 PCR-4 Tier-B library + 1 PCR-5 hunt system + 1 FPP-1 presentation contract). The player-facing rulebook is `Docs/ASTRAWILD_PLAYER_RULES.md` (every number sourced from live code at the freeze SHA).
 
 ## 4. Final story canon (IMPLEMENTED — was frozen spec v1.7 §11)
 
@@ -225,13 +225,13 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 | W-19 | HUD/UI | LIVE + ending banner + boss labels | |
 | W-20 | **Ending + post-game** | **LIVE (FR-5/FR-6 + audit G-2 gate fix)** | ending gated on MQ-17 per canon |
 | W-21 | Content pipeline (ArtSource/LFS/import) | LIVE | 459 LFS objects verified |
-| W-22 | Tests | 124 world-free contracts | ENGINE-UNVERIFIED until run |
+| W-22 | Tests | 125 world-free contracts | ENGINE-UNVERIFIED until run |
 
 ## 8. Verification queue for Antigravity (one-time final integration)
 
 1. `git fetch && git checkout final-completion` (or merge into main — subsumes PR #4)
 2. Build: `Engine\Build\BatchFiles\Build.bat AstrawildEditor Win64 Development -project=<repo>\ASTRAWILD.uproject`
-3. Run automation: 124/124 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*`, the 10 LAN co-op contracts `ASTRAWILD.LCP2..LCP6.*`, and the PCR contracts `ASTRAWILD.PCR1..PCR5.*` — full list in `ASTRAWILD_TEST_INVENTORY.md` rows 1-124; the count is read from the repo, never from memory)
+3. Run automation: 125/125 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*`, the 10 LAN co-op contracts `ASTRAWILD.LCP2..LCP6.*`, the PCR contracts `ASTRAWILD.PCR1..PCR5.*`, and `ASTRAWILD.FPP1.PresentationContract` — full list in `ASTRAWILD_TEST_INVENTORY.md`; the count is read from the repo, never from memory)
 4. PIE smoke: MQ chain HUD tracker · save/load round-trip (schema 5 stamp in log) ·
    `AW.FastForward` to MQ-13+ if needed → verify anchor POIs, Eye Gate at 150 m with coil skiff,
    Sovereign fight, ending banner, post-game weather pin (Ending A).
@@ -259,7 +259,7 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | Save persistence model | YES — schema V5, every major system persisted |
 | UI player-accessible | YES — HUD/screens incl. ending banner |
 | AI complete source paths | YES (echo/hostile/boss) |
-| Automation deterministic | YES — scripts + 124 contracts + this document |
+| Automation deterministic | YES — scripts + 125 contracts + this document |
 | Documentation single control | YES — this file |
 | Task registry | YES — ASTRAWILD_MASTER_TASK_REGISTRY.md |
 | P0 source blockers | NONE KNOWN (static level) |
@@ -269,20 +269,21 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | **Tier-B creature visual identity (PCR)** | YES (source-side) — 39 unique variant-baked GLBs + definition-driven opt-in binding (PMC stays until the §20b import pass) |
 | **Post-game hunts (PCR)** | YES — 8 repeatable cull contracts + Hunt Board (the post-game claim is now TRUE) |
 
-**Overall status (v7.3): READY_FOR_FINAL_BUILD (source-side, product-completion scope closed).**
+**Overall status (v8.0): SOURCE_PRODUCT_FROZEN (source-side; READY_FOR_FINAL_BUILD carried through — presentation scope closed, feature development ends here).**
 Declared at DP-10, suspended twice (LAN CO-OP scope; PCR product audit),
-re-declared here at the PCR-6 gate: the six product gaps (PG-1..PG-6) are all
-closed (gap matrix closure ledger), 124 contracts hold, census gates are
-unchanged, and the engine conversion queue is §20 (build/automation/PIE +
-the 39 Tier-B GLB imports riding the §20b baseline pass) + §22 (LAN
-acceptance). Nothing in this document claims engine verification.
+re-declared at the PCR-6 gate and now **FROZEN at the FPP-1 gate**: the six
+closed product gaps (PG-1..PG-6), 125 contracts, census gates unchanged, and
+the presentation dead ends closed by FPP-1 — the engine conversion queue is
+§20 (build/automation/PIE + the 39 Tier-B GLB imports riding the §20b baseline
+pass) + §22 (LAN acceptance). Nothing in this document claims engine
+verification.
 
 ## 11. Known engine-unverified items (honest ledger)
 
 - LAN co-op: all LCP source work is ENGINE-UNVERIFIED until the Antigravity run executes the §22 LAN acceptance test (4 players, host + 3 clients).
 - Door visual state on pure clients (bIsSwitchedOn has no OnRep) — single-player/listen-server correct.
 - Imported skiff mesh orientation (glTF Y-up→Z-up assumption) — cosmetic; collision hull unaffected.
-- 124 automation tests never executed in a real engine.
+- 125 automation tests never executed in a real engine.
 - Package/cook success at the final SHA (FZ-A1 failure was at 8313c61).
 - Dungeon generator float-precision at 400 m altitude (Eye) — probes use world height; watch PIE log.
 - Dedicated-server paths remain out of scope by design (§1b — LAN listen server is the target).
@@ -316,6 +317,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026 | **v5.0 (GLM DP-10 FINAL GATE — DEPTH PASSES COMPLETE)**: full source audit at tip 018a95a — both validators PASS (validate_repository.sh v2 + validate_final_run.py 61 checks incl. the 109-test gate and the 15 census equality gates); doc-consistency sweep executed (stale current-state counts corrected across the matrix/manifest/registry/readiness/handoff — historical/dated rows untouched); content readiness matrix re-verified at 14 categories (Tier-A meshes IMPORT_READY, skill loadout live, affinity-gated dialogue, themed dungeons — statuses stay honest, nothing BOUND); readiness report re-affirms **READY_FOR_FINAL_BUILD (source-side)** with the residual ledger (Tier-B rig library P1 / engine import+binding queue §20b+§20c / tone-weapon-particle-ACS decisions awaiting engine evidence); HANDOFF coherence pass (109 tests as repo truth, §20b+§20c referenced from the §20 sequence, 12 golden-path verify items, 12-point stop-condition list from the user directive); registry §I closed — DP-1..DP-10 all COMPLETE, no orphans; branch frozen for the Antigravity one-time integration run |
 | 2026 | **v6.1 (GLM LCP-8 — LAN CO-OP PACK COMPLETE, READY_FOR_FINAL_BUILD re-declared)**: LCP-2 client world (deterministic cosmetic build from the replicated seed + replicated gameplay actors incl. the DP-9 client-shell fix) · LCP-3 interaction/trade routing (ServerInteract choke point, first Client RPCs, fail-closed dialogue/trade validation, mount/pilot input relays, cheat client gate) · LCP-4 per-player persistence (coop save blocks, roster owner partition, stable player keys, late-join/reconnect) · LCP-5 client state sync (quest replication, research mirror, unlock/completion feedback everywhere) · LCP-6 LAN session flow (UDP beacon, pause panel, HUD mode line, travel-autoload) · LCP-7 free-asset ledger + 6 CC0 Quaternius Ultimate packs (264 files, dual license gates, Drive-crawl downloader) · LCP-8 this gate — suite 109→119, validators PASS ×2, HANDOFF §21b+§22, READINESS §O, registry §J closed; engine queue = AG-2..5 + §22 |
 | 2026 | **v6.0 (GLM LCP-1 — LAN CO-OP PACK OPENED)**: user-issued product decision reopens scope: ASTRAWILD is a private 4-player LAN co-op game (listen server, host-authoritative, free-asset production mode) — §1b added, `ASTRAWILD_LAN_COOP_SPEC.md` issued (full PART-3 source audit: 43 replicated props / 14 classes, 8 Server RPCs, 0 Client RPCs; client-visible world BROKEN-for-clients, co-op save MISSING, session flow MISSING, quest/research client sync PARTIAL — every verdict source-grounded), MULTIPLAYER.md refreshed to the audit truth, registry §I reopened with the LCP-1..LCP-8 ledger; DP-era freeze lifted for LCP batches only; depth-pass canon UNCHANGED; engine gates unchanged (AG-2..5 + new §22 LAN acceptance) |
+| 2026 | **v8.0 (GLM FPP-1 — FINAL PLAYER-FACING PRESENTATION PASS, SOURCE_PRODUCT_FROZEN)**: 5-way presentation audit (skills/echo/bosses/progression+feedback/rulebook-extraction) → real dead ends fixed with smallest-compatible implementations, NO new systems and census UNCHANGED: (1) **P0 crafting screen** — UCLASS(Abstract)+no WBP meant CreateWidget returned nullptr and the crafting UI never opened; now a concrete native pure-C++ screen (rows: inputs have/need, station range, [Craft] with reason-labeled disabled states, live craft status) keeping the BP_* subclass contract; (2) player skills: GetSkillDescription table + pause-slot name/description/READY-recharging + GROWTH attributes+XP readout + level-up toast with new-skill milestone + Y no-ready/cast toasts; (3) journal+roster: ability kit lines (name+unlock Lv), passive aura, rideable markers, weakness flag names the ELEMENT, boss species gain bestiary entries; (4) HUD own-echo prompt truth (ride/evolve not "capture") + boss bar engages only within 4000cm of the NEAREST alive boss; (5) bosses: weakness/weak-point HIT toast+SFX, 0.5s melee windup telegraph + whiff window, element-tinted blast discs, weak-point pulse, phase/enrage/defeat toasts + defeat sound + loot toast; (6) feedback: craft refusal reasons + success toasts, kill-loot/supply-drop/brownout/quest-title/bond-25/40 toasts, WorkSite display names; +test 125 `FPP1.PresentationContract` + validator gate; `ASTRAWILD_PLAYER_RULES.md` issued (the concise player-facing rulebook). Post-freeze work is evidence-driven only: actual UE5 integration failures, runtime bugs, or engine-run visual defects |
 | 2026 | **v7.3 (GLM PCR-6 — FINAL GATE, READY_FOR_FINAL_BUILD re-declared)**: gap-matrix closure ledger (PG-1..PG-6 all delivered with commit SHAs) + READINESS §P re-declaration + residual ledger rewrite (§M-a Tier-B = EXECUTED) + registry §K closed + this document's status/rows updated; both validators PASS at tip (124-test gate, census unchanged, Tier-B coherence gate); the branch freezes for the one-time Antigravity engine integration (AG-2..AG-5 + §22) |
 | 2026 | **v7.2 (GLM PCR-5 — POST-GAME HUNT SYSTEM, PG-5 closed)**: `UAstrawildHuntSubsystem` (world subsystem; 8 repeatable cull contracts — every row reuses an EXISTING Tier-B species + EXISTING reward item, census UNCHANGED by design) + progress observes the SAME defeat events the quest counters count (Event.HostileDefeated/EchoDefeated via the event bus, server-side; world-shared counting = the documented co-op v1 exception class) + `ClaimHunt` (authority + completion validated; AddItemSilent rewards — no false quest credit; round resets → repeatable forever) + additive `FAstrawildHuntSaveRow` rows on the world save (no schema bump; fail-closed import drops unknown ids) + `UAstrawildHuntScreenWidget` + key **U** + pause-menu button + controller Request/ServerClaimHunt routing + test 124; post-game claim now TRUE: "world events, hunts, economy and dungeons keep running" has a hunts system behind it |
 | 2026 | **v7.1 (GLM PCR-4 — TIER-B ARCHETYPE MESH LIBRARY, the §M-a MISSING residual closed)**: `Tools/ArtSourceGen/aw_archetypes.py` (8 parameterized body-plan builders on the Tier-A rig conventions — quadruped/biped/avian/serpent/insectoid/amorphous/floating/crystalline, per-species proportions/features/palette from the bestiary rows + deterministic name-hash jitter, 3 clips per species) + `gen_tier_b.py` (species data parsed from the ACTUAL source tables — bestiary 204 rows + appearance retrofit + zone-wildlife + dungeon pools + event boosts; Tier-B rule = spawn tables ∪ Huge ∪ monolith/colossus family minus the 14 Tier-A species) → **39 unique GLBs (4.8 MB, validate_glb PASS ×39, LFS-committed, manifest-recorded)**: every zone signature species, both dungeon pools, the monolith/colossus line + binding: `GetTierBSpeciesIds()` + `BuildTierBMechPath/BuildTierBAnimPath` + **definition-driven opt-in binding in ProductionContent (derived convention paths — ZERO engine-side code patch; before import the PMC body stays, the same opt-in contract the bosses use; explicit art rows always win)** + validator §9b (code list == 39 == baked GLBs) + test 123 (ASTRAWILD.PCR4.TierBLibrary — size pin + path derivation + on-disk GLB existence + registry binding round-trip); input/census unchanged |

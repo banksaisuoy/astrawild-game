@@ -2,12 +2,15 @@
 
 **Report date**: 2026 (FINAL GAME COMPLETION RUN → FCR → DEPTH PASSES — re-affirmed at the DP-10 final gate) · **Author**: GLM 5.3
 **Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + all Final Run / FINAL-AUDIT / GDP / SCP / FCR / ASSET ACQUISITION (26a7c7b, a09e566) / DEPTH PASS DP-1..DP-9 (981250d → 018a95a) / DP-10 final-gate batches — all pushed)
-**Top-level status**: **READY_FOR_FINAL_BUILD** (source-side; RE-DECLARED at the LCP gate —
-the LAN CO-OP scope addition closed through LCP-1..LCP-8, see §O). The final content manifest
+**Top-level status**: **SOURCE_PRODUCT_FROZEN** (source-side — the FINAL PLAYER-FACING
+PRESENTATION PASS closed the last real player-facing dead ends; feature development
+ends here. The Antigravity one-time engine integration (AG-2..AG-5 + HANDOFF §20/§22)
+is the sole remaining work; post-freeze changes are evidence-driven engine fixes only.
+**ENGINE_UNVERIFIED** — nothing in this report claims a runtime PASS.) The final content manifest
 (`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 459/459 LFS objects verified live
 on GitHub, all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
-(validator equality gates), and the automation suite holds **124 world-free contract
+(validator equality gates), and the automation suite holds **125 world-free contract
 tests** behind an exact gate. The FINAL GAME COMPLETION RUN's five-agent deep audit fixed
 2 compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects (FCR-1-A/B/C), and the DEPTH
 PASS batch (DP-1..DP-9, per the user directive "MAKE IT A REAL GAME") landed the real-game
@@ -31,7 +34,7 @@ matrix re-verified. Engine verification (AG-2..5 per HANDOFF §20) is the sole r
 > [!NOTE]
 > **REDO LANDED (2026-09-03)**: every pillar below was re-implemented on branch
 > `final-completion` and pushed batch-by-batch (BATCH-0..5). The static validator runs
-> ALL CHECKS PASSED (now 61 checks incl. the 15 census equality gates) and the automation suite holds 124 world-free contract tests
+> ALL CHECKS PASSED (now 61 checks incl. the 15 census equality gates) and the automation suite holds 125 world-free contract tests
 > (inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`). Specs remain LOCKED as MASTER_CONTROL
 > v5.0 — the redo and the depth passes changed no canon, only extended it.
 
@@ -88,19 +91,19 @@ Side content: 23 SQ roster remains staged (deferred by design, MASTER_CONTROL D)
 - All P0 findings fixed (FR-0001..FR-0017, commit f310698): inventory duplication exploit, save thread-freeze, orphaned quest chain, false quest credits, fail-open building restores, silent reward loss, unsanitized roster import, chassis downgrade-on-reload.
 - P1/P2 fixed in aee4cc8: element matrix canon, building shell completion, 5 NPC dialogue trees, skiff mesh/seed, Azure POI, stale docs.
 - UObject lifetime audit: clean (TObjectPtr/TWeakObjectPtr everywhere; no raw dangles found).
-- Honest status: every fix is **statically validated only** (124 automation tests, compile-pending; ENGINE-UNVERIFIED).
+- Honest status: every fix is **statically validated only** (125 automation tests, compile-pending; ENGINE-UNVERIFIED).
 
 ## G. Automation Readiness
 
 - `Scripts/validate_repository.sh` v2 — PASS (structural ruleset).
-- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 124-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
+- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 125-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
 - 109 world-free automation contracts (57 baseline + 4 hardening + 6 Final-Run + 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth passes DP-3..DP-9) — never yet executed in an engine (AG-3).
 - Deterministic content: single code-default library, same-id .uasset override contract, ArtSource generators + AwPipeline importer.
 - Git: conventional commits, FR/DP-id traceability; every batch pushed to `origin/final-completion` (the binding push-after-every-batch rule honored live — `git ls-remote` shows the full chain through the DP-10 final-gate commit).
 
 ## H. Known Engine-Unverified Items
 
-1. The 124-test suite has never run in a real engine.
+1. The 125-test suite has never run in a real engine.
 2. Build/cook/package at the Final-Run SHA (previous attempt failed UBT at 8313c61 — FZ-A1).
 3. PIE golden path MQ-13..17 + endings (cheat-assisted jump is acceptable for verification).
 4. Save v4→v5 migration on a real old save.
@@ -137,7 +140,7 @@ Antigravity records the post-verification SHA here after AG-1..AG-5.
 ## K. Antigravity One-Time Integration Plan
 
 Executable runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 (10 steps:
-pull → build → 124/124 tests → PIE boot+golden path incl. both endings → save round-trip →
+pull → build → 125/125 tests → PIE boot+golden path incl. both endings → save round-trip →
 package → packaged boot → log capture → push/merge + close PR #4 → fix-loop rules — plus
 the §20b acquired-asset checklist and the §20c Tier-A creature-mesh binding patch as the
 in-run sub-sequences, and the 12-point source-side stop-condition list in §21).
@@ -160,16 +163,16 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 | 11 | Save V5 model complete | **PASS** | AUD-2 checklist a–k: item-loss class fixed (chassis/drone refund/echo health); additive defeat counters |
 | 12 | Content/LFS manifest complete | **PASS** | FINAL_CONTENT_MANIFEST v1.1 (459/459 LFS live-verified) |
 | 13 | Asset paths validated | **PASS** | 65/65 /Game references resolve (validator) |
-| 14 | Tests complete at source level | **PASS** | 124 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts contracts (ENGINE-UNVERIFIED) |
+| 14 | Tests complete at source level | **PASS** | 125 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation contracts (ENGINE-UNVERIFIED) |
 | 15 | Final handoff executable | **PASS** | HANDOFF §1–20: live branch + SHAs, no dead references, corrected controls |
 | 16 | No duplicate gameplay architectures | **PASS** | one Echo platform (authored + bestiary share it); crafting screen single surface; no second combat/save stack |
-| 17 | No active contradictory documentation | **PASS** | ONE test count (124) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc |
+| 17 | No active contradictory documentation | **PASS** | ONE test count (125) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc |
 | 18 | Final branch/commit recorded | **PASS** | §J + HANDOFF §1 (tip = the DP-10 final-gate commit) |
 
 **Gate verdict: READY_FOR_FINAL_BUILD (18/18 + branch record, re-checked at the DP-10 final gate).**
 
 > Reminder: READY_FOR_FINAL_BUILD means SOURCE/REPOSITORY READY. It does NOT mean
-> UE5-VERIFIED — AG-2..AG-5 (build, 124/124 tests, PIE golden path, package) remain the
+> UE5-VERIFIED — AG-2..AG-5 (build, 125/125 tests, PIE golden path, package) remain the
 > engine machine's exclusive gates.
 
 ## M. Residual ledger (what honestly remains — none of it blocks READY_FOR_FINAL_BUILD)
@@ -188,11 +191,11 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
   strategy/matrix docs. Claimed exactly to that extent and no further.
 - **STATIC-VERIFIED** — code + data machine-checked without an engine: the full C++
   module under both validators (`validate_repository.sh` v2 ruleset,
-  `validate_final_run.py` 61+ checks incl. the 124-test exact gate, the 15 census
+  `validate_final_run.py` 61+ checks incl. the 125-test exact gate, the 15 census
   equality gates and the 39-species Tier-B coherence gate) and the world-free
   automation contracts. Never executed, never rendered.
 - **ENGINE-UNVERIFIED** — everything that requires UE5.8.2/MSVC on the Antigravity
-  machine: compile, the 124-test run, PIE golden path, import/binding/cook, packaged
+  machine: compile, the 125-test run, PIE golden path, import/binding/cook, packaged
   boot. No document in this repository may claim any of these; AG-2..AG-5 (HANDOFF
   §20) are the exclusive conversion gates.
 
@@ -224,7 +227,7 @@ The LCP batches closed it:
 | LCP-8 | This gate: docs/validators/registry/worklog closure | COMPLETE |
 
 Checks: the 13-point stop list (HANDOFF §21) + the 2 LCP additions (§21b) hold;
-suite 124/124 contracts (ENGINE-UNVERIFIED); both validators ALL PASS at tip;
+suite 125/125 contracts (ENGINE-UNVERIFIED); both validators ALL PASS at tip;
 census gates unchanged (no gameplay-content rows touched by LCP — the LCP
 batches add networking/persistence code, not content).
 
@@ -262,10 +265,10 @@ audited the product itself and closed every player-valued gap:
 | PCR-5 | PG-5 post-game hunt system (Hunt Board) | COMPLETE |
 | PCR-6 | This gate: matrix closure + residual rewrite + re-declaration | COMPLETE |
 
-Checks: both validators ALL PASS at tip (124-test exact gate; 15 census equality
+Checks: both validators ALL PASS at tip (125-test exact gate; 15 census equality
 gates UNCHANGED — screens/art/hunts ride existing content; the 39-species
 Tier-B coherence gate); input contract 28→32 actions; every active doc carries
-ONE test count (124); the post-game "hunts" claim is now backed by the hunt
+ONE test count (125); the post-game "hunts" claim is now backed by the hunt
 subsystem; the LCP-5 roster-mirror exception was superseded by the PCR-2 screen.
 
 Residual (PCR-specific, none blocks READY):
@@ -279,3 +282,87 @@ Residual (PCR-specific, none blocks READY):
 **Re-declared verdict: READY_FOR_FINAL_BUILD (source-side, product-completion
 scope closed).** Engine conversion queue: §20 (build/automation/PIE/package)
 + §22 (LAN acceptance, host + 3 clients).
+
+## Q. FPP gate + FINAL SOURCE FREEZE (PLAYER-FACING PRESENTATION PASS — this session)
+
+**Directive**: the FINAL PLAYER-FACING GAMEPLAY PRESENTATION PASS — "make every
+important existing system actually PLAYER-FACING, understandable and visually
+actionable"; no new systems, no content-count inflation.
+
+**Method**: a 5-way parallel source audit (player skills / Echo abilities /
+boss abilities + boss presentation / progression + feedback events / rulebook
+data extraction) against the live repository, followed by smallest-compatible
+fixes for every REAL player-facing dead end the audits found.
+
+**Dead ends found and closed (all source-verified):**
+
+1. **P0 — the crafting UI could not open at all.**
+   `UAstrawildCraftingScreenWidget` was `UCLASS(Abstract)` while
+   `AAstrawildPlayerController::ToggleCraftingScreen` fell back to
+   `CreateWidget` with that abstract StaticClass — which returns nullptr — and
+   no WBP subclass exists in Content. Every crafting station E-press was a
+   silent no-op. Fixed: the class is concrete with a native pure-C++ screen
+   (recipe rows with have/need input counts, station-range state,
+   reason-labeled disabled buttons, live craft progress status), exactly the
+   PCR screen pattern; the BP_* subclass contract is preserved.
+2. **Player skills were un-understandable and the growth loop invisible.**
+   No descriptions, no cooldown display, no level/XP readout, no level-up
+   feedback (the level-up delegate had one subscriber: a max-HP recompute),
+   a silent Y-press on cooldown, and a bindable "passive" (Masterwork) that
+   never says it never casts. Fixed: description table rendered in the pause
+   loadout (name + effect + READY/recharging), GROWTH attributes line (level +
+   XP per attribute), level-up toast with new-skill milestone detection,
+   Y-press "next ready in Ns" toast, cast toast, Masterwork passive label +
+   refund toast.
+3. **Journal/Roster could not answer "why is this Echo worth using".** The 53
+   authored ability DisplayName+Description strings rendered zero times;
+   journal knowledge flags said "Weakness ✓" without naming the element;
+   mounts/auras/rideability were undiscoverable; the HUD prompt for your own
+   captured Echo incorrectly said "Capture Echo — needs Resonator". Fixed:
+   ability-kit lines (name + unlock level) + passive aura + rideable (Bond 25)
+   on both screens, weakness flag names the element, own-echo prompt tells
+   the truth (ride/evolve/feed), mount bond-gate toast at the interact site.
+4. **Boss presentation gaps.** Weakness/weak-point HIT confirmation was silent
+   (the ×1.5/×2 multipliers applied with no output); the melee swing had no
+   telegraph at all (damage landed instantly on the highest-frequency attack);
+   blast discs were element-neutral; defeat had no toast/sound and world-boss
+   loot was silent; the HUD boss bar picked the FIRST alive boss in the world
+   (an arbitrary dungeon boss owned the HUD from game start); boss species
+   could never gain bestiary entries (journal observed only
+   `AAstrawildEchoCharacter`). Fixed: hit feedback (toast + the ArtPack-bound
+   energy-impact cue, mirroring the creature path), a 0.5s melee windup disc +
+   delayed damage window (dodge = whiff), element-tinted telegraph lights,
+   weak-point core pulse, phase/enrage/defeat toasts + defeat sound + loot
+   toast, boss bar engages the NEAREST alive boss within 4000 cm, bosses are
+   journal-observable via the shared `ObserveCandidate` path.
+5. **Critical events had no player-facing feedback path.** Craft success AND
+   failure were silent; rare kill loot was silent; the supply-drop code
+   COMMENT promised a toast that never existed; base-power brownouts never
+   announced themselves; quest-complete toasts printed raw registry ids;
+   WorkSite toasts printed actor names ("AstrawildEchoCharacter_7") and raw
+   item ids; bond 25/40 gates were silent walls. Fixed with the established
+   NotifyPlayer/HUD toast path — every one of these now speaks player
+   language with registry display names.
+
+**Not done (deliberate, per the no-new-systems / no-inflation rules):**
+gamepad smart-cast chord (documented as an engine-pass backlog item in
+HANDOFF §18 + PLAYER_RULES), UI toast sounds beyond the existing ArtPack cue
+bindings, journal per-species detail views. None is a player-facing DEAD END —
+all core loops are now presentable and actionable.
+
+**Artifacts**: +test 125 `ASTRAWILD.FPP1.PresentationContract` (skill
+description/cooldown coverage, crafting-screen concrete guard, 53-ability
+DisplayName+Description coverage), validator gate 124→125, census UNCHANGED
+(no species/quests/bosses/recipes/zones/buildings added),
+`Docs/ASTRAWILD_PLAYER_RULES.md` (the concise player-facing rulebook — every
+number extracted from live source).
+
+**Status after this gate**: **SOURCE_PRODUCT_FROZEN / ENGINE_UNVERIFIED**.
+Remaining work is exclusively: (a) the one-time Antigravity engine integration
+(HANDOFF §20 sequence + §22 LAN acceptance), (b) evidence-driven fixes to
+actual UE5 integration failures, runtime bugs, or engine-discovered visual
+defects. Stop condition satisfied: player skills are player-facing, Echo
+abilities are player-understandable, boss mechanics have presentation paths,
+progression conditions are explicit, rewards have feedback, the core systems
+carry no known player-facing dead ends, the player rules document exists, and
+the documentation is synchronized (125/125-test single truth, census gates).

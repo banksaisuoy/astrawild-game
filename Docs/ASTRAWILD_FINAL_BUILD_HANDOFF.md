@@ -184,7 +184,7 @@ Packaged exe: same, after the loading screen.
 ## 13. EXPECTED PLAYER CONTROLS
 
 Final-audit correction — this list now matches the actual runtime bindings
-(`BuildRuntimeInputDefaults`, 31 actions):
+(`BuildRuntimeInputDefaults`, 32 actions):
 WASD move · mouse look · Space jump · Shift sprint · **Q dodge** · LMB attack (melee/ranged;
 confirm while building) · F heavy attack · RMB block (guard pose = aim stance) ·
 **E interact** (nodes/NPCs/portals/skiff/capture-wild-echo/doors/crates/research-desk/
@@ -192,9 +192,11 @@ workstations/**crafting stations — opens the crafting screen**) · **C party c
 (not craft) · R feed target echo · G smart-consume · X equip-best · V scan (hold) ·
 B build mode (wheel cycle · N rotate · Z dismantle) · Tab inventory (TAB/ESC close) ·
 **K research** (K/ESC close) · H deploy/recall drone · J deploy robot · F5 save · F9 load ·
-Esc pause (ESC resumes) · LeftCtrl skiff descend (board/dismount with E; Shift boost).
+**P Field Journal** · **L Echo Roster** · **M World Map** · **U Hunt Board** (PCR screens) ·
+**T party abilities** · **Y player smart-cast** · Esc pause (ESC resumes) · LeftCtrl skiff
+descend (board/dismount with E; Shift boost).
 Crafting is done at stations via the crafting screen (E), not a hotkey.
-Journal data exists (scanner observation) but has **no viewing UI yet** (known gap, §18).
+The full player-facing control+rules reference is **`Docs/ASTRAWILD_PLAYER_RULES.md`**.
 
 ## 14. EXPECTED GAMEPLAY LOOP (golden path)
 
@@ -243,21 +245,30 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 - Co-op pure-client gaps (documented, deferred CV-6): inventory Items not replicated, E-interact
   family and screen actions are host/listen-server only, research screen reads host state.
   Single-player and listen-host are the supported configurations.
-- Journal/bestiary viewing UI and radar compass are not implemented (data + scanner exist);
-  PLAYABLE_BUILD_STATUS.md "PRODUCTION READY" claims for them are HISTORICAL (superseded).
+- Radar compass is not implemented (data + scanner exist); the Field Journal/bestiary IS
+  implemented (PCR-1, P key + pause menu) — superseding old notes here.
+- Player-skill smart-cast is keyboard-first (Y); gamepad full-cast is deferred to the
+  engine pass (bind the loadout via the pause menu meanwhile — see PLAYER_RULES).
 - Overworld defeated creatures leave corpses until the spawner recycles populations (actor
   accumulation is bounded by the spawner's population caps).
 
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 124 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 125 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
-- Enhanced Input runtime mapping (31 actions) — verify no duplicate-context warnings in the log.
+- Enhanced Input runtime mapping (32 actions) — verify no duplicate-context warnings in the log.
 - Save schema 5 first migration (v4→v5) — run one old save through load to see the migration log line.
 - The final audit changed the element weakness of 151 bestiary rows + 4 authored species and
   unified the boss resist to ×0.80 — combat feel needs the PIE pass more than ever.
+- FPP-1 presentation code (craft screen native UI, boss melee windup, journal ability lines)
+  is source-reviewed only — the PIE golden path exercises all of it (§14 + V2-29/30/31).
+- **Landscape material (engine-only manual step)**: `MainMap.umap`'s Landscape actor must
+  have its Landscape Material slot pointed at `/Game/Materials/M_Landscape_SciFiFrontier`
+  (built by the import pass). `import_all.py` does NOT assign it automatically — open the
+  map, select the Landscape actor, check the slot, assign if it still points at
+  `M_Master_Surface` or is unset. This satisfies queue row V2-32.
 
 ## 20a. PIPELINE IDEMPOTENCY CONTRACT (Phase 14 — deterministic by construction)
 
@@ -276,7 +287,7 @@ working tree:
 - **Validators**: pure read-only static checks — any number of runs is safe and
   MUST PASS before every stage transition.
 - **Drift tripwires**: the validator's census equality gates (15 content-count
-  contracts + the exact 109-test gate) fail loudly if a pipeline stage ever
+  contracts + the exact 125-test gate) fail loudly if a pipeline stage ever
   duplicated or dropped content.
 
 A second full execution of the sequence therefore converges to the same state —
@@ -287,12 +298,16 @@ no duplicated assets, no double imports, no corrupted Content.
 ```text
 1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 124/124 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 125/125 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
    ending A (check: weather clears, banner shows, save) → load the save (banner persists) →
    ending B on a second save (storm stays) + the 12 golden-path verify items below (GDP + DP-3..DP-9)
+   [FPP-1 additions to verify in the same pass: the crafting screen OPENS at a station and
+   crafts with reasons on refusal; a skill slot shows description+cooldown; the journal row
+   shows ability lines + the weakness element; a boss fight shows phase toasts, melee windup
+   discs, weak-point hit toasts; the boss bar only appears when engaged]
 6  Test_RealSaveLoad.ps1 (3-cycle persistence)   → raw log
 7  Build_Package.ps1 exit 0 (§10)                → raw UAT log
 8  Packaged exe boots to MainMap, input works    → raw RUNTIME_<sha>.log

@@ -129,6 +129,16 @@ per the production directive PHASE 16.
 | V2-33 | Resource node meshes | Astraite/Pyronite/Voidstone/AncientVein nodes render crystal clusters (rarity shapes retired) | clip |
 | V2-34 | Weapon FX + audio | after authoring NS_AW_MuzzleFlash (RUNBOOK §3): fire Scrapshot → Niagara muzzle + A_Weapon_Scrap_Fire audible; bind NS_AW_Weap_Trail → projectile trail follows | clip |
 
+**STATUS NOTE (FPP-2, source-side)**: V2-29's acceptance bar was MET once on the
+engine machine at SHA `8313c61` (branch `agent/antigravity-ue5-v2`, 2026-09-02) —
+the report is committed as `Docs/ENGINE_LOGS/raw/import_report.json`
+(`total_missing: 0`, `errors: []`, 115/115). That run predates the Tier-B library
+(39 GLBs) and the PCR screens, so the FINAL tip still needs its one-time baseline
+re-import inside the §20 sequence (idempotent — the report re-derives). V2-30 /
+V2-31 remain **NOT_RUN at the final tip** (no PIE clip artifacts exist); do not
+mark them PASS without the clip evidence. The landscape-material assignment
+(V2-32 prerequisite) is an editor-only manual step — see HANDOFF §19.
+
 ---
 
 ## §4 Packaging (stretch — after §1–§3 green)
