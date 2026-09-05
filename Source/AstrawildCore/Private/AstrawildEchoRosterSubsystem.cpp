@@ -44,6 +44,7 @@ bool UAstrawildEchoRosterSubsystem::AddToRoster(AAstrawildEchoCharacter* Echo, c
     }
 
     OnRosterChanged.Broadcast(Roster.Num());
+    PushRosterMirrors(); // PCR-2: capture feedback reaches the owner's roster screen
     UE_LOG(LogAstrawildAI, Log, TEXT("Echo added to roster (size %d)."), Roster.Num());
     return true;
 }
@@ -55,6 +56,7 @@ bool UAstrawildEchoRosterSubsystem::RemoveFromRoster(const FGuid& InstanceId)
     if (Removed > 0)
     {
         OnRosterChanged.Broadcast(Roster.Num());
+        PushRosterMirrors(); // PCR-2
         return true;
     }
     return false;
@@ -113,7 +115,17 @@ void UAstrawildEchoRosterSubsystem::ExportForSave(TArray<FAstrawildEchoInstanceV
             {
                 if (Entry.InstanceId == Live.InstanceId)
                 {
+                    // PCR-2 (defect fix): the actor refresh carries NEITHER the
+                    // LCP-4 owner key (ToSaveDataV2 defaults it to NAME_None —
+                    // a co-op save round-trip used to strip ownership from every
+                    // spawned row, orphaning parties after reload) NOR the PCR-2
+                    // bench flag. Ownership and benching are ROSTER-side facts;
+                    // the actor refresh only contributes live stats/needs/transform.
+                    const FName PreservedOwnerKey = Entry.OwnerPlayerKey;
+                    const bool bPreservedBenched = Entry.bBenched;
                     Entry = Live;
+                    Entry.OwnerPlayerKey = PreservedOwnerKey;
+                    Entry.bBenched = bPreservedBenched;
                     break;
                 }
             }
@@ -147,6 +159,7 @@ void UAstrawildEchoRosterSubsystem::ImportFromSave(const TArray<FAstrawildEchoIn
     }
     SpawnedParty.Reset();
     OnRosterChanged.Broadcast(Roster.Num());
+    PushRosterMirrors(); // PCR-2: loaded rosters reach every client screen
 }
 
 int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
@@ -181,7 +194,7 @@ int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
         {
             break;
         }
-        if (!Entry.bInParty || !Entry.InstanceId.IsValid() || Entry.DefinitionId.IsNone())
+        if (!ShouldSpawnInPartyRing(Entry))
         {
             continue;
         }
@@ -230,6 +243,91 @@ int32 UAstrawildEchoRosterSubsystem::SpawnPartyActors(APlayerController* Owner)
         UE_LOG(LogAstrawildAI, Log, TEXT("Party respawned from roster: %d Echoes."), Spawned);
     }
     return Spawned;
+}
+
+// --- PCR-2: roster/party management ---
+
+bool UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(const FAstrawildEchoInstanceV2& Row)
+{
+    // One rule for the spawn path, the bench toggle, and the automation
+    // contract: captured membership + valid identity + not benched.
+    return Row.bInParty && Row.InstanceId.IsValid() && !Row.DefinitionId.IsNone() && !Row.bBenched;
+}
+
+bool UAstrawildEchoRosterSubsystem::SetInstanceBenched(const FGuid& InstanceId, const bool bBenched, APlayerController* Owner)
+{
+    UWorld* World = GetWorld();
+    if (!World || World->GetNetMode() == NM_Client || !Owner || !Owner->HasAuthority())
+    {
+        return false; // authority-guarded: the bench decision is server-side only
+    }
+
+    const AAstrawildPlayerController* AstrawildOwner = Cast<AAstrawildPlayerController>(Owner);
+    const FName OwnerKey = AstrawildOwner ? AstrawildOwner->GetPlayerKey() : NAME_None;
+
+    for (FAstrawildEchoInstanceV2& Entry : Roster)
+    {
+        if (Entry.InstanceId != InstanceId)
+        {
+            continue;
+        }
+        if (!IsRosterRowOwnedBy(Entry, OwnerKey))
+        {
+            return false; // another player's Echo — the toggle is not theirs to flip
+        }
+        if (Entry.bBenched == bBenched)
+        {
+            return true; // idempotent no-op
+        }
+
+        Entry.bBenched = bBenched;
+
+        // Rebuild the ring so the change is VISIBLE immediately: benched actors
+        // despawn; unbenched ones spawn around the owner (same machinery the
+        // save-load path uses — destroy live party, respawn from the roster).
+        for (AAstrawildEchoCharacter* Echo : GetSpawnedParty())
+        {
+            if (IsValid(Echo))
+            {
+                Echo->Destroy();
+            }
+        }
+        SpawnPartyActors(Owner);
+
+        OnRosterChanged.Broadcast(Roster.Num());
+        PushRosterMirrors();
+        UE_LOG(LogAstrawildAI, Log, TEXT("PCR-2: Echo %s %s the party ring."),
+            *InstanceId.ToString(), bBenched ? TEXT("left") : TEXT("joined"));
+        return true;
+    }
+    return false; // unknown instance
+}
+
+void UAstrawildEchoRosterSubsystem::PushRosterMirrors()
+{
+    // The roster pool lives in the HOST's game instance; pure clients carry a
+    // replicated per-player slice on their PlayerController (read-only for
+    // display — every mutation routes through the server RPC). Local
+    // controllers keep their mirror in sync too so the screen reads one source.
+    UWorld* World = GetWorld();
+    if (!World || World->GetNetMode() == NM_Client)
+    {
+        return;
+    }
+
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+        if (!AstrawildPC)
+        {
+            continue;
+        }
+        // Push every player's OWN slice to their controller. On a listen server
+        // the local PC's mirror equals its local view (harmless, keeps one read
+        // path); on a remote PC the property replicates to the owning client.
+        AstrawildPC->RosterMirror = GetRosterForPlayer(AstrawildPC->GetPlayerKey());
+    }
 }
 
 // --- Content Pack CP-02: evolution / progression ---
@@ -306,6 +404,7 @@ bool UAstrawildEchoRosterSubsystem::EvolveInstance(const FGuid& InstanceId)
     // The transformation: species swaps, identity (level/bond/trust/personality) survives.
     Entry->DefinitionId = Target->DefinitionId;
     OnRosterChanged.Broadcast(Roster.Num());
+    PushRosterMirrors(); // PCR-2: the species swap reaches the owner's screen
     UE_LOG(LogAstrawildAI, Log, TEXT("Echo evolved: instance %s is now species %s (level %d, bond %.1f)."),
         *InstanceId.ToString(), *Target->DefinitionId.ToString(), Entry->Level, Entry->Bond);
 

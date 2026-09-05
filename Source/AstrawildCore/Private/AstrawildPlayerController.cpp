@@ -11,12 +11,15 @@
 #include "AstrawildInventoryScreenWidget.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalScreenWidget.h"
+#include "AstrawildRosterScreenWidget.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildEchoRosterSubsystem.h"
 #include "GameFramework/PlayerState.h" // LCP-4: player key
+#include "Net/UnrealNetwork.h" // PCR-2: DOREPLIFETIME
 #include "AstrawildResearchScreenWidget.h"
 #include "AstrawildShopWidget.h"
 #include "Blueprint/UserWidget.h"
@@ -248,6 +251,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         TogglePauseMenu();
     }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
 
     if (bOpen)
     {
@@ -313,6 +320,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
     }
 
     if (bOpen)
@@ -380,6 +391,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     {
         TogglePauseMenu();
     }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
 
     if (bOpen)
     {
@@ -444,6 +459,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsJournalOpen())
     {
         ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
     }
 
     if (bOpen)
@@ -511,6 +530,10 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     {
         ToggleCraftingScreen();
     }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
@@ -553,9 +576,134 @@ bool AAstrawildPlayerController::IsJournalOpen() const
     return JournalScreen && JournalScreen->IsInViewport();
 }
 
+// --- PCR-2 (PG-2): the Echo Roster / party-ring management screen ---
+
+void AAstrawildPlayerController::ToggleRosterScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsRosterOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!RosterScreen)
+        {
+            const TSubclassOf<UAstrawildRosterScreenWidget> WidgetClass = RosterScreenClass
+                ? RosterScreenClass
+                : TSubclassOf<UAstrawildRosterScreenWidget>(UAstrawildRosterScreenWidget::StaticClass());
+            RosterScreen = CreateWidget<UAstrawildRosterScreenWidget>(this, WidgetClass);
+        }
+        if (RosterScreen)
+        {
+            RosterScreen->RefreshRoster();
+            RosterScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so L/ESC close without a mouse click.
+            RosterScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (RosterScreen)
+        {
+            RosterScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsRosterOpen() const
+{
+    return RosterScreen && RosterScreen->IsInViewport();
+}
+
+void AAstrawildPlayerController::OnRep_RosterMirror()
+{
+    // Pure clients refresh an open roster screen when the host pushes a new
+    // slice (capture feedback, bench confirmations, evolution swaps).
+    if (IsRosterOpen() && RosterScreen)
+    {
+        RosterScreen->RefreshRoster();
+    }
+}
+
+bool AAstrawildPlayerController::RequestSetEchoBenched(const FGuid& InstanceId, const bool bBenched)
+{
+    // Single player / listen host mutates directly; a remote client routes
+    // through the server RPC (the subsystem re-validates ownership + authority
+    // server-side — the widget path can be spoofed, the mutation cannot).
+    if (!IsLocalController())
+    {
+        return false;
+    }
+
+    UWorld* World = GetWorld();
+    if (World && World->GetNetMode() != NM_Client && HasAuthority())
+    {
+        UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()
+            ? World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr;
+        return Roster ? Roster->SetInstanceBenched(InstanceId, bBenched, this) : false;
+    }
+
+    ServerSetEchoBenched(InstanceId, bBenched);
+    return true; // accepted for routing; the server result arrives via the mirror push
+}
+
+void AAstrawildPlayerController::ServerSetEchoBenched_Implementation(const FGuid& InstanceId, const bool bBenched)
+{
+    // Fail-closed server validation: the subsystem checks authority, ownership
+    // (the stable player key) and instance existence itself.
+    UWorld* World = GetWorld();
+    UAstrawildEchoRosterSubsystem* Roster = (World && World->GetGameInstance())
+        ? World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr;
+    if (!Roster || !Roster->SetInstanceBenched(InstanceId, bBenched, this))
+    {
+        NotifyPlayer(FText::FromString(TEXT("Could not change that Echo's party status.")));
+    }
+}
+
+void AAstrawildPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    // PCR-2: the per-player roster slice reaches the owning client (player
+    // controllers only replicate to their own connection).
+    DOREPLIFETIME(AAstrawildPlayerController, RosterMirror);
+}
+
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen();
 }
 
 

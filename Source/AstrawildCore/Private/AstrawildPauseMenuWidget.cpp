@@ -97,6 +97,10 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     JournalButton = MakeMenuButton(TEXT("PauseJournal"), TEXT("Field Journal [P]"), FLinearColor(0.28f, 0.45f, 0.3f, 1.0f));
     JournalButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleJournalClicked);
 
+    // PCR-2: the Echo Roster entry (gamepad-reachable; L on keyboard).
+    RosterButton = MakeMenuButton(TEXT("PauseRoster"), TEXT("Echo Roster [L]"), FLinearColor(0.2f, 0.4f, 0.5f, 1.0f));
+    RosterButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleRosterClicked);
+
     QuitButton = MakeMenuButton(TEXT("PauseQuit"), TEXT("Quit To Desktop"), FLinearColor(0.5f, 0.2f, 0.16f, 1.0f));
     QuitButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleQuitClicked);
 
@@ -163,6 +167,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     {
         JournalSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         JournalSlot->SetPadding(FMargin(0.0f, 6.0f));
+    }
+    if (UVerticalBoxSlot* RosterSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(RosterButton)))
+    {
+        RosterSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        RosterSlot->SetPadding(FMargin(0.0f, 6.0f));
     }
     if (UVerticalBoxSlot* LoadoutTitleSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SkillLoadoutText)))
     {
@@ -250,6 +259,19 @@ void UAstrawildPauseMenuWidget::HandleJournalClicked()
             PC->TogglePauseMenu();
         }
         PC->ToggleJournalScreen();
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleRosterClicked()
+{
+    // PCR-2: same close-then-open sequence as the journal button.
+    if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+    {
+        if (PC->IsPauseMenuOpen())
+        {
+            PC->TogglePauseMenu();
+        }
+        PC->ToggleRosterScreen();
     }
 }
 

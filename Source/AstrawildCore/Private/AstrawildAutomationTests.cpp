@@ -60,6 +60,7 @@
 #include "AstrawildJournalScreenWidget.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildPauseMenuWidget.h"
+#include "AstrawildRosterScreenWidget.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -5354,6 +5355,88 @@ bool FAstrawildPCR1JournalScreenTest::RunTest(const FString& Parameters)
     UClass* JournalClass = UAstrawildJournalSubsystem::StaticClass();
     TestTrue(TEXT("JournalSubsystem exposes GetEntry"), JournalClass->FindFunctionByName(TEXT("GetEntry")) != nullptr);
     TestTrue(TEXT("JournalSubsystem exposes GetAllEntries"), JournalClass->FindFunctionByName(TEXT("GetAllEntries")) != nullptr);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-2 (PG-2): Echo Roster / party-ring management screen contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR2RosterScreenTest,
+    "ASTRAWILD.PCR2.RosterScreen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR2RosterScreenTest::RunTest(const FString& Parameters)
+{
+    // 1) The party-ring eligibility rule (the spawn path and the screen share
+    // ONE pure predicate — pinned world-free):
+    FAstrawildEchoInstanceV2 Fresh;
+    Fresh.EchoDefinitionId = TEXT("Echo_Terraquill");
+    Fresh.bInParty = true;
+    TestTrue(TEXT("Fresh captured row spawns in the ring"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(Fresh));
+
+    FAstrawildEchoInstanceV2 Benched = Fresh;
+    Benched.bBenched = true;
+    TestFalse(TEXT("Benched row never occupies the ring"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(Benched));
+
+    FAstrawildEchoInstanceV2 InvalidId = Fresh;
+    InvalidId.InstanceId.Invalidate();
+    TestFalse(TEXT("Invalid instance identity never spawns"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(InvalidId));
+
+    FAstrawildEchoInstanceV2 NoSpecies = Fresh;
+    NoSpecies.EchoDefinitionId = NAME_None;
+    TestFalse(TEXT("Missing species never spawns"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(NoSpecies));
+
+    FAstrawildEchoInstanceV2 NotCaptured = Fresh;
+    NotCaptured.bInParty = false;
+    TestFalse(TEXT("Uncaptured row never spawns"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(NotCaptured));
+
+    // 2) Ring capacity rules (the Deploy/Bench button gating):
+    TestTrue(TEXT("Benching is always allowed (full ring included)"),
+        UAstrawildRosterScreenWidget::CanDeployIntoRing(3, 3, false));
+    TestFalse(TEXT("Deploy into a full ring is refused"),
+        UAstrawildRosterScreenWidget::CanDeployIntoRing(3, 3, true));
+    TestTrue(TEXT("Deploy into a free slot is allowed"),
+        UAstrawildRosterScreenWidget::CanDeployIntoRing(2, 3, true));
+    TestTrue(TEXT("Zero max ring never accepts a deploy"),
+        !UAstrawildRosterScreenWidget::CanDeployIntoRing(0, 0, true));
+
+    // 3) Structural wiring (reflection contract — dropped/renamed surfaces
+    // fail here before any engine run):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleRosterScreen"), PCClass->FindFunctionByName(TEXT("ToggleRosterScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsRosterOpen"), PCClass->FindFunctionByName(TEXT("IsRosterOpen")) != nullptr);
+    TestTrue(TEXT("Controller carries the replicated roster mirror"),
+        PCClass->FindPropertyByName(TEXT("RosterMirror")) != nullptr);
+    TestTrue(TEXT("Controller exposes RequestSetEchoBenched (local-authority path)"),
+        PCClass->FindFunctionByName(TEXT("RequestSetEchoBenched")) != nullptr);
+    TestTrue(TEXT("Controller exposes ServerSetEchoBenched (validated client path)"),
+        PCClass->FindFunctionByName(TEXT("ServerSetEchoBenched")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the roster input action"),
+        CharClass->FindPropertyByName(TEXT("RosterAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the roster button"),
+        PauseClass->FindPropertyByName(TEXT("RosterButton")) != nullptr);
+
+    UClass* RosterClass = UAstrawildEchoRosterSubsystem::StaticClass();
+    TestTrue(TEXT("Roster subsystem exposes SetInstanceBenched"),
+        RosterClass->FindFunctionByName(TEXT("SetInstanceBenched")) != nullptr);
+
+    // 4) The additive save field: benching is a ROSTER-side fact that rides the
+    // existing v2 payload (no schema bump — legacy saves deserialize unbenched).
+    UClass* RowClass = FAstrawildEchoInstanceV2::StaticStruct();
+    TestTrue(TEXT("Instance row carries the bench flag"),
+        RowClass->FindPropertyByName(TEXT("bBenched")) != nullptr);
+    TestFalse(TEXT("Legacy default is unbenched (pre-PCR saves load unchanged)"),
+        FAstrawildEchoInstanceV2().bBenched);
     return true;
 }
 

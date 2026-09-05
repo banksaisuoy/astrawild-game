@@ -15,6 +15,9 @@ class UAstrawildShopWidget;
 class UAstrawildDialogueWidget;
 class UAstrawildDialogueComponent;
 class UAstrawildJournalScreenWidget;
+class UAstrawildRosterScreenWidget;
+
+#include "AstrawildTypes.h"
 
 /**
  * ASTRAWILD player controller: hosts the quest component (survives respawn) and
@@ -177,7 +180,7 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsPauseMenuOpen() const;
 
-    // --- PCR: Field Journal / (Roster + Map arrive in PCR-2/PCR-3) ---
+    // --- PCR: Field Journal / (Map arrives in PCR-3) ---
 
     /** PCR-1 (PG-1): Field Journal screen class override point (defaults to the pure-C++ widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
@@ -190,12 +193,50 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsJournalOpen() const;
 
+    /** PCR-2 (PG-2): Echo Roster screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildRosterScreenWidget> RosterScreenClass;
+
+    /** PCR-2: toggle the captured-Echo roster/party screen — key L. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleRosterScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsRosterOpen() const;
+
+    /**
+     * PCR-2: this player's roster slice, replicated from the host's roster
+     * pool for read-only display on a pure LAN client (single-player/host
+     * reads it live through the roster subsystem — the mirror is kept in
+     * sync there too so the screen reads one source). Mutations always route
+     * through RequestSetEchoBenched -> ServerSetEchoBenched (authority).
+     */
+    UPROPERTY(ReplicatedUsing = OnRep_RosterMirror, BlueprintReadOnly, Category="ASTRAWILD|Echo")
+    TArray<FAstrawildEchoInstanceV2> RosterMirror;
+
+    UFUNCTION()
+    void OnRep_RosterMirror();
+
+    /**
+     * PCR-2: bench/unbench one of this player's captured Echoes. Local
+     * authority (single player / listen host) mutates directly; a remote
+     * client routes through the validated server RPC.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    bool RequestSetEchoBenched(const FGuid& InstanceId, bool bBenched);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetEchoBenched(const FGuid& InstanceId, bool bBenched);
+
     /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsAnyScreenOpen() const;
 
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
+
+    /** PCR-2: the RosterMirror replicates to the owning client (LCP-5 pattern). */
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
     UPROPERTY()
@@ -221,4 +262,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildJournalScreenWidget> JournalScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildRosterScreenWidget> RosterScreen;
 };

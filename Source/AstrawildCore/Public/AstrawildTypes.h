@@ -554,6 +554,17 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
     bool bInParty = false;
 
     /**
+     * PCR-2 (additive, no schema bump): player's party-ring selection. false
+     * (default) = eligible for the ≤MaxPartySize spawn ring — identical to all
+     * pre-PCR behavior. true = benched: the Echo stays captured and in the
+     * roster (bInParty untouched) but does NOT occupy a party ring slot, so the
+     * player chooses which companions follow. Pre-PCR saves deserialize as
+     * false everywhere (nothing benched).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    bool bBenched = false;
+
+    /**
      * Final-audit M-2 (additive, no schema bump): health at save time. 0 = the
      * pre-audit sentinel (legacy saves / fresh entries) — restore full. Otherwise
      * restored clamped to [1, MaxHealth] so a load can neither revive a defeated

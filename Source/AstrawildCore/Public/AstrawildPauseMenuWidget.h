@@ -57,6 +57,10 @@ private:
     UFUNCTION()
     void HandleJournalClicked();
 
+    /** PCR-2: open the Echo Roster (party-ring management) — the gamepad-reachable path (L on KB/M). */
+    UFUNCTION()
+    void HandleRosterClicked();
+
     UFUNCTION()
     void HandleQuitClicked();
 
@@ -112,6 +116,10 @@ private:
     /** PCR-1: Field Journal entry point for gamepad players (keyboard: P). */
     UPROPERTY()
     TObjectPtr<UButton> JournalButton;
+
+    /** PCR-2: Echo Roster entry point for gamepad players (keyboard: L). */
+    UPROPERTY()
+    TObjectPtr<UButton> RosterButton;
 
     UPROPERTY()
     TObjectPtr<UButton> QuitButton;

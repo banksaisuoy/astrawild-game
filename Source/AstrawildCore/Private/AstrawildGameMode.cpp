@@ -3,6 +3,7 @@
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
 #include "AstrawildGameState.h"
+#include "AstrawildEchoRosterSubsystem.h" // PCR-2: PostLogin roster mirror push
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
@@ -211,6 +212,14 @@ void AAstrawildGameMode::PostLogin(AController* NewPlayer)
     if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
     {
         SaveSubsystem->TryRestoreLateJoinPlayer(PC);
+    }
+
+    // PCR-2: the joining player's roster mirror starts empty — push their
+    // slice now so the roster screen is live from the first frame (later
+    // updates ride the mutation-time pushes).
+    if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+    {
+        Roster->PushRosterMirrors();
     }
 }
 

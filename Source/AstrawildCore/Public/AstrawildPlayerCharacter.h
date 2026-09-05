@@ -275,6 +275,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> JournalAction;
 
+    /** PCR-2: toggle the Echo Roster (party-ring management) screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> RosterAction;
+
     /** Toggle the pause menu (loop stage QUIT). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> PauseAction;
@@ -453,6 +457,7 @@ protected:
     void ToggleInventoryScreenInput(const FInputActionValue& Value);
     void ToggleResearchScreenInput(const FInputActionValue& Value);
     void ToggleJournalScreenInput(const FInputActionValue& Value);
+    void ToggleRosterScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
 
     // Batch 8 — skiff flight inputs (routed to the piloted skiff).

@@ -776,6 +776,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     InventoryAction = MakeRuntimeAction(TEXT("AWD_Inventory"), static_cast<uint8>(EInputActionValueType::Boolean));
     ResearchAction = MakeRuntimeAction(TEXT("AWD_Research"), static_cast<uint8>(EInputActionValueType::Boolean));
     JournalAction = MakeRuntimeAction(TEXT("AWD_Journal"), static_cast<uint8>(EInputActionValueType::Boolean));
+    RosterAction = MakeRuntimeAction(TEXT("AWD_Roster"), static_cast<uint8>(EInputActionValueType::Boolean));
     PauseAction = MakeRuntimeAction(TEXT("AWD_Pause"), static_cast<uint8>(EInputActionValueType::Boolean));
 
     RuntimeMappingContext = NewObject<UInputMappingContext>(this, TEXT("AWD_DefaultIMC"));
@@ -848,6 +849,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(InventoryAction, EKeys::Tab);
     Context->MapKey(ResearchAction, EKeys::K);
     Context->MapKey(JournalAction, EKeys::P);
+    Context->MapKey(RosterAction, EKeys::L);
     Context->MapKey(PauseAction, EKeys::Escape);
     // Batch 8 — skiff descend: CTRL held (SPACE climbs through JumpAction).
     DescendAction = MakeRuntimeAction(TEXT("AWD_Descend"), static_cast<uint8>(EInputActionValueType::Boolean));
@@ -1081,6 +1083,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (JournalAction)
     {
         EnhancedInput->BindAction(JournalAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleJournalScreenInput);
+    }
+    if (RosterAction)
+    {
+        EnhancedInput->BindAction(RosterAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleRosterScreenInput);
     }
     if (PauseAction)
     {
@@ -2608,6 +2614,14 @@ void AAstrawildPlayerCharacter::ToggleJournalScreenInput(const FInputActionValue
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
     {
         PC->ToggleJournalScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleRosterScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleRosterScreen();
     }
 }
 
