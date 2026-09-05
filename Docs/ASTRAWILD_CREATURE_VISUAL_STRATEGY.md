@@ -125,8 +125,8 @@ Each archetype ships `SK_Plan_<Name>.glb` with 3 authored clips (`Idle/Move/Hit`
 | Priority | Work | Estimated scope |
 |---|---|---|
 | **P0** | 8 bespoke Tier-A meshes: 4 bosses + Gloomfang + Lumewisp + Sprigling + Auroraling | **COMPLETE — delivered across V25-C1 (4 bosses) + V25-C2 (4 story): 14 bespoke echo meshes IMPORT_READY**; residual P0 work is engine-side import/binding (Antigravity §20b), not ArtSourceGen |
-| **P1** | Archetype rig library: 8 plans × (rig + 3 clips + parameter manifest) + first variant bakes for the 17 zone signatures | library refactor + 8 generators |
-| **P1.5** | Tier-B variant bakes for the remaining ~38 rule members (dungeon pools, monolith line, wildlife rows) | parameter rows only once library exists |
+| **P1** | Archetype rig library: 8 plans × (rig + 3 clips + parameter manifest) + first variant bakes for the 17 zone signatures | **EXECUTED at PCR-4 — aw_archetypes.py + gen_tier_b.py delivered 39 unique variant-baked GLBs** (every zone signature + dungeon pools + monolith/colossus + Huge; convention-path opt-in binding; zero engine-side patch); import/binding rides the §20b baseline pass |
+| **P1.5** | Tier-B variant bakes for the remaining ~38 rule members (dungeon pools, monolith line, wildlife rows) | **EXECUTED at PCR-4 — folded into the same bake (39 species cover dungeon pools + monolith line + wildlife rows)** |
 | **P2** | Tier-C identity strengthening (element emissive/point-light audit, pattern/accent variation pass), species `Icon` field wiring + `CodexIndex` UI, Hit-clip runtime wiring | engine-side material/task work |
 | **P3** | Evolution variant escalation rule application (6 species) if the tint/scale/glow rule alone reads weak in PIE | small |
 
@@ -149,6 +149,7 @@ Everything above is source-side ArtSourceGen/manifest work except where marked e
 | 4 boss meshes (DrownedSovereign / GlassTyrant / Dawnfang / EyeSentinel) | **IMPORT_READY (V25-C1)**; engine binding ENGINE-UNVERIFIED |
 | 4 story species meshes (Lumewisp / Sprigling / Gloomfang / Auroraling) | **IMPORT_READY (V25-C2 — this batch)**; engine binding ENGINE-UNVERIFIED |
 | Tier-A bespoke set (8 meshes from §10 P0) | **COMPLETE — 10 hero/boss + 4 story = 14 bespoke echo meshes IMPORT_READY** |
+| Tier-B archetype library (§6/§10 P1+P1.5) | **EXECUTED at PCR-4 — 39 unique variant-baked GLBs (4.8 MB, validate_glb PASS ×39) + definition-driven opt-in binding; PMC bodies stay until the engine import pass (per-species proportion/feature/palette variation from the bestiary rows + name-hash jitter — never a plain recolor)** |
 | Archetype rig library (8 plans) | MISSING → P1 |
 | Tier-C identity strengthening | PARTIAL (tints/ring/point-light live; pattern pass pending) |
 | Engine import/binding of any creature mesh | ENGINE-UNVERIFIED (Antigravity §20b) |

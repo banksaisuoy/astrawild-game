@@ -1343,6 +1343,26 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
             }
         }
     }
+
+    // PCR-4/PCR-5 (Tier-B archetype library): DEFINITION-DRIVEN opt-in binding.
+    // Species in the Tier-B list get their convention paths (SK_Echo_<Name> +
+    // AM_<Name>_Idle/Move) — the engine import pass activates the skinned body
+    // with ZERO engine-side code patching (the §20c hand-patch stays Tier-A-only).
+    // Before import, LoadSynchronous fails closed and the PMC body stays: the
+    // same opt-in contract the bosses use, so single-player behavior is unchanged.
+    for (const FName& TierBId : AstrawildArtPack::GetTierBSpeciesIds())
+    {
+        if (const AstrawildArtPack::FEchoArt* Existing = AstrawildArtPack::FindEchoArt(TierBId))
+        {
+            continue; // an explicit art row always wins over the convention
+        }
+        if (UAstrawildEchoDefinition* EchoDef = Registry->FindEcho(TierBId))
+        {
+            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::BuildTierBMechPath(TierBId)));
+            EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, false)));
+            EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, true)));
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

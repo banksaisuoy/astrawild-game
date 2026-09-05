@@ -57,6 +57,7 @@
 #include "AstrawildVfxActor.h"
 #include "AstrawildZoneSubsystem.h"
 #include "AstrawildContentLibrary.h"
+#include "AstrawildProductionContent.h"
 #include "AstrawildJournalScreenWidget.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildPauseMenuWidget.h"
@@ -5493,6 +5494,72 @@ bool FAstrawildPCR3MapScreenTest::RunTest(const FString& Parameters)
     UClass* POIClass = UAstrawildPOISubsystem::StaticClass();
     TestTrue(TEXT("POISubsystem exposes IsPOIDiscovered (undiscovered POIs stay hidden)"),
         POIClass->FindFunctionByName(TEXT("IsPOIDiscovered")) != nullptr);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-4/PCR-5: Tier-B archetype mesh library contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR4TierBLibraryTest,
+    "ASTRAWILD.PCR4.TierBLibrary",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR4TierBLibraryTest::RunTest(const FString& Parameters)
+{
+    // 1) The library size pins the bake (39 species = the strategy §5 Tier-B
+    // rule over the ACTUAL source tables: zone-wildlife + dungeon pools +
+    // event boosts + Huge + the monolith/colossus family, minus Tier-A).
+    const TArray<FName>& TierB = AstrawildArtPack::GetTierBSpeciesIds();
+    TestEqual(TEXT("Tier-B library holds 39 species"), TierB.Num(), 39);
+
+    // 2) Convention-path derivation (the definition-driven opt-in binding):
+    TestEqual(TEXT("Mesh path derives by convention"),
+        AstrawildArtPack::BuildTierBMechPath(TEXT("Echo_Rimefang")),
+        FString(TEXT("/Game/Characters/Echoes/SK_Echo_Rimefang")));
+    TestEqual(TEXT("Idle clip path derives"),
+        AstrawildArtPack::BuildTierBAnimPath(TEXT("Echo_Rimefang"), false),
+        FString(TEXT("/Game/Characters/Echoes/AM_Rimefang_Idle")));
+    TestEqual(TEXT("Move clip path derives"),
+        AstrawildArtPack::BuildTierBAnimPath(TEXT("Echo_Rimefang"), true),
+        FString(TEXT("/Game/Characters/Echoes/AM_Rimefang_Move")));
+    TestTrue(TEXT("Tier-B membership predicate"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Stonehide")));
+    TestFalse(TEXT("Non-members stay out"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Mosspaw")));
+    TestFalse(TEXT("Tier-A species stay out"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Terraquill")));
+
+    // 3) Every Tier-B entry has a baked GLB in ArtSource (the manifest mirror —
+    // a dropped file or a renamed species fails here before any engine import).
+    const FString EchoesDir = FPaths::ProjectDir() / TEXT("ArtSource/Meshes/Echoes");
+    for (const FName& Species : TierB)
+    {
+        const FString SpeciesName = Species.ToString().RightChop(5);
+        const FString GlbPath = EchoesDir / FString::Printf(TEXT("SK_Echo_%s.glb"), *SpeciesName);
+        TestTrue(FString::Printf(TEXT("GLB baked: %s"), *SpeciesName), FPaths::FileExists(GlbPath));
+    }
+
+    // 4) Every Tier-B species resolves in the registry and carries the
+    // convention binding after ProductionContent runs (the opt-in contract:
+    // the soft path is set; the LOAD stays lazy — unresolved = PMC body).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    int32 Bound = 0;
+    for (const FName& Species : TierB)
+    {
+        const UAstrawildEchoDefinition* Def = Registry->FindEcho(Species);
+        if (!TestTrue(FString::Printf(TEXT("Registry resolves %s"), *Species.ToString()), Def != nullptr))
+        {
+            continue;
+        }
+        if (Def->SkeletalMesh.IsValid())
+        {
+            ++Bound;
+            TestEqual(FString::Printf(TEXT("Convention mesh bound: %s"), *Species.ToString()),
+                Def->SkeletalMesh.ToSoftObjectPath().ToString(),
+                AstrawildArtPack::BuildTierBMechPath(Species));
+        }
+    }
+    TestEqual(TEXT("All 39 Tier-B species carry the convention binding"), Bound, 39);
     return true;
 }
 

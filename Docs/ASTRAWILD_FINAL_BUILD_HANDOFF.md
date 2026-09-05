@@ -99,7 +99,7 @@ git lfs install
 git checkout final-completion              # the default clone already lands here (origin HEAD follows main; checkout explicitly)
 git pull origin final-completion
 git lfs pull
-python Scripts/validate_final_run.py     # ALL static checks must PASS (122-test gate + 15 census equality gates included)
+python Scripts/validate_final_run.py     # ALL static checks must PASS (123-test gate + 15 census equality gates + the 39-species Tier-B coherence gate included)
 bash Scripts/validate_repository.sh      # structural ruleset PASS
 ```
 Final-audit note: the earlier text pointed at `glm/final-run`, a branch that never reached
@@ -147,7 +147,7 @@ the UBT log tail BEFORE retrying; that is the artifact GLM needs to diagnose.
 .\Test.ps1
 # outputs E:\AstrawildGame\Automation_Output.txt
 ```
-**PASS = 122/122 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
+**PASS = 123/123 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety` · `ASTRAWILD.Save.SchemaV5Ending` ·
 `ASTRAWILD.Quest.FinalRunChain` · `ASTRAWILD.Echo.FinalRunBosses` ·
 `ASTRAWILD.Tech.SkiffEngineering` · `ASTRAWILD.Dialogue.EndingChoice` ·
@@ -251,7 +251,7 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 122 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 123 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
 - Enhanced Input runtime mapping (31 actions) — verify no duplicate-context warnings in the log.
@@ -287,7 +287,7 @@ no duplicated assets, no double imports, no corrupted Content.
 ```text
 1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 122/122 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 123/123 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
@@ -391,7 +391,7 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **122/122** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3; the validator gate enforces the exact value — always read the count from the repo, never from memory).
+6. Automation now expects **123/123** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4; the validator gate enforces the exact value — always read the count from the repo, never from memory).
 7. DP-4 skill loadout (ESC pause menu — SKILL LOADOUT section): cycle a slot onto an unlocked
    skill, close the menu, press **Y** — only the bound skills may fire (an unbound unlocked skill
    like Second Wind must stay silent even when hurt); clear every slot and the Y key returns to

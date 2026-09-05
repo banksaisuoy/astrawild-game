@@ -150,7 +150,20 @@ check(f"Asset path references resolve ({len(refs)} refs)", len(unresolved) == 0,
 # --- 9. Automation test count ---
 TESTS = read("Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
 count = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", TESTS))
-check("Automation tests == 122 (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 session flow + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map screen)", count == 122, f"count={count} — update this gate + all active docs together")
+check("Automation tests == 123 (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 session flow + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B library)", count == 123, f"count={count} — update this gate + all active docs together")
+
+# --- 9b. PCR-4/PCR-5: Tier-B archetype library coherence ---
+ARTPACK = read("Source/AstrawildCore/Private/AstrawildArtPack.cpp")
+tierb_ids = re.findall(r'TEXT\("(Echo_\w+)"\)', ARTPACK[ARTPACK.find("GetTierBSpeciesTable"):ARTPACK.find("} // namespace AstrawildArtPack") if "} // namespace AstrawildArtPack" in ARTPACK else len(ARTPACK)])
+tierb_table = re.findall(r'TEXT\("(Echo_\w+)"\)', ARTPACK[ARTPACK.find("GetTierBSpeciesTable"):ARTPACK.find("FString BuildTierBMechPath")])
+glb_files = set()
+echoes_dir = os.path.join(ROOT, "ArtSource", "Meshes", "Echoes")
+if os.path.isdir(echoes_dir):
+    for fn in os.listdir(echoes_dir):
+        if fn.startswith("SK_Echo_") and fn.endswith(".glb"):
+            glb_files.add("Echo_" + fn[len("SK_Echo_"):-4])
+missing_glbs = [sid for sid in tierb_table if sid not in glb_files]
+check(f"Tier-B code list == 39 species with baked GLBs ({len(tierb_table)} listed)", len(tierb_table) == 39 and not missing_glbs, f"listed={len(tierb_table)} missing_glbs={missing_glbs[:5]}")
 
 # --- 10. Building catalog completeness ---
 cats = ["Foundation", "Wall", "Floor", "Roof", "Door", "Storage", "Workstation", "Farm", "Power", "Research"]
