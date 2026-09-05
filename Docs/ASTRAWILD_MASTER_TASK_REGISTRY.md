@@ -201,3 +201,35 @@ census docs together; engine-side verification remains Antigravity-exclusive.
 
 No §I row is PENDING or orphaned: DP-1..DP-10 all COMPLETE. Engine-side conversion
 remains Antigravity-exclusive (§B AG-1..AG-6).
+
+---
+
+## §J LAN CO-OP PACK (LCP — current session, user directive "PERSONAL LAN CO-OP + FREE ASSET PRODUCTION MODE")
+
+Directive (user, this session): ASTRAWILD is a private personal 4-player LAN co-op game
+(1 listen-server host + 3 LAN clients, host-authoritative, free assets with verified
+licenses only, no asset-collage identity drift). This REOPENS the source scope after
+DP-10's freeze (MASTER_CONTROL v6.0 §1b): every depth-pass canon stays UNCHANGED; all
+LCP work extends the existing server-authoritative replication foundation (no parallel
+networking architecture, no dedicated server, no MMO systems). Readiness verdict is
+SUSPENDED until §J closes, then READY_FOR_FINAL_BUILD re-declares with the expanded
+stop-condition list (HANDOFF §21 + new §22 LAN acceptance test). Spec + PART-3 audit:
+`Docs/ASTRAWILD_LAN_COOP_SPEC.md`.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| LCP-1 | Scope + audit | LAN_COOP_SPEC (product decision §1, PART-3 source audit at 00354da: 43 replicated props/14 classes, 8 Server RPCs, 0 Client RPCs; client world BROKEN-for-clients, co-op save MISSING, session flow MISSING, quest/research/roster client sync PARTIAL — every verdict grep-grounded) + MASTER_CONTROL v6.0 (§1b multiplayer target + scope-guard + ledger + overall status IN PROGRESS-LCP) + MULTIPLAYER.md wave-5 re-audit header + §J ledger opened | GLM | COMPLETE | docs-only batch — zero source changes; DP-era freeze lifted for LCP batches only; engine gates unchanged |
+| LCP-2 | Client world build | bootstrapper client path (deterministic cosmetic layers from replicated WorldSeed; gameplay spawns stay authority-only) + gameplay actor replication (ResourceNode/NPCCharacter/RestPoint/CraftingStationActor/POIMarkerActor/VillageActor) with low NetUpdateFrequency where state is rare | GLM | PENDING | +2 tests; single-player path byte-identical behavior |
+| LCP-3 | Interaction/trade routing | `ServerInteract` choke point on PlayerController (validated server-side: target/own-pawn/distance) + Client RPCs (ClientNotify/ClientOpenVendorShop/ClientOpenDialogue) + shop trade Server RPC (TryBuy/TrySell server validation) + capture intent routing + cheat host-gate | GLM | PENDING | +2 tests; first Client RPCs in the module |
+| LCP-4 | Per-player persistence | save V6 additive per-player blocks (inventory/equipment/survival/transform/attrs/skills/roster ownership/party/quests/affinity; host block = legacy fields) + roster `OwnerPlayerId` partition + stable PlayerKey + late-join/reconnect restore | GLM | PENDING | +2 tests; additive-only schema rule honored |
+| LCP-5 | Client state sync | QuestComponent replication (per-PC state to owning client, HUD delegates fire via OnRep) + research + roster mirrors on GameState (client GameInstance subsystems import on OnRep — read paths unchanged) + unlock/objective notifications | GLM | PENDING | +2 tests |
+| LCP-6 | LAN session flow | `UAstrawildLANSessionSubsystem` (HostLANGame → ServerTravel ?listen + autoload; FindLANGames → UDP beacon listener; JoinLANGame/ConnectDirect → ClientTravel) + pause-menu LAN panel + HUD mode line (SINGLE PLAYER / LAN HOST / LAN CLIENT) | GLM | PENDING | +2 tests (beacon packet encode/decode + address parsing); Build.cs +Sockets+Networking |
+| LCP-7 | Free-asset ledger | `Docs/ASTRAWILD_FREE_ASSET_LEDGER.md` (every acquired asset: source/URL/license/license URL/date checked/usage/attribution/status per user PART 10/19 columns) + approved Quaternius Ultimate pack acquisition attempts (verify CC0 per pack before download; Poly Haven/Freesound = recorded coverage decisions) | GLM | PENDING | extends Scripts/download_assets.py; LICENSE_UNCLEAR never enters the repo |
+| LCP-8 | Final gate | validators re-run ×2 (test gate 109→N with all census docs updated together) + HANDOFF §22 LAN acceptance test (host + 3 clients golden path) + READINESS re-affirmation with expanded stop-condition list + §J close + worklog | GLM | PENDING | docs + validator only; no new features after this gate |
+
+**§J ground rules** (from the directive, binding): server-authoritative mutation
+everywhere; host owns the world save; clients never grant themselves items/XP/research/
+quest completion/boss rewards/Echo ownership/building ownership; 4-player performance
+target only; free assets = license-verified CC0-or-clearly-permitted only; no UE5
+integration in this sandbox (Antigravity one-time final run remains the exclusive
+engine gate, now with §22).
