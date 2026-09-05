@@ -60,10 +60,20 @@ commits (oldest→newest, ALL pushed to origin/final-completion):
   0087047  [DP-7] World depth — 7 zone events + hazards + 4 secret POIs (+test 107)
   0710dd0  [DP-8] NPC depth — affinity-gated dialogue + regional knowledge (+test 108)
   018a95a  [DP-9] Dungeon depth — room themes + puzzle rooms + room hazards (+test 109)
-  <TIP>    [DP-10] Final gate — source audit PASS + readiness matrix/report/handoff/master-
-           control v5.0 + registry closed (this docs batch; `git ls-remote origin
-           final-completion` gives the exact tip SHA; `git log --oneline -30` must show
-           the full list above).
+  00354da  [DP-10] Final gate — source audit PASS + readiness matrix/report/handoff/master-
+           control v5.0 + registry closed (docs batch)
+  7eb4ddf..4e52548  [LCP-1..LCP-8] LAN CO-OP PACK (client world, routing, per-player
+           persistence, state sync, session flow, free-asset ledger; tests 110-119)
+  e3cd7f9..4bb7be5  [PCR-0..PCR-6c] PRODUCT COMPLETION RUN (Field Journal P / Echo Roster L /
+           World Map M / Hunt Board U + Tier-B library 39 GLBs + hunt system + ownership
+           defect fix; tests 120-124)
+  cca4cfc  [FPP-1] Player-facing presentation pass — crafting-screen P0 (concrete native
+           UI) + skills/journal/roster/boss/feedback presentation (+test 125)
+  948d75a  [FPP-2] Player rules + doc sync — ASTRAWILD_PLAYER_RULES.md + control set v8.0
+           + freeze declarations
+  <TIP>    [FPP-3] FINAL SOURCE FREEZE RECORD (SOURCE_PRODUCT_FROZEN — this commit; the
+           exact tip SHA comes from `git rev-parse HEAD` / `git ls-remote origin
+           final-completion`; `git log --oneline -40` must show the full list above).
 ```
 **PR #4 is subsumed** — merging `final-completion` into `main` closes it (do not re-merge
 PR #4 separately).
@@ -406,7 +416,7 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **124/124** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4 → 124 at PCR-5; the validator gate enforces the exact value — always read the count from the repo, never from memory).
+6. Automation now expects **125/125** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4 → 124 at PCR-5 → 125 at FPP-1; the validator gate enforces the exact value — always read the count from the repo, never from memory).
 7. PCR screens (the four new player surfaces): press **P** (Field Journal — species rows show knowledge flags + observation %; undiscovered read "???"), **L** (Echo Roster — rows show identity/level/bond/top-work; Bench one Echo → its actor despawns, Deploy → respawns; save/load preserves bench state), **M** (World Map — 12 zone cells render with threat/hazard, discovered POI dots appear, player ● marker sits in the current zone), **U** (Hunt Board — 8 contracts list with progress; cull 1 Duskmoth → progress ticks; claim at 5 rewards Dawn Shard x3 and resets).
 8. Tier-B creature bodies: after the §20b baseline import (the 39 new Tier-B GLBs import exactly like the 6 heroes — flat folder /Game/Characters/Echoes/), spawn/observe one zone signature species per zone (e.g. Duskmoth in Dusk Marsh, Rimefang in Frostveil) — each must render its unique skinned body (NOT the PMC box) with idle/move clips. Until the import lands, the PMC body is the documented opt-in contract, not a defect.
 9. DP-4 skill loadout (ESC pause menu — SKILL LOADOUT section): cycle a slot onto an unlocked

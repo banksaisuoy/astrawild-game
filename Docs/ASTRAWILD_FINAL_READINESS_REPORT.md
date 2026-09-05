@@ -123,8 +123,11 @@ element-canon rewrite (151 bestiary rows) changes combat matchups and needs the 
 
 ## J. Final Commit
 
-`final-completion` HEAD = the DP-10 final-gate batch (this documentation/audit commit;
-`git ls-remote origin final-completion` gives the exact SHA).
+`final-completion` HEAD = the FPP-3 final-freeze record (SOURCE_PRODUCT_FROZEN tip;
+`git rev-parse HEAD` / `git ls-remote origin final-completion` gives the exact SHA —
+the repo never hardcodes its own tip). The freeze chain from the DP-10 gate:
+00354da (DP-10) → 7eb4ddf..4e52548 (LCP-1..8) → e3cd7f9..4bb7be5 (PCR-0..PCR-6c) →
+cca4cfc (FPP-1 code) → 948d75a (FPP-2 docs) → FPP-3 (this freeze record).
 Source-complete chain: main 94a398c → PR #4 f31f5e1 → 99e4105 → 61c45e6 → 93ee929 →
 b9c1bd6 → 1d65587 → 4622464 → **1be6e20 (FINAL-AUDIT-A)** → **69a1d65 (FINAL-AUDIT-B)** →
 **a5aa74d (FINAL-AUDIT-C)** → d20152b (D) → baca0f6/078c662 (GDP) → a7a827f..f9892b6
