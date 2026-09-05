@@ -1,5 +1,7 @@
 #include "AstrawildDungeonPortalActor.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2
+
 #include "AstrawildCore.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
@@ -97,4 +99,13 @@ void AAstrawildDungeonPortalActor::TeleportPlayer(AAstrawildPlayerCharacter* Pla
     }
 
     UE_LOG(LogAstrawildAI, Log, TEXT("Portal %s teleported the player."), *PortalId.ToString());
+}
+
+void AAstrawildDungeonPortalActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    // LCP-2: LAN clients read the prompt + publish the right quest ids;
+    // the Destination stays server-side (the teleport itself is authority-guarded).
+    DOREPLIFETIME(AAstrawildDungeonPortalActor, PortalId);
+    DOREPLIFETIME(AAstrawildDungeonPortalActor, PromptText);
 }

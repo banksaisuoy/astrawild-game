@@ -93,6 +93,19 @@ void AAstrawildDungeonRoomActor::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAstrawildDungeonRoomActor, bCleared);
+    DOREPLIFETIME(AAstrawildDungeonRoomActor, Template);   // LCP-2: client themed shells
+    DOREPLIFETIME(AAstrawildDungeonRoomActor, RoomIndex);  // LCP-2
+}
+
+void AAstrawildDungeonRoomActor::OnRep_Template()
+{
+    // LCP-2: LAN client — the real template arrived (the authority assigned it
+    // after spawn); rebuild the themed shell locally. Same guarded path the
+    // server's RefreshRoomShell takes, so the double-call never double-builds.
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        RefreshRoomShell();
+    }
 }
 
 void AAstrawildDungeonRoomActor::BeginPlay()

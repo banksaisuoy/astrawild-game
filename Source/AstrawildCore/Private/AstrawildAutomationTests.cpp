@@ -37,6 +37,9 @@
 #include "Sound/SoundBase.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDungeonRoomActor.h"
+#include "AstrawildWorldBootstrapper.h"
+#include "AstrawildWeatherSubsystem.h"
+#include "AstrawildResourceNode.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
@@ -4858,6 +4861,81 @@ bool FAstrawildGeneticsIVBoundsTest::RunTest(const FString& Parameters)
     // Negative/oversized inputs clamp (corrupt saves cannot mint stats).
     TestEqual(TEXT("Negative IV clamps to neutral"), Gen::ComputeIVStatMultiplier(-5.0f), 1.0f);
     TestEqual(TEXT("Oversized IV clamps to 1.31"), Gen::ComputeIVStatMultiplier(99.0f), 1.31f);
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-2 — LAN CO-OP: client world build contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP2ClientWorldPolicyTest,
+    "ASTRAWILD.LCP2.ClientWorldPolicy",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP2ClientWorldPolicyTest::RunTest(const FString& Parameters)
+{
+    // The cosmetic-world build policy: authority builds in BeginPlay (standalone
+    // + listen host), remote clients build from the replicated seed, nothing
+    // builds anywhere else (dedicated server = out of scope, MASTER_CONTROL §1b).
+    using Boot = AAstrawildWorldBootstrapper;
+    TestTrue(TEXT("Authority builds"), Boot::ShouldBuildCosmeticWorld(ROLE_Authority, NM_Standalone));
+    TestTrue(TEXT("Listen-host authority builds"), Boot::ShouldBuildCosmeticWorld(ROLE_Authority, NM_ListenServer));
+    TestTrue(TEXT("Remote client builds from seed"), Boot::ShouldBuildCosmeticWorld(ROLE_SimulatedProxy, NM_Client));
+    TestFalse(TEXT("Dedicated-server proxy does not build"), Boot::ShouldBuildCosmeticWorld(ROLE_SimulatedProxy, NM_DedicatedServer));
+
+    // The weather-visibility mapper the client atmosphere pass uses must agree
+    // with the profile table for every state (one source of truth).
+    TestEqual(TEXT("Clear visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Clear), 1.00f);
+    TestEqual(TEXT("Cloudy visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Cloudy), 1.00f);
+    TestEqual(TEXT("Rain visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Rain), 0.85f);
+    TestEqual(TEXT("HeavyRain visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::HeavyRain), 0.70f);
+    TestEqual(TEXT("Storm visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Storm), 0.55f);
+    TestEqual(TEXT("Fog visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Fog), 0.45f);
+
+    // Cosmetic stream determinism: same seed -> same landmark sequence;
+    // different seed -> different sequence (no hidden global state).
+    FRandomStream StreamA(static_cast<uint32>(1337) ^ AAstrawildWorldBootstrapper::CosmeticStreamSalt);
+    FRandomStream StreamB(static_cast<uint32>(1337) ^ AAstrawildWorldBootstrapper::CosmeticStreamSalt);
+    FRandomStream StreamC(static_cast<uint32>(9999) ^ AAstrawildWorldBootstrapper::CosmeticStreamSalt);
+    const float A1 = StreamA.FRand(); const float A2 = StreamA.FRand();
+    const float B1 = StreamB.FRand(); const float B2 = StreamB.FRand();
+    const float C1 = StreamC.FRand();
+    TestEqual(TEXT("Same seed same first draw"), A1, B1);
+    TestEqual(TEXT("Same seed same second draw"), A2, B2);
+    TestNotEqual(TEXT("Different seed different draw"), A1, C1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP2DressingGateTest,
+    "ASTRAWILD.LCP2.DressingGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP2DressingGateTest::RunTest(const FString& Parameters)
+{
+    // The client dressing gate: expected replicated actor count = villages +
+    // dungeon generators + portals + POI markers + skiffs. The POI count comes
+    // from the registry (identical on every machine).
+    using Boot = AAstrawildWorldBootstrapper;
+    TestEqual(TEXT("17 registered POIs -> 33 expected actors"), Boot::ComputeExpectedReplicatedWorldActorCount(17), 2 + 3 + 9 + 17 + 2);
+    TestEqual(TEXT("0 POIs -> 16 expected actors"), Boot::ComputeExpectedReplicatedWorldActorCount(0), 16);
+    TestEqual(TEXT("negative POIs clamp to 0"), Boot::ComputeExpectedReplicatedWorldActorCount(-5), 16);
+
+    // The gate timeout must be positive and generous enough for initial actor
+    // streaming on a LAN join (15s contract).
+    TestTrue(TEXT("Dressing gate timeout is positive"),
+        AAstrawildWorldBootstrapper::ClientDressingGateTimeoutSeconds > 0.0f);
+    TestTrue(TEXT("Dressing gate timeout allows slow joins (>= 10s)"),
+        AAstrawildWorldBootstrapper::ClientDressingGateTimeoutSeconds >= 10.0f);
+
+    // Node quantity mirror: the depleted visual predicate is pure and shared
+    // between the server harvest path and the client OnRep mirror (same rule,
+    // no drift — pinned so the two paths can never diverge).
+    using Node = AAstrawildResourceNode;
+    TestFalse(TEXT("Infinite nodes never read as depleted"), Node::IsNodeDepleted(true, 0));
+    TestTrue(TEXT("Finite empty node reads as depleted"), Node::IsNodeDepleted(false, 0));
+    TestFalse(TEXT("Finite stocked node reads as harvestable"), Node::IsNodeDepleted(false, 5));
+    TestFalse(TEXT("Overdrafted-but-infinite stays visible"), Node::IsNodeDepleted(true, -3));
     return true;
 }
 

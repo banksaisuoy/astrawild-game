@@ -37,6 +37,15 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World", Replicated)
     int32 WorldSeed = 1337;
 
+    /**
+     * LCP-2: true once the server has FINALIZED the world seed (bootstrapper
+     * BeginPlay or save-load restore). Clients must not build their deterministic
+     * cosmetic world copy before this flips — the default 1337 could otherwise
+     * race a save-restored seed and build the wrong world locally.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World", Replicated)
+    bool bWorldSeedSynced = false;
+
     // --- Final Run (FR-6): Act 3 ending state ---
 
     /** One-way ending verdict (save schema v5). None = story in play. */

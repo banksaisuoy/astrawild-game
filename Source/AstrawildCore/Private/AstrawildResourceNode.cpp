@@ -1,5 +1,7 @@
 #include "AstrawildResourceNode.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDifficultySubsystem.h"
@@ -16,7 +18,12 @@
 AAstrawildResourceNode::AAstrawildResourceNode()
 {
     PrimaryActorTick.bCanEverTick = false;
-    SetReplicates(false);
+
+    // LCP-2: resource nodes replicate so LAN clients see the world's real
+    // harvest state. State changes are rare (harvest/respawn) — the net update
+    // frequency stays far below movement actors.
+    SetReplicates(true);
+    SetNetUpdateFrequency(0.5f);
 
     VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
     RootComponent = VisualMesh;
@@ -51,7 +58,6 @@ AAstrawildResourceNode::AAstrawildResourceNode()
 void AAstrawildResourceNode::BeginPlay()
 {
     Super::BeginPlay();
-
     // Production V2 (P0): definition-driven identity resolves FIRST; the legacy
     // direct-property path only logs. Deterministic identity means the node
     // either carries a valid item id or is explicitly disabled — the silent
@@ -285,4 +291,36 @@ void AAstrawildResourceNode::RespawnNode()
     RemainingQuantity = FMath::Max(1, CachedMaxQuantity > 0 ? CachedMaxQuantity : ResourceQuantityPerHarvest);
     SetActorHiddenInGame(false);
     SetActorEnableCollision(true);
+}
+
+void AAstrawildResourceNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildResourceNode, NodeDefinitionId);
+    DOREPLIFETIME(AAstrawildResourceNode, RemainingQuantity);
+    DOREPLIFETIME(AAstrawildResourceNode, bInfiniteResource);
+}
+
+void AAstrawildResourceNode::OnRep_RemainingQuantity()
+{
+    // LCP-2: mirror the server's depleted/respawned visual (the server hides
+    // the node and disables collision on depletion — clients follow the
+    // replicated quantity instead of a hidden flag so a mid-stream join
+    // converges without extra state).
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        ApplyQuantityVisual();
+    }
+}
+
+void AAstrawildResourceNode::ApplyQuantityVisual()
+{
+    const bool bDepleted = IsNodeDepleted(bInfiniteResource, RemainingQuantity);
+    SetActorHiddenInGame(bDepleted);
+    SetActorEnableCollision(!bDepleted);
+}
+
+bool AAstrawildResourceNode::IsNodeDepleted(const bool bInfinite, const int32 InRemainingQuantity)
+{
+    return !bInfinite && InRemainingQuantity <= 0;
 }

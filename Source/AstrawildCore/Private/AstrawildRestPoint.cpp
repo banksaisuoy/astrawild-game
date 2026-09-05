@@ -1,5 +1,7 @@
 #include "AstrawildRestPoint.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildSurvivalComponent.h"
@@ -11,6 +13,11 @@ AAstrawildRestPoint::AAstrawildRestPoint()
 {
     PrimaryActorTick.bCanEverTick = false;
     WorldObjectId = FGuid::NewGuid();
+
+    // LCP-2: rest points replicate so LAN clients can see + route their
+    // interact intent to the server copy.
+    bReplicates = true;
+    NetUpdateFrequency = 1.0f;
 
     VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
     RootComponent = VisualMesh;
@@ -66,6 +73,13 @@ void AAstrawildRestPoint::Interact_Implementation(AActor* InteractingActor)
 FText AAstrawildRestPoint::GetInteractionPrompt_Implementation() const
 {
     return NSLOCTEXT("ASTRAWILD", "RestPointPrompt", "Rest at the campfire (full recovery) [E]");
+}
+
+void AAstrawildRestPoint::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildRestPoint, WorldObjectId);
+    DOREPLIFETIME(AAstrawildRestPoint, bActive);
 }
 
 FAstrawildRestPointSaveData AAstrawildRestPoint::ToSaveData() const

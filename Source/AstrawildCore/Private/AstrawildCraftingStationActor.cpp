@@ -1,5 +1,7 @@
 #include "AstrawildCraftingStationActor.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildDataAssets.h"
@@ -16,6 +18,11 @@ AAstrawildCraftingStationActor::AAstrawildCraftingStationActor()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+    // LCP-2: stations replicate so LAN clients see them and route their
+    // interact intent (craft screen open request) to the server copy.
+    bReplicates = true;
+    NetUpdateFrequency = 1.0f;
+
     VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
     RootComponent = VisualMesh;
 
@@ -30,6 +37,12 @@ AAstrawildCraftingStationActor::AAstrawildCraftingStationActor()
 void AAstrawildCraftingStationActor::BeginPlay()
 {
     Super::BeginPlay();
+}
+
+void AAstrawildCraftingStationActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildCraftingStationActor, StationId);
 }
 
 FText AAstrawildCraftingStationActor::GetInteractionPrompt_Implementation() const

@@ -115,6 +115,11 @@ float UAstrawildWeatherSubsystem::GetVisibilityMultiplier() const
     return GetProfile(GetCurrentWeather()).VisibilityMultiplier;
 }
 
+float UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState State)
+{
+    return GetProfile(State).VisibilityMultiplier;
+}
+
 void UAstrawildWeatherSubsystem::ForceWeather(const EAstrawildWeatherState NewState)
 {
     AAstrawildGameState* GameState = GetAstrawildGameState();

@@ -5,7 +5,7 @@ ASTRAWILD Final Run — static content validator (no engine required).
 Cross-checks every ID referenced in the Final Run content pack against the
 registered content, verifies quest-chain closure, LFS pointer integrity, and
 asset path references. Complements Scripts/validate_repository.sh (structural)
-and the 109 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
+and the 111 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
 """
 import os
 import re
@@ -150,7 +150,7 @@ check(f"Asset path references resolve ({len(refs)} refs)", len(unresolved) == 0,
 # --- 9. Automation test count ---
 TESTS = read("Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
 count = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", TESTS))
-check("Automation tests == 109 (99 + 3 FCR regressions + 1 DP-3 resonance + 1 DP-4 skill loadout + 1 DP-5 boss special sets + 1 DP-6 base depth + 1 DP-7 world depth + 1 DP-8 affinity dialogue + 1 DP-9 dungeon identity)", count == 109, f"count={count} — update this gate + all active docs together")
+check("Automation tests == 111 (109 through DP-9 + 1 LCP-2 client world policy + 1 LCP-2 dressing gate)", count == 111, f"count={count} — update this gate + all active docs together")
 
 # --- 10. Building catalog completeness ---
 cats = ["Foundation", "Wall", "Floor", "Roof", "Door", "Storage", "Workstation", "Farm", "Power", "Research"]

@@ -15,6 +15,7 @@ void AAstrawildGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(AAstrawildGameState, DayNumber);
     DOREPLIFETIME(AAstrawildGameState, WeatherState);
     DOREPLIFETIME(AAstrawildGameState, WorldSeed);
+    DOREPLIFETIME(AAstrawildGameState, bWorldSeedSynced);
     DOREPLIFETIME(AAstrawildGameState, EndingState);
     DOREPLIFETIME(AAstrawildGameState, bPostGameActive);
 }
@@ -89,6 +90,7 @@ void AAstrawildGameState::SetWorldSeed(const int32 InSeed)
         return;
     }
     WorldSeed = InSeed;
+    bWorldSeedSynced = true; // LCP-2: clients may now build the deterministic world copy
 }
 
 void AAstrawildGameState::SetEndingState(const EAstrawildEndingState InState)

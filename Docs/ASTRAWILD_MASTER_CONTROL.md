@@ -73,7 +73,7 @@ A declared PASS without a raw log is a CLAIM, not evidence.
 | :--- | :--- | :--- |
 | **GLM** | Lead Programmer | C++, architecture, save/load, quests, AI, economy, tests; this document |
 | **Qwen** | Technical Art (optional) | Materials/meshes/animation polish — never blocks the project |
-| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 109-test automation run, playtest, package, push |
+| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 111-test automation run, playtest, package, push |
 | **Sonnet/Reviewers** | Auditors | Findings are inputs; only REAL BUG / STALE DOC / UNPROVEN CLAIM classes act on |
 
 ## 1b. Supported multiplayer target (v6.0 — user product decision, binding)
@@ -135,7 +135,7 @@ No cheat-command dependency anywhere in the chain.
   229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 11 NPCs,
   11 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots**.
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
-  superseded. The automation suite holds **109 world-free contract tests**.
+  superseded. The automation suite holds **111 world-free contract tests** (109 through DP-9 + 2 LCP-2 LAN co-op contracts).
 
 ## 4. Final story canon (IMPLEMENTED — was frozen spec v1.7 §11)
 
@@ -225,13 +225,13 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 | W-19 | HUD/UI | LIVE + ending banner + boss labels | |
 | W-20 | **Ending + post-game** | **LIVE (FR-5/FR-6 + audit G-2 gate fix)** | ending gated on MQ-17 per canon |
 | W-21 | Content pipeline (ArtSource/LFS/import) | LIVE | 459 LFS objects verified |
-| W-22 | Tests | 109 world-free contracts | ENGINE-UNVERIFIED until run |
+| W-22 | Tests | 111 world-free contracts | ENGINE-UNVERIFIED until run |
 
 ## 8. Verification queue for Antigravity (one-time final integration)
 
 1. `git fetch && git checkout final-completion` (or merge into main — subsumes PR #4)
 2. Build: `Engine\Build\BatchFiles\Build.bat AstrawildEditor Win64 Development -project=<repo>\ASTRAWILD.uproject`
-3. Run automation: 109/109 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, and the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*` — full list in `ASTRAWILD_TEST_INVENTORY.md` rows 1-109; the count is read from the repo, never from memory)
+3. Run automation: 109/109 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, and the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*` — full list in `ASTRAWILD_TEST_INVENTORY.md` rows 1-111; the count is read from the repo, never from memory)
 4. PIE smoke: MQ chain HUD tracker · save/load round-trip (schema 5 stamp in log) ·
    `AW.FastForward` to MQ-13+ if needed → verify anchor POIs, Eye Gate at 150 m with coil skiff,
    Sovereign fight, ending banner, post-game weather pin (Ending A).
@@ -259,7 +259,7 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | Save persistence model | YES — schema V5, every major system persisted |
 | UI player-accessible | YES — HUD/screens incl. ending banner |
 | AI complete source paths | YES (echo/hostile/boss) |
-| Automation deterministic | YES — scripts + 109 contracts + this document |
+| Automation deterministic | YES — scripts + 111 contracts + this document |
 | Documentation single control | YES — this file |
 | Task registry | YES — ASTRAWILD_MASTER_TASK_REGISTRY.md |
 | P0 source blockers | NONE KNOWN (static level) |
@@ -278,7 +278,7 @@ acceptance) converts this to GAME-COMPLETE or returns engine-specific defects.
 - LAN co-op: all LCP source work is ENGINE-UNVERIFIED until the Antigravity run executes the §22 LAN acceptance test (4 players, host + 3 clients).
 - Door visual state on pure clients (bIsSwitchedOn has no OnRep) — single-player/listen-server correct.
 - Imported skiff mesh orientation (glTF Y-up→Z-up assumption) — cosmetic; collision hull unaffected.
-- 109 automation tests never executed in a real engine.
+- 111 automation tests never executed in a real engine.
 - Package/cook success at the final SHA (FZ-A1 failure was at 8313c61).
 - Dungeon generator float-precision at 400 m altitude (Eye) — probes use world height; watch PIE log.
 - Dedicated-server paths remain out of scope by design (§1b — LAN listen server is the target).

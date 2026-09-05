@@ -3,7 +3,8 @@
 **Status (LCP-1 re-audit, 2026): source re-audited at `00354da` for the LAN co-op scope —
 the authoritative co-op spec, PART-3 audit and LCP work ledger now live in
 `Docs/ASTRAWILD_LAN_COOP_SPEC.md` (this file is the replication inventory + rules reference).**
-**Date: LCP-1 (2026) — re-audit wave 5 (43 replicated props / 14 classes / 8 Server RPCs);
+**Date: LCP-2 (2026) — re-audit wave 5 + client-world build landed (61 replicated props /
+21 classes / 8 Server RPCs / 0 Client RPCs — the first Client RPCs arrive with LCP-3);
 original inventory waves 1-4 dated 2026-08-30.**
 **Primary sources:** every `GetLifetimeReplicatedProps` + `UFUNCTION(Server)` in `Source/AstrawildCore`
 (grep `DOREPLIFETIME`, `UFUNCTION(Server)`), `AstrawildGameMode.cpp`, subsystem authority guards
@@ -14,18 +15,29 @@ original inventory waves 1-4 dated 2026-08-30.**
 
 The wave-1..4 tables below are corrected by this wave:
 
-- Replication inventory grew to **43 properties across 14 classes** (was 26/9):
-  + `AAstrawildSkiffActor`, `UAstrawildMountComponent`, `UAstrawildCreatureSanityComponent`,
-    `AAstrawildDungeonGateActor`, `AAstrawildResonancePillarActor` gained replication during
-    SCP/GDP/DP batches.
+- Replication inventory grew to **61 properties across 21 classes** (wave-5 audit found
+  43/14; LCP-2 then added): `AAstrawildGameState.bWorldSeedSynced` (client build gate),
+  `AAstrawildResourceNode` (NodeDefinitionId/RemainingQuantity/bInfiniteResource + OnRep
+  depleted visual mirror — the v1 "harvested locally" simplification is closed),
+  `AAstrawildNPCCharacter` (NpcDefinitionId + registry-resolved appearance — NPCs now
+  replicate at all), `AAstrawildVillageActor` (identity props; huts rebuild locally),
+  `AAstrawildRestPoint` (WorldObjectId/bActive), `AAstrawildCraftingStationActor`
+  (StationId), `AAstrawildPOIMarkerActor` (PoiId + OnRep beacon),
+  `AAstrawildDungeonRoomActor` (Template + RoomIndex — client themed shells close the
+  DP-9 "Template not replicated" gap), `AAstrawildDungeonPortalActor` (PortalId/PromptText).
+  Earlier waves: `AAstrawildSkiffActor`, `UAstrawildMountComponent`,
+  `UAstrawildCreatureSanityComponent`, `AAstrawildDungeonGateActor`,
+  `AAstrawildResonancePillarActor` gained replication during SCP/GDP/DP batches.
 - Server RPC inventory grew to **8** (was 5): `ServerRangedAttack` (final run) +
   `ServerRequestCraft`/`ServerRequestCancelCraft` (SCP-era — UMG screens now route craft
   requests from any net role).
 - Client/NetMulticast RPCs: **still zero** — feedback flows via replicated properties.
   The LCP-3 batch adds the first Client RPCs (shop/dialogue/notify).
-- Co-op architecture status: **replaced by LAN_COOP_SPEC §2** (client world build
-  BROKEN-for-clients, co-op save MISSING, quest/research client sync PARTIAL,
-  session flow MISSING — with the LCP-2..LCP-6 fix batches).
+- Co-op architecture status: **replaced by LAN_COOP_SPEC §2** (LCP-2 CLOSED the
+  client-visible-world gap: every client now builds the deterministic cosmetic world
+  (lighting/terrain/sea/landmarks/dressing) from the replicated seed and receives the
+  gameplay actors through replication; co-op save / client state sync / session flow
+  remain LCP-4..LCP-6).
 - The open work list (§5 below) is superseded by the LCP ledger in LAN_COOP_SPEC §8.
 
 ---
@@ -157,7 +169,7 @@ No Client/NetMulticast RPCs exist yet (client feedback flows through replicated 
 | Target | **4 players LAN, host/listen server authoritative** (user product decision; single player unchanged) |
 | Session classes | ✅ GameMode/GameState/PlayerController authority guards in place; LAN session flow = LCP-6 (MISSING at audit) |
 | World state sharing | ✅ GameState replication (time/weather/seed/ending) |
-| Client-visible world | ❌ BROKEN-for-clients at audit (server-only non-replicated terrain/lighting/dressing/NPCs/nodes) → LCP-2 |
+| Client-visible world | ✅ LCP-2 CLOSED — deterministic client cosmetic build (seed-gated) + replicated gameplay actors (nodes/NPCs/villages/stations/rest points/POI markers/dungeon rooms+portals); ENGINE-UNVERIFIED |
 | Research pool | ⚠️ host pool correct; client visibility/notifications NOT IMPLEMENTED → LCP-5 |
 | Echo roster | ⚠️ host-side pool; no per-player partition, no client visibility → LCP-4/LCP-5 |
 | Player-specific save | ❌ first-player-only → per-player blocks = LCP-4 |

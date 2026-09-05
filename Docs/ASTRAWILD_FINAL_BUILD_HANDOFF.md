@@ -99,7 +99,7 @@ git lfs install
 git checkout final-completion              # the default clone already lands here (origin HEAD follows main; checkout explicitly)
 git pull origin final-completion
 git lfs pull
-python Scripts/validate_final_run.py     # ALL static checks must PASS (109-test gate + 15 census equality gates included)
+python Scripts/validate_final_run.py     # ALL static checks must PASS (111-test gate + 15 census equality gates included)
 bash Scripts/validate_repository.sh      # structural ruleset PASS
 ```
 Final-audit note: the earlier text pointed at `glm/final-run`, a branch that never reached
@@ -147,7 +147,7 @@ the UBT log tail BEFORE retrying; that is the artifact GLM needs to diagnose.
 .\Test.ps1
 # outputs E:\AstrawildGame\Automation_Output.txt
 ```
-**PASS = 109/109 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
+**PASS = 111/111 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value). Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety` · `ASTRAWILD.Save.SchemaV5Ending` ·
 `ASTRAWILD.Quest.FinalRunChain` · `ASTRAWILD.Echo.FinalRunBosses` ·
 `ASTRAWILD.Tech.SkiffEngineering` · `ASTRAWILD.Dialogue.EndingChoice` ·
@@ -251,7 +251,7 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 109 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 111 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
 - Enhanced Input runtime mapping (26 actions) — verify no duplicate-context warnings in the log.

@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 109 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 111 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -39,9 +39,9 @@ wrong order resets, window expiry resets; the unthemed default stays the
 legacy shell).
 
 **Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **109** — derived from `AutomationTests.cpp`
+authoritative test count is **111** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 109`), and listed in this inventory (rows 1-109).
+EXACT gate (`Automation tests == 111`), and listed in this inventory (rows 1-111).
 Historical counts (57/63/67/72/84/99/102/103/104/105/106/107/108) describe earlier commits only and appear
 nowhere as current-state claims.
 
@@ -141,8 +141,8 @@ nowhere as current-state claims.
 
 ```
 UE_5.8\Engine\Build\BatchFiles\RunUAT.bat BuildGraph ...   (or the Editor automation UI)
-Filter: ASTRAWILD.                                          (all 109)
-Expected: 109 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
+Filter: ASTRAWILD.                                          (all 111)
+Expected: 111 pass / 0 fail / 0 skip. Any failure → capture the raw log and file AG-6.
 ```
 
 ## Gameplay Depth Pack contracts (73-84)
@@ -231,3 +231,10 @@ Expected: 109 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 | # | Test | Covers |
 |---|------|--------|
 | 109 | ASTRAWILD.DP9.DungeonIdentity | DP-9: dungeon depth — theme resolution per dungeon id (the 3 canonical dungeon ids resolve 3 DISTINCT themes; unknown/empty ids fail closed to None so identity never breaks a dungeon), the theme profile table the rooms consume (pairwise-distinct shell tints; Underlight tighter than the Vault which reads wider than the Eye; Eye monolith walls taller than the Underlight's oppressive slabs; only the Eye pulses its accent light; the per-dungeon hazard identity is exactly AshLung/Waterlogged/EnergyPulse with mild bands — ash lung ≤ 8/s, waterlogged 0.5-1.0×, pulses 5s+ cadence / ≤ 6 dps / dissipating within the cadence; dressing vocabulary resolves through the EXISTING ArtPack biome/node tables with sane budgets; only the Vault carries the flooded-floor accent; only the Eye carries the ancient-tech node accent; the unthemed default stays the legacy shell — no hazard, no walls, no light, unscaled footprint), and the resonance-pillar sequence verbs (3 pillars, 20-90s window; correct order advances → advances → completes; skipping ahead / re-attuning / out-of-range / degenerate / stale inputs reset; window expiry is inclusive at the boundary and a zero window never expires; the room-hazard status ids are stable) |
+
+## LCP-2 LAN co-op contracts (110-111, landed in the LCP-2 batch)
+
+| # | Test | Covers |
+|---|------|--------|
+| 110 | ASTRAWILD.LCP2.ClientWorldPolicy | LCP-2: client world build policy — the cosmetic-build truth table (authority + standalone + listen-host build in BeginPlay; remote clients build from the replicated seed; dedicated-server proxies never build — out of scope per MASTER_CONTROL §1b), the client weather-visibility mapper equals the profile table for all six states (one source of truth: the same static the server atmosphere pass uses), and cosmetic-stream determinism (same seed -> identical landmark draw sequence, different seed -> different sequence, no hidden global state) |
+| 111 | ASTRAWILD.LCP2.DressingGate | LCP-2: client dressing gate — expected replicated world actor count for the exclusion-bubble sources (villages + dungeon generators + portals + POI markers + skiffs; POI count from the registry, negative clamps), the gate timeout contract (positive, >= 10s for slow LAN joins), and the shared node-depleted predicate (infinite nodes never deplete; finite nodes deplete at quantity <= 0 — the server harvest path and the client OnRep mirror use the same pure function so they can never drift) |

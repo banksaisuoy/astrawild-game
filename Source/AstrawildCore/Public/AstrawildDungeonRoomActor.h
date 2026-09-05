@@ -231,8 +231,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
     TObjectPtr<UPointLightComponent> RoomLight;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", ReplicatedUsing=OnRep_Template)
     FAstrawildDungeonRoomTemplate Template;
+
+    /** LCP-2: client-side themed-shell rebuild after the template replicates. */
+    UFUNCTION()
+    void OnRep_Template();
 
     /** Batch 8: per-dungeon quest target identifier emitted upon boss defeat. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
@@ -243,7 +247,7 @@ public:
     FName BossSummonSpeciesId;
 
     /** Sequential room index within the dungeon. */
-    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
+    UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon", Replicated)
     int32 RoomIndex = 0;
 
     UPROPERTY(BlueprintReadOnly, Category="ASTRAWILD|Dungeon", Replicated)

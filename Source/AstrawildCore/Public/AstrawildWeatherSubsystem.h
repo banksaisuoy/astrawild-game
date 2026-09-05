@@ -59,6 +59,15 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Weather")
     float GetVisibilityMultiplier() const;
 
+    /**
+     * LCP-2: visibility multiplier for a weather state WITHOUT a live subsystem
+     * instance — the client-side bootstrapper atmosphere pass reads this from the
+     * replicated GameState weather (the client's local weather subsystem never
+     * ticks). Same profile table the server path uses — one source of truth.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Weather")
+    static float GetVisibilityMultiplierForState(EAstrawildWeatherState State);
+
     /** Cheat/debug: force a weather state (server only). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|World|Weather")
     void ForceWeather(EAstrawildWeatherState NewState);

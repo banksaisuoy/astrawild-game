@@ -1,5 +1,7 @@
 #include "AstrawildNPCCharacter.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildInventoryComponent.h"
@@ -31,6 +33,11 @@ namespace
 AAstrawildNPCCharacter::AAstrawildNPCCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
+
+    // LCP-2: villagers replicate so LAN clients see + approach them. AI
+    // possession (below) is server-only — clients receive the movement.
+    bReplicates = true;
+    NetUpdateFrequency = 10.0f;
 
     GetCapsuleComponent()->InitCapsuleSize(40.0f, 90.0f);
 
@@ -92,9 +99,41 @@ void AAstrawildNPCCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    // LCP-2: a replicated NPC may arrive with NpcDefinitionId already set
+    // (initial bunch) but no object pointer — resolve first, then refresh.
+    ResolveNpcDefinitionFromId();
+
     // Editor-placed NPCs may already carry a definition; runtime spawns refresh
     // explicitly after the bootstrapper assigns NpcDefinition.
     RefreshAppearanceFromDefinition();
+}
+
+void AAstrawildNPCCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildNPCCharacter, NpcDefinitionId);
+}
+
+void AAstrawildNPCCharacter::OnRep_NpcDefinitionId()
+{
+    ResolveNpcDefinitionFromId();
+    RefreshAppearanceFromDefinition();
+}
+
+void AAstrawildNPCCharacter::ResolveNpcDefinitionFromId()
+{
+    if (IsValid(NpcDefinition) || NpcDefinitionId.IsNone())
+    {
+        return;
+    }
+
+    const UWorld* World = GetWorld();
+    const UAstrawildItemRegistrySubsystem* Registry =
+        World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (UAstrawildNPCDefinition* Def = Registry ? Registry->FindNPCDefinition(NpcDefinitionId) : nullptr)
+    {
+        NpcDefinition = Def;
+    }
 }
 
 bool AAstrawildNPCCharacter::IsGuard() const

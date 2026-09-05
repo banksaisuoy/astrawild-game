@@ -53,6 +53,21 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     TObjectPtr<UAstrawildNPCDefinition> NpcDefinition;
 
+    /**
+     * LCP-2: stable NPC identity for replication. The definition OBJECT pointer
+     * cannot replicate (data assets don't), so remote clients resolve the same
+     * definition from their identical local registry and rebuild the appearance.
+     */
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC", ReplicatedUsing=OnRep_NpcDefinitionId)
+    FName NpcDefinitionId = NAME_None;
+
+    /** LCP-2: client-side appearance rebuild after the id replicates. */
+    UFUNCTION()
+    void OnRep_NpcDefinitionId();
+
+    /** LCP-2: resolve NpcDefinition from NpcDefinitionId through the local registry (all machines). */
+    void ResolveNpcDefinitionFromId();
+
     /** SCP Phase 7: daily schedule (work/home/shelter/sleep anchors + service gating). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Schedule")
     TObjectPtr<UAstrawildNPCScheduleComponent> ScheduleComponent;
@@ -146,6 +161,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 
 private:
     int32 PatrolIndex = 0;
