@@ -459,15 +459,17 @@ void AAstrawildWorkSiteActor::CreditOfflineProduction(float OfflineSeconds)
 FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
 {
     // Audit C-7: dynamic prompt — collect when output waits, assign otherwise.
+    // FPP-1: prompts carry the OUTPUT's display name ("Collect 3 x Cooked Meat")
+    // instead of the raw registry id — the automation loop speaks player.
     if (StoredOutput > 0)
     {
         return FText::FromString(FString::Printf(TEXT("Collect %d x %s [E]"),
-            StoredOutput, *OutputItemId.ToString()));
+            StoredOutput, *ItemLabel(OutputItemId)));
     }
     if (!Workers.IsEmpty() || AssignedRobot.IsValid())
     {
         return FText::FromString(FString::Printf(TEXT("%s — working (%s) [E]"),
-            *UEnum::GetDisplayValueAsText(WorkType).ToString(), *OutputItemId.ToString()));
+            *UEnum::GetDisplayValueAsText(WorkType).ToString(), *ItemLabel(OutputItemId)));
     }
     return FText::FromString(FString::Printf(TEXT("Assign idle Echo to %s [E]"),
         *UEnum::GetDisplayValueAsText(WorkType).ToString()));
@@ -508,7 +510,7 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
                     EventBus->PublishEvent(TAG_Astrawild_Event_ItemCollected, Player, OutputItemId, Collected, GetActorLocation());
                 }
                 Notify(FText::FromString(FString::Printf(TEXT("Collected %d x %s"),
-                    Collected, *OutputItemId.ToString())));
+                    Collected, *ItemLabel(OutputItemId))));
             }
             else
             {
@@ -597,8 +599,13 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
     {
         if (AssignWorker(Best))
         {
+            // FPP-1: the assigned ECHO's display name — "AstrawildEchoCharacter_7"
+            // (the actor name) is debug terminology, not a creature.
+            const FString EchoLabel = Best->EchoDefinition && !Best->EchoDefinition->DisplayName.IsEmpty()
+                ? Best->EchoDefinition->DisplayName.ToString()
+                : Best->GetName();
             Notify(FText::FromString(FString::Printf(TEXT("%s assigned to %s."),
-                *Best->GetName(), *UEnum::GetDisplayValueAsText(WorkType).ToString())));
+                *EchoLabel, *UEnum::GetDisplayValueAsText(WorkType).ToString())));
         }
     }
     else
@@ -609,7 +616,8 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
 
 FString AAstrawildWorkSiteActor::FormatInputRequirements() const
 {
-    // "2x Item_RawMeat + 1x Item_Berry" — the prompt contract for input sites.
+    // "2x Raw Meat + 1x Berry" — the prompt contract for input sites.
+    // FPP-1: display names (the raw ids are registry keys, not player language).
     FString Out;
     for (const FAstrawildItemStack& Required : InputItems)
     {
@@ -617,7 +625,16 @@ FString AAstrawildWorkSiteActor::FormatInputRequirements() const
         {
             Out += TEXT(" + ");
         }
-        Out += FString::Printf(TEXT("%dx %s"), FMath::Max(1, Required.Quantity), *Required.ItemId.ToString());
+        Out += FString::Printf(TEXT("%dx %s"), FMath::Max(1, Required.Quantity), *ItemLabel(Required.ItemId));
     }
     return Out;
+}
+
+FString AAstrawildWorkSiteActor::ItemLabel(const FName ItemId) const
+{
+    // FPP-1: registry display name with a safe raw-id fallback (tests, unknown ids).
+    const UWorld* World = GetWorld();
+    const UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    const UAstrawildItemDefinition* Def = Registry ? Registry->FindItem(ItemId) : nullptr;
+    return Def && !Def->DisplayName.IsEmpty() ? Def->DisplayName.ToString() : ItemId.ToString();
 }

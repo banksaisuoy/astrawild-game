@@ -136,6 +136,13 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     SkillSlotButtons[1]->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleSkillSlot1Clicked);
     SkillSlotButtons[2]->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleSkillSlot2Clicked);
 
+    // FPP-1: the growth readout — five attributes with level + XP progress so
+    // a player can see what to grind and what the next milestone unlocks.
+    AttributesText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("PauseAttributes"));
+    AttributesText->SetColorAndOpacity(FSlateColor(FLinearColor(0.78f, 0.9f, 0.72f, 1.0f)));
+    AttributesText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
+    AttributesText->SetAutoWrapText(true);
+
     // LCP-6: the LAN CO-OP panel — host a game, find + join one, or connect
     // directly by address (PART 6). The status line always names the active
     // mode so it is OBVIOUS who is hosting.
@@ -202,6 +209,14 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
         {
             SlotBtnSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
             SlotBtnSlot->SetPadding(FMargin(0.0f, 3.0f));
+        }
+    }
+    if (AttributesText)
+    {
+        if (UVerticalBoxSlot* AttributesSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(AttributesText)))
+        {
+            AttributesSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+            AttributesSlot->SetPadding(FMargin(0.0f, 6.0f, 0.0f, 2.0f));
         }
     }
     if (UVerticalBoxSlot* LanTitleSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(LanTitleText)))
@@ -460,11 +475,81 @@ void UAstrawildPauseMenuWidget::RefreshSkillSlotLabels()
         }
         const EAstrawildPlayerSkillId Skill = Bound.IsValidIndex(SlotIndex)
             ? Bound[SlotIndex] : EAstrawildPlayerSkillId::None;
-        SkillSlotLabels[SlotIndex]->SetText(Skill == EAstrawildPlayerSkillId::None
-            ? FText::FromString(FString::Printf(TEXT("Skill Slot %d: — empty"), SlotIndex + 1))
-            : FText::FromString(FString::Printf(TEXT("Skill Slot %d: %s"), SlotIndex + 1,
-                *UEnum::GetDisplayValueAsText(Skill).ToString())));
+        if (Skill == EAstrawildPlayerSkillId::None)
+        {
+            SkillSlotLabels[SlotIndex]->SetText(FText::FromString(FString::Printf(
+                TEXT("Skill Slot %d: — empty (click to cycle your unlocked skills)"), SlotIndex + 1)));
+            continue;
+        }
+
+        // FPP-1: name + what it DOES + the live cooldown state — a loadout
+        // choice can now be made from the menu alone, and "not ready" reads
+        // as "recharging", never as "the key does nothing".
+        const FText Description = UAstrawildAttributeComponent::GetSkillDescription(Skill);
+        const float CooldownRemaining = Attributes ? Attributes->GetSkillCooldownRemaining(Skill) : 0.0f;
+        const FString CooldownLine = CooldownRemaining > 0.05f
+            ? FString::Printf(TEXT("  [recharging %.0fs]"), CooldownRemaining)
+            : FString(TEXT("  [READY]"));
+        SkillSlotLabels[SlotIndex]->SetAutoWrapText(true);
+        SkillSlotLabels[SlotIndex]->SetText(FText::FromString(FString::Printf(
+            TEXT("Skill Slot %d: %s\n%s%s"),
+            SlotIndex + 1,
+            *UEnum::GetDisplayValueAsText(Skill).ToString(),
+            *Description.ToString(),
+            *CooldownLine)));
     }
+
+    RefreshAttributeStats();
+}
+
+void UAstrawildPauseMenuWidget::RefreshAttributeStats()
+{
+    if (!AttributesText)
+    {
+        return;
+    }
+
+    AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>();
+    AAstrawildPlayerCharacter* Player = PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+    UAstrawildAttributeComponent* Attributes = Player ? Player->AttributeComponent : nullptr;
+    if (!Attributes)
+    {
+        AttributesText->SetText(FText::GetEmpty());
+        return;
+    }
+
+    struct FRow { EAstrawildAttributeType Type; const TCHAR* Label; };
+    const FRow Rows[] = {
+        { EAstrawildAttributeType::Might,    TEXT("Might (melee dmg)") },
+        { EAstrawildAttributeType::Vigor,    TEXT("Vigor (max HP)") },
+        { EAstrawildAttributeType::Agility,  TEXT("Agility (speed/stamina)") },
+        { EAstrawildAttributeType::Instinct, TEXT("Instinct (capture)") },
+        { EAstrawildAttributeType::Craft,    TEXT("Craft (craft speed)") },
+    };
+
+    // FPP-1: "Might 3 (XP 40/300)" per attribute — XP sources now have a
+    // visible destination, and skill milestones stop being invisible walls.
+    FString Line = TEXT("GROWTH — ");
+    for (int32 i = 0; i < 5; ++i)
+    {
+        const int32 Level = Attributes->GetLevel(Rows[i].Type);
+        const float XP = Attributes->GetXP(Rows[i].Type);
+        const float XPNext = Attributes->GetXPToNextLevel(Rows[i].Type);
+        if (i > 0)
+        {
+            Line += TEXT("  ·  ");
+        }
+        Line += FString::Printf(TEXT("%s %d"), Rows[i].Label, Level);
+        if (XPNext > 0.0f)
+        {
+            Line += FString::Printf(TEXT(" (XP %.0f/%.0f)"), XP, XPNext);
+        }
+        else
+        {
+            Line += TEXT(" (MAX)");
+        }
+    }
+    AttributesText->SetText(FText::FromString(Line));
 }
 
 

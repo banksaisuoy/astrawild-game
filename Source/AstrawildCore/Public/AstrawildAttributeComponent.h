@@ -103,6 +103,15 @@ public:
     /** Static cooldown table (seconds) — public for tests. */
     static float GetSkillCooldown(EAstrawildPlayerSkillId Skill);
 
+    /**
+     * FPP-1: static player-readable description table (what the skill does,
+     * its duration/effect numbers and its cooldown — the pause-menu loadout
+     * and the smart-cast toast render this verbatim; no skill is left as a
+     * bare name a player cannot understand).
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Attribute|Skill")
+    static FText GetSkillDescription(EAstrawildPlayerSkillId Skill);
+
     /** Cooldown remaining for a skill (0 = ready). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Attribute|Skill")
     float GetSkillCooldownRemaining(EAstrawildPlayerSkillId Skill) const;

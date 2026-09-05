@@ -61,6 +61,7 @@
 #include "AstrawildJournalScreenWidget.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildPauseMenuWidget.h"
+#include "AstrawildCraftingScreenWidget.h"
 #include "AstrawildRosterScreenWidget.h"
 #include "AstrawildMapScreenWidget.h"
 #include "AstrawildHuntScreenWidget.h"
@@ -5632,6 +5633,79 @@ bool FAstrawildPCR5HuntSystemTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Hunt subsystem exposes ClaimHunt"), HuntClass->FindFunctionByName(TEXT("ClaimHunt")) != nullptr);
     TestTrue(TEXT("Save game object carries the Hunts array"),
         UAstrawildSaveGame::StaticClass()->FindPropertyByName(TEXT("Hunts")) != nullptr);
+    return true;
+}
+
+// ===========================================================================
+// FPP-1 (presentation pass): the player-facing presentation contract
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildFPP1PresentationContractTest,
+    "ASTRAWILD.FPP1.PresentationContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildFPP1PresentationContractTest::RunTest(const FString& Parameters)
+{
+    // 1) Every player skill carries a player-readable description (the
+    //    pause-menu loadout renders it verbatim — a bare name is not
+    //    understandable) and every ACTIVE skill carries a real cooldown.
+    const EAstrawildPlayerSkillId AllSkills[] = {
+        EAstrawildPlayerSkillId::PowerStrike,
+        EAstrawildPlayerSkillId::Whirlwind,
+        EAstrawildPlayerSkillId::Dash,
+        EAstrawildPlayerSkillId::SecondWind,
+        EAstrawildPlayerSkillId::HuntersFocus,
+        EAstrawildPlayerSkillId::Masterwork,
+        EAstrawildPlayerSkillId::Overcharge,
+    };
+    for (const EAstrawildPlayerSkillId Skill : AllSkills)
+    {
+        TestFalse(FString::Printf(TEXT("Skill %s has a description"), *UEnum::GetValueAsString(Skill)),
+            UAstrawildAttributeComponent::GetSkillDescription(Skill).IsEmpty());
+    }
+    for (const EAstrawildPlayerSkillId Skill : AllSkills)
+    {
+        if (Skill == EAstrawildPlayerSkillId::Masterwork)
+        {
+            continue; // Pure passive — cooldown 0 by design.
+        }
+        TestTrue(FString::Printf(TEXT("Skill %s has a cooldown"), *UEnum::GetValueAsString(Skill)),
+            UAstrawildAttributeComponent::GetSkillCooldown(Skill) > 0.0f);
+    }
+    TestTrue(TEXT("Masterwork description flags itself as a PASSIVE"),
+        UAstrawildAttributeComponent::GetSkillDescription(EAstrawildPlayerSkillId::Masterwork)
+            .ToString().Contains(TEXT("PASSIVE")));
+    TestTrue(TEXT("None skill resolves to an empty description"),
+        UAstrawildAttributeComponent::GetSkillDescription(EAstrawildPlayerSkillId::None).IsEmpty());
+
+    // 2) The crafting screen stays CONCRETE — the class used to be
+    //    UCLASS(Abstract) with no WBP subclass in Content, so CreateWidget
+    //    returned nullptr and the player could not craft at all. Any
+    //    regression to Abstract re-breaks the entire crafting loop.
+    TestFalse(TEXT("CraftingScreenWidget is concrete (CreateWidget-instantiable)"),
+        UAstrawildCraftingScreenWidget::StaticClass()->HasAnyClassFlags(CLASS_Abstract));
+    TestNotNull(TEXT("CraftingScreenWidget class resolves"),
+        UAstrawildCraftingScreenWidget::StaticClass());
+
+    // 3) The ability library exposes per-ability player metadata: every
+    //    registered template carries a display name + a description (the
+    //    journal/roster ability lines render them — data without a
+    //    description is a presentation dead end).
+    UAstrawildAbilityLibrary::BuildDefaults();
+    TestEqual(TEXT("Ability library census"), UAstrawildAbilityLibrary::GetAbilityCount(), 53);
+    for (const FName AbilityId : UAstrawildAbilityLibrary::GetAllAbilityIds())
+    {
+        const FAstrawildAbilityData* Ability = UAstrawildAbilityLibrary::FindAbility(AbilityId);
+        if (!TestNotNull(FString::Printf(TEXT("Ability %s resolves"), *AbilityId.ToString()), Ability))
+        {
+            continue;
+        }
+        TestFalse(FString::Printf(TEXT("Ability %s has a display name"), *AbilityId.ToString()),
+            Ability->DisplayName.IsEmpty());
+        TestFalse(FString::Printf(TEXT("Ability %s has a description"), *AbilityId.ToString()),
+            Ability->Description.IsEmpty());
+    }
+
     return true;
 }
 

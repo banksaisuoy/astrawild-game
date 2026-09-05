@@ -165,6 +165,33 @@ float UAstrawildAttributeComponent::GetSkillCooldown(const EAstrawildPlayerSkill
     }
 }
 
+FText UAstrawildAttributeComponent::GetSkillDescription(const EAstrawildPlayerSkillId Skill)
+{
+    // FPP-1: the presentation layer — one authored player-readable string per
+    // skill (effect numbers + cooldown verbatim from the tables above so the
+    // text never drifts from the tuning).
+    switch (Skill)
+    {
+    case EAstrawildPlayerSkillId::PowerStrike:
+        return FText::FromString(TEXT("Your next melee strike hits for ×2.2 damage (6s window). 8s cooldown."));
+    case EAstrawildPlayerSkillId::Whirlwind:
+        return FText::FromString(TEXT("Sweep every hostile within 350cm for heavy melee damage and stagger. 14s cooldown."));
+    case EAstrawildPlayerSkillId::Dash:
+        return FText::FromString(TEXT("Burst-dash in your movement direction — closes gaps or escapes hazards. 6s cooldown."));
+    case EAstrawildPlayerSkillId::SecondWind:
+        return FText::FromString(TEXT("Instantly restore 40 health and 60 stamina. 30s cooldown."));
+    case EAstrawildPlayerSkillId::HuntersFocus:
+        return FText::FromString(TEXT("+25% capture chance for 12s — cast before a Resonator throw. 25s cooldown."));
+    case EAstrawildPlayerSkillId::Masterwork:
+        return FText::FromString(TEXT("PASSIVE — never casts: 15% chance to refund ALL ingredients when a craft completes. Binding it only reserves a loadout slot."));
+    case EAstrawildPlayerSkillId::Overcharge:
+        return FText::FromString(TEXT("+30% ranged damage for 10s — pairs with beam/chain weapons. 18s cooldown."));
+    case EAstrawildPlayerSkillId::None:
+    default:
+        return FText::GetEmpty();
+    }
+}
+
 float UAstrawildAttributeComponent::GetSkillCooldownRemaining(const EAstrawildPlayerSkillId Skill) const
 {
     const float* Remaining = SkillCooldowns.Find(Skill);

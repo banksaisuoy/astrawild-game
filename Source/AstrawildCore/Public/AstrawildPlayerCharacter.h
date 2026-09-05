@@ -514,6 +514,14 @@ protected:
     UFUNCTION()
     void OnSprintExhausted();
 
+    /** FPP-1: attribute level-up → toast (+ "new skill available" when a
+     *  milestone was crossed — the growth loop was previously invisible). */
+    UFUNCTION()
+    void HandleAttributeLevelUp(EAstrawildAttributeType Attribute, int32 NewLevel);
+
+    /** FPP-1: unlocked-skill count at the last level-up (milestone detector). */
+    int32 LastSeenSkillCount = -1;
+
 private:
     void SetMovementSpeed(float NewSpeed);
     double LastAttackTimeSeconds = -BIG_NUMBER;

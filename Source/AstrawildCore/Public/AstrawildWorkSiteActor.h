@@ -185,6 +185,9 @@ public:
 
     /** Buffer helpers (server state math — deterministic, unit-testable shape). */
     FString FormatInputRequirements() const;
+
+    /** FPP-1: registry display name for an item id (raw-id fallback). */
+    FString ItemLabel(const FName ItemId) const;
     int32 BufferQuantity(FName ItemId) const;
     void RemoveBufferedQuantity(FName ItemId, int32 Quantity);
     void AddBufferedQuantity(FName ItemId, int32 Quantity);

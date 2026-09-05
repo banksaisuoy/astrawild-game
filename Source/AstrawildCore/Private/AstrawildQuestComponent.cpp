@@ -363,9 +363,14 @@ void UAstrawildQuestComponent::CompleteQuest(const FName QuestId)
 
     // LCP-5 (PART 18 feedback): quest completion toasts reach the owning
     // player wherever their screen lives (host toast / remote ClientNotify).
+    // FPP-1: the toast carries the QUEST'S display name — the raw id
+    // ("Quest complete: Quest_FirstLight") is debug terminology.
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetOwner()))
     {
-        PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Quest complete: %s"), *QuestId.ToString())));
+        const FString QuestLabel = Definition && !Definition->Title.IsEmpty()
+            ? Definition->Title.ToString()
+            : QuestId.ToString();
+        PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Quest complete: %s"), *QuestLabel)));
     }
 
     // Chain the next quest (directive §25 quest chain).

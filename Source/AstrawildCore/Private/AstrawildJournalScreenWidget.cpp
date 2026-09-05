@@ -1,9 +1,11 @@
 #include "AstrawildJournalScreenWidget.h"
 
+#include "AstrawildAbilityLibrary.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildPlayerController.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
@@ -190,21 +192,65 @@ void UAstrawildJournalScreenWidget::RefreshJournal()
                 ? FLinearColor(0.62f, 0.92f, 0.72f, 1.0f)
                 : FLinearColor(0.95f, 0.93f, 0.85f, 1.0f);
 
-            const FString FlagLine = FString::Printf(TEXT("Scanned %s  Food %s  Habitat %s  Weakness %s"),
+            // FPP-1: the weakness flag names the ELEMENT once discovered — the
+            // knowledge that actually changes combat decisions, not a bare checkmark.
+            const FString WeaknessFlag = Entry.bWeaknessDiscovered
+                ? (Def->WeaknessElement != EAstrawildElementType::None
+                    ? UEnum::GetDisplayValueAsText(Def->WeaknessElement).ToString()
+                    : FString(TEXT("none found")))
+                : FString(TEXT("\u2717"));
+
+            const FString FlagLine = FString::Printf(TEXT("Scanned %s  Food %s  Habitat %s  Weakness: %s"),
                 Entry.bScanned ? TEXT("\u2713") : TEXT("\u2717"),
                 Entry.bFoodDiscovered ? TEXT("\u2713") : TEXT("\u2717"),
                 Entry.bHabitatDiscovered ? TEXT("\u2713") : TEXT("\u2717"),
-                Entry.bWeaknessDiscovered ? TEXT("\u2713") : TEXT("\u2717"));
+                *WeaknessFlag);
 
-            RowText = FString::Printf(TEXT("%s\n%s · %s · %s\n%s  %d%% observed · %d encounter%s"),
+            // FPP-1: what the species can DO — its abilities (with the level that
+            // unlocks them) and whether it can carry a rider. The codex now answers
+            // "why is this Echo worth capturing" instead of only naming it.
+            FString AbilityLine;
+            const TArray<FName> AbilityIds = UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(Def);
+            for (const FName AbilityId : AbilityIds)
+            {
+                const FAstrawildAbilityData* Ability = UAstrawildAbilityLibrary::FindAbility(AbilityId);
+                if (!Ability)
+                {
+                    continue;
+                }
+                if (!AbilityLine.IsEmpty())
+                {
+                    AbilityLine += TEXT(", ");
+                }
+                AbilityLine += FString::Printf(TEXT("%s (Lv %d)"),
+                    *Ability->DisplayName.ToString(), FMath::Max(1, Ability->UnlockLevel));
+            }
+            if (!AbilityLine.IsEmpty())
+            {
+                AbilityLine = FString::Printf(TEXT("\nAbilities: %s"), *AbilityLine);
+            }
+            if (Def->Passive != EAstrawildEchoPassive::None)
+            {
+                AbilityLine += FString::Printf(TEXT("\nPassive: %s"),
+                    *UEnum::GetDisplayValueAsText(Def->Passive).ToString());
+            }
+            if (UAstrawildMountComponent::IsRideableSpecies(Def->Family, Def->BodyPlan, Def->SizeClass))
+            {
+                AbilityLine += FString::Printf(TEXT("\nRideable (Bond %d)"),
+                    FMath::RoundToInt(UAstrawildMountComponent::MountBondGate));
+            }
+
+            RowText = FString::Printf(TEXT("%s\n%s · %s · %s%s\n%s  %d%% observed · %d encounter%s%s"),
                 *Def->DisplayName.ToString(),
                 *UEnum::GetDisplayValueAsText(Def->Element).ToString(),
                 *UEnum::GetDisplayValueAsText(Def->Role).ToString(),
                 *UEnum::GetDisplayValueAsText(Def->Rarity).ToString(),
+                *AbilityLine,
                 *FlagLine,
                 FMath::RoundToInt(Entry.ObservationProgress),
                 Entry.TimesEncountered,
-                Entry.TimesEncountered == 1 ? TEXT("") : TEXT("s"));
+                Entry.TimesEncountered == 1 ? TEXT("") : TEXT("s"),
+                TEXT(""));
         }
 
         Row->SetColorAndOpacity(FSlateColor(RowColor));

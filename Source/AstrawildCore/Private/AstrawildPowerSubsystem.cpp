@@ -3,7 +3,10 @@
 #include "AstrawildBuildingActor.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerController.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
 
 UAstrawildPowerSubsystem::UAstrawildPowerSubsystem()
 {
@@ -194,6 +197,24 @@ void UAstrawildPowerSubsystem::ResolveGrid()
     {
         bGridPowered = bNewGridState;
         OnPowerStateChanged.Broadcast(bGridPowered);
+
+        // FPP-1: grid transitions announce themselves — a brownout silently
+        // dimming lamps (with the HUD line never saying why) read as a bug.
+        // The broadcast keeps its zero-subscriber API; players get the toast.
+        if (UWorld* World = GetWorld())
+        {
+            const FText Message = bGridPowered
+                ? FText::FromString(TEXT("BASE POWER RESTORED — every consumer is back online."))
+                : FText::FromString(TEXT("BASE POWER: BROWNOUT — add generators or batteries; some buildings went dark."));
+            for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            {
+                if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get()))
+                {
+                    PC->NotifyPlayer(Message); // LCP-3: routes to the owning screen.
+                }
+            }
+        }
+
         UE_LOG(LogAstrawildBuilding, Log, TEXT("Power grid state: %s (gen %.1f, draw %.1f, stored %.0f)."),
             bGridPowered ? TEXT("STABLE") : TEXT("BROWNOUT"), TotalGeneration, TotalDraw, StoredEnergy);
     }

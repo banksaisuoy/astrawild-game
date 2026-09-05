@@ -10,6 +10,7 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildResearchSubsystem.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -117,6 +118,32 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
 {
     if (GetOwnerRole() != ROLE_Authority || !CanCraft(Recipe) || IsCrafting())
     {
+        // FPP-1: refusal REASONS reach the player — the silent return made
+        // the crafting screen feel broken when a gate (tech/inputs/station/
+        // busy) legitimately blocked the craft.
+        if (IsValid(Recipe))
+        {
+            if (IsCrafting())
+            {
+                NotifyOwnerPlayer(FText::FromString(FString::Printf(
+                    TEXT("Already crafting %s — wait or cancel first."), *GetRecipeDisplayName(ActiveRecipeId))));
+            }
+            else if (!CanCraftIgnoringStation(Recipe))
+            {
+                NotifyOwnerPlayer(FText::FromString(FString::Printf(
+                    TEXT("Cannot craft %s — missing ingredients%s."),
+                    *GetRecipeDisplayName(Recipe->RecipeId),
+                    !Recipe->RequiredTechId.IsNone() && GetResearch() && !GetResearch()->IsTechUnlocked(Recipe->RequiredTechId)
+                        ? TEXT(" (research not unlocked)") : TEXT(""))));
+            }
+            else
+            {
+                NotifyOwnerPlayer(FText::FromString(FString::Printf(
+                    TEXT("%s needs a %s nearby — stand closer."),
+                    *GetRecipeDisplayName(Recipe->RecipeId),
+                    *Recipe->RequiredStationId.ToString())));
+            }
+        }
         return false;
     }
 
@@ -134,6 +161,8 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
         UE_LOG(LogAstrawildEconomy, Warning,
             TEXT("Craft refused (outputs would exceed carry weight): %s — free pack space first."),
             *Recipe->RecipeId.ToString());
+        NotifyOwnerPlayer(FText::FromString(FString::Printf(
+            TEXT("Pack too full to craft %s — free some space first."), *GetRecipeDisplayName(Recipe->RecipeId))));
         return false;
     }
 
@@ -170,8 +199,16 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
                 Inventory->AddItem(Ingredient.ItemId, Ingredient.Quantity);
             }
             UE_LOG(LogAstrawildEconomy, Log, TEXT("Masterwork! Ingredients refunded: %s"), *Recipe->RecipeId.ToString());
+            // FPP-1: the passive's payoff was log-only — the player never knew
+            // the Craft attribute just saved their whole ingredient set.
+            NotifyOwnerPlayer(FText::FromString(FString::Printf(
+                TEXT("MASTERWORK — %s ingredients refunded!"), *GetRecipeDisplayName(Recipe->RecipeId))));
         }
         OnCraftCompleted.Broadcast(Recipe->RecipeId, true);
+        // FPP-1: craft success toast — visible even when the screen is closed
+        // (the timed path gets the same toast in CompleteActiveCraft).
+        NotifyOwnerPlayer(FText::FromString(FString::Printf(
+            TEXT("Crafted: %s"), *GetRecipeDisplayName(Recipe->RecipeId))));
         if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
         {
             if (Player->AttributeComponent)
@@ -410,6 +447,13 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
                 LostRefunds, *CompletedRecipe.ToString());
         }
         UE_LOG(LogAstrawildEconomy, Log, TEXT("Masterwork! Ingredients refunded: %s"), *CompletedRecipe.ToString());
+        // FPP-1: same refund toast as the instant path — the Craft-5 passive
+        // announces itself at both completion flavors.
+        if (LostRefunds == 0)
+        {
+            NotifyOwnerPlayer(FText::FromString(FString::Printf(
+                TEXT("MASTERWORK — %s ingredients refunded!"), *GetRecipeDisplayName(CompletedRecipe))));
+        }
     }
     bMasterworkPendingRefund = false;
     PendingRefundInputs.Reset();
@@ -427,6 +471,11 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
 
     OnCraftCompleted.Broadcast(CompletedRecipe, true);
     UE_LOG(LogAstrawildEconomy, Log, TEXT("Craft completed: %s."), *CompletedRecipe.ToString());
+    // FPP-1: timed-craft completion toast (the instant path toasts inside
+    // CraftRecipe) — the craft loop now closes with the player told what
+    // landed in their pack.
+    NotifyOwnerPlayer(FText::FromString(FString::Printf(
+        TEXT("Craft complete: %s"), *GetRecipeDisplayName(CompletedRecipe))));
 
     if (UWorld* World = GetWorld())
     {
@@ -435,4 +484,30 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
             EventBus->PublishEvent(TAG_Astrawild_Event_RecipeCrafted, GetOwner(), CompletedRecipe, 1, GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector);
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// FPP-1: player-facing helpers — the craft loop's feedback path
+// ---------------------------------------------------------------------------
+
+void UAstrawildCraftingComponent::NotifyOwnerPlayer(const FText& Message) const
+{
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->NotifyPlayer(Message); // LCP-3: routes to the owning screen (host or client).
+        }
+    }
+}
+
+FString UAstrawildCraftingComponent::GetRecipeDisplayName(const FName RecipeId) const
+{
+    const UAstrawildItemRegistrySubsystem* Registry = GetRegistry();
+    const UAstrawildRecipeDefinition* Recipe = Registry ? Registry->FindRecipe(RecipeId) : nullptr;
+    if (Recipe && !Recipe->DisplayName.IsEmpty())
+    {
+        return Recipe->DisplayName.ToString();
+    }
+    return RecipeId.ToString();
 }

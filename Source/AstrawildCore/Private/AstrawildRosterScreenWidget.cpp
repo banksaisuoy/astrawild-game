@@ -1,9 +1,11 @@
 #include "AstrawildRosterScreenWidget.h"
 
+#include "AstrawildAbilityLibrary.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildPlayerController.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
@@ -104,6 +106,40 @@ void UAstrawildRosterRowWidget::BuildRowTree()
             Line += FString::Printf(TEXT("\nTop work: %s ×%.1f"),
                 *UEnum::GetDisplayValueAsText(Best->WorkType).ToString(), Best->Affinity);
         }
+    }
+
+    // FPP-1: what this Echo can DO — its ability kit (with unlock levels),
+    // its party passive and whether it can be ridden. The roster is where the
+    // ring is chosen; the choice is now informed instead of name-only.
+    FString AbilityLine;
+    const TArray<FName> AbilityIds = UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(Def);
+    for (const FName AbilityId : AbilityIds)
+    {
+        const FAstrawildAbilityData* Ability = UAstrawildAbilityLibrary::FindAbility(AbilityId);
+        if (!Ability)
+        {
+            continue;
+        }
+        if (!AbilityLine.IsEmpty())
+        {
+            AbilityLine += TEXT(", ");
+        }
+        AbilityLine += FString::Printf(TEXT("%s (Lv %d)"),
+            *Ability->DisplayName.ToString(), FMath::Max(1, Ability->UnlockLevel));
+    }
+    if (!AbilityLine.IsEmpty())
+    {
+        Line += FString::Printf(TEXT("\nAbilities: %s"), *AbilityLine);
+    }
+    if (Def->Passive != EAstrawildEchoPassive::None)
+    {
+        Line += FString::Printf(TEXT("  |  Passive: %s"),
+            *UEnum::GetDisplayValueAsText(Def->Passive).ToString());
+    }
+    if (UAstrawildMountComponent::IsRideableSpecies(Def->Family, Def->BodyPlan, Def->SizeClass))
+    {
+        Line += FString::Printf(TEXT("\nRideable (Bond %d)"),
+            FMath::RoundToInt(UAstrawildMountComponent::MountBondGate));
     }
 
     // Ring status.

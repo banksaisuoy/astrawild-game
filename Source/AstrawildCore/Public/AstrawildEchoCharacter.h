@@ -455,6 +455,9 @@ private:
     /** DP-5: feedback fan-out for a landed weakness hit (multicast + toast + audio + log, server). */
     void NotifyWeaknessHit(float AppliedDamage);
 
+    /** FPP-1: announce bond-gate crossings (ride 25 / evolve gate) to the owner. */
+    void NotifyBondMilestoneIfCrossed(float OldBond);
+
     UFUNCTION()
     void OnRep_bWeakPointExposed();
 

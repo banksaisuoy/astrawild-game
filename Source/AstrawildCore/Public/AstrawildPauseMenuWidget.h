@@ -106,6 +106,13 @@ private:
     /** DP-4: rebuild the slot button labels from the live loadout state. */
     void RefreshSkillSlotLabels();
 
+    /** FPP-1: rebuild the growth readout (5 attributes: level + XP-to-next). */
+    void RefreshAttributeStats();
+
+    /** FPP-1: the growth/progression readout under the loadout slots. */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> AttributesText;
+
     UPROPERTY()
     TObjectPtr<UCanvasPanel> RootCanvas;
 

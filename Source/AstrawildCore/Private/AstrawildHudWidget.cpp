@@ -16,6 +16,7 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
@@ -357,7 +358,25 @@ void UAstrawildHudWidget::RefreshState()
         }
         else if (const AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Target))
         {
-            PromptText->SetText(FText::FromString(TEXT("Capture Echo [E] — needs Resonator")));
+            if (Echo->bCaptured && Echo->OwnerPlayerId == Pawn->GetFName() && Echo->EchoDefinition)
+            {
+                // FPP-1: E on your OWN echo mounts/evolves it — the old prompt
+                // ("Capture Echo — needs Resonator") lied about what E does.
+                if (Echo->MountComponent && UAstrawildMountComponent::IsRideableSpecies(
+                        Echo->EchoDefinition->Family, Echo->EchoDefinition->BodyPlan, Echo->EchoDefinition->SizeClass))
+                {
+                    PromptText->SetText(FText::FromString(FString::Printf(
+                        TEXT("Your Echo [E]: ride (Bond %.0f/25) or evolve · feed [R]"), Echo->Bond)));
+                }
+                else
+                {
+                    PromptText->SetText(FText::FromString(TEXT("Your Echo [E]: evolve check · feed [R]")));
+                }
+            }
+            else
+            {
+                PromptText->SetText(FText::FromString(TEXT("Capture Echo [E] — needs Resonator")));
+            }
         }
         else
         {
@@ -517,24 +536,35 @@ void UAstrawildHudWidget::RefreshState()
         QuestText->SetText(FText::FromString(Tracker));
     }
 
-    // Final production run (PHASE 14): boss encounter bar — the nearest alive boss
-    // owns the bar (dungeon slice has one; robust to any future second boss).
+    // Final production run (PHASE 14): boss encounter bar — the NEAREST alive
+    // boss within engagement range owns the bar. FPP-1 fix: the previous
+    // first-found pick meant an arbitrary dungeon boss owned the HUD from
+    // game start; the bar now appears only when a boss is actually engaged.
     if (BossHealthBar && BossText)
     {
         UWorld* World = GetWorld();
-        AAstrawildEchoBossCharacter* Boss = CachedBoss.Get();
-        if (!Boss && World)
+        AAstrawildEchoBossCharacter* Boss = nullptr;
+        if (World)
         {
+            constexpr float BossBarEngagementRangeSq = 4000.0f * 4000.0f;
+            float BestDistanceSq = BossBarEngagementRangeSq;
             for (TActorIterator<AAstrawildEchoBossCharacter> It(World); It; ++It)
             {
-                if (!It->IsDefeated())
+                AAstrawildEchoBossCharacter* Candidate = *It;
+                if (!Candidate || Candidate->IsDefeated())
                 {
-                    Boss = *It;
-                    CachedBoss = Boss;
-                    break;
+                    continue;
+                }
+                const float DistanceSq = FVector::DistSquared(
+                    Candidate->GetActorLocation(), Pawn->GetActorLocation());
+                if (DistanceSq < BestDistanceSq)
+                {
+                    BestDistanceSq = DistanceSq;
+                    Boss = Candidate;
                 }
             }
         }
+        CachedBoss = Boss;
 
         if (Boss && !Boss->IsDefeated())
         {
@@ -550,8 +580,6 @@ void UAstrawildHudWidget::RefreshState()
         }
         else
         {
-            Boss = nullptr;
-            CachedBoss = nullptr;
             BossHealthBar->SetVisibility(ESlateVisibility::Hidden);
             BossText->SetVisibility(ESlateVisibility::Hidden);
         }

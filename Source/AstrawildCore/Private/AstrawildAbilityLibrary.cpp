@@ -304,6 +304,18 @@ int32 UAstrawildAbilityLibrary::GetAbilityCount()
     return GetAbilityTable().Num();
 }
 
+TArray<FName> UAstrawildAbilityLibrary::GetAllAbilityIds()
+{
+    // FPP-1: presentation contract support — enumerate every registered id
+    // (deterministic sorted order so test output stays stable).
+    BuildDefaults();
+    FScopeLock Lock(&GAbilityTableLock);
+    TArray<FName> Ids;
+    GetAbilityTable().GetKeys(Ids);
+    Ids.Sort();
+    return Ids;
+}
+
 TArray<FName> UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(const UAstrawildEchoDefinition* Definition)
 {
     TArray<FName> Result;

@@ -1305,11 +1305,36 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
 
                 if (Killer && Killer->InventoryComponent && EchoDefinition->DefeatLoot.Num() > 0)
                 {
-                    for (const FAstrawildItemStack& Drop : EchoDefinition->DefeatLoot)
+                    // FPP-1: kills announce their loot — drops used to land silently
+                    // (rare-kill rewards were indistinguishable from nothing).
+                    FString LootLine;
+                    if (UWorld* LootWorld = GetWorld())
                     {
-                        if (Drop.IsValid())
+                        if (UAstrawildItemRegistrySubsystem* Registry =
+                                LootWorld->GetSubsystem<UAstrawildItemRegistrySubsystem>())
                         {
-                            Killer->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
+                            for (const FAstrawildItemStack& Drop : EchoDefinition->DefeatLoot)
+                            {
+                                if (Drop.IsValid())
+                                {
+                                    Killer->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
+                                    const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Drop.ItemId);
+                                    if (!LootLine.IsEmpty())
+                                    {
+                                        LootLine += TEXT(", ");
+                                    }
+                                    LootLine += FString::Printf(TEXT("%dx %s"), Drop.Quantity,
+                                        ItemDef ? *ItemDef->DisplayName.ToString() : *Drop.ItemId.ToString());
+                                }
+                            }
+                        }
+                    }
+                    if (!LootLine.IsEmpty())
+                    {
+                        if (AAstrawildPlayerController* KillerPC = Cast<AAstrawildPlayerController>(Killer->GetController()))
+                        {
+                            KillerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                                TEXT("Loot: %s"), *LootLine)));
                         }
                     }
                 }
@@ -1570,10 +1595,15 @@ float AAstrawildEchoCharacter::Feed(const FName FoodItemId, const float FeedValu
     const float Multiplier = bPreferred ? 2.0f : 1.0f;
     const float TrustGain = FMath::Max(0.0f, FeedValue) * Multiplier;
 
+    const float OldBond = Bond;
     Trust += TrustGain;
     Bond = FMath::Clamp(Bond + TrustGain * 0.25f, 0.0f, 100.0f);
     Needs.Hunger = FMath::Clamp(Needs.Hunger + 30.0f * Multiplier, 0.0f, 100.0f);
     Needs.Mood = FMath::Clamp(Needs.Mood + 10.0f * Multiplier, 0.0f, 100.0f);
+
+    // FPP-1: bond gate crossings (25 ride / 40 evolve) announce themselves —
+    // the gates were silent walls the roster only revealed on open.
+    NotifyBondMilestoneIfCrossed(OldBond);
 
     // FCR-1-a fix (H-a7): feeding now also grows the echo — AddExperience previously
     // had ZERO callers, so every echo was frozen at level 1 and 38 of the 44 ability
@@ -1676,7 +1706,10 @@ void AAstrawildEchoCharacter::HandleNeedsDecay(const float DeltaSeconds)
     // Bond grows slowly while traveling with the player (directive §4 Relationship).
     if (bCaptured)
     {
+        const float OldTravelBond = Bond;
         Bond = FMath::Clamp(Bond + 0.2f * InWorldHoursThisTick, 0.0f, 100.0f);
+        // FPP-1: same milestone announcement for the slow travel growth.
+        NotifyBondMilestoneIfCrossed(OldTravelBond);
     }
 
     // Critical needs injure the creature (soft pressure, directive §11 philosophy).
@@ -2414,4 +2447,64 @@ float AAstrawildEchoCharacter::GetLocomotionSpeedMultiplier() const
         CurrentZone == EAstrawildZone::TidebreakerIsles ||
         CurrentZone == EAstrawildZone::PearlseaReef;
     return bInSeaZone ? 1.4f : 0.85f;
+}
+
+// ---------------------------------------------------------------------------
+// FPP-1 (presentation pass): bond milestone + loot feedback
+// ---------------------------------------------------------------------------
+
+void AAstrawildEchoCharacter::NotifyBondMilestoneIfCrossed(const float OldBond)
+{
+    if (GetLocalRole() != ROLE_Authority || !bCaptured || !IsValid(EchoDefinition))
+    {
+        return;
+    }
+
+    // The two gates that unlock gameplay: riding (MountBondGate) and evolution
+    // (the species' EvolveRequiredBond). Crossing either silently left the
+    // player discovering it by accident (or never).
+    const float MountGate = UAstrawildMountComponent::MountBondGate;
+    const float EvolveGate = EchoDefinition->EvolveRequiredBond;
+
+    AAstrawildPlayerController* OwnerPC = nullptr;
+    auto ResolveOwnerPC = [&OwnerPC, this]()
+    {
+        UWorld* World = GetWorld();
+        if (!World)
+        {
+            return;
+        }
+        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+        {
+            AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get());
+            const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+            // H-1 convention: the live-actor OwnerPlayerId is the owner pawn's name.
+            if (Pawn && Pawn->GetFName() == OwnerPlayerId)
+            {
+                OwnerPC = PC;
+                break;
+            }
+        }
+    };
+
+    if (OldBond < MountGate && Bond >= MountGate)
+    {
+        ResolveOwnerPC();
+        if (OwnerPC)
+        {
+            OwnerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                TEXT("Bond %.0f — %s will now accept a rider ([E] to mount)."),
+                Bond, *EchoDefinition->DisplayName.ToString())));
+        }
+    }
+    else if (OldBond < EvolveGate && Bond >= EvolveGate)
+    {
+        ResolveOwnerPC();
+        if (OwnerPC)
+        {
+            OwnerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                TEXT("Bond %.0f — %s can EVOLVE once its level rises ([E] on it)."),
+                Bond, *EchoDefinition->DisplayName.ToString())));
+        }
+    }
 }

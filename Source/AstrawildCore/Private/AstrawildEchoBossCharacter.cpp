@@ -1,5 +1,6 @@
 #include "AstrawildEchoBossCharacter.h"
 
+#include "AstrawildArtPack.h"
 #include "AstrawildBossHazardActor.h"
 #include "AstrawildBossTelegraphActor.h"
 #include "AstrawildCombatComponent.h"
@@ -12,8 +13,11 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -541,6 +545,9 @@ void AAstrawildEchoBossCharacter::Tick(const float DeltaTime)
     TickSpecials(DeltaTime);
     TickWeakPoint(DeltaTime);
     TickPendingBlasts(DeltaTime);
+
+    // FPP-1: the delayed melee swings resolve after their windup.
+    TickPendingMelees(DeltaTime);
 }
 
 void AAstrawildEchoBossCharacter::TransitionToPhase(const int32 NewPhase)
@@ -553,6 +560,22 @@ void AAstrawildEchoBossCharacter::TransitionToPhase(const int32 NewPhase)
     const float FractionAtTransition = GetHealthFraction();
     CurrentPhase = NewPhase;
     OnPhaseChanged.Broadcast(NewPhase, FractionAtTransition);
+
+    // FPP-1: the phase beat is ANNOUNCED — the HUD bar text updates on its
+    // own cadence, but the "the fight just changed" moment deserves a toast.
+    if (NewPhase == 2)
+    {
+        NotifyNearbyPlayers(FText::FromString(FString::Printf(
+            TEXT("%s — PHASE 2: reinforcements incoming!"), *GetBossDisplayName().ToString())), 6000.0f);
+    }
+    else if (NewPhase == 3)
+    {
+        NotifyNearbyPlayers(FText::FromString(FString::Printf(
+            TEXT("%s — PHASE 3%s!"),
+            *GetBossDisplayName().ToString(),
+            bEnraged ? TEXT(" ENRAGED — everything hits harder") : TEXT(""))),
+            6000.0f);
+    }
 
     // Phase behavior changes (directive §24 — pattern change, not just HP):
     if (NewPhase == 2)
@@ -627,27 +650,28 @@ void AAstrawildEchoBossCharacter::ExecuteAttack(const float DeltaTime)
     {
         LastAttackTime = World->GetTimeSeconds();
 
-        // Telegraphed hit: the swing lands after the cooldown gate (timing tuning in-engine).
-        // Audit C-5: routed through the player's combat component so dodge i-frames and
-        // block mitigation apply (consistent with Echo attacks — previously bypassed).
-        if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())
+        // FPP-1 (presentation pass): the melee swing now WARNS before it lands —
+        // a 0.5s windup disc under the target (hot amber, danger cadence) plus
+        // a delayed damage window. Dodging out of reach during the windup = the
+        // swing whiffs; standing still eats the hit. The counterplay window the
+        // audit demanded (melee was previously instant + unreadable).
+        constexpr float BossMeleeWindupSeconds = 0.5f;
+        constexpr float BossMeleeDiscRadius = 180.0f;
+
+        FAstrawildPendingMelee Pending;
+        Pending.Target = Player;
+        Pending.RemainingSeconds = BossMeleeWindupSeconds;
+        Pending.Damage = GetAttackDamage();
+        PendingMelees.Add(Pending);
+
+        FActorSpawnParameters DiscParams;
+        DiscParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        if (AAstrawildBossTelegraphActor* Windup = World->SpawnActor<AAstrawildBossTelegraphActor>(
+            AAstrawildBossTelegraphActor::StaticClass(), Player->GetActorLocation(), FRotator::ZeroRotator, DiscParams))
         {
-            const float RawDamage = GetAttackDamage();
-            const float Mitigated = Player->CombatComponent
-                ? Player->CombatComponent->GetMitigatedIncomingDamage(RawDamage)
-                : RawDamage;
-            Survival->ApplyDamage(Mitigated);
-
-            // Batch 3 — Item B: boss hits are heavy by design — always stagger the
-            // player when the swing actually lands (dodged hits never reach here).
-            if (Player->CombatComponent)
-            {
-                Player->CombatComponent->ApplyStagger(Player->CombatComponent->PlayerStaggerSeconds);
-            }
-
-            UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss hit player for %.1f (phase %d%s)."),
-                Mitigated, CurrentPhase, bEnraged ? TEXT(" ENRAGED") : TEXT(""));
+            Windup->ConfigureTelegraph(BossMeleeDiscRadius, BossMeleeWindupSeconds, BossElement);
         }
+        UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss melee windup at the player (%.1fs window)."), BossMeleeWindupSeconds);
     }
 }
 
@@ -660,16 +684,27 @@ float AAstrawildEchoBossCharacter::ApplyElementalBossDamage(const float DamageAm
 
     // Batch 6: resolve the element against the boss's weakness/own element (same
     // multiplier vocabulary as the Echo pipeline) before the phase pipeline.
+    const bool bWeaknessHit = Element != EAstrawildElementType::None && Element == WeaknessElement;
     float Damage = DamageAmount * ComputeBossElementalMultiplier(Element, WeaknessElement, BossElement);
 
     // Final production run (PHASE 14): strikes landed while the weak-point core is
     // exposed hit the vulnerability window (x2 by default) — the skill ceiling.
+    const bool bWeakPointHit = bWeakPointExposed;
     if (bWeakPointExposed)
     {
         Damage *= FMath::Max(1.0f, WeakPointDamageMultiplier);
     }
 
     const float Applied = ApplyBossDamage(Damage);
+
+    // FPP-1: attacker-facing confirmation — the ×1.5 weakness and ×2 weak-point
+    // multipliers used to apply silently (the creature path had the full DP-5
+    // toast+SFX treatment; the boss path had none). The player can now verify
+    // the Light counter works on the Sovereign.
+    if (Applied > 0.0f && (bWeaknessHit || bWeakPointHit))
+    {
+        NotifyBossHitFeedback(bWeaknessHit, bWeakPointHit, Element);
+    }
 
     if (Applied > 0.0f)
     {
@@ -735,12 +770,27 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
                 {
                     if (UAstrawildInventoryComponent* Inventory = Killer->FindComponentByClass<UAstrawildInventoryComponent>())
                     {
+                        // FPP-1: loot names resolve to display names — the reward
+                        // moment says WHAT dropped, not "Item_MaelstromGlass ×2".
+                        FString LootLine;
                         for (const FAstrawildItemStack& Drop : Species->DefeatLoot)
                         {
                             if (Drop.IsValid())
                             {
                                 Inventory->AddItem(Drop.ItemId, Drop.Quantity);
+                                const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(Drop.ItemId) : nullptr;
+                                if (!LootLine.IsEmpty())
+                                {
+                                    LootLine += TEXT(", ");
+                                }
+                                LootLine += FString::Printf(TEXT("%dx %s"), Drop.Quantity,
+                                    ItemDef ? *ItemDef->DisplayName.ToString() : *Drop.ItemId.ToString());
                             }
+                        }
+                        if (AAstrawildPlayerController* KillerPC = Cast<AAstrawildPlayerController>(Killer->GetController()))
+                        {
+                            KillerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                                TEXT("Boss loot: %s"), *LootLine)));
                         }
                         UE_LOG(LogAstrawildEconomy, Log, TEXT("Boss %s dropped species loot to %s."),
                             *DefeatEventTargetId.ToString(), *Killer->GetName());
@@ -750,6 +800,20 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
         }
 
         OnBossDefeated.Broadcast(this);
+
+        // FPP-1: the victory moment — name DEFEATED + the energy-impact cue
+        // (the same ArtPack SFX binding the weakness-hit path rides — no new
+        // /Game/ reference). A boss dying silently read as the bar vanishing.
+        NotifyNearbyPlayers(FText::FromString(FString::Printf(
+            TEXT("%s DEFEATED — the way opens."), *GetBossDisplayName().ToString())), 12000.0f);
+        if (UWorld* DefeatWorld = GetWorld())
+        {
+            const TSoftObjectPtr<USoundBase> DefeatCue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+            if (USoundBase* DefeatSound = DefeatCue.LoadSynchronous())
+            {
+                UGameplayStatics::PlaySoundAtLocation(DefeatWorld, DefeatSound, GetActorLocation(), 1.6f);
+            }
+        }
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss DEFEATED."));
     }
 
@@ -810,6 +874,8 @@ void AAstrawildEchoBossCharacter::TickSpecials(const float /*DeltaTime*/)
                 {
                     Ring->BlastRadius = SpecialBlastRadius;
                     Ring->TelegraphDuration = TelegraphDurationSeconds;
+                    // FPP-1: the disc carries the boss's element identity.
+                    Ring->ConfigureTelegraph(SpecialBlastRadius, TelegraphDurationSeconds, BossElement);
                     Blast.Ring = Ring;
                 }
                 PendingBlasts.Add(Blast);
@@ -845,6 +911,14 @@ void AAstrawildEchoBossCharacter::TickWeakPoint(const float DeltaTime)
             {
                 WeakPointMesh->SetVisibility(false);
             }
+        }
+        else if (WeakPointMesh)
+        {
+            // FPP-1: the core PULSES while vulnerable (0.9 -> 1.25 scale at a
+            // ~1.6Hz beat) — "hit me now" reads at combat distance even before
+            // the HUD line updates. Cheap transform work, no light budget.
+            const float Pulse = 0.9f + 0.35f * (0.5f + 0.5f * FMath::Sin(WeakPointElapsed * 10.0f));
+            WeakPointMesh->SetRelativeScale3D(FVector(Pulse));
         }
     }
     else if (WeakPointElapsed >= WeakPointPeriodSeconds)
@@ -1001,4 +1075,120 @@ void AAstrawildEchoBossCharacter::CleanupEncounterFx()
             WeakPointMesh->SetVisibility(false);
         }
     }
+}
+
+// --- FPP-1 (presentation pass): melee resolution + player-facing feedback ---
+
+void AAstrawildEchoBossCharacter::TickPendingMelees(const float DeltaTime)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // The swing lands only if the target is still within reach when the windup
+    // expires — the dodge window (Audit C-5 keeps the damage routed through the
+    // player's combat component: i-frames + block mitigation + stagger).
+    constexpr float BossMeleeReach = 340.0f;
+    for (int32 i = PendingMelees.Num() - 1; i >= 0; --i)
+    {
+        FAstrawildPendingMelee& Pending = PendingMelees[i];
+        Pending.RemainingSeconds -= DeltaTime;
+        if (Pending.RemainingSeconds > 0.0f)
+        {
+            continue;
+        }
+
+        AAstrawildPlayerCharacter* Target = Pending.Target.Get();
+        const float Damage = Pending.Damage;
+        PendingMelees.RemoveAt(i);
+
+        if (!Target || !Target->IsAlive() ||
+            FVector::Dist(GetActorLocation(), Target->GetActorLocation()) > BossMeleeReach)
+        {
+            UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss melee whiffed — the target dodged out of reach."));
+            continue;
+        }
+
+        if (UAstrawildSurvivalComponent* Survival = Target->FindComponentByClass<UAstrawildSurvivalComponent>())
+        {
+            const float Mitigated = Target->CombatComponent
+                ? Target->CombatComponent->GetMitigatedIncomingDamage(Damage)
+                : Damage;
+            Survival->ApplyDamage(Mitigated);
+
+            // Batch 3 — Item B: boss hits are heavy by design — always stagger the
+            // player when the swing actually lands (dodged hits never reach here).
+            if (Target->CombatComponent)
+            {
+                Target->CombatComponent->ApplyStagger(Target->CombatComponent->PlayerStaggerSeconds);
+            }
+
+            UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss hit player for %.1f (phase %d%s)."),
+                Mitigated, CurrentPhase, bEnraged ? TEXT(" ENRAGED") : TEXT(""));
+        }
+    }
+}
+
+void AAstrawildEchoBossCharacter::NotifyNearbyPlayers(const FText& Message, const float Radius) const
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    const float RadiusSq = Radius * Radius;
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        const APlayerController* PC = It->Get();
+        const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+        if (!Pawn)
+        {
+            continue;
+        }
+        if (FVector::DistSquared(GetActorLocation(), Pawn->GetActorLocation()) > RadiusSq)
+        {
+            continue;
+        }
+        if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+        {
+            AstrawildPC->NotifyPlayer(Message); // LCP-3: routes to the owning screen.
+        }
+    }
+}
+
+void AAstrawildEchoBossCharacter::NotifyBossHitFeedback(const bool bWeaknessHit, const bool bWeakPointHit, const EAstrawildElementType Element)
+{
+    // Same treatment the creature weakness path (EchoCharacter::NotifyWeaknessHit)
+    // already ships: toast + the ArtPack-bound energy impact cue.
+    if (UWorld* World = GetWorld())
+    {
+        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+        if (USoundBase* ImpactSound = Cue.LoadSynchronous())
+        {
+            UGameplayStatics::PlaySoundAtLocation(World, ImpactSound, GetActorLocation());
+        }
+    }
+
+    const FText ElementName = UEnum::GetDisplayValueAsText(Element);
+    FText Message;
+    if (bWeaknessHit && bWeakPointHit)
+    {
+        Message = FText::FromString(FString::Printf(
+            TEXT("CRITICAL — %s strikes true (×1.5) into the exposed core (×2)!"),
+            *ElementName.ToString()));
+    }
+    else if (bWeaknessHit)
+    {
+        Message = FText::FromString(FString::Printf(
+            TEXT("WEAKNESS HIT — %s strikes the boss true (×1.5 damage)."),
+            *ElementName.ToString()));
+    }
+    else
+    {
+        Message = FText::FromString(TEXT("WEAK POINT HIT — the exposed core takes ×2 damage!"));
+    }
+    NotifyNearbyPlayers(Message, 4000.0f);
 }

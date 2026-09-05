@@ -25,6 +25,7 @@
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildSkiffActor.h"
@@ -196,6 +197,15 @@ void AAstrawildPlayerCharacter::BeginPlay()
         SurvivalComponent->OnStatusEffectRemoved.AddDynamic(this, &AAstrawildPlayerCharacter::OnStatusSpeedChanged);
         // Batch 4 — M-2a: stamina floor while sprinting → drop out of sprint speed.
         SurvivalComponent->OnSprintExhausted.AddDynamic(this, &AAstrawildPlayerCharacter::OnSprintExhausted);
+    }
+
+    // FPP-1: growth feedback — the level-up toast (with the new-skill
+    // milestone detector) rides the same dynamic-delegate path as the survival
+    // handlers above.
+    if (AttributeComponent)
+    {
+        AttributeComponent->OnAttributeLevelUp.AddDynamic(this, &AAstrawildPlayerCharacter::HandleAttributeLevelUp);
+        LastSeenSkillCount = AttributeComponent->GetUnlockedSkills().Num();
     }
 
     // Batch 3 — Item B: refresh speed when the stagger state changes.
@@ -506,6 +516,21 @@ void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
 
     if (Skill == EAstrawildPlayerSkillId::None)
     {
+        // FPP-1: a silent Y-press read as "the key does nothing" — say WHY
+        // nothing fired (all skills recharging) and when the next one lands.
+        if (AttributeComponent->GetUnlockedSkills().Num() > 0)
+        {
+            float NextReady = FLT_MAX;
+            for (const EAstrawildPlayerSkillId Unlocked : AttributeComponent->GetUnlockedSkills())
+            {
+                NextReady = FMath::Min(NextReady, AttributeComponent->GetSkillCooldownRemaining(Unlocked));
+            }
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+            {
+                PC->NotifyPlayer(FText::FromString(FString::Printf(
+                    TEXT("No skill ready — next in %.0fs."), FMath::Max(0.0f, NextReady))));
+            }
+        }
         UE_LOG(LogAstrawildAI, Verbose, TEXT("Smart-cast: nothing ready for this situation."));
         return;
     }
@@ -582,6 +607,14 @@ void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
     {
         AttributeComponent->StartSkillCooldown(Skill);
         AttributeComponent->OnPlayerSkillExecuted.Broadcast(Skill, true);
+        // FPP-1: execution feedback — the cast names itself and its cooldown so
+        // the Y key becomes a readable action instead of an invisible stat bump.
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("SKILL — %s (%.0fs cooldown)"),
+                *UEnum::GetDisplayValueAsText(Skill).ToString(),
+                UAstrawildAttributeComponent::GetSkillCooldown(Skill))));
+        }
         UE_LOG(LogAstrawildAI, Log, TEXT("Player smart-cast: %s"), *UEnum::GetValueAsString(Skill));
     }
 }
@@ -1455,6 +1488,20 @@ void AAstrawildPlayerCharacter::ExecuteInteractIntent(AActor* InteractableActor)
                 return;
             }
         }
+        else if (Echo->MountComponent && Echo->bCaptured && Echo->OwnerPlayerId == GetFName() &&
+                 Echo->EchoDefinition && !Echo->IsDefeated() &&
+                 UAstrawildMountComponent::IsRideableSpecies(
+                     Echo->EchoDefinition->Family, Echo->EchoDefinition->BodyPlan, Echo->EchoDefinition->SizeClass))
+        {
+            // FPP-1: the bond gate was silent — a player pressing E on their own
+            // rideable echo got the vague evolve line instead of the real reason.
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+            {
+                PC->NotifyPlayer(FText::FromString(FString::Printf(
+                    TEXT("Bond %.0f/25 — keep feeding [R] and traveling together to ride this Echo."),
+                    Echo->Bond)));
+            }
+        }
     }
 
     // Standard interactables (nodes, stations, rest points, NPCs).
@@ -1983,6 +2030,28 @@ void AAstrawildPlayerCharacter::OnSprintExhausted()
         SurvivalComponent->SetSprintDrainActive(false);
     }
     RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::HandleAttributeLevelUp(const EAstrawildAttributeType Attribute, const int32 NewLevel)
+{
+    // FPP-1: the growth moment made visible — the level-up previously had
+    // exactly one subscriber (Vigor max-HP recompute) and zero player feedback.
+    if (LastSeenSkillCount < 0)
+    {
+        LastSeenSkillCount = AttributeComponent ? AttributeComponent->GetUnlockedSkills().Num() : 0;
+    }
+    const int32 UnlockedNow = AttributeComponent ? AttributeComponent->GetUnlockedSkills().Num() : 0;
+    const bool bNewSkill = UnlockedNow > LastSeenSkillCount;
+    LastSeenSkillCount = UnlockedNow;
+
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->NotifyPlayer(FText::FromString(FString::Printf(
+            TEXT("%s grew to level %d%s"),
+            *UEnum::GetDisplayValueAsText(Attribute).ToString(),
+            NewLevel,
+            bNewSkill ? TEXT(" — NEW SKILL UNLOCKED (see Skill Loadout in the pause menu)") : TEXT(""))));
+    }
 }
 
 void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)

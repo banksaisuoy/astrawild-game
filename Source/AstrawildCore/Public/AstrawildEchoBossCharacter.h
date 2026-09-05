@@ -332,6 +332,19 @@ private:
     };
     TArray<FAstrawildPendingBlast> PendingBlasts;
 
+    /**
+     * FPP-1: telegraphed melee swings in flight — a short windup disc under the
+     * target plus a delayed damage window (dodging out of reach = whiff).
+     * Same shape as PendingBlasts, single authority path.
+     */
+    struct FAstrawildPendingMelee
+    {
+        TWeakObjectPtr<class AAstrawildPlayerCharacter> Target;
+        float RemainingSeconds = 0.0f;
+        float Damage = 0.0f;
+    };
+    TArray<FAstrawildPendingMelee> PendingMelees;
+
     /** Active arena hazards (cleaned up on defeat). */
     TArray<TWeakObjectPtr<AAstrawildBossHazardActor>> ActiveHazards;
 
@@ -356,6 +369,16 @@ private:
     void TickSpecials(float DeltaTime);
     void TickWeakPoint(float DeltaTime);
     void TickPendingBlasts(float DeltaTime);
+
+    /** FPP-1: delayed melee resolution (the dodge window behind the windup disc). */
+    void TickPendingMelees(float DeltaTime);
+
+    /** FPP-1: toast every player inside the radius (phase/enrage/defeat beats). */
+    void NotifyNearbyPlayers(const FText& Message, float Radius) const;
+
+    /** FPP-1: attacker-facing weak-point/weakness confirmation (toast + SFX). */
+    void NotifyBossHitFeedback(bool bWeaknessHit, bool bWeakPointHit, EAstrawildElementType Element);
+
     void FireEnergyBolt(class AAstrawildPlayerCharacter* Target, int32 VolleyIndex);
     void SpawnArenaHazard();
     void CleanupEncounterFx();

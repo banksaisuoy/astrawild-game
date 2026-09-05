@@ -43,6 +43,9 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Ability")
     static int32 GetAbilityCount();
 
+    /** FPP-1: every registered ability id (sorted — presentation contracts). */
+    static TArray<FName> GetAllAbilityIds();
+
     /**
      * Ability ids an Echo of the given definition can ever learn: authored
      * AbilityIds first (deduped, order preserved), then the derived element/
