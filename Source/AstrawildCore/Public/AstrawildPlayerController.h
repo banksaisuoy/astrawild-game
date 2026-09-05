@@ -53,6 +53,48 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
     void Notify(const FText& Message);
 
+    // --- LCP-3: LAN co-op client routing (the first Client RPCs in the module) ---
+
+    /**
+     * LCP-3: server -> owning client notification. Host-local callers keep using
+     * Notify(); server-side code that must reach a REMOTE player's screen routes
+     * through NotifyPlayer (local -> Notify, remote -> ClientNotify).
+     */
+    UFUNCTION(Client, Reliable)
+    void ClientNotify(const FText& Message);
+
+    /** LCP-3: delivery helper - whatever machine owns this controller's screen gets the message. */
+    void NotifyPlayer(const FText& Message);
+
+    /** LCP-3: server -> owning client shop open (remote vendor interaction). */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenVendorShop(class AAstrawildNPCCharacter* Vendor);
+
+    /** LCP-3: server -> owning client dialogue open (remote NPC conversation). */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenVendorDialogue(class AAstrawildNPCCharacter* Npc);
+
+    /** LCP-3: server -> owning client crafting screen open (remote station interaction). */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenCraftingScreen(class AAstrawildCraftingStationActor* Station);
+
+    /**
+     * LCP-3: remote shop row transaction intent. Server validates the vendor
+     * distance + routes through the authority-guarded TryPurchase/TrySell.
+     */
+    UFUNCTION(Server, Reliable)
+    void ServerVendorTrade(class AAstrawildNPCCharacter* Vendor, FName ItemId, int32 Quantity, bool bBuy);
+
+    /**
+     * LCP-3: remote dialogue choice submission. The client sends the node +
+     * choice index it displayed (static registry content); the server
+     * re-resolves and re-validates everything structurally + conditionally
+     * (fail-closed) before applying consequences through the authority
+     * DialogueComponent.
+     */
+    UFUNCTION(Server, Reliable)
+    void ServerSubmitDialogueChoice(class AAstrawildNPCCharacter* Npc, FName NodeId, int32 ChoiceIndex);
+
     /**
      * Batch 5 — Item C: open the vendor shop screen for the given NPC (switches
      * to UI-only input + mouse cursor). Local controller only; no-op otherwise.

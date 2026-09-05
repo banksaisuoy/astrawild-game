@@ -164,11 +164,11 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         if (bSuccess)
         {
             const FText SpeciesName = Echo->EchoDefinition ? Echo->EchoDefinition->DisplayName : FText::FromString(TEXT("Echo"));
-            PC->Notify(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *SpeciesName.ToString())));
+            PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *SpeciesName.ToString()))); // LCP-3 remote routing
         }
         else
         {
-            PC->Notify(FText::FromString(TEXT("The Echo broke free — weaken it, feed it, or observe longer.")));
+            PC->NotifyPlayer(FText::FromString(TEXT("The Echo broke free — weaken it, feed it, or observe longer."))); // LCP-3 remote routing
         }
     }
     if (bSuccess)

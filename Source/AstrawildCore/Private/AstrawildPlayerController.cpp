@@ -3,6 +3,7 @@
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
 #include "AstrawildCraftingScreenWidget.h"
+#include "AstrawildCraftingStationActor.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDialogueWidget.h"
@@ -469,4 +470,116 @@ bool AAstrawildPlayerController::IsPauseMenuOpen() const
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
     return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen();
+}
+
+
+// ===========================================================================
+// LCP-3 — LAN co-op client routing (first Client RPCs in the module)
+// ===========================================================================
+
+void AAstrawildPlayerController::ClientNotify_Implementation(const FText& Message)
+{
+    Notify(Message);
+}
+
+void AAstrawildPlayerController::NotifyPlayer(const FText& Message)
+{
+    // Whatever machine owns this controller's screen gets the message: the
+    // listen-host/standalone PC is its own local controller (Notify directly);
+    // a server-side PC for a REMOTE player routes to that client.
+    if (IsLocalController())
+    {
+        Notify(Message);
+    }
+    else
+    {
+        ClientNotify(Message);
+    }
+}
+
+void AAstrawildPlayerController::ClientOpenVendorShop_Implementation(AAstrawildNPCCharacter* Vendor)
+{
+    OpenShop(Vendor);
+}
+
+void AAstrawildPlayerController::ClientOpenVendorDialogue_Implementation(AAstrawildNPCCharacter* Npc)
+{
+    OpenDialogue(Npc);
+}
+
+void AAstrawildPlayerController::ClientOpenCraftingScreen_Implementation(AAstrawildCraftingStationActor* Station)
+{
+    if (!IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+}
+
+void AAstrawildPlayerController::ServerVendorTrade_Implementation(AAstrawildNPCCharacter* Vendor, const FName ItemId, const int32 Quantity, const bool bBuy)
+{
+    // Fail-closed server validation: the vendor must be a valid, interactable
+    // NPC near this player's pawn (the client-side shop screen can be spoofed;
+    // the trade cannot). TryPurchase/TrySell re-check authority + price +
+    // currency internally (they were already authority-guarded — this RPC is
+    // the routing the shop widget previously lacked for remote clients).
+    APawn* Pawn = GetPawn();
+    if (!Vendor || !Pawn || !Vendor->NpcDefinition)
+    {
+        return;
+    }
+    if (FVector::DistSquared(Pawn->GetActorLocation(), Vendor->GetActorLocation()) > FMath::Square(600.0f))
+    {
+        NotifyPlayer(FText::FromString(TEXT("Too far from the vendor.")));
+        return;
+    }
+    if (Quantity <= 0 || Quantity > 99)
+    {
+        return; // quantity sanity (row buttons trade x1; the gate is cheap insurance)
+    }
+
+    const EAstrawildVendorResult Result = bBuy
+        ? Vendor->TryPurchase(Pawn, ItemId, Quantity)
+        : Vendor->TrySell(Pawn, ItemId, Quantity);
+    const TCHAR* ResultText = TEXT("declined");
+    switch (Result)
+    {
+    case EAstrawildVendorResult::Success:       ResultText = bBuy ? TEXT("bought") : TEXT("sold"); break;
+    case EAstrawildVendorResult::NotAVendor:    ResultText = TEXT("not a vendor"); break;
+    case EAstrawildVendorResult::NotAWare:      ResultText = TEXT("not in this shop"); break;
+    case EAstrawildVendorResult::NotEnoughCurrency: ResultText = TEXT("not enough currency"); break;
+    case EAstrawildVendorResult::TooHeavy:      ResultText = TEXT("too heavy to carry"); break;
+    case EAstrawildVendorResult::TooFarAway:    ResultText = TEXT("too far from the vendor"); break;
+    default: break;
+    }
+    NotifyPlayer(FText::FromString(FString::Printf(TEXT("Trade %s."), ResultText)));
+}
+
+void AAstrawildPlayerController::ServerSubmitDialogueChoice_Implementation(AAstrawildNPCCharacter* Npc, const FName NodeId, const int32 ChoiceIndex)
+{
+    // Structural re-validation from registry truth (the client sent node +
+    // choice indices from static content, but a modified client could send
+    // anything — everything resolves again here, fail-closed).
+    if (!Npc || !Npc->NpcDefinition || !DialogueComponent)
+    {
+        return;
+    }
+    UWorld* World = GetWorld();
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    UAstrawildDialogueTreeDefinition* Tree = Registry ? Registry->FindDialogueTree(Npc->NpcDefinition->DialogueTreeId) : nullptr;
+    const FAstrawildDialogueChoice* Choice = UAstrawildDialogueComponent::ResolveValidatedChoice(Tree, NodeId, ChoiceIndex);
+    if (!Choice)
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("LCP-3: rejected dialogue choice (npc=%s node=%s index=%d)."),
+            *GetNameSafe(Npc), *NodeId.ToString(), ChoiceIndex);
+        return;
+    }
+
+    // Conditional re-validation + consequence application run on THIS (server)
+    // component — the talking NPC mirrors what OpenDialogue would have set.
+    DialogueComponent->SetTalkingNpc(Npc);
+    if (!DialogueComponent->EvaluateChoiceConditions(*Choice))
+    {
+        return; // the client may have shown a stale/filtered list; the server disagrees — no-op
+    }
+    DialogueComponent->ApplyChoiceConsequences(*Choice);
 }

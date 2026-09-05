@@ -28,6 +28,11 @@ AAstrawildPlayerCharacter* UAstrawildCheatManager::GetPlayer() const
 
 void UAstrawildCheatManager::SpawnEcho(const FName EchoDefinitionId)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UWorld* World = GetWorld();
     AAstrawildPlayerCharacter* Player = GetPlayer();
     UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
@@ -50,6 +55,11 @@ void UAstrawildCheatManager::SpawnEcho(const FName EchoDefinitionId)
 
 void UAstrawildCheatManager::GiveItem(const FName ItemId, const int32 Quantity)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     AAstrawildPlayerCharacter* Player = GetPlayer();
     if (Player && Player->InventoryComponent)
     {
@@ -114,6 +124,11 @@ namespace
 
 void UAstrawildCheatManager::BuyItem(const FName ItemId, int32 Quantity)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     AAstrawildPlayerCharacter* Player = GetPlayer();
     AAstrawildNPCCharacter* Vendor = FindNearestVendor(Player);
     if (!Player || !Vendor)
@@ -136,6 +151,11 @@ void UAstrawildCheatManager::BuyItem(const FName ItemId, int32 Quantity)
 
 void UAstrawildCheatManager::SellItem(const FName ItemId, int32 Quantity)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     AAstrawildPlayerCharacter* Player = GetPlayer();
     AAstrawildNPCCharacter* Vendor = FindNearestVendor(Player);
     if (!Player || !Vendor)
@@ -158,6 +178,11 @@ void UAstrawildCheatManager::SellItem(const FName ItemId, int32 Quantity)
 
 void UAstrawildCheatManager::EquipItem(const FName ItemId)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     AAstrawildPlayerCharacter* Player = GetPlayer();
     if (Player && Player->InventoryComponent)
     {
@@ -170,6 +195,11 @@ void UAstrawildCheatManager::EquipItem(const FName ItemId)
 
 void UAstrawildCheatManager::SetTime(const int32 Hour, const int32 Minute)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UWorld* World = GetWorld();
     if (UAstrawildTimeSubsystem* Time = World ? World->GetSubsystem<UAstrawildTimeSubsystem>() : nullptr)
     {
@@ -179,6 +209,11 @@ void UAstrawildCheatManager::SetTime(const int32 Hour, const int32 Minute)
 
 void UAstrawildCheatManager::SetWeather(const FName WeatherName)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UWorld* World = GetWorld();
     UAstrawildWeatherSubsystem* Weather = World ? World->GetSubsystem<UAstrawildWeatherSubsystem>() : nullptr;
     if (!Weather)
@@ -203,6 +238,11 @@ void UAstrawildCheatManager::SetWeather(const FName WeatherName)
 
 void UAstrawildCheatManager::God()
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     if (AAstrawildPlayerCharacter* Player = GetPlayer())
     {
         if (Player->SurvivalComponent)
@@ -214,6 +254,11 @@ void UAstrawildCheatManager::God()
 
 void UAstrawildCheatManager::HealAll()
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     if (AAstrawildPlayerCharacter* Player = GetPlayer())
     {
         if (Player->SurvivalComponent)
@@ -225,6 +270,11 @@ void UAstrawildCheatManager::HealAll()
 
 void UAstrawildCheatManager::ResearchPoints(const int32 Amount)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     const UWorld* World = GetWorld();
     if (World && World->GetGameInstance())
     {
@@ -237,6 +287,11 @@ void UAstrawildCheatManager::ResearchPoints(const int32 Amount)
 
 void UAstrawildCheatManager::UnlockTech(const FName TechId)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     const UWorld* World = GetWorld();
     if (World && World->GetGameInstance())
     {
@@ -249,6 +304,11 @@ void UAstrawildCheatManager::UnlockTech(const FName TechId)
 
 void UAstrawildCheatManager::SaveNow()
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UWorld* World = GetWorld();
     if (World && World->GetGameInstance())
     {
@@ -261,6 +321,11 @@ void UAstrawildCheatManager::SaveNow()
 
 void UAstrawildCheatManager::LoadNow()
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UWorld* World = GetWorld();
     if (World && World->GetGameInstance())
     {
@@ -274,6 +339,11 @@ void UAstrawildCheatManager::LoadNow()
 
 void UAstrawildCheatManager::CaptureAll()
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UWorld* World = GetWorld();
     AAstrawildPlayerCharacter* Player = GetPlayer();
     if (!World || !Player)
@@ -294,6 +364,11 @@ void UAstrawildCheatManager::CaptureAll()
 
 void UAstrawildCheatManager::TeleportForward(const float Distance)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     AAstrawildPlayerCharacter* Player = GetPlayer();
     if (Player)
     {
@@ -312,6 +387,11 @@ UAstrawildQuestComponent* UAstrawildCheatManager::GetQuests() const
 
 void UAstrawildCheatManager::FastForward(const FName QuestId)
 {
+    if (!AreCheatsAllowed())
+    {
+        return; // LCP-3: remote clients cannot exec cheats
+    }
+
     UAstrawildQuestComponent* Quests = GetQuests();
     if (!Quests)
     {
@@ -349,4 +429,10 @@ void UAstrawildCheatManager::FastForward(const FName QuestId)
         UE_LOG(LogAstrawild, Warning, TEXT("AW.FastForward: %s is not on the active chain (active: %s)."),
             *QuestId.ToString(), *Quests->GetActiveQuestId().ToString());
     }
+}
+
+bool UAstrawildCheatManager::AreCheatsAllowed() const
+{
+    const UWorld* World = GetWorld();
+    return !World || World->GetNetMode() != NM_Client;
 }

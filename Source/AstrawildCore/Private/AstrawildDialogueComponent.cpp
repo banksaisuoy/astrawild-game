@@ -246,3 +246,18 @@ AAstrawildPlayerCharacter* UAstrawildDialogueComponent::GetPlayerCharacter() con
     const APlayerController* PC = Cast<APlayerController>(GetOwner());
     return PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
 }
+
+const FAstrawildDialogueChoice* UAstrawildDialogueComponent::ResolveValidatedChoice(
+    const UAstrawildDialogueTreeDefinition* Tree, const FName NodeId, const int32 ChoiceIndex)
+{
+    if (!Tree || NodeId.IsNone())
+    {
+        return nullptr;
+    }
+    const FAstrawildDialogueNode* Node = Tree->FindNode(NodeId);
+    if (!Node || ChoiceIndex < 0 || ChoiceIndex >= Node->Choices.Num())
+    {
+        return nullptr;
+    }
+    return &Node->Choices[ChoiceIndex];
+}

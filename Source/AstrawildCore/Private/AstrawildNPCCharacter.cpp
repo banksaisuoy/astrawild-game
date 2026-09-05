@@ -236,7 +236,16 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
                 : nullptr;
             if (Registry && Registry->FindDialogueTree(NpcDefinition->DialogueTreeId))
             {
-                AstrawildPC->OpenDialogue(this);
+                // LCP-3: the interact now runs server-side (ServerInteract) —
+                // route the screen open to whoever owns this controller's screen.
+                if (AstrawildPC->IsLocalController())
+                {
+                    AstrawildPC->OpenDialogue(this);
+                }
+                else
+                {
+                    AstrawildPC->ClientOpenVendorDialogue(this);
+                }
                 return;
             }
             UE_LOG(LogAstrawild, Warning, TEXT("NPC %s references unregistered dialogue tree %s."),
@@ -271,12 +280,20 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
         {
             if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
             {
-                PC->OpenShop(this);
+                // LCP-3: remote shop opens on the owning client's screen.
+                if (PC->IsLocalController())
+                {
+                    PC->OpenShop(this);
+                }
+                else
+                {
+                    PC->ClientOpenVendorShop(this);
+                }
             }
         }
         else if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
         {
-            PC->Notify(FText::FromString(TEXT("The shop is closed - come back during trading hours.")));
+            PC->NotifyPlayer(FText::FromString(TEXT("The shop is closed - come back during trading hours.")));
         }
     }
 }

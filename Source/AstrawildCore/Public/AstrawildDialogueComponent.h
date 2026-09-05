@@ -68,6 +68,16 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Dialogue")
     static bool MeetsAffinityGate(int32 RequiredMinAffinity, float NpcAffinity);
 
+    /**
+     * LCP-3 (world-free testable): structural validation of a remotely
+     * submitted dialogue choice. Resolves the node inside the tree and returns
+     * the choice at the index — nullptr on ANY mismatch (unknown tree/node,
+     * out-of-range index). The server RPC re-derives everything from registry
+     * truth; a modified client can never reach a hidden choice.
+     */
+    static const FAstrawildDialogueChoice* ResolveValidatedChoice(
+        const class UAstrawildDialogueTreeDefinition* Tree, FName NodeId, int32 ChoiceIndex);
+
     // --- Talking-NPC tracking (DP-8 affinity gate source) ---
 
     /** Set while a conversation screen is open (OpenDialogue); cleared on close. */

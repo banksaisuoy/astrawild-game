@@ -62,6 +62,13 @@ void AAstrawildCraftingStationActor::Interact_Implementation(AActor* Interacting
     {
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
         {
+            // LCP-3: this interact runs server-side for remote clients — the
+            // screen toggle must happen on the owning client's machine.
+            if (!PC->IsLocalController())
+            {
+                PC->ClientOpenCraftingScreen(this);
+                return;
+            }
             if (PC->IsCraftingOpen())
             {
                 PC->ToggleCraftingScreen(); // E again = close (fast back-to-game).

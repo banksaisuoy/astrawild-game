@@ -212,7 +212,7 @@ Target: **4 players maximum** — reliability over scale.
 | :--- | :--- | :--- |
 | LCP-1 | THIS document + MASTER_CONTROL v6.0 + MULTIPLAYER audit refresh + registry reopen (docs-only) | — |
 | LCP-2 | Client world build: bootstrapper client path (seeded deterministic cosmetic layer), gameplay actors replicate (nodes/NPCs/stations/rest points/POI markers/villages) | **DONE** (+2: LCP2.ClientWorldPolicy / LCP2.DressingGate) |
-| LCP-3 | Interaction & trade routing: `ServerInteract`, `ClientOpenVendorShop`/`ClientOpenDialogue`/`ClientNotify`, shop trade RPC, capture intent, cheat host-gate | +2 |
+| LCP-3 | Interaction & trade routing: `ServerInteract`, `ClientOpenVendorShop`/`ClientOpenVendorDialogue`/`ClientNotify`, shop trade RPC, capture intent, cheat host-gate | **DONE** (+2: LCP3.ServerRoutingSurface / LCP3.DialogueValidation) |
 | LCP-4 | Per-player persistence: save V6 additive per-player blocks, roster `OwnerPlayerId` partition, stable player keys, reconnect restore | +2 |
 | LCP-5 | Client state sync: QuestComponent replication, research + roster mirrors on GameState, client notifications | +2 |
 | LCP-6 | LAN session flow: LANSessionSubsystem (host/find/join/direct), beacon encode/decode, pause menu panel, HUD mode line | +2 |

@@ -40,13 +40,13 @@
 #include "AstrawildWorldBootstrapper.h"
 #include "AstrawildWeatherSubsystem.h"
 #include "AstrawildResourceNode.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
-#include "AstrawildWorldBootstrapper.h"
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSkiffActor.h"
@@ -4936,6 +4936,96 @@ bool FAstrawildLCP2DressingGateTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Finite empty node reads as depleted"), Node::IsNodeDepleted(false, 0));
     TestFalse(TEXT("Finite stocked node reads as harvestable"), Node::IsNodeDepleted(false, 5));
     TestFalse(TEXT("Overdrafted-but-infinite stays visible"), Node::IsNodeDepleted(true, -3));
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-3 — LAN CO-OP: interaction / trade routing contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP3ServerRoutingSurfaceTest,
+    "ASTRAWILD.LCP3.ServerRoutingSurface",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP3ServerRoutingSurfaceTest::RunTest(const FString& Parameters)
+{
+    // The LAN co-op routing surface exists EXACTLY as designed (reflection
+    // contract — a dropped/renamed RPC fails here before any engine run):
+    //   PlayerCharacter: ServerInteract (the single interact-intent choke
+    //   point) + the skiff/mount input relays.
+    //   PlayerController: the first Client RPCs (notify/shop/dialogue/crafting
+    //   screen opens) + the vendor-trade and dialogue-choice server RPCs.
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("ServerInteract exists"), CharClass->FindFunctionByName(TEXT("ServerInteract")) != nullptr);
+    TestTrue(TEXT("ServerSkiffPilotInput exists"), CharClass->FindFunctionByName(TEXT("ServerSkiffPilotInput")) != nullptr);
+    TestTrue(TEXT("ServerMountRiderInput exists"), CharClass->FindFunctionByName(TEXT("ServerMountRiderInput")) != nullptr);
+
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("ClientNotify exists"), PCClass->FindFunctionByName(TEXT("ClientNotify")) != nullptr);
+    TestTrue(TEXT("ClientOpenVendorShop exists"), PCClass->FindFunctionByName(TEXT("ClientOpenVendorShop")) != nullptr);
+    TestTrue(TEXT("ClientOpenVendorDialogue exists"), PCClass->FindFunctionByName(TEXT("ClientOpenVendorDialogue")) != nullptr);
+    TestTrue(TEXT("ClientOpenCraftingScreen exists"), PCClass->FindFunctionByName(TEXT("ClientOpenCraftingScreen")) != nullptr);
+    TestTrue(TEXT("ServerVendorTrade exists"), PCClass->FindFunctionByName(TEXT("ServerVendorTrade")) != nullptr);
+    TestTrue(TEXT("ServerSubmitDialogueChoice exists"), PCClass->FindFunctionByName(TEXT("ServerSubmitDialogueChoice")) != nullptr);
+
+    // The replicated mount/pilot identity rides the pawn (client input routing).
+    TestTrue(TEXT("Pawn replicates the piloted skiff identity"),
+        CharClass->FindPropertyByName(TEXT("ReplicatedPilotedSkiff")) != nullptr);
+    TestTrue(TEXT("Pawn replicates the mounted echo identity"),
+        CharClass->FindPropertyByName(TEXT("ReplicatedMountedEcho")) != nullptr);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP3DialogueValidationTest,
+    "ASTRAWILD.LCP3.DialogueValidation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP3DialogueValidationTest::RunTest(const FString& Parameters)
+{
+    using DialogueComp = UAstrawildDialogueComponent;
+
+    // World-free tree: entry node with two choices.
+    UAstrawildDialogueTreeDefinition* Tree = NewObject<UAstrawildDialogueTreeDefinition>();
+    Tree->DialogueId = TEXT("Tree_LCP3Test");
+    Tree->EntryNodeId = TEXT("Node_Root");
+
+    FAstrawildDialogueNode Root;
+    Root.NodeId = TEXT("Node_Root");
+    FAstrawildDialogueChoice ChoiceA;
+    ChoiceA.Text = FText::FromString(TEXT("Ask about the frontier"));
+    ChoiceA.GotoNodeId = TEXT("Node_Root");
+    FAstrawildDialogueChoice ChoiceB;
+    ChoiceB.Text = FText::FromString(TEXT("Leave"));
+    ChoiceB.bEndDialogue = true;
+    Root.Choices.Add(ChoiceA);
+    Root.Choices.Add(ChoiceB);
+    Tree->Nodes.Add(Root);
+
+    // Fail-closed structural validation (the exact resolver the server RPC uses):
+    const FAstrawildDialogueChoice* Resolved = DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), 0);
+    TestTrue(TEXT("Valid node + index 0 resolves"), Resolved != nullptr);
+    if (Resolved)
+    {
+        TestEqual(TEXT("Resolved choice text matches"),
+            Resolved->Text.ToString(), FString(TEXT("Ask about the frontier")));
+    }
+    TestTrue(TEXT("Valid node + index 1 resolves"),
+        DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), 1) != nullptr);
+
+    // Every malformed submission fails CLOSED — a modified client can never
+    // reach a hidden choice through the RPC:
+    TestNull(TEXT("Null tree fails closed"), DialogueComp::ResolveValidatedChoice(nullptr, TEXT("Node_Root"), 0));
+    TestNull(TEXT("Unknown node fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Missing"), 0));
+    TestNull(TEXT("None node id fails closed"), DialogueComp::ResolveValidatedChoice(Tree, NAME_None, 0));
+    TestNull(TEXT("Negative index fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), -1));
+    TestNull(TEXT("Out-of-range index fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), 2));
+
+    // Empty node: zero choices, any index fails.
+    FAstrawildDialogueNode Empty;
+    Empty.NodeId = TEXT("Node_Empty");
+    Tree->Nodes.Add(Empty);
+    TestNull(TEXT("Empty node + index 0 fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Empty"), 0));
     return true;
 }
 

@@ -105,6 +105,7 @@ public:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-3
     virtual void PossessedBy(AController* NewController) override;
     virtual void PawnClientRestart() override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
@@ -351,6 +352,28 @@ public:
     /** Called by the skiff on mount/dismount (input routing switches over). */
     void SetPilotedSkiff(AAstrawildSkiffActor* Skiff);
 
+    // --- LCP-3: LAN co-op interaction/input routing (remote clients) ---
+
+    /**
+     * LCP-3: the single client→server interaction intent. The owning client
+     * traces locally (predictive), then sends the target; the server re-validates
+     * (alive + interact range + interface) and runs the SAME authority interact
+     * ladder (dismount-first → mount → generic interactable → capture → evolve).
+     */
+    UFUNCTION(Server, Reliable)
+    void ServerInteract(AActor* Target);
+
+    /**
+     * LCP-3: relays remote pilot input to the server's skiff (capped by the
+     * client at send-on-change; Unreliable — a dropped tick just coasts).
+     */
+    UFUNCTION(Server, Unreliable)
+    void ServerSkiffPilotInput(float ForwardAxis, float TurnAxis, float VerticalAxis, bool bBoosting);
+
+    /** LCP-3: relays remote rider input to the server's mount (same discipline). */
+    UFUNCTION(Server, Unreliable)
+    void ServerMountRiderInput(float ForwardAxis, float TurnAxis, float VerticalAxis);
+
     /** Server: spawn a drone bound to this player (deploy key / save-load). */
     AAstrawildUtilityDroneActor* SpawnUtilityDrone();
 
@@ -500,6 +523,35 @@ private:
     /** SCP Phase 5: ridden Echo (weak — a defeated mount auto-dismounts). */
     UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Mount")
     TWeakObjectPtr<AAstrawildEchoCharacter> MountedEcho;
+
+    // --- LCP-3: replicated mount/pilot identity (remote clients need them for
+    // input routing; the weak mirrors above stay the local read surface) ---
+
+    UPROPERTY(ReplicatedUsing=OnRep_PilotedSkiff)
+    TObjectPtr<AAstrawildSkiffActor> ReplicatedPilotedSkiff;
+
+    UPROPERTY(ReplicatedUsing=OnRep_MountedEcho)
+    TObjectPtr<AAstrawildEchoCharacter> ReplicatedMountedEcho;
+
+    UFUNCTION()
+    void OnRep_PilotedSkiff();
+
+    UFUNCTION()
+    void OnRep_MountedEcho();
+
+    /** LCP-3: the shared authority interact ladder (host-local Interact and the
+     *  ServerInteract RPC land here; extraction of the original Interact body). */
+    void ExecuteInteractIntent(AActor* InteractableActor);
+
+    /** LCP-3 (world-free testable): server-side target re-validation — alive,
+     *  present, within InteractionDistance. Returns the target or null. */
+    AActor* ValidateInteractTargetForServer(AActor* Target) const;
+
+    /** LCP-3: pilot/rider input relay bookkeeping — the held vertical axis
+     *  (+1 climb / -1 descend / 0 rest) so per-frame move relays never cancel
+     *  a held key, and the boost state mirror for the same reason. */
+    float TrackedVerticalAxis = 0.0f;
+    bool bLastSentPilotBoost = false;
 
     /** Production V2 Batch 2: held-weapon refresh cadence + dedupe cache. */
     FTimerHandle HeldWeaponTimerHandle;

@@ -78,4 +78,11 @@ public:
 private:
     class AAstrawildPlayerCharacter* GetPlayer() const;
     class UAstrawildQuestComponent* GetQuests() const;
+
+    /**
+     * LCP-3 cheat hardening: remote LAN clients may not exec AW.* (Shipping
+     * already strips the CheatManager; dev builds now block it on clients too,
+     * so a client console can never mint local fake state or spam intents).
+     */
+    bool AreCheatsAllowed() const;
 };

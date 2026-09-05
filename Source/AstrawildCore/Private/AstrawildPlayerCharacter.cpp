@@ -1,5 +1,7 @@
 #include "AstrawildPlayerCharacter.h"
 
+#include "Net/UnrealNetwork.h" // LCP-3: DOREPLIFETIME
+
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingActor.h"
@@ -1096,6 +1098,12 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotMove(MovementVector.Y, MovementVector.X);
+        // LCP-3: remote pilots relay the intent to the server (send-on-change);
+        // the local call above is the prediction-lite visual.
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(MovementVector.Y, MovementVector.X, TrackedVerticalAxis, bLastSentPilotBoost);
+        }
         return;
     }
 
@@ -1105,6 +1113,10 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
         if (Mount->MountComponent)
         {
             Mount->MountComponent->ReceiveRiderMove(MovementVector.Y, MovementVector.X);
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(MovementVector.Y, MovementVector.X, TrackedVerticalAxis);
+            }
             return;
         }
     }
@@ -1141,6 +1153,11 @@ void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotBoost(true);
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            bLastSentPilotBoost = true;
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, true); // LCP-3 relay
+        }
         return;
     }
 
@@ -1160,6 +1177,11 @@ void AAstrawildPlayerCharacter::StopSprint(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotBoost(false);
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            bLastSentPilotBoost = false;
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, false); // LCP-3 relay
+        }
         return;
     }
 
@@ -1230,6 +1252,11 @@ void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(1.0f);
+        TrackedVerticalAxis = 1.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, 1.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
         return;
     }
 
@@ -1239,6 +1266,11 @@ void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
         if (Mount->MountComponent)
         {
             Mount->MountComponent->ReceiveRiderVertical(1.0f);
+            TrackedVerticalAxis = 1.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, 1.0f); // LCP-3 relay
+            }
             return;
         }
     }
@@ -1259,6 +1291,11 @@ void AAstrawildPlayerCharacter::OnJumpReleased(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(0.0f);
+        TrackedVerticalAxis = 0.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
         return;
     }
 
@@ -1268,6 +1305,11 @@ void AAstrawildPlayerCharacter::OnJumpReleased(const FInputActionValue& Value)
         if (Mount->MountComponent)
         {
             Mount->MountComponent->ReceiveRiderVertical(0.0f);
+            TrackedVerticalAxis = 0.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, 0.0f); // LCP-3 relay
+            }
             return;
         }
     }
@@ -1281,6 +1323,11 @@ void AAstrawildPlayerCharacter::StartDescend(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(-1.0f);
+        TrackedVerticalAxis = -1.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, -1.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
         return;
     }
 
@@ -1290,6 +1337,11 @@ void AAstrawildPlayerCharacter::StartDescend(const FInputActionValue& Value)
         if (Mount->MountComponent)
         {
             Mount->MountComponent->ReceiveRiderVertical(-1.0f);
+            TrackedVerticalAxis = -1.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, -1.0f); // LCP-3 relay
+            }
         }
     }
 }
@@ -1299,6 +1351,11 @@ void AAstrawildPlayerCharacter::StopDescend(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(0.0f);
+        TrackedVerticalAxis = 0.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
         return;
     }
 
@@ -1307,6 +1364,11 @@ void AAstrawildPlayerCharacter::StopDescend(const FInputActionValue& Value)
         if (Mount->MountComponent)
         {
             Mount->MountComponent->ReceiveRiderVertical(0.0f);
+            TrackedVerticalAxis = 0.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, 0.0f); // LCP-3 relay
+            }
         }
     }
 }
@@ -1325,6 +1387,22 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
         PlaySurvivorOneShot(SurvivorGatherAnim.Get(), 1.0f);
     }
 
+    // LCP-3: remote clients trace locally (collision replicates), then hand the
+    // intent to the server — the dismount-first checks + the whole authority
+    // ladder run there against the server's pawn state. Host/standalone keep
+    // the direct path (byte-identical behavior).
+    AActor* InteractableActor = FindInteractableActor();
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        ServerInteract(InteractableActor);
+        return;
+    }
+
+    ExecuteInteractIntent(InteractableActor);
+}
+
+void AAstrawildPlayerCharacter::ExecuteInteractIntent(AActor* InteractableActor)
+{
     // Batch 8 — E while piloting = dismount (before any trace).
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
@@ -1341,8 +1419,6 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
             return;
         }
     }
-
-    AActor* InteractableActor = FindInteractableActor();
 
     // SCP Phase 5 — E at an own, bonded, rideable party Echo = board it
     // (mount attempt BEFORE the generic interact path so seats beat menus).
@@ -1397,13 +1473,13 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
                         {
                             if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
                             {
-                                PC->Notify(FText::FromString(TEXT("Your Echo evolved — its dream deepened.")));
+                                PC->NotifyPlayer(FText::FromString(TEXT("Your Echo evolved — its dream deepened."))); // LCP-3 remote routing
                             }
                         }
                     }
                     else if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
                     {
-                        PC->Notify(FText::FromString(TEXT("Not ready to evolve — deepen the bond and level it first.")));
+                        PC->NotifyPlayer(FText::FromString(TEXT("Not ready to evolve — deepen the bond and level it first."))); // LCP-3 remote routing
                     }
                 }
             }
@@ -2541,4 +2617,90 @@ void AAstrawildPlayerCharacter::SetMountedEcho(AAstrawildEchoCharacter* Echo)
 void AAstrawildPlayerCharacter::SetPilotedSkiff(AAstrawildSkiffActor* Skiff)
 {
     PilotedSkiff = Skiff;
+}
+
+// ===========================================================================
+// LCP-3 — LAN co-op interaction / input routing (remote clients)
+// ===========================================================================
+
+void AAstrawildPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildPlayerCharacter, ReplicatedPilotedSkiff);
+    DOREPLIFETIME(AAstrawildPlayerCharacter, ReplicatedMountedEcho);
+}
+
+void AAstrawildPlayerCharacter::OnRep_PilotedSkiff()
+{
+    // Client mirror: the replicated identity refreshes the local weak pointer
+    // so input routing (Move/vertical/boost handlers) finds the skiff.
+    PilotedSkiff = ReplicatedPilotedSkiff;
+}
+
+void AAstrawildPlayerCharacter::OnRep_MountedEcho()
+{
+    MountedEcho = ReplicatedMountedEcho;
+}
+
+void AAstrawildPlayerCharacter::SetPilotedSkiff(AAstrawildSkiffActor* Skiff)
+{
+    PilotedSkiff = Skiff;
+    ReplicatedPilotedSkiff = Skiff; // LCP-3: authority write — replicates to the owner
+}
+
+void AAstrawildPlayerCharacter::SetMountedEcho(AAstrawildEchoCharacter* Echo)
+{
+    MountedEcho = Echo;
+    ReplicatedMountedEcho = Echo; // LCP-3: authority write — replicates to the owner
+}
+
+AActor* AAstrawildPlayerCharacter::ValidateInteractTargetForServer(AActor* Target) const
+{
+    // Fail-closed server re-validation of a client's interact intent:
+    // the target must exist, be an interactable, and sit within the pawn's
+    // interaction distance (no RPC-forged tele-interactions).
+    if (!IsValid(Target) || !IsAlive())
+    {
+        return nullptr;
+    }
+    if (!Target->GetClass()->ImplementsInterface(UAstrawildInteractable::StaticClass()) &&
+        !Cast<AAstrawildEchoCharacter>(Target))
+    {
+        return nullptr; // only interactables and Echoes (mount/capture) are routable
+    }
+    if (FVector::DistSquared(GetActorLocation(), Target->GetActorLocation()) >
+        FMath::Square(InteractionDistance * 1.5f))
+    {
+        UE_LOG(LogAstrawild, Warning,
+            TEXT("LCP-3: rejected out-of-range interact with %s (distance gate)."), *Target->GetName());
+        return nullptr;
+    }
+    return Target;
+}
+
+void AAstrawildPlayerCharacter::ServerInteract_Implementation(AActor* Target)
+{
+    ExecuteInteractIntent(ValidateInteractTargetForServer(Target));
+}
+
+void AAstrawildPlayerCharacter::ServerSkiffPilotInput_Implementation(const float ForwardAxis, const float TurnAxis, const float VerticalAxis, const bool bBoosting)
+{
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotMove(ForwardAxis, TurnAxis);
+        Skiff->ReceivePilotVertical(VerticalAxis);
+        Skiff->ReceivePilotBoost(bBoosting);
+    }
+}
+
+void AAstrawildPlayerCharacter::ServerMountRiderInput_Implementation(const float ForwardAxis, const float TurnAxis, const float VerticalAxis)
+{
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderMove(ForwardAxis, TurnAxis);
+            Mount->MountComponent->ReceiveRiderVertical(VerticalAxis);
+        }
+    }
 }
