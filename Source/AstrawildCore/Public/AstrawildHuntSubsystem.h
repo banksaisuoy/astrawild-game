@@ -5,6 +5,7 @@
 #include "AstrawildTypes.h"
 #include "AstrawildHuntSubsystem.generated.h"
 
+class APawn;
 class UAstrawildEventBusSubsystem;
 
 /**

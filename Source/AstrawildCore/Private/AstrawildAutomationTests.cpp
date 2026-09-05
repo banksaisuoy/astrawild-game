@@ -5578,9 +5578,6 @@ bool FAstrawildPCR5HuntSystemTest::RunTest(const FString& Parameters)
 {
     // 1) The contract table (pure — world-free): 8 repeatable cull contracts,
     //    every row reusing an EXISTING species + EXISTING reward item.
-    TArray<FName> HuntIds;
-    UAstrawildHuntSubsystem* Probe = nullptr; // table is static — use the pure lookup
-    // (StaticClass-free zone: the subsystem exposes pure statics via FindContract.)
     UAstrawildHuntSubsystem::FHuntContract Contract;
     TestTrue(TEXT("Hunt_Hunt table resolves"), UAstrawildHuntSubsystem::FindContract(TEXT("Hunt_DuskmothCull"), Contract));
     TestEqual(TEXT("Duskmoth contract requires 5"), Contract.RequiredDefeats, 5);
