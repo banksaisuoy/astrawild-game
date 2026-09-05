@@ -27,7 +27,10 @@ class ASTRAWILDCORE_API UAstrawildDialogueChoiceRowWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    void InitializeRow(UAstrawildDialogueWidget* InParent, const FAstrawildDialogueChoice& InChoice);
+    void InitializeRow(UAstrawildDialogueWidget* InParent, const FAstrawildDialogueChoice& InChoice, int32 InChoiceIndex);
+
+    /** LCP-3: this row's index within the current node's choice list (remote submission routing). */
+    int32 RowChoiceIndex = INDEX_NONE;
 
 protected:
     virtual void NativeConstruct() override;
@@ -81,6 +84,9 @@ public:
 
     /** Player picked a choice — apply consequences, continue or close. */
     void SelectChoice(const FAstrawildDialogueChoice& Choice);
+
+    /** LCP-3: index-aware selection (remote clients submit the index to the server). */
+    void SelectChoiceByIndex(int32 ChoiceIndex, const FAstrawildDialogueChoice& Choice);
 
     /** Close the conversation (leave button, choice end, or shop hand-off). */
     void CloseDialogue();

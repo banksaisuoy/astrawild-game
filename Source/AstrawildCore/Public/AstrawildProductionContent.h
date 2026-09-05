@@ -37,4 +37,17 @@ public:
     static void BuildProductionTechnologies(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildProductionQuests(UAstrawildItemRegistrySubsystem* Registry);
     static void BuildDialogueTrees(UAstrawildItemRegistrySubsystem* Registry);
+
+    /**
+     * Final Run (FR-5) — Act 3 "The Storm Crown" content pack:
+     *  - MQ-13..17 quest chain (Storm Anchors → Crown Relay → Eye of the
+     *    Maelstrom → The Drowned Sovereign → First Dawn Again),
+     *  - the boss species roster (Glass Tyrant / Eye Sentinel / Drowned
+     *    Sovereign),
+     *  - items (Sovereign Core, Maelstrom Glass, Skiff Stratos Coil),
+     *    tech (Skiff Engineering), recipe, loot (Loot_EyeCore),
+     *  - Warden Maren's ending dialogue (Ending_BreakCage /
+     *    Ending_StormSleeps → the two endings).
+     */
+    static void BuildFinalRunContent(UAstrawildItemRegistrySubsystem* Registry);
 };

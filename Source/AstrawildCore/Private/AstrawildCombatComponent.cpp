@@ -1,12 +1,16 @@
 #include "AstrawildCombatComponent.h"
 
+#include "AstrawildAttributeComponent.h"
+#include "AstrawildComboSubsystem.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildVfxActor.h"
@@ -325,6 +329,12 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
         FCollisionShape::MakeSphere(SweepRadius), QueryParams);
 
     float TotalDamageDealt = 0.0f;
+
+    // GDP-3: Power Strike — the queued skill multiplies THIS swing's damage and
+    // is consumed by it (window set by the smart-cast, spent here, never both).
+    AAstrawildPlayerCharacter* PlayerForSkills = Cast<AAstrawildPlayerCharacter>(GetOwner());
+    const bool bEmpowered = PlayerForSkills && PlayerForSkills->IsNextMeleeEmpowered();
+
     for (const FHitResult& Hit : HitResults)
     {
         AActor* HitActor = Hit.GetActor();
@@ -333,7 +343,11 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             continue;
         }
 
-        const float BaseDamage = GetOutgoingAttackDamage(bHeavy);
+        float BaseDamage = GetOutgoingAttackDamage(bHeavy);
+        if (bEmpowered)
+        {
+            BaseDamage *= 2.2f;
+        }
         // Batch 3 — Item A: resolve the element per hit (weapon override → tunable fallback)
         // so elemental statuses apply from whichever weapon is equipped.
         const EAstrawildElementType ResolvedElement = GetResolvedAttackElement();
@@ -367,6 +381,36 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             DamageTarget->ApplyDamage(BaseDamage);
             TotalDamageDealt += BaseDamage;
         }
+
+        // SCP Phase 6: every landed player melee hit drops a combo mark on
+        // the victim — party Echo abilities striking the same target inside
+        // 3s resolve a Dual-Tech reaction.
+        if (UWorld* ComboWorld = GetWorld())
+        {
+            if (UAstrawildComboSubsystem* Combos = ComboWorld->GetSubsystem<UAstrawildComboSubsystem>())
+            {
+                Combos->NotifyPlayerMeleeHit(HitActor, bEmpowered);
+            }
+        }
+    }
+
+    // GDP-3: Power Strike spent on this swing + Might XP for connecting hits.
+    // FCR-1-b fix (L-b7): the empowered swing is consumed only when the swing
+    // CONNECTED — a whiffed swing no longer burns the buff.
+    if (bEmpowered && PlayerForSkills && TotalDamageDealt > 0.0f)
+    {
+        PlayerForSkills->ConsumeEmpoweredMelee();
+    }
+    if (PlayerForSkills && PlayerForSkills->AttributeComponent && TotalDamageDealt > 0.0f)
+    {
+        PlayerForSkills->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Might, bHeavy ? 4.0f : 2.0f);
+    }
+
+    // SCP Phase 12: weapon wear only on CONNECTED hits (whiffed swings cost
+    // stamina, not durability) — the melee tool path shares the same pool.
+    if (PlayerForSkills && PlayerForSkills->DurabilityComponent && TotalDamageDealt > 0.0f)
+    {
+        PlayerForSkills->DurabilityComponent->ApplyWeaponWear();
     }
 
     OnAttackExecuted.Broadcast(bHeavy, TotalDamageDealt);
@@ -419,9 +463,24 @@ bool UAstrawildCombatComponent::ExecuteRangedAttack()
 
     LastRangedAttackTime = World->GetTimeSeconds();
 
+    // FCR-1-c fix (M-c7): every ranged shot WEARS the weapon (the durability
+    // spec says "melee or ranged"; only melee ever called ApplyWeaponWear).
+    // Applied once here — the beam/arc/projective branches all pass through.
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->DurabilityComponent && GetEquippedWeaponDefinition())
+        {
+            Player->DurabilityComponent->ApplyWeaponWear();
+        }
+    }
+
     // Muzzle: slightly in front of the player's eyes, aimed along the view.
-    const FVector AimOrigin = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
-    const FVector AimDirection = OwnerCharacter->GetActorForwardVector();
+    // Final-audit F-01: the pawn uses orient-to-movement (bUseControllerRotationYaw
+    // = false), so the ACTOR forward is the last MOVEMENT direction, not the aim.
+    // Ranged fire, beam traces and lock-on must derive from the CONTROL rotation —
+    // the same axis the HUD crosshair sits on — or shots diverge up to 180°.
+    const FVector AimDirection = OwnerCharacter->GetControlRotation().Vector();
+    const FVector AimOrigin = OwnerCharacter->GetActorLocation() + AimDirection * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
 
     // --- Fire-mode branches (data-driven archetypes) ---
 
@@ -520,8 +579,10 @@ bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefiniti
         return false;
     }
 
-    const FVector Start = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
-    const FVector End = Start + OwnerCharacter->GetActorForwardVector() * WeaponDef->BeamRange;
+    // Final-audit F-01: view-axis firing (see ExecuteRangedAttack).
+    const FVector AimDirection = OwnerCharacter->GetControlRotation().Vector();
+    const FVector Start = OwnerCharacter->GetActorLocation() + AimDirection * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector End = Start + AimDirection * WeaponDef->BeamRange;
 
     TArray<FHitResult> HitResults;
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDBeamAttack), false, OwnerCharacter);
@@ -555,7 +616,7 @@ bool UAstrawildCombatComponent::ExecuteBeamAttack(const UAstrawildWeaponDefiniti
     {
         const FVector BeamEnd = HitResults.Num() > 0 ? HitResults.Last().ImpactPoint : End;
         AAstrawildBeamVfxActor::SpawnBeam(World, Start, BeamEnd, ResolveWeaponVfxTint(WeaponDef));
-        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
+        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, AimDirection,
             ResolveWeaponVfxTint(WeaponDef));
         if (HitResults.Num() > 0)
         {
@@ -578,15 +639,17 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
         return false;
     }
 
-    const FVector Start = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector() * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
-    const FVector End = Start + OwnerCharacter->GetActorForwardVector() * WeaponDef->BeamRange;
+    // Final-audit F-01: view-axis firing (see ExecuteRangedAttack).
+    const FVector AimDirection = OwnerCharacter->GetControlRotation().Vector();
+    const FVector Start = OwnerCharacter->GetActorLocation() + AimDirection * ProjectileSpawnOffset + FVector(0.0f, 0.0f, 30.0f);
+    const FVector End = Start + AimDirection * WeaponDef->BeamRange;
 
     FHitResult FirstHit;
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ASTRAWILDArcAttack), false, OwnerCharacter);
     if (!World->LineTraceSingleByChannel(FirstHit, Start, End, ECC_Pawn, QueryParams))
     {
         // Blank shot: still a muzzle flash so the trigger reads (ammo was spent).
-        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
+        SpawnWeaponMuzzleFlash(World, WeaponDef, Start, AimDirection,
             ResolveWeaponVfxTint(WeaponDef));
         OnAttackExecuted.Broadcast(false, 0.0f);
         return true; // The shot fired (blank) — cooldown/ammo already spent.
@@ -658,7 +721,7 @@ bool UAstrawildCombatComponent::ExecuteArcAttack(const UAstrawildWeaponDefinitio
     // Production V2 Batch 2 / CP-05: jagged lightning placeholder along the hop
     // chain; the impact burst lands at the first contact when the profile binds one.
     AAstrawildBeamVfxActor::SpawnArcChain(World, VfxHops, ResolveWeaponVfxTint(WeaponDef));
-    SpawnWeaponMuzzleFlash(World, WeaponDef, Start, OwnerCharacter->GetActorForwardVector(),
+    SpawnWeaponMuzzleFlash(World, WeaponDef, Start, AimDirection,
         ResolveWeaponVfxTint(WeaponDef));
     SpawnWeaponImpact(World, WeaponDef, FirstHit.ImpactPoint);
 
@@ -741,11 +804,36 @@ float UAstrawildCombatComponent::GetRangedDamage() const
 {
     // Weapon profile damage + the equipped item's flat attack bonus (the item
     // still carries the progression stat; the definition carries behaviour).
+    float Damage;
     if (const UAstrawildWeaponDefinition* WeaponDef = GetEquippedWeaponDefinition())
     {
-        return FMath::Max(1.0f, WeaponDef->DamagePerHit) + GetEquippedWeaponAttackPower();
+        Damage = FMath::Max(1.0f, WeaponDef->DamagePerHit) + GetEquippedWeaponAttackPower();
+        // FCR-1-c fix (M-c7): a BROKEN ranged weapon hits at x0.4 exactly like
+        // melee (the durability spec says "melee or ranged"; the ranged pipeline
+        // previously ignored the multiplier entirely).
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->DurabilityComponent)
+            {
+                Damage *= Player->DurabilityComponent->GetEquippedWeaponDamageMultiplier();
+            }
+        }
     }
-    return GetOutgoingAttackDamage(false);
+    else
+    {
+        Damage = GetOutgoingAttackDamage(false);
+    }
+
+    // GDP-3: Instinct-earned Overcharge adds +30% ranged damage while its window
+    // is open (the smart-cast sets it; the window decays on the player's Tick).
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->GetRangedBuffRemaining() > 0.0f)
+        {
+            Damage *= 1.3f;
+        }
+    }
+    return Damage;
 }
 
 float UAstrawildCombatComponent::GetMitigatedIncomingDamage(const float RawDamage) const
@@ -793,8 +881,24 @@ float UAstrawildCombatComponent::GetEquippedWeaponAttackPower() const
 float UAstrawildCombatComponent::GetOutgoingAttackDamage(const bool bHeavy) const
 {
     // Wave 3: the equipped weapon adds flat attack power to both attack tiers.
-    const float Base = bHeavy ? HeavyAttackDamage : LightAttackDamage;
-    return Base + GetEquippedWeaponAttackPower();
+    float Base = bHeavy ? HeavyAttackDamage : LightAttackDamage;
+    Base += GetEquippedWeaponAttackPower();
+
+    // GDP-3: Might attribute scales melee output (1 + 4% per level above 1).
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Base *= Attributes->GetMeleeDamageMultiplier();
+        }
+        // SCP Phase 12: broken weapons hit at 40% — the repair-bench loop has
+        // a real mechanical consequence.
+        if (const UAstrawildDurabilityComponent* Durability = Player->DurabilityComponent)
+        {
+            Base *= Durability->GetEquippedWeaponDamageMultiplier();
+        }
+    }
+    return Base;
 }
 
 // --- Batch 3 — Item A: element-driven status effects ---

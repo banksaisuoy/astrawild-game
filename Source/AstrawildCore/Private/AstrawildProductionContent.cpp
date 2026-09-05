@@ -772,10 +772,108 @@ void UAstrawildProductionContent::BuildWorkSites(UAstrawildItemRegistrySubsystem
     CampKitchen->Zone = EAstrawildZone::DawnFields;
     CampKitchen->OffsetFromZoneCenter = FVector2D(0.0f, 1400.0f);
     Registry->RegisterWorkSite(CampKitchen);
+
+    // --- DP-6 (base depth): field consumables — production feeds progression. ---
+    // Base output becomes exploration/combat verbs: the transport depot packs
+    // camp produce into Field Rations (timed stamina regen), the field lab brews
+    // Pulse Tonics (timed capture-focus window). Both effects ride the existing
+    // survival status-effect system / Hunter's Focus window — no new verb types.
+
+    UAstrawildItemDefinition* FieldRation = MakeItem(Registry, TEXT("Item_FieldRation"), TEXT("Field Ration"),
+        EAstrawildItemCategory::Consumable, 0.35f, 30);
+    FieldRation->Description = FText::FromString(TEXT("Trail-packed camp ration. Hearty, keeps for weeks, and steadies the legs on long hauls."));
+    FieldRation->FoodValue = 25.0f;
+    FieldRation->HealValue = 10.0f;
+    FieldRation->PerishableSeconds = 2400.0f; // Preserved field ration — the longest-lasting food.
+    FieldRation->VendorPrice = 3;
+    FieldRation->OnConsumeStatus.StatusId = TEXT("Status.RationVigor");
+    FieldRation->OnConsumeStatus.RemainingSeconds = 90.0f;
+    FieldRation->OnConsumeStatus.StaminaRegenPerSecond = 4.0f; // +~30% over the 14/s baseline for 90s.
+
+    UAstrawildItemDefinition* PulseTonic = MakeItem(Registry, TEXT("Item_PulseTonic"), TEXT("Pulse Tonic"),
+        EAstrawildItemCategory::Consumable, 0.25f, 20);
+    PulseTonic->Description = FText::FromString(TEXT("Effervescent lab tonic. Sharpens the eye for the catch — a brief Hunter's Focus without the skill."));
+    PulseTonic->WaterValue = 12.0f;
+    PulseTonic->HealValue = 15.0f;
+    PulseTonic->VendorPrice = 5;
+    PulseTonic->CaptureFocusSeconds = 30.0f; // Reuses the existing +25% capture-focus window verb.
+
+    // Manual crafting mirrors for both field consumables (campfire/workbench —
+    // the same dual path Seared Meat already has: recipe + automated site).
+    MakeRecipe(Registry, TEXT("Recipe_FieldRation"), TEXT("Field Ration"),
+        { Stack(TEXT("Item_CookedMeat"), 1), Stack(TEXT("Item_Berry"), 2) },
+        { Stack(TEXT("Item_FieldRation"), 1) }, 6.0f, NAME_None, TEXT("Station_Campfire"));
+
+    MakeRecipe(Registry, TEXT("Recipe_PulseTonic"), TEXT("Pulse Tonic"),
+        { Stack(TEXT("Item_Dawnbloom"), 1), Stack(TEXT("Item_CrystalShard"), 1) },
+        { Stack(TEXT("Item_PulseTonic"), 2) }, 6.0f, NAME_None, TEXT("Station_Workbench"));
+
+    // --- DP-6: work-site coverage for the uncovered work types. Species work
+    // affinities already express Transport (67), PowerGeneration (62),
+    // ResearchAssist (51) and Defense (46) — only the sites were missing. All
+    // four live OUTSIDE DawnFields so the bootstrapper's definition-placed loop
+    // spawns them (zone center + offset) without touching the camp table.
+
+    // Sea-zone cargo hub (Skiff Engineering country): haulers pack camp produce
+    // into expedition rations — base output leaves the camp as a field verb.
+    UAstrawildWorkSiteDefinition* TidebreakerDepot = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    TidebreakerDepot->SiteId = TEXT("Site_TidebreakerDepot");
+    TidebreakerDepot->DisplayName = FText::FromString(TEXT("Tidebreaker Cargo Dock"));
+    TidebreakerDepot->WorkType = EAstrawildWorkType::Transport;
+    TidebreakerDepot->OutputItemId = TEXT("Item_FieldRation");
+    TidebreakerDepot->OutputQuantity = 1;
+    TidebreakerDepot->InputItems = { Stack(TEXT("Item_CookedMeat"), 1), Stack(TEXT("Item_Berry"), 2) };
+    TidebreakerDepot->SecondsPerOutput = 16.0f;
+    TidebreakerDepot->Zone = EAstrawildZone::TidebreakerIsles;
+    TidebreakerDepot->OffsetFromZoneCenter = FVector2D(900.0f, -700.0f);
+    Registry->RegisterWorkSite(TidebreakerDepot);
+
+    // Research-assist station: lab hands brew the capture tonic from bloom +
+    // shard stock — the research branch of the base feeds the capture loop.
+    UAstrawildWorkSiteDefinition* VerdantLab = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    VerdantLab->SiteId = TEXT("Site_VerdantLab");
+    VerdantLab->DisplayName = FText::FromString(TEXT("Verdant Reach Field Lab"));
+    VerdantLab->WorkType = EAstrawildWorkType::ResearchAssist;
+    VerdantLab->OutputItemId = TEXT("Item_PulseTonic");
+    VerdantLab->OutputQuantity = 1;
+    VerdantLab->InputItems = { Stack(TEXT("Item_Dawnbloom"), 1), Stack(TEXT("Item_CrystalShard"), 1) };
+    VerdantLab->SecondsPerOutput = 20.0f;
+    VerdantLab->Zone = EAstrawildZone::VerdantReach;
+    VerdantLab->OffsetFromZoneCenter = FVector2D(-800.0f, 600.0f);
+    Registry->RegisterWorkSite(VerdantLab);
+
+    // Power-generation work site: the storm zone's silver charges into cells
+    // the base actually burns (Ridge rig power draw, Pulse Lance ammo).
+    UAstrawildWorkSiteDefinition* StormcrestDynamo = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    StormcrestDynamo->SiteId = TEXT("Site_StormcrestDynamo");
+    StormcrestDynamo->DisplayName = FText::FromString(TEXT("Stormcrest Dynamo Hall"));
+    StormcrestDynamo->WorkType = EAstrawildWorkType::PowerGeneration;
+    StormcrestDynamo->OutputItemId = TEXT("Item_EnergyCell");
+    StormcrestDynamo->OutputQuantity = 2;
+    StormcrestDynamo->InputItems = { Stack(TEXT("Item_StormSilver"), 1) };
+    StormcrestDynamo->SecondsPerOutput = 22.0f;
+    StormcrestDynamo->Zone = EAstrawildZone::StormcrestHighlands;
+    StormcrestDynamo->OffsetFromZoneCenter = FVector2D(600.0f, 900.0f);
+    Registry->RegisterWorkSite(StormcrestDynamo);
+
+    // Defense site at the dungeon approach: the perimeter post rolls salves
+    // for the front line — base production arms the combat loop.
+    UAstrawildWorkSiteDefinition* HollowBulwark = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    HollowBulwark->SiteId = TEXT("Site_HollowBulwark");
+    HollowBulwark->DisplayName = FText::FromString(TEXT("Hollow Approach Bulwark Post"));
+    HollowBulwark->WorkType = EAstrawildWorkType::Defense;
+    HollowBulwark->OutputItemId = TEXT("Item_HerbalSalve");
+    HollowBulwark->OutputQuantity = 1;
+    HollowBulwark->InputItems = { Stack(TEXT("Item_Fiber"), 2), Stack(TEXT("Item_Dawnbloom"), 2) };
+    HollowBulwark->SecondsPerOutput = 18.0f;
+    HollowBulwark->Zone = EAstrawildZone::HollowApproach;
+    HollowBulwark->OffsetFromZoneCenter = FVector2D(-900.0f, -500.0f);
+    Registry->RegisterWorkSite(HollowBulwark);
 }
 
 // ---------------------------------------------------------------------------
-// World events — 9 data-driven archetypes (Master Plan §19)
+// World events — 16 data-driven archetypes (Master Plan §19; DP-7 gives the
+// seven previously-bare zones their own reasons to visit)
 // ---------------------------------------------------------------------------
 
 void UAstrawildProductionContent::BuildWorldEvents(UAstrawildItemRegistrySubsystem* Registry)
@@ -843,6 +941,71 @@ void UAstrawildProductionContent::BuildWorldEvents(UAstrawildItemRegistrySubsyst
         EAstrawildWorldEventKind::BossStirring, 0.5f, 36.0f, 6, 30, EAstrawildZone::HollowApproach, false);
     BossStirring->ResearchPointReward = 4;
     BossStirring->Description = FText::FromString(TEXT("The Underlight Warden shifts in its sleep — the whole zone holds its breath."));
+
+    // --- DP-7 (world depth): one anchored event per previously-bare zone. ---
+    // All seven reuse the EXISTING effect vocabulary (forced weather / research
+    // points / loot table / species boost / bonus nodes) — the Kind labels are
+    // the existing archetypes, only the payloads are new. Balance mirrors the
+    // rows above: weights 0.5-1.0, cooldowns 12-36h, MinDay 2-4, durations
+    // 0/60/90/120min, night-gate stays reserved for camp raids.
+
+    // Dusk Marsh: the fog tide rolls in off the muck and the flora wakes in it.
+    UAstrawildWorldEventDefinition* MistTide = MakeWorldEvent(Registry, TEXT("Event_MistTide"), TEXT("Mist Tide"),
+        EAstrawildWorldEventKind::StormSurge, 1.0f, 20.0f, 2, 90, EAstrawildZone::DuskMarsh, false);
+    MistTide->ForcedWeather = EAstrawildWeatherState::Fog;
+    MistTide->bForcesWeather = true;
+    MistTide->SpeciesBoostId = TEXT("Echo_Sprigling");
+    MistTide->SpeciesBoostCount = 3;
+    MistTide->Description = FText::FromString(TEXT("A fog tide swallows the Dusk Marsh — the reeds bloom and Spriglings drift through the white."));
+
+    // Ember Ridge: the caldera exhales — cinders fall and the vents open.
+    UAstrawildWorldEventDefinition* CinderFall = MakeWorldEvent(Registry, TEXT("Event_CinderFall"), TEXT("Cinder Fall"),
+        EAstrawildWorldEventKind::ResourceSurge, 0.9f, 18.0f, 3, 60, EAstrawildZone::EmberRidge, false);
+    CinderFall->SpeciesBoostId = TEXT("Echo_Emberfang");
+    CinderFall->SpeciesBoostCount = 2;
+    CinderFall->BonusNodeIds = { TEXT("Node_EmberAsh"), TEXT("Node_EmberAsh"), TEXT("Node_EmberAsh") };
+    CinderFall->Description = FText::FromString(TEXT("Cinders fall over Ember Ridge — the ash vents crack open and the Emberfangs hunt the glow."));
+
+    // Sunscar: the dunes give up a buried cache (instant — the find is the event).
+    UAstrawildWorldEventDefinition* DuneCache = MakeWorldEvent(Registry, TEXT("Event_DuneBuriedCache"), TEXT("Dune-Buried Cache"),
+        EAstrawildWorldEventKind::SupplyDrop, 0.6f, 24.0f, 3, 0, EAstrawildZone::SunscarDesert, false);
+    DuneCache->RewardLootTableId = TEXT("Loot_POIAncient");
+    DuneCache->ResearchPointReward = 3;
+    DuneCache->Description = FText::FromString(TEXT("The wind uncovers pre-collapse machine bones in the Sunscar — a cache the dune glass sealed."));
+
+    // Azure Shallows: the reef blooms and the shallows teem.
+    UAstrawildWorldEventDefinition* ReefBloom = MakeWorldEvent(Registry, TEXT("Event_ReefBloom"), TEXT("Reef Bloom"),
+        EAstrawildWorldEventKind::Migration, 0.9f, 20.0f, 2, 120, EAstrawildZone::AzureShallows, false);
+    ReefBloom->SpeciesBoostId = TEXT("Echo_Brinefin");
+    ReefBloom->SpeciesBoostCount = 4;
+    ReefBloom->BonusNodeIds = { TEXT("Node_SeaPearl"), TEXT("Node_SeaPearl"), TEXT("Node_SeaPearl") };
+    ReefBloom->Description = FText::FromString(TEXT("A reef bloom brightens the Azure Shallows — Brinefins school in the clear water and the pearl beds show."));
+
+    // Tidebreaker Isles: the surge cracks a drowned hold and wakes its guardian.
+    UAstrawildWorldEventDefinition* WreckSurge = MakeWorldEvent(Registry, TEXT("Event_WreckSurge"), TEXT("Wreck Surge"),
+        EAstrawildWorldEventKind::SupplyDrop, 0.7f, 22.0f, 3, 60, EAstrawildZone::TidebreakerIsles, false);
+    WreckSurge->RewardLootTableId = TEXT("Loot_POIRuin");
+    WreckSurge->SpeciesBoostId = TEXT("Echo_Dawnfang");
+    WreckSurge->SpeciesBoostCount = 2;
+    WreckSurge->Description = FText::FromString(TEXT("A wreck surge hammers the Tidebreaker Isles — cargo washes ashore and something rises with it."));
+
+    // Stormcrest: the storm front parks on the highlands and the thunder herds run.
+    UAstrawildWorldEventDefinition* StormFront = MakeWorldEvent(Registry, TEXT("Event_StormFront"), TEXT("Storm Front"),
+        EAstrawildWorldEventKind::StormSurge, 1.0f, 12.0f, 2, 90, EAstrawildZone::StormcrestHighlands, false);
+    StormFront->ForcedWeather = EAstrawildWeatherState::Storm;
+    StormFront->bForcesWeather = true;
+    StormFront->SpeciesBoostId = TEXT("Echo_Magmawing");
+    StormFront->SpeciesBoostCount = 3;
+    StormFront->Description = FText::FromString(TEXT("A storm front parks over Stormcrest — pulse-charged Magmawings ride the downdrafts above the tors."));
+
+    // Pearlsea: the reef sings and its rarest resident surfaces (the deep-reef
+    // answer to the Glimmerwood's Rare Echo Bloom).
+    UAstrawildWorldEventDefinition* Pearlsong = MakeWorldEvent(Registry, TEXT("Event_Pearlsong"), TEXT("Pearlsong"),
+        EAstrawildWorldEventKind::RareEchoBloom, 0.5f, 36.0f, 4, 90, EAstrawildZone::PearlseaReef, false);
+    Pearlsong->SpeciesBoostId = TEXT("Echo_Pearlcrest");
+    Pearlsong->SpeciesBoostCount = 1;
+    Pearlsong->ResearchPointReward = 3;
+    Pearlsong->Description = FText::FromString(TEXT("The Pearlsea sings — a Pearlcrest surfaces in the coral cathedrals, briefly, for anyone patient enough to be there."));
 }
 
 // ---------------------------------------------------------------------------
@@ -909,6 +1072,38 @@ void UAstrawildProductionContent::BuildPOIs(UAstrawildItemRegistrySubsystem* Reg
     MakePOI(Registry, TEXT("POI_PearlseaResonanceWell"), TEXT("Resonance Well"),
         TEXT("The reef grows in rings around whatever is at the bottom."),
         EAstrawildPOIType::SignalSource, EAstrawildZone::PearlseaReef, FVector2D(-1800.0f, -1800.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    // Final Run (FR-10): the Azure Shallows finally gets its POI — the sextant
+    // platform reads the tide races and explains why the isles' charts end mid-water.
+    MakePOI(Registry, TEXT("POI_ShallowsSextant"), TEXT("The Shallows Sextant"),
+        TEXT("A drowned surveyor's ring — it still tracks something deep under the race."),
+        EAstrawildPOIType::Ruin, EAstrawildZone::AzureShallows, FVector2D(2400.0f, -1600.0f), 1200.0f,
+        TEXT("Loot_VendorDriftwood"), 5);
+
+    // --- DP-7 (world depth): scanner-gated zone secrets — one hidden cache per
+    // high-threat region, mirroring the Frostveil Signal Source gating pattern
+    // (bRequiresSignalScanner — only players carrying the ancient signal tracker
+    // ever see them on the sweep). Real loot + research on first discovery. ---
+
+    MakePOI(Registry, TEXT("POI_HollowUndergateVault"), TEXT("The Undergate Vault"),
+        TEXT("The scanner pins a strongbox under the ashfall — pre-collapse, still charged, facing the gate."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::HollowApproach, FVector2D(2800.0f, -1600.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    MakePOI(Registry, TEXT("POI_SunscarMachineCoffin"), TEXT("The Machine Coffin"),
+        TEXT("Beneath the singing dune glass, machine bones keep their charge in a box the sun never reaches."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::SunscarDesert, FVector2D(3200.0f, -2400.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    MakePOI(Registry, TEXT("POI_TidebreakerHoldRoom"), TEXT("The Hold Room"),
+        TEXT("Every wreck kept one room dry. The scanner says this one kept it that way on purpose."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::TidebreakerIsles, FVector2D(-2600.0f, 1200.0f), 1000.0f,
+        TEXT("Loot_POIAncient"), 6, true);
+
+    MakePOI(Registry, TEXT("POI_PearlseaTidecache"), TEXT("The Tidecache"),
+        TEXT("A coral-sealed cache the reef grew around — the tide hides it, the scanner hums to it."),
+        EAstrawildPOIType::SignalSource, EAstrawildZone::PearlseaReef, FVector2D(2600.0f, 1800.0f), 1000.0f,
         TEXT("Loot_POIAncient"), 6, true);
 }
 
@@ -1083,40 +1278,48 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
         { Stack(TEXT("Item_EmberAsh"), 2) });
 
     // Voltpylon — the power-plant Echo (generation affinity + stamina aura).
-    MakeProductionEcho(Registry, TEXT("Echo_Voltpylon"), TEXT("Voltpylon"),
+    // DP-3: authored Construct signature — the overclock sprint.
+    if (UAstrawildEchoDefinition* Voltpylon = MakeProductionEcho(Registry, TEXT("Echo_Voltpylon"), TEXT("Voltpylon"),
         EAstrawildElementType::Pulse, EAstrawildEchoRole::Base, 140.0f, 20.0f, 20.0f, 340.0f,
         EAstrawildPersonality::Energetic, EAstrawildActivityPattern::Nocturnal,
-        { TEXT("Item_VoltCore") }, 0.5f, EAstrawildElementType::Flora,
+        { TEXT("Item_VoltCore") }, 0.5f, EAstrawildElementType::Light,
         EAstrawildEchoFamily::Construct, EAstrawildBodyPlan::Biped, EAstrawildSizeClass::Medium,
         EAstrawildZone::Glimmerwood, EAstrawildRarity::Rare, EAstrawildEchoPassive::PlayerStamina,
         { { EAstrawildWorkType::PowerGeneration, 1.8f }, { EAstrawildWorkType::Crafting, 1.1f } },
-        { Stack(TEXT("Item_VoltCore"), 1) });
+        { Stack(TEXT("Item_VoltCore"), 1) }))
+    {
+        Voltpylon->AbilityIds = { TEXT("Ability_OverclockDrive") };
+    }
 
     // Bastionbeetle — the base defense wall.
     MakeProductionEcho(Registry, TEXT("Echo_Bastionbeetle"), TEXT("Bastionbeetle"),
         EAstrawildElementType::Ash, EAstrawildEchoRole::Combat, 260.0f, 22.0f, 44.0f, 300.0f,
         EAstrawildPersonality::Protective, EAstrawildActivityPattern::Diurnal,
-        { TEXT("Item_ChitinPlate") }, 0.55f, EAstrawildElementType::Pulse,
+        { TEXT("Item_ChitinPlate") }, 0.55f, EAstrawildElementType::None,
         EAstrawildEchoFamily::Insectoid, EAstrawildBodyPlan::Insectoid, EAstrawildSizeClass::Large,
         EAstrawildZone::VerdantReach, EAstrawildRarity::Rare, EAstrawildEchoPassive::ThreatDampener,
         { { EAstrawildWorkType::Defense, 1.9f }, { EAstrawildWorkType::Mining, 1.0f } },
         { Stack(TEXT("Item_ChitinPlate"), 2) });
 
     // Mistmender — the healing aura companion.
-    MakeProductionEcho(Registry, TEXT("Echo_Mistmender"), TEXT("Mistmender"),
+    // DP-3: authored Spirit signature — the phase-shift escape.
+    if (UAstrawildEchoDefinition* Mistmender = MakeProductionEcho(Registry, TEXT("Echo_Mistmender"), TEXT("Mistmender"),
         EAstrawildElementType::Light, EAstrawildEchoRole::Support, 130.0f, 12.0f, 16.0f, 400.0f,
         EAstrawildPersonality::Social, EAstrawildActivityPattern::Crepuscular,
-        { TEXT("Item_Dawnbloom"), TEXT("Item_HerbalSalve") }, 0.4f, EAstrawildElementType::Ash,
+        { TEXT("Item_Dawnbloom"), TEXT("Item_HerbalSalve") }, 0.4f, EAstrawildElementType::None,
         EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Small,
         EAstrawildZone::DuskMarsh, EAstrawildRarity::Rare, EAstrawildEchoPassive::PartyHeal,
         { { EAstrawildWorkType::Farming, 1.3f }, { EAstrawildWorkType::ResearchAssist, 1.5f } },
-        { Stack(TEXT("Item_Dawnbloom"), 1) });
+        { Stack(TEXT("Item_Dawnbloom"), 1) }))
+    {
+        Mistmender->AbilityIds = { TEXT("Ability_PhaseShift") };
+    }
 
     // Deepdelver — the mining specialist.
     MakeProductionEcho(Registry, TEXT("Echo_Deepdelver"), TEXT("Deepdelver"),
         EAstrawildElementType::Ash, EAstrawildEchoRole::Base, 190.0f, 26.0f, 30.0f, 320.0f,
         EAstrawildPersonality::Lazy, EAstrawildActivityPattern::Nocturnal,
-        { TEXT("Item_Stone") }, 0.5f, EAstrawildElementType::Light,
+        { TEXT("Item_Stone") }, 0.5f, EAstrawildElementType::None,
         EAstrawildEchoFamily::Elemental, EAstrawildBodyPlan::Amorphous, EAstrawildSizeClass::Medium,
         EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Rare, EAstrawildEchoPassive::None,
         { { EAstrawildWorkType::Mining, 1.9f }, { EAstrawildWorkType::Construction, 1.3f } },
@@ -1138,6 +1341,26 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
             {
                 EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.MoveAnimPath));
             }
+        }
+    }
+
+    // PCR-4/PCR-5 (Tier-B archetype library): DEFINITION-DRIVEN opt-in binding.
+    // Species in the Tier-B list get their convention paths (SK_Echo_<Name> +
+    // AM_<Name>_Idle/Move) — the engine import pass activates the skinned body
+    // with ZERO engine-side code patching (the §20c hand-patch stays Tier-A-only).
+    // Before import, LoadSynchronous fails closed and the PMC body stays: the
+    // same opt-in contract the bosses use, so single-player behavior is unchanged.
+    for (const FName& TierBId : AstrawildArtPack::GetTierBSpeciesIds())
+    {
+        if (const AstrawildArtPack::FEchoArt* Existing = AstrawildArtPack::FindEchoArt(TierBId))
+        {
+            continue; // an explicit art row always wins over the convention
+        }
+        if (UAstrawildEchoDefinition* EchoDef = Registry->FindEcho(TierBId))
+        {
+            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::BuildTierBMechPath(TierBId)));
+            EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, false)));
+            EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, true)));
         }
     }
 }
@@ -1240,31 +1463,42 @@ void UAstrawildProductionContent::BuildEvolutionTargets(UAstrawildItemRegistrySu
 
 void UAstrawildProductionContent::BuildProductionTechnologies(UAstrawildItemRegistrySubsystem* Registry)
 {
+    // Branch rationale (DP-6 audit — the 9-branch enum is set here and pinned
+    // by test 106): charged arsenal families stay on Weapons; the suit line is
+    // Armor's tiered body; observation gear is Scanner; robotics is Automation;
+    // travel tech rides Exploration with Ancient Resonance.
+
+    // Weapons — the plasma/lumen/arc family extends the Armory arsenal line.
     MakeTech(Registry, TEXT("Tech_WeaponSystems"), TEXT("Weapon Systems"), EAstrawildTechEra::Electrical,
         EAstrawildResearchBranch::Weapons, 20,
         { TEXT("Tech_Armory"), TEXT("Tech_Electrical") },
         { TEXT("Recipe_PlasmaCharger"), TEXT("Recipe_LumenBeam"), TEXT("Recipe_ArcCaster") });
 
+    // Weapons — magrail/skysinger/seeker ordnance stays with the arsenal line.
     MakeTech(Registry, TEXT("Tech_AdvancedBallistics"), TEXT("Advanced Ballistics"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Weapons, 30,
         { TEXT("Tech_WeaponSystems") },
         { TEXT("Recipe_MagrailDriver"), TEXT("Recipe_SkysingerLauncher"), TEXT("Recipe_RailSlugBatch"), TEXT("Recipe_SeekerMissileBatch") });
 
+    // Weapons — prototype starlance/nova kit crowns the arsenal line.
     MakeTech(Registry, TEXT("Tech_ExperimentalArsenal"), TEXT("Experimental Arsenal"), EAstrawildTechEra::Ancient,
         EAstrawildResearchBranch::Weapons, 40,
         { TEXT("Tech_AdvancedBallistics"), TEXT("Tech_AncientResonance") },
         { TEXT("Recipe_StarlancePrototype"), TEXT("Recipe_NovaCell") });
 
+    // Armor — vanguard/bastion/astralforged suits are the armor tree's tiered body.
     MakeTech(Registry, TEXT("Tech_ExosuitEngineering"), TEXT("Exosuit Engineering"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Armor, 25,
         { TEXT("Tech_AdvancedEnergy") },
         { TEXT("Recipe_VanguardHelm"), TEXT("Recipe_VanguardVest"), TEXT("Recipe_BastionHelm"), TEXT("Recipe_BastionPlate"), TEXT("Recipe_AstralforgedExosuit") });
 
+    // Scanner — array/oracle scanners deepen the observation line.
     MakeTech(Registry, TEXT("Tech_ScannerArray"), TEXT("Scanner Array"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Scanner, 18,
         { TEXT("Tech_AdvancedEnergy") },
         { TEXT("Recipe_ArrayScanner"), TEXT("Recipe_OracleScanner") });
 
+    // Automation — drone modules + specialist chassis extend the robotics line.
     MakeTech(Registry, TEXT("Tech_AutomationII"), TEXT("Automation II"), EAstrawildTechEra::AdvancedEnergy,
         EAstrawildResearchBranch::Automation, 22,
         { TEXT("Tech_Mechanics"), TEXT("Tech_AdvancedEnergy") },
@@ -1341,7 +1575,9 @@ void UAstrawildProductionContent::BuildProductionQuests(UAstrawildItemRegistrySu
     }
     Vanguard->RewardItems = { Stack(TEXT("Item_AncientAlloy"), 1), Stack(TEXT("Item_StormSilver"), 3) };
     Vanguard->RewardResearchPoints = 25;
-    Vanguard->NextQuestId = NAME_None; // Chain closes (Antigravity's slice ends here for now).
+    // Final Run (FR-5): Act 3 opens here — "The Storm Crown Stirs" takes over
+    // the moment the Vanguard Protocol closes (validator: chain bridge).
+    Vanguard->NextQuestId = TEXT("Quest_StormAnchors");
     Registry->RegisterQuest(Vanguard);
 }
 
@@ -1403,6 +1639,19 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             Node.Choices.Add(Choice);
         }
         {
+            // Final Run (FR-6): the crown conversation unlocks once the Drowned
+            // Sovereign falls — the last story beat routes to the ending choice.
+            // Final-audit G-2: canon (MASTER_CONTROL §3) gates Maren's final
+            // dialogue on MQ-17 (homecoming) — NOT the Sovereign kill, or the
+            // ending fires one quest early and strands MQ-17 active.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("The crown — what do we do?"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
+            Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+            Choice.GotoNodeId = TEXT("crown");
+            Node.Choices.Add(Choice);
+        }
+        {
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Leave"));
             Choice.bEndDialogue = true;
@@ -1458,9 +1707,49 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         }
         Maren->Nodes.Add(Node);
     }
+    {
+        // Final Run (FR-6) — Maren's final choice: the two endings. The crown
+        // cage stands open; the Vale waits on one word. Both choices are one-way
+        // (TriggerEndingId routes through the game state; the flag hides the
+        // beat afterward; post-game free roam unlocks either way).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("crown");
+        Node.Lines = {
+            Line(nullptr, TEXT("The cage is open. The core still hums — one pulse from the storm crown, one heartbeat of everything that drowned.")),
+            Line(nullptr, TEXT("Break it, and the storms never return — but the Vale changes forever. Let it sleep, and we live beside the crown — guarded, watchful, free."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Break the cage — end the storms forever"));
+            // Final-audit G-2: gated on MQ-17 (homecoming) per canon — see the
+            // reveal choice comment above.
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
+            Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+            Choice.SetFlagId = TEXT("Maren_EndingResolved");
+            Choice.TriggerEndingId = TEXT("Ending_BreakCage"); // → The Dawn That Stays.
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Let it sleep — the crown keeps its vigil"));
+            // Final-audit G-2: gated on MQ-17 (homecoming) per canon.
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
+            Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+            Choice.SetFlagId = TEXT("Maren_EndingResolved");
+            Choice.TriggerEndingId = TEXT("Ending_StormSleeps"); // → The Storm That Sleeps.
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Maren->Nodes.Add(Node);
+    }
     Registry->RegisterDialogueTree(Maren);
 
     // --- Trader Tam (Dawnstead vendor) — shop hand-off + one-time Gloomfang tip ---
+    // DP-8 (NPC depth): the tree evolves with the relationship — trade-route
+    // knowledge is free (a merchant sells maps with everything), while the
+    // supply-line beat only exists at Friend (affinity >= 50) and bridges
+    // straight into the shop (bOpenShop — the existing vendor hand-off verb).
     UAstrawildDialogueTreeDefinition* Tam = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Tam->DialogueId = TEXT("Dialogue_TraderTam");
     Tam->EntryNodeId = TEXT("hello");
@@ -1482,6 +1771,26 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             Choice.SetFlagId = TEXT("Tam_GloomfangTip");
             Choice.GiveResearchPoints = 10;
             Choice.GotoNodeId = TEXT("gloomfang");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line (free): the trade-route resource map.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Where do your goods come from?"));
+            Choice.GotoNodeId = TEXT("sources");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Friend tier (>= 50) — the supply-line
+            // beat. Honest content: a real Storm Front warning + one-time
+            // research notes + the shop bridge (bOpenShop on the follow-up).
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Your supply line — anything I should know?"));
+            Choice.RequiredMinAffinity = 50; // Friend
+            Choice.ForbiddenFlagId = TEXT("Tam_SupplyLineTip");
+            Choice.SetFlagId = TEXT("Tam_SupplyLineTip");
+            Choice.GiveResearchPoints = 10;
+            Choice.GotoNodeId = TEXT("supplyline");
             Node.Choices.Add(Choice);
         }
         {
@@ -1514,9 +1823,74 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         }
         Tam->Nodes.Add(Node);
     }
+    {
+        // DP-8 knowledge node: the trade-route map — which zone holds which
+        // rare material (all pinned by the zone resource tables).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("sources");
+        Node.Lines = {
+            Line(nullptr, TEXT("Dune glass out of the Sunscar, storm silver down from Stormcrest, ember ash over the Ridge — that's the shape of my trade.")),
+            Line(nullptr, TEXT("The old world's alloy? Hollow Approach, sleeping in hidden veins. And keep an ear on the Frostveil — when a star falls out there, rare metal scatters with it."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse wares"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tam->Nodes.Add(Node);
+    }
+    {
+        // DP-8 affinity evolution: Friend-tier supply-line beat — the storm
+        // front parking over Stormcrest halts the silver caravans (the real
+        // Event_StormFront: forced storm + Magmawing pulse herd). The
+        // follow-up bridges straight into the shop.
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("supplyline");
+        Node.Lines = {
+            Line(nullptr, TEXT("For a friend? Then hear it plain. When a storm front parks over Stormcrest, the silver caravans halt — and the thunder herds ride the downdrafts with it.")),
+            Line(nullptr, TEXT("I sit on my stock until it blows over, and I price what survives. The delivery manifest is yours to look through — take what's useful before the next front moves in."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the delivery manifest"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Tam->Nodes.Add(Node);
+    }
     Registry->RegisterDialogueTree(Tam);
 
     // --- Elder Rowan (Dawnstead) — Wings over the Vale offer + old-world lore ---
+    // DP-8 (NPC depth): the Elder shares his map of the far lands with anyone
+    // (that is what elders are for), but the old doors — where the dungeon
+    // gates and sealed vaults sit — only a Confidant hears (affinity >= 75).
     UAstrawildDialogueTreeDefinition* Rowan = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Rowan->DialogueId = TEXT("Dialogue_ElderRowan");
     Rowan->EntryNodeId = TEXT("hello");
@@ -1528,6 +1902,27 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Ask about the old world"));
             Choice.GotoNodeId = TEXT("oldworld");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line (free): the far-lands resource map.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What should I know of the far lands?"));
+            Choice.GotoNodeId = TEXT("farlands");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Confidant tier (>= 75) — the old doors.
+            // Deep lore + quest hint: the dungeon gates and the four
+            // scanner-sealed vaults (all real world content) + one-time
+            // research for the archive haul.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("The old doors — where are they?"));
+            Choice.RequiredMinAffinity = 75; // Confidant
+            Choice.ForbiddenFlagId = TEXT("Rowan_OldDoorsTold");
+            Choice.SetFlagId = TEXT("Rowan_OldDoorsTold");
+            Choice.GiveResearchPoints = 12;
+            Choice.GotoNodeId = TEXT("doors");
             Node.Choices.Add(Choice);
         }
         {
@@ -1553,6 +1948,53 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         Node.Lines = {
             Line(nullptr, TEXT("Before the quiet, they crossed the sky in machines that sang. What's left of their roads still hums at dusk.")),
             Line(nullptr, TEXT("We do not dig where it hums. You, I think, will."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    {
+        // DP-8 knowledge node: the far-lands map — where the rare materials
+        // actually sit (pinned by the zone resource tables).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("farlands");
+        Node.Lines = {
+            Line(nullptr, TEXT("Glass-sand in the Sunscar's dunes. Silver in Stormcrest's tors. Ash in the Ridge's vents, crystal in the Glimmerwood's spires.")),
+            Line(nullptr, TEXT("And in the Frostveil — when a star falls into the snowfields, the metal it scatters is the rarest the Vale still gives. I have watched three fall in my lifetime."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Rowan->Nodes.Add(Node);
+    }
+    {
+        // DP-8 affinity evolution: Confidant-tier deep lore — the old doors:
+        // the three dungeon gates + the four scanner-sealed vaults, all real
+        // world content (bootstrapper dungeons + the DP-7 secrets).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("doors");
+        Node.Lines = {
+            Line(nullptr, TEXT("Three doors matter. The Underlight gate past the Hollow Approach. The Sunken Vault under the Tidebreakers' west isle. And the Eye Gate, floating above Stormcrest — past any stock skiff; only the Stratos Coil reaches it.")),
+            Line(nullptr, TEXT("Four more sleep sealed: a vault under the Hollow, a machine coffin in the Sunscar, a hold room in the drowned isles, a tidecache in the Pearlsea's coral. An ancient signal tracker's sweep wakes them on your map — take my notes for the bench."))
         };
         {
             FAstrawildDialogueChoice Choice;
@@ -1649,6 +2091,11 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
     Registry->RegisterDialogueTree(Kael);
 
     // --- Guard Captain Sela (Dawnstead) — night-raid survival lore + one-time watch advice ---
+    // DP-8 (NPC depth): the hazard map is public safety information (guards
+    // drill it into anyone walking out the gate), while the patrol chart —
+    // where the dungeon gates actually sit — only leaves her mouth at
+    // Acquaintance (affinity >= 25): strangers get the fence, neighbours get
+    // the watch.
     UAstrawildDialogueTreeDefinition* Sela = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
     Sela->DialogueId = TEXT("Dialogue_GuardSela");
     Sela->EntryNodeId = TEXT("hello");
@@ -1660,6 +2107,26 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
             FAstrawildDialogueChoice Choice;
             Choice.Text = FText::FromString(TEXT("Ask about the night raids"));
             Choice.GotoNodeId = TEXT("raids");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line (free): the per-zone hazard map.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Which lands press hardest?"));
+            Choice.GotoNodeId = TEXT("hazards");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Acquaintance tier (>= 25) — patrol
+            // knowledge. Honest content: where the three dungeon gates sit +
+            // the storm watch + one-time research for the patrol chart.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Share your patrol knowledge"));
+            Choice.RequiredMinAffinity = 25; // Acquaintance
+            Choice.ForbiddenFlagId = TEXT("Sela_PatrolTip");
+            Choice.SetFlagId = TEXT("Sela_PatrolTip");
+            Choice.GiveResearchPoints = 8;
+            Choice.GotoNodeId = TEXT("patrol");
             Node.Choices.Add(Choice);
         }
         {
@@ -1685,6 +2152,53 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         Node.Lines = {
             Line(nullptr, TEXT("When the sky goes amber, they come — Gloomfangs bold, Ashfangs hungry, worse behind them on the storm nights.")),
             Line(nullptr, TEXT("A fence slows them. A powered fence stops them. Get your generator humming before dusk, not after."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    {
+        // DP-8 knowledge node: the hazard map — how each wild land presses
+        // the body (all pinned by the DP-7 zone hazard table).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hazards");
+        Node.Lines = {
+            Line(nullptr, TEXT("Frostveil reads twelve degrees colder than these fields under the same sky — dress for it or turn back. The Sunscar burns hottest at noon, and the Ridge simmers over its caldera all day.")),
+            Line(nullptr, TEXT("The Hollow is the trap: its ash tires the lungs without drawing blood. Keep fights short in there — men who duel in the ash come back slow."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Sela->Nodes.Add(Node);
+    }
+    {
+        // DP-8 affinity evolution: Acquaintance-tier patrol chart — where the
+        // three dungeon gates sit + what the storm watch looks for (all real
+        // bootstrapper content).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("patrol");
+        Node.Lines = {
+            Line(nullptr, TEXT("The Underlight gate sits past the Hollow Approach — my watch ends at the ash line. The Sunken Vault's door is under the Tidebreakers' west isle; Kael's skiff runs it. The Eye Gate floats above Stormcrest — above any stock skiff.")),
+            Line(nullptr, TEXT("And when a storm front parks on Stormcrest, the thunder herds ride the downdrafts — we watch for the Magmawings first. Here, the patrol chart. Your bench can lift the timings from it."))
         };
         {
             FAstrawildDialogueChoice Choice;
@@ -1788,6 +2302,574 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         Perry->Nodes.Add(Node);
     }
     Registry->RegisterDialogueTree(Perry);
+
+    // -------------------------------------------------------------------------
+    // Final Run (FR-10) — the last five villagers get their trees. Every NPC in
+    // the Vale now converses: vendor hand-offs route through bOpenShop, one-time
+    // beats use story flags, and conditions gate on quest state + world facts.
+    // -------------------------------------------------------------------------
+
+    // --- Herbalist Wren (Dawnstead vendor) — salve recipe tip + shop ---
+    UAstrawildDialogueTreeDefinition* Wren = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Wren->DialogueId = TEXT("Dialogue_HerbalistWren");
+    Wren->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Bark, root, bloom. The marsh gives everything if you know which parts to boil.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse remedies"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Ask about the salve recipe"));
+            Choice.ForbiddenFlagId = TEXT("Wren_SalveTip");
+            Choice.SetFlagId = TEXT("Wren_SalveTip");
+            Choice.GiveResearchPoints = 8;
+            Choice.GotoNodeId = TEXT("salve");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Wren->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("salve");
+        Node.Lines = {
+            Line(nullptr, TEXT("Chitin plate, marsh bloom, a whisper of dawn shard. Grind, warm, wrap — the Herbal Salve writes itself.")),
+            Line(nullptr, TEXT("Here, the proportions. Your research bench will make better ink of it than my chalk."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse remedies"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Wren->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Wren);
+
+    // --- Blacksmith Borin (Dawnstead vendor) — one-time whetstone gift + shop ---
+    UAstrawildDialogueTreeDefinition* Borin = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Borin->DialogueId = TEXT("Dialogue_BlacksmithBorin");
+    Borin->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Steel today, story tomorrow. Which do you need?")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the forge"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Take the whetstone offer"));
+            Choice.ForbiddenFlagId = TEXT("Borin_WhetstoneGiven");
+            Choice.SetFlagId = TEXT("Borin_WhetstoneGiven");
+            Choice.GiveItemId = TEXT("Item_Stone");
+            Choice.GiveItemQuantity = 3;
+            Choice.GotoNodeId = TEXT("whetstone");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Borin->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("whetstone");
+        Node.Lines = {
+            Line(nullptr, TEXT("First-fielders get whetstones. Keep an edge on everything — the Vale doesn't forgive dull tools.")),
+            Line(nullptr, TEXT("Three stones. Don't come back crying when you've ground them to sand."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the forge"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Borin->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Borin);
+
+    // --- Guard Bram (Dawnstead) — night-watch intelligence + the Tyrant rumor ---
+    UAstrawildDialogueTreeDefinition* Bram = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Bram->DialogueId = TEXT("Dialogue_GuardBram");
+    Bram->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Gloomfangs again. Always Gloomfangs. Third night running they test the south fence.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("How do I survive a night raid?"));
+            Choice.ForbiddenFlagId = TEXT("Bram_NightTip");
+            Choice.SetFlagId = TEXT("Bram_NightTip");
+            Choice.GiveResearchPoints = 8;
+            Choice.GotoNodeId = TEXT("nighttip");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Anything stranger than Gloomfangs?"));
+            Choice.GotoNodeId = TEXT("rumor");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Bram->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("nighttip");
+        Node.Lines = {
+            Line(nullptr, TEXT("Fires. Lamplight. Don't chase them past the treeline — they pull you off the wall and swarm.")),
+            Line(nullptr, TEXT("And keep a shield up. Here — the watch rotation notes, for your bench."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("rumor");
+        Node.Lines = {
+            Line(nullptr, TEXT("The Sunscar. Something made of glass has been walking the dunes at noon — flat, bright, wrong.")),
+            Line(nullptr, TEXT("Kael's charts call it the Glass Tyrant. If you're headed that way... take the bright stuff. It hates light."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    Registry->RegisterDialogueTree(Bram);
+
+    // --- Farmer Jori (Dawnstead) — Sprigling husbandry tip ---
+    // DP-8 (NPC depth): knowledge line — what the wild weathers mean for
+    // anyone who works the ground (zone events read as almanac, not omen).
+    UAstrawildDialogueTreeDefinition* Jori = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Jori->DialogueId = TEXT("Dialogue_FarmerJori");
+    Jori->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Spriglings turn the soil better than any hoe. I just follow behind with seeds and apologies.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("How do you keep Spriglings happy?"));
+            Choice.ForbiddenFlagId = TEXT("Jori_HusbandryTip");
+            Choice.SetFlagId = TEXT("Jori_HusbandryTip");
+            Choice.GiveResearchPoints = 6;
+            Choice.GotoNodeId = TEXT("husbandry");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 knowledge line: the weather almanac — what the new zone
+            // events mean (all real Event_* payloads).
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What do the wild weathers mean?"));
+            Choice.ForbiddenFlagId = TEXT("Jori_WeatherTip");
+            Choice.SetFlagId = TEXT("Jori_WeatherTip");
+            Choice.GiveResearchPoints = 6;
+            Choice.GotoNodeId = TEXT("weathers");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Jori->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("husbandry");
+        Node.Lines = {
+            Line(nullptr, TEXT("Feed mix, a trough, and patience. They sulk without company — pen them near the fire, not the fence.")),
+            Line(nullptr, TEXT("The old feeding schedule is in the shed ledger. Take it; my eyes are done with small print."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Jori->Nodes.Add(Node);
+    }
+    {
+        // DP-8 knowledge node: the weather almanac — zone events as the
+        // farmer reads them (Mist Tide / Cinder Fall / Storm Front payloads).
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("weathers");
+        Node.Lines = {
+            Line(nullptr, TEXT("When a mist tide rolls over the Dusk Marsh, the Spriglings bloom threefold in the white — best taming day you'll ever see. I'd trade a season's harvest for one of those days.")),
+            Line(nullptr, TEXT("Cinders over the Ridge crack the ash vents open — that's gathering weather, if you can stand the heat. And a front parked on Stormcrest means the thunder herds run. The old almanac's in the shed if your bench wants it."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Jori->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Jori);
+
+    // --- Fisher Nima (Driftwood Landing vendor) — tide table + shop ---
+    // DP-8 (NPC depth): rare-goods beat exists only at Friend (affinity >= 50)
+    // — a fisherwoman tells her FRIENDS when the rare catches move, and the
+    // follow-up bridges into her catch (bOpenShop — the existing verb).
+    UAstrawildDialogueTreeDefinition* Nima = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Nima->DialogueId = TEXT("Dialogue_FisherNima");
+    Nima->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("Fresh catch, sea pearls, and gossip — the gossip's the expensive part.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the catch"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What's beyond the shallows?"));
+            Choice.GotoNodeId = TEXT("beyond");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // DP-8 affinity evolution: Friend tier (>= 50) — the rare-goods
+            // line. Honest content: when Reef Bloom / Pearlsong fire (real
+            // events) + one-time research + the shop bridge.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Any rare goods moving through the reef?"));
+            Choice.RequiredMinAffinity = 50; // Friend
+            Choice.ForbiddenFlagId = TEXT("Nima_RareGoodsTip");
+            Choice.SetFlagId = TEXT("Nima_RareGoodsTip");
+            Choice.GiveResearchPoints = 10;
+            Choice.GotoNodeId = TEXT("raregoods");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Nima->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("beyond");
+        Node.Lines = {
+            Line(nullptr, TEXT("There's a surveyor's ring out in the Azure Shallows — a sextant, still turning, still pointed at nothing.")),
+            Line(nullptr, TEXT("Perry says the charts end there because the surveyor never came back to finish them. I say the sea keeps what it likes."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the catch"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    {
+        // DP-8 affinity evolution: Friend-tier rare-goods beat — when the
+        // reef blooms and when the Pearlsea sings (Reef Bloom + Pearlsong,
+        // the real zone events) + the rare-catch shop bridge.
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("raregoods");
+        Node.Lines = {
+            Line(nullptr, TEXT("For a friend? Watch the water. When the reef blooms, the Azure Shallows clear and the pearl beds show themselves — Brinefins school right over them.")),
+            Line(nullptr, TEXT("Rarer still: when the Pearlsea sings, a Pearlcrest surfaces in the coral cathedrals — brief, and only for the patient. I keep the good bin aside when either runs. Marked prices, marked down. Have a look."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Browse the rare bin"));
+            Choice.bOpenShop = true;
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+    }
+    Registry->RegisterDialogueTree(Nima);
+}
+
+// ---------------------------------------------------------------------------
+// Final Run (FR-5) — Act 3 "The Storm Crown" content pack.
+//
+// The game finally ENDS: MQ-13..17 walk the player from the three storm
+// anchors, through the Glass Tyrant mini-boss and the Stratos Coil ceiling
+// gate, into the Eye of the Maelstrom, against the Drowned Sovereign — then
+// home to Dawnstead, where Warden Maren holds the last choice (two endings,
+// wired through TriggerEndingId → the game state; see the Maren tree above).
+// ---------------------------------------------------------------------------
+
+void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySubsystem* Registry)
+{
+    if (!Registry)
+    {
+        return;
+    }
+
+    // --- Act 3 materials + key item ---
+
+    UAstrawildItemDefinition* SovereignCore = MakeItem(Registry, TEXT("Item_SovereignCore"), TEXT("Sovereign Core"),
+        EAstrawildItemCategory::QuestItem, 0.8f, 1);
+    SovereignCore->Rarity = EAstrawildRarity::Legendary;
+    SovereignCore->Description = FText::FromString(TEXT("The storm crown's heart, torn from the Drowned Sovereign. It still hums with the first pulse of the Vale."));
+    SovereignCore->VendorPrice = 0; // Quest item — not for sale.
+
+    UAstrawildItemDefinition* MaelstromGlass = MakeItem(Registry, TEXT("Item_MaelstromGlass"), TEXT("Maelstrom Glass"),
+        EAstrawildItemCategory::Material, 0.5f, 20);
+    MaelstromGlass->Rarity = EAstrawildRarity::Rare;
+    MaelstromGlass->Description = FText::FromString(TEXT("Storm-fused glass. It rings when the crown stirs — and it coils resonance like wire."));
+    MaelstromGlass->VendorPrice = 9;
+
+    UAstrawildItemDefinition* StratosCoil = MakeItem(Registry, TEXT("Item_SkiffStratosCoil"), TEXT("Skiff Stratos Coil"),
+        EAstrawildItemCategory::QuestItem, 2.0f, 1);
+    StratosCoil->Rarity = EAstrawildRarity::Epic;
+    StratosCoil->Description = FText::FromString(TEXT("A resonance coil that lifts a Dawn Skiff past the storm ceiling (120m → 160m). The sky gate opens."));
+    StratosCoil->VendorPrice = 0; // Key item — not for sale.
+
+    // --- Act 3 boss species roster ---
+
+    // Glass Tyrant — the Sunscar's crystalline mini-boss (MQ-14). An encounter
+    // DESIGN exception to the FR-3 matrix (Ash normally has no weakness): the
+    // Tyrant's glass shatters under concentrated light — Bram's tip, the quest
+    // text and the Dawn arsenal theme all agree.
+    MakeProductionEcho(Registry, TEXT("Echo_GlassTyrant"), TEXT("Glass Tyrant"),
+        EAstrawildElementType::Ash, EAstrawildEchoRole::Combat,
+        260.0f, 38.0f, 22.0f, 520.0f,
+        EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Diurnal,
+        { }, 0.90f, EAstrawildElementType::Light,
+        EAstrawildEchoFamily::Elemental, EAstrawildBodyPlan::Crystalline, EAstrawildSizeClass::Large,
+        EAstrawildZone::SunscarDesert, EAstrawildRarity::Epic, EAstrawildEchoPassive::None,
+        { }, { Stack(TEXT("Item_MaelstromGlass"), 2), Stack(TEXT("Item_DuneGlass"), 2) });
+
+    // Eye Sentinel — the Sovereign's floating guards (dungeon adds + boss summons).
+    // FR-3 matrix: Pulse falls to Light.
+    MakeProductionEcho(Registry, TEXT("Echo_EyeSentinel"), TEXT("Eye Sentinel"),
+        EAstrawildElementType::Pulse, EAstrawildEchoRole::Combat,
+        90.0f, 22.0f, 12.0f, 480.0f,
+        EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Nocturnal,
+        { }, 0.85f, EAstrawildElementType::Light,
+        EAstrawildEchoFamily::Construct, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Medium,
+        EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Rare, EAstrawildEchoPassive::None,
+        { }, { Stack(TEXT("Item_MaelstromGlass"), 1) });
+
+    // The Drowned Sovereign — the final boss (MQ-16). 400 HP base × the boss
+    // health scale (5.0) = 2000 HP, three phases, weak to Dawn Light.
+    // DP-3: authored Ancient signature — the relic-burst (canon row; bosses
+    // run their own choreography, the id rides for data parity like
+    // Ability_SovereignTide above it).
+    if (UAstrawildEchoDefinition* Sovereign = MakeProductionEcho(Registry, TEXT("Echo_DrownedSovereign"), TEXT("The Drowned Sovereign"),
+        EAstrawildElementType::Pulse, EAstrawildEchoRole::Combat,
+        400.0f, 46.0f, 26.0f, 430.0f,
+        EAstrawildPersonality::Aggressive, EAstrawildActivityPattern::Diurnal,
+        { }, 0.95f, EAstrawildElementType::Light,
+        EAstrawildEchoFamily::Ancient, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Huge,
+        EAstrawildZone::StormcrestHighlands, EAstrawildRarity::Legendary, EAstrawildEchoPassive::None,
+        { }, { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 3) }))
+    {
+        Sovereign->AbilityIds = { TEXT("Ability_RelicBurst"), TEXT("Ability_SovereignTide") };
+    }
+
+    // --- Skiff Engineering (FR-8 tech + recipe) ---
+
+    // Exploration — skiff travel tech rides the same branch as Ancient
+    // Resonance: lifting the storm ceiling is a travel/exploration verb.
+    MakeTech(Registry, TEXT("Tech_SkiffEngineering"), TEXT("Skiff Engineering"), EAstrawildTechEra::AdvancedEnergy,
+        EAstrawildResearchBranch::Exploration, 25,
+        { TEXT("Tech_AdvancedEnergy") },
+        { TEXT("Recipe_SkiffStratosCoil") });
+
+    MakeRecipe(Registry, TEXT("Recipe_SkiffStratosCoil"), TEXT("Skiff Stratos Coil"),
+        { Stack(TEXT("Item_StormSilver"), 4), Stack(TEXT("Item_DuneGlass"), 3), Stack(TEXT("Item_MaelstromGlass"), 2) },
+        { Stack(TEXT("Item_SkiffStratosCoil"), 1) }, 20.0f, TEXT("Tech_SkiffEngineering"), TEXT("Station_Workbench"));
+
+    // --- The Sovereign's loot table (FR-7 boss-room override) ---
+
+    MakeLoot(Registry, TEXT("Loot_EyeCore"),
+        { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 2) }, 0.5f);
+
+    // --- MQ-13 "The Storm Crown Stirs" ---
+    UAstrawildQuestDefinition* StormAnchors = NewObject<UAstrawildQuestDefinition>(Registry);
+    StormAnchors->QuestId = TEXT("Quest_StormAnchors");
+    StormAnchors->Title = FText::FromString(TEXT("The Storm Crown Stirs"));
+    StormAnchors->Summary = FText::FromString(TEXT("Three ancient anchors hum across the Vale — Frostveil, Sunscar, Stormcrest. Read them all; the crown is waking."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_FrostveilSignalSource");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Read the Frostveil signal source"));
+        StormAnchors->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_SunscarMirageStone");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Read the Sunscar mirage stone"));
+        StormAnchors->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_StormcrestArray");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Read the Stormcrest array"));
+        StormAnchors->Objectives.Add(Obj);
+    }
+    StormAnchors->RewardItems = { Stack(TEXT("Item_MaelstromGlass"), 1) };
+    StormAnchors->RewardResearchPoints = 25;
+    StormAnchors->NextQuestId = TEXT("Quest_CrownRelay");
+    Registry->RegisterQuest(StormAnchors);
+
+    // --- MQ-14 "The Crown Relay" ---
+    UAstrawildQuestDefinition* CrownRelay = NewObject<UAstrawildQuestDefinition>(Registry);
+    CrownRelay->QuestId = TEXT("Quest_CrownRelay");
+    CrownRelay->Title = FText::FromString(TEXT("The Crown Relay"));
+    CrownRelay->Summary = FText::FromString(TEXT("A Glass Tyrant squats on the Sunscar relay, and the skiff needs a coil that sings above the storm ceiling."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Creature_GlassTyrant");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Break the Glass Tyrant"));
+        CrownRelay->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::CraftRecipe;
+        Obj.TargetId = TEXT("Recipe_SkiffStratosCoil");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Craft the Skiff Stratos Coil"));
+        CrownRelay->Objectives.Add(Obj);
+    }
+    CrownRelay->RewardItems = { Stack(TEXT("Item_DawnShard"), 6) };
+    CrownRelay->RewardResearchPoints = 30;
+    CrownRelay->NextQuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    Registry->RegisterQuest(CrownRelay);
+
+    // --- MQ-15 "The Eye of the Maelstrom" ---
+    UAstrawildQuestDefinition* EyeQuest = NewObject<UAstrawildQuestDefinition>(Registry);
+    EyeQuest->QuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    EyeQuest->Title = FText::FromString(TEXT("The Eye of the Maelstrom"));
+    EyeQuest->Summary = FText::FromString(TEXT("The eye opens above Stormcrest, past the 150-metre storm ceiling. Coil installed, climb, and enter."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ReachLocation;
+        Obj.TargetId = TEXT("Location_EyeGate");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Reach the Eye Gate above Stormcrest"));
+        EyeQuest->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ReachLocation;
+        Obj.TargetId = TEXT("Location_EyeOfTheMaelstrom");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Enter the Eye of the Maelstrom"));
+        EyeQuest->Objectives.Add(Obj);
+    }
+    EyeQuest->RewardItems = { Stack(TEXT("Item_EnergyCell"), 6) };
+    EyeQuest->RewardResearchPoints = 30;
+    EyeQuest->NextQuestId = TEXT("Quest_TheDrownedSovereign");
+    Registry->RegisterQuest(EyeQuest);
+
+    // --- MQ-16 "The Drowned Sovereign" ---
+    UAstrawildQuestDefinition* Sovereign = NewObject<UAstrawildQuestDefinition>(Registry);
+    Sovereign->QuestId = TEXT("Quest_TheDrownedSovereign");
+    Sovereign->Title = FText::FromString(TEXT("The Drowned Sovereign"));
+    Sovereign->Summary = FText::FromString(TEXT("Everything the storms drowned is still down there, wearing a crown. Dawn Light is its bane — three phases, one core."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Creature_DrownedSovereign");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Defeat the Drowned Sovereign"));
+        Sovereign->Objectives.Add(Obj);
+    }
+    Sovereign->RewardItems = { Stack(TEXT("Item_SovereignCore"), 1), Stack(TEXT("Item_MaelstromGlass"), 3) };
+    Sovereign->RewardResearchPoints = 40;
+    Sovereign->NextQuestId = TEXT("Quest_FirstDawnAgain");
+    Registry->RegisterQuest(Sovereign);
+
+    // --- MQ-17 "First Dawn Again" (terminus) ---
+    UAstrawildQuestDefinition* FirstDawn = NewObject<UAstrawildQuestDefinition>(Registry);
+    FirstDawn->QuestId = TEXT("Quest_FirstDawnAgain");
+    FirstDawn->Title = FText::FromString(TEXT("First Dawn Again"));
+    FirstDawn->Summary = FText::FromString(TEXT("Carry the core home to Dawnstead. Maren is waiting at the watch-fire — and the Vale is waiting on her word."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ReachLocation;
+        Obj.TargetId = TEXT("Location_Dawnstead");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Return to Dawnstead and speak with Warden Maren"));
+        FirstDawn->Objectives.Add(Obj);
+    }
+    FirstDawn->RewardItems = { };
+    FirstDawn->RewardResearchPoints = 50;
+    FirstDawn->NextQuestId = NAME_None; // Chain terminus — the endings live in Maren's crown dialogue.
+    Registry->RegisterQuest(FirstDawn);
+
+    UE_LOG(LogAstrawildEconomy, Log,
+        TEXT("Final Run content registered: Act 3 quest chain MQ-13..17 (StormAnchors→CrownRelay→EyeOfTheMaelstrom→DrownedSovereign→FirstDawnAgain), 3 boss species (GlassTyrant/EyeSentinel/DrownedSovereign), 3 items (SovereignCore/MaelstromGlass/SkiffStratosCoil), Tech_SkiffEngineering + coil recipe, Loot_EyeCore, Maren ending dialogue (2 endings)."));
 }
 
 // ---------------------------------------------------------------------------
@@ -1811,7 +2893,8 @@ void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Regi
     BuildProductionTechnologies(Registry);
     BuildProductionQuests(Registry);
     BuildDialogueTrees(Registry);
+    BuildFinalRunContent(Registry); // FR-5: Act 3 "The Storm Crown" + the two endings.
 
     UE_LOG(LogAstrawildEconomy, Log,
-        TEXT("Production V2 content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 production Echoes + 6 evolution targets, 6 technologies, 2 quests, 6 dialogue trees."));
+        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 quests (17 total), 6 + 5 dialogue trees (11 total — every NPC converses)."));
 }

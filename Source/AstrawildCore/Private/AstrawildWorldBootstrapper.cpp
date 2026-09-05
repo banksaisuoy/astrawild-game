@@ -6,6 +6,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildDungeonGeneratorActor.h"
 #include "AstrawildDungeonPortalActor.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -145,7 +146,32 @@ AAstrawildWorldBootstrapper::AAstrawildWorldBootstrapper()
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.TickInterval = 0.25f; // Sun tracking + light flicker — cheap.
 
+    // LCP-2: replicate so LAN clients receive the bootstrapper and build their
+    // deterministic cosmetic world copy (terrain/lighting/sea/landmarks/dressing).
+    // It carries no replicated properties — the channel is near-free.
+    bReplicates = true;
+    bAlwaysRelevant = true;
+    NetUpdateFrequency = 0.1f;
+
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+}
+
+bool AAstrawildWorldBootstrapper::ShouldBuildCosmeticWorld(const ENetRole InLocalRole, const ENetMode InNetMode)
+{
+    // Authority machines (standalone + listen host) build inside BeginPlay;
+    // remote clients (simulated proxy in a client netmode) build from the
+    // replicated seed once bWorldSeedSynced flips. Anything else (dedicated
+    // server — out of scope per MASTER_CONTROL §1b) does not build.
+    return InLocalRole == ROLE_Authority || InNetMode == NM_Standalone || InNetMode == NM_Client;
+}
+
+int32 AAstrawildWorldBootstrapper::ComputeExpectedReplicatedWorldActorCount(const int32 PoiCount)
+{
+    // The exclusion-bubble sources SpawnBiomeDressing iterates: 2 villages,
+    // 3 dungeon generators, 9 portals (Underlight entrance+exit, Vault
+    // entrance+exit, landing marker, Eye entrance+exit+arrival, home marker),
+    // 1 marker per registered POI definition, 2 skiffs.
+    return 2 + 3 + 9 + FMath::Max(0, PoiCount) + 2;
 }
 
 AAstrawildGameState* AAstrawildWorldBootstrapper::GetGameState() const
@@ -197,6 +223,24 @@ FVector2D AAstrawildWorldBootstrapper::GetDriftwoodLandingXY()
     return FVector2D(-112000.0f, -86000.0f);
 }
 
+FVector2D AAstrawildWorldBootstrapper::GetStormcrestCenterXY()
+{
+    // Final Run (FR-7): the storm heart — Glass Tyrant roams here and the Eye
+    // gate floats overhead.
+    if (const FAstrawildZoneDescriptor* Zone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_StormcrestHighlands")))
+    {
+        return Zone->GetCenter();
+    }
+    return FVector2D(-40000.0f, -80000.0f);
+}
+
+FVector2D AAstrawildWorldBootstrapper::GetEyeDungeonCenterXY()
+{
+    // Final Run (FR-7): the Eye dungeon anchor — offset south of the Stormcrest
+    // center so the gate pad and the Tyrant's roaming ground don't overlap.
+    return GetStormcrestCenterXY() + FVector2D(6000.0f, -9000.0f);
+}
+
 float AAstrawildWorldBootstrapper::GroundZ(const FVector2D& WorldXY) const
 {
     return AAstrawildTerrainTileActor::EvalWorldHeight(WorldXY, WorldSeedCached);
@@ -208,6 +252,13 @@ void AAstrawildWorldBootstrapper::BeginPlay()
 
     if (GetLocalRole() != ROLE_Authority)
     {
+        // LCP-2: LAN client — the authority path above never runs here. The
+        // deterministic cosmetic world (terrain/sea/lighting/landmarks) builds
+        // once the replicated seed syncs; dressing waits for the replicated
+        // gameplay actors (exclusion bubbles). Gameplay spawns never run —
+        // those actors arrive through replication.
+        bPendingClientWorldBuild = true;
+        bPendingClientDressing = true;
         return;
     }
 
@@ -217,11 +268,13 @@ void AAstrawildWorldBootstrapper::BeginPlay()
         const int32 Seed = GameState->WorldSeed;
         GameState->SetWorldSeed(Seed);
         RandomStream = FRandomStream(Seed);
+        CosmeticStream = FRandomStream(Seed ^ CosmeticStreamSalt); // LCP-2
         WorldSeedCached = Seed;
     }
     else
     {
         RandomStream = FRandomStream(1337);
+        CosmeticStream = FRandomStream(1337 ^ CosmeticStreamSalt); // LCP-2
         WorldSeedCached = 1337;
     }
 
@@ -483,18 +536,25 @@ void AAstrawildWorldBootstrapper::SpawnZoneLight(const FVector& Location, const 
     {
         FlickerLights.Add(Light);
         FlickerBaseIntensity.Add(Intensity);
-        FlickerPhase.Add(RandomStream.FRandRange(0.0f, 2.0f * PI));
+        // LCP-2: flicker phases draw from the COSMETIC stream so the light
+        // animation phase matches across server and clients.
+        FlickerPhase.Add(CosmeticStream.FRandRange(0.0f, 2.0f * PI));
     }
 }
 
 FVector AAstrawildWorldBootstrapper::RandomPointInZone(const FAstrawildZoneDescriptor& Zone, const float MinDistanceToCenter)
 {
+    return RandomPointInZoneWith(RandomStream, Zone, MinDistanceToCenter);
+}
+
+FVector AAstrawildWorldBootstrapper::RandomPointInZoneWith(FRandomStream& Stream, const FAstrawildZoneDescriptor& Zone, const float MinDistanceToCenter)
+{
     const FVector2D Center = Zone.GetCenter();
     for (int32 Attempt = 0; Attempt < 8; ++Attempt)
     {
         const FVector2D Point(
-            RandomStream.FRandRange(Zone.Bounds.Min.X + 4000.0f, Zone.Bounds.Max.X - 4000.0f),
-            RandomStream.FRandRange(Zone.Bounds.Min.Y + 4000.0f, Zone.Bounds.Max.Y - 4000.0f));
+            Stream.FRandRange(Zone.Bounds.Min.X + 4000.0f, Zone.Bounds.Max.X - 4000.0f),
+            Stream.FRandRange(Zone.Bounds.Min.Y + 4000.0f, Zone.Bounds.Max.Y - 4000.0f));
         if (FVector2D::Distance(Point, Center) >= MinDistanceToCenter)
         {
             return FVector(Point.X, Point.Y, GroundZ(Point));
@@ -691,7 +751,15 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
     };
 
     // Rest point — revive anchor.
-    World->SpawnActor<AAstrawildRestPoint>(AAstrawildRestPoint::StaticClass(), CampLocation(CampRadius, 0.0f), FRotator::ZeroRotator, Params);
+    if (AAstrawildRestPoint* RestPoint = World->SpawnActor<AAstrawildRestPoint>(AAstrawildRestPoint::StaticClass(), CampLocation(CampRadius, 0.0f), FRotator::ZeroRotator, Params))
+    {
+        // Final-audit F-05: deterministic id from the camp site — the ctor rolls
+        // FGuid::NewGuid() every session, so the LoadWorld WorldObjectId matcher
+        // never matched across cold boots and the saved activation state was dead.
+        const uint32 CampHashX = GetTypeHash(static_cast<int32>(CampXY.X));
+        const uint32 CampHashY = GetTypeHash(static_cast<int32>(CampXY.Y));
+        RestPoint->WorldObjectId = FGuid(CampHashX, CampHashY, 0xA572A1u, 1u);
+    }
 
     // Crafting stations: workbench + campfire.
     if (AAstrawildCraftingStationActor* Workbench = World->SpawnActor<AAstrawildCraftingStationActor>(AAstrawildCraftingStationActor::StaticClass(), CampLocation(0.0f, CampRadius), FRotator::ZeroRotator, Params))
@@ -716,6 +784,13 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         {
             { TEXT("Site_CampGathering"), CampLocation(-CampRadius, 0.0f) },
             { TEXT("Site_CampFarm"), CampLocation(-CampRadius * 0.7f, CampRadius * 0.7f) },
+            // Final-audit H-2: the Camp Kitchen was the FIRST consume→produce
+            // site (RawMeat in → CookedMeat out — the Production V2 input-buffer
+            // showcase). Its definition lives in DawnFields, which the generic
+            // placement loop below skips, so it stays in this historical table.
+            // (DP-6 added four more consume→produce sites — all outside the
+            // camp, so the definition-placed loop below spawns them.)
+            { TEXT("Site_CampKitchen"), CampLocation(0.0f, CampRadius) },
         };
         for (const FSitePlacement& Placement : Placements)
         {
@@ -829,6 +904,112 @@ void AAstrawildWorldBootstrapper::SpawnPointsOfInterest()
         LandingMarker->PortalId = TEXT("Location_DriftwoodLanding");
         LandingMarker->PromptText = FText::FromString(TEXT("Chart Driftwood Landing [E]"));
         LandingMarker->bPublishOnly = true;
+    }
+
+    // -------------------------------------------------------------------------
+    // Final Run (FR-7) — Act 3 "The Storm Crown" world layer:
+    //   - the Glass Tyrant world boss roaming Stormcrest (MQ-14 target),
+    //   - the Eye of the Maelstrom dungeon floating ~400m over Stormcrest
+    //     (MQ-16: the Drowned Sovereign + Eye Sentinel adds + Loot_EyeCore),
+    //   - the Eye Gate / Eye arrival portals (MQ-15) and the Dawnstead
+    //     homecoming marker (MQ-17).
+    // -------------------------------------------------------------------------
+
+    // Glass Tyrant — a world boss, not a dungeon room (the fight happens in
+    // the open, during the storm, on the Sunscar relay run).
+    {
+        const FVector2D TyrantXY = GetStormcrestCenterXY() + FVector2D(-5000.0f, 5000.0f);
+        const FVector TyrantLocation(TyrantXY.X, TyrantXY.Y, GroundZ(TyrantXY) + 250.0f);
+        AAstrawildEchoBossCharacter* Tyrant = World->SpawnActor<AAstrawildEchoBossCharacter>(
+            AAstrawildEchoBossCharacter::StaticClass(), TyrantLocation, FRotator::ZeroRotator, Params);
+        if (Tyrant)
+        {
+            // World mini-boss tuning BEFORE InitializeFromBossDefinition — the
+            // initializer multiplies the species stats by these scales once.
+            Tyrant->BossHealthScale = 3.0f; // tough, not final (Sovereign is 5.0).
+            Tyrant->BossDamageScale = 1.4f;
+            UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+            const UAstrawildEchoDefinition* TyrantDef = Registry ? Registry->FindEcho(TEXT("Echo_GlassTyrant")) : nullptr;
+            if (TyrantDef)
+            {
+                Tyrant->InitializeFromBossDefinition(TyrantDef);
+            }
+            Tyrant->BossSpeciesId = TEXT("Echo_GlassTyrant");
+            Tyrant->DefeatEventTargetId = TEXT("Creature_GlassTyrant"); // MQ-14 credit.
+            // DP-5: the world boss resolves its own special set from the final
+            // defeat id (glass shard volleys + Glassgolem adds).
+            Tyrant->ApplyBossSpecialSet();
+            UE_LOG(LogAstrawildAI, Log, TEXT("Act 3: Glass Tyrant world boss spawned over Stormcrest."));
+        }
+    }
+
+    // Eye of the Maelstrom — dungeon #3, floating ~400m above Stormcrest. The
+    // interior (room chain + Sovereign) is generated by the dungeon actor; the
+    // altitude is what makes it Act 3's gate (Stratos Coil ceiling 160m).
+    const FVector EyeDungeonLocation(GetEyeDungeonCenterXY().X, GetEyeDungeonCenterXY().Y, 40000.0f);
+    if (AAstrawildDungeonGeneratorActor* EyeDungeon = World->SpawnActor<AAstrawildDungeonGeneratorActor>(
+        AAstrawildDungeonGeneratorActor::StaticClass(), EyeDungeonLocation, FRotator::ZeroRotator, Params))
+    {
+        EyeDungeon->DungeonId = TEXT("Dungeon_EyeOfTheMaelstrom");
+        EyeDungeon->RoomCount = 5;
+        EyeDungeon->BossDefinitionId = TEXT("Echo_DrownedSovereign");
+        EyeDungeon->BossDefeatEventId = TEXT("Creature_DrownedSovereign"); // MQ-16 credit.
+        EyeDungeon->CreaturePoolIds = { TEXT("Echo_EyeSentinel"), TEXT("Echo_EyeSentinel") };
+        EyeDungeon->RewardTechnologyId = NAME_None; // research points only — every era gate stays in its own dungeon.
+        EyeDungeon->DungeonCompletionResearchPoints = 30;
+        // FR-7 boss overrides (validator anchors): the Sovereign drops the core.
+        EyeDungeon->BossLootTableId = TEXT("Loot_EyeCore");
+        EyeDungeon->BossSummonSpeciesId = TEXT("Echo_EyeSentinel");
+    }
+
+    // Eye portals: the Gate pad floats at ~150m above the Stormcrest ground —
+    // reachable ONLY past the stock 120m skiff ceiling with the Stratos Coil
+    // (160m) installed. Entering teleports into the dungeon's entry room; the
+    // exit pad beside the entry room returns to the Gate platform.
+    {
+        const FVector2D GateXY = GetStormcrestCenterXY();
+        const FVector GateLocation(GateXY.X, GateXY.Y, GroundZ(GateXY) + 15000.0f);
+        if (AAstrawildDungeonPortalActor* EyeEntrance = World->SpawnActor<AAstrawildDungeonPortalActor>(
+            AAstrawildDungeonPortalActor::StaticClass(), GateLocation, FRotator::ZeroRotator, Params))
+        {
+            EyeEntrance->PortalId = TEXT("Location_EyeGate");
+            EyeEntrance->PromptText = FText::FromString(TEXT("The Eye Gate — enter the Maelstrom [E] (Stratos Coil altitude required)"));
+            EyeEntrance->Destination = EyeDungeonLocation + FVector(0.0f, 0.0f, 150.0f);
+        }
+        if (AAstrawildDungeonPortalActor* EyeExit = World->SpawnActor<AAstrawildDungeonPortalActor>(
+            AAstrawildDungeonPortalActor::StaticClass(), EyeDungeonLocation + FVector(0.0f, 900.0f, 0.0f), FRotator::ZeroRotator, Params))
+        {
+            EyeExit->PortalId = TEXT("Location_EyeOfTheMaelstrom");
+            EyeExit->PromptText = FText::FromString(TEXT("Fall back to the Gate [E]"));
+            EyeExit->Destination = GateLocation + FVector(0.0f, 0.0f, 100.0f);
+        }
+
+        // Final-audit H-5: MQ-15's "Enter the Eye of the Maelstrom" objective
+        // used to complete only on the EXIT pad ("fall back to the Gate") — the
+        // quest read as finished while the player was leaving, before any combat.
+        // This publish-only arrival marker sits beside the dungeon's entry point,
+        // so the objective completes the moment the player actually ARRIVES.
+        if (AAstrawildDungeonPortalActor* EyeArrival = World->SpawnActor<AAstrawildDungeonPortalActor>(
+            AAstrawildDungeonPortalActor::StaticClass(), EyeDungeonLocation + FVector(0.0f, -900.0f, 150.0f), FRotator::ZeroRotator, Params))
+        {
+            EyeArrival->PortalId = TEXT("Location_EyeOfTheMaelstrom");
+            EyeArrival->PromptText = FText::FromString(TEXT("The Eye of the Maelstrom — you are inside the storm [E]"));
+            EyeArrival->bPublishOnly = true;
+        }
+    }
+
+    // Dawnstead homecoming marker (MQ-17): a publish-only pad at the camp —
+    // walking home with the core completes "First Dawn Again" and opens
+    // Maren's ending dialogue.
+    {
+        const FVector2D CampXY = GetCampCenterXY();
+        if (AAstrawildDungeonPortalActor* HomeMarker = World->SpawnActor<AAstrawildDungeonPortalActor>(
+            AAstrawildDungeonPortalActor::StaticClass(), FVector(CampXY.X + 900.0f, CampXY.Y, GroundZ(CampXY) + 100.0f), FRotator::ZeroRotator, Params))
+        {
+            HomeMarker->PortalId = TEXT("Location_Dawnstead");
+            HomeMarker->PromptText = FText::FromString(TEXT("Home — the watch-fire of Dawnstead [E]"));
+            HomeMarker->bPublishOnly = true;
+        }
     }
 }
 
@@ -969,6 +1150,7 @@ void AAstrawildWorldBootstrapper::SpawnVillages()
             if (AAstrawildNPCCharacter* Npc = World->SpawnActor<AAstrawildNPCCharacter>(
                 AAstrawildNPCCharacter::StaticClass(), SpawnPoint, FRotator::ZeroRotator, Params))
             {
+                Npc->NpcDefinitionId = NpcId; // LCP-2: replicates to clients (definition object pointers cannot)
                 Npc->NpcDefinition = Registry->FindNPCDefinition(NpcId);
                 Npc->RefreshAppearanceFromDefinition(); // BeginPlay ran before the assignment.
                 Npc->SetHomeVillage(Dawnstead);
@@ -1000,6 +1182,7 @@ void AAstrawildWorldBootstrapper::SpawnVillages()
             if (AAstrawildNPCCharacter* Npc = World->SpawnActor<AAstrawildNPCCharacter>(
                 AAstrawildNPCCharacter::StaticClass(), SpawnPoint, FRotator::ZeroRotator, Params))
             {
+                Npc->NpcDefinitionId = NpcId; // LCP-2: replicates to clients (definition object pointers cannot)
                 Npc->NpcDefinition = Registry->FindNPCDefinition(NpcId);
                 Npc->RefreshAppearanceFromDefinition(); // BeginPlay ran before the assignment.
                 Npc->SetHomeVillage(Driftwood);
@@ -1055,13 +1238,13 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             // Dawnwood groves + glowcap clusters around the camp.
             for (int32 i = 0; i < 10; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, 12000.0f);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 12000.0f);
                 SpawnShape(ShapeCylinder, Point + FVector(0, 0, 175), FVector(1.2, 1.2, 3.5), FRotator::ZeroRotator);
                 SpawnShape(ShapeCone, Point + FVector(0, 0, 550), FVector(4.2, 4.2, 5.2), FRotator::ZeroRotator);
             }
             for (int32 i = 0; i < 3; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, 9000.0f);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 9000.0f);
                 SpawnShape(ShapeCylinder, Point + FVector(0, 0, 60), FVector(0.5, 0.5, 1.2), FRotator::ZeroRotator);
                 SpawnShape(ShapeSphere, Point + FVector(0, 0, 140), FVector(1.6, 1.6, 1.0), FRotator::ZeroRotator);
                 SpawnZoneLight(Point + FVector(0, 0, 220), FLinearColor(0.3f, 0.95f, 0.7f), 9000.0f, 1800.0f, true);
@@ -1074,21 +1257,21 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             // Dead trees, muck pools and flickering marsh wisps.
             for (int32 i = 0; i < 7; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
-                const FRotator Lean(RandomStream.FRandRange(-8.0f, 8.0f), RandomStream.FRandRange(0.0f, 360.0f), 0.0f);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const FRotator Lean(CosmeticStream.FRandRange(-8.0f, 8.0f), CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f);
                 SpawnShape(ShapeCylinder, Point + FVector(0, 0, 300), FVector(0.9, 0.9, 6.0), Lean);
-                SpawnShape(ShapeCube, Point + FVector(180, 0, 520), FVector(0.6, 0.6, 3.0), FRotator(35.0f, RandomStream.FRandRange(0.0f, 360.0f), 0.0f));
+                SpawnShape(ShapeCube, Point + FVector(180, 0, 520), FVector(0.6, 0.6, 3.0), FRotator(35.0f, CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
             }
             for (int32 i = 0; i < 5; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
-                const float PoolScale = RandomStream.FRandRange(3.5f, 5.5f);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float PoolScale = CosmeticStream.FRandRange(3.5f, 5.5f);
                 SpawnShape(ShapeSphere, Point + FVector(0, 0, 15), FVector(PoolScale, PoolScale, 0.4f), FRotator::ZeroRotator);
                 SpawnZoneLight(Point + FVector(0, 0, 350), ZoneDesc.AmbientLightColor, 14000.0f, 2600.0f, true);
             }
             for (int32 i = 0; i < 8; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
                 SpawnShape(ShapeCylinder, Point + FVector(0, 0, 90), FVector(0.25, 0.25, 1.8), FRotator::ZeroRotator);
                 SpawnShape(ShapeCylinder, Point + FVector(60, 30, 70), FVector(0.2, 0.2, 1.4), FRotator(0, 0, 12.0f));
             }
@@ -1100,22 +1283,22 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             // Obsidian spires, lava mounds with flickering ember light, ember rocks.
             for (int32 i = 0; i < 6; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
-                const float Height = RandomStream.FRandRange(8.0f, 14.0f);
-                SpawnShape(ShapeCube, Point + FVector(0, 0, Height * 50.0f), FVector(RandomStream.FRandRange(1.5f, 2.6f), RandomStream.FRandRange(1.5f, 2.6f), Height),
-                    FRotator(RandomStream.FRandRange(-4.0f, 4.0f), RandomStream.FRandRange(0.0f, 360.0f), RandomStream.FRandRange(-3.0f, 3.0f)));
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float Height = CosmeticStream.FRandRange(8.0f, 14.0f);
+                SpawnShape(ShapeCube, Point + FVector(0, 0, Height * 50.0f), FVector(CosmeticStream.FRandRange(1.5f, 2.6f), CosmeticStream.FRandRange(1.5f, 2.6f), Height),
+                    FRotator(CosmeticStream.FRandRange(-4.0f, 4.0f), CosmeticStream.FRandRange(0.0f, 360.0f), CosmeticStream.FRandRange(-3.0f, 3.0f)));
             }
             for (int32 i = 0; i < 4; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
                 SpawnShape(ShapeSphere, Point + FVector(0, 0, 40), FVector(3.6, 3.6, 1.1f), FRotator::ZeroRotator);
                 SpawnZoneLight(Point + FVector(0, 0, 260), ZoneDesc.AmbientLightColor, 28000.0f, 3200.0f, true);
             }
             for (int32 i = 0; i < 6; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
                 SpawnShape(ShapeCube, Point + FVector(0, 0, 60), FVector(0.9, 0.9, 0.9),
-                    FRotator(RandomStream.FRandRange(-25.0f, 25.0f), RandomStream.FRandRange(0.0f, 360.0f), RandomStream.FRandRange(-25.0f, 25.0f)));
+                    FRotator(CosmeticStream.FRandRange(-25.0f, 25.0f), CosmeticStream.FRandRange(0.0f, 360.0f), CosmeticStream.FRandRange(-25.0f, 25.0f)));
             }
             break;
         }
@@ -1125,19 +1308,19 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             // Ice pillars with cold rim light + snow drifts.
             for (int32 i = 0; i < 7; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
-                const float Height = RandomStream.FRandRange(6.0f, 12.0f);
-                SpawnShape(ShapeCylinder, Point + FVector(0, 0, Height * 50.0f), FVector(RandomStream.FRandRange(1.0f, 1.8f), RandomStream.FRandRange(1.0f, 1.8f), Height),
-                    FRotator(RandomStream.FRandRange(-3.0f, 3.0f), RandomStream.FRandRange(0.0f, 360.0f), 0.0f));
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float Height = CosmeticStream.FRandRange(6.0f, 12.0f);
+                SpawnShape(ShapeCylinder, Point + FVector(0, 0, Height * 50.0f), FVector(CosmeticStream.FRandRange(1.0f, 1.8f), CosmeticStream.FRandRange(1.0f, 1.8f), Height),
+                    FRotator(CosmeticStream.FRandRange(-3.0f, 3.0f), CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
             }
             for (int32 i = 0; i < 4; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
                 SpawnZoneLight(Point + FVector(0, 0, 400), ZoneDesc.AmbientLightColor, 18000.0f, 3000.0f, false);
             }
             for (int32 i = 0; i < 4; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
                 SpawnShape(ShapeSphere, Point + FVector(0, 0, 30), FVector(4.0, 4.0, 0.8f), FRotator::ZeroRotator);
             }
             break;
@@ -1148,10 +1331,10 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             // Crystal spires with violet light + glimmer trees.
             for (int32 i = 0; i < 9; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
-                const float Height = RandomStream.FRandRange(5.0f, 10.0f);
-                SpawnShape(ShapeCone, Point + FVector(0, 0, Height * 50.0f), FVector(RandomStream.FRandRange(1.0f, 2.0f), RandomStream.FRandRange(1.0f, 2.0f), Height),
-                    FRotator(RandomStream.FRandRange(-6.0f, 6.0f), RandomStream.FRandRange(0.0f, 360.0f), 0.0f));
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float Height = CosmeticStream.FRandRange(5.0f, 10.0f);
+                SpawnShape(ShapeCone, Point + FVector(0, 0, Height * 50.0f), FVector(CosmeticStream.FRandRange(1.0f, 2.0f), CosmeticStream.FRandRange(1.0f, 2.0f), Height),
+                    FRotator(CosmeticStream.FRandRange(-6.0f, 6.0f), CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
                 if (i % 2 == 0)
                 {
                     SpawnZoneLight(Point + FVector(0, 0, 320), ZoneDesc.AmbientLightColor, 20000.0f, 2800.0f, true);
@@ -1159,7 +1342,7 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             }
             for (int32 i = 0; i < 5; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, MinDist);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
                 SpawnShape(ShapeCylinder, Point + FVector(0, 0, 175), FVector(1.0, 1.0, 3.5), FRotator::ZeroRotator);
                 SpawnShape(ShapeCone, Point + FVector(0, 0, 520), FVector(3.6, 3.6, 4.6), FRotator::ZeroRotator);
             }
@@ -1171,19 +1354,19 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             // Ash spires, charred trees and dim blood-ash light over the wilds.
             for (int32 i = 0; i < 5; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, 8000.0f);
-                const float Height = RandomStream.FRandRange(6.0f, 11.0f);
-                SpawnShape(ShapeCube, Point + FVector(0, 0, Height * 50.0f), FVector(RandomStream.FRandRange(1.2f, 2.2f), RandomStream.FRandRange(1.2f, 2.2f), Height),
-                    FRotator(RandomStream.FRandRange(-6.0f, 6.0f), RandomStream.FRandRange(0.0f, 360.0f), RandomStream.FRandRange(-5.0f, 5.0f)));
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 8000.0f);
+                const float Height = CosmeticStream.FRandRange(6.0f, 11.0f);
+                SpawnShape(ShapeCube, Point + FVector(0, 0, Height * 50.0f), FVector(CosmeticStream.FRandRange(1.2f, 2.2f), CosmeticStream.FRandRange(1.2f, 2.2f), Height),
+                    FRotator(CosmeticStream.FRandRange(-6.0f, 6.0f), CosmeticStream.FRandRange(0.0f, 360.0f), CosmeticStream.FRandRange(-5.0f, 5.0f)));
             }
             for (int32 i = 0; i < 4; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, 8000.0f);
-                SpawnShape(ShapeCylinder, Point + FVector(0, 0, 260), FVector(1.0, 1.0, 5.2), FRotator(RandomStream.FRandRange(-10.0f, 10.0f), RandomStream.FRandRange(0.0f, 360.0f), 0.0f));
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 8000.0f);
+                SpawnShape(ShapeCylinder, Point + FVector(0, 0, 260), FVector(1.0, 1.0, 5.2), FRotator(CosmeticStream.FRandRange(-10.0f, 10.0f), CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
             }
             for (int32 i = 0; i < 2; ++i)
             {
-                const FVector Point = RandomPointInZone(ZoneDesc, 12000.0f);
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 12000.0f);
                 SpawnZoneLight(Point + FVector(0, 0, 500), ZoneDesc.AmbientLightColor, 16000.0f, 3400.0f, false);
             }
             break;
@@ -1261,7 +1444,15 @@ void AAstrawildWorldBootstrapper::UpdateAtmosphere()
     }
 
     float VisibilityMultiplier = 1.0f;
-    if (UWorld* World = GetWorld())
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        // LCP-2: remote clients read the weather from the REPLICATED game
+        // state — the local weather subsystem never ticks on a client, so its
+        // answer would always be Clear. Same profile table, one truth.
+        VisibilityMultiplier =
+            UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(GameState->WeatherState);
+    }
+    else if (UWorld* World = GetWorld())
     {
         if (const UAstrawildWeatherSubsystem* Weather = World->GetSubsystem<UAstrawildWeatherSubsystem>())
         {
@@ -1415,10 +1606,133 @@ void AAstrawildWorldBootstrapper::UpdateFlickerLights(const float TimeSeconds)
     }
 }
 
+void AAstrawildWorldBootstrapper::BuildClientCosmeticWorld()
+{
+    // LCP-2: LAN client deterministic world copy — cosmetic layers ONLY.
+    // Gameplay actors (nodes/NPCs/stations/villages/skiffs/dungeons) arrive via
+    // replication from the authority; replicating them would double-spawn.
+    const AAstrawildGameState* GameState = GetGameState();
+    if (!GameState)
+    {
+        return; // no seed source yet — stay pending
+    }
+
+    WorldSeedCached = GameState->WorldSeed;
+    CosmeticStream = FRandomStream(static_cast<uint32>(WorldSeedCached) ^ CosmeticStreamSalt);
+
+    BuildLighting();
+
+    if (bBuildTerrain)
+    {
+        BuildTerrain();
+    }
+
+    SpawnWaterPlanes();
+
+    if (bBuildLandmarks)
+    {
+        BuildZoneLandmarks();
+    }
+
+    bPendingClientWorldBuild = false;
+    bClientWorldBuilt = true;
+    UE_LOG(LogAstrawildWorld, Log,
+        TEXT("LCP-2: client cosmetic world built from seed %d (dressing pending gameplay actors)."),
+        WorldSeedCached);
+}
+
+int32 AAstrawildWorldBootstrapper::CountActorsOf(const UWorld* World, UClass* Class)
+{
+    if (!World || !Class)
+    {
+        return 0;
+    }
+    int32 Count = 0;
+    for (TActorIterator<AActor> It(const_cast<UWorld*>(World), Class); It; ++It)
+    {
+        ++Count;
+    }
+    return Count;
+}
+
+bool AAstrawildWorldBootstrapper::ClientDressingGateSatisfied() const
+{
+    // Count the replicated exclusion-bubble sources that streamed in.
+    const UWorld* World = GetWorld();
+    if (!World)
+    {
+        return false;
+    }
+
+    const UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+    const int32 PoiCount = Registry ? Registry->GetAllPOIs().Num() : 0;
+    const int32 Expected = ComputeExpectedReplicatedWorldActorCount(PoiCount);
+
+    int32 Seen = 0;
+    Seen += CountActorsOf(World, AAstrawildVillageActor::StaticClass());
+    Seen += CountActorsOf(World, AAstrawildDungeonGeneratorActor::StaticClass());
+    Seen += CountActorsOf(World, AAstrawildDungeonPortalActor::StaticClass());
+    Seen += CountActorsOf(World, AAstrawildPOIMarkerActor::StaticClass());
+    Seen += CountActorsOf(World, AAstrawildSkiffActor::StaticClass());
+    return Seen >= Expected;
+}
+
+void AAstrawildWorldBootstrapper::TryBuildClientDressing()
+{
+    if (!bClientWorldBuilt)
+    {
+        return; // terrain first; the seed path also gates dressing
+    }
+
+    if (!ClientDressingGateSatisfied() &&
+        ClientDressingWaitElapsed < ClientDressingGateTimeoutSeconds)
+    {
+        return; // still streaming replicated gameplay actors (bounded by the timeout)
+    }
+
+    if (!ClientDressingGateSatisfied())
+    {
+        UE_LOG(LogAstrawildWorld, Warning,
+            TEXT("LCP-2: client dressing gate timed out after %.1fs — building with partial exclusion bubbles."),
+            ClientDressingWaitElapsed);
+    }
+
+    if (bBuildBiomeDressing)
+    {
+        SpawnBiomeDressing();
+    }
+    bPendingClientDressing = false;
+}
+
 void AAstrawildWorldBootstrapper::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    if (GetLocalRole() == ROLE_Authority || GetNetMode() == NM_Standalone)
+
+    // LCP-2: LAN client world build state machine (authority machines skip —
+    // they built inside BeginPlay and both flags stay false).
+    if (bPendingClientWorldBuild)
+    {
+        const AAstrawildGameState* GameState = GetGameState();
+        if (GameState && GameState->bWorldSeedSynced)
+        {
+            BuildClientCosmeticWorld();
+        }
+    }
+    if (bPendingClientDressing)
+    {
+        // The timeout budget starts when the cosmetic world exists — seed sync
+        // delays must not eat into the actor-streaming window.
+        if (bClientWorldBuilt)
+        {
+            ClientDressingWaitElapsed += DeltaTime;
+        }
+        TryBuildClientDressing();
+    }
+
+    // LCP-2: any machine that has a built cosmetic world updates its own sun/
+    // atmosphere/flicker locally — the inputs (time/weather) are replicated
+    // GameState values, so every screen matches without replicating visuals.
+    if (GetLocalRole() == ROLE_Authority || GetNetMode() == NM_Standalone || bClientWorldBuilt)
     {
         UpdateSunRotation();
         UpdateAtmosphere();

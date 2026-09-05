@@ -139,6 +139,15 @@ public:
     bool HasStatusEffect(FName StatusId) const;
 
     /**
+     * DP-9 (dungeon depth): server-side removal of a live status by id — room
+     * hazards clear their effect when the owning room clears (the natural expiry
+     * stays the backup). Broadcasts OnStatusEffectRemoved so speed listeners
+     * refresh (REVIEW-3 semantics).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void RemoveStatusEffect(FName StatusId);
+
+    /**
      * Batch 3 — Item A: combined movement multiplier from every active speed-affecting
      * status (Chill 0.5, Shock 0.3, ...). 1.0 when nothing slows the player.
      */
@@ -152,8 +161,25 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Survival")
     bool IsGodMode() const { return bGodMode; }
 
+    /**
+     * GDP-3 (public — the save load path calls it after importing attributes):
+     * recompute max health from the owner's Vigor level (server-side).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Survival")
+    void RefreshVigorMaxHealth();
+
 protected:
     virtual void BeginPlay() override;
+
+    // --- GDP-3: attribute-driven vitals ---
+
+    /** Vigor level-up feed (max health refresh). */
+    UFUNCTION()
+    void HandleAttributeLevelUp(EAstrawildAttributeType Attribute, int32 NewLevel);
+
+    /** Pre-Vigor base max health (tunable; the level multiplier scales this). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Survival", meta=(ClampMin="1.0"))
+    float BaseMaxHealth = 100.0f;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
@@ -178,6 +204,20 @@ private:
      *  while standing still is free). */
     bool IsOwnerMoving() const;
     class UAstrawildWeatherSubsystem* GetWeatherSubsystem() const;
+
+    /**
+     * DP-7 (world depth): thermal offset of the ambient hazard of the zone the
+     * owner currently stands in (pure zone-table lookup; 0 outside the world or
+     * in hazard-free zones). Layered ON TOP of the global weather offset.
+     */
+    float GetZoneHazardTemperatureOffset() const;
+
+    /**
+     * DP-7: passive stamina-regen penalty of the owner's current zone (ash
+     * lung; 0 for every non-respiratory hazard). Consumed by the regen branch
+     * of the authority tick, clamped so the net regen never goes negative.
+     */
+    float GetZoneHazardStaminaRegenPenalty() const;
     // Final production run (PHASE 12): advanced-equipment integration helpers.
     float GetEquippedInsulation() const;
 

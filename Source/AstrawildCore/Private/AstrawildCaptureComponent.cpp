@@ -1,14 +1,19 @@
 #include "AstrawildCaptureComponent.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildVfxActor.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 UAstrawildCaptureComponent::UAstrawildCaptureComponent()
 {
@@ -61,6 +66,21 @@ float UAstrawildCaptureComponent::PreviewCaptureChance(const AAstrawildEchoChara
         Chance += 0.05f;
     }
 
+    // GDP-3: Instinct attribute (+1.5% per level above 1) and the Hunter's
+    // Focus smart-cast window (+25% while active) — the growth path a capture
+    // player actually feels.
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Chance += Attributes->GetCaptureChanceBonus();
+        }
+        if (Player->GetCaptureFocusRemaining() > 0.0f)
+        {
+            Chance += 0.25f;
+        }
+    }
+
     return FMath::Clamp(Chance, 0.0f, 0.95f);
 }
 
@@ -77,13 +97,30 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         return false;
     }
 
-    LastCaptureTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
-
-    // Consume a Resonator per attempt (directive §8).
-    UAstrawildInventoryComponent* Inventory = GetInventory();
-    if (!Inventory || !Inventory->HasItem(ResonatorItemId, 1) || !Inventory->RemoveItem(ResonatorItemId, 1))
+    // Final-audit L-9: validate capturability BEFORE consuming the Resonator and
+    // BEFORE stamping the cooldown — a dead/already-captured target used to burn
+    // the resonator and start the cooldown for a guaranteed-failure attempt.
+    if (Echo->IsDefeated() || Echo->bCaptured)
     {
+        OnCaptureResult.Broadcast(Echo, false);
+        return false;
+    }
+
+    UAstrawildInventoryComponent* Inventory = GetInventory();
+    if (!Inventory || !Inventory->HasItem(ResonatorItemId, 1))
+    {
+        // Final-audit F-20: no Resonator → report and leave the cooldown unstamped
+        // (the failed check itself must not lock the player out of a later attempt).
         UE_LOG(LogAstrawild, Warning, TEXT("Capture attempt without a Resonator."));
+        OnCaptureResult.Broadcast(Echo, false);
+        return false;
+    }
+
+    // The roll can succeed — stamp the cooldown and consume the Resonator now.
+    LastCaptureTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    if (!Inventory->RemoveItem(ResonatorItemId, 1))
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("Capture: Resonator removal failed after the gate."));
         OnCaptureResult.Broadcast(Echo, false);
         return false;
     }
@@ -107,10 +144,50 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         bSuccess = Echo->Capture(InitialTrust);
     }
 
+    // GDP-3: Instinct grows from the hunt itself — successful captures pay big,
+    // failed attempts still teach the player something about the species.
+    if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Instinct, bSuccess ? 25.0f : 4.0f);
+        }
+    }
+
     OnCaptureResult.Broadcast(Echo, bSuccess);
+
+    // Final Run (FR-11): capture feedback — HUD toast on both outcomes plus the
+    // success stinger (A_Echo_Capture_Success) at the capture site. The audio is
+    // a soft load: absent asset = silent pass-through (zero-asset rule, CP-00).
+    if (AAstrawildPlayerController* PC = GetOwnerPlayerController())
+    {
+        if (bSuccess)
+        {
+            const FText SpeciesName = Echo->EchoDefinition ? Echo->EchoDefinition->DisplayName : FText::FromString(TEXT("Echo"));
+            PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *SpeciesName.ToString()))); // LCP-3 remote routing
+        }
+        else
+        {
+            PC->NotifyPlayer(FText::FromString(TEXT("The Echo broke free — weaken it, feed it, or observe longer."))); // LCP-3 remote routing
+        }
+    }
+    if (bSuccess)
+    {
+        if (USoundBase* CaptureStinger = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/A_Echo_Capture_Success")))
+        {
+            UGameplayStatics::PlaySoundAtLocation(GetWorld(), CaptureStinger, Echo->GetActorLocation());
+        }
+    }
+
     if (!bSuccess)
     {
         UE_LOG(LogAstrawild, Verbose, TEXT("Capture failed for %s (chance %.2f)."), *Echo->GetName(), CaptureChance);
     }
     return bSuccess;
+}
+
+AAstrawildPlayerController* UAstrawildCaptureComponent::GetOwnerPlayerController() const
+{
+    const APawn* Pawn = Cast<APawn>(GetOwner());
+    return Pawn ? Cast<AAstrawildPlayerController>(Pawn->GetController()) : nullptr;
 }

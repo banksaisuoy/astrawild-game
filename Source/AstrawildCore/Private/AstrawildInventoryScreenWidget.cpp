@@ -145,6 +145,7 @@ void UAstrawildInventoryRowWidget::HandleActionClicked()
             {
                 Player->SurvivalComponent->ApplyConsumption(ItemDef->FoodValue, ItemDef->WaterValue, ItemDef->HealValue);
             }
+            Player->ApplyFieldConsumableEffects(ItemDef); // DP-6: timed field verbs (status payload / capture focus).
         }
     }
     else if (ItemDef->Category == EAstrawildItemCategory::Equipment)
@@ -161,6 +162,28 @@ void UAstrawildInventoryRowWidget::HandleActionClicked()
 // ---------------------------------------------------------------------------
 // Screen widget
 // ---------------------------------------------------------------------------
+
+
+UAstrawildInventoryScreenWidget::UAstrawildInventoryScreenWidget()
+{
+    // Final-audit F-05: focusable so TAB/ESC reach NativeOnKeyDown in UIOnly mode.
+    bIsFocusable = true;
+}
+
+FReply UAstrawildInventoryScreenWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // Final-audit F-05: the screen advertises "Close [TAB]" — make it true. ESC also
+    // closes (the pause/dialogue convention).
+    if (InKeyEvent.GetKey() == EKeys::Tab || InKeyEvent.GetKey() == EKeys::Escape)
+    {
+        if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+        {
+            PC->ToggleInventoryScreen();
+            return FReply::Handled();
+        }
+    }
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
 
 void UAstrawildInventoryScreenWidget::NativeConstruct()
 {

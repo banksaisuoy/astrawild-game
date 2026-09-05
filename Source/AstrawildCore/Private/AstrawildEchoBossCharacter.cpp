@@ -9,12 +9,15 @@
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -94,6 +97,138 @@ float AAstrawildEchoBossCharacter::GetHealthFraction() const
     return FMath::Clamp(CurrentHealth / FMath::Max(1.0f, MaxHealth), 0.0f, 1.0f);
 }
 
+FText AAstrawildEchoBossCharacter::GetBossDisplayName() const
+{
+    // Final Run (FR-11): display name resolves from the stable defeat id first
+    // (per-boss identity), then the cached species label, then a generic title.
+    return ResolveBossDisplayName(DefeatEventTargetId, CachedSpeciesLabel);
+}
+
+FText AAstrawildEchoBossCharacter::ResolveBossDisplayName(const FName DefeatEventId, const FText& SpeciesLabel)
+{
+    // Final Run (FR-11): the canonical boss roster. Appended-only — a future
+    // boss just adds one row (or falls through to the species label).
+    if (DefeatEventId == TEXT("Creature_UnderlightWarden"))
+    {
+        return FText::FromString(TEXT("Underlight Warden"));
+    }
+    if (DefeatEventId == TEXT("Creature_VaultColossus"))
+    {
+        return FText::FromString(TEXT("Vault Colossus"));
+    }
+    if (DefeatEventId == TEXT("Creature_GlassTyrant"))
+    {
+        return FText::FromString(TEXT("Glass Tyrant"));
+    }
+    if (DefeatEventId == TEXT("Creature_DrownedSovereign"))
+    {
+        return FText::FromString(TEXT("The Drowned Sovereign"));
+    }
+    return SpeciesLabel.IsEmpty() ? FText::FromString(TEXT("Echo Boss")) : SpeciesLabel;
+}
+
+// --- DP-5: per-boss special sets (pure resolver + tuning table) ---
+
+EAstrawildBossSpecialSet AAstrawildEchoBossCharacter::ResolveBossSpecialSet(const FName DefeatEventTargetId)
+{
+    // The four canonical defeat ids (the same stable identity FR-11 resolves
+    // display names from). Unknown ids fail closed to the Underlight Warden
+    // set — exactly the pre-DP-5 shared-pipeline behavior.
+    if (DefeatEventTargetId == TEXT("Creature_VaultColossus"))
+    {
+        return EAstrawildBossSpecialSet::SunkenVault;
+    }
+    if (DefeatEventTargetId == TEXT("Creature_GlassTyrant"))
+    {
+        return EAstrawildBossSpecialSet::GlassTyrant;
+    }
+    if (DefeatEventTargetId == TEXT("Creature_DrownedSovereign"))
+    {
+        return EAstrawildBossSpecialSet::EyeOfTheMaelstrom;
+    }
+    return EAstrawildBossSpecialSet::UnderlightWarden;
+}
+
+FAstrawildBossSpecialSetParams AAstrawildEchoBossCharacter::GetBossSpecialSetParams(const EAstrawildBossSpecialSet Set)
+{
+    // Pure data table: each set RECOMBINES the same four primitives with
+    // different numbers (no new mechanic types). The Underlight Warden row is
+    // the byte-exact legacy tuning — the default set is a zero-regression set.
+    switch (Set)
+    {
+    case EAstrawildBossSpecialSet::SunkenVault:
+    {
+        // Dawnfang the sea-dragon: tidal pressure — faster cadence, paired
+        // bolts, wide single blasts, double hazard waves, Wavecrest adds.
+        FAstrawildBossSpecialSetParams Params;
+        Params.SpecialAttackCooldownSeconds = 6.0f;
+        Params.BoltCount = 2;
+        Params.BlastCount = 1;
+        Params.SpecialBlastRadius = 430.0f;
+        Params.HazardWaveCount = 2;
+        Params.HazardDamagePerSecond = 5.0f;
+        Params.SummonSpeciesId = TEXT("Echo_Wavecrest");
+        return Params;
+    }
+    case EAstrawildBossSpecialSet::GlassTyrant:
+    {
+        // Storm-glass world boss: shard volleys — slower cadence, triple bolts,
+        // twin tight blasts, sharp hazard fields, Glassgolem shards.
+        FAstrawildBossSpecialSetParams Params;
+        Params.SpecialAttackCooldownSeconds = 8.0f;
+        Params.BoltCount = 3;
+        Params.BlastCount = 2;
+        Params.SpecialBlastRadius = 300.0f;
+        Params.HazardWaveCount = 2;
+        Params.HazardDamagePerSecond = 8.0f;
+        Params.SummonSpeciesId = TEXT("Echo_Glassgolem");
+        return Params;
+    }
+    case EAstrawildBossSpecialSet::EyeOfTheMaelstrom:
+    {
+        // The Drowned Sovereign (finale): overwhelming pressure — fastest
+        // cadence, paired bolts, triple blasts, triple hazard waves,
+        // Eye Sentinel adds (the FR-7 room override agrees).
+        FAstrawildBossSpecialSetParams Params;
+        Params.SpecialAttackCooldownSeconds = 5.0f;
+        Params.BoltCount = 2;
+        Params.BlastCount = 3;
+        Params.SpecialBlastRadius = 380.0f;
+        Params.HazardWaveCount = 3;
+        Params.HazardDamagePerSecond = 7.0f;
+        Params.SummonSpeciesId = TEXT("Echo_EyeSentinel");
+        return Params;
+    }
+    default:
+    {
+        // Underlight Warden (default): the pre-DP-5 shared pipeline verbatim.
+        return FAstrawildBossSpecialSetParams();
+    }
+    }
+}
+
+void AAstrawildEchoBossCharacter::ApplyBossSpecialSet()
+{
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    SpecialSet = ResolveBossSpecialSet(DefeatEventTargetId);
+    const FAstrawildBossSpecialSetParams Params = GetBossSpecialSetParams(SpecialSet);
+    SpecialAttackCooldownSeconds = Params.SpecialAttackCooldownSeconds;
+    BoltCount = Params.BoltCount;
+    BlastCount = Params.BlastCount;
+    SpecialBlastRadius = Params.SpecialBlastRadius;
+    HazardWaveCount = Params.HazardWaveCount;
+    HazardDamagePerSecond = Params.HazardDamagePerSecond;
+    SummonSpeciesId = Params.SummonSpeciesId;
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss special set resolved for %s: set %d (cooldown %.1fs, %d bolts, %d blasts r%.0f, %d hazards @%.1fdps, summons %s)."),
+        *DefeatEventTargetId.ToString(), static_cast<int32>(SpecialSet),
+        SpecialAttackCooldownSeconds, BoltCount, BlastCount, SpecialBlastRadius,
+        HazardWaveCount, HazardDamagePerSecond, *SummonSpeciesId.ToString());
+}
+
 float AAstrawildEchoBossCharacter::GetAttackDamage() const
 {
     return ComputeBossAttackDamage(BaseDamage, CurrentPhase, bEnraged, EnrageDamageMultiplier);
@@ -119,7 +254,10 @@ float AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
     }
     if (AttackElement == OwnElement)
     {
-        return 0.75f;
+        // Final-audit H-4: unified with the wild-Echo pipeline (×(1−0.2)=×0.80,
+        // DataAssets.h ElementalResistance default) and MASTER_CONTROL §3 — the
+        // boss path previously used a divergent ×0.75.
+        return 0.8f;
     }
     return 1.0f;
 }
@@ -157,6 +295,23 @@ float AAstrawildEchoBossCharacter::ComputeBossAttackDamage(
 
 // --- Batch 6: definition-driven stats ---
 
+namespace
+{
+    // Size-class canon (mirrors AAstrawildEchoCharacter's BodyScaleForSize — the
+    // one scale table every creature body respects, procedural or skeletal).
+    float BossBodyScaleForSize(const EAstrawildSizeClass SizeClass)
+    {
+        switch (SizeClass)
+        {
+        case EAstrawildSizeClass::Tiny:   return 0.45f;
+        case EAstrawildSizeClass::Small:  return 0.7f;
+        case EAstrawildSizeClass::Large:  return 1.4f;
+        case EAstrawildSizeClass::Huge:   return 1.9f;
+        default:                          return 1.0f;
+        }
+    }
+}
+
 void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildEchoDefinition* Definition)
 {
     if (!Definition)
@@ -167,6 +322,7 @@ void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildE
     BossSpeciesId = Definition->DefinitionId;
     WeaknessElement = Definition->WeaknessElement;
     BossElement = Definition->Element;
+    CachedSpeciesLabel = Definition->DisplayName; // FR-11: HUD fallback label.
 
     // Boss scale on top of the species baseline (directive §24 — the PHASE design
     // carries the difficulty; the scale just makes it a boss-sized encounter).
@@ -174,9 +330,72 @@ void AAstrawildEchoBossCharacter::InitializeFromBossDefinition(const UAstrawildE
     BaseDamage = FMath::Max(5.0f, Definition->BaseStats.AttackPower * BossDamageScale);
     CurrentHealth = MaxHealth;
 
-    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss initialized from %s: HP %.0f, ATK %.0f, weakness %d, element %d."),
+    // Creature Visual Strategy DP-1: opt-in Tier-A boss mesh. The skinned body
+    // activates only when the imported mesh actually resolves (engine import per
+    // HANDOFF §20b); until then the cone placeholder stays — the fallback is the
+    // contract, never a broken visual.
+    BossIdleAnimation = Definition->IdleAnimation;
+    BossMoveAnimation = Definition->MoveAnimation;
+    USkeletalMesh* BossMesh = Definition->SkeletalMesh.LoadSynchronous();
+    if (BossMesh)
+    {
+        BossBodyMesh = NewObject<USkeletalMeshComponent>(this, TEXT("BossBodyMesh"));
+        if (BossBodyMesh)
+        {
+            BossBodyMesh->SetupAttachment(GetCapsuleComponent());
+            BossBodyMesh->SetSkeletalMesh(BossMesh);
+            BossBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            BossBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            // Size-class canon (mirrors AAstrawildEchoCharacter's BodyScaleForSize).
+            const float SizeScale = BossBodyScaleForSize(Definition->SizeClass);
+            const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 160.0f;
+            BossBodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
+            BossBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+            BossBodyMesh->SetRelativeScale3D(FVector(SizeScale));
+            BossBodyMesh->RegisterComponent();
+            if (PlaceholderMesh)
+            {
+                PlaceholderMesh->SetVisibility(false);
+            }
+            BossIdleAnimation.LoadSynchronous();
+            BossMoveAnimation.LoadSynchronous();
+            UpdateBossBodyAnimation();
+            if (UWorld* World = GetWorld())
+            {
+                World->GetTimerManager().SetTimer(BossAnimTimerHandle, this,
+                    &AAstrawildEchoBossCharacter::UpdateBossBodyAnimation, 0.25f, true);
+            }
+        }
+    }
+
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Boss initialized from %s: HP %.0f, ATK %.0f, weakness %d, element %d, skinned body %s."),
         *BossSpeciesId.ToString(), MaxHealth, BaseDamage,
-        static_cast<int32>(WeaknessElement), static_cast<int32>(BossElement));
+        static_cast<int32>(WeaknessElement), static_cast<int32>(BossElement),
+        BossBodyMesh ? TEXT("active") : TEXT("cone fallback"));
+
+    // DP-5: resolve the special set from the CURRENT defeat id. Spawn paths
+    // that finalize DefeatEventTargetId afterwards re-apply (idempotent) —
+    // until then the class default resolves to the legacy Underlight Warden
+    // tuning, so a direct spawn behaves exactly like the pre-DP-5 pipeline.
+    ApplyBossSpecialSet();
+}
+
+void AAstrawildEchoBossCharacter::UpdateBossBodyAnimation()
+{
+    if (!BossBodyMesh)
+    {
+        return;
+    }
+    // Bosses prowl slowly — idle/move selection follows movement speed exactly
+    // like the Echo single-node cadence, without per-tick cost.
+    UAnimSequenceBase* Target = GetVelocity().Size() < 60.0f
+        ? BossIdleAnimation.Get()
+        : BossMoveAnimation.Get();
+    if (Target && Target != CurrentBossLoopAnimation)
+    {
+        BossBodyMesh->PlayAnimation(Target, true);
+        CurrentBossLoopAnimation = Target;
+    }
 }
 
 // --- Batch 6: status effects on the boss ---
@@ -295,6 +514,14 @@ void AAstrawildEchoBossCharacter::Tick(const float DeltaTime)
     if (!bEnraged && EnrageElapsed >= EnrageTimerSeconds)
     {
         bEnraged = true;
+        // Final-audit H-10: enrage from phase 1 used to jump straight to phase 3,
+        // skipping phase 2's SpawnSummons entirely — a stalled fight never
+        // presented its adds. Pass through phase 2 first (its adds spawn), then
+        // land on the enrage tempo in the same tick — the no-stall guarantee holds.
+        if (CurrentPhase < 2)
+        {
+            TransitionToPhase(2);
+        }
         TransitionToPhase(3);
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss ENRAGED by timer at %.0f%% health."), GetHealthFraction() * 100.0f);
     }
@@ -493,6 +720,35 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
             }
         }
 
+        // Final-audit (AUD-3 loot note): world bosses (the Glass Tyrant) had NO
+        // reward path — its authored DefeatLoot (MaelstromGlass x2 + DuneGlass x2)
+        // was unreachable data. Dungeon-room bosses opt out (bGrantSpeciesDefeatLoot
+        // = false) because their room's ClearLootTableId already rewards the kill.
+        if (bGrantSpeciesDefeatLoot && GetWorld() && !BossSpeciesId.IsNone())
+        {
+            UAstrawildItemRegistrySubsystem* Registry =
+                GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+            const UAstrawildEchoDefinition* Species = Registry ? Registry->FindEcho(BossSpeciesId) : nullptr;
+            if (Species && Species->DefeatLoot.Num() > 0)
+            {
+                if (AAstrawildPlayerCharacter* Killer = FindNearestPlayer())
+                {
+                    if (UAstrawildInventoryComponent* Inventory = Killer->FindComponentByClass<UAstrawildInventoryComponent>())
+                    {
+                        for (const FAstrawildItemStack& Drop : Species->DefeatLoot)
+                        {
+                            if (Drop.IsValid())
+                            {
+                                Inventory->AddItem(Drop.ItemId, Drop.Quantity);
+                            }
+                        }
+                        UE_LOG(LogAstrawildEconomy, Log, TEXT("Boss %s dropped species loot to %s."),
+                            *DefeatEventTargetId.ToString(), *Killer->GetName());
+                    }
+                }
+            }
+        }
+
         OnBossDefeated.Broadcast(this);
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss DEFEATED."));
     }
@@ -520,36 +776,58 @@ void AAstrawildEchoBossCharacter::TickSpecials(const float /*DeltaTime*/)
     {
         LastSpecialAttackTime = Now;
 
-        // Always: energy bolt at the player (dodgeable projectile).
-        FireEnergyBolt(Player);
+        // Always: energy bolt volley at the player (dodgeable projectiles).
+        // DP-5: the set decides the volley width — a lateral fan around the
+        // target (a 1-bolt set is the exact legacy single shot).
+        const int32 VolleySize = FMath::Max(1, BoltCount);
+        for (int32 VolleyIndex = 0; VolleyIndex < VolleySize; ++VolleyIndex)
+        {
+            FireEnergyBolt(Player, VolleyIndex);
+        }
 
         // Phase 2+: telegraphed AoE at the player's CURRENT position — the ring
         // gives the player the window to sprint out (the whole point of telegraphs).
+        // DP-5: the set decides how many discs detonate — the first always sits
+        // ON the player (legacy behavior), the rest ring around them.
         if (CurrentPhase >= 2)
         {
-            FAstrawildPendingBlast Blast;
-            Blast.Location = Player->GetActorLocation();
-            Blast.RemainingSeconds = TelegraphDurationSeconds;
-
-            FActorSpawnParameters Params;
-            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            if (AAstrawildBossTelegraphActor* Ring = World->SpawnActor<AAstrawildBossTelegraphActor>(
-                AAstrawildBossTelegraphActor::StaticClass(), Blast.Location, FRotator::ZeroRotator, Params))
+            const int32 BlastTotal = FMath::Max(1, BlastCount);
+            for (int32 BlastIndex = 0; BlastIndex < BlastTotal; ++BlastIndex)
             {
-                Ring->BlastRadius = SpecialBlastRadius;
-                Ring->TelegraphDuration = TelegraphDurationSeconds;
-                Blast.Ring = Ring;
+                FAstrawildPendingBlast Blast;
+                Blast.Location = Player->GetActorLocation();
+                if (BlastIndex > 0)
+                {
+                    const float Angle = (PI * 2.0f * BlastIndex) / static_cast<float>(BlastTotal);
+                    Blast.Location += FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * 240.0f;
+                }
+                Blast.RemainingSeconds = TelegraphDurationSeconds;
+
+                FActorSpawnParameters Params;
+                Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+                if (AAstrawildBossTelegraphActor* Ring = World->SpawnActor<AAstrawildBossTelegraphActor>(
+                    AAstrawildBossTelegraphActor::StaticClass(), Blast.Location, FRotator::ZeroRotator, Params))
+                {
+                    Ring->BlastRadius = SpecialBlastRadius;
+                    Ring->TelegraphDuration = TelegraphDurationSeconds;
+                    Blast.Ring = Ring;
+                }
+                PendingBlasts.Add(Blast);
+                UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss telegraphs a blast at %.0f,%.0f."), Blast.Location.X, Blast.Location.Y);
             }
-            PendingBlasts.Add(Blast);
-            UE_LOG(LogAstrawildCombat, Verbose, TEXT("Boss telegraphs a blast at %.0f,%.0f."), Blast.Location.X, Blast.Location.Y);
         }
     }
 
     // Arena hazards: phase 2+ scatters lingering pools around the arena center.
+    // DP-5: the set decides the wave size — each hazard rolls its own ring slot.
     if (CurrentPhase >= 2 && Now - LastHazardTime >= HazardIntervalSeconds)
     {
         LastHazardTime = Now;
-        SpawnArenaHazard();
+        const int32 HazardWaveSize = FMath::Max(1, HazardWaveCount);
+        for (int32 HazardIndex = 0; HazardIndex < HazardWaveSize; ++HazardIndex)
+        {
+            SpawnArenaHazard();
+        }
     }
 }
 
@@ -634,7 +912,7 @@ void AAstrawildEchoBossCharacter::TickPendingBlasts(const float DeltaTime)
     }
 }
 
-void AAstrawildEchoBossCharacter::FireEnergyBolt(AAstrawildPlayerCharacter* Target)
+void AAstrawildEchoBossCharacter::FireEnergyBolt(AAstrawildPlayerCharacter* Target, const int32 VolleyIndex)
 {
     UWorld* World = GetWorld();
     if (!World || !Target)
@@ -643,7 +921,14 @@ void AAstrawildEchoBossCharacter::FireEnergyBolt(AAstrawildPlayerCharacter* Targ
     }
 
     const FVector Muzzle = GetActorLocation() + GetActorForwardVector() * 120.0f + FVector(0.0f, 0.0f, 60.0f);
-    const FVector Direction = (Target->GetActorLocation() + FVector(0.0f, 0.0f, 40.0f) - Muzzle).GetSafeNormal();
+
+    // DP-5: volley fan — bolt 0 aims straight at the target (the exact legacy
+    // shot); later bolts walk outward along the boss's right vector so a wide
+    // volley spreads instead of stacking.
+    const int32 VolleySize = FMath::Max(1, BoltCount);
+    const float FanOffset = (static_cast<float>(VolleyIndex) - (static_cast<float>(VolleySize) - 1.0f) * 0.5f) * 130.0f;
+    const FVector AimPoint = Target->GetActorLocation() + GetActorRightVector() * FanOffset + FVector(0.0f, 0.0f, 40.0f);
+    const FVector Direction = (AimPoint - Muzzle).GetSafeNormal();
 
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -675,6 +960,9 @@ void AAstrawildEchoBossCharacter::SpawnArenaHazard()
     if (AAstrawildBossHazardActor* Hazard = World->SpawnActor<AAstrawildBossHazardActor>(
         AAstrawildBossHazardActor::StaticClass(), Location, FRotator::ZeroRotator, Params))
     {
+        // DP-5: the set tunes the hazard damage (the actor default 6dps is the
+        // Underlight Warden value — applying explicitly keeps every set honest).
+        Hazard->DamagePerSecond = FMath::Max(0.0f, HazardDamagePerSecond);
         ActiveHazards.Add(Hazard);
     }
 }

@@ -57,6 +57,18 @@ void UAstrawildWeatherSubsystem::Tick(const float DeltaTime)
         return;
     }
 
+    // Final Run (FR-6) EndingBreak: after "The Dawn That Stays" the sky is
+    // pinned to Clear — re-assert the pin once if anything moved it, then stop
+    // rolling transitions entirely (the storm crown is broken, not sleeping).
+    if (IsEndingBreakPinned())
+    {
+        if (GameState->WeatherState != EAstrawildWeatherState::Clear)
+        {
+            ForceWeather(EAstrawildWeatherState::Clear);
+        }
+        return;
+    }
+
     // Weather decisions run on an in-world cadence, not real time.
     const int64 AbsoluteMinutes = static_cast<int64>(TimeSubsystem->GetCurrentDay()) * 24 * 60 + TimeSubsystem->GetCurrentMinute();
     if (LastDecisionAbsoluteMinutes < 0)
@@ -103,6 +115,11 @@ float UAstrawildWeatherSubsystem::GetVisibilityMultiplier() const
     return GetProfile(GetCurrentWeather()).VisibilityMultiplier;
 }
 
+float UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState State)
+{
+    return GetProfile(State).VisibilityMultiplier;
+}
+
 void UAstrawildWeatherSubsystem::ForceWeather(const EAstrawildWeatherState NewState)
 {
     AAstrawildGameState* GameState = GetAstrawildGameState();
@@ -137,6 +154,13 @@ void UAstrawildWeatherSubsystem::RollNextWeather()
     AAstrawildGameState* GameState = GetAstrawildGameState();
     if (!GameState)
     {
+        return;
+    }
+
+    // EndingBreak guard (FR-6): the pinned sky never rolls.
+    if (IsEndingBreakPinned())
+    {
+        ForceWeather(EAstrawildWeatherState::Clear);
         return;
     }
 
@@ -181,4 +205,13 @@ AAstrawildGameState* UAstrawildWeatherSubsystem::GetAstrawildGameState() const
 {
     const UWorld* World = GetWorld();
     return World ? World->GetGameState<AAstrawildGameState>() : nullptr;
+}
+
+bool UAstrawildWeatherSubsystem::IsEndingBreakPinned() const
+{
+    // Final Run (FR-6) EndingBreak: "The Dawn That Stays" pins the sky to Clear
+    // forever — no transition rolls, no storm, the crown is broken. "The Storm
+    // That Sleeps" deliberately keeps the living sky (only tamed).
+    const AAstrawildGameState* GameState = GetAstrawildGameState();
+    return GameState && GameState->EndingState == EAstrawildEndingState::TheDawnThatStays;
 }

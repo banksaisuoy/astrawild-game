@@ -9,6 +9,13 @@ namespace AstrawildArtPack
 		const TCHAR* ProjectileTrail = TEXT("/Game/VFX/NS_AW_Weap_Trail");
 	}
 
+	namespace Sfx
+	{
+		// DP-5: reuses the existing CP-06 energy impact binding verbatim
+		// (no new /Game/ path — validator check 8 reads the same ref).
+		const TCHAR* WeaknessHitImpact = TEXT("/Game/Audio/A_Weapon_Impact_Energy");
+	}
+
 	namespace Paths
 	{
 		// Meshes (mirrored from ArtSource/manifest.json ue_path values)
@@ -185,3 +192,70 @@ namespace AstrawildArtPack
 		return nullptr;
 	}
 }
+
+namespace AstrawildArtPack
+{
+
+// ---------------------------------------------------------------------------
+// PCR-4/PCR-5 — Tier-B archetype mesh library (strategy §6)
+// ---------------------------------------------------------------------------
+
+namespace
+{
+	// The 39 Tier-B species (baked by Tools/ArtSourceGen/gen_tier_b.py from the
+	// ACTUAL source tables: zone-wildlife spawn rows + dungeon creature pools +
+	// event species boosts + Huge size + the monolith/colossus name family,
+	// minus the 14 Tier-A bespoke species). Mirrors the ArtSource manifest —
+	// ASTRAWILD.PCR4.TierBLibrary + the static validator verify every entry.
+	const TArray<FName>& GetTierBSpeciesTable()
+	{
+		static const TArray<FName> Table =
+		{
+			TEXT("Echo_Abyssjelly"), TEXT("Echo_Astralmonolith"), TEXT("Echo_Brinefin"),
+			TEXT("Echo_Coralray"), TEXT("Echo_Duskmoth"), TEXT("Echo_Eldermonolith"),
+			TEXT("Echo_Emberfang"), TEXT("Echo_Embershade"), TEXT("Echo_Fernthorn"),
+			TEXT("Echo_Forgottencolossus"), TEXT("Echo_Frostblaze"), TEXT("Echo_Geargolem"),
+			TEXT("Echo_Ghostshade"), TEXT("Echo_Glimmerhornet"), TEXT("Echo_Hallowedcolossus"),
+			TEXT("Echo_Lagoonfin"), TEXT("Echo_Magmawing"), TEXT("Echo_Mistwing"),
+			TEXT("Echo_Monolithcolossus"), TEXT("Echo_Monolithprimarch"), TEXT("Echo_Pearlcrest"),
+			TEXT("Echo_Pistongolem"), TEXT("Echo_Primemonolith"), TEXT("Echo_Pyreblaze"),
+			TEXT("Echo_Reliccolossus"), TEXT("Echo_Rimefang"), TEXT("Echo_Saltcrest"),
+			TEXT("Echo_Saltray"), TEXT("Echo_Stonehide"), TEXT("Echo_Sunhide"),
+			TEXT("Echo_Sunhorn"), TEXT("Echo_Sunpaw"), TEXT("Echo_Tidewyrm"),
+			TEXT("Echo_Undertowray"), TEXT("Echo_Verdantbloom"), TEXT("Echo_Vespermonolith"),
+			TEXT("Echo_Voidwing"), TEXT("Echo_Voltmaw"), TEXT("Echo_Wavecrest"),
+		};
+		return Table;
+	}
+}
+
+const TArray<FName>& GetTierBSpeciesIds()
+{
+	return GetTierBSpeciesTable();
+}
+
+FString BuildTierBMechPath(const FName& EchoId)
+{
+	// Convention path — derived, never a literal (validator check 8 unaffected).
+	// "/Game/Characters/Echoes/SK_Echo_<Name>" resolves only after the engine
+	// import pass lands the .uassets; until then the PMC body stays (opt-in).
+	const FString Species = EchoId.ToString().StartsWith(TEXT("Echo_"))
+		? EchoId.ToString().RightChop(5)
+		: EchoId.ToString();
+	return FString::Printf(TEXT("/Game/Characters/Echoes/SK_Echo_%s"), *Species);
+}
+
+FString BuildTierBAnimPath(const FName& EchoId, const bool bMoveClip)
+{
+	const FString Species = EchoId.ToString().StartsWith(TEXT("Echo_"))
+		? EchoId.ToString().RightChop(5)
+		: EchoId.ToString();
+	return FString::Printf(TEXT("/Game/Characters/Echoes/AM_%s_%s"), *Species, bMoveClip ? TEXT("Move") : TEXT("Idle"));
+}
+
+bool IsTierBSpecies(const FName& EchoId)
+{
+	return GetTierBSpeciesTable().Contains(EchoId);
+}
+
+} // namespace AstrawildArtPack

@@ -8,12 +8,15 @@
 class UAstrawildEchoDefinition;
 class AAstrawildEchoCharacter;
 class AAstrawildWorkSiteActor;
+class UAstrawildCreatureSanityComponent;
+class UAstrawildMountComponent;
 class UPointLightComponent;
 class UStaticMeshComponent;
 class UNavigationInvokerComponent;
 class UProceduralMeshComponent;
 class USkeletalMeshComponent;
 class UAnimSequenceBase;
+class AAstrawildProjectileActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoCaptured, AAstrawildEchoCharacter*, Echo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoDamaged, AAstrawildEchoCharacter*, Echo, float, NewHealth);
@@ -21,6 +24,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildEchoDefeated, AAstrawildEc
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoLevelUp, AAstrawildEchoCharacter*, Echo, int32, NewLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoCommandReceived, AAstrawildEchoCharacter*, Echo, EAstrawildEchoCommand, Command);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoAIStateChanged, AAstrawildEchoCharacter*, Echo, EAstrawildEchoAIState, NewState);
+
+/**
+ * DP-5: fired on the server when an elemental hit lands on the species'
+ * WEAKNESS element (the existing x1.5 branch) and actually deals damage.
+ * Blueprint/UMG consumers plus the built-in feedback surfaces (HUD toast,
+ * impact cue, log) all hang off this one readability event.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildEchoWeaknessHit, AAstrawildEchoCharacter*, Echo, float, AppliedDamage);
+
+/** GDP-1: fired on every ability resolve attempt (success or deny — UI toasts listen). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAstrawildEchoAbilityExecuted, AAstrawildEchoCharacter*, Echo, FName, AbilityId, bool, bSuccess);
 
 /**
  * Echo — the creature heart of ASTRAWILD (directive §4).
@@ -101,6 +115,14 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
     FAstrawildEchoAIStateChanged OnAIStateChanged;
 
+    /** GDP-1: ability resolve broadcast (HUD toast + audio hooks). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoAbilityExecuted OnAbilityExecuted;
+
+    /** DP-5: weakness-hit readability broadcast (server-side, with damage). */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Echo")
+    FAstrawildEchoWeaknessHit OnWeaknessHit;
+
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TObjectPtr<UAstrawildEchoDefinition> EchoDefinition;
 
@@ -155,9 +177,97 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo", Replicated)
     TArray<FAstrawildStatusEffect> StatusEffects;
 
+    /**
+     * DP-5: the wild-game weak-point window is OPEN. Only Large/Huge species
+     * ever set this (bWeakPointEligible — decided from the definition); bosses
+     * have their own boss-class weak point and never route here. Replicated so
+     * clients mirror the glow pulse (OnRep refreshes the light immediately).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|WeakPoint", ReplicatedUsing=OnRep_bWeakPointExposed)
+    bool bWeakPointExposed = false;
+
+    /** DP-5: true when this species may expose a weak point (Large/Huge size class). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|WeakPoint")
+    bool CanExposeWeakPoint() const { return bWeakPointEligible; }
+
     /** Assigned work site for base jobs (directive §18). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo")
     TWeakObjectPtr<AAstrawildWorkSiteActor> AssignedWorkSite;
+
+    /** SCP Phase 9: sanity / illness / healthcare simulation. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Sanity")
+    TObjectPtr<UAstrawildCreatureSanityComponent> SanityComponent;
+
+    /** SCP Phase 5: riding (rider attach + forwarded input driving). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Mount")
+    TObjectPtr<UAstrawildMountComponent> MountComponent;
+
+    /** SCP Phase 10: passive traits rolled at breeding (4 slots, saved with the instance). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Genetics")
+    TArray<FName> InstanceTraits;
+
+    /** SCP Phase 10 / FCR-1-d fix (H-d5): hidden IVs rolled at breeding —
+     *  Health / Attack / Defense / Speed, 0-31 each, +1% per point. Stored on the
+     *  instance and consumed by the stat getters (previously rolled then dropped:
+     *  the directive's IV layer was dead code). Wild echoes stay 0 = neutral. */
+    UPROPERTY()
+    FVector4 InstanceIVs = FVector4::ZeroVector;
+
+    /** Assign breeding traits + apply their stat effects (server). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Genetics")
+    void SetInstanceTraits(const TArray<FName>& InTraits);
+
+    // ------------------------------------------------------------------
+    // GDP-1 — Echo ability engine (server-authoritative, replicated cooldowns).
+    // ------------------------------------------------------------------
+
+    /** Live cooldowns (seconds remaining); replicated so the HUD shows readiness. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Ability", Replicated)
+    TMap<FName, float> AbilityCooldowns;
+
+    /** All ability ids this species can ever learn (authored + derived). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    TArray<FName> GetAllAbilityIds() const;
+
+    /** Ability ids known at the CURRENT level (UnlockLevel gate applied). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    TArray<FName> GetKnownAbilityIds() const;
+
+    /** True when the ability is known and off cooldown. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    bool IsAbilityReady(FName AbilityId) const;
+
+    /** Seconds until the ability is ready again (0 when ready/unknown). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    float GetAbilityCooldownRemaining(FName AbilityId) const;
+
+    /**
+     * Server-side ability resolve. Offensive/debuff ride the projectile pipeline
+     * toward TargetActor; restore/defensive/mobility apply immediately. Returns
+     * false (with a broadcast) when unknown/locked/cooling down.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Ability")
+    bool ExecuteAbility(FName AbilityId, AActor* TargetActor);
+
+    /** Deterministic combat pick used by the AI and the player's party-cast key. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Ability")
+    FName PickCombatAbility(float DistanceToTarget, bool bWantsHeal, bool bWantsShield) const;
+
+    // ------------------------------------------------------------------
+    // GDP-2 — locomotion class (Land / Water / Flying).
+    // ------------------------------------------------------------------
+
+    /** Resolved locomotion (definition field, or derived from family/plan/zone when Auto). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Locomotion")
+    EAstrawildLocomotionClass GetLocomotionClass() const;
+
+    /** Static derivation rule — public for tests. */
+    static EAstrawildLocomotionClass DeriveLocomotionClass(EAstrawildEchoFamily Family,
+        EAstrawildBodyPlan BodyPlan, EAstrawildZone HomeZone);
+
+    /** GDP-2: zone-based speed multiplier (water species surge in sea zones, drag on land). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Locomotion")
+    float GetLocomotionSpeedMultiplier() const;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
     bool InitializeFromDefinition(UAstrawildEchoDefinition* InDefinition, const FGuid& OptionalInstanceId = FGuid());
@@ -199,6 +309,21 @@ public:
     static bool HasPlayerPartyPassive(const class UWorld* World, const class AActor* Player,
         EAstrawildEchoPassive Passive, float Radius = 1500.0f);
 
+    /**
+     * DP-3: the element-pair party resonance row for a player's active party —
+     * captured, healthy Echoes of this owner within Radius contribute their
+     * element; when at least two DIFFERENT elements stand together the dominant
+     * pair (first in canon table order) resolves. Invalid row otherwise.
+     */
+    static FAstrawildPartyResonance GetActivePartyResonance(const class UWorld* World, const class AActor* Player,
+        float Radius = 1500.0f);
+
+    /** DP-3: pure symmetric pair lookup (invalid row when either element is None or equal). */
+    static FAstrawildPartyResonance ResolvePartyResonance(EAstrawildElementType ElementA, EAstrawildElementType ElementB);
+
+    /** DP-3: pure resolver over the elements present in a party (dominant pair = canon table order). Public for tests. */
+    static FAstrawildPartyResonance ResolvePartyResonanceForElements(const TArray<EAstrawildElementType>& PartyElements);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
 
@@ -208,6 +333,9 @@ public:
     /** Max health including level scaling. */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     float GetMaxHealth() const;
+
+    /** FCR-1-d (H-d5): defense incl. the defense IV (elemental mitigation site). */
+    float GetDefense() const;
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     float GetAttackPower() const;
@@ -315,11 +443,29 @@ protected:
 private:
     FAstrawildEchoStats CachedStats;
 
+    /** DP-5: size-class gate for the weak-point window — true only for Large/Huge species (fail-closed everywhere else). */
+    bool bWeakPointEligible = false;
+
+    /** DP-5: server-side weak-point cadence countdown (period and window constants live in the cpp). */
+    float WeakPointElapsed = 0.0f;
+
+    /** DP-5: server timer that opens/closes the weak-point window (authoritative, gated by bWeakPointEligible). */
+    void TickWeakPointWindow(float DeltaTime);
+
+    /** DP-5: feedback fan-out for a landed weakness hit (multicast + toast + audio + log, server). */
+    void NotifyWeaknessHit(float AppliedDamage);
+
+    UFUNCTION()
+    void OnRep_bWeakPointExposed();
+
     /** Batch 3 — Item B: server-side stagger countdown (client feedback via replicated CurrentAIState). */
     float StaggerRemainingSeconds = 0.0f;
 
     /** Needs simulate at a throttled cadence based on ecosystem LOD tier (directive §34). */
     float NeedsDecayAccumulator = 0.0f;
+
+    /** GDP-1: throttled (0.25s) server tick that decrements ability cooldowns. */
+    float AbilityCooldownAccumulator = 0.0f;
 
     void RollPersonalityFromDefinition();
     void RegisterWithEcosystem();
@@ -327,6 +473,9 @@ private:
     class UAstrawildEcosystemSubsystem* GetEcosystem() const;
     /** Batch 3 — Item A: server tick of DoT/expiry/speed for StatusEffects. */
     void ApplyStatusTicks(float DeltaTime);
+
+    /** DP-3: resonance row for this echo's owner party (invalid when not a captured party echo). */
+    FAstrawildPartyResonance GetOwnerPartyResonance() const;
 
     /**
      * Navigation invoker (audit C-3): the zero-asset world has no authored navmesh —

@@ -324,6 +324,91 @@
       "seconds": 0.9,
       "ue_path": "/Game/Audio/A_Weapon_Singularity_Fire"
     },
+    "SK_Echo_Abyssjelly": {
+      "animations": [
+        "AM_Abyssjelly_Idle",
+        "AM_Abyssjelly_Move",
+        "AM_Abyssjelly_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "amorphous",
+      "bones": 8,
+      "bytes": 43900,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Abyssjelly.glb",
+      "skins": 1,
+      "species": "Abyssjelly",
+      "tier": "B",
+      "triangles": 728,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Abyssjelly",
+      "validate": "PASS"
+    },
+    "SK_Echo_Astralmonolith": {
+      "animations": [
+        "AM_Astralmonolith_Idle",
+        "AM_Astralmonolith_Move",
+        "AM_Astralmonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 61744,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Astralmonolith.glb",
+      "skins": 1,
+      "species": "Astralmonolith",
+      "tier": "B",
+      "triangles": 904,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Astralmonolith",
+      "validate": "PASS"
+    },
+    "SK_Echo_Auroraling": {
+      "animations": [
+        "AM_Auroraling_Idle",
+        "AM_Auroraling_Move",
+        "AM_Auroraling_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 15,
+      "bytes": 185272,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 15,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 16,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Auroraling.glb",
+      "skins": 1,
+      "species": "Auroraling",
+      "triangles": 1813,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Auroraling",
+      "validate": "PASS"
+    },
     "SK_Echo_Bastionbeetle": {
       "animations": [
         "AM_Bastionbeetle_Idle",
@@ -349,6 +434,35 @@
       "species": "Bastionbeetle",
       "triangles": 1459,
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Bastionbeetle",
+      "validate": "PASS"
+    },
+    "SK_Echo_Brinefin": {
+      "animations": [
+        "AM_Brinefin_Idle",
+        "AM_Brinefin_Move",
+        "AM_Brinefin_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 8,
+      "bytes": 44192,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Brinefin.glb",
+      "skins": 1,
+      "species": "Brinefin",
+      "tier": "B",
+      "triangles": 512,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Brinefin",
       "validate": "PASS"
     },
     "SK_Echo_Cindermule": {
@@ -378,6 +492,62 @@
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Cindermule",
       "validate": "PASS"
     },
+    "SK_Echo_Coralray": {
+      "animations": [
+        "AM_Coralray_Idle",
+        "AM_Coralray_Move",
+        "AM_Coralray_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 85240,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Coralray.glb",
+      "skins": 1,
+      "species": "Coralray",
+      "tier": "B",
+      "triangles": 1130,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Coralray",
+      "validate": "PASS"
+    },
+    "SK_Echo_Dawnfang": {
+      "animations": [
+        "AM_Dawnfang_Idle",
+        "AM_Dawnfang_Move",
+        "AM_Dawnfang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 20,
+      "bytes": 310748,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 20,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 21,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Dawnfang.glb",
+      "skins": 1,
+      "species": "Dawnfang",
+      "triangles": 3288,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Dawnfang",
+      "validate": "PASS"
+    },
     "SK_Echo_Deepdelver": {
       "animations": [
         "AM_Deepdelver_Idle",
@@ -403,6 +573,518 @@
       "species": "Deepdelver",
       "triangles": 720,
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Deepdelver",
+      "validate": "PASS"
+    },
+    "SK_Echo_DrownedSovereign": {
+      "animations": [
+        "AM_DrownedSovereign_Idle",
+        "AM_DrownedSovereign_Move",
+        "AM_DrownedSovereign_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 24,
+      "bytes": 358264,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 24,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 25,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_DrownedSovereign.glb",
+      "skins": 1,
+      "species": "DrownedSovereign",
+      "triangles": 4405,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_DrownedSovereign",
+      "validate": "PASS"
+    },
+    "SK_Echo_Duskmoth": {
+      "animations": [
+        "AM_Duskmoth_Idle",
+        "AM_Duskmoth_Move",
+        "AM_Duskmoth_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "insectoid",
+      "bones": 12,
+      "bytes": 50228,
+      "category": "mesh",
+      "element": "Flora",
+      "joints": 12,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 13,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Duskmoth.glb",
+      "skins": 1,
+      "species": "Duskmoth",
+      "tier": "B",
+      "triangles": 674,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Duskmoth",
+      "validate": "PASS"
+    },
+    "SK_Echo_Eldermonolith": {
+      "animations": [
+        "AM_Eldermonolith_Idle",
+        "AM_Eldermonolith_Move",
+        "AM_Eldermonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 60344,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Eldermonolith.glb",
+      "skins": 1,
+      "species": "Eldermonolith",
+      "tier": "B",
+      "triangles": 898,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Eldermonolith",
+      "validate": "PASS"
+    },
+    "SK_Echo_Emberfang": {
+      "animations": [
+        "AM_Emberfang_Idle",
+        "AM_Emberfang_Move",
+        "AM_Emberfang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 82512,
+      "category": "mesh",
+      "element": "Ember",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Emberfang.glb",
+      "skins": 1,
+      "species": "Emberfang",
+      "tier": "B",
+      "triangles": 1118,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Emberfang",
+      "validate": "PASS"
+    },
+    "SK_Echo_Embershade": {
+      "animations": [
+        "AM_Embershade_Idle",
+        "AM_Embershade_Move",
+        "AM_Embershade_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "floating",
+      "bones": 5,
+      "bytes": 32724,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 5,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 6,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Embershade.glb",
+      "skins": 1,
+      "species": "Embershade",
+      "tier": "B",
+      "triangles": 506,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Embershade",
+      "validate": "PASS"
+    },
+    "SK_Echo_EyeSentinel": {
+      "animations": [
+        "AM_EyeSentinel_Idle",
+        "AM_EyeSentinel_Move",
+        "AM_EyeSentinel_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 14,
+      "bytes": 177356,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_EyeSentinel.glb",
+      "skins": 1,
+      "species": "EyeSentinel",
+      "triangles": 2243,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_EyeSentinel",
+      "validate": "PASS"
+    },
+    "SK_Echo_Fernthorn": {
+      "animations": [
+        "AM_Fernthorn_Idle",
+        "AM_Fernthorn_Move",
+        "AM_Fernthorn_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 61768,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Fernthorn.glb",
+      "skins": 1,
+      "species": "Fernthorn",
+      "tier": "B",
+      "triangles": 904,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Fernthorn",
+      "validate": "PASS"
+    },
+    "SK_Echo_Forgottencolossus": {
+      "animations": [
+        "AM_Forgottencolossus_Idle",
+        "AM_Forgottencolossus_Move",
+        "AM_Forgottencolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "crystalline",
+      "bones": 8,
+      "bytes": 39528,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Forgottencolossus.glb",
+      "skins": 1,
+      "species": "Forgottencolossus",
+      "tier": "B",
+      "triangles": 512,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Forgottencolossus",
+      "validate": "PASS"
+    },
+    "SK_Echo_Frostblaze": {
+      "animations": [
+        "AM_Frostblaze_Idle",
+        "AM_Frostblaze_Move",
+        "AM_Frostblaze_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "amorphous",
+      "bones": 10,
+      "bytes": 56392,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 10,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 11,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Frostblaze.glb",
+      "skins": 1,
+      "species": "Frostblaze",
+      "tier": "B",
+      "triangles": 898,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Frostblaze",
+      "validate": "PASS"
+    },
+    "SK_Echo_Geargolem": {
+      "animations": [
+        "AM_Geargolem_Idle",
+        "AM_Geargolem_Move",
+        "AM_Geargolem_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 60408,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Geargolem.glb",
+      "skins": 1,
+      "species": "Geargolem",
+      "tier": "B",
+      "triangles": 898,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Geargolem",
+      "validate": "PASS"
+    },
+    "SK_Echo_Ghostshade": {
+      "animations": [
+        "AM_Ghostshade_Idle",
+        "AM_Ghostshade_Move",
+        "AM_Ghostshade_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "floating",
+      "bones": 5,
+      "bytes": 31380,
+      "category": "mesh",
+      "element": "Flora",
+      "joints": 5,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 6,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Ghostshade.glb",
+      "skins": 1,
+      "species": "Ghostshade",
+      "tier": "B",
+      "triangles": 500,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Ghostshade",
+      "validate": "PASS"
+    },
+    "SK_Echo_GlassTyrant": {
+      "animations": [
+        "AM_GlassTyrant_Idle",
+        "AM_GlassTyrant_Move",
+        "AM_GlassTyrant_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 19,
+      "bytes": 247648,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 19,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 20,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_GlassTyrant.glb",
+      "skins": 1,
+      "species": "GlassTyrant",
+      "triangles": 3052,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_GlassTyrant",
+      "validate": "PASS"
+    },
+    "SK_Echo_Glimmerhornet": {
+      "animations": [
+        "AM_Glimmerhornet_Idle",
+        "AM_Glimmerhornet_Move",
+        "AM_Glimmerhornet_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 82356,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Glimmerhornet.glb",
+      "skins": 1,
+      "species": "Glimmerhornet",
+      "tier": "B",
+      "triangles": 1118,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Glimmerhornet",
+      "validate": "PASS"
+    },
+    "SK_Echo_Gloomfang": {
+      "animations": [
+        "AM_Gloomfang_Idle",
+        "AM_Gloomfang_Move",
+        "AM_Gloomfang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 22,
+      "bytes": 235156,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 22,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 23,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Gloomfang.glb",
+      "skins": 1,
+      "species": "Gloomfang",
+      "triangles": 2310,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Gloomfang",
+      "validate": "PASS"
+    },
+    "SK_Echo_Hallowedcolossus": {
+      "animations": [
+        "AM_Hallowedcolossus_Idle",
+        "AM_Hallowedcolossus_Move",
+        "AM_Hallowedcolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "crystalline",
+      "bones": 8,
+      "bytes": 39524,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Hallowedcolossus.glb",
+      "skins": 1,
+      "species": "Hallowedcolossus",
+      "tier": "B",
+      "triangles": 512,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Hallowedcolossus",
+      "validate": "PASS"
+    },
+    "SK_Echo_Lagoonfin": {
+      "animations": [
+        "AM_Lagoonfin_Idle",
+        "AM_Lagoonfin_Move",
+        "AM_Lagoonfin_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 9,
+      "bytes": 52816,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Lagoonfin.glb",
+      "skins": 1,
+      "species": "Lagoonfin",
+      "tier": "B",
+      "triangles": 584,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Lagoonfin",
+      "validate": "PASS"
+    },
+    "SK_Echo_Lumewisp": {
+      "animations": [
+        "AM_Lumewisp_Idle",
+        "AM_Lumewisp_Move",
+        "AM_Lumewisp_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 10,
+      "bytes": 100120,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 10,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 11,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Lumewisp.glb",
+      "skins": 1,
+      "species": "Lumewisp",
+      "triangles": 1013,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Lumewisp",
+      "validate": "PASS"
+    },
+    "SK_Echo_Magmawing": {
+      "animations": [
+        "AM_Magmawing_Idle",
+        "AM_Magmawing_Move",
+        "AM_Magmawing_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 83688,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Magmawing.glb",
+      "skins": 1,
+      "species": "Magmawing",
+      "tier": "B",
+      "triangles": 1124,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Magmawing",
       "validate": "PASS"
     },
     "SK_Echo_Mistmender": {
@@ -432,6 +1114,468 @@
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistmender",
       "validate": "PASS"
     },
+    "SK_Echo_Mistwing": {
+      "animations": [
+        "AM_Mistwing_Idle",
+        "AM_Mistwing_Move",
+        "AM_Mistwing_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "avian",
+      "bones": 9,
+      "bytes": 40784,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Mistwing.glb",
+      "skins": 1,
+      "species": "Mistwing",
+      "tier": "B",
+      "triangles": 445,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistwing",
+      "validate": "PASS"
+    },
+    "SK_Echo_Monolithcolossus": {
+      "animations": [
+        "AM_Monolithcolossus_Idle",
+        "AM_Monolithcolossus_Move",
+        "AM_Monolithcolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "crystalline",
+      "bones": 9,
+      "bytes": 43368,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Monolithcolossus.glb",
+      "skins": 1,
+      "species": "Monolithcolossus",
+      "tier": "B",
+      "triangles": 554,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Monolithcolossus",
+      "validate": "PASS"
+    },
+    "SK_Echo_Monolithprimarch": {
+      "animations": [
+        "AM_Monolithprimarch_Idle",
+        "AM_Monolithprimarch_Move",
+        "AM_Monolithprimarch_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "floating",
+      "bones": 5,
+      "bytes": 31412,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 5,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 6,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Monolithprimarch.glb",
+      "skins": 1,
+      "species": "Monolithprimarch",
+      "tier": "B",
+      "triangles": 500,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Monolithprimarch",
+      "validate": "PASS"
+    },
+    "SK_Echo_Pearlcrest": {
+      "animations": [
+        "AM_Pearlcrest_Idle",
+        "AM_Pearlcrest_Move",
+        "AM_Pearlcrest_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 9,
+      "bytes": 52816,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Pearlcrest.glb",
+      "skins": 1,
+      "species": "Pearlcrest",
+      "tier": "B",
+      "triangles": 584,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Pearlcrest",
+      "validate": "PASS"
+    },
+    "SK_Echo_Pistongolem": {
+      "animations": [
+        "AM_Pistongolem_Idle",
+        "AM_Pistongolem_Move",
+        "AM_Pistongolem_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 60412,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Pistongolem.glb",
+      "skins": 1,
+      "species": "Pistongolem",
+      "tier": "B",
+      "triangles": 898,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Pistongolem",
+      "validate": "PASS"
+    },
+    "SK_Echo_Primemonolith": {
+      "animations": [
+        "AM_Primemonolith_Idle",
+        "AM_Primemonolith_Move",
+        "AM_Primemonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 60380,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Primemonolith.glb",
+      "skins": 1,
+      "species": "Primemonolith",
+      "tier": "B",
+      "triangles": 898,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Primemonolith",
+      "validate": "PASS"
+    },
+    "SK_Echo_Pyreblaze": {
+      "animations": [
+        "AM_Pyreblaze_Idle",
+        "AM_Pyreblaze_Move",
+        "AM_Pyreblaze_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "amorphous",
+      "bones": 8,
+      "bytes": 46516,
+      "category": "mesh",
+      "element": "Ember",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Pyreblaze.glb",
+      "skins": 1,
+      "species": "Pyreblaze",
+      "tier": "B",
+      "triangles": 738,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Pyreblaze",
+      "validate": "PASS"
+    },
+    "SK_Echo_Reliccolossus": {
+      "animations": [
+        "AM_Reliccolossus_Idle",
+        "AM_Reliccolossus_Move",
+        "AM_Reliccolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "crystalline",
+      "bones": 8,
+      "bytes": 39508,
+      "category": "mesh",
+      "element": "Ember",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Reliccolossus.glb",
+      "skins": 1,
+      "species": "Reliccolossus",
+      "tier": "B",
+      "triangles": 512,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Reliccolossus",
+      "validate": "PASS"
+    },
+    "SK_Echo_Rimefang": {
+      "animations": [
+        "AM_Rimefang_Idle",
+        "AM_Rimefang_Move",
+        "AM_Rimefang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 81152,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Rimefang.glb",
+      "skins": 1,
+      "species": "Rimefang",
+      "tier": "B",
+      "triangles": 1112,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Rimefang",
+      "validate": "PASS"
+    },
+    "SK_Echo_Saltcrest": {
+      "animations": [
+        "AM_Saltcrest_Idle",
+        "AM_Saltcrest_Move",
+        "AM_Saltcrest_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 9,
+      "bytes": 52812,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Saltcrest.glb",
+      "skins": 1,
+      "species": "Saltcrest",
+      "tier": "B",
+      "triangles": 584,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Saltcrest",
+      "validate": "PASS"
+    },
+    "SK_Echo_Saltray": {
+      "animations": [
+        "AM_Saltray_Idle",
+        "AM_Saltray_Move",
+        "AM_Saltray_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 81156,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Saltray.glb",
+      "skins": 1,
+      "species": "Saltray",
+      "tier": "B",
+      "triangles": 1112,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Saltray",
+      "validate": "PASS"
+    },
+    "SK_Echo_Sprigling": {
+      "animations": [
+        "AM_Sprigling_Idle",
+        "AM_Sprigling_Move",
+        "AM_Sprigling_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 15,
+      "bytes": 137908,
+      "category": "mesh",
+      "element": "Flora",
+      "joints": 15,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 16,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Sprigling.glb",
+      "skins": 1,
+      "species": "Sprigling",
+      "triangles": 1583,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sprigling",
+      "validate": "PASS"
+    },
+    "SK_Echo_Stonehide": {
+      "animations": [
+        "AM_Stonehide_Idle",
+        "AM_Stonehide_Move",
+        "AM_Stonehide_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 82336,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Stonehide.glb",
+      "skins": 1,
+      "species": "Stonehide",
+      "tier": "B",
+      "triangles": 1118,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Stonehide",
+      "validate": "PASS"
+    },
+    "SK_Echo_Sunhide": {
+      "animations": [
+        "AM_Sunhide_Idle",
+        "AM_Sunhide_Move",
+        "AM_Sunhide_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 61636,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Sunhide.glb",
+      "skins": 1,
+      "species": "Sunhide",
+      "tier": "B",
+      "triangles": 904,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sunhide",
+      "validate": "PASS"
+    },
+    "SK_Echo_Sunhorn": {
+      "animations": [
+        "AM_Sunhorn_Idle",
+        "AM_Sunhorn_Move",
+        "AM_Sunhorn_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 82324,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Sunhorn.glb",
+      "skins": 1,
+      "species": "Sunhorn",
+      "tier": "B",
+      "triangles": 1118,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sunhorn",
+      "validate": "PASS"
+    },
+    "SK_Echo_Sunpaw": {
+      "animations": [
+        "AM_Sunpaw_Idle",
+        "AM_Sunpaw_Move",
+        "AM_Sunpaw_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 85212,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Sunpaw.glb",
+      "skins": 1,
+      "species": "Sunpaw",
+      "tier": "B",
+      "triangles": 1130,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sunpaw",
+      "validate": "PASS"
+    },
     "SK_Echo_Terraquill": {
       "animations": [
         "AM_Terraquill_Idle",
@@ -459,6 +1603,180 @@
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Terraquill",
       "validate": "PASS"
     },
+    "SK_Echo_Tidewyrm": {
+      "animations": [
+        "AM_Tidewyrm_Idle",
+        "AM_Tidewyrm_Move",
+        "AM_Tidewyrm_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 83800,
+      "category": "mesh",
+      "element": "Ember",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Tidewyrm.glb",
+      "skins": 1,
+      "species": "Tidewyrm",
+      "tier": "B",
+      "triangles": 1124,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Tidewyrm",
+      "validate": "PASS"
+    },
+    "SK_Echo_Undertowray": {
+      "animations": [
+        "AM_Undertowray_Idle",
+        "AM_Undertowray_Move",
+        "AM_Undertowray_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 82528,
+      "category": "mesh",
+      "element": "Light",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Undertowray.glb",
+      "skins": 1,
+      "species": "Undertowray",
+      "tier": "B",
+      "triangles": 1118,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Undertowray",
+      "validate": "PASS"
+    },
+    "SK_Echo_Verdantbloom": {
+      "animations": [
+        "AM_Verdantbloom_Idle",
+        "AM_Verdantbloom_Move",
+        "AM_Verdantbloom_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 85232,
+      "category": "mesh",
+      "element": "Flora",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Verdantbloom.glb",
+      "skins": 1,
+      "species": "Verdantbloom",
+      "tier": "B",
+      "triangles": 1130,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Verdantbloom",
+      "validate": "PASS"
+    },
+    "SK_Echo_Vespermonolith": {
+      "animations": [
+        "AM_Vespermonolith_Idle",
+        "AM_Vespermonolith_Move",
+        "AM_Vespermonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 60384,
+      "category": "mesh",
+      "element": "Ash",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Vespermonolith.glb",
+      "skins": 1,
+      "species": "Vespermonolith",
+      "tier": "B",
+      "triangles": 898,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Vespermonolith",
+      "validate": "PASS"
+    },
+    "SK_Echo_Voidwing": {
+      "animations": [
+        "AM_Voidwing_Idle",
+        "AM_Voidwing_Move",
+        "AM_Voidwing_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 82336,
+      "category": "mesh",
+      "element": "Frost",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Voidwing.glb",
+      "skins": 1,
+      "species": "Voidwing",
+      "tier": "B",
+      "triangles": 1118,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Voidwing",
+      "validate": "PASS"
+    },
+    "SK_Echo_Voltmaw": {
+      "animations": [
+        "AM_Voltmaw_Idle",
+        "AM_Voltmaw_Move",
+        "AM_Voltmaw_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 10,
+      "bytes": 53828,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 10,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 11,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Voltmaw.glb",
+      "skins": 1,
+      "species": "Voltmaw",
+      "tier": "B",
+      "triangles": 620,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Voltmaw",
+      "validate": "PASS"
+    },
     "SK_Echo_Voltpylon": {
       "animations": [
         "AM_Voltpylon_Idle",
@@ -484,6 +1802,35 @@
       "species": "Voltpylon",
       "triangles": 1550,
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Voltpylon",
+      "validate": "PASS"
+    },
+    "SK_Echo_Wavecrest": {
+      "animations": [
+        "AM_Wavecrest_Idle",
+        "AM_Wavecrest_Move",
+        "AM_Wavecrest_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 10,
+      "bytes": 53936,
+      "category": "mesh",
+      "element": "Pulse",
+      "joints": 10,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 11,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Wavecrest.glb",
+      "skins": 1,
+      "species": "Wavecrest",
+      "tier": "B",
+      "triangles": 620,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Wavecrest",
       "validate": "PASS"
     },
     "SK_Survivor_Exosuit": {

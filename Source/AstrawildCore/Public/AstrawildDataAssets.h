@@ -90,6 +90,25 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food", meta=(ClampMin="0.0", ClampMax="3.0"))
     float EchoFeedValue = 0.0f;
 
+    // --- DP-6 (additive): field-consumable timed effects (production → progression) ---
+
+    /**
+     * Consumable: timed status applied through the survival component's
+     * status-effect system on use (StatusId None = no timed effect). The Field
+     * Ration carries a stamina-regen payload here; combat statuses reuse the
+     * same struct, so the loop is one system, not two.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food")
+    FAstrawildStatusEffect OnConsumeStatus;
+
+    /**
+     * Consumable: seconds of the capture-focus window granted on use (0 = none).
+     * Reuses the Hunter's Focus smart-cast window verb (+25% capture chance
+     * while active) — the Pulse Tonic is a bottled version of that skill.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Food", meta=(ClampMin="0.0"))
+    float CaptureFocusSeconds = 0.0f;
+
     /**
      * Batch 4 — M-11: vendor buy price in the NPC's currency item. 0 = not
      * tradeable. Sell value at a vendor is half the buy price (floor 1) via
@@ -213,6 +232,45 @@ public:
     /** Robot: chassis specialization id (mining/farming/defense profiles). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Equipment")
     FName RobotDefinitionId = NAME_None;
+
+    // --- SCP Phase 12 (additive) — durability, spoilage, harvest specialization ---
+
+    /**
+     * Equipment/tool durability pool (0 = item ignores durability). Weapons lose
+     * 1 per landed hit, tools 1 per harvest, armor 1 per damage taken. At 0 the
+     * item enters the Broken state (weapon damage x0.4, tools cannot harvest at
+     * bonus rates) until repaired at the Repair Bench.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Durability", meta=(ClampMin="0.0"))
+    float DurabilityMax = 0.0f;
+
+    /**
+     * Seconds before one stack of this item spoils (0 = never perishes).
+     * The spoilage subsystem ages every held stack; at the deadline the stack
+     * converts to Item_SpoiledOrganics unless preserved in an Ice Box radius
+     * (x10 slower there).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Perishable", meta=(ClampMin="0.0"))
+    float PerishableSeconds = 0.0f;
+
+    /**
+     * Resource category this item belongs to when harvested ("Ore", "Wood",
+     * "Fiber", "Flora" — set on resource items). Tools carrying a matching
+     * HarvestBonusCategory grant their HarvestMultiplier on yield.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Harvest")
+    FName HarvestCategory = NAME_None;
+
+    /**
+     * Tool specialization category ("Ore" for picks, "Wood" for axes, "Fiber"
+     * for sickles). Matched against the harvested item's HarvestCategory.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Harvest")
+    FName HarvestBonusCategory = NAME_None;
+
+    /** Yield multiplier when the tool category matches the resource (picks x3, sickles x4). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Item|Harvest", meta=(ClampMin="1.0", ClampMax="10.0"))
+    float HarvestMultiplier = 1.0f;
 
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
@@ -371,6 +429,15 @@ public:
     /** Creature lineage — drives silhouette family, loot flavor and work affinities. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
     EAstrawildEchoFamily Family = EAstrawildEchoFamily::Beast;
+
+    /**
+     * GDP-2 — locomotion class: how the species actually moves. Auto derives
+     * deterministically from family/body plan/home zone at runtime
+     * (AAstrawildEchoCharacter::GetLocomotionClass), so existing definitions
+     * and the generated 200-species table need no migration.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Locomotion")
+    EAstrawildLocomotionClass Locomotion = EAstrawildLocomotionClass::Auto;
 
     /** Procedural silhouette kit used by the runtime body builder. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Echo|Appearance")
@@ -1247,9 +1314,10 @@ struct ASTRAWILDCORE_API FAstrawildDialogueLine
 };
 
 /**
- * A player reply. Conditions are ANDed (all must pass; NAME_None = ignored);
- * consequences apply in a fixed order (quest start, flag, items, research)
- * before the conversation continues to GotoNodeId.
+ * A player reply. Conditions are ANDed (all must pass; NAME_None = ignored,
+ * RequiredMinAffinity 0 = ignored) and the affinity gate resolves against the
+ * TALKING NPC; consequences apply in a fixed order (quest start, flag, items,
+ * research) before the conversation continues to GotoNodeId.
  */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildDialogueChoice
@@ -1277,6 +1345,18 @@ struct ASTRAWILDCORE_API FAstrawildDialogueChoice
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition")
     FName ForbiddenFlagId = NAME_None;
 
+    /**
+     * DP-8 (NPC depth): minimum affinity with the TALKING NPC required for
+     * this reply to appear. 0 = no gate (every pre-DP-8 tree stays
+     * byte-identical — fresh default is save-safe). Fail-closed beside the
+     * quest/flag conditions: a positive threshold hides the reply whenever the
+     * NPC's live affinity is below it or the NPC cannot be resolved. Author
+     * against the tier boundaries (NPCCharacter.cpp): 25 Acquaintance /
+     * 50 Friend / 75 Confidant.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Condition", meta=(ClampMin="0", ClampMax="100"))
+    int32 RequiredMinAffinity = 0;
+
     // --- Consequences ---
 
     /** Quest started when this choice is taken (routes through the quest component). */
@@ -1297,6 +1377,15 @@ struct ASTRAWILDCORE_API FAstrawildDialogueChoice
     /** Research points granted on top of any quest rewards. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence", meta=(ClampMin="0"))
     int32 GiveResearchPoints = 0;
+
+    /**
+     * Final Run (FR-6): ending route — when set, taking this choice triggers the
+     * world ending through the game state (one-way, save-persistent). Vocabulary:
+     * Ending_BreakCage → The Dawn That Stays; Ending_StormSleeps → The Storm That
+     * Sleeps. Unknown ids are refused with a warning (fail-closed, like quest ids).
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")
+    FName TriggerEndingId = NAME_None;
 
     /** Next node (NAME_None + !bEndDialogue = also ends the conversation). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Dialogue|Consequence")

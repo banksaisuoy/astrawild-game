@@ -1,5 +1,7 @@
 #include "AstrawildHudWidget.h"
+#include "AstrawildLANSessionSubsystem.h" // LCP-6: session mode line
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
 #include "AstrawildCombatComponent.h"
@@ -30,6 +32,7 @@
 void UAstrawildHudWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     BuildWidgetTree();
 }
 
@@ -37,6 +40,7 @@ void UAstrawildHudWidget::BuildWidgetTree()
 {
     WidgetTree->RootWidget = nullptr;
     RootCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("RootCanvas"));
+    RootCanvas->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     WidgetTree->RootWidget = RootCanvas;
 
     // --- Helper lambdas ---
@@ -90,6 +94,11 @@ void UAstrawildHudWidget::BuildWidgetTree()
     ResearchText = MakeText(TEXT("ResearchText"), FLinearColor(0.70f, 0.90f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(ResearchText), FVector2D(0.5f, 0.085f), FVector2D(0.5f, 0.085f), FVector2D(-110.0f, 0.0f), FVector2D(220.0f, 20.0f));
 
+    // LCP-6 (PART 6): the active session mode is ALWAYS visible — a quiet
+    // top-left line naming the mode (host authority included).
+    SessionModeText = MakeText(TEXT("SessionModeText"), FLinearColor(0.55f, 0.75f, 0.7f, 1.0f), 12);
+    AnchorSlot(RootCanvas->AddChildToCanvas(SessionModeText), FVector2D(0.02f, 0.02f), FVector2D(0.02f, 0.02f), FVector2D::ZeroVector, FVector2D(340.0f, 16.0f));
+
     // --- Batch 7: Shattered Vale zone banner (title + flavor + discovery count) ---
     ZoneBannerText = MakeText(TEXT("ZoneBannerText"), FLinearColor(0.95f, 0.92f, 0.80f, 1.0f), 19);
     AnchorSlot(RootCanvas->AddChildToCanvas(ZoneBannerText), FVector2D(0.5f, 0.125f), FVector2D(0.5f, 0.125f), FVector2D(-160.0f, 0.0f), FVector2D(320.0f, 24.0f));
@@ -128,6 +137,10 @@ void UAstrawildHudWidget::BuildWidgetTree()
     CommandText = MakeText(TEXT("CommandText"), FLinearColor(0.70f, 0.85f, 0.98f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(CommandText), FVector2D(0.98f, 0.93f), FVector2D(0.98f, 0.93f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 20.0f));
 
+    // --- GDP: ability readiness line (under the party command) ---
+    AbilityText = MakeText(TEXT("AbilityText"), FLinearColor(0.75f, 0.95f, 0.65f, 1.0f), 13);
+    AnchorSlot(RootCanvas->AddChildToCanvas(AbilityText), FVector2D(0.98f, 0.955f), FVector2D(0.98f, 0.955f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 18.0f));
+
     // --- Right-bottom equipment readout (wave 3) ---
     EquipmentText = MakeText(TEXT("EquipmentText"), FLinearColor(0.98f, 0.80f, 0.55f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(EquipmentText), FVector2D(0.98f, 0.90f), FVector2D(0.98f, 0.90f), FVector2D(-300.0f, 0.0f), FVector2D(300.0f, 20.0f));
@@ -142,6 +155,13 @@ void UAstrawildHudWidget::BuildWidgetTree()
 
     BossText = MakeText(TEXT("BossText"), FLinearColor(0.98f, 0.75f, 0.78f, 1.0f), 14);
     AnchorSlot(RootCanvas->AddChildToCanvas(BossText), FVector2D(0.5f, 0.225f), FVector2D(0.5f, 0.225f), FVector2D(-200.0f, 0.0f), FVector2D(400.0f, 20.0f));
+
+    // --- Final Run (FR-6): full-screen ending banner — shows for the whole
+    // post-game once an ending is chosen (persistent verdict, not a toast). ---
+    EndingBannerText = MakeText(TEXT("EndingBannerText"), FLinearColor(0.98f, 0.86f, 0.55f, 1.0f), 16);
+    EndingBannerText->SetAutoWrapText(true);
+    AnchorSlot(RootCanvas->AddChildToCanvas(EndingBannerText), FVector2D(0.5f, 0.255f), FVector2D(0.5f, 0.255f), FVector2D(-220.0f, 0.0f), FVector2D(440.0f, 40.0f));
+    EndingBannerText->SetVisibility(ESlateVisibility::Hidden);
 
     // --- Final production run: scanner + drone companion readout (under capture). ---
     ScanText = MakeText(TEXT("ScanText"), FLinearColor(0.62f, 0.88f, 0.98f, 1.0f), 14);
@@ -296,6 +316,11 @@ void UAstrawildHudWidget::RefreshState()
         {
             if (World->GetGameInstance())
             {
+                if (SessionModeText)
+                {
+                    // LCP-6 (PART 6): the active session mode is always visible.
+                    SessionModeText->SetText(FText::FromString(UAstrawildLANSessionSubsystem::DescribeSessionMode(this)));
+                }
                 if (const UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
                 {
                     ResearchText->SetText(FText::FromString(FString::Printf(TEXT("Research: %d RP"),
@@ -358,6 +383,46 @@ void UAstrawildHudWidget::RefreshState()
     {
         CommandText->SetText(FText::FromString(FString::Printf(TEXT("Party command [C]: %s"),
             *UEnum::GetDisplayValueAsText(Pawn->CurrentPartyCommand).ToString())));
+    }
+
+    // GDP: ability readiness — how many party Echo abilities + player skills are
+    // castable right now (the T/Y keys become readable instead of guessable).
+    if (AbilityText)
+    {
+        int32 ReadyEchoAbilities = 0;
+        int32 PartySize = 0;
+        if (const UWorld* World = GetWorld())
+        {
+            for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+            {
+                const AAstrawildEchoCharacter* Echo = *It;
+                if (Echo && Echo->bCaptured && Echo->OwnerPlayerId == Pawn->GetFName() && !Echo->IsDefeated())
+                {
+                    PartySize++;
+                    ReadyEchoAbilities += Echo->GetKnownAbilityIds().Num() -
+                        Echo->AbilityCooldowns.Num(); // Off-cooldown approximation read client-side.
+                }
+            }
+        }
+
+        int32 UnlockedSkills = 0;
+        int32 BoundSkillCount = 0;
+        if (Pawn->AttributeComponent)
+        {
+            UnlockedSkills = Pawn->AttributeComponent->GetUnlockedSkills().Num();
+            for (const EAstrawildPlayerSkillId BoundSkill : Pawn->AttributeComponent->GetBoundSkills())
+            {
+                if (BoundSkill != EAstrawildPlayerSkillId::None)
+                {
+                    ++BoundSkillCount;
+                }
+            }
+        }
+
+        // DP-4: the bound count makes the player's loadout (build identity)
+        // readable at a glance — 0 bound = the legacy all-unlocked smart-cast.
+        AbilityText->SetText(FText::FromString(FString::Printf(TEXT("[T] Echo abilities ready: %d/%d | [Y] Skills: %d unlocked, %d/3 bound"),
+            FMath::Max(0, ReadyEchoAbilities), PartySize, UnlockedSkills, BoundSkillCount)));
     }
 
     // Equipment readout (wave 3): weapon ATK + shield block.
@@ -476,7 +541,9 @@ void UAstrawildHudWidget::RefreshState()
             BossHealthBar->SetVisibility(ESlateVisibility::Visible);
             BossText->SetVisibility(ESlateVisibility::Visible);
             BossHealthBar->SetPercent(Boss->GetHealthFraction());
-            BossText->SetText(FText::FromString(FString::Printf(TEXT("Underlight Warden — Phase %d%s%s"),
+            // FR-11: per-boss display name — dynamic, never a hardcoded string.
+            BossText->SetText(FText::FromString(FString::Printf(TEXT("%s — Phase %d%s%s"),
+                *Boss->GetBossDisplayName().ToString(),
                 Boss->CurrentPhase,
                 Boss->bEnraged ? TEXT(" ENRAGED") : TEXT(""),
                 Boss->bWeakPointExposed ? TEXT(" | WEAK POINT EXPOSED!") : TEXT(""))));
@@ -487,6 +554,22 @@ void UAstrawildHudWidget::RefreshState()
             CachedBoss = nullptr;
             BossHealthBar->SetVisibility(ESlateVisibility::Hidden);
             BossText->SetVisibility(ESlateVisibility::Hidden);
+        }
+    }
+
+    // Final Run (FR-6): ending banner — persistent post-game verdict overlay.
+    if (EndingBannerText)
+    {
+        UWorld* World = GetWorld();
+        const AAstrawildGameState* GameState = World ? World->GetGameState<AAstrawildGameState>() : nullptr;
+        if (GameState && GameState->EndingState != EAstrawildEndingState::None)
+        {
+            EndingBannerText->SetText(GameState->GetEndingBannerText());
+            EndingBannerText->SetVisibility(ESlateVisibility::Visible);
+        }
+        else
+        {
+            EndingBannerText->SetVisibility(ESlateVisibility::Hidden);
         }
     }
 

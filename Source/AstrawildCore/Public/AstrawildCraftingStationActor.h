@@ -25,7 +25,7 @@ public:
     TObjectPtr<UStaticMeshComponent> VisualMesh;
 
     /** Registry id of this station kind (e.g. Station_Workbench, Station_Campfire). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Crafting")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Crafting", Replicated)
     FName StationId = NAME_None;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Crafting", meta=(ClampMin="100.0"))
@@ -36,4 +36,5 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 };

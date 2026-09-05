@@ -87,6 +87,14 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Work")
     int32 GetStoredOutput() const { return StoredOutput; }
 
+    /**
+     * SCP Phase 8: credit offline production for elapsed wall seconds (called
+     * by SaveSubsystem::LoadWorld with now - SavedAtUtc). Capped at 48h, at a
+     * 50% rate, and honest about cycle inputs — offline production never
+     * free-mints items from empty buffers (directive Phase 8.3).
+     */
+    void CreditOfflineProduction(float OfflineSeconds);
+
     /** Player collects the accumulated output. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Work")
     int32 CollectOutput();
@@ -163,6 +171,14 @@ private:
 
     /** Consume one cycle's inputs from the buffer (false when insufficient → stall). */
     bool ConsumeCycleInputs();
+
+    /** FCR-1-d (L-d16): UTC ticks this site's offline window was credited through
+     *  (crash between load and autosave cannot double-credit). 0 = never. */
+    int64 LastOfflineCreditUtcTicks = 0;
+
+public:
+    /** FCR-1-d (L-d16): save-subsystem read accessor for the credit window start. */
+    int64 GetOfflineCreditUtcTicks() const { return LastOfflineCreditUtcTicks; }
 
     /** Deposit matching inputs from a player inventory into the buffer (server). */
     int32 DepositInputsFromInventory(class UAstrawildInventoryComponent* Inventory);

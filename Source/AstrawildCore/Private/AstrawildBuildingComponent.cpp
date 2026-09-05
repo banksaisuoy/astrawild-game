@@ -1,5 +1,6 @@
 #include "AstrawildBuildingComponent.h"
 
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -176,6 +177,14 @@ bool UAstrawildBuildingComponent::ValidatePlacementLocation(const FVector& Locat
         return false;
     }
 
+    // SCP Phase 9: once a Base Terminal exists, new pieces must claim inside a
+    // terminal territory (3500cm). With no terminal placed the world stays open
+    // (early game flow preserved).
+    if (!AAstrawildBaseTerminalActor::IsPlacementAllowed(World, Location))
+    {
+        return false;
+    }
+
     // Overlap check against existing blocking geometry.
     FCollisionShape Shape = FCollisionShape::MakeBox(FVector(GridSize * 0.45f, GridSize * 0.45f, 50.0f));
     TArray<FOverlapResult> Overlaps;
@@ -211,6 +220,19 @@ void UAstrawildBuildingComponent::UpdatePreview()
         case EAstrawildBuildingCategory::Wall:
             PreviewActor->VisualMesh->SetWorldScale3D(FVector(2.0f, 0.2f, 1.5f));
             break;
+        // Final Run (FR-9): preview silhouettes mirror the placed pieces.
+        case EAstrawildBuildingCategory::Floor:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(2.0f, 2.0f, 0.12f));
+            break;
+        case EAstrawildBuildingCategory::Roof:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(2.2f, 2.2f, 0.18f));
+            break;
+        case EAstrawildBuildingCategory::Door:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(1.5f, 0.15f, 1.6f));
+            break;
+        case EAstrawildBuildingCategory::Storage:
+            PreviewActor->VisualMesh->SetWorldScale3D(FVector(1.1f, 1.1f, 0.9f));
+            break;
         default:
             PreviewActor->VisualMesh->SetWorldScale3D(FVector(1.2f, 1.2f, 1.0f));
             break;
@@ -222,6 +244,19 @@ void UAstrawildBuildingComponent::UpdatePreview()
     const UAstrawildInventoryComponent* Inventory = Player ? Player->InventoryComponent : nullptr;
     const bool bHasMaterials = Def && Inventory && Inventory->HasItem(Def->RequiredItemId, Def->RequiredItemCount);
     bPlacementValid = bHasMaterials && ValidatePlacementLocation(Location, SnapGridSize);
+
+    // Final Run (FR-9): validity tint — the preview's indicator light reads
+    // GREEN when the placement resolves (materials + clear ground) and RED
+    // when it does not. Zero-asset-safe: the basic-shape mesh catches the
+    // colored light, so validity reads at a glance while rotating.
+    if (PreviewActor && PreviewActor->PowerIndicatorLight)
+    {
+        PreviewActor->PowerIndicatorLight->SetIntensity(bPlacementValid ? 6.0f : 10.0f);
+        PreviewActor->PowerIndicatorLight->SetAttenuationRadius(1100.0f);
+        PreviewActor->PowerIndicatorLight->SetLightColor(bPlacementValid
+            ? FLinearColor(0.15f, 0.95f, 0.35f, 1.0f)
+            : FLinearColor(0.95f, 0.20f, 0.12f, 1.0f));
+    }
 }
 
 void UAstrawildBuildingComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -274,17 +309,20 @@ void UAstrawildBuildingComponent::ServerPlaceBuilding_Implementation(const FName
     if (!ValidatePlacementLocation(Location, Def->GridCellSize))
     {
         // Refund the consumed materials.
+        // Final-audit F-04: AddItemSilent — the dismantle and save-restore refunds
+        // were already silent; this placement-rejection path still fired
+        // ItemCollected, falsely advancing a live "collect Item_Wood" objective
+        // (MASTER_CONTROL §9 refund rule).
         if (Player->InventoryComponent)
         {
-            Player->InventoryComponent->AddItem(Def->RequiredItemId, Def->RequiredItemCount);
+            Player->InventoryComponent->AddItemSilent(Def->RequiredItemId, Def->RequiredItemCount);
         }
         return;
     }
 
-    FActorSpawnParameters Params;
-    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    AAstrawildBuildingActor* Building = World->SpawnActor<AAstrawildBuildingActor>(
-        AAstrawildBuildingActor::StaticClass(), Location, FRotator(0.0f, Yaw, 0.0f), Params);
+    // SCP Phase 9: route through the factory so Base Terminals spawn their
+    // territory-aware subclass.
+    AAstrawildBuildingActor* Building = AAstrawildBuildingActor::SpawnForDefinition(World, Def, Location, FRotator(0.0f, Yaw, 0.0f));
 
     if (Building && Building->InitializeFromDefinition(Def, Player->GetFName()))
     {
@@ -294,6 +332,18 @@ void UAstrawildBuildingComponent::ServerPlaceBuilding_Implementation(const FName
             EventBus->PublishEvent(TAG_Astrawild_Event_BuildingPlaced, Player, DefinitionId, 1, Location);
         }
         UE_LOG(LogAstrawildBuilding, Log, TEXT("Building placed: %s at %s."), *DefinitionId.ToString(), *Location.ToCompactString());
+    }
+    else
+    {
+        // FCR-1-c fix (L-c19): spawn/init failure refunds the consumed materials —
+        // the location-rejection path above already did; this branch silently
+        // ate them. Silent add per the refund rule (no false ItemCollected).
+        if (Player->InventoryComponent)
+        {
+            Player->InventoryComponent->AddItemSilent(Def->RequiredItemId, Def->RequiredItemCount);
+        }
+        UE_LOG(LogAstrawildBuilding, Warning, TEXT("Building placement failed at spawn/init — materials refunded (%s x%d)."),
+            *DefinitionId.ToString(), Def->RequiredItemCount);
     }
 }
 

@@ -7,7 +7,9 @@
 
 class AAstrawildBossHazardActor;
 class AAstrawildBossTelegraphActor;
+class UAnimSequenceBase;
 class UStaticMeshComponent;
+class USkeletalMeshComponent;
 class UAstrawildEchoDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildBossPhaseChanged, int32, NewPhase, float, HealthFractionAtTransition);
@@ -43,6 +45,15 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss")
     TObjectPtr<UStaticMeshComponent> PlaceholderMesh;
+
+    /**
+     * Tier-A boss mesh (Creature Visual Strategy DP-1): replaces the cone the
+     * moment the imported skeletal mesh resolves (InitializeFromBossDefinition).
+     * Until engine import the cone stays — never auto-replace a working visual
+     * (same rule as the weapon CANDIDATE_REPLACEMENT policy).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss")
+    TObjectPtr<USkeletalMeshComponent> BossBodyMesh;
 
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Boss")
     FAstrawildBossPhaseChanged OnPhaseChanged;
@@ -89,11 +100,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
     FName DefeatEventTargetId = TEXT("Creature_UnderlightWarden");
 
+    /**
+     * Final-audit (AUD-3 loot note): when true, defeat grants the species'
+     * authored DefeatLoot to the nearest player. Dungeon-room bosses set this to
+     * FALSE at spawn — their room's ClearLootTableId already rewards the kill
+     * (double-dipping would inflate the Sovereign's SovereignCore count). World
+     * bosses (the Glass Tyrant) keep it true — nothing else rewards them.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
+    bool bGrantSpeciesDefeatLoot = true;
+
     /** Attacking with this element deals ×1.5 (resolved from the species definition). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
     EAstrawildElementType WeaknessElement = EAstrawildElementType::Light;
 
-    /** The boss's own element — same-element attacks are resisted (×0.75). */
+    /** The boss's own element — same-element attacks are resisted (×0.80, unified). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss")
     EAstrawildElementType BossElement = EAstrawildElementType::Ash;
 
@@ -131,6 +152,22 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="2.0"))
     float HazardIntervalSeconds = 9.0f;
 
+    /** DP-5: energy bolts per special volley (fanned around the target — set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="5"))
+    int32 BoltCount = 1;
+
+    /** DP-5: telegraphed blasts per special volley (the first sits on the player, the rest ring around them — set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="3"))
+    int32 BlastCount = 1;
+
+    /** DP-5: hazards spawned per hazard wave (ring around the arena center — set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="6"))
+    int32 HazardWaveCount = 1;
+
+    /** DP-5: damage per second of each arena hazard this boss spawns (set-tuned). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="0.0"))
+    float HazardDamagePerSecond = 6.0f;
+
     /** Hazards spawn on a ring of this radius around the arena center (cm). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="100.0"))
     float HazardSpawnRadius = 650.0f;
@@ -146,6 +183,41 @@ public:
     /** Damage multiplier while the weak point is exposed. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|WeakPoint", meta=(ClampMin="1.0", ClampMax="5.0"))
     float WeakPointDamageMultiplier = 2.0f;
+
+    // --- DP-5: per-boss special sets (data-driven, shared pipeline) ---
+
+    /**
+     * DP-5: the special set driving this encounter's specials, resolved once
+     * from DefeatEventTargetId (server tuning — the parameters are read by the
+     * shared TickSpecials pipeline, never replicated).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss|Specials")
+    EAstrawildBossSpecialSet SpecialSet = EAstrawildBossSpecialSet::UnderlightWarden;
+
+    /**
+     * DP-5: resolve the special set from a defeat id. The four canonical ids
+     * map to four distinct sets; every other id fails closed to the
+     * Underlight Warden set (the pre-DP-5 shared-pipeline behavior).
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
+    static EAstrawildBossSpecialSet ResolveBossSpecialSet(FName DefeatEventTargetId);
+
+    /**
+     * DP-5: pure tuning table for one special set (bolt count/cadence, blast
+     * count/radius, hazard wave count/dps, summon species) — the same four
+     * primitives recombined per boss, no new mechanic types.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
+    static FAstrawildBossSpecialSetParams GetBossSpecialSetParams(EAstrawildBossSpecialSet Set);
+
+    /**
+     * DP-5: resolve the set from the CURRENT DefeatEventTargetId and apply its
+     * tuning onto this encounter (server; idempotent). Called at the end of
+     * InitializeFromBossDefinition and again wherever a spawn path finalizes
+     * DefeatEventTargetId (dungeon boss room + the Tyrant world spawn).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Boss")
+    void ApplyBossSpecialSet();
 
     // --- Replicated encounter state ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Boss", Replicated)
@@ -198,6 +270,22 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
     bool IsDefeated() const { return CurrentHealth <= 0.0f; }
 
+    /**
+     * Final Run (FR-11): per-boss HUD display name — resolved from
+     * DefeatEventTargetId (the stable per-boss identity) with a graceful
+     * fallback to the species name. The HUD never hardcodes "Underlight
+     * Warden" for every boss again.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Boss")
+    FText GetBossDisplayName() const;
+
+    /**
+     * Final Run (FR-11): pure display-name resolver (automation-tested).
+     * Maps the four canonical defeat ids to names; anything else falls back
+     * to the provided species label (or "Echo Boss" when unknown).
+     */
+    static FText ResolveBossDisplayName(FName DefeatEventId, const FText& SpeciesLabel);
+
     // --- Batch 6: pure statics (unit-tested — ASTRAWILD.Dungeon.*) ---
 
     /** Elemental multiplier: weakness ×1.5, same-element resist ×0.75, otherwise ×1. */
@@ -213,6 +301,20 @@ public:
     static float ComputeBossAttackDamage(float Base, int32 Phase, bool bIsEnraged, float EnrageMultiplier);
 
 private:
+    /** Idle/move clip selection for the opt-in skeletal body (single-node mode). */
+    void UpdateBossBodyAnimation();
+
+    UPROPERTY(Transient)
+    TSoftObjectPtr<UAnimSequenceBase> BossIdleAnimation;
+
+    UPROPERTY(Transient)
+    TSoftObjectPtr<UAnimSequenceBase> BossMoveAnimation;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> CurrentBossLoopAnimation;
+
+    FTimerHandle BossAnimTimerHandle;
+
     double LastAttackTime = -BIG_NUMBER;
     double LastSpecialAttackTime = -BIG_NUMBER;
     double LastHazardTime = -BIG_NUMBER;
@@ -239,6 +341,9 @@ private:
     /** Walk speed set by the current phase — status slows multiply on top each tick. */
     float PhaseWalkSpeed = 380.0f;
 
+    /** FR-11: species display label cached at initialization (HUD fallback). */
+    FText CachedSpeciesLabel;
+
     /** Active status effects (server-side; health replication carries the visible result). */
     TArray<FAstrawildStatusEffect> ActiveStatusEffects;
 
@@ -251,7 +356,7 @@ private:
     void TickSpecials(float DeltaTime);
     void TickWeakPoint(float DeltaTime);
     void TickPendingBlasts(float DeltaTime);
-    void FireEnergyBolt(class AAstrawildPlayerCharacter* Target);
+    void FireEnergyBolt(class AAstrawildPlayerCharacter* Target, int32 VolleyIndex);
     void SpawnArenaHazard();
     void CleanupEncounterFx();
 

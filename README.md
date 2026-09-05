@@ -1,12 +1,25 @@
 # ASTRAWILD — Echoes of the First Dawn
 
+> [!NOTE]
+> **Current status (DP-10 final gate, 2026)**: the repository is source-complete on branch
+> `final-completion` — 109 world-free automation contracts, full 12-zone world, 229 Echo
+> species, MQ-01..17 + two endings, save schema V5, ready for the one-time engine
+> integration run. The canonical control doc is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v5.0)**;
+> the engine runbook is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The narrative text below
+> this note is the Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54
+> tests" snapshot refers to the 2026-09-01 Antigravity V2 session).
+
 **Current world (Batch 7): The Shattered Vale** — six 800 m zones (Dawn Fields, Dusk Marsh, Glimmerwood, Ember Ridge, Frostveil Expanse, Hollow Approach) over a 2.4 km × 1.6 km procedural terrain, each zone with its own wildlife, resources, landmarks and signature light. Runtime world needs zero assets; an optional editor Landscape path ships in `Content/Heightmaps/`.
 
 ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal Engine. The first milestone is a playable Vertical Slice: one small region, three prototype Echo creatures, exploration, combat, capture, crafting, a small base, and reliable save/load.
 
 ## Current repository status
 
-This repository contains the Unreal Engine C++ core for the first Vertical Slice, configuration, data contracts, save schema, interaction/inventory/crafting/capture systems, project documentation, architecture diagram, validation script, and Antigravity build handoff. It does not yet contain a compiled game, generated Blueprint/Map binary assets, or final art assets. The next implementation step is to open `ASTRAWILD.uproject` in Unreal Engine, compile the module, and create the first playable test map.
+> [!TIP]
+> **LATEST STATUS**: **PLAYABLE VERTICAL SLICE LOCKED & RE-CERTIFIED**  
+> For the complete summary and how to run the game, see [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).
+
+This repository contains the verified Unreal Engine 5.8.2 C++ core, data contracts, and ArtPack ingestion pipeline. The core playable loop (Spawn -> Move -> Look -> Jump -> Sprint -> Interact -> Inventory -> Build -> Scan -> Attack) is physically verified and compiles with 0 errors across 54/54 automated tests and packaged standalone binaries.
 
 ## Recommended environment
 

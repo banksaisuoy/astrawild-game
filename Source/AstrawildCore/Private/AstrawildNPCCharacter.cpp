@@ -1,14 +1,18 @@
 #include "AstrawildNPCCharacter.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCAIController.h"
+#include "AstrawildNPCScheduleComponent.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildTimeSubsystem.h"
 #include "AstrawildVillageActor.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
@@ -30,11 +34,19 @@ AAstrawildNPCCharacter::AAstrawildNPCCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+    // LCP-2: villagers replicate so LAN clients see + approach them. AI
+    // possession (below) is server-only — clients receive the movement.
+    bReplicates = true;
+    NetUpdateFrequency = 10.0f;
+
     GetCapsuleComponent()->InitCapsuleSize(40.0f, 90.0f);
 
     // Batch 8 — living villages: the NPC brain (patrol / guard duty / campfire nights).
     AIControllerClass = AAstrawildNPCAIController::StaticClass();
     AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+    // SCP Phase 7: living schedule — work hours, rain shelter, night curfew.
+    ScheduleComponent = CreateDefaultSubobject<UAstrawildNPCScheduleComponent>(TEXT("Schedule"));
 
     // Navmesh anchor — runtime tiles generate around each villager (audit C-3 pattern).
     UNavigationInvokerComponent* NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
@@ -87,9 +99,41 @@ void AAstrawildNPCCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    // LCP-2: a replicated NPC may arrive with NpcDefinitionId already set
+    // (initial bunch) but no object pointer — resolve first, then refresh.
+    ResolveNpcDefinitionFromId();
+
     // Editor-placed NPCs may already carry a definition; runtime spawns refresh
     // explicitly after the bootstrapper assigns NpcDefinition.
     RefreshAppearanceFromDefinition();
+}
+
+void AAstrawildNPCCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildNPCCharacter, NpcDefinitionId);
+}
+
+void AAstrawildNPCCharacter::OnRep_NpcDefinitionId()
+{
+    ResolveNpcDefinitionFromId();
+    RefreshAppearanceFromDefinition();
+}
+
+void AAstrawildNPCCharacter::ResolveNpcDefinitionFromId()
+{
+    if (IsValid(NpcDefinition) || NpcDefinitionId.IsNone())
+    {
+        return;
+    }
+
+    const UWorld* World = GetWorld();
+    const UAstrawildItemRegistrySubsystem* Registry =
+        World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    if (UAstrawildNPCDefinition* Def = Registry ? Registry->FindNPCDefinition(NpcDefinitionId) : nullptr)
+    {
+        NpcDefinition = Def;
+    }
 }
 
 bool AAstrawildNPCCharacter::IsGuard() const
@@ -175,6 +219,9 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     }
     LastInteractedActor = Player;
 
+    // GDP-4: talking builds the relationship (+2, once per in-world day).
+    AddAffinity(2.0f, /*bTradeChannel=*/false);
+
     // Production V2 Batch 3 — when the NPC has a dialogue tree, the conversation
     // screen takes over the whole interaction: quest offers migrate into choice
     // consequences (StartQuestId) and vendor hand-off happens via bOpenShop, so
@@ -189,7 +236,16 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
                 : nullptr;
             if (Registry && Registry->FindDialogueTree(NpcDefinition->DialogueTreeId))
             {
-                AstrawildPC->OpenDialogue(this);
+                // LCP-3: the interact now runs server-side (ServerInteract) —
+                // route the screen open to whoever owns this controller's screen.
+                if (AstrawildPC->IsLocalController())
+                {
+                    AstrawildPC->OpenDialogue(this);
+                }
+                else
+                {
+                    AstrawildPC->ClientOpenVendorDialogue(this);
+                }
                 return;
             }
             UE_LOG(LogAstrawild, Warning, TEXT("NPC %s references unregistered dialogue tree %s."),
@@ -216,9 +272,28 @@ void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)
     // through the same server-authoritative TryPurchase/TrySell pipeline.
     if (NpcDefinition && !NpcDefinition->ShopLootTableId.IsNone() && !NpcDefinition->CurrencyItemId.IsNone())
     {
-        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        // FCR-1-d fix (H-d7): the trader's shop only trades during work hours —
+        // AreServicesOpenNow previously had ZERO callers, so vendors sold 24/7,
+        // rain or night, contradicting the schedule component's own contract.
+        const bool bServicesOpen = !ScheduleComponent || ScheduleComponent->AreServicesOpenNow();
+        if (bServicesOpen)
         {
-            PC->OpenShop(this);
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+            {
+                // LCP-3: remote shop opens on the owning client's screen.
+                if (PC->IsLocalController())
+                {
+                    PC->OpenShop(this);
+                }
+                else
+                {
+                    PC->ClientOpenVendorShop(this);
+                }
+            }
+        }
+        else if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+        {
+            PC->NotifyPlayer(FText::FromString(TEXT("The shop is closed - come back during trading hours.")));
         }
     }
 }
@@ -283,7 +358,9 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TryPurchase(AActor* Purchaser, co
     }
 
     // Funds + weight — validated before anything moves (no partial transactions).
-    const int32 TotalCost = WareDef->VendorPrice * Quantity;
+    // GDP-4: Confidants get up to 15% off — the relationship literally pays.
+    const int32 TotalCost = FMath::Max(1,
+        FMath::FloorToInt32(WareDef->VendorPrice * Quantity * (1.0f - GetVendorDiscountFraction())));
     if (!Inventory->HasItem(NpcDefinition->CurrencyItemId, TotalCost))
     {
         return EAstrawildVendorResult::NotEnoughCurrency;
@@ -296,6 +373,9 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TryPurchase(AActor* Purchaser, co
     // Execute: currency out, ware in (silent adds — the caller notifies once).
     Inventory->RemoveItem(NpcDefinition->CurrencyItemId, TotalCost);
     Inventory->AddItemSilent(ItemId, Quantity);
+
+    // GDP-4: trading deepens the bond (+1, its own once-per-day gate).
+    AddAffinity(1.0f, /*bTradeChannel=*/true);
 
     UE_LOG(LogAstrawildEconomy, Log,
         TEXT("Vendor %s sold %d x %s to %s for %d %s."),
@@ -381,4 +461,91 @@ EAstrawildVendorResult AAstrawildNPCCharacter::TrySell(AActor* Seller, const FNa
     }
 
     return EAstrawildVendorResult::Success;
+}
+
+// ===========================================================================
+// GDP-4 — NPC affinity
+// ===========================================================================
+
+int32 AAstrawildNPCCharacter::GetCurrentWorldDay() const
+{
+    if (const UWorld* World = GetWorld())
+    {
+        if (const UAstrawildTimeSubsystem* Time = World->GetSubsystem<UAstrawildTimeSubsystem>())
+        {
+            return Time->GetCurrentDay();
+        }
+    }
+    return 0;
+}
+
+void AAstrawildNPCCharacter::SetAffinityGateDays(const int32 TalkDay, const int32 TradeDay)
+{
+    // FCR-1-b (M-b5): save-restore entry point — clamped so a corrupted save
+    // cannot pin the gates shut forever or open them into the far future.
+    LastTalkAffinityDay = FMath::Max(-1, TalkDay);
+    LastTradeAffinityDay = FMath::Max(-1, TradeDay);
+}
+
+
+FName AAstrawildNPCCharacter::GetStableNPCId() const
+{
+    return NpcDefinition ? NpcDefinition->NpcId : NAME_None;
+}
+
+int32 AAstrawildNPCCharacter::GetAffinityTier() const
+{
+    if (Affinity >= 75.0f) return 3; // Confidant
+    if (Affinity >= 50.0f) return 2; // Friend
+    if (Affinity >= 25.0f) return 1; // Acquaintance
+    return 0;                        // Stranger
+}
+
+FText AAstrawildNPCCharacter::GetAffinityTierTitle() const
+{
+    switch (GetAffinityTier())
+    {
+    case 3: return FText::FromString(TEXT("Confidant"));
+    case 2: return FText::FromString(TEXT("Friend"));
+    case 1: return FText::FromString(TEXT("Acquaintance"));
+    default: return FText::FromString(TEXT("Stranger"));
+    }
+}
+
+float AAstrawildNPCCharacter::GetVendorDiscountFraction() const
+{
+    // 5% per tier above Stranger — the relationship literally pays for itself.
+    return GetAffinityTier() * 0.05f;
+}
+
+void AAstrawildNPCCharacter::AddAffinity(const float Amount, const bool bTradeChannel)
+{
+    if (GetLocalRole() != ROLE_Authority || Amount <= 0.0f)
+    {
+        return;
+    }
+
+    // FCR-1-b fix (H-b3): SEPARATE once-per-day gates for talk (+2) and trade (+1).
+    // The old shared gate meant Interact's +2 always consumed the day, so the
+    // trade grant in TryPurchase was permanently dead (max +2/day, not the
+    // designed +2 talk and +1 trade). Talking AND trading on the same day now
+    // both count (up to +3/day for a chatty merchant).
+    const int32 Today = GetCurrentWorldDay();
+    int32& GateDay = bTradeChannel ? LastTradeAffinityDay : LastTalkAffinityDay;
+    if (GateDay == Today)
+    {
+        return;
+    }
+    GateDay = Today;
+
+    const float Before = Affinity;
+    Affinity = FMath::Clamp(Affinity + Amount, 0.0f, 100.0f);
+
+    const int32 TierBefore = FMath::Clamp(static_cast<int32>(Before / 25.0f), 0, 3);
+    const int32 TierAfter = GetAffinityTier();
+    if (TierAfter > TierBefore)
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("NPC %s affinity tier up: %s (%.0f)."),
+            *GetStableNPCId().ToString(), *GetAffinityTierTitle().ToString(), Affinity);
+    }
 }

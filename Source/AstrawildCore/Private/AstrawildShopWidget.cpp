@@ -164,6 +164,22 @@ void UAstrawildShopRowWidget::HandleActionClicked()
         return;
     }
 
+    // LCP-3: remote clients route the trade through the server RPC (the
+    // authority-guarded TryPurchase/TrySell was already unreachable from a
+    // remote screen — it returns InvalidRequest on non-authority callers).
+    if (APlayerController* RowPC = Shop->GetOwningPlayer())
+    {
+        if (RowPC->GetNetMode() == NM_Client)
+        {
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(RowPC))
+            {
+                AstrawildPC->ServerVendorTrade(VendorPtr, RowItemId, 1, bBuyRow);
+                Shop->RefreshShop(); // inventory replicates back; feedback arrives via NotifyPlayer
+            }
+            return;
+        }
+    }
+
     const EAstrawildVendorResult Result = bBuyRow
         ? VendorPtr->TryPurchase(Pawn, RowItemId, 1)
         : VendorPtr->TrySell(Pawn, RowItemId, 1);

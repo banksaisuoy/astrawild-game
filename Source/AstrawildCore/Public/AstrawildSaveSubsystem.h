@@ -126,6 +126,51 @@ public:
      *  (v4 payload extension — additive, older v4 saves deserialize empty). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     TArray<FName> DialogueFlags;
+
+    // --- v5 payload (Final Run — Act 3 ending state) ---
+
+    /** GDP-3: player attribute levels/XP (absent in pre-GDP saves = fresh states). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildAttributeSaveData> Attributes;
+
+    /** GDP-4: per-NPC affinity (absent in pre-GDP saves = strangers). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildNPCAffinitySaveData> NPCAffinities;
+
+    /** Ending choice as int32-cast EAstrawildEndingState (0 = None = story in play). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 EndingState = 0;
+
+    /** True once any ending was chosen — post-game free-roam flag. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bPostGameUnlocked = false;
+
+    /** Final-audit G-3 (additive v5, no schema bump): lifetime defeat counters
+     *  (species/boss id -> kills). One-shot bosses defeated before their quest
+     *  activates must stay creditable across sessions — see QuestComponent. */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, int32> DefeatedCreatureCounts;
+
+    // --- SCP (additive v5, no schema bump) — survival depth persistence ---
+
+    /** SCP Phase 12: equipment wear pools (item id -> remaining durability).
+     *  Absent in pre-SCP saves = pristine equipment (identical semantics). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, float> EquipmentDurability;
+
+    /** SCP Phase 12: perishable freshness (item id -> remaining seconds). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TMap<FName, float> FoodFreshness;
+
+    // --- LCP-4 (LAN co-op, additive v5 payload — no schema bump) ---
+
+    /** One block per non-host LAN player, keyed by the stable player key (empty = single-player / pre-LCP saves). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildCoopPlayerSaveBlock> CoopPlayers;
+
+    /** PCR-5: post-game hunt progress rows (additive v5 payload — no schema bump). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Save")
+    TArray<FAstrawildHuntSaveRow> Hunts;
 };
 
 UCLASS()
@@ -166,11 +211,40 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Save")
     int32 GetCurrentSchemaVersion() const { return CurrentSchemaVersion; }
 
+    // --- LCP-4: LAN co-op per-player persistence ---
+
+    /**
+     * LCP-4: build the per-player block for a connected non-host player
+     * (host machine only; the data lives on the server-side pawn/components).
+     */
+    FAstrawildCoopPlayerSaveBlock BuildCoopPlayerBlock(APlayerController* PC) const;
+
+    /** LCP-4: apply one per-player block to a connected controller (host machine only). */
+    void ApplyCoopPlayerBlock(APlayerController* PC, const FAstrawildCoopPlayerSaveBlock& Block);
+
+    /**
+     * LCP-4: late-join / reconnect restore — checks the in-session player
+     * cache first, then the LATEST save's CoopPlayers blocks. Returns true
+     * when a block matched and applied (host machine only).
+     */
+    bool TryRestoreLateJoinPlayer(APlayerController* PC);
+
+    /** LCP-4: snapshot a connected player's block into the in-session cache (disconnects, autosaves). */
+    void SnapshotPlayerForSession(APlayerController* PC);
+
     /** FNV-1a integrity hash for the save header fields. */
     static uint32 ComputeChecksum(int32 SchemaVersion, const FDateTime& SavedAtUtc);
 
 private:
-    static constexpr int32 CurrentSchemaVersion = 4;
+    static constexpr int32 CurrentSchemaVersion = 5;
+
+    /**
+     * FR-2 (Final Run redo): hard cap on day catch-up during load. A corrupted
+     * DayNumber (e.g. 2 billion) used to spin the AdvanceDay loop forever —
+     * the classic boot freeze. Anything beyond current day + this cap is treated
+     * as corruption and clamped (logged).
+     */
+    static constexpr int32 MaxCatchUpDays = 365;
 
     bool MigrateV1ToV2(UAstrawildSaveGame* SaveGame) const;
 
@@ -179,4 +253,15 @@ private:
 
     /** v3 -> v4 is purely additive (world events + POIs default-init). */
     void MigrateV3ToV4(UAstrawildSaveGame* SaveGame) const;
+
+    /** v4 -> v5 (Final Run): purely additive — ending state defaults to None
+     *  (story in play) and post-game stays locked on legacy saves. */
+    void MigrateV4ToV5(UAstrawildSaveGame* SaveGame) const;
+
+    /**
+     * LCP-4: in-session per-player blocks (reconnect restore source). Lives on
+     * the HOST's GameInstance subsystem — never on clients (PART 7: the host
+     * owns the authoritative world save; clients never write world state).
+     */
+    TMap<FName, FAstrawildCoopPlayerSaveBlock> SessionPlayerBlocks;
 };

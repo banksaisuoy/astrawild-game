@@ -98,6 +98,10 @@ private:
     float CraftTimeTotal = 0.0f;
     TArray<FAstrawildItemStack> PendingOutputs;
 
+    /** GDP-3: Masterwork roll won at consume time — refund lands on completion. */
+    bool bMasterworkPendingRefund = false;
+    TArray<FAstrawildItemStack> PendingRefundInputs;
+
     /**
      * H-11 guard (Production V2): true while completed outputs are held because
      * the pack is full — retries every second until space frees, blocks cancel

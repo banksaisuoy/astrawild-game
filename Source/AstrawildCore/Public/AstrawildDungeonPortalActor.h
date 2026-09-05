@@ -29,16 +29,16 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
     TObjectPtr<UStaticMeshComponent> PortalMesh;
 
-    /** Stable location id published with Event.LocationReached (quest TargetId). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    /** Stable location id published with Event.LocationReached (quest TargetId). LCP-2: replicated for client prompts. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", Replicated)
     FName PortalId = NAME_None;
 
     /** World-space teleport destination. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FVector Destination = FVector::ZeroVector;
 
-    /** Interaction prompt shown by the HUD. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    /** Interaction prompt shown by the HUD. LCP-2: replicated for client prompts. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon", Replicated)
     FText PromptText;
 
     /** Max distance the player may stand from the portal to use it (server guard). */
@@ -55,6 +55,7 @@ public:
 
     virtual void Interact_Implementation(AActor* InteractingActor) override;
     virtual FText GetInteractionPrompt_Implementation() const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 
 private:
     /** Authority-side teleport + event publish (range-guarded). */

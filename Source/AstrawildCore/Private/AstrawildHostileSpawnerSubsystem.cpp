@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDifficultySubsystem.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEcosystemSubsystem.h"
 #include "AstrawildGameState.h"
@@ -155,6 +156,19 @@ void UAstrawildHostileSpawnerSubsystem::SpawnOneHostile(UAstrawildEchoDefinition
     if (Echo)
     {
         Echo->InitializeFromDefinition(Definition);
+
+        // SCP Phase 3: DDA pressure on spawn — struggling players meet softer
+        // hostiles, thriving players meet tougher ones (HP only; the AI
+        // controller scales the outgoing damage separately).
+        if (const UAstrawildDifficultySubsystem* DDA = World->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            const float Scale = DDA->GetHostileStrengthScale();
+            if (!FMath::IsNearlyEqual(Scale, 1.0f))
+            {
+                Echo->CurrentHealth = FMath::Max(1.0f, Echo->CurrentHealth * Scale);
+            }
+        }
+
         // REVIEW-2 medium-risk fix: RegisterWithEcosystem ran in BeginPlay BEFORE
         // EchoDefinition was set, so the WildCount bump at EcosystemSubsystem::RegisterEcho
         // was skipped. Re-register now that the definition is populated, so the next

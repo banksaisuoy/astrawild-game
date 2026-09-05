@@ -1,5 +1,6 @@
 #include "AstrawildContentLibrary.h"
 
+#include "AstrawildAbilityLibrary.h"
 #include "AstrawildBestiaryData.h"
 #include "AstrawildProductionContent.h"
 #include "AstrawildDataAssets.h"
@@ -120,20 +121,32 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_WoodPlank"), TEXT("Dawnwood Plank"), EAstrawildItemCategory::Material, 1.0f, 100));
     Registry->RegisterItem(MakeItem(Outer, TEXT("Item_CrystalShard"), TEXT("Dawn Crystal Shard"), EAstrawildItemCategory::Material, 0.3f, 100));
 
+    // SCP Phase 12: resource categories power the specialized-tool yield multipliers
+    // (pick x3 ore, axe x3 wood, sickle x4 fiber — directive Phase 12.1).
+    {
+        if (UAstrawildItemDefinition* WoodItem = Registry->FindItem(TEXT("Item_Wood"))) { WoodItem->HarvestCategory = TEXT("Wood"); }
+        if (UAstrawildItemDefinition* StoneItem = Registry->FindItem(TEXT("Item_Stone"))) { StoneItem->HarvestCategory = TEXT("Ore"); }
+        if (UAstrawildItemDefinition* FiberItem = Registry->FindItem(TEXT("Item_Fiber"))) { FiberItem->HarvestCategory = TEXT("Fiber"); }
+        if (UAstrawildItemDefinition* ShardItem = Registry->FindItem(TEXT("Item_CrystalShard"))) { ShardItem->HarvestCategory = TEXT("Ore"); }
+    }
+
     UAstrawildItemDefinition* Berry = MakeItem(Outer, TEXT("Item_Berry"), TEXT("Glimmer Berry"), EAstrawildItemCategory::Consumable, 0.2f, 50);
     Berry->FoodValue = 15.0f;
     Berry->WaterValue = 5.0f;
     Berry->EchoFeedValue = 6.0f;
     Berry->VendorPrice = 2; // Batch 4 — M-11: Trader Tam ware.
+    Berry->PerishableSeconds = 600.0f; // SCP Phase 12: fresh-picked shelf life.
     Registry->RegisterItem(Berry);
 
     UAstrawildItemDefinition* RawMeat = MakeItem(Outer, TEXT("Item_RawMeat"), TEXT("Raw Echo Meat"), EAstrawildItemCategory::Consumable, 0.7f, 30);
     RawMeat->FoodValue = 8.0f;
     RawMeat->EchoFeedValue = 5.0f;
+    RawMeat->PerishableSeconds = 300.0f; // SCP Phase 12: raw meat spoils fastest — cook it.
     Registry->RegisterItem(RawMeat);
 
     UAstrawildItemDefinition* CookedMeat = MakeItem(Outer, TEXT("Item_CookedMeat"), TEXT("Seared Meat"), EAstrawildItemCategory::Consumable, 0.6f, 30);
     CookedMeat->FoodValue = 30.0f;
+    CookedMeat->PerishableSeconds = 1200.0f; // SCP Phase 12: cooking quadruples shelf life.
     Registry->RegisterItem(CookedMeat);
 
     UAstrawildItemDefinition* WaterFlask = MakeItem(Outer, TEXT("Item_WaterFlask"), TEXT("Dew Flask"), EAstrawildItemCategory::Consumable, 0.9f, 20);
@@ -164,6 +177,7 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
     UAstrawildItemDefinition* FeedMix = MakeItem(Outer, TEXT("Item_FeedMix"), TEXT("Echo Feed Mix"), EAstrawildItemCategory::Consumable, 0.3f, 40);
     FeedMix->FoodValue = 5.0f;
     FeedMix->EchoFeedValue = 14.0f;
+    FeedMix->PerishableSeconds = 1800.0f; // SCP Phase 12: preserved mix keeps longer.
     Registry->RegisterItem(FeedMix);
 
     UAstrawildItemDefinition* HerbalSalve = MakeItem(Outer, TEXT("Item_HerbalSalve"), TEXT("Dawnbloom Salve"), EAstrawildItemCategory::Consumable, 0.25f, 20);
@@ -210,6 +224,7 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* DawnwoodClub = MakeItem(Outer, TEXT("Item_DawnwoodClub"), TEXT("Dawnwood Club"), EAstrawildItemCategory::Equipment, 2.5f, 1);
     DawnwoodClub->AttackPower = 6.0f;
+    DawnwoodClub->DurabilityMax = 60.0f; // SCP Phase 12: soft wood wears fast.
     DawnwoodClub->VendorPrice = 5; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(DawnwoodClub);
 
@@ -220,10 +235,69 @@ void UAstrawildContentLibrary::BuildItems(UAstrawildItemRegistrySubsystem* Regis
 
     UAstrawildItemDefinition* CrystalBlade = MakeItem(Outer, TEXT("Item_CrystalBlade"), TEXT("Dawn Crystal Blade"), EAstrawildItemCategory::Equipment, 3.0f, 1);
     CrystalBlade->AttackPower = 14.0f;
+    CrystalBlade->DurabilityMax = 150.0f; // SCP Phase 12: tempered crystal holds an edge.
     // Batch 3 — Item A: tier-3 weapon carries the Pulse element → attacks apply Shock.
     CrystalBlade->Element = EAstrawildElementType::Pulse;
     CrystalBlade->VendorPrice = 14; // Batch 8 — Blacksmith Borin ware.
     Registry->RegisterItem(CrystalBlade);
+
+    // --- SCP Phase 12: specialized harvest tools (weapon-slot equipment). ---
+
+    UAstrawildItemDefinition* FieldPick = MakeItem(Outer, TEXT("Item_FieldPick"), TEXT("Fieldstone Pick"), EAstrawildItemCategory::Equipment, 2.8f, 1);
+    FieldPick->AttackPower = 8.0f;
+    FieldPick->DurabilityMax = 80.0f;
+    FieldPick->HarvestBonusCategory = TEXT("Ore");
+    FieldPick->HarvestMultiplier = 3.0f;
+    FieldPick->Description = FText::FromString(TEXT("CODE_DEFAULT — heavy-headed pick; ore and stone yield x3"));
+    Registry->RegisterItem(FieldPick);
+
+    UAstrawildItemDefinition* FieldAxe = MakeItem(Outer, TEXT("Item_FieldAxe"), TEXT("Dawnwood Axe"), EAstrawildItemCategory::Equipment, 2.6f, 1);
+    FieldAxe->AttackPower = 8.0f;
+    FieldAxe->DurabilityMax = 80.0f;
+    FieldAxe->HarvestBonusCategory = TEXT("Wood");
+    FieldAxe->HarvestMultiplier = 3.0f;
+    FieldAxe->Description = FText::FromString(TEXT("CODE_DEFAULT — broad-bit axe; timber yields x3"));
+    Registry->RegisterItem(FieldAxe);
+
+    UAstrawildItemDefinition* SunSickle = MakeItem(Outer, TEXT("Item_SunSickle"), TEXT("Sunfiber Sickle"), EAstrawildItemCategory::Equipment, 1.4f, 1);
+    SunSickle->AttackPower = 5.0f;
+    SunSickle->DurabilityMax = 60.0f;
+    SunSickle->HarvestBonusCategory = TEXT("Fiber");
+    SunSickle->HarvestMultiplier = 4.0f;
+    SunSickle->Description = FText::FromString(TEXT("CODE_DEFAULT — crescent sickle; fiber and petals yield x4"));
+    Registry->RegisterItem(SunSickle);
+
+    // --- SCP Phase 12: spoilage + repair economy. ---
+
+    UAstrawildItemDefinition* SpoiledOrganics = MakeItem(Outer, TEXT("Item_SpoiledOrganics"), TEXT("Spoiled Organics"), EAstrawildItemCategory::Material, 0.3f, 100);
+    SpoiledOrganics->Description = FText::FromString(TEXT("CODE_DEFAULT — what spoiled food becomes; compost it or feed the farm."));
+    Registry->RegisterItem(SpoiledOrganics);
+
+    UAstrawildItemDefinition* Compost = MakeItem(Outer, TEXT("Item_Compost"), TEXT("Dawn Compost"), EAstrawildItemCategory::Material, 0.5f, 60);
+    Compost->Description = FText::FromString(TEXT("CODE_DEFAULT — broken-down organics; a plot fertilizer."));
+    Registry->RegisterItem(Compost);
+
+    UAstrawildItemDefinition* FieldRepairKit = MakeItem(Outer, TEXT("Item_FieldRepairKit"), TEXT("Field Repair Kit"), EAstrawildItemCategory::Material, 0.8f, 20);
+    FieldRepairKit->Description = FText::FromString(TEXT("CODE_DEFAULT — wraps, wedges and resin; restores one worn item anywhere."));
+    Registry->RegisterItem(FieldRepairKit);
+
+    // --- SCP Phase 9: creature healthcare. ---
+
+    UAstrawildItemDefinition* CureTonic = MakeItem(Outer, TEXT("Item_CureTonic"), TEXT("Echo Cure Tonic"), EAstrawildItemCategory::Consumable, 0.3f, 20);
+    CureTonic->HealValue = 25.0f;
+    CureTonic->Description = FText::FromString(TEXT("CODE_DEFAULT — medicine bench brew; clears one creature illness and restores 30 sanity."));
+    Registry->RegisterItem(CureTonic);
+
+    // --- SCP Phase 10: breeding economy. ---
+
+    UAstrawildItemDefinition* BreedingCake = MakeItem(Outer, TEXT("Item_BreedingCake"), TEXT("Echo Breeding Cake"), EAstrawildItemCategory::Consumable, 0.6f, 10);
+    BreedingCake->EchoFeedValue = 10.0f;
+    BreedingCake->Description = FText::FromString(TEXT("CODE_DEFAULT — rich feed; two bonded Echoes at the Breeding Pen produce an egg."));
+    Registry->RegisterItem(BreedingCake);
+
+    UAstrawildItemDefinition* EchoEgg = MakeItem(Outer, TEXT("Item_EchoEgg"), TEXT("Echo Egg"), EAstrawildItemCategory::CreatureItem, 1.5f, 5);
+    EchoEgg->Description = FText::FromString(TEXT("CODE_DEFAULT — a warm, humming egg; hatch it at the Egg Incubator."));
+    Registry->RegisterItem(EchoEgg);
 
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): torso progression. ---
     // Rating feeds ComputeArmorFraction(Rating, K=100) → 17% / 31% / 44% reduction.
@@ -388,6 +462,40 @@ void UAstrawildContentLibrary::BuildRecipes(UAstrawildItemRegistrySubsystem* Reg
         { Stack(TEXT("Item_CrystalShard"), 2), Stack(TEXT("Item_WoodPlank"), 2), Stack(TEXT("Item_EmberAsh"), 1) },
         { Stack(TEXT("Item_CrystalBlade"), 1) }, 8.0f, TEXT("Tech_Armory"), TEXT("Station_Workbench")));
 
+    // --- SCP Phase 12: tool, repair and compost recipes. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldPick"), TEXT("Fieldstone Pick"),
+        { Stack(TEXT("Item_Stone"), 3), Stack(TEXT("Item_Wood"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_FieldPick"), 1) }, 4.0f, TEXT("Tech_BasicCrafting"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldAxe"), TEXT("Dawnwood Axe"),
+        { Stack(TEXT("Item_Wood"), 3), Stack(TEXT("Item_Stone"), 2), Stack(TEXT("Item_Fiber"), 1) },
+        { Stack(TEXT("Item_FieldAxe"), 1) }, 4.0f, TEXT("Tech_BasicCrafting"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_SunSickle"), TEXT("Sunfiber Sickle"),
+        { Stack(TEXT("Item_CrystalShard"), 1), Stack(TEXT("Item_Wood"), 1), Stack(TEXT("Item_Fiber"), 3) },
+        { Stack(TEXT("Item_SunSickle"), 1) }, 3.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FieldRepairKit"), TEXT("Field Repair Kit"),
+        { Stack(TEXT("Item_Fiber"), 2), Stack(TEXT("Item_WoodPlank"), 1), Stack(TEXT("Item_Dawnbloom"), 1) },
+        { Stack(TEXT("Item_FieldRepairKit"), 1) }, 3.0f, TEXT("Tech_BasicCrafting"), TEXT("Station_Workbench")));
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_Compost"), TEXT("Dawn Compost"),
+        { Stack(TEXT("Item_SpoiledOrganics"), 3) },
+        { Stack(TEXT("Item_Compost"), 1) }, 6.0f, TEXT("Tech_Agriculture"), TEXT("Station_Composter")));
+
+    // --- SCP Phase 9: healthcare recipe. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_CureTonic"), TEXT("Echo Cure Tonic"),
+        { Stack(TEXT("Item_Dawnbloom"), 2), Stack(TEXT("Item_Berry"), 1), Stack(TEXT("Item_CrystalShard"), 1) },
+        { Stack(TEXT("Item_CureTonic"), 2) }, 5.0f, TEXT("Tech_Husbandry"), TEXT("Station_Workbench")));
+
+    // --- SCP Phase 10: breeding recipe. ---
+
+    Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_BreedingCake"), TEXT("Echo Breeding Cake"),
+        { Stack(TEXT("Item_Berry"), 2), Stack(TEXT("Item_FeedMix"), 1), Stack(TEXT("Item_Dawnbloom"), 2) },
+        { Stack(TEXT("Item_BreedingCake"), 1) }, 8.0f, TEXT("Tech_Husbandry"), TEXT("Station_Campfire")));
+
     // --- Armor (CODE_DEFAULT wave 5, Batch 3 — Item C): armory progression. ---
 
     Registry->RegisterRecipe(MakeRecipe(Outer, TEXT("Recipe_FiberWeaveVest"), TEXT("Fiberweave Vest"),
@@ -471,9 +579,10 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     const TArray<FName> BerryFood = { TEXT("Item_Berry") };
 
     // The first companion: docile, curious, light-element (directive §21 first Echo).
+    // FR-3 matrix: Light has no weakness (the pure element — nothing counters it).
     UAstrawildEchoDefinition* Lumewisp = MakeEcho(Outer, TEXT("Echo_Lumewisp"), TEXT("Lumewisp"), EAstrawildElementType::Light,
         EAstrawildEchoRole::Support, 60.0f, 8.0f, 2.0f, 320.0f, EAstrawildPersonality::Curious,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.25f, EAstrawildElementType::Ash, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.25f, EAstrawildElementType::None, false);
     Lumewisp->PreferredWeather = { EAstrawildWeatherState::Clear, EAstrawildWeatherState::Cloudy };
     Lumewisp->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
     FAstrawildWorkAffinity LightWork;
@@ -481,53 +590,73 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     LightWork.Affinity = 1.2f;
     Lumewisp->WorkAffinities.Add(LightWork);
     Lumewisp->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 1));
+    // GDP-1: signature loadout — the starter healer flash + the party gleam.
+    Lumewisp->AbilityIds = { TEXT("Ability_LumewispDawn"), TEXT("Ability_RestoringGleam") };
     Registry->RegisterEcho(Lumewisp);
 
     // Sturdy stone companion: brave tank.
+    // FR-3 matrix: Ash has no weakness (grit endures everything equally).
     UAstrawildEchoDefinition* Stonehide = MakeEcho(Outer, TEXT("Echo_Stonehide"), TEXT("Stonehide"), EAstrawildElementType::Ash,
         EAstrawildEchoRole::Combat, 140.0f, 16.0f, 8.0f, 260.0f, EAstrawildPersonality::Brave,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.55f, EAstrawildElementType::Light, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.55f, EAstrawildElementType::None, false);
     FAstrawildWorkAffinity MiningWork;
     MiningWork.WorkType = EAstrawildWorkType::Mining;
     MiningWork.Affinity = 1.8f;
     Stonehide->WorkAffinities.Add(MiningWork);
     Stonehide->DefeatLoot.Add(Stack(TEXT("Item_Stone"), 2));
+    // GDP-1: signature loadout — the tank's stance + its own hide of stone.
+    Stonehide->AbilityIds = { TEXT("Ability_StonehideBulwark"), TEXT("Ability_StoneSkin"), TEXT("Ability_GravelSpit") };
     Registry->RegisterEcho(Stonehide);
 
     // Nocturnal energy creature — the power synergy of directive §55.
+    // FR-3 matrix: Pulse falls to Light (dawn light grounds the arc).
     UAstrawildEchoDefinition* Voltling = MakeEcho(Outer, TEXT("Echo_Voltling"), TEXT("Voltling"), EAstrawildElementType::Pulse,
         EAstrawildEchoRole::Base, 55.0f, 10.0f, 3.0f, 380.0f, EAstrawildPersonality::Energetic,
-        EAstrawildActivityPattern::Nocturnal, BerryFood, 0.45f, EAstrawildElementType::Frost, false);
+        EAstrawildActivityPattern::Nocturnal, BerryFood, 0.45f, EAstrawildElementType::Light, false);
     FAstrawildWorkAffinity PowerWork;
     PowerWork.WorkType = EAstrawildWorkType::PowerGeneration;
     PowerWork.Affinity = 2.0f;
     Voltling->WorkAffinities.Add(PowerWork);
+    // GDP-1: signature loadout — the blink + the bolt.
+    Voltling->AbilityIds = { TEXT("Ability_VoltlingStatic"), TEXT("Ability_ArcBolt") };
     Registry->RegisterEcho(Voltling);
 
     // Dusk moth: shy support with research affinity.
+    // FR-3 matrix: Flora falls to Ember (the burning counter to green things).
     UAstrawildEchoDefinition* Duskmoth = MakeEcho(Outer, TEXT("Echo_Duskmoth"), TEXT("Duskmoth"), EAstrawildElementType::Flora,
         EAstrawildEchoRole::Support, 45.0f, 6.0f, 2.0f, 300.0f, EAstrawildPersonality::Timid,
-        EAstrawildActivityPattern::Crepuscular, BerryFood, 0.35f, EAstrawildElementType::Frost, false);
+        EAstrawildActivityPattern::Crepuscular, BerryFood, 0.35f, EAstrawildElementType::Ember, false);
     FAstrawildWorkAffinity ResearchWork;
     ResearchWork.WorkType = EAstrawildWorkType::ResearchAssist;
     ResearchWork.Affinity = 1.6f;
     Duskmoth->WorkAffinities.Add(ResearchWork);
+    // CV-5 closure (FCR Phase 17): Duskmoth carried no DefeatLoot — the starter
+    // area's most-hunted passive dropped nothing. Moth wings and meadow fiber.
+    Duskmoth->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 1));
+    Duskmoth->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 2));
+    // GDP-1: signature loadout — the soporific cloud + a lashing vine.
+    Duskmoth->AbilityIds = { TEXT("Ability_DuskmothPowder"), TEXT("Ability_ThornLash") };
     Registry->RegisterEcho(Duskmoth);
 
     // First hostile creature (directive §21): night stalker.
+    // FR-3 matrix: Ash has no weakness — light RESISTS it narratively, but the
+    // numbers treat Ash as the uncountered grit element.
     UAstrawildEchoDefinition* Gloomfang = MakeEcho(Outer, TEXT("Echo_Gloomfang"), TEXT("Gloomfang"), EAstrawildElementType::Ash,
         EAstrawildEchoRole::Combat, 110.0f, 18.0f, 4.0f, 420.0f, EAstrawildPersonality::Aggressive,
-        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.85f, EAstrawildElementType::Light, true);
+        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.85f, EAstrawildElementType::None, true);
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Gloomfang->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
+    // GDP-1: signature loadout — the night stalker earns its fear honestly.
+    Gloomfang->AbilityIds = { TEXT("Ability_GloomfangTerror"), TEXT("Ability_GravelSpit"), TEXT("Ability_DustScreen") };
     Registry->RegisterEcho(Gloomfang);
 
     // --- Content expansion (CODE_DEFAULT wave 2) ---
 
     // Herding flora companion: the husbandry anchor species (directive §7 herds).
+    // FR-3 matrix: Flora falls to Ember.
     UAstrawildEchoDefinition* Sprigling = MakeEcho(Outer, TEXT("Echo_Sprigling"), TEXT("Sprigling"), EAstrawildElementType::Flora,
         EAstrawildEchoRole::Support, 50.0f, 5.0f, 3.0f, 290.0f, EAstrawildPersonality::Social,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.30f, EAstrawildElementType::Frost, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.30f, EAstrawildElementType::Ember, false);
     Sprigling->PreferredWeather = { EAstrawildWeatherState::Clear, EAstrawildWeatherState::Rain };
     Sprigling->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
     FAstrawildWorkAffinity FarmWork;
@@ -536,9 +665,12 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     Sprigling->WorkAffinities.Add(FarmWork);
     Sprigling->DefeatLoot.Add(Stack(TEXT("Item_Dawnbloom"), 2));
     Sprigling->DefeatLoot.Add(Stack(TEXT("Item_Fiber"), 1));
+    // GDP-1: signature loadout — the meadow's gentle mend + a rooting snare.
+    Sprigling->AbilityIds = { TEXT("Ability_SpriglingCheer"), TEXT("Ability_RootSnare") };
     Registry->RegisterEcho(Sprigling);
 
     // Ember predator: crepuscular stalker of the meadow edges (directive §7 food chain).
+    // FR-3 matrix: Ember falls to Frost ✓ (the counter-chain runs Ember→Frost→Pulse→Light).
     UAstrawildEchoDefinition* Emberfang = MakeEcho(Outer, TEXT("Echo_Emberfang"), TEXT("Emberfang"), EAstrawildElementType::Ember,
         EAstrawildEchoRole::Combat, 130.0f, 20.0f, 5.0f, 400.0f, EAstrawildPersonality::Aggressive,
         EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.90f, EAstrawildElementType::Frost, true);
@@ -550,30 +682,34 @@ void UAstrawildContentLibrary::BuildEchoes(UAstrawildItemRegistrySubsystem* Regi
     //     element coverage — every element now has at least one species, and
     //     the hostile roster spans Ash/Ember/Frost/Pulse. ---
 
-    // Frost predator: the night's cold answer to the Emberfang rivalry. Weak to
-    // Ember (fire melts frost) while Emberfang is weak to Frost — a true rivalry pair.
+    // Frost predator: the night's cold answer.
+    // FR-3 matrix: Frost falls to PULSE — the counter-chain is Frost→Pulse (the
+    // arc shatters the ice), while Ember melts nothing here; the old Frost/Ember
+    // rivalry pair was a canon violation (Ember already answers to Frost).
     UAstrawildEchoDefinition* Rimefang = MakeEcho(Outer, TEXT("Echo_Rimefang"), TEXT("Rimefang"), EAstrawildElementType::Frost,
         EAstrawildEchoRole::Combat, 120.0f, 17.0f, 6.0f, 380.0f, EAstrawildPersonality::Aggressive,
-        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.88f, EAstrawildElementType::Ember, true);
+        EAstrawildActivityPattern::Nocturnal, TArray<FName>(), 0.88f, EAstrawildElementType::Pulse, true);
     Rimefang->PreferredWeather = { EAstrawildWeatherState::Rain, EAstrawildWeatherState::Storm };
     Rimefang->DefeatLoot.Add(Stack(TEXT("Item_RawMeat"), 2));
     Rimefang->DefeatLoot.Add(Stack(TEXT("Item_Frostbloom"), 2));
     Registry->RegisterEcho(Rimefang);
 
     // Pulse predator: glass-cannon stalker — highest ATK (22) and speed (440) in
-    // the roster, paper-thin defense. Weak to Ash (stone grounds the arc).
+    // the roster, paper-thin defense.
+    // FR-3 matrix: Pulse falls to Light (dawn light grounds the arc).
     UAstrawildEchoDefinition* Voltmaw = MakeEcho(Outer, TEXT("Echo_Voltmaw"), TEXT("Voltmaw"), EAstrawildElementType::Pulse,
         EAstrawildEchoRole::Combat, 95.0f, 22.0f, 3.0f, 440.0f, EAstrawildPersonality::Aggressive,
-        EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.92f, EAstrawildElementType::Ash, true);
+        EAstrawildActivityPattern::Crepuscular, TArray<FName>(), 0.92f, EAstrawildElementType::Light, true);
     Voltmaw->DefeatLoot.Add(Stack(TEXT("Item_CrystalShard"), 1));
     Voltmaw->DefeatLoot.Add(Stack(TEXT("Item_VoltCore"), 1));
     Registry->RegisterEcho(Voltmaw);
 
     // Ancient-rare companion: the crown jewel of the dawn fields — one spawns per
     // world, hardest capture in the roster (0.95), research affinity par excellence.
+    // FR-3 matrix: Light has no weakness.
     UAstrawildEchoDefinition* Auroraling = MakeEcho(Outer, TEXT("Echo_Auroraling"), TEXT("Auroraling"), EAstrawildElementType::Light,
         EAstrawildEchoRole::Support, 90.0f, 12.0f, 6.0f, 350.0f, EAstrawildPersonality::Curious,
-        EAstrawildActivityPattern::Diurnal, BerryFood, 0.95f, EAstrawildElementType::Ash, false);
+        EAstrawildActivityPattern::Diurnal, BerryFood, 0.95f, EAstrawildElementType::None, false);
     Auroraling->PreferredWeather = { EAstrawildWeatherState::Clear };
     Auroraling->HabitatBiomeIds = { TEXT("Biome_DawnFields") };
     FAstrawildWorkAffinity AuroraResearch;
@@ -686,6 +822,57 @@ void UAstrawildContentLibrary::BuildBuildings(UAstrawildItemRegistrySubsystem* R
 
     Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Composter"), TEXT("Dawn Composter"), EAstrawildBuildingCategory::Farm,
         TEXT("Item_Wood"), 4, TEXT("Tech_Agriculture"), 220.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::Farming));
+
+    // --- Final Run (FR-9): the construction set completes — floors, roofs, a
+    //     working door (toggle + collision) and a storage crate (deposit /
+    //     withdraw, contents persist through save schema v5). ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Floor"), TEXT("Floor Deck"), EAstrawildBuildingCategory::Floor,
+        TEXT("Item_Wood"), 2, NAME_None, 400.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Roof"), TEXT("Roof Cap"), EAstrawildBuildingCategory::Roof,
+        TEXT("Item_Wood"), 3, NAME_None, 350.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_Door"), TEXT("Sliding Door"), EAstrawildBuildingCategory::Door,
+        TEXT("Item_Wood"), 3, NAME_None, 300.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_StorageCrate"), TEXT("Storage Crate"), EAstrawildBuildingCategory::Storage,
+        TEXT("Item_Wood"), 6, NAME_None, 250.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    // --- SCP Phase 12: repair + preservation buildings. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_RepairBench"), TEXT("Repair Bench"), EAstrawildBuildingCategory::Workstation,
+        TEXT("Item_WoodPlank"), 4, NAME_None, 320.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::Crafting));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_IceBox"), TEXT("Ice Box"), EAstrawildBuildingCategory::Storage,
+        TEXT("Item_Stone"), 8, TEXT("Tech_Thermal"), 280.0f, EAstrawildPowerRole::Consumer, 0.0f, 2.0f, 0.0f, EAstrawildWorkType::None));
+
+    // --- SCP Phase 9: base terminal + creature care buildings. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_BaseTerminal"), TEXT("Base Terminal"), EAstrawildBuildingCategory::Decoration,
+        TEXT("Item_CrystalShard"), 4, NAME_None, 500.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_CreatureBed"), TEXT("Creature Bed"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_Fiber"), 6, TEXT("Tech_Husbandry"), 200.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_HotSpring"), TEXT("Hot Spring Basin"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_Stone"), 12, TEXT("Tech_Thermal"), 300.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_MedicineBench"), TEXT("Medicine Bench"), EAstrawildBuildingCategory::Workstation,
+        TEXT("Item_WoodPlank"), 3, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::Crafting));
+
+    // --- SCP Phase 11: base defense. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_DefenseTurret"), TEXT("Bolt Turret"), EAstrawildBuildingCategory::Defense,
+        TEXT("Item_Stone"), 6, TEXT("Tech_Electrical"), 400.0f, EAstrawildPowerRole::Consumer, 0.0f, 3.0f, 0.0f, EAstrawildWorkType::None));
+
+    // --- SCP Phase 10: breeding. ---
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_BreedingPen"), TEXT("Breeding Pen"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_WoodPlank"), 6, TEXT("Tech_Husbandry"), 260.0f, EAstrawildPowerRole::Consumer, 0.0f, 0.0f, 0.0f, EAstrawildWorkType::None));
+
+    Registry->RegisterBuilding(MakeBuilding(Outer, TEXT("Building_EggIncubator"), TEXT("Egg Incubator"), EAstrawildBuildingCategory::CreatureHousing,
+        TEXT("Item_CrystalShard"), 2, TEXT("Tech_Husbandry"), 240.0f, EAstrawildPowerRole::Consumer, 0.0f, 1.0f, 0.0f, EAstrawildWorkType::None));
 }
 
 // ---------------------------------------------------------------------------
@@ -1082,6 +1269,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     HerbalistWren->VillageId = TEXT("Village_Dawnstead");
     HerbalistWren->PrimaryTint = FLinearColor(0.45f, 0.80f, 0.45f);
     HerbalistWren->Greeting = FText::FromString(TEXT("Bark, root, bloom — the marsh provides."));
+    HerbalistWren->DialogueTreeId = TEXT("Dialogue_HerbalistWren"); // FR-10: full tree.
     Registry->RegisterNPC(HerbalistWren);
 
     UAstrawildNPCDefinition* BlacksmithBorin = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1093,6 +1281,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     BlacksmithBorin->VillageId = TEXT("Village_Dawnstead");
     BlacksmithBorin->PrimaryTint = FLinearColor(0.55f, 0.40f, 0.30f);
     BlacksmithBorin->Greeting = FText::FromString(TEXT("Steel today, story tomorrow."));
+    BlacksmithBorin->DialogueTreeId = TEXT("Dialogue_BlacksmithBorin"); // FR-10: full tree.
     Registry->RegisterNPC(BlacksmithBorin);
 
     UAstrawildNPCDefinition* ElderRowan = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1123,6 +1312,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     GuardBram->VillageId = TEXT("Village_Dawnstead");
     GuardBram->PrimaryTint = FLinearColor(0.50f, 0.60f, 0.90f);
     GuardBram->Greeting = FText::FromString(TEXT("Gloomfangs again. Always Gloomfangs."));
+    GuardBram->DialogueTreeId = TEXT("Dialogue_GuardBram"); // FR-10: full tree.
     Registry->RegisterNPC(GuardBram);
 
     UAstrawildNPCDefinition* FarmerJori = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1132,6 +1322,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     FarmerJori->VillageId = TEXT("Village_Dawnstead");
     FarmerJori->PrimaryTint = FLinearColor(0.80f, 0.70f, 0.40f);
     FarmerJori->Greeting = FText::FromString(TEXT("Spriglings turn the soil better than any hoe."));
+    FarmerJori->DialogueTreeId = TEXT("Dialogue_FarmerJori"); // FR-10: full tree.
     Registry->RegisterNPC(FarmerJori);
 
     // --- Driftwood Landing (the island fishing hamlet, Tidebreaker Isles) ---
@@ -1156,6 +1347,7 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     FisherNima->VillageId = TEXT("Village_DriftwoodLanding");
     FisherNima->PrimaryTint = FLinearColor(0.40f, 0.75f, 0.90f);
     FisherNima->Greeting = FText::FromString(TEXT("Fresh catch, sea pearls, and gossip — cheap."));
+    FisherNima->DialogueTreeId = TEXT("Dialogue_FisherNima"); // FR-10: full tree.
     Registry->RegisterNPC(FisherNima);
 
     UAstrawildNPCDefinition* OldSaltPerry = NewObject<UAstrawildNPCDefinition>(Outer);
@@ -1248,10 +1440,33 @@ void UAstrawildContentLibrary::BuildDefaults(UAstrawildItemRegistrySubsystem* Re
     // Production V2 (Master Plan STEP 3): the data-driven content foundation.
     UAstrawildProductionContent::BuildAll(Registry);
 
+    // GDP-1: the Echo ability library (44 templates — authored signatures + the
+    // derived element/role/family kits every species falls back to).
+    UAstrawildAbilityLibrary::BuildDefaults();
+
     // Production V2 retrofits: existing items/techs gain their new data fields.
     ApplyProductionV2Retrofits(Registry);
 
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library defaults registered: 48 items, 44 recipes, 226 Echo species (16 authored + 6 evolution targets + 204 bestiary), 13 buildings, 16 technologies, 12 quests, 10 loot tables, 12 NPCs, 8 weapon profiles, 10 resource nodes, 4 work sites, 9 world events, 12 POIs, 12 biomes, 6 dialogue trees."));
+    // Final Completion Run (registry reconciliation): the completion summary is derived
+    // LIVE from the registry — never hardcoded. This log line is the engine-side
+    // authoritative content census (docs must cite these numbers, not invent them).
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Content library registered (live census): %d items, %d recipes, %d Echo species, %d buildings, %d technologies, %d quests, %d loot tables, %d NPCs, %d weapon profiles, %d resource nodes, %d work sites, %d world events, %d POIs, %d biomes, %d dialogue trees, %d robots."),
+        Registry->GetAllItems().Num(),
+        Registry->GetAllRecipes().Num(),
+        Registry->GetAllEchoDefinitions().Num(),
+        Registry->GetAllBuildings().Num(),
+        Registry->GetAllTechnologies().Num(),
+        Registry->GetNumQuests(),
+        Registry->GetNumLootTables(),
+        Registry->GetNumNPCs(),
+        Registry->GetAllWeapons().Num(),
+        Registry->GetAllResourceNodeDefinitions().Num(),
+        Registry->GetAllWorkSiteDefinitions().Num(),
+        Registry->GetAllWorldEvents().Num(),
+        Registry->GetAllPOIs().Num(),
+        Registry->GetAllBiomes().Num(),
+        Registry->GetAllDialogueTrees().Num(),
+        Registry->GetNumRobots());
 }
 
 void UAstrawildContentLibrary::WarmArtPackBindings(UAstrawildItemRegistrySubsystem* Registry)

@@ -2,7 +2,9 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildEchoCharacter.h"
+#include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
 #include "AstrawildInventoryComponent.h"
@@ -93,8 +95,17 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
 
     for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : Workers)
     {
-        const AAstrawildEchoCharacter* Echo = Weak.Get();
+        AAstrawildEchoCharacter* Echo = Weak.Get();
         if (!Echo || !IsValid(Echo->EchoDefinition) || Echo->IsDefeated())
+        {
+            continue;
+        }
+
+        // Final-audit M-9: workers produce only while AT the site (2× the work
+        // range — ExecuteWork paths them to the site, so present workers are the
+        // norm). Previously an echo "worked" from across the map, and an echo that
+        // refused the Work command (obedience roll) still produced at full rate.
+        if (FVector::Dist(Echo->GetActorLocation(), GetActorLocation()) > (WorkRange * 2.0f))
         {
             continue;
         }
@@ -115,14 +126,14 @@ void AAstrawildWorkSiteActor::Tick(const float DeltaTime)
         const float MoodMult = FMath::Lerp(0.5f, 1.0f, Echo->Needs.Mood / 100.0f);
         const float EnergyMult = FMath::Lerp(0.5f, 1.0f, Echo->Needs.Energy / 100.0f);
 
-        WorkAccumulator += DeltaTime * Affinity * PersonalityMult * MoodMult * EnergyMult * PowerMultiplier;
+        // SCP Phase 9: sanity band + illness penalties (Depressed x0.6,
+        // Slacker x0.3) — base care now has a mechanical payoff.
+        const float SanityMult = Echo->SanityComponent ? Echo->SanityComponent->GetWorkOutputMultiplier() : 1.0f;
+
+        WorkAccumulator += DeltaTime * Affinity * PersonalityMult * MoodMult * EnergyMult * SanityMult * PowerMultiplier;
 
         // Working consumes energy.
-        // (Mutating Needs on a const-free path: Workers holds non-const weak pointers.)
-        if (AAstrawildEchoCharacter* MutableEcho = Weak.Get())
-        {
-            MutableEcho->Needs.Energy = FMath::Max(0.0f, MutableEcho->Needs.Energy - DeltaTime * 0.5f);
-        }
+        Echo->Needs.Energy = FMath::Max(0.0f, Echo->Needs.Energy - DeltaTime * 0.5f);
     }
 
     // Final production run + Production V2: robots work at a flat rate (no needs
@@ -364,6 +375,8 @@ FAstrawildWorkSiteSaveData AAstrawildWorkSiteActor::ExportForSave() const
     // Production V2 (schema v4): buffer + per-cycle output persist across saves.
     Data.InputBuffer = InputBuffer;
     Data.OutputQuantity = FMath::Max(1, OutputQuantity);
+    // FCR-1-d (L-d16): the credited-through stamp persists (crash-safe re-credit).
+    Data.LastOfflineCreditUtcTicks = LastOfflineCreditUtcTicks;
     return Data;
 }
 
@@ -382,6 +395,65 @@ void AAstrawildWorkSiteActor::ImportFromSave(const FAstrawildWorkSiteSaveData& D
     // Production V2 (schema v4): buffer + per-cycle output restore.
     InputBuffer = Data.InputBuffer;
     OutputQuantity = FMath::Max(1, Data.OutputQuantity);
+    // FCR-1-d (L-d16): restore the credited-through stamp (0 = legacy/never).
+    LastOfflineCreditUtcTicks = FMath::Max<int64>(0, Data.LastOfflineCreditUtcTicks);
+}
+
+void AAstrawildWorkSiteActor::CreditOfflineProduction(float OfflineSeconds)
+{
+    // Directive Phase 8.3: capped at 48 hours, half rate, and each credited
+    // cycle still burns its real inputs — an empty buffer stalls exactly like
+    // the live loop (no offline item minting).
+    if (OfflineSeconds <= 0.0f || OutputItemId.IsNone() || SecondsPerOutput <= 0.0f)
+    {
+        return;
+    }
+
+    // FCR-1-d fix (H-d4): the offline credit must respect the SAME gates as the
+    // live loop — staffing (echoes or a robot) and power. The old check minted
+    // items for unstaffed, unpowered sites while the player was away (~8.6k
+    // fiber / 6.1k berries / 9.6k stone per 48h load with zero workers). A site
+    // that was left running keeps its saved worker/robot assignment; a dead
+    // site produces nothing. Power cannot be "live" while away — the saved
+    // battery state is the honest proxy, so powered sites require the flag.
+    const bool bStaffed = !GetAssignedEchoInstanceIds().IsEmpty() || HasRobot();
+    const bool bPowerOk = !bRequiresPower || IsPowered();
+    if (!bStaffed || !bPowerOk)
+    {
+        return;
+    }
+
+    const float EffectiveSeconds = FMath::Min(OfflineSeconds, 48.0f * 3600.0f) * 0.5f;
+    int32 CreditedCycles = 0;
+
+    // Simulate whole cycles against the live input buffer.
+    float Accumulated = EffectiveSeconds;
+    while (Accumulated >= SecondsPerOutput)
+    {
+        if (!ConsumeCycleInputs())
+        {
+            // Inputs exhausted mid-window — production stalls, matching the
+            // live-loop contract (the accumulator pins at the threshold).
+            break;
+        }
+        Accumulated -= SecondsPerOutput;
+        ++CreditedCycles;
+    }
+
+    if (CreditedCycles > 0)
+    {
+        StoredOutput += CreditedCycles * FMath::Max(1, OutputQuantity);
+        // FCR-1-d fix (L-d16): stamp the credited-through time so a crash between
+        // load and the next autosave cannot re-credit this window on reload.
+        LastOfflineCreditUtcTicks = FDateTime::UtcNow().GetTicks();
+        UE_LOG(LogAstrawildBuilding, Log, TEXT("Offline production: site %s credited %d cycles (%d x %s)."),
+            *SiteId.ToString(), CreditedCycles, CreditedCycles * FMath::Max(1, OutputQuantity), *OutputItemId.ToString());
+    }
+    else
+    {
+        // Nothing credited (gates/stall) — still stamp so the window is consumed.
+        LastOfflineCreditUtcTicks = FDateTime::UtcNow().GetTicks();
+    }
 }
 
 FText AAstrawildWorkSiteActor::GetInteractionPrompt_Implementation() const
@@ -468,6 +540,37 @@ void AAstrawildWorkSiteActor::Interact_Implementation(AActor* InteractingActor)
     }
 
     // 2) Assign the nearest idle captured Echo of this player.
+    // FCR-1-c fix (M-c8): the garrison cap is ENFORCED — GetBaseGarrisonCount had
+    // zero gate callers, so the 5/10/20 terminal caps were display-only. With a
+    // terminal standing, a full garrison refuses new assignments (upgrade the
+    // terminal for more); terminal-less starter camps keep working as before.
+    if (UWorld* W = GetWorld())
+    {
+        int32 BestCap = 0;
+        bool bHasTerminal = false;
+        for (TActorIterator<AAstrawildBaseTerminalActor> TermIt(W); TermIt; ++TermIt)
+        {
+            if (AAstrawildBaseTerminalActor* Terminal = *TermIt)
+            {
+                bHasTerminal = true;
+                BestCap = FMath::Max(BestCap, Terminal->GetGarrisonCap());
+            }
+        }
+        if (bHasTerminal && W->GetGameInstance())
+        {
+            if (UAstrawildEchoRosterSubsystem* Roster = W->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+            {
+                if (Roster->GetBaseGarrisonCount() >= BestCap)
+                {
+                    Notify(FText::FromString(FString::Printf(
+                        TEXT("Garrison full (%d/%d) — upgrade the Base Terminal to station more Echoes."),
+                        Roster->GetBaseGarrisonCount(), BestCap)));
+                    return;
+                }
+            }
+        }
+    }
+
     const FName OwnerId = Player->GetFName();
     AAstrawildEchoCharacter* Best = nullptr;
     float BestDistance = 4000.0f;

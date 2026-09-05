@@ -107,7 +107,12 @@ void UAstrawildPowerSubsystem::ResolveGrid()
         {
         case EAstrawildPowerRole::Generator:
             Generators.Add(Building);
-            TotalGeneration += Def->PowerGeneration;
+            // Final-audit L-2 (AUD-4): generators respect their switch — a switched-off
+            // dynamo contributes nothing (consumers were already gated; generators were not).
+            if (Building->IsSwitchedOn())
+            {
+                TotalGeneration += Def->PowerGeneration;
+            }
             break;
         case EAstrawildPowerRole::Battery:
             Batteries.Add(Building);
@@ -167,7 +172,11 @@ void UAstrawildPowerSubsystem::ResolveGrid()
 
         // Batch 2 — Item C: sync the actor's replicated bIsPowered field so the
         // saved state matches the grid and clients see correct lamp visuals.
+        // Final-audit M-2 (AUD-4): RepNotifies do not fire on the server/listen-host,
+        // so the host's lamp visual used to stay stale until some other path
+        // refreshed it — update the visual directly on the authority.
         Consumer->bIsPowered = bPowered;
+        Consumer->UpdateVisualPowerState();
 
         if (bPowered)
         {
@@ -194,18 +203,8 @@ void UAstrawildPowerSubsystem::ResolveGrid()
 
 bool UAstrawildPowerSubsystem::IsLocationPowered(const FVector& Location) const
 {
-    // A location is powered when it is near any active power node (generator/battery)
-    // and its local consumer (if registered) is powered.
-    for (const TPair<FObjectKey, bool>& Pair : BuildingPowerState)
-    {
-        if (!Pair.Value)
-        {
-            continue;
-        }
-        // Key-based lookup cannot give the actor back; power queries route through
-        // IsBuildingPowered for exact buildings. Locations fall back to generator proximity.
-        break;
-    }
+    // Final-audit L-1 (AUD-4): removed a dead key-map loop that iterated
+    // BuildingPowerState and broke out immediately without doing anything.
 
     // Proximity to any generator = powered location (simplified shared grid v1).
     for (const TWeakObjectPtr<AAstrawildBuildingActor>& Weak : Buildings)

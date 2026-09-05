@@ -2,16 +2,27 @@
 
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
+#include "AstrawildCraftingScreenWidget.h"
+#include "AstrawildCraftingStationActor.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDialogueWidget.h"
 #include "AstrawildHudWidget.h"
 #include "AstrawildInventoryScreenWidget.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildJournalScreenWidget.h"
+#include "AstrawildRosterScreenWidget.h"
+#include "AstrawildMapScreenWidget.h"
+#include "AstrawildHuntScreenWidget.h"
+#include "AstrawildHuntSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
+#include "AstrawildEchoRosterSubsystem.h"
+#include "GameFramework/PlayerState.h" // LCP-4: player key
+#include "Net/UnrealNetwork.h" // PCR-2: DOREPLIFETIME
 #include "AstrawildResearchScreenWidget.h"
 #include "AstrawildShopWidget.h"
 #include "Blueprint/UserWidget.h"
@@ -36,6 +47,13 @@ void AAstrawildPlayerController::BeginPlay()
         return;
     }
 
+    // Ensure game-only input mode and mouse lock on startup for immediate playable control.
+    FInputModeGameOnly GameInputMode;
+    SetInputMode(GameInputMode);
+    bShowMouseCursor = false;
+    SetIgnoreMoveInput(false);
+    SetIgnoreLookInput(false);
+
     // C++-built HUD — no UMG asset dependency (directive §29/§50).
     const TSubclassOf<UAstrawildHudWidget> WidgetClass = HudWidgetClass
         ? HudWidgetClass
@@ -52,6 +70,20 @@ void AAstrawildPlayerController::BeginPlay()
 void AAstrawildPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+    if (IsLocalController())
+    {
+        FInputModeGameOnly GameInputMode;
+        SetInputMode(GameInputMode);
+        bShowMouseCursor = false;
+        SetIgnoreMoveInput(false);
+        SetIgnoreLookInput(false);
+
+        if (AAstrawildPlayerCharacter* PlayerChar = Cast<AAstrawildPlayerCharacter>(InPawn))
+        {
+            PlayerChar->ApplyMappingContext();
+        }
+    }
 }
 
 void AAstrawildPlayerController::Notify(const FText& Message)
@@ -151,6 +183,14 @@ void AAstrawildPlayerController::OpenDialogue(AAstrawildNPCCharacter* Npc)
         return;
     }
 
+    // DP-8 (NPC depth): the dialogue component remembers who is being talked
+    // to so affinity-gated replies evaluate against the LIVE relationship
+    // while the screen is open (cleared in CloseDialogue).
+    if (DialogueComponent)
+    {
+        DialogueComponent->SetTalkingNpc(Npc);
+    }
+
     DialogueWidget->InitializeDialogue(Npc, Tree);
     DialogueWidget->AddToViewport(10); // Above the HUD, same layer as the other screens.
 
@@ -166,6 +206,13 @@ void AAstrawildPlayerController::CloseDialogue()
     if (DialogueWidget)
     {
         DialogueWidget->RemoveFromParent();
+    }
+
+    // DP-8: the conversation is over — drop the talking NPC so no stale
+    // affinity state leaks into any later evaluation.
+    if (DialogueComponent)
+    {
+        DialogueComponent->SetTalkingNpc(nullptr);
     }
 
     SetInputMode(FInputModeGameOnly());
@@ -195,9 +242,29 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleResearchScreen();
     }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
     }
 
     if (bOpen)
@@ -213,6 +280,9 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
         {
             InventoryScreen->RefreshInventory();
             InventoryScreen->AddToViewport(10);
+            // Final-audit F-05: give the screen keyboard focus so TAB/ESC close
+            // without requiring a prior mouse click.
+            InventoryScreen->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);
@@ -250,9 +320,29 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     {
         ToggleInventoryScreen();
     }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
     }
 
     if (bOpen)
@@ -268,6 +358,8 @@ void AAstrawildPlayerController::ToggleResearchScreen()
         {
             ResearchScreen->RefreshResearch();
             ResearchScreen->AddToViewport(10);
+            // Final-audit F-05: keyboard focus for the advertised K/ESC close.
+            ResearchScreen->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);
@@ -290,6 +382,84 @@ bool AAstrawildPlayerController::IsResearchOpen() const
     return ResearchScreen && ResearchScreen->IsInViewport();
 }
 
+void AAstrawildPlayerController::ToggleCraftingScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsCraftingOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+
+    if (bOpen)
+    {
+        if (!CraftingScreen)
+        {
+            const TSubclassOf<UAstrawildCraftingScreenWidget> WidgetClass = CraftingScreenClass
+                ? CraftingScreenClass
+                : TSubclassOf<UAstrawildCraftingScreenWidget>(UAstrawildCraftingScreenWidget::StaticClass());
+            CraftingScreen = CreateWidget<UAstrawildCraftingScreenWidget>(this, WidgetClass);
+        }
+        if (CraftingScreen)
+        {
+            CraftingScreen->RefreshRecipes();
+            CraftingScreen->AddToViewport(10);
+            // Final-audit F-05: keyboard focus for the ESC close.
+            CraftingScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (CraftingScreen)
+        {
+            CraftingScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsCraftingOpen() const
+{
+    return CraftingScreen && CraftingScreen->IsInViewport();
+}
+
 void AAstrawildPlayerController::TogglePauseMenu()
 {
     if (!IsLocalController())
@@ -309,6 +479,26 @@ void AAstrawildPlayerController::TogglePauseMenu()
     {
         ToggleResearchScreen();
     }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
 
     if (bOpen)
     {
@@ -324,6 +514,8 @@ void AAstrawildPlayerController::TogglePauseMenu()
             // Pause the world while the menu is up (single-player/listen-server).
             SetPause(true);
             PauseMenuWidget->AddToViewport(20);
+            // Final-audit F-05: keyboard focus for ESC-resume.
+            PauseMenuWidget->SetKeyboardFocus();
             FInputModeUIOnly InputMode;
             InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
             SetInputMode(InputMode);
@@ -347,7 +539,543 @@ bool AAstrawildPlayerController::IsPauseMenuOpen() const
     return PauseMenuWidget && PauseMenuWidget->IsInViewport();
 }
 
+// --- PCR-1 (PG-1): the Field Journal (bestiary) screen ---
+
+void AAstrawildPlayerController::ToggleJournalScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsJournalOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!JournalScreen)
+        {
+            const TSubclassOf<UAstrawildJournalScreenWidget> WidgetClass = JournalScreenClass
+                ? JournalScreenClass
+                : TSubclassOf<UAstrawildJournalScreenWidget>(UAstrawildJournalScreenWidget::StaticClass());
+            JournalScreen = CreateWidget<UAstrawildJournalScreenWidget>(this, WidgetClass);
+        }
+        if (JournalScreen)
+        {
+            JournalScreen->RefreshJournal();
+            JournalScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so P/ESC close without a mouse click.
+            JournalScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (JournalScreen)
+        {
+            JournalScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsJournalOpen() const
+{
+    return JournalScreen && JournalScreen->IsInViewport();
+}
+
+// --- PCR-2 (PG-2): the Echo Roster / party-ring management screen ---
+
+void AAstrawildPlayerController::ToggleRosterScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsRosterOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!RosterScreen)
+        {
+            const TSubclassOf<UAstrawildRosterScreenWidget> WidgetClass = RosterScreenClass
+                ? RosterScreenClass
+                : TSubclassOf<UAstrawildRosterScreenWidget>(UAstrawildRosterScreenWidget::StaticClass());
+            RosterScreen = CreateWidget<UAstrawildRosterScreenWidget>(this, WidgetClass);
+        }
+        if (RosterScreen)
+        {
+            RosterScreen->RefreshRoster();
+            RosterScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so L/ESC close without a mouse click.
+            RosterScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (RosterScreen)
+        {
+            RosterScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsRosterOpen() const
+{
+    return RosterScreen && RosterScreen->IsInViewport();
+}
+
+void AAstrawildPlayerController::OnRep_RosterMirror()
+{
+    // Pure clients refresh an open roster screen when the host pushes a new
+    // slice (capture feedback, bench confirmations, evolution swaps).
+    if (IsRosterOpen() && RosterScreen)
+    {
+        RosterScreen->RefreshRoster();
+    }
+}
+
+bool AAstrawildPlayerController::RequestSetEchoBenched(const FGuid& InstanceId, const bool bBenched)
+{
+    // Single player / listen host mutates directly; a remote client routes
+    // through the server RPC (the subsystem re-validates ownership + authority
+    // server-side — the widget path can be spoofed, the mutation cannot).
+    if (!IsLocalController())
+    {
+        return false;
+    }
+
+    UWorld* World = GetWorld();
+    if (World && World->GetNetMode() != NM_Client && HasAuthority())
+    {
+        UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()
+            ? World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr;
+        return Roster ? Roster->SetInstanceBenched(InstanceId, bBenched, this) : false;
+    }
+
+    ServerSetEchoBenched(InstanceId, bBenched);
+    return true; // accepted for routing; the server result arrives via the mirror push
+}
+
+void AAstrawildPlayerController::ServerSetEchoBenched_Implementation(const FGuid& InstanceId, const bool bBenched)
+{
+    // Fail-closed server validation: the subsystem checks authority, ownership
+    // (the stable player key) and instance existence itself.
+    UWorld* World = GetWorld();
+    UAstrawildEchoRosterSubsystem* Roster = (World && World->GetGameInstance())
+        ? World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr;
+    if (!Roster || !Roster->SetInstanceBenched(InstanceId, bBenched, this))
+    {
+        NotifyPlayer(FText::FromString(TEXT("Could not change that Echo's party status.")));
+    }
+}
+
+// --- PCR-3 (PG-3): the world map screen ---
+
+void AAstrawildPlayerController::ToggleMapScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsMapOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+
+    if (bOpen)
+    {
+        if (!MapScreen)
+        {
+            const TSubclassOf<UAstrawildMapScreenWidget> WidgetClass = MapScreenClass
+                ? MapScreenClass
+                : TSubclassOf<UAstrawildMapScreenWidget>(UAstrawildMapScreenWidget::StaticClass());
+            MapScreen = CreateWidget<UAstrawildMapScreenWidget>(this, WidgetClass);
+        }
+        if (MapScreen)
+        {
+            MapScreen->RefreshMap();
+            MapScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so M/ESC close without a mouse click.
+            MapScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (MapScreen)
+        {
+            MapScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsMapOpen() const
+{
+    return MapScreen && MapScreen->IsInViewport();
+}
+
+void AAstrawildPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    // PCR-2: the per-player roster slice reaches the owning client (player
+    // controllers only replicate to their own connection).
+    DOREPLIFETIME(AAstrawildPlayerController, RosterMirror);
+}
+
+// --- PCR-5 (PG-5): the Hunt Board screen ---
+
+void AAstrawildPlayerController::ToggleHuntScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsHuntOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!HuntScreen)
+        {
+            const TSubclassOf<UAstrawildHuntScreenWidget> WidgetClass = HuntScreenClass
+                ? HuntScreenClass
+                : TSubclassOf<UAstrawildHuntScreenWidget>(UAstrawildHuntScreenWidget::StaticClass());
+            HuntScreen = CreateWidget<UAstrawildHuntScreenWidget>(this, WidgetClass);
+        }
+        if (HuntScreen)
+        {
+            HuntScreen->RefreshHunts();
+            HuntScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so U/ESC close without a mouse click.
+            HuntScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (HuntScreen)
+        {
+            HuntScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsHuntOpen() const
+{
+    return HuntScreen && HuntScreen->IsInViewport();
+}
+
+bool AAstrawildPlayerController::RequestClaimHunt(const FName HuntId)
+{
+    if (!IsLocalController())
+    {
+        return false;
+    }
+
+    UWorld* World = GetWorld();
+    if (World && World->GetNetMode() != NM_Client && HasAuthority())
+    {
+        UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>();
+        return Hunts ? Hunts->ClaimHunt(HuntId, GetPlayerKey(), GetPawn()) : false;
+    }
+
+    ServerClaimHunt(HuntId);
+    return true; // accepted for routing; the server validates the claim
+}
+
+void AAstrawildPlayerController::ServerClaimHunt_Implementation(const FName HuntId)
+{
+    // Fail-closed server validation: ClaimHunt re-checks completion + authority.
+    UWorld* World = GetWorld();
+    UAstrawildHuntSubsystem* Hunts = World ? World->GetSubsystem<UAstrawildHuntSubsystem>() : nullptr;
+    if (!Hunts || !Hunts->ClaimHunt(HuntId, GetPlayerKey(), GetPawn()))
+    {
+        NotifyPlayer(FText::FromString(TEXT("That hunt is not complete yet.")));
+    }
+    else
+    {
+        NotifyPlayer(FText::FromString(TEXT("Hunt reward claimed.")));
+    }
+}
+
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen();
+}
+
+
+// ===========================================================================
+// LCP-3 — LAN co-op client routing (first Client RPCs in the module)
+// ===========================================================================
+
+void AAstrawildPlayerController::ClientNotify_Implementation(const FText& Message)
+{
+    Notify(Message);
+}
+
+void AAstrawildPlayerController::NotifyPlayer(const FText& Message)
+{
+    // Whatever machine owns this controller's screen gets the message: the
+    // listen-host/standalone PC is its own local controller (Notify directly);
+    // a server-side PC for a REMOTE player routes to that client.
+    if (IsLocalController())
+    {
+        Notify(Message);
+    }
+    else
+    {
+        ClientNotify(Message);
+    }
+}
+
+void AAstrawildPlayerController::ClientOpenVendorShop_Implementation(AAstrawildNPCCharacter* Vendor)
+{
+    OpenShop(Vendor);
+}
+
+void AAstrawildPlayerController::ClientOpenVendorDialogue_Implementation(AAstrawildNPCCharacter* Npc)
+{
+    OpenDialogue(Npc);
+}
+
+void AAstrawildPlayerController::ClientOpenCraftingScreen_Implementation(AAstrawildCraftingStationActor* Station)
+{
+    if (!IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+}
+
+void AAstrawildPlayerController::ServerVendorTrade_Implementation(AAstrawildNPCCharacter* Vendor, const FName ItemId, const int32 Quantity, const bool bBuy)
+{
+    // Fail-closed server validation: the vendor must be a valid, interactable
+    // NPC near this player's pawn (the client-side shop screen can be spoofed;
+    // the trade cannot). TryPurchase/TrySell re-check authority + price +
+    // currency internally (they were already authority-guarded — this RPC is
+    // the routing the shop widget previously lacked for remote clients).
+    APawn* Pawn = GetPawn();
+    if (!Vendor || !Pawn || !Vendor->NpcDefinition)
+    {
+        return;
+    }
+    if (FVector::DistSquared(Pawn->GetActorLocation(), Vendor->GetActorLocation()) > FMath::Square(600.0f))
+    {
+        NotifyPlayer(FText::FromString(TEXT("Too far from the vendor.")));
+        return;
+    }
+    if (Quantity <= 0 || Quantity > 99)
+    {
+        return; // quantity sanity (row buttons trade x1; the gate is cheap insurance)
+    }
+
+    const EAstrawildVendorResult Result = bBuy
+        ? Vendor->TryPurchase(Pawn, ItemId, Quantity)
+        : Vendor->TrySell(Pawn, ItemId, Quantity);
+    const TCHAR* ResultText = TEXT("declined");
+    switch (Result)
+    {
+    case EAstrawildVendorResult::Success:       ResultText = bBuy ? TEXT("bought") : TEXT("sold"); break;
+    case EAstrawildVendorResult::NotAVendor:    ResultText = TEXT("not a vendor"); break;
+    case EAstrawildVendorResult::NotAWare:      ResultText = TEXT("not in this shop"); break;
+    case EAstrawildVendorResult::NotEnoughCurrency: ResultText = TEXT("not enough currency"); break;
+    case EAstrawildVendorResult::TooHeavy:      ResultText = TEXT("too heavy to carry"); break;
+    case EAstrawildVendorResult::TooFarAway:    ResultText = TEXT("too far from the vendor"); break;
+    default: break;
+    }
+    NotifyPlayer(FText::FromString(FString::Printf(TEXT("Trade %s."), ResultText)));
+}
+
+void AAstrawildPlayerController::ServerSubmitDialogueChoice_Implementation(AAstrawildNPCCharacter* Npc, const FName NodeId, const int32 ChoiceIndex)
+{
+    // Structural re-validation from registry truth (the client sent node +
+    // choice indices from static content, but a modified client could send
+    // anything — everything resolves again here, fail-closed).
+    if (!Npc || !Npc->NpcDefinition || !DialogueComponent)
+    {
+        return;
+    }
+    UWorld* World = GetWorld();
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    UAstrawildDialogueTreeDefinition* Tree = Registry ? Registry->FindDialogueTree(Npc->NpcDefinition->DialogueTreeId) : nullptr;
+    const FAstrawildDialogueChoice* Choice = UAstrawildDialogueComponent::ResolveValidatedChoice(Tree, NodeId, ChoiceIndex);
+    if (!Choice)
+    {
+        UE_LOG(LogAstrawild, Warning, TEXT("LCP-3: rejected dialogue choice (npc=%s node=%s index=%d)."),
+            *GetNameSafe(Npc), *NodeId.ToString(), ChoiceIndex);
+        return;
+    }
+
+    // Conditional re-validation + consequence application run on THIS (server)
+    // component — the talking NPC mirrors what OpenDialogue would have set.
+    DialogueComponent->SetTalkingNpc(Npc);
+    if (!DialogueComponent->EvaluateChoiceConditions(*Choice))
+    {
+        return; // the client may have shown a stale/filtered list; the server disagrees — no-op
+    }
+    DialogueComponent->ApplyChoiceConsequences(*Choice);
+}
+
+FName AAstrawildPlayerController::GetPlayerKey() const
+{
+    // Stable identity: player name first (set in the session flow / engine
+    // login), session-unique slot id as the fallback (join order). Documented
+    // caveat in LAN_COOP_SPEC §5: reconnect across sessions restores by NAME —
+    // unnamed slots restore only within a matching join order.
+    if (const APlayerState* PS = GetPlayerState())
+    {
+        const FString Name = PS->GetPlayerName();
+        if (!Name.IsEmpty())
+        {
+            return FName(*Name);
+        }
+        return FName(*FString::Printf(TEXT("PlayerSlot_%d"), PS->GetPlayerId()));
+    }
+    return FName(*FString::Printf(TEXT("PlayerSlot_%d"), NetPlayerIndex));
 }

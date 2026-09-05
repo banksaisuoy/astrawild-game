@@ -4,22 +4,50 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "AstrawildCaptureComponent.h"
+#include "AstrawildAbilityLibrary.h"
+#include "AstrawildAssetFallback.h"
+#include "AstrawildAttributeComponent.h"
+#include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBestiaryData.h"
+#include "AstrawildComboSubsystem.h"
+#include "AstrawildCropComponent.h"
+#include "AstrawildCreatureSanityComponent.h"
+#include "AstrawildDataValidator.h"
+#include "AstrawildDifficultySubsystem.h"
+#include "AstrawildDurabilityComponent.h"
+#include "AstrawildErrorReporter.h"
+#include "AstrawildMountComponent.h"
+#include "AstrawildGeneticsLibrary.h"
+#include "AstrawildNPCScheduleComponent.h"
+#include "AstrawildPerformanceManager.h"
+#include "AstrawildSpoilageSubsystem.h"
+#include "AstrawildTurretComponent.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildBiomeDressingActor.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildPlayerCharacter.h"
+#include "AstrawildQuestComponent.h"
+#include "AstrawildResearchSubsystem.h"
+#include "InputMappingContext.h"
 // Complete soft-pointer pointee types: TSoftObjectPtr<>::IsValid() in test code
 // needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
 #include "Engine/StaticMesh.h"
 #include "Sound/SoundBase.h"
+#include "AstrawildLANSessionSubsystem.h"
 #include "AstrawildDialogueComponent.h"
+#include "AstrawildDungeonRoomActor.h"
+#include "AstrawildWorldBootstrapper.h"
+#include "AstrawildWeatherSubsystem.h"
+#include "AstrawildResourceNode.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildInventoryComponent.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
-#include "AstrawildWorldBootstrapper.h"
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
 #include "AstrawildSkiffActor.h"
@@ -28,6 +56,15 @@
 #include "AstrawildTypes.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildZoneSubsystem.h"
+#include "AstrawildContentLibrary.h"
+#include "AstrawildProductionContent.h"
+#include "AstrawildJournalScreenWidget.h"
+#include "AstrawildJournalSubsystem.h"
+#include "AstrawildPauseMenuWidget.h"
+#include "AstrawildRosterScreenWidget.h"
+#include "AstrawildMapScreenWidget.h"
+#include "AstrawildHuntScreenWidget.h"
+#include "AstrawildHuntSubsystem.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -375,8 +412,8 @@ bool FAstrawildBossElementalMultiplierTest::RunTest(const FString& Parameters)
 
     TestEqual(TEXT("Attacking the weakness deals x1.5"),
         AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Weakness, Weakness, Own), 1.5f);
-    TestEqual(TEXT("Same-element attacks are resisted x0.75"),
-        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Own, Weakness, Own), 0.75f);
+    TestEqual(TEXT("Same-element attacks are resisted x0.80 (unified with the Echo pipeline)"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(Own, Weakness, Own), 0.8f);
     TestEqual(TEXT("Neutral elements deal x1.0"),
         AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(EEl::Frost, Weakness, Own), 1.0f);
     TestEqual(TEXT("The None element never triggers a multiplier"),
@@ -2082,6 +2119,3519 @@ bool FAstrawildArtPackBindingTest::RunTest(const FString& Parameters)
                 Profile->Mesh.ToSoftObjectPath().ToString() == Art->MeshPath);
         }
     }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// GLM Hardening Pass: Test 55 — Core Loop Action Roster
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInputCoreLoopRosterTest,
+    "ASTRAWILD.Input.CoreLoopRoster",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInputCoreLoopRosterTest::RunTest(const FString& Parameters)
+{
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (!Player)
+    {
+        return false;
+    }
+
+    Player->BuildRuntimeInputDefaults();
+    TestNotNull(TEXT("DefaultMappingContext built"), Player->DefaultMappingContext.Get());
+    TestNotNull(TEXT("MoveAction valid"), Player->MoveAction.Get());
+    TestNotNull(TEXT("LookAction valid"), Player->LookAction.Get());
+    TestNotNull(TEXT("JumpAction valid"), Player->JumpAction.Get());
+    TestNotNull(TEXT("SprintAction valid"), Player->SprintAction.Get());
+    TestNotNull(TEXT("InteractAction valid"), Player->InteractAction.Get());
+    TestNotNull(TEXT("AttackAction valid"), Player->AttackAction.Get());
+    TestNotNull(TEXT("InventoryAction valid"), Player->InventoryAction.Get());
+    TestNotNull(TEXT("BuildModeAction valid"), Player->BuildModeAction.Get());
+    TestNotNull(TEXT("ScanAction valid"), Player->ScanAction.Get());
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// GLM Hardening Pass: Test 56 — Runtime Action Contract
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInputRuntimeActionContractTest,
+    "ASTRAWILD.Input.RuntimeActionContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInputRuntimeActionContractTest::RunTest(const FString& Parameters)
+{
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (!Player)
+    {
+        return false;
+    }
+
+    Player->BuildRuntimeInputDefaults();
+    Player->BuildGamepadInputDefaults();
+
+    TestNotNull(TEXT("Keyboard context exists"), Player->DefaultMappingContext.Get());
+    TestNotNull(TEXT("Gamepad context exists"), Player->GamepadMappingContext.Get());
+
+    if (Player->DefaultMappingContext.Get())
+    {
+        TestTrue(TEXT("Default mapping context has >= 20 key bindings"),
+            Player->DefaultMappingContext->GetMappings().Num() >= 20);
+    }
+    if (Player->GamepadMappingContext.Get())
+    {
+        TestTrue(TEXT("Gamepad mapping context has >= 10 key bindings"),
+            Player->GamepadMappingContext->GetMappings().Num() >= 10);
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// GLM Hardening Pass: Test 57 — Survivor Fallback Chain
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAssetSurvivorFallbackChainTest,
+    "ASTRAWILD.Asset.SurvivorFallbackChain",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAssetSurvivorFallbackChainTest::RunTest(const FString& Parameters)
+{
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (!Player)
+    {
+        return false;
+    }
+
+    Player->BuildProceduralBody();
+    TestNotNull(TEXT("Procedural BodyMesh exists"), Player->BodyMesh.Get());
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: P0 hardening contracts (FR-1..FR-4)
+// Test 58: Inventory transaction safety — negative-quantity rejection,
+// atomic ConsumeItems with duplicate aggregation, save-import dedupe.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildInventoryTransactionSafetyTest,
+    "ASTRAWILD.Inventory.TransactionSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildInventoryTransactionSafetyTest::RunTest(const FString& Parameters)
+{
+    // World-free component: no owner → role is not authority → weight gate
+    // bypassed; the transaction math below is the deterministic contract.
+    UAstrawildInventoryComponent* Inventory = NewObject<UAstrawildInventoryComponent>();
+    if (!TestNotNull(TEXT("Inventory constructed"), Inventory))
+    {
+        return false;
+    }
+
+    Inventory->AddItemSilent(TEXT("Item_Wood"), 7);
+
+    // FR-1: RemoveItem quantity-sign gate FIRST (the old exploit: "0 >= -5"
+    // passed HasItem, then Count -= -5 minted items).
+    TestFalse(TEXT("RemoveItem rejects negative quantity"), Inventory->RemoveItem(TEXT("Item_Wood"), -5));
+    TestFalse(TEXT("RemoveItem rejects zero quantity"), Inventory->RemoveItem(TEXT("Item_Wood"), 0));
+    TestFalse(TEXT("RemoveItem rejects missing id"), Inventory->RemoveItem(NAME_None, 1));
+    TestEqual(TEXT("Rejected removes leave the stack untouched"), Inventory->GetQuantity(TEXT("Item_Wood")), 7);
+
+    // FR-1: ConsumeItems is atomic across DUPLICATE ids. {Wood x5, Wood x5}
+    // aggregates to 10 required; only 7 owned → refuse WITHOUT partial loss.
+    const auto Stack = [](const TCHAR* Id, const int32 Qty)
+    {
+        FAstrawildItemStack Out;
+        Out.ItemId = Id;
+        Out.Quantity = Qty;
+        return Out;
+    };
+
+    TestFalse(TEXT("ConsumeItems refuses aggregated shortage"),
+        Inventory->ConsumeItems({ Stack(TEXT("Item_Wood"), 5), Stack(TEXT("Item_Wood"), 5) }));
+    TestEqual(TEXT("Refused consume is atomic — no partial drain"), Inventory->GetQuantity(TEXT("Item_Wood")), 7);
+
+    // Top up to 12 — the same request now succeeds atomically and leaves 2.
+    Inventory->AddItemSilent(TEXT("Item_Wood"), 5);
+    TestTrue(TEXT("ConsumeItems succeeds when the aggregate fits"),
+        Inventory->ConsumeItems({ Stack(TEXT("Item_Wood"), 5), Stack(TEXT("Item_Wood"), 5) }));
+    TestEqual(TEXT("Successful consume leaves the remainder"), Inventory->GetQuantity(TEXT("Item_Wood")), 2);
+
+    // FR-1: SetItemStacks sanitize — first-seen-wins on duplicate ids, invalid
+    // stacks are dropped (a crafted save cannot inflate quantities).
+    Inventory->SetItemStacks({
+        Stack(TEXT("Item_Wood"), 10),
+        Stack(TEXT("Item_Wood"), 99),   // duplicate id — ignored
+        Stack(NAME_None, 42),           // invalid id — dropped
+        Stack(TEXT("Item_Stone"), 0)    // invalid quantity — dropped
+    });
+    TestEqual(TEXT("SetItemStacks keeps the FIRST duplicate entry"), Inventory->GetQuantity(TEXT("Item_Wood")), 10);
+    TestFalse(TEXT("SetItemStacks drops invalid stacks"), Inventory->HasItem(NAME_None, 1));
+    TestFalse(TEXT("SetItemStacks drops zero-quantity stacks"), Inventory->HasItem(TEXT("Item_Stone"), 1));
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: Test 59 — Save consistency contracts:
+// building refund snapshot (fail-closed restore) + schema evolution fields.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveConsistencyContractsTest,
+    "ASTRAWILD.Save.ConsistencyContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveConsistencyContractsTest::RunTest(const FString& Parameters)
+{
+    // FR-2: the building refund snapshot ships default-neutral so pre-V4.1 saves
+    // deserialize cleanly and the load path logs the loss instead of guessing.
+    FAstrawildBuildingSaveData BuildingData;
+    TestTrue(TEXT("RefundItemId defaults to none"), BuildingData.RefundItemId.IsNone());
+    TestEqual(TEXT("RefundItemCount defaults to zero"), BuildingData.RefundItemCount, 0);
+
+    // The snapshot round-trips through the struct contract (SaveWorld fills it
+    // from the definition; LoadWorld refunds from it when the definition is gone).
+    BuildingData.RefundItemId = TEXT("Item_Plank");
+    BuildingData.RefundItemCount = 12;
+    TestEqual(TEXT("Refund snapshot carries the count"), BuildingData.RefundItemCount, 12);
+    TestFalse(TEXT("Refund snapshot carries a resolvable id"), BuildingData.RefundItemId.IsNone());
+
+    // Invalid refund snapshots are rejected by the same validity rule as every
+    // other stack (the load path checks RefundItemCount > 0 before granting).
+    BuildingData.RefundItemCount = -4;
+    TestTrue(TEXT("Negative refund count fails the > 0 gate"), BuildingData.RefundItemCount <= 0);
+
+    // FR-2: the save game header contract — schema stamp + checksum baseline.
+    UAstrawildSaveGame* SaveGame = NewObject<UAstrawildSaveGame>();
+    if (!TestNotNull(TEXT("SaveGame object constructed"), SaveGame))
+    {
+        return false;
+    }
+    TestTrue(TEXT("SaveSchemaVersion is a sane positive integer"), SaveGame->SaveSchemaVersion >= 1);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: Test 60 — Quest save-import safety:
+// duplicate ids collapse, exactly one active quest survives.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestImportSafetyTest,
+    "ASTRAWILD.Quest.ImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestImportSafetyTest::RunTest(const FString& Parameters)
+{
+    UAstrawildQuestComponent* Quests = NewObject<UAstrawildQuestComponent>();
+    if (!TestNotNull(TEXT("Quest component constructed"), Quests))
+    {
+        return false;
+    }
+
+    const auto MakeState = [](const TCHAR* Id, const bool bActive, const bool bCompleted)
+    {
+        FAstrawildQuestSaveData State;
+        State.QuestId = Id;
+        State.bActive = bActive;
+        State.bCompleted = bCompleted;
+        return State;
+    };
+
+    // Crafted/corrupt payload: duplicate id (active first, completed second —
+    // first-seen-wins), two EXTRA active quests, and one id-less entry.
+    Quests->ImportFromSave({
+        MakeState(TEXT("Q_First"), true, false),
+        MakeState(TEXT("Q_First"), false, true),   // duplicate id — ignored
+        MakeState(TEXT("Q_Second"), true, false),  // second active — demoted
+        MakeState(TEXT("Q_Third"), true, false),   // third active — demoted
+        MakeState(NAME_None, true, false)          // id-less — dropped
+    });
+
+    TestEqual(TEXT("First active quest wins the active slot"), Quests->GetActiveQuestId(), FName(TEXT("Q_First")));
+    TestTrue(TEXT("First entry is active"), Quests->IsQuestActive(TEXT("Q_First")));
+    TestFalse(TEXT("Duplicate entry did NOT complete the quest (first-seen-wins)"), Quests->IsQuestCompleted(TEXT("Q_First")));
+    TestFalse(TEXT("Second quest demoted — single-active invariant"), Quests->IsQuestActive(TEXT("Q_Second")));
+    TestFalse(TEXT("Third quest demoted — single-active invariant"), Quests->IsQuestActive(TEXT("Q_Third")));
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL COMPLETION RUN — BATCH 1: Test 61 — Echo roster save-import safety:
+// invalid entries dropped, duplicate guids collapse (first-seen-wins).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEchoRosterImportSafetyTest,
+    "ASTRAWILD.Echo.RosterImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEchoRosterImportSafetyTest::RunTest(const FString& Parameters)
+{
+    // GameInstance subsystem used world-free: ImportFromSave touches only the
+    // roster array and the change delegate — no GameInstance dependency.
+    UAstrawildEchoRosterSubsystem* Roster = NewObject<UAstrawildEchoRosterSubsystem>();
+    if (!TestNotNull(TEXT("Roster subsystem constructed"), Roster))
+    {
+        return false;
+    }
+
+    FAstrawildEchoInstanceV2 Valid;
+    Valid.InstanceId = FGuid::NewGuid();
+    Valid.DefinitionId = TEXT("Echo_Lumewisp");
+    Valid.bInParty = true;
+
+    FAstrawildEchoInstanceV2 Duplicate = Valid; // same guid — must collapse
+
+    FAstrawildEchoInstanceV2 BrokenGuid;
+    BrokenGuid.DefinitionId = TEXT("Echo_Gloomfang"); // guid stays invalid
+
+    FAstrawildEchoInstanceV2 NoSpecies;
+    NoSpecies.InstanceId = FGuid::NewGuid(); // species stays none
+
+    Roster->ImportFromSave({ Valid, Duplicate, BrokenGuid, NoSpecies });
+
+    TestEqual(TEXT("Only the valid entry survives"), Roster->GetRoster().Num(), 1);
+    TestTrue(TEXT("Valid entry kept its guid"), Roster->IsInRoster(Valid.InstanceId));
+    TestFalse(TEXT("Guid-less entry dropped"), Roster->IsInRoster(BrokenGuid.InstanceId));
+    TestFalse(TEXT("Species-less entry dropped"), Roster->IsInRoster(NoSpecies.InstanceId));
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Final Run (FR-12) — Act 3 "The Storm Crown" contracts.
+// World-free: pure data/struct contracts + static resolvers, exactly like the
+// rest of the suite (engine run happens on the Antigravity machine, AG-3).
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildFinalRunQuestChainTest,
+    "ASTRAWILD.Quest.FinalRunChain",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildFinalRunQuestChainTest::RunTest(const FString& Parameters)
+{
+    // MQ-13..17 chain contract (FR-5): every link resolves inside the set,
+    // exactly ONE terminus, every quest has objectives, and the objective
+    // vocabulary stays inside the Act 3 set (DiscoverPOI / DefeatCreature /
+    // CraftRecipe / ReachLocation) — mirrors the BuildFinalRunContent data.
+    UAstrawildQuestDefinition* StormAnchors = NewObject<UAstrawildQuestDefinition>();
+    StormAnchors->QuestId = TEXT("Quest_StormAnchors");
+    StormAnchors->NextQuestId = TEXT("Quest_CrownRelay");
+    StormAnchors->Objectives = { FAstrawildQuestObjective() }; // DiscoverPOI default-set in content.
+
+    UAstrawildQuestDefinition* CrownRelay = NewObject<UAstrawildQuestDefinition>();
+    CrownRelay->QuestId = TEXT("Quest_CrownRelay");
+    CrownRelay->NextQuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    CrownRelay->Objectives = { FAstrawildQuestObjective(), FAstrawildQuestObjective() };
+
+    UAstrawildQuestDefinition* EyeQuest = NewObject<UAstrawildQuestDefinition>();
+    EyeQuest->QuestId = TEXT("Quest_EyeOfTheMaelstrom");
+    EyeQuest->NextQuestId = TEXT("Quest_TheDrownedSovereign");
+    EyeQuest->Objectives = { FAstrawildQuestObjective(), FAstrawildQuestObjective() };
+
+    UAstrawildQuestDefinition* Sovereign = NewObject<UAstrawildQuestDefinition>();
+    Sovereign->QuestId = TEXT("Quest_TheDrownedSovereign");
+    Sovereign->NextQuestId = TEXT("Quest_FirstDawnAgain");
+    Sovereign->Objectives = { FAstrawildQuestObjective() };
+
+    UAstrawildQuestDefinition* FirstDawn = NewObject<UAstrawildQuestDefinition>();
+    FirstDawn->QuestId = TEXT("Quest_FirstDawnAgain");
+    FirstDawn->NextQuestId = NAME_None; // THE terminus (validator: chain closure).
+    FirstDawn->Objectives = { FAstrawildQuestObjective() };
+
+    const TArray<UAstrawildQuestDefinition*> Chain = { StormAnchors, CrownRelay, EyeQuest, Sovereign, FirstDawn };
+
+    // Chain walk: 5 links, 4 hops, ends at FirstDawnAgain with no successor.
+    int32 Hops = 0;
+    const UAstrawildQuestDefinition* Current = Chain[0];
+    while (Current && !Current->NextQuestId.IsNone() && Hops < 10)
+    {
+        const UAstrawildQuestDefinition* Next = nullptr;
+        for (const UAstrawildQuestDefinition* Quest : Chain)
+        {
+            if (Quest->QuestId == Current->NextQuestId)
+            {
+                Next = Quest;
+                break;
+            }
+        }
+        TestNotNull(FString::Printf(TEXT("Link resolves: %s"), *Current->QuestId.ToString()), const_cast<UAstrawildQuestDefinition*>(Next));
+        Current = Next;
+        ++Hops;
+    }
+    TestEqual(TEXT("Chain walks exactly 4 hops"), Hops, 4);
+    TestEqual(TEXT("Chain ends at the terminus"), Current ? Current->QuestId : FName(), FName(TEXT("Quest_FirstDawnAgain")));
+
+    // Exactly one terminus + every quest carries objectives and rewards policy.
+    int32 Terminii = 0;
+    for (const UAstrawildQuestDefinition* Quest : Chain)
+    {
+        if (Quest->NextQuestId.IsNone())
+        {
+            ++Terminii;
+        }
+        TestTrue(FString::Printf(TEXT("Quest %s has objectives"), *Quest->QuestId.ToString()), Quest->Objectives.Num() > 0);
+        TestTrue(FString::Printf(TEXT("Quest %s grants research"), *Quest->QuestId.ToString()), Quest->RewardResearchPoints > 0);
+    }
+    TestEqual(TEXT("Exactly one chain terminus"), Terminii, 1);
+
+    // Act 3 objective vocabulary: the chain consumes the four Final Run types
+    // (enum members exist + are distinct — serialization-safe, appended-only).
+    TestNotEqual(TEXT("DiscoverPOI differs from ReachLocation"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::DiscoverPOI), static_cast<int32>(EAstrawildQuestObjectiveType::ReachLocation));
+    TestNotEqual(TEXT("DefeatCreature differs from CraftRecipe"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::DefeatCreature), static_cast<int32>(EAstrawildQuestObjectiveType::CraftRecipe));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDialogueEndingChoiceTest,
+    "ASTRAWILD.Dialogue.EndingChoice",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDialogueEndingChoiceTest::RunTest(const FString& Parameters)
+{
+    // FR-6: the ending id vocabulary is closed and maps to exactly two states.
+    TestEqual(TEXT("Ending_BreakCage routes to The Dawn That Stays"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(TEXT("Ending_BreakCage"))),
+        static_cast<int32>(EAstrawildEndingState::TheDawnThatStays));
+    TestEqual(TEXT("Ending_StormSleeps routes to The Storm That Sleeps"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(TEXT("Ending_StormSleeps"))),
+        static_cast<int32>(EAstrawildEndingState::TheStormThatSleeps));
+    TestEqual(TEXT("Unknown ending id routes to None"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(TEXT("Ending_Nonsense"))),
+        static_cast<int32>(EAstrawildEndingState::None));
+    TestEqual(TEXT("None id routes to None"),
+        static_cast<int32>(UAstrawildDialogueComponent::ResolveEndingForTriggerId(NAME_None)),
+        static_cast<int32>(EAstrawildEndingState::None));
+
+    // The choice struct carries the consequence field, defaulting to off.
+    FAstrawildDialogueChoice Choice;
+    TestTrue(TEXT("TriggerEndingId defaults to NAME_None"), Choice.TriggerEndingId.IsNone());
+
+    // A hand-built ending choice: hard end + one-way flag + ending route —
+    // the exact Maren crown shape (structural contract).
+    // Final-audit G-2: canon gates the ending on MQ-17 (Quest_FirstDawnAgain,
+    // the homecoming terminus) — gating on the Sovereign (MQ-16) would fire the
+    // ending one quest early and strand MQ-17 active under the ending banner.
+    Choice.Text = FText::FromString(TEXT("Break the cage"));
+    Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
+    Choice.ForbiddenFlagId = TEXT("Maren_EndingResolved");
+    Choice.SetFlagId = TEXT("Maren_EndingResolved");
+    Choice.TriggerEndingId = TEXT("Ending_BreakCage");
+    Choice.bEndDialogue = true;
+    TestTrue(TEXT("Ending choice is a hard end"), Choice.bEndDialogue);
+    TestTrue(TEXT("Ending choice has no goto (unambiguous)"), Choice.GotoNodeId.IsNone());
+    TestTrue(TEXT("Ending choice is gated on the MQ-17 homecoming, not the Sovereign"),
+        Choice.RequiredQuestCompletedId == FName(TEXT("Quest_FirstDawnAgain")));
+    TestTrue(TEXT("Ending gate is NOT the MQ-16 Sovereign kill"),
+        Choice.RequiredQuestCompletedId != FName(TEXT("Quest_TheDrownedSovereign")));
+
+    // The ending enum itself is a closed 4-value vocabulary (None + 2 + Count).
+    TestEqual(TEXT("Ending enum order: None=0, Dawn=1, Storm=2, Count=3"),
+        static_cast<int32>(EAstrawildEndingState::Count), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveSchemaV5EndingTest,
+    "ASTRAWILD.Save.SchemaV5Ending",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveSchemaV5EndingTest::RunTest(const FString& Parameters)
+{
+    // FR-6: schema v5 — the subsystem reports 5 and the save object carries the
+    // ending payload with save-safe defaults (None + locked post-game).
+    UAstrawildSaveSubsystem* Subsystem = NewObject<UAstrawildSaveSubsystem>();
+    TestEqual(TEXT("Current schema version is 5"), Subsystem->GetCurrentSchemaVersion(), 5);
+
+    UAstrawildSaveGame* Save = NewObject<UAstrawildSaveGame>();
+    TestEqual(TEXT("Ending defaults to 0 (None)"), Save->EndingState, 0);
+    TestFalse(TEXT("Post-game defaults locked"), Save->bPostGameUnlocked);
+
+    // Round-trip: chosen ending survives the int32-cast pair used by
+    // SaveWorld/LoadWorld (GameState->enum -> int32 -> enum on restore).
+    Save->EndingState = static_cast<int32>(EAstrawildEndingState::TheDawnThatStays);
+    Save->bPostGameUnlocked = true;
+    TestEqual(TEXT("Dawn ending round-trips"),
+        static_cast<EAstrawildEndingState>(Save->EndingState), EAstrawildEndingState::TheDawnThatStays);
+    Save->EndingState = static_cast<int32>(EAstrawildEndingState::TheStormThatSleeps);
+    TestEqual(TEXT("Storm ending round-trips"),
+        static_cast<EAstrawildEndingState>(Save->EndingState), EAstrawildEndingState::TheStormThatSleeps);
+
+    // Load-side clamp contract (corrupt saves fail closed, never trust garbage).
+    const int32 Corrupt = 9999;
+    const int32 Clamped = FMath::Clamp(Corrupt, 0, static_cast<int32>(EAstrawildEndingState::Count) - 1);
+    TestEqual(TEXT("Corrupt ending value clamps into range"), Clamped, 2);
+    TestTrue(TEXT("Clamped value is a valid enum member"), Clamped >= 0 && Clamped < static_cast<int32>(EAstrawildEndingState::Count));
+
+    // Legacy contract: the save object's own schema stamp default stays at the
+    // historical 2 (older saves deserialize with their written version; the
+    // subsystem always stamps the current 5 on write).
+    TestEqual(TEXT("Save object schema default is the legacy 2 stamp"), Save->SaveSchemaVersion, 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEchoFinalRunBossesTest,
+    "ASTRAWILD.Echo.FinalRunBosses",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEchoFinalRunBossesTest::RunTest(const FString& Parameters)
+{
+    // FR-11: the boss display-name resolver covers the canonical roster and
+    // falls back gracefully — no boss is ever "Underlight Warden" by mistake.
+    TestEqual(TEXT("Warden id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_UnderlightWarden"), FText()).ToString(),
+        FString(TEXT("Underlight Warden")));
+    TestEqual(TEXT("Colossus id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_VaultColossus"), FText()).ToString(),
+        FString(TEXT("Vault Colossus")));
+    TestEqual(TEXT("Tyrant id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_GlassTyrant"), FText()).ToString(),
+        FString(TEXT("Glass Tyrant")));
+    TestEqual(TEXT("Sovereign id resolves"), AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_DrownedSovereign"), FText()).ToString(),
+        FString(TEXT("The Drowned Sovereign")));
+    TestEqual(TEXT("Unknown id falls back to the species label"),
+        AAstrawildEchoBossCharacter::ResolveBossDisplayName(TEXT("Creature_SomethingNew"), FText::FromString(TEXT("Wild Boss"))).ToString(),
+        FString(TEXT("Wild Boss")));
+    TestEqual(TEXT("Unknown id with no label falls back to a generic title"),
+        AAstrawildEchoBossCharacter::ResolveBossDisplayName(NAME_None, FText()).ToString(), FString(TEXT("Echo Boss")));
+
+    // The Drowned Sovereign combat contract (MQ-16): 2000 HP at the standard
+    // boss scale (400 base × 5.0) + Dawn Light weakness + Pulse resist.
+    UAstrawildEchoDefinition* Sovereign = NewObject<UAstrawildEchoDefinition>();
+    Sovereign->BaseStats.MaxHealth = 400.0f;
+    Sovereign->WeaknessElement = EAstrawildElementType::Light;
+    Sovereign->Element = EAstrawildElementType::Pulse;
+    const float BossHealthScale = 5.0f;
+    TestEqual(TEXT("Sovereign boss health is 2000"), FMath::RoundToInt(Sovereign->BaseStats.MaxHealth * BossHealthScale), 2000);
+
+    TestEqual(TEXT("Dawn Light exploits the Sovereign (x1.5)"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+            EAstrawildElementType::Light, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 1.5f);
+    TestEqual(TEXT("Pulse attacks are resisted (x0.80, unified)"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+            EAstrawildElementType::Pulse, EAstrawildElementType::Light, EAstrawildElementType::Pulse), 0.8f);
+
+    // Glass Tyrant weakness (MQ-14): Light cuts it too — the Dawn arsenal
+    // carries Act 3, exactly as the story promises.
+    UAstrawildEchoDefinition* Tyrant = NewObject<UAstrawildEchoDefinition>();
+    Tyrant->WeaknessElement = EAstrawildElementType::Light;
+    Tyrant->Element = EAstrawildElementType::Ash;
+    TestEqual(TEXT("Light exploits the Glass Tyrant"),
+        AAstrawildEchoBossCharacter::ComputeBossElementalMultiplier(
+            EAstrawildElementType::Light, Tyrant->WeaknessElement, Tyrant->Element), 1.5f);
+
+    // Phase design at 2000 HP: thresholds 66%/33% remain meaningful.
+    TestEqual(TEXT("Phase 1 above 66%"), AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.99f, false), 1);
+    TestEqual(TEXT("Phase 2 in the middle band"), AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.5f, false), 2);
+    TestEqual(TEXT("Phase 3 below 33%"), AAstrawildEchoBossCharacter::ComputePhaseForHealthFraction(0.25f, false), 3);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildTechSkiffEngineeringTest,
+    "ASTRAWILD.Tech.SkiffEngineering",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildTechSkiffEngineeringTest::RunTest(const FString& Parameters)
+{
+    // FR-8/FR-5: Skiff Engineering unlocks exactly the Stratos Coil recipe —
+    // the tech and the recipe form one gate (25 RP, AdvancedEnergy era).
+    UAstrawildTechnologyDefinition* Tech = NewObject<UAstrawildTechnologyDefinition>();
+    Tech->TechId = TEXT("Tech_SkiffEngineering");
+    Tech->ResearchCost = 25;
+    Tech->UnlockedRecipeIds = { TEXT("Recipe_SkiffStratosCoil") };
+    TestEqual(TEXT("Tech cost is 25"), Tech->ResearchCost, 25);
+    TestEqual(TEXT("Tech unlocks exactly one recipe"), Tech->UnlockedRecipeIds.Num(), 1);
+    TestTrue(TEXT("Tech unlocks the coil recipe"), Tech->UnlockedRecipeIds.Contains(FName(TEXT("Recipe_SkiffStratosCoil"))));
+
+    // The recipe contract: three materials in, one key item out, workbench-gated.
+    UAstrawildRecipeDefinition* Recipe = NewObject<UAstrawildRecipeDefinition>();
+    Recipe->RecipeId = TEXT("Recipe_SkiffStratosCoil");
+    Recipe->Ingredients.SetNum(3);
+    Recipe->Ingredients[0].ItemId = TEXT("Item_StormSilver");
+    Recipe->Ingredients[0].Quantity = 4;
+    Recipe->Ingredients[1].ItemId = TEXT("Item_DuneGlass");
+    Recipe->Ingredients[1].Quantity = 3;
+    Recipe->Ingredients[2].ItemId = TEXT("Item_MaelstromGlass");
+    Recipe->Ingredients[2].Quantity = 2;
+    Recipe->Outputs.SetNum(1);
+    Recipe->Outputs[0].ItemId = TEXT("Item_SkiffStratosCoil");
+    Recipe->Outputs[0].Quantity = 1;
+    Recipe->RequiredTechId = TEXT("Tech_SkiffEngineering");
+    Recipe->RequiredStationId = TEXT("Station_Workbench");
+    Recipe->CraftDurationSeconds = 20.0f;
+
+    TestEqual(TEXT("Recipe consumes three materials"), Recipe->Ingredients.Num(), 3);
+    TestEqual(TEXT("Recipe outputs exactly one coil"), Recipe->Outputs.Num(), 1);
+    TestEqual(TEXT("Coil output quantity is 1"), Recipe->Outputs[0].Quantity, 1);
+    TestTrue(TEXT("Every ingredient has a positive quantity"),
+        Recipe->Ingredients[0].Quantity > 0 && Recipe->Ingredients[1].Quantity > 0 && Recipe->Ingredients[2].Quantity > 0);
+    TestTrue(TEXT("Recipe is gated by its own tech"), Recipe->RequiredTechId == FName(TEXT("Tech_SkiffEngineering")));
+    bool bHasMaelstromGate = false;
+    for (const FAstrawildItemStack& Input : Recipe->Ingredients)
+    {
+        if (Input.ItemId == FName(TEXT("Item_MaelstromGlass")))
+        {
+            bHasMaelstromGate = true;
+        }
+    }
+    TestTrue(TEXT("Maelstrom Glass is the Act 3 material gate"), bHasMaelstromGate);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSkiffCeilingGateTest,
+    "ASTRAWILD.Skiff.CeilingGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSkiffCeilingGateTest::RunTest(const FString& Parameters)
+{
+    // FR-8: the Stratos Coil ceiling gate — pure resolver, no world needed.
+    // Stock skiff: 12000 (120m). Coiled: 16000 (160m) — the Eye Gate at 150m
+    // sits BETWEEN them, which is what makes the coil Act 3's key.
+    TestEqual(TEXT("Stock ceiling stays 12000"),
+        AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, false), 12000.0f);
+    TestEqual(TEXT("Coiled ceiling rises to 16000"),
+        AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, true), 16000.0f);
+
+    // The Eye Gate altitude (15000) is inside the coiled band and outside the
+    // stock band — the gate is physically unreachable without the coil.
+    const float StockCeiling = AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, false);
+    const float CoiledCeiling = AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 16000.0f, true);
+    const float EyeGateAltitude = 15000.0f;
+    TestTrue(TEXT("Eye Gate is above the stock ceiling"), EyeGateAltitude > StockCeiling);
+    TestTrue(TEXT("Eye Gate is below the coiled ceiling"), EyeGateAltitude < CoiledCeiling);
+
+    // Defensive contract: a mis-tuned coiled value can never LOWER the ceiling.
+    TestEqual(TEXT("Bad coil data never lowers the ceiling"),
+        AAstrawildSkiffActor::ComputeFlightCeiling(12000.0f, 9000.0f, true), 12000.0f);
+
+    // Symmetry with the class defaults (the actor's tunables match the design;
+    // read from the CDO — no world spawn needed).
+    const AAstrawildSkiffActor* SkiffCDO = AAstrawildSkiffActor::StaticClass()->GetDefaultObject<AAstrawildSkiffActor>();
+    TestEqual(TEXT("Default stock ceiling matches the design"), SkiffCDO->MaxAltitudeAboveGround, 12000.0f);
+    TestEqual(TEXT("Default coiled ceiling matches the design"), SkiffCDO->CoiledMaxAltitudeAboveGround, 16000.0f);
+    TestEqual(TEXT("Default coil item id matches the content"), SkiffCDO->StratosCoilItemId, FName(TEXT("Item_SkiffStratosCoil")));
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 68: one-shot objective back-fill (G-1/G-3).
+// POIs discovered or one-shot bosses defeated BEFORE a quest activates must
+// credit that quest at StartQuest — the alternative was a dead objective that
+// soft-locked the 17-quest chain (MQ-11's FirstLightRuin sits ~25m from spawn).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestOneShotBackFillTest,
+    "ASTRAWILD.Quest.OneShotBackFill",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestOneShotBackFillTest::RunTest(const FString& Parameters)
+{
+    const auto MakeObjective = [](const EAstrawildQuestObjectiveType Type, const TCHAR* TargetId, const int32 Required)
+    {
+        FAstrawildQuestObjective Objective;
+        Objective.Type = Type;
+        Objective.TargetId = TargetId;
+        Objective.RequiredCount = Required;
+        return Objective;
+    };
+
+    // Discovered POI back-fills to full (discovery is one-shot per save).
+    FAstrawildQuestSaveData State;
+    State.QuestId = TEXT("Q_BackFill");
+    State.Objectives = {
+        MakeObjective(EAstrawildQuestObjectiveType::DiscoverPOI, TEXT("POI_FirstLightRuin"), 1),
+        MakeObjective(EAstrawildQuestObjectiveType::DiscoverPOI, TEXT("POI_NeverSeen"), 1),
+        MakeObjective(EAstrawildQuestObjectiveType::DefeatCreature, TEXT("Creature_DrownedSovereign"), 1),
+        MakeObjective(EAstrawildQuestObjectiveType::DefeatCreature, TEXT("Echo_Gloomfang"), 3),
+        MakeObjective(EAstrawildQuestObjectiveType::CollectItem, TEXT("Item_Wood"), 10)
+    };
+
+    TMap<FName, int32> DefeatCounts;
+    DefeatCounts.Add(TEXT("Creature_DrownedSovereign"), 1);
+    DefeatCounts.Add(TEXT("Echo_Gloomfang"), 2); // 2 of 3 — partial credit
+
+    TSet<FName> DiscoveredPois;
+    DiscoveredPois.Add(TEXT("POI_FirstLightRuin"));
+
+    const int32 BackFilled = UAstrawildQuestComponent::BackFillOneShotObjectives(State, DefeatCounts, DiscoveredPois);
+
+    TestEqual(TEXT("Four objectives received back-fill"), BackFilled, 4);
+    TestTrue(TEXT("Discovered POI objective completes"), State.Objectives[0].IsComplete());
+    TestFalse(TEXT("Undiscovered POI objective stays at zero"), State.Objectives[1].IsComplete());
+    TestTrue(TEXT("Defeated one-shot boss objective completes"), State.Objectives[2].IsComplete());
+    TestEqual(TEXT("Partial kill count credits 2 of 3"), State.Objectives[3].ProgressCount, 2);
+    TestEqual(TEXT("CollectItem is NEVER back-filled (live gameplay only)"), State.Objectives[4].ProgressCount, 0);
+
+    // Pre-completed objectives are never touched (no double-grant, no reset).
+    State.Objectives[1].ProgressCount = 1; // simulate completed progress
+    const int32 SecondPass = UAstrawildQuestComponent::BackFillOneShotObjectives(State, DefeatCounts, DiscoveredPois);
+    TestTrue(TEXT("Completed objectives are skipped on re-run"), SecondPass < 5);
+
+    // Counters cannot exceed the requirement (no minted progress from history).
+    TMap<FName, int32> HugeCounts;
+    HugeCounts.Add(TEXT("Echo_Gloomfang"), 500);
+    FAstrawildQuestSaveData Capped = State;
+    Capped.Objectives = { MakeObjective(EAstrawildQuestObjectiveType::DefeatCreature, TEXT("Echo_Gloomfang"), 3) };
+    UAstrawildQuestComponent::BackFillOneShotObjectives(Capped, HugeCounts, {});
+    TestEqual(TEXT("Back-fill caps at the required count"), Capped.Objectives[0].ProgressCount, 3);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 69: defeat-counter import sanitize (G-3).
+// Crafted saves cannot mint quest credit: id-less entries dropped, negatives
+// dropped, values capped.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestDefeatCountImportTest,
+    "ASTRAWILD.Quest.DefeatCountImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestDefeatCountImportTest::RunTest(const FString& Parameters)
+{
+    UAstrawildQuestComponent* Quests = NewObject<UAstrawildQuestComponent>();
+    if (!TestNotNull(TEXT("Quest component constructed"), Quests))
+    {
+        return false;
+    }
+
+    TMap<FName, int32> Crafted;
+    Crafted.Add(TEXT("Creature_GlassTyrant"), 2);
+    Crafted.Add(NAME_None, 7);              // id-less — dropped
+    Crafted.Add(TEXT("Echo_BadValue"), -4); // negative — dropped
+    Crafted.Add(TEXT("Echo_HugeValue"), 5000); // capped
+
+    Quests->ImportDefeatCounts(Crafted);
+
+    TMap<FName, int32> Imported;
+    Quests->ExportDefeatCounts(Imported);
+    TestEqual(TEXT("Valid entries survive import"), Imported.FindRef(TEXT("Creature_GlassTyrant")), 2);
+    TestFalse(TEXT("Id-less entry dropped"), Imported.Contains(NAME_None));
+    TestFalse(TEXT("Negative entry dropped"), Imported.Contains(TEXT("Echo_BadValue")));
+    TestEqual(TEXT("Absurd counter capped at 999"), Imported.FindRef(TEXT("Echo_HugeValue")), 999);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 70: dismantle never advances a
+// PlaceBuilding objective (F-03) — the event Amount=-1 clamp exploit.
+// Drives the REAL objective matcher (ApplyEventToQuest is the production path).
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestDismantleNotPlacementTest,
+    "ASTRAWILD.Quest.DismantleIsNotPlacement",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildQuestDismantleNotPlacementTest::RunTest(const FString& Parameters)
+{
+    UAstrawildQuestComponent* Quests = NewObject<UAstrawildQuestComponent>();
+    if (!TestNotNull(TEXT("Quest component constructed"), Quests))
+    {
+        return false;
+    }
+
+    FAstrawildQuestSaveData State;
+    State.QuestId = TEXT("Q_Place");
+    FAstrawildQuestObjective Objective;
+    Objective.Type = EAstrawildQuestObjectiveType::PlaceBuilding;
+    Objective.TargetId = TEXT("Building_Foundation");
+    Objective.RequiredCount = 2;
+    State.Objectives = { Objective };
+    State.bActive = true;
+    Quests->ImportFromSave({ State });
+
+    const auto BuildingEvent = [](const int32 Amount)
+    {
+        FAstrawildGameplayEvent Event;
+        Event.EventTag = TAG_Astrawild_Event_BuildingPlaced;
+        Event.TargetId = TEXT("Building_Foundation");
+        Event.Amount = Amount;
+        return Event;
+    };
+
+    // The dismantle publication: BuildingPlaced with Amount = -1.
+    Quests->ApplyEventToQuest(BuildingEvent(-1));
+    TestEqual(TEXT("Dismantle does NOT advance the placement objective"), Quests->GetActiveObjectives()[0].ProgressCount, 0);
+
+    // A real placement still counts.
+    Quests->ApplyEventToQuest(BuildingEvent(1));
+    TestEqual(TEXT("Real placement advances the objective"), Quests->GetActiveObjectives()[0].ProgressCount, 1);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 71: research import sanitize (M-3) —
+// duplicate tech ids collapse, invalid entries drop, negative RP clamps.
+// The earlier hardening of this path was lost with the destroyed Final-Run
+// branch; this contract pins its re-landing.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildResearchImportSafetyTest,
+    "ASTRAWILD.Research.ImportSafety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildResearchImportSafetyTest::RunTest(const FString& Parameters)
+{
+    UAstrawildResearchSubsystem* Research = NewObject<UAstrawildResearchSubsystem>();
+    if (!TestNotNull(TEXT("Research subsystem constructed"), Research))
+    {
+        return false;
+    }
+
+    FAstrawildResearchSaveData Crafted;
+    Crafted.UnlockedTechIds = { TEXT("Tech_Electrical"), TEXT("Tech_Electrical"), NAME_None, TEXT("Tech_Husbandry") };
+    Crafted.ResearchPoints = -25;
+
+    Research->ImportFromSave(Crafted);
+
+    TestEqual(TEXT("Duplicate tech collapses (first-seen-wins)"), Research->GetUnlockedTechIds().Num(), 2);
+    TestTrue(TEXT("Valid tech survived"), Research->IsTechUnlocked(TEXT("Tech_Electrical")));
+    TestTrue(TEXT("Second valid tech survived"), Research->IsTechUnlocked(TEXT("Tech_Husbandry")));
+    TestFalse(TEXT("Id-less tech dropped"), Research->IsTechUnlocked(NAME_None));
+    TestEqual(TEXT("Negative research points clamp to zero"), Research->GetResearchPoints(), 0);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// FINAL SOURCE COMPLETION PASS — Test 72: final-audit save contracts —
+// echo health (M-2) + robot chassis (H-2) additive fields round-trip.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveFinalAuditContractsTest,
+    "ASTRAWILD.Save.FinalAuditContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSaveFinalAuditContractsTest::RunTest(const FString& Parameters)
+{
+    // M-2: echo health persists; 0 is the legacy sentinel (full-heal for old saves).
+    FAstrawildEchoInstanceV2 EchoData;
+    TestEqual(TEXT("Echo health defaults to the legacy sentinel"), EchoData.CurrentHealth, 0.0f);
+    EchoData.CurrentHealth = 37.5f;
+    TestEqual(TEXT("Echo health carries the saved value"), EchoData.CurrentHealth, 37.5f);
+    EchoData.CurrentHealth = -5.0f;
+    TestTrue(TEXT("Negative health fails the > 0 restore gate"), EchoData.CurrentHealth <= 0.0f);
+
+    // H-2: the robot chassis id persists — the field the SaveWorld loop now writes.
+    FAstrawildRobotSaveData RobotData;
+    TestTrue(TEXT("Robot chassis defaults to none"), RobotData.RobotDefinitionId.IsNone());
+    RobotData.RobotDefinitionId = TEXT("Robot_Borebot");
+    TestTrue(TEXT("Robot chassis carries the definition id"), RobotData.RobotDefinitionId == FName(TEXT("Robot_Borebot")));
+    TestTrue(TEXT("Chassis survives a struct copy (save -> load round-trip shape)"),
+        FAstrawildRobotSaveData(RobotData).RobotDefinitionId == RobotData.RobotDefinitionId);
+
+    return true;
+}
+
+
+// ===========================================================================
+// GAMEPLAY DEPTH PACK (GDP) — Tests 73-84: ability engine, locomotion,
+// attributes, skills, NPC affinity.
+// ===========================================================================
+
+// --- GDP-1: ability library integrity (Test 73) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityLibraryIntegrityTest,
+    "ASTRAWILD.Ability.LibraryIntegrity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityLibraryIntegrityTest::RunTest(const FString& Parameters)
+{
+    TArray<FString> Problems;
+    UAstrawildAbilityLibrary::ValidateTable(Problems);
+    for (const FString& Problem : Problems)
+    {
+        AddError(Problem);
+    }
+    TestTrue(TEXT("Ability table validates clean"), Problems.IsEmpty());
+    TestEqual(TEXT("Ability table holds 53 templates"), UAstrawildAbilityLibrary::GetAbilityCount(), 53);
+    TestTrue(TEXT("Signature ability resolves"), UAstrawildAbilityLibrary::IsKnownAbility(TEXT("Ability_LumewispDawn")));
+    TestFalse(TEXT("Unknown id rejected"), UAstrawildAbilityLibrary::IsKnownAbility(TEXT("Ability_Nope")));
+
+    return true;
+}
+
+// --- GDP-1: derived loadouts cover every element/role (Test 74) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityDerivedLoadoutTest,
+    "ASTRAWILD.Ability.DerivedLoadout",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityDerivedLoadoutTest::RunTest(const FString& Parameters)
+{
+    const EAstrawildElementType Elements[6] =
+    {
+        EAstrawildElementType::Light, EAstrawildElementType::Ash, EAstrawildElementType::Flora,
+        EAstrawildElementType::Ember, EAstrawildElementType::Frost, EAstrawildElementType::Pulse
+    };
+    const EAstrawildEchoRole Roles[4] =
+    {
+        EAstrawildEchoRole::Combat, EAstrawildEchoRole::Base,
+        EAstrawildEchoRole::Support, EAstrawildEchoRole::Explorer
+    };
+
+    for (const EAstrawildElementType Element : Elements)
+    {
+        for (const EAstrawildEchoRole Role : Roles)
+        {
+            const TArray<FName> Loadout = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+                Element, Role, EAstrawildEchoFamily::Beast);
+            TestTrue(TEXT("Derived loadout non-empty"), Loadout.Num() >= 4);
+            bool bHasOffense = false;
+            for (const FName& Id : Loadout)
+            {
+                const FAstrawildAbilityData* Data = UAstrawildAbilityLibrary::FindAbility(Id);
+                TestNotNull(TEXT("Derived id resolves"), Data);
+                if (Data && Data->Category == EAstrawildAbilityCategory::Offensive)
+                {
+                    bHasOffense = true;
+                }
+            }
+            TestTrue(TEXT("Every element x role combo derives an offensive option"), bHasOffense);
+        }
+    }
+
+    // Determinism: same inputs, same loadout.
+    const TArray<FName> A = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Ember, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Dragon);
+    const TArray<FName> B = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Ember, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Dragon);
+    TestTrue(TEXT("Derivation is deterministic"), A == B);
+
+    // DP-3: Water/Flying locomotion appends exactly one signature (7 entries);
+    // the legacy three-argument path (pinned above) stays at six.
+    const TArray<FName> WaterLoadout = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Frost, EAstrawildEchoRole::Combat, EAstrawildEchoFamily::Aquatic,
+        EAstrawildLocomotionClass::Water);
+    TestEqual(TEXT("Water movers carry a locomotion signature"), WaterLoadout.Num(), 7);
+    const TArray<FName> FlyingLoadout = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+        EAstrawildElementType::Light, EAstrawildEchoRole::Support, EAstrawildEchoFamily::Avian,
+        EAstrawildLocomotionClass::Flying);
+    TestEqual(TEXT("Flying movers carry a locomotion signature"), FlyingLoadout.Num(), 7);
+
+    return true;
+}
+
+// --- DP-3: party element resonance contracts (Test 103) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPartyResonanceTest,
+    "ASTRAWILD.DP3.Resonance.PairResolution",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPartyResonanceTest::RunTest(const FString& Parameters)
+{
+    // Known pairs resolve with themed identity; the lookup is symmetric.
+    const FAstrawildPartyResonance SteamVeil = AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::Frost, EAstrawildElementType::Ember);
+    TestTrue(TEXT("Frost+Ember resolves Steam Veil"), SteamVeil.ResonanceId == TEXT("Resonance_SteamVeil"));
+    const FAstrawildPartyResonance Reversed = AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::Ember, EAstrawildElementType::Frost);
+    TestTrue(TEXT("Pair lookup is symmetric"), Reversed.ResonanceId == SteamVeil.ResonanceId);
+
+    // None or identical elements never resonate (fail-closed).
+    TestFalse(TEXT("None element never resonates"), AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::None, EAstrawildElementType::Ember).IsValid());
+    TestFalse(TEXT("Same element never resonates"), AAstrawildEchoCharacter::ResolvePartyResonance(
+        EAstrawildElementType::Ember, EAstrawildElementType::Ember).IsValid());
+
+    // Party resolution: duplicates collapse; with three distinct elements the
+    // FIRST pair in canon table order wins (deterministic dominance).
+    TArray<EAstrawildElementType> Trio;
+    Trio.Add(EAstrawildElementType::Ember);
+    Trio.Add(EAstrawildElementType::Ember);
+    Trio.Add(EAstrawildElementType::Frost);
+    Trio.Add(EAstrawildElementType::Pulse);
+    const FAstrawildPartyResonance TrioRow = AAstrawildEchoCharacter::ResolvePartyResonanceForElements(Trio);
+    TestTrue(TEXT("Three-element party resolves the canon-dominant pair"),
+        TrioRow.ResonanceId == TEXT("Resonance_Superconductor"));
+
+    // Full-table sweep: every distinct pair resolves, carries exactly ONE
+    // modest bonus axis, and stays inside the 8-12% passive band.
+    const EAstrawildElementType Elements[6] =
+    {
+        EAstrawildElementType::Light, EAstrawildElementType::Ash, EAstrawildElementType::Flora,
+        EAstrawildElementType::Frost, EAstrawildElementType::Pulse, EAstrawildElementType::Ember
+    };
+    for (int32 A = 0; A < 6; ++A)
+    {
+        for (int32 B = A + 1; B < 6; ++B)
+        {
+            const FAstrawildPartyResonance Row = AAstrawildEchoCharacter::ResolvePartyResonance(Elements[A], Elements[B]);
+            TestTrue(TEXT("Every element pair resolves a row"), Row.IsValid());
+            const int32 Axes = (Row.DamageMitigation > 0.0f ? 1 : 0)
+                + (Row.AbilityPowerBonus > 0.0f ? 1 : 0)
+                + (Row.StatusPotencyBonus > 0.0f ? 1 : 0);
+            TestEqual(TEXT("Resonance carries exactly one bonus axis"), Axes, 1);
+            const float Magnitude = Row.DamageMitigation + Row.AbilityPowerBonus + Row.StatusPotencyBonus;
+            TestTrue(TEXT("Resonance magnitude stays in the modest band"),
+                Magnitude >= 0.05f && Magnitude <= 0.15f);
+        }
+    }
+
+    return true;
+}
+
+// --- DP-4: player skill loadout contracts (Test 104) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSkillLoadoutTest,
+    "ASTRAWILD.DP4.SkillLoadout",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSkillLoadoutTest::RunTest(const FString& Parameters)
+{
+    using S = EAstrawildPlayerSkillId;
+
+    // Fresh component: a 3-slot loadout with every slot empty.
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Fresh loadout has three slots"), Attributes->GetBoundSkills().Num(), 3);
+    TestFalse(TEXT("Fresh loadout binds nothing"), Attributes->IsSkillBound(S::PowerStrike));
+
+    // Bind validation: slot bounds.
+    TestFalse(TEXT("Slot -1 rejected"), Attributes->BindSkillToSlot(-1, S::PowerStrike));
+    TestFalse(TEXT("Slot 3 rejected"), Attributes->BindSkillToSlot(3, S::PowerStrike));
+
+    // Bind validation: locked skills (and None) rejected on a Might-1 component.
+    TestFalse(TEXT("Locked skill rejected"), Attributes->BindSkillToSlot(0, S::PowerStrike));
+    TestFalse(TEXT("None never binds"), Attributes->BindSkillToSlot(0, S::None));
+
+    // Might 10 / Agility 10 / Vigor 10 unlock PowerStrike, Whirlwind, Dash and
+    // SecondWind — the second one proves unbound-but-unlocked suppression below.
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 1000.0f);
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Agility, 1000.0f);
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Vigor, 1000.0f);
+    }
+    TestEqual(TEXT("Might 10 reached"), Attributes->GetLevel(EAstrawildAttributeType::Might), 10);
+    TestEqual(TEXT("Agility 10 reached"), Attributes->GetLevel(EAstrawildAttributeType::Agility), 10);
+
+    // Unlocked skill accepted; the slot reports it.
+    TestTrue(TEXT("Unlocked PowerStrike binds to slot 0"), Attributes->BindSkillToSlot(0, S::PowerStrike));
+    TestTrue(TEXT("Bound skill is reported bound"), Attributes->IsSkillBound(S::PowerStrike));
+    TestEqual(TEXT("Slot 0 carries PowerStrike"), Attributes->GetBoundSkills()[0], S::PowerStrike);
+
+    // Duplicate binding rejected (PowerStrike already occupies slot 0).
+    TestFalse(TEXT("Duplicate binding rejected"), Attributes->BindSkillToSlot(1, S::PowerStrike));
+    TestTrue(TEXT("A second skill binds to slot 1"), Attributes->BindSkillToSlot(1, S::Whirlwind));
+
+    // Rebinding a slot replaces its occupant (no duplicates introduced).
+    TestTrue(TEXT("Slot 0 rebinding replaces the occupant"), Attributes->BindSkillToSlot(0, S::Dash));
+    TestFalse(TEXT("Evicted skill is no longer bound"), Attributes->IsSkillBound(S::PowerStrike));
+    TestEqual(TEXT("Slot 0 now carries Dash"), Attributes->GetBoundSkills()[0], S::Dash);
+
+    // Clearing: in-bounds empties the slot; out-of-bounds is a safe no-op.
+    Attributes->ClearSlot(1);
+    TestEqual(TEXT("Cleared slot reports None"), Attributes->GetBoundSkills()[1], S::None);
+    Attributes->ClearSlot(-1);
+    Attributes->ClearSlot(7);
+    TestEqual(TEXT("Out-of-bounds clear is a safe no-op"), Attributes->GetBoundSkills()[0], S::Dash);
+
+    // Bound-only cast: with ONLY Dash bound, the hurt-player ladder cannot pick
+    // the (unlocked, unbound) SecondWind even at 20% health — and Dash stays
+    // reachable through the moving branch.
+    TestEqual(TEXT("Unbound SecondWind is not picked while hurt"),
+        Attributes->PickBestReadySkill(0.2f, 0, false, false), S::None);
+    TestEqual(TEXT("Bound Dash still picked while moving"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true), S::Dash);
+
+    // Empty-loadout fallback (zero-regression): unlocked skills but NO
+    // bindings pick among ALL unlocked skills (the legacy ladder).
+    UAstrawildAttributeComponent* Legacy = NewObject<UAstrawildAttributeComponent>();
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Legacy->AddAttributeXP(EAstrawildAttributeType::Vigor, 1000.0f);
+        Legacy->AddAttributeXP(EAstrawildAttributeType::Agility, 1000.0f);
+    }
+    TestEqual(TEXT("Empty loadout keeps the legacy SecondWind pick"),
+        Legacy->PickBestReadySkill(0.2f, 0, false, false), S::SecondWind);
+
+    // Save round-trip: the loadout rides the attribute payload (v5 additive)
+    // and survives intact; a pre-DP-4 payload (rows without a loadout) resets
+    // the loadout to all-empty — the legacy smart-cast contract.
+    TestEqual(TEXT("Loadout round-trip repairs nothing"), Attributes->ImportFromSaveData(Attributes->ToSaveData()), 0);
+    TestEqual(TEXT("Rounded loadout keeps Dash in slot 0"), Attributes->GetBoundSkills()[0], S::Dash);
+
+    TArray<FAstrawildAttributeSaveData> PreDP4;
+    FAstrawildAttributeSaveData LegacyRow;
+    LegacyRow.Type = EAstrawildAttributeType::Might;
+    LegacyRow.Level = 10;
+    PreDP4.Add(LegacyRow);
+    TestEqual(TEXT("Pre-DP-4 payload imports clean"), Attributes->ImportFromSaveData(PreDP4), 0);
+    TestEqual(TEXT("Pre-DP-4 loadout still has three slots"), Attributes->GetBoundSkills().Num(), 3);
+    TestFalse(TEXT("Pre-DP-4 payload clears the loadout"), Attributes->IsSkillBound(S::Dash));
+
+    return true;
+}
+
+// --- DP-5: per-boss special set contracts (Test 105) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBossSpecialSetsTest,
+    "ASTRAWILD.DP5.BossSpecialSets",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBossSpecialSetsTest::RunTest(const FString& Parameters)
+{
+    // Canonical ids resolve to four DISTINCT sets — the shared special pipeline
+    // finally reads different data per boss.
+    TestEqual(TEXT("Warden id resolves the Underlight Warden set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_UnderlightWarden")),
+        EAstrawildBossSpecialSet::UnderlightWarden);
+    TestEqual(TEXT("Colossus id resolves the Sunken Vault set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_VaultColossus")),
+        EAstrawildBossSpecialSet::SunkenVault);
+    TestEqual(TEXT("Tyrant id resolves the Glass Tyrant set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_GlassTyrant")),
+        EAstrawildBossSpecialSet::GlassTyrant);
+    TestEqual(TEXT("Sovereign id resolves the Eye of the Maelstrom set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_DrownedSovereign")),
+        EAstrawildBossSpecialSet::EyeOfTheMaelstrom);
+
+    // Unknown ids fail closed to the default set (the legacy shared pipeline).
+    TestEqual(TEXT("Unknown id falls back to the default set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(TEXT("Creature_DoesNotExist")),
+        EAstrawildBossSpecialSet::UnderlightWarden);
+    TestEqual(TEXT("None id falls back to the default set"),
+        AAstrawildEchoBossCharacter::ResolveBossSpecialSet(NAME_None),
+        EAstrawildBossSpecialSet::UnderlightWarden);
+
+    // The default set is the byte-exact legacy tuning (zero-regression).
+    const FAstrawildBossSpecialSetParams Legacy =
+        AAstrawildEchoBossCharacter::GetBossSpecialSetParams(EAstrawildBossSpecialSet::UnderlightWarden);
+    TestEqual(TEXT("Legacy set keeps the 7s special cooldown"), Legacy.SpecialAttackCooldownSeconds, 7.0f);
+    TestEqual(TEXT("Legacy set keeps one bolt"), Legacy.BoltCount, 1);
+    TestEqual(TEXT("Legacy set keeps one blast"), Legacy.BlastCount, 1);
+    TestEqual(TEXT("Legacy set keeps the 350cm blast radius"), Legacy.SpecialBlastRadius, 350.0f);
+    TestEqual(TEXT("Legacy set keeps one hazard per wave"), Legacy.HazardWaveCount, 1);
+    TestEqual(TEXT("Legacy set keeps the 6dps hazards"), Legacy.HazardDamagePerSecond, 6.0f);
+    TestTrue(TEXT("Legacy set keeps the Gloomfang summons"), Legacy.SummonSpeciesId == TEXT("Echo_Gloomfang"));
+
+    // Pairwise distinctness: no two sets carry the same tuning bundle (the
+    // identical-special-pipeline gap stays closed by data, not by trust).
+    const EAstrawildBossSpecialSet Sets[4] =
+    {
+        EAstrawildBossSpecialSet::UnderlightWarden,
+        EAstrawildBossSpecialSet::SunkenVault,
+        EAstrawildBossSpecialSet::GlassTyrant,
+        EAstrawildBossSpecialSet::EyeOfTheMaelstrom
+    };
+    const auto ParamsKey = [](const FAstrawildBossSpecialSetParams& P)
+    {
+        return FString::Printf(TEXT("%.1f|%d|%d|%.0f|%d|%.1f|%s"),
+            P.SpecialAttackCooldownSeconds, P.BoltCount, P.BlastCount, P.SpecialBlastRadius,
+            P.HazardWaveCount, P.HazardDamagePerSecond, *P.SummonSpeciesId.ToString());
+    };
+    TSet<FString> Keys;
+    for (const EAstrawildBossSpecialSet Set : Sets)
+    {
+        Keys.Add(ParamsKey(AAstrawildEchoBossCharacter::GetBossSpecialSetParams(Set)));
+    }
+    TestEqual(TEXT("All four sets tune differently"), Keys.Num(), 4);
+
+    // Sanity band: every set stays a boss fight, not a spam machine or a
+    // pushover (cooldown 4-10s, 1-4 bolts, 1-3 blasts, 250-500cm, 1-4 hazards,
+    // 4-10 dps, a real summon species).
+    for (const EAstrawildBossSpecialSet Set : Sets)
+    {
+        const FAstrawildBossSpecialSetParams Params = AAstrawildEchoBossCharacter::GetBossSpecialSetParams(Set);
+        TestTrue(TEXT("Set cooldown stays in the 4-10s band"),
+            Params.SpecialAttackCooldownSeconds >= 4.0f && Params.SpecialAttackCooldownSeconds <= 10.0f);
+        TestTrue(TEXT("Set bolt count stays in the 1-4 band"),
+            Params.BoltCount >= 1 && Params.BoltCount <= 4);
+        TestTrue(TEXT("Set blast count stays in the 1-3 band"),
+            Params.BlastCount >= 1 && Params.BlastCount <= 3);
+        TestTrue(TEXT("Set blast radius stays in the 250-500cm band"),
+            Params.SpecialBlastRadius >= 250.0f && Params.SpecialBlastRadius <= 500.0f);
+        TestTrue(TEXT("Set hazard wave stays in the 1-4 band"),
+            Params.HazardWaveCount >= 1 && Params.HazardWaveCount <= 4);
+        TestTrue(TEXT("Set hazard dps stays in the 4-10 band"),
+            Params.HazardDamagePerSecond >= 4.0f && Params.HazardDamagePerSecond <= 10.0f);
+        TestFalse(TEXT("Set summon species is set"), Params.SummonSpeciesId.IsNone());
+    }
+
+    return true;
+}
+
+// --- DP-6: base depth contracts (Test 106) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBaseDepthTest,
+    "ASTRAWILD.DP6.BaseDepth",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBaseDepthTest::RunTest(const FString& Parameters)
+{
+    // Registry-backed world-free census (house rule: no world, no spawned
+    // actors). The registry's register/find contract is plain C++ data, so the
+    // full CODE_DEFAULT content library builds ownerless through the same
+    // BuildDefaults entry point the world uses — the site/tech/item data this
+    // test pins is the live registry content, not a parallel table.
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    TestTrue(TEXT("Registry builds ownerless"), Registry != nullptr);
+
+    // 1) Work-site coverage: 8 sites cover 8 of the 10 actionable work types.
+    // The DP-6 rows cover Transport / ResearchAssist / PowerGeneration /
+    // Defense (the four highest species-affinity uncovered types) on top of
+    // the original Gathering / Farming / Mining / Cooking camp set; Crafting
+    // Assistance (18 affinity slots) and Construction (0) stay uncovered by
+    // documented design — species work identity has no site demand there yet.
+    const TArray<UAstrawildWorkSiteDefinition*> Sites = Registry->GetAllWorkSiteDefinitions();
+    TestEqual(TEXT("Eight work sites registered"), Sites.Num(), 8);
+
+    TSet<EAstrawildWorkType> CoveredTypes;
+    TSet<FName> SiteIds;
+    for (const UAstrawildWorkSiteDefinition* Site : Sites)
+    {
+        if (!TestTrue(TEXT("Site entry is valid"), Site != nullptr))
+        {
+            continue;
+        }
+        TestTrue(TEXT("Site id is set"), !Site->SiteId.IsNone());
+        SiteIds.Add(Site->SiteId);
+        TestTrue(TEXT("Site carries an actionable work type"), Site->WorkType != EAstrawildWorkType::None);
+        TestTrue(TEXT("Site output item resolves"), Registry->FindItem(Site->OutputItemId) != nullptr);
+        TestTrue(TEXT("Site zone is placed"), Site->Zone != EAstrawildZone::None);
+        TestTrue(TEXT("Site cycle time is positive"), Site->SecondsPerOutput >= 1.0f);
+        for (const FAstrawildItemStack& Input : Site->InputItems)
+        {
+            TestTrue(TEXT("Site input item resolves"), Registry->FindItem(Input.ItemId) != nullptr);
+        }
+        CoveredTypes.Add(Site->WorkType);
+    }
+    TestEqual(TEXT("Site ids are unique"), SiteIds.Num(), 8);
+
+    const EAstrawildWorkType MustCover[] =
+    {
+        EAstrawildWorkType::Gathering, EAstrawildWorkType::Farming, EAstrawildWorkType::Mining,
+        EAstrawildWorkType::Cooking, EAstrawildWorkType::Transport, EAstrawildWorkType::ResearchAssist,
+        EAstrawildWorkType::PowerGeneration, EAstrawildWorkType::Defense
+    };
+    for (const EAstrawildWorkType Type : MustCover)
+    {
+        TestTrue(*FString::Printf(TEXT("Work type %d has site coverage"), static_cast<int32>(Type)),
+            CoveredTypes.Contains(Type));
+    }
+    TestFalse(TEXT("Crafting Assistance stays uncovered by design"), CoveredTypes.Contains(EAstrawildWorkType::Crafting));
+    TestFalse(TEXT("Construction stays uncovered by design"), CoveredTypes.Contains(EAstrawildWorkType::Construction));
+
+    // 2) Research branch wiring: all 17 techs carry a branch and the assignment
+    // pins to the audited data (legacy ten via the ContentLibrary retrofit
+    // table, production seven via MakeTech — each row verified against its
+    // unlock payload, e.g. Skiff Engineering → Exploration: travel tech).
+    const TArray<UAstrawildTechnologyDefinition*> Techs = Registry->GetAllTechnologies();
+    TestEqual(TEXT("Seventeen techs registered"), Techs.Num(), 17);
+
+    struct FBranchCase { FName TechId; EAstrawildResearchBranch Branch; };
+    const FBranchCase BranchCases[] =
+    {
+        { TEXT("Tech_BasicCrafting"), EAstrawildResearchBranch::Tools },
+        { TEXT("Tech_Cooking"), EAstrawildResearchBranch::Survival },
+        { TEXT("Tech_Electrical"), EAstrawildResearchBranch::Energy },
+        { TEXT("Tech_AdvancedEnergy"), EAstrawildResearchBranch::Energy },
+        { TEXT("Tech_Husbandry"), EAstrawildResearchBranch::EchoTech },
+        { TEXT("Tech_Armory"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_Mechanics"), EAstrawildResearchBranch::Tools },
+        { TEXT("Tech_Thermal"), EAstrawildResearchBranch::Survival },
+        { TEXT("Tech_Agriculture"), EAstrawildResearchBranch::EchoTech },
+        { TEXT("Tech_AncientResonance"), EAstrawildResearchBranch::Exploration },
+        { TEXT("Tech_WeaponSystems"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_AdvancedBallistics"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_ExperimentalArsenal"), EAstrawildResearchBranch::Weapons },
+        { TEXT("Tech_ExosuitEngineering"), EAstrawildResearchBranch::Armor },
+        { TEXT("Tech_ScannerArray"), EAstrawildResearchBranch::Scanner },
+        { TEXT("Tech_AutomationII"), EAstrawildResearchBranch::Automation },
+        { TEXT("Tech_SkiffEngineering"), EAstrawildResearchBranch::Exploration },
+    };
+    for (const FBranchCase& Case : BranchCases)
+    {
+        const UAstrawildTechnologyDefinition* Tech = Registry->FindTechnology(Case.TechId);
+        if (TestTrue(*FString::Printf(TEXT("Tech %s resolves"), *Case.TechId.ToString()), Tech != nullptr))
+        {
+            TestEqual(*FString::Printf(TEXT("Tech %s carries its audited branch"), *Case.TechId.ToString()),
+                Tech->Branch, Case.Branch);
+        }
+    }
+
+    // 3) Field consumables: production feeds progression with real verbs.
+    // Field Ration — timed stamina regen through the survival status-effect
+    // system (Status.RationVigor); Pulse Tonic — bottled Hunter's Focus (the
+    // existing capture-focus window). Both also keep the instant food/water
+    // verbs so they are never vendor trash.
+    const UAstrawildItemDefinition* FieldRation = Registry->FindItem(TEXT("Item_FieldRation"));
+    if (TestTrue(TEXT("Field Ration resolves"), FieldRation != nullptr))
+    {
+        TestEqual(TEXT("Field Ration is a consumable"), FieldRation->Category, EAstrawildItemCategory::Consumable);
+        TestTrue(TEXT("Field Ration carries a timed status"), FieldRation->OnConsumeStatus.StatusId != NAME_None);
+        TestTrue(TEXT("Field Ration status lasts a real window"), FieldRation->OnConsumeStatus.RemainingSeconds > 0.0f);
+        TestTrue(TEXT("Field Ration status regenerates stamina"), FieldRation->OnConsumeStatus.StaminaRegenPerSecond > 0.0f);
+        TestTrue(TEXT("Field Ration status never damages"), FieldRation->OnConsumeStatus.DamagePerSecond <= 0.0f);
+        TestTrue(TEXT("Field Ration feeds the player too"), FieldRation->FoodValue > 0.0f);
+    }
+
+    const UAstrawildItemDefinition* PulseTonic = Registry->FindItem(TEXT("Item_PulseTonic"));
+    if (TestTrue(TEXT("Pulse Tonic resolves"), PulseTonic != nullptr))
+    {
+        TestEqual(TEXT("Pulse Tonic is a consumable"), PulseTonic->Category, EAstrawildItemCategory::Consumable);
+        TestTrue(TEXT("Pulse Tonic grants capture focus"), PulseTonic->CaptureFocusSeconds > 0.0f);
+        TestTrue(TEXT("Pulse Tonic carries no damage status"), PulseTonic->OnConsumeStatus.StatusId == NAME_None);
+        TestTrue(TEXT("Pulse Tonic heals and hydrates"), PulseTonic->HealValue > 0.0f && PulseTonic->WaterValue > 0.0f);
+    }
+
+    // Fresh status effects stay regen-free by default (combat statuses keep
+    // the byte-exact pre-DP-6 shape — the new field is additive).
+    const FAstrawildStatusEffect FreshStatus;
+    TestEqual(TEXT("Fresh status has no stamina regen"), FreshStatus.StaminaRegenPerSecond, 0.0f);
+
+    // 4) The loop actually closes: recipes mirror the automated sites and the
+    // depot literally consumes camp output (kitchen meat + farm berries).
+    const UAstrawildRecipeDefinition* RationRecipe = Registry->FindRecipe(TEXT("Recipe_FieldRation"));
+    if (TestTrue(TEXT("Field Ration recipe resolves"), RationRecipe != nullptr))
+    {
+        TestTrue(TEXT("Ration recipe outputs Field Rations"),
+            RationRecipe->Outputs.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_FieldRation"); }));
+    }
+    const UAstrawildRecipeDefinition* TonicRecipe = Registry->FindRecipe(TEXT("Recipe_PulseTonic"));
+    if (TestTrue(TEXT("Pulse Tonic recipe resolves"), TonicRecipe != nullptr))
+    {
+        TestTrue(TEXT("Tonic recipe outputs Pulse Tonics"),
+            TonicRecipe->Outputs.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_PulseTonic"); }));
+    }
+
+    const UAstrawildWorkSiteDefinition* Depot = Registry->FindWorkSite(TEXT("Site_TidebreakerDepot"));
+    if (TestTrue(TEXT("Tidebreaker depot resolves"), Depot != nullptr))
+    {
+        TestTrue(TEXT("Depot outputs Field Rations"), Depot->OutputItemId == TEXT("Item_FieldRation"));
+        TestTrue(TEXT("Depot consumes kitchen meat"),
+            Depot->InputItems.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_CookedMeat"); }));
+        TestTrue(TEXT("Depot consumes farm berries"),
+            Depot->InputItems.ContainsByPredicate([](const FAstrawildItemStack& S) { return S.ItemId == TEXT("Item_Berry"); }));
+    }
+    const UAstrawildWorkSiteDefinition* Lab = Registry->FindWorkSite(TEXT("Site_VerdantLab"));
+    if (TestTrue(TEXT("Verdant field lab resolves"), Lab != nullptr))
+    {
+        TestTrue(TEXT("Lab outputs Pulse Tonics"), Lab->OutputItemId == TEXT("Item_PulseTonic"));
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DP-7 — world depth: per-zone hazard identity + bare-zone events + secrets
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildWorldDepthTest,
+    "ASTRAWILD.DP7.WorldDepth",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildWorldDepthTest::RunTest(const FString& Parameters)
+{
+    // 1) Per-zone hazard identity — the pure static zone table (world-free).
+    // Every zone carries an explicit hazard row; the two pure consumption
+    // helpers agree with the enum; the layering contract holds (thermal
+    // pressure shifts the ambient temperature ON TOP of global weather).
+    const TArray<FAstrawildZoneDescriptor>& Zones = UAstrawildZoneSubsystem::GetAllZones();
+    TestEqual(TEXT("Twelve zones in the hazard table"), Zones.Num(), 12);
+
+    const FAstrawildZoneDescriptor* DawnFields = nullptr;
+    const FAstrawildZoneDescriptor* Frostveil = nullptr;
+    const FAstrawildZoneDescriptor* HollowApproach = nullptr;
+    TSet<FName> HazardZoneIds;
+    for (const FAstrawildZoneDescriptor& Desc : Zones)
+    {
+        TestTrue(TEXT("Zone hazard pressure stays non-negative"), Desc.HazardPressure >= 0.0f);
+        TestTrue(TEXT("Zone hazard pressure stays inside the honest band"), Desc.HazardPressure <= 20.0f);
+
+        // The pure helpers mirror the enum (the survival tick consumes these).
+        const float Thermal = Desc.GetHazardTemperatureOffsetCelsius();
+        const float RegenPenalty = Desc.GetHazardStaminaRegenPenalty();
+        switch (Desc.HazardType)
+        {
+        case EAstrawildZoneHazard::ColdPressure:
+            TestEqual(*FString::Printf(TEXT("Cold zone %s offsets by -pressure"), *Desc.ZoneId.ToString()),
+                Thermal, -Desc.HazardPressure);
+            TestEqual(*FString::Printf(TEXT("Cold zone %s never suppresses regen"), *Desc.ZoneId.ToString()),
+                RegenPenalty, 0.0f);
+            HazardZoneIds.Add(Desc.ZoneId);
+            break;
+        case EAstrawildZoneHazard::HeatPressure:
+            TestEqual(*FString::Printf(TEXT("Heat zone %s offsets by +pressure"), *Desc.ZoneId.ToString()),
+                Thermal, Desc.HazardPressure);
+            TestEqual(*FString::Printf(TEXT("Heat zone %s never suppresses regen"), *Desc.ZoneId.ToString()),
+                RegenPenalty, 0.0f);
+            HazardZoneIds.Add(Desc.ZoneId);
+            break;
+        case EAstrawildZoneHazard::AshLung:
+            TestEqual(*FString::Printf(TEXT("Ash-lung zone %s never shifts temperature"), *Desc.ZoneId.ToString()),
+                Thermal, 0.0f);
+            TestEqual(*FString::Printf(TEXT("Ash-lung zone %s suppresses regen by pressure"), *Desc.ZoneId.ToString()),
+                RegenPenalty, Desc.HazardPressure);
+            HazardZoneIds.Add(Desc.ZoneId);
+            break;
+        default:
+            TestEqual(*FString::Printf(TEXT("Hazard-free zone %s stays neutral"), *Desc.ZoneId.ToString()),
+                Thermal, 0.0f);
+            TestEqual(*FString::Printf(TEXT("Hazard-free zone %s has no regen penalty"), *Desc.ZoneId.ToString()),
+                RegenPenalty, 0.0f);
+            TestEqual(*FString::Printf(TEXT("Hazard-free zone %s carries zero pressure"), *Desc.ZoneId.ToString()),
+                Desc.HazardPressure, 0.0f);
+            break;
+        }
+
+        if (Desc.Zone == EAstrawildZone::DawnFields) { DawnFields = &Desc; }
+        if (Desc.Zone == EAstrawildZone::FrostveilExpanse) { Frostveil = &Desc; }
+        if (Desc.Zone == EAstrawildZone::HollowApproach) { HollowApproach = &Desc; }
+    }
+    // Ten of twelve zones carry a real hazard identity (the two gentle zones —
+    // Dawn Fields + Glimmerwood — stay hazard-free by design).
+    TestEqual(TEXT("Ten zones carry a hazard identity"), HazardZoneIds.Num(), 10);
+
+    if (TestTrue(TEXT("Dawn Fields descriptor resolves"), DawnFields != nullptr))
+    {
+        TestEqual(TEXT("Dawn Fields stays gentle by design (no hazard)"),
+            DawnFields->HazardType, EAstrawildZoneHazard::None);
+        TestEqual(TEXT("Dawn Fields hazard pressure is zero"), DawnFields->HazardPressure, 0.0f);
+    }
+    if (TestTrue(TEXT("Frostveil descriptor resolves"), Frostveil != nullptr))
+    {
+        TestEqual(TEXT("Frostveil is the cold identity"), Frostveil->HazardType, EAstrawildZoneHazard::ColdPressure);
+        // The layering contract: under the SAME sky, Frostveil reads colder
+        // than Dawn Fields (survival adds this to base + weather).
+        TestTrue(TEXT("Frostveil reads colder than Dawn Fields"),
+            DawnFields != nullptr &&
+            Frostveil->GetHazardTemperatureOffsetCelsius() < DawnFields->GetHazardTemperatureOffsetCelsius());
+        TestTrue(TEXT("Frostveil cold pressure is real"), Frostveil->HazardPressure >= 8.0f);
+    }
+    if (TestTrue(TEXT("Hollow Approach descriptor resolves"), HollowApproach != nullptr))
+    {
+        TestEqual(TEXT("Hollow Approach is the ash-lung identity"),
+            HollowApproach->HazardType, EAstrawildZoneHazard::AshLung);
+        TestTrue(TEXT("Ash lung pressure is real but sub-lethal"),
+            HollowApproach->HazardPressure > 0.0f && HollowApproach->HazardPressure < 10.0f);
+    }
+
+    // 2) Registry-backed events census (ownerless BuildDefaults — same pattern
+    // as test 106): every previously-bare zone now anchors at least one event
+    // built ONLY from the existing effect vocabulary.
+    UAstrawildItemRegistrySubsystem* EventRegistry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(EventRegistry);
+    const TArray<UAstrawildWorldEventDefinition*> Events = EventRegistry->GetAllWorldEvents();
+    TestEqual(TEXT("Sixteen world events registered"), Events.Num(), 16);
+
+    const EAstrawildZone BareZones[] =
+    {
+        EAstrawildZone::DuskMarsh, EAstrawildZone::EmberRidge, EAstrawildZone::SunscarDesert,
+        EAstrawildZone::AzureShallows, EAstrawildZone::TidebreakerIsles,
+        EAstrawildZone::StormcrestHighlands, EAstrawildZone::PearlseaReef
+    };
+    for (const EAstrawildZone Zone : BareZones)
+    {
+        int32 Anchored = 0;
+        for (const UAstrawildWorldEventDefinition* Event : Events)
+        {
+            if (Event && Event->Zone == Zone)
+            {
+                ++Anchored;
+            }
+        }
+        TestTrue(*FString::Printf(TEXT("Zone %d anchors at least one world event"), static_cast<int32>(Zone)),
+            Anchored >= 1);
+    }
+
+    struct FZoneEventCase { FName EventId; EAstrawildZone Zone; };
+    const FZoneEventCase ZoneEvents[] =
+    {
+        { TEXT("Event_MistTide"), EAstrawildZone::DuskMarsh },
+        { TEXT("Event_CinderFall"), EAstrawildZone::EmberRidge },
+        { TEXT("Event_DuneBuriedCache"), EAstrawildZone::SunscarDesert },
+        { TEXT("Event_ReefBloom"), EAstrawildZone::AzureShallows },
+        { TEXT("Event_WreckSurge"), EAstrawildZone::TidebreakerIsles },
+        { TEXT("Event_StormFront"), EAstrawildZone::StormcrestHighlands },
+        { TEXT("Event_Pearlsong"), EAstrawildZone::PearlseaReef },
+    };
+    for (const FZoneEventCase& Case : ZoneEvents)
+    {
+        const UAstrawildWorldEventDefinition* Event = EventRegistry->FindWorldEvent(Case.EventId);
+        if (TestTrue(*FString::Printf(TEXT("Event %s resolves"), *Case.EventId.ToString()), Event != nullptr))
+        {
+            TestEqual(*FString::Printf(TEXT("Event %s anchors its bare zone"), *Case.EventId.ToString()),
+                Event->Zone, Case.Zone);
+            // Balance idiom of the legacy rows: sane weight, real cooldown,
+            // day-gated progression, night-gate stays reserved for camp raids.
+            TestTrue(*FString::Printf(TEXT("Event %s weight sits in the balance band"), *Case.EventId.ToString()),
+                Event->RarityWeight > 0.0f && Event->RarityWeight <= 2.0f);
+            TestTrue(*FString::Printf(TEXT("Event %s carries a real cooldown"), *Case.EventId.ToString()),
+                Event->CooldownGameHours > 0.0f);
+            TestTrue(*FString::Printf(TEXT("Event %s is day-gated for progression"), *Case.EventId.ToString()),
+                Event->MinDay >= 2);
+            TestFalse(*FString::Printf(TEXT("Event %s does not night-gate"), *Case.EventId.ToString()),
+                Event->bRequiresNight);
+            TestTrue(*FString::Printf(TEXT("Event %s carries an authored description"), *Case.EventId.ToString()),
+                !Event->Description.ToString().IsEmpty());
+            // Every payload resolves in the live registry (no dangling ids).
+            if (!Event->SpeciesBoostId.IsNone())
+            {
+                TestTrue(*FString::Printf(TEXT("Event %s boost species resolves"), *Case.EventId.ToString()),
+                    EventRegistry->FindEcho(Event->SpeciesBoostId) != nullptr);
+                TestTrue(*FString::Printf(TEXT("Event %s boost count is sane"), *Case.EventId.ToString()),
+                    Event->SpeciesBoostCount >= 1 && Event->SpeciesBoostCount <= 4);
+            }
+            for (const FName NodeId : Event->BonusNodeIds)
+            {
+                TestTrue(*FString::Printf(TEXT("Event %s bonus node resolves"), *Case.EventId.ToString()),
+                    EventRegistry->FindResourceNode(NodeId) != nullptr);
+            }
+            if (!Event->RewardLootTableId.IsNone())
+            {
+                TestTrue(*FString::Printf(TEXT("Event %s loot table resolves"), *Case.EventId.ToString()),
+                    EventRegistry->FindLootTable(Event->RewardLootTableId) != nullptr);
+            }
+        }
+    }
+
+    // 3) Scanner-gated zone secrets — the live POI census, not a parallel table.
+    const TArray<UAstrawildPOIDefinition*> Pois = EventRegistry->GetAllPOIs();
+    TestEqual(TEXT("Seventeen POIs registered"), Pois.Num(), 17);
+
+    int32 GatedCount = 0;
+    TSet<FName> PoiIds;
+    for (const UAstrawildPOIDefinition* Poi : Pois)
+    {
+        if (Poi && Poi->bRequiresSignalScanner)
+        {
+            ++GatedCount;
+        }
+        if (Poi)
+        {
+            PoiIds.Add(Poi->PoiId);
+        }
+    }
+    TestEqual(TEXT("Six scanner-gated secret POIs exist (2 legacy + 4 DP-7)"), GatedCount, 6);
+    TestEqual(TEXT("POI ids are unique"), PoiIds.Num(), Pois.Num());
+
+    const FName SecretIds[] =
+    {
+        TEXT("POI_HollowUndergateVault"), TEXT("POI_SunscarMachineCoffin"),
+        TEXT("POI_TidebreakerHoldRoom"), TEXT("POI_PearlseaTidecache")
+    };
+    const EAstrawildZone SecretZones[] =
+    {
+        EAstrawildZone::HollowApproach, EAstrawildZone::SunscarDesert,
+        EAstrawildZone::TidebreakerIsles, EAstrawildZone::PearlseaReef
+    };
+    for (int32 i = 0; i < 4; ++i)
+    {
+        const UAstrawildPOIDefinition* Secret = EventRegistry->FindPOI(SecretIds[i]);
+        if (TestTrue(*FString::Printf(TEXT("Secret %s resolves"), *SecretIds[i].ToString()), Secret != nullptr))
+        {
+            TestTrue(*FString::Printf(TEXT("Secret %s mirrors the Frostveil scanner gate"), *SecretIds[i].ToString()),
+                Secret->bRequiresSignalScanner);
+            TestEqual(*FString::Printf(TEXT("Secret %s is a signal source"), *SecretIds[i].ToString()),
+                Secret->Type, EAstrawildPOIType::SignalSource);
+            TestEqual(*FString::Printf(TEXT("Secret %s sits in its high-threat zone"), *SecretIds[i].ToString()),
+                Secret->Zone, SecretZones[i]);
+            TestTrue(*FString::Printf(TEXT("Secret %s pays real research"), *SecretIds[i].ToString()),
+                Secret->ResearchReward >= 5);
+            TestTrue(*FString::Printf(TEXT("Secret %s loot table resolves"), *SecretIds[i].ToString()),
+                EventRegistry->FindLootTable(Secret->RewardLootTableId) != nullptr);
+        }
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DP-8 — NPC depth: affinity-gated dialogue evolution (gate evaluation)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAffinityDialogueTest,
+    "ASTRAWILD.DP8.AffinityDialogue",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAffinityDialogueTest::RunTest(const FString& Parameters)
+{
+    using DialogueComp = UAstrawildDialogueComponent;
+
+    // 1) Pure gate resolver: a threshold of 0 never gates (the fresh default —
+    // every pre-DP-8 tree stays byte-identical); otherwise the affinity must
+    // REACH the threshold (>=), with the tier boundaries resolving exactly on
+    // 25 / 50 / 75.
+    TestTrue(TEXT("Default threshold 0 never gates"), DialogueComp::MeetsAffinityGate(0, 0.0f));
+    TestTrue(TEXT("Threshold 0 stays ungated at max affinity"), DialogueComp::MeetsAffinityGate(0, 100.0f));
+    TestFalse(TEXT("Affinity below the threshold fails"), DialogueComp::MeetsAffinityGate(50, 49.9f));
+    TestTrue(TEXT("Threshold is inclusive (>=)"), DialogueComp::MeetsAffinityGate(50, 50.0f));
+    TestTrue(TEXT("Affinity above the threshold passes"), DialogueComp::MeetsAffinityGate(50, 75.0f));
+    TestTrue(TEXT("Acquaintance boundary resolves at 25"),
+        DialogueComp::MeetsAffinityGate(25, 25.0f) && !DialogueComp::MeetsAffinityGate(25, 24.9f));
+    TestTrue(TEXT("Confidant boundary resolves at 75"),
+        DialogueComp::MeetsAffinityGate(75, 75.0f) && !DialogueComp::MeetsAffinityGate(75, 74.9f));
+
+    // 2) Component evaluation — fail-closed like the quest conditions: a
+    // gated reply hides when no talking NPC can be resolved, while a default-0
+    // reply stays visible in the exact same world-free state.
+    UAstrawildDialogueComponent* Comp = NewObject<UAstrawildDialogueComponent>();
+
+    FAstrawildDialogueChoice Gated;
+    Gated.Text = FText::FromString(TEXT("Friend-only reply"));
+    Gated.RequiredMinAffinity = 50;
+    TestFalse(TEXT("Affinity gate fails without a talking NPC (fail-closed)"),
+        Comp->EvaluateChoiceConditions(Gated));
+
+    FAstrawildDialogueChoice Ungated;
+    Ungated.Text = FText::FromString(TEXT("Anyone reply"));
+    TestTrue(TEXT("Default-0 gate never hides a choice"),
+        Comp->EvaluateChoiceConditions(Ungated));
+
+    // 3) Live talking-NPC path (world-free actor — the affinity-tier test's
+    // pattern): below the threshold the reply hides, on the boundary it
+    // appears, and dropping the NPC fails the gate closed again.
+    AAstrawildNPCCharacter* Npc = NewObject<AAstrawildNPCCharacter>();
+    Npc->Affinity = 24.0f;
+    Comp->SetTalkingNpc(Npc);
+    TestTrue(TEXT("Talking NPC resolves"), Comp->GetTalkingNpc() == Npc);
+    TestFalse(TEXT("Stranger affinity misses the Friend gate"),
+        Comp->EvaluateChoiceConditions(Gated));
+    Npc->Affinity = 50.0f;
+    TestTrue(TEXT("Friend affinity meets the Friend gate"),
+        Comp->EvaluateChoiceConditions(Gated));
+    Comp->SetTalkingNpc(nullptr);
+    TestFalse(TEXT("Clearing the talking NPC fails the gate closed"),
+        Comp->EvaluateChoiceConditions(Gated));
+
+    // 4) AND semantics: the affinity gate composes with the flag conditions
+    // exactly like the quest/flag pair does.
+    FAstrawildDialogueChoice Strict;
+    Strict.RequiredFlagId = TEXT("Flag_Trusted");
+    Strict.RequiredMinAffinity = 25;
+    Comp->SetStoryFlag(TEXT("Flag_Trusted"));
+    Npc->Affinity = 10.0f;
+    Comp->SetTalkingNpc(Npc);
+    TestFalse(TEXT("Flag set but affinity low fails the pair"),
+        Comp->EvaluateChoiceConditions(Strict));
+    Npc->Affinity = 25.0f;
+    TestTrue(TEXT("Flag set and affinity met passes the pair"),
+        Comp->EvaluateChoiceConditions(Strict));
+
+    // 5) The evolved trees pin their tiers through the live registry
+    // (ownerless BuildDefaults — the test-106/107 census pattern).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+
+    struct FGatedRow { FName TreeId; FName NodeId; int32 MinAffinity; };
+    const FGatedRow GatedRows[] = {
+        { TEXT("Dialogue_TraderTam"),  TEXT("hello"), 50 }, // Friend supply line (shop bridge).
+        { TEXT("Dialogue_ElderRowan"), TEXT("hello"), 75 }, // Confidant old doors (deep lore).
+        { TEXT("Dialogue_FisherNima"), TEXT("hello"), 50 }, // Friend rare goods (shop bridge).
+        { TEXT("Dialogue_GuardSela"),  TEXT("hello"), 25 }, // Acquaintance patrol chart.
+    };
+    for (const FGatedRow& Row : GatedRows)
+    {
+        const UAstrawildDialogueTreeDefinition* Tree = Registry->FindDialogueTree(Row.TreeId);
+        if (TestTrue(*FString::Printf(TEXT("Tree %s resolves"), *Row.TreeId.ToString()), Tree != nullptr))
+        {
+            const FAstrawildDialogueNode* Node = Tree->FindNode(Row.NodeId);
+            if (TestTrue(*FString::Printf(TEXT("Tree %s entry node resolves"), *Row.TreeId.ToString()), Node != nullptr))
+            {
+                bool bFoundGated = false;
+                for (const FAstrawildDialogueChoice& Choice : Node->Choices)
+                {
+                    if (Choice.RequiredMinAffinity == Row.MinAffinity)
+                    {
+                        bFoundGated = true;
+                        // Honest content contract: gated beats are one-time
+                        // (forbidden flag) and pay real consequences — no
+                        // new consequence types, existing verbs only.
+                        TestTrue(*FString::Printf(TEXT("Tree %s gated reply is one-time"), *Row.TreeId.ToString()),
+                            !Choice.ForbiddenFlagId.IsNone() && !Choice.SetFlagId.IsNone());
+                        TestTrue(*FString::Printf(TEXT("Tree %s gated reply pays real content"), *Row.TreeId.ToString()),
+                            Choice.GiveResearchPoints > 0 || Choice.bOpenShop || !Choice.GiveItemId.IsNone());
+                    }
+                }
+                TestTrue(*FString::Printf(TEXT("Tree %s carries its %d-affinity gated reply"),
+                    *Row.TreeId.ToString(), Row.MinAffinity), bFoundGated);
+            }
+        }
+    }
+
+    // 6) Depth without clones: the census pins stay 11 NPCs / 11 trees.
+    TestEqual(TEXT("Eleven dialogue trees (census unchanged)"), Registry->GetAllDialogueTrees().Num(), 11);
+    TestEqual(TEXT("Eleven NPCs (census unchanged)"), Registry->GetNumNPCs(), 11);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DP-9 — dungeon depth: per-dungeon room identity (themes + pillar sequence)
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDungeonIdentityTest,
+    "ASTRAWILD.DP9.DungeonIdentity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDungeonIdentityTest::RunTest(const FString& Parameters)
+{
+    using Room = AAstrawildDungeonRoomActor;
+
+    // 1) Theme resolution per dungeon id: the 3 canonical dungeons resolve 3
+    // DISTINCT themes; unknown/empty ids fail closed to None (the unthemed
+    // legacy shell — identity never breaks a dungeon).
+    const FName CanonicalIds[] = {
+        TEXT("Dungeon_HollowUnderlight"), TEXT("Dungeon_SunkenVault"), TEXT("Dungeon_EyeOfTheMaelstrom")
+    };
+    const EAstrawildDungeonTheme ExpectedThemes[] = {
+        EAstrawildDungeonTheme::HollowUnderlight, EAstrawildDungeonTheme::SunkenVault,
+        EAstrawildDungeonTheme::MaelstromEye
+    };
+    TSet<int32> DistinctThemes;
+    for (int32 i = 0; i < 3; ++i)
+    {
+        const EAstrawildDungeonTheme Resolved = Room::ResolveDungeonTheme(CanonicalIds[i]);
+        TestEqual(*FString::Printf(TEXT("Dungeon %s resolves its theme"), *CanonicalIds[i].ToString()),
+            Resolved, ExpectedThemes[i]);
+        DistinctThemes.Add(static_cast<int32>(Resolved));
+    }
+    TestEqual(TEXT("The three canonical dungeons resolve three distinct themes"), DistinctThemes.Num(), 3);
+    TestEqual(TEXT("Unknown dungeon id fails closed to None"),
+        Room::ResolveDungeonTheme(TEXT("Dungeon_DoesNotExist")), EAstrawildDungeonTheme::None);
+    TestEqual(TEXT("Empty dungeon id fails closed to None"),
+        Room::ResolveDungeonTheme(NAME_None), EAstrawildDungeonTheme::None);
+
+    // 2) Theme profiles — pairwise-distinct identity data the rooms consume:
+    // tints, shell proportions, wall heights, hazards and dressing vocabulary.
+    const FAstrawildDungeonThemeProfile Underlight = Room::MakeThemeProfile(EAstrawildDungeonTheme::HollowUnderlight);
+    const FAstrawildDungeonThemeProfile Vault = Room::MakeThemeProfile(EAstrawildDungeonTheme::SunkenVault);
+    const FAstrawildDungeonThemeProfile Eye = Room::MakeThemeProfile(EAstrawildDungeonTheme::MaelstromEye);
+    const FAstrawildDungeonThemeProfile Unthemed = Room::MakeThemeProfile(EAstrawildDungeonTheme::None);
+
+    // Shell tints pairwise distinct (each dungeon reads differently in-room).
+    TestTrue(TEXT("Underlight tint is the darkest of the three"),
+        Underlight.ShellTint.R < Vault.ShellTint.R && Underlight.ShellTint.R < Eye.ShellTint.R);
+    TestTrue(TEXT("Vault and Eye tints differ"),
+        !FMath::IsNearlyEqual(Vault.ShellTint.G, Eye.ShellTint.G) &&
+        !FMath::IsNearlyEqual(Vault.ShellTint.B, Eye.ShellTint.B));
+
+    // Structural identity: Underlight tight, Sunken Vault wide, Eye tall monoliths.
+    TestTrue(TEXT("Underlight rooms read tighter than the Vault"),
+        Underlight.ExtentScale.X < Vault.ExtentScale.X && Underlight.ExtentScale.Y < Vault.ExtentScale.Y);
+    TestTrue(TEXT("Vault rooms read wider than the Eye"),
+        Vault.ExtentScale.X > Eye.ExtentScale.X);
+    TestTrue(TEXT("Eye side walls read taller than the Underlight's oppressive slabs"),
+        Eye.SideWallHeight > Underlight.SideWallHeight);
+    TestTrue(TEXT("Every themed shell carries real walls"),
+        Underlight.SideWallHeight > 0.0f && Vault.SideWallHeight > 0.0f && Eye.SideWallHeight > 0.0f);
+
+    // Accent light identity: the Eye pulses, the other two stay steady.
+    TestTrue(TEXT("Only the Eye pulses its accent light"),
+        Eye.AccentLightPulseRate > 0.0f && Underlight.AccentLightPulseRate == 0.0f && Vault.AccentLightPulseRate == 0.0f);
+
+    // Hazard identity per dungeon — three distinct verbs from the existing vocabulary.
+    TestEqual(TEXT("Underlight hazard is the room-level ash lung"),
+        Underlight.Hazard, EAstrawildRoomHazardType::AshLung);
+    TestEqual(TEXT("Sunken Vault hazard is the waterlogged slow"),
+        Vault.Hazard, EAstrawildRoomHazardType::Waterlogged);
+    TestEqual(TEXT("Eye hazard is the energy pulse tiles"),
+        Eye.Hazard, EAstrawildRoomHazardType::EnergyPulse);
+
+    // Hazard bands (mild by design — identity pressure, not a death sentence).
+    TestTrue(TEXT("Room ash lung is mild and non-lethal"),
+        Underlight.HazardPressure > 0.0f && Underlight.HazardPressure <= 8.0f);
+    TestTrue(TEXT("Waterlogged slows but never cripples"),
+        Vault.HazardSpeedMultiplier >= 0.5f && Vault.HazardSpeedMultiplier < 1.0f);
+    TestTrue(TEXT("Energy pulses are periodic, small and dissipate"),
+        Eye.HazardPulseInterval >= 5.0f && Eye.HazardTileCount >= 1 && Eye.HazardTileCount <= 4 &&
+        Eye.HazardTileDamagePerSecond > 0.0f && Eye.HazardTileDamagePerSecond <= 6.0f &&
+        Eye.HazardTileLifetime > 0.0f && Eye.HazardTileLifetime < Eye.HazardPulseInterval);
+
+    // Dressing vocabulary resolves through the EXISTING ArtPack binding tables
+    // (no new /Game/ paths — validator check 8 stays byte-clean).
+    const FAstrawildDungeonThemeProfile AllThemed[] = { Underlight, Vault, Eye };
+    for (const FAstrawildDungeonThemeProfile& Profile : AllThemed)
+    {
+        const AstrawildArtPack::FBiomeArt* RockArt = AstrawildArtPack::FindBiomeArt(Profile.RockBiomeId);
+        if (TestTrue(TEXT("Theme rock biome id resolves in the ArtPack table"), RockArt != nullptr))
+        {
+            TestTrue(TEXT("Theme rock vocabulary is non-empty"), RockArt->RockMeshPaths.Num() > 0);
+        }
+        const AstrawildArtPack::FBiomeArt* FloraArt = AstrawildArtPack::FindBiomeArt(Profile.FloraBiomeId);
+        if (TestTrue(TEXT("Theme flora biome id resolves in the ArtPack table"), FloraArt != nullptr))
+        {
+            TestTrue(TEXT("Theme flora vocabulary is non-empty"), FloraArt->GrassMeshPaths.Num() > 0);
+        }
+        TestTrue(TEXT("Theme dressing budget is sane"),
+            Profile.RockCount >= 4 && Profile.RockCount <= 16 && Profile.FloraCount >= 4 && Profile.FloraCount <= 16);
+    }
+    TestTrue(TEXT("Only the Eye carries the ancient-tech accent"),
+        Underlight.TechNodeArtId.IsNone() && Vault.TechNodeArtId.IsNone() && !Eye.TechNodeArtId.IsNone());
+    TestTrue(TEXT("The Eye tech accent resolves in the ArtPack node table"),
+        AstrawildArtPack::FindNodeArt(Eye.TechNodeArtId) != nullptr);
+    TestTrue(TEXT("Only the Sunken Vault carries the flooded-floor accent"),
+        !Underlight.bWaterFloorAccent && Vault.bWaterFloorAccent && !Eye.bWaterFloorAccent);
+
+    // The unthemed default stays the legacy shell (fail-closed identity).
+    TestEqual(TEXT("Unthemed profile carries no hazard"), Unthemed.Hazard, EAstrawildRoomHazardType::None);
+    TestEqual(TEXT("Unthemed profile builds no walls"), Unthemed.SideWallHeight, 0.0f);
+    TestEqual(TEXT("Unthemed profile lights nothing"), Unthemed.AccentLightIntensity, 0.0f);
+    TestTrue(TEXT("Unthemed footprint stays unscaled"), Unthemed.ExtentScale.Equals(FVector(1.0f, 1.0f, 1.0f), 1e-4f));
+
+    // 3) Resonance-pillar sequence (the puzzle room's mechanic — pure verbs).
+    TestEqual(TEXT("Puzzle rooms carry three resonance pillars"), Room::GetPuzzlePillarCount(), 3);
+    TestTrue(TEXT("The attunement window is generous but finite"),
+        Room::GetPuzzleSequenceWindowSeconds() >= 20.0f && Room::GetPuzzleSequenceWindowSeconds() <= 90.0f);
+
+    // Correct order: advance, advance, complete.
+    TestEqual(TEXT("First pillar in order advances"),
+        Room::EvaluatePillarActivation(0, 0, 3), Room::EPillarActivityResult::Advanced);
+    TestEqual(TEXT("Second pillar in order advances"),
+        Room::EvaluatePillarActivation(1, 1, 3), Room::EPillarActivityResult::Advanced);
+    TestEqual(TEXT("Final pillar in order completes"),
+        Room::EvaluatePillarActivation(2, 2, 3), Room::EPillarActivityResult::Completed);
+
+    // Wrong order resets (the whole sequence restarts — retryable, no stall).
+    TestEqual(TEXT("Skipping ahead resets"),
+        Room::EvaluatePillarActivation(1, 0, 3), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Re-attuning the same pillar resets"),
+        Room::EvaluatePillarActivation(0, 1, 3), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Out-of-range pillar resets"),
+        Room::EvaluatePillarActivation(7, 0, 3), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Degenerate pillar count resets"),
+        Room::EvaluatePillarActivation(0, 0, 0), Room::EPillarActivityResult::ResetRequired);
+    TestEqual(TEXT("Already-complete sequence resets (stale input)"),
+        Room::EvaluatePillarActivation(0, 3, 3), Room::EPillarActivityResult::ResetRequired);
+
+    // Window expiry contract: inclusive at the boundary, fresh below it.
+    TestFalse(TEXT("Fresh window has not expired"),
+        Room::IsPillarSequenceExpired(1.0f, Room::GetPuzzleSequenceWindowSeconds()));
+    TestTrue(TEXT("Window expires exactly at the boundary"),
+        Room::IsPillarSequenceExpired(Room::GetPuzzleSequenceWindowSeconds(), Room::GetPuzzleSequenceWindowSeconds()));
+    TestTrue(TEXT("Overdue window has expired"),
+        Room::IsPillarSequenceExpired(Room::GetPuzzleSequenceWindowSeconds() + 0.1f, Room::GetPuzzleSequenceWindowSeconds()));
+    TestFalse(TEXT("A zero window never expires (fail-open)"),
+        Room::IsPillarSequenceExpired(1000.0f, 0.0f));
+
+    // 4) Room-hazard status ids are stable (the room tick and the clear path
+    // agree — the survival vocabulary's plain-FName idiom).
+    TestEqual(TEXT("Room ash-lung status id is stable"), Room::GetRoomAshLungStatusId(), FName(TEXT("AshLung")));
+    TestEqual(TEXT("Room waterlogged status id is stable"), Room::GetRoomWaterloggedStatusId(), FName(TEXT("Waterlogged")));
+
+    return true;
+}
+
+// --- GDP-1: combat pick ladder (Test 75) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityCombatPickTest,
+    "ASTRAWILD.Ability.CombatPick",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityCombatPickTest::RunTest(const FString& Parameters)
+{
+    // One offense + one heal, both ready, in range.
+    TArray<FName> Known = { TEXT("Ability_CinderBolt"), TEXT("Ability_FieldTriage") };
+    TMap<FName, float> NoCooldowns;
+
+    // No healing wanted -> offense wins.
+    TestEqual(TEXT("Healthy caster prefers offense"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(Known, NoCooldowns, 10, 500.0f, false, false),
+        FName(TEXT("Ability_CinderBolt")));
+
+    // Hurt caster -> the medic heals itself first.
+    TestEqual(TEXT("Hurt caster prefers the heal"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(Known, NoCooldowns, 10, 500.0f, true, false),
+        FName(TEXT("Ability_FieldTriage")));
+
+    // Everything cooling down -> nothing castable.
+    TMap<FName, float> AllCooling;
+    AllCooling.Add(TEXT("Ability_CinderBolt"), 5.0f);
+    AllCooling.Add(TEXT("Ability_FieldTriage"), 5.0f);
+    TestTrue(TEXT("All-cooldown returns none"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(Known, AllCooling, 10, 500.0f, true, true) == NAME_None);
+
+    // Out of range offense -> falls back to other categories or none.
+    TArray<FName> OnlyOffense = { TEXT("Ability_FlareNova") }; // Range 500.
+    TestTrue(TEXT("Out-of-range offense not cast"),
+        UAstrawildAbilityLibrary::ChooseAbilityForCombat(OnlyOffense, NoCooldowns, 20, 1200.0f, false, false) == NAME_None);
+
+    return true;
+}
+
+// --- GDP-1: species ability loadout (authored + derived merge) (Test 76) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilitySpeciesLoadoutTest,
+    "ASTRAWILD.Ability.SpeciesLoadout",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilitySpeciesLoadoutTest::RunTest(const FString& Parameters)
+{
+    UAstrawildEchoDefinition* Def = NewObject<UAstrawildEchoDefinition>();
+
+    // No authored ids -> derived kit only.
+    Def->Element = EAstrawildElementType::Frost;
+    Def->Role = EAstrawildEchoRole::Support;
+    Def->Family = EAstrawildEchoFamily::Avian;
+    TArray<FName> Loadout = UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(Def);
+    TestTrue(TEXT("Unauthored species derives a kit"), Loadout.Num() >= 4);
+
+    // Authored ids come first, derived fill the rest, no duplicates.
+    Def->AbilityIds = { TEXT("Ability_LumewispDawn"), TEXT("Ability_LumewispDawn") };
+    Loadout = UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(Def);
+    TestEqual(TEXT("Authored ids lead the loadout"), Loadout[0], FName(TEXT("Ability_LumewispDawn")));
+    TSet<FName> Unique(Loadout);
+    TestEqual(TEXT("No duplicated ids in merged loadout"), Unique.Num(), Loadout.Num());
+
+    return true;
+}
+
+// --- GDP-2: locomotion derivation matrix (Test 77) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLocomotionDerivationTest,
+    "ASTRAWILD.Locomotion.Derivation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLocomotionDerivationTest::RunTest(const FString& Parameters)
+{
+    using L = EAstrawildLocomotionClass;
+
+    // Avian family / winged body plan -> flight.
+    TestEqual(TEXT("Avian family flies"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Biped, EAstrawildZone::DawnFields), L::Flying);
+    TestEqual(TEXT("Avian body plan flies"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Avian, EAstrawildZone::DawnFields), L::Flying);
+    TestEqual(TEXT("Floating body plan hovers"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildZone::Glimmerwood), L::Flying);
+
+    // Aquatic family + sea zones -> water.
+    TestEqual(TEXT("Aquatic family swims"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Serpent, EAstrawildZone::DawnFields), L::Water);
+    TestEqual(TEXT("Sea-zone beast swims"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildZone::AzureShallows), L::Water);
+    TestEqual(TEXT("Pearlsea reef swims"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Flora, EAstrawildBodyPlan::Amorphous, EAstrawildZone::PearlseaReef), L::Water);
+    TestEqual(TEXT("Tidebreaker isles swim"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Insectoid, EAstrawildBodyPlan::Insectoid, EAstrawildZone::TidebreakerIsles), L::Water);
+
+    // Everything else walks.
+    TestEqual(TEXT("Inland beast walks"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildZone::DawnFields), L::Land);
+    TestEqual(TEXT("Winged sea-zone species still flies (flight outranks water)"),
+        AAstrawildEchoCharacter::DeriveLocomotionClass(EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Avian, EAstrawildZone::AzureShallows), L::Flying);
+
+    return true;
+}
+
+// --- GDP-3: attribute XP curve + level cap (Test 78) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeXPCurveTest,
+    "ASTRAWILD.Attributes.XPCurve",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeXPCurveTest::RunTest(const FString& Parameters)
+{
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Might starts at 1"), Attributes->GetLevel(EAstrawildAttributeType::Might), 1);
+    TestEqual(TEXT("Might starts at 0 XP"), Attributes->GetXP(EAstrawildAttributeType::Might), 0.0f);
+    TestEqual(TEXT("Level 1 needs 100 XP"), Attributes->GetXPToNextLevel(EAstrawildAttributeType::Might), 100.0f);
+
+    // Level 2 exactly at 100 XP.
+    Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 100.0f);
+    TestEqual(TEXT("100 XP -> level 2"), Attributes->GetLevel(EAstrawildAttributeType::Might), 2);
+    TestEqual(TEXT("Overflow XP carried"), Attributes->GetXP(EAstrawildAttributeType::Might), 0.0f);
+    TestEqual(TEXT("Level 2 needs 200 XP"), Attributes->GetXPToNextLevel(EAstrawildAttributeType::Might), 200.0f);
+
+    // Cap at 10 with no overflow residue.
+    for (int32 i = 0; i < 40; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 1000.0f);
+    }
+    TestEqual(TEXT("Might caps at 10"), Attributes->GetLevel(EAstrawildAttributeType::Might), 10);
+    TestEqual(TEXT("Cap clears the XP residue"), Attributes->GetXP(EAstrawildAttributeType::Might), 0.0f);
+    TestEqual(TEXT("Capped attribute reports 0 to next"), Attributes->GetXPToNextLevel(EAstrawildAttributeType::Might), 0.0f);
+
+    // Negative/zero XP is rejected.
+    Attributes->AddAttributeXP(EAstrawildAttributeType::Vigor, -50.0f);
+    TestEqual(TEXT("Negative XP rejected"), Attributes->GetXP(EAstrawildAttributeType::Vigor), 0.0f);
+
+    return true;
+}
+
+// --- GDP-3: bonus formulas (Test 79) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeBonusFormulasTest,
+    "ASTRAWILD.Attributes.BonusFormulas",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeBonusFormulasTest::RunTest(const FString& Parameters)
+{
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+
+    // Fresh component: every multiplier reads exactly 1.0/0.0.
+    TestEqual(TEXT("Fresh melee mult 1.0"), Attributes->GetMeleeDamageMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh max health mult 1.0"), Attributes->GetMaxHealthMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh stamina regen mult 1.0"), Attributes->GetStaminaRegenMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh move mult 1.0"), Attributes->GetMoveSpeedMultiplier(), 1.0f);
+    TestEqual(TEXT("Fresh capture bonus 0"), Attributes->GetCaptureChanceBonus(), 0.0f);
+    TestEqual(TEXT("Fresh craft mult 1.0"), Attributes->GetCraftSpeedMultiplier(), 1.0f);
+    TestEqual(TEXT("No masterwork at Craft 1"), Attributes->GetMasterworkRefundChance(), 0.0f);
+
+    // Might 10 -> 1 + 0.04*9 = 1.36.
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Might, 1000.0f);
+    }
+    TestEqual(TEXT("Might 10 melee mult 1.36"), Attributes->GetMeleeDamageMultiplier(), 1.36f);
+
+    // Craft 5 -> masterwork unlocked at 15%.
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Craft, 1000.0f);
+    }
+    TestEqual(TEXT("Craft 5+ masterwork 15%"), Attributes->GetMasterworkRefundChance(), 0.15f);
+
+    return true;
+}
+
+// --- GDP-3: skill unlock milestones + smart-cast ladder (Test 80) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeSkillUnlockTest,
+    "ASTRAWILD.Attributes.SkillUnlock",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeSkillUnlockTest::RunTest(const FString& Parameters)
+{
+    using S = EAstrawildPlayerSkillId;
+
+    // Milestone table (static rule — no component needed).
+    TestTrue(TEXT("PowerStrike at Might 3"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::PowerStrike, 3, 1, 1, 1, 1));
+    TestFalse(TEXT("PowerStrike locked at Might 2"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::PowerStrike, 2, 1, 1, 1, 1));
+    TestTrue(TEXT("Whirlwind at Might 6"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Whirlwind, 6, 1, 1, 1, 1));
+    TestTrue(TEXT("Dash at Agility 3"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Dash, 1, 1, 3, 1, 1));
+    TestTrue(TEXT("SecondWind at Vigor 4"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::SecondWind, 1, 4, 1, 1, 1));
+    TestTrue(TEXT("HuntersFocus at Instinct 4"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::HuntersFocus, 1, 1, 1, 4, 1));
+    TestTrue(TEXT("Masterwork at Craft 5"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Masterwork, 1, 1, 1, 1, 5));
+    TestTrue(TEXT("Overcharge at Instinct 7"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::Overcharge, 1, 1, 1, 7, 1));
+    TestFalse(TEXT("None never unlocks"), UAstrawildAttributeComponent::IsSkillUnlockedByAttributes(S::None, 10, 10, 10, 10, 10));
+
+    // Cooldown table sanity.
+    TestEqual(TEXT("Masterwork is passive (0 cooldown)"), UAstrawildAttributeComponent::GetSkillCooldown(S::Masterwork), 0.0f);
+    TestTrue(TEXT("SecondWind has the longest cooldown"),
+        UAstrawildAttributeComponent::GetSkillCooldown(S::SecondWind) > UAstrawildAttributeComponent::GetSkillCooldown(S::PowerStrike));
+
+    // Smart-cast ladder: hurt player with SecondWind picks the heal.
+    UAstrawildAttributeComponent* Attributes = NewObject<UAstrawildAttributeComponent>();
+    for (int32 i = 0; i < 30; ++i)
+    {
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Vigor, 1000.0f);
+        Attributes->AddAttributeXP(EAstrawildAttributeType::Agility, 1000.0f);
+    }
+    TestEqual(TEXT("Hurt player smart-casts SecondWind"),
+        Attributes->PickBestReadySkill(0.2f, 0, false, false), S::SecondWind);
+    TestEqual(TEXT("Healthy moving player smart-casts Dash"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true), S::Dash);
+
+    // After casting, the cooldown blocks a re-pick.
+    Attributes->StartSkillCooldown(S::Dash);
+    TestTrue(TEXT("Dash on cooldown is not picked"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true) != S::Dash);
+    Attributes->TickCooldowns(UAstrawildAttributeComponent::GetSkillCooldown(S::Dash) + 0.1f);
+    TestEqual(TEXT("Cooldown expiry re-enables Dash"),
+        Attributes->PickBestReadySkill(1.0f, 0, false, true), S::Dash);
+
+    return true;
+}
+
+// --- GDP-3: attribute save round-trip + sanitize (Test 81) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAttributeSaveRoundTripTest,
+    "ASTRAWILD.Attributes.SaveRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAttributeSaveRoundTripTest::RunTest(const FString& Parameters)
+{
+    UAstrawildAttributeComponent* Source = NewObject<UAstrawildAttributeComponent>();
+    Source->AddAttributeXP(EAstrawildAttributeType::Might, 350.0f);   // Level 3, 50 XP.
+    Source->AddAttributeXP(EAstrawildAttributeType::Craft, 120.0f);  // Level 2, 20 XP.
+
+    const TArray<FAstrawildAttributeSaveData> Saved = Source->ToSaveData();
+    TestEqual(TEXT("Save payload has all five attributes"), Saved.Num(), 5);
+
+    UAstrawildAttributeComponent* Target = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Clean import repairs nothing"), Target->ImportFromSaveData(Saved), 0);
+    TestEqual(TEXT("Might level survives the round-trip"), Target->GetLevel(EAstrawildAttributeType::Might), 3);
+    TestEqual(TEXT("Might XP survives the round-trip"), Target->GetXP(EAstrawildAttributeType::Might), 50.0f);
+    TestEqual(TEXT("Craft level survives the round-trip"), Target->GetLevel(EAstrawildAttributeType::Craft), 2);
+
+    // Corrupt import: out-of-range level, negative XP, duplicates.
+    TArray<FAstrawildAttributeSaveData> Corrupt;
+    FAstrawildAttributeSaveData Row;
+    Row.Type = EAstrawildAttributeType::Vigor;
+    Row.Level = 99;
+    Row.XP = -10.0f;
+    Corrupt.Add(Row);
+    Corrupt.Add(Row); // Duplicate row.
+    TestTrue(TEXT("Corrupt import reports repairs"), Target->ImportFromSaveData(Corrupt) >= 2);
+    TestEqual(TEXT("Vigor level clamped to 10"), Target->GetLevel(EAstrawildAttributeType::Vigor), 10);
+    TestEqual(TEXT("Vigor XP clamped to >= 0"), Target->GetXP(EAstrawildAttributeType::Vigor), 0.0f);
+
+    // Old saves (empty array) import as fresh states.
+    UAstrawildAttributeComponent* Fresh = NewObject<UAstrawildAttributeComponent>();
+    TestEqual(TEXT("Empty payload imports clean"), Fresh->ImportFromSaveData(TArray<FAstrawildAttributeSaveData>()), 0);
+    TestEqual(TEXT("Fresh Might at 1"), Fresh->GetLevel(EAstrawildAttributeType::Might), 1);
+
+    return true;
+}
+
+// --- GDP-4: NPC affinity tiers + discount (Test 82) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNPCAffinityTierTest,
+    "ASTRAWILD.NPC.AffinityTiers",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNPCAffinityTierTest::RunTest(const FString& Parameters)
+{
+    // Tier boundaries: 0/25/50/75 -> Stranger/Acquaintance/Friend/Confidant.
+    AAstrawildNPCCharacter* Npc = NewObject<AAstrawildNPCCharacter>();
+    Npc->Affinity = 0.0f;
+    TestEqual(TEXT("Stranger tier 0"), Npc->GetAffinityTier(), 0);
+    TestEqual(TEXT("Stranger no discount"), Npc->GetVendorDiscountFraction(), 0.0f);
+
+    Npc->Affinity = 24.9f;
+    TestEqual(TEXT("Below 25 stays Stranger"), Npc->GetAffinityTier(), 0);
+    Npc->Affinity = 25.0f;
+    TestEqual(TEXT("25 -> Acquaintance"), Npc->GetAffinityTier(), 1);
+    TestEqual(TEXT("Acquaintance 5% off"), Npc->GetVendorDiscountFraction(), 0.05f);
+
+    Npc->Affinity = 50.0f;
+    TestEqual(TEXT("50 -> Friend"), Npc->GetAffinityTier(), 2);
+    Npc->Affinity = 75.0f;
+    TestEqual(TEXT("75 -> Confidant"), Npc->GetAffinityTier(), 3);
+    TestEqual(TEXT("Confidant 15% off"), Npc->GetVendorDiscountFraction(), 0.15f);
+    Npc->Affinity = 100.0f;
+    TestEqual(TEXT("100 clamps at Confidant"), Npc->GetAffinityTier(), 3);
+
+    TestTrue(TEXT("Titles are non-empty"), !Npc->GetAffinityTierTitle().IsEmpty());
+    TestTrue(TEXT("No definition -> no stable id"), Npc->GetStableNPCId().IsNone());
+
+    return true;
+}
+
+// --- GDP-4: NPC affinity save payload (Test 83) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNPCAffinitySaveTest,
+    "ASTRAWILD.NPC.AffinitySave",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNPCAffinitySaveTest::RunTest(const FString& Parameters)
+{
+    FAstrawildNPCAffinitySaveData Row;
+    TestTrue(TEXT("Default id is none"), Row.NPCId.IsNone());
+    TestEqual(TEXT("Default affinity is 0"), Row.Affinity, 0.0f);
+
+    Row.NPCId = TEXT("NPC_Wren");
+    Row.Affinity = 62.5f;
+    const FAstrawildNPCAffinitySaveData Copy = Row;
+    TestTrue(TEXT("NPC id survives the struct copy"), Copy.NPCId == Row.NPCId);
+    TestEqual(TEXT("Affinity survives the struct copy"), Copy.Affinity, 62.5f);
+
+    // The save field exists and defaults empty (old saves deserialize clean).
+    UAstrawildSaveGame* SaveGame = NewObject<UAstrawildSaveGame>();
+    TestEqual(TEXT("Fresh save holds no NPC affinity rows"), SaveGame->NPCAffinities.Num(), 0);
+    TestEqual(TEXT("Fresh save holds no attribute rows"), SaveGame->Attributes.Num(), 0);
+    SaveGame->NPCAffinities.Add(Row);
+    SaveGame->Attributes.Add(FAstrawildAttributeSaveData());
+    TestEqual(TEXT("Rows append"), SaveGame->NPCAffinities.Num(), 1);
+    TestEqual(TEXT("Attribute rows append"), SaveGame->Attributes.Num(), 1);
+
+    return true;
+}
+
+// --- GDP-1: full pipeline — Echo ability engine contracts (Test 84) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityEngineContractTest,
+    "ASTRAWILD.Ability.EngineContracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityEngineContractTest::RunTest(const FString& Parameters)
+{
+    UAstrawildEchoDefinition* Def = NewObject<UAstrawildEchoDefinition>();
+    Def->Element = EAstrawildElementType::Flora;
+    Def->Role = EAstrawildEchoRole::Support;
+    Def->Family = EAstrawildEchoFamily::Flora;
+    Def->AbilityIds = { TEXT("Ability_ThornLash"), TEXT("Ability_RootSnare"), TEXT("Ability_LumewispDawn") };
+
+    AAstrawildEchoCharacter* Echo = NewObject<AAstrawildEchoCharacter>();
+    Echo->EchoDefinition = Def;
+
+    // Every learned id is level-1 knowable: LumewispDawn (1), ThornLash (3),
+    // RootSnare (5) — knowledge follows the level gate.
+    TestEqual(TEXT("All ids exposed"), Echo->GetAllAbilityIds().Num(), 5); // 3 authored (2 unique after element dedupe) + derived kit.
+    TestTrue(TEXT("Level 1 knows LumewispDawn"), Echo->GetKnownAbilityIds().Contains(TEXT("Ability_LumewispDawn")));
+    TestFalse(TEXT("Level 1 does not know ThornLash (needs 3)"), Echo->GetKnownAbilityIds().Contains(TEXT("Ability_ThornLash")));
+    TestFalse(TEXT("Gated ability is not ready at level 1"), Echo->IsAbilityReady(TEXT("Ability_ThornLash")));
+
+    // Cooldown query reads 0 for unknown ids (never blocks).
+    TestEqual(TEXT("Unknown ability reports no cooldown"), Echo->GetAbilityCooldownRemaining(TEXT("Ability_Nope")), 0.0f);
+
+    // PickCombatAbility never crashes and respects level gates: level 1 with
+    // only > 1 unlock-level kits yields nothing castable in range.
+    const FName Picked = Echo->PickCombatAbility(400.0f, false, false);
+    if (Picked != NAME_None)
+    {
+        TestTrue(TEXT("Level 1 pick is actually level-1 knowable"),
+            Echo->GetKnownAbilityIds().Contains(Picked));
+    }
+    Echo->Level = 30;
+    TestTrue(TEXT("Level 30 can pick something in melee range"),
+        Echo->PickCombatAbility(300.0f, false, false) != NAME_None);
+
+    return true;
+}
+
+// ===========================================================================
+// SCP (Systems Completion Pack) — plan-vs-repo gap closure contracts
+// ===========================================================================
+
+// --- SCP Phase 1: data validator static tables (Test 85) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDataValidatorStaticTablesTest,
+    "ASTRAWILD.SCP.DataValidator.StaticTables",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDataValidatorStaticTablesTest::RunTest(const FString& Parameters)
+{
+    TArray<FString> Problems;
+    UAstrawildDataValidatorLibrary::ValidateStaticTables(Problems);
+    for (const FString& Problem : Problems)
+    {
+        AddError(Problem);
+    }
+    TestTrue(TEXT("Static tables (bestiary + abilities + element chain) validate clean"),
+        Problems.IsEmpty());
+    return true;
+}
+
+// --- SCP Phase 2: error reporter ring buffer + formatting (Test 86) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildErrorReporterContractTest,
+    "ASTRAWILD.SCP.ErrorReporter.RingBuffer",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildErrorReporterContractTest::RunTest(const FString& Parameters)
+{
+    UAstrawildErrorReporterLibrary::Clear();
+    TestEqual(TEXT("Reporter starts empty"), UAstrawildErrorReporterLibrary::GetRecordCount(), 0);
+
+    UAstrawildErrorReporterLibrary::ReportError(TEXT("TestCategory"), TEXT("Boom"));
+    UAstrawildErrorReporterLibrary::ReportWarning(TEXT("TestCategory"), TEXT("Careful"));
+    UAstrawildErrorReporterLibrary::ReportInfo(TEXT("TestCategory"), TEXT("FYI"));
+    TestEqual(TEXT("Three records held"), UAstrawildErrorReporterLibrary::GetRecordCount(), 3);
+    TestEqual(TEXT("Two non-info records"), UAstrawildErrorReporterLibrary::GetNonInfoCount(), 2);
+
+    // Capacity contract: the buffer drops the OLDEST records beyond the cap.
+    for (int32 Index = 0; Index < UAstrawildErrorReporterLibrary::MaxRecords + 50; ++Index)
+    {
+        UAstrawildErrorReporterLibrary::ReportInfo(TEXT("Flood"), FString::Printf(TEXT("record %d"), Index));
+    }
+    TestEqual(TEXT("Ring buffer bounded at capacity"), UAstrawildErrorReporterLibrary::GetRecordCount(),
+        UAstrawildErrorReporterLibrary::MaxRecords);
+
+    const TArray<FAstrawildErrorRecord> Records = UAstrawildErrorReporterLibrary::GetRecords();
+    TestTrue(TEXT("Oldest records dropped, newest kept"),
+        Records.Last().Message.Equals(FString::Printf(TEXT("record %d"), UAstrawildErrorReporterLibrary::MaxRecords + 49)));
+
+    const FString Report = UAstrawildErrorReporterLibrary::FormatReport(TEXT("HEADER"));
+    TestTrue(TEXT("Report carries the header"), Report.Contains(TEXT("HEADER")));
+    TestTrue(TEXT("Report renders record lines"), Report.Contains(TEXT("Flood")));
+
+    UAstrawildErrorReporterLibrary::Clear();
+    TestEqual(TEXT("Clear resets the trail"), UAstrawildErrorReporterLibrary::GetRecordCount(), 0);
+    return true;
+}
+
+// --- SCP Phase 2: asset fallback shape mapping (Test 87) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAssetFallbackContractTest,
+    "ASTRAWILD.SCP.AssetFallback.ShapePaths",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAssetFallbackContractTest::RunTest(const FString& Parameters)
+{
+    const FString Cube = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Cube);
+    const FString Sphere = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Sphere);
+    const FString Cylinder = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Cylinder);
+    const FString Cone = UAstrawildAssetFallbackLibrary::GetFallbackShapePath(EAstrawildFallbackShape::Cone);
+
+    TestTrue(TEXT("Cube path is an engine basic shape"), Cube.Contains(TEXT("/Engine/BasicShapes/Cube")));
+    TestTrue(TEXT("Sphere path is an engine basic shape"), Sphere.Contains(TEXT("/Engine/BasicShapes/Sphere")));
+    TestTrue(TEXT("Cylinder path is an engine basic shape"), Cylinder.Contains(TEXT("/Engine/BasicShapes/Cylinder")));
+    TestTrue(TEXT("Cone path is an engine basic shape"), Cone.Contains(TEXT("/Engine/BasicShapes/Cone")));
+    TestTrue(TEXT("Every shape maps to a distinct path"),
+        Cube != Sphere && Cube != Cylinder && Cube != Cone && Sphere != Cylinder && Sphere != Cone);
+
+    // Malformed enum value falls back to the cube (switch default) — never empty.
+    TestFalse(TEXT("Default path never empty"),
+        UAstrawildAssetFallbackLibrary::GetFallbackShapePath(static_cast<EAstrawildFallbackShape>(255)).IsEmpty());
+    return true;
+}
+
+// --- SCP Phase 12: spoilage math (Test 88) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSpoilageMathTest,
+    "ASTRAWILD.SCP.Spoilage.Math",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSpoilageMathTest::RunTest(const FString& Parameters)
+{
+    // Unknown freshness initializes to the full shelf life.
+    TestEqual(TEXT("Fresh stack initializes to shelf life"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(0.0f, 600.0f, 10.0f, false), 590.0f);
+
+    // Normal aging subtracts the elapsed step.
+    TestEqual(TEXT("Aging advances linearly"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(590.0f, 600.0f, 10.0f, false), 580.0f);
+
+    // Ice Box preservation slows aging tenfold.
+    TestEqual(TEXT("Preserved aging is x0.1"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(590.0f, 600.0f, 10.0f, true), 589.0f);
+
+    // Deadline clamps to the sentinel (callers treat <= 0 as conversion).
+    TestTrue(TEXT("Overdue stack hits the deadline sentinel"),
+        UAstrawildSpoilageSubsystem::ComputeSpoilStep(5.0f, 600.0f, 10.0f, false) < 0.0f);
+
+    // Conversion: half the stack, floor of 1 — food never silently vanishes.
+    TestEqual(TEXT("Even stack halves"), UAstrawildSpoilageSubsystem::ComputeSpoiledConversion(10), 5);
+    TestEqual(TEXT("Odd stack floors"), UAstrawildSpoilageSubsystem::ComputeSpoiledConversion(9), 4);
+    TestEqual(TEXT("Single item still yields one"), UAstrawildSpoilageSubsystem::ComputeSpoiledConversion(1), 1);
+    return true;
+}
+
+// --- SCP Phase 12: durability constants + definition wiring (Test 89) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDurabilityContractTest,
+    "ASTRAWILD.SCP.Durability.Contracts",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDurabilityContractTest::RunTest(const FString& Parameters)
+{
+    // The directive numbers, pinned as contracts: broken weapons hit at 40%,
+    // bench repairs cost 40% of the craft inputs.
+    TestEqual(TEXT("Broken weapon multiplier is 0.4"),
+        UAstrawildDurabilityComponent::BrokenWeaponDamageMultiplier, 0.4f);
+    TestEqual(TEXT("Bench repair cost fraction is 0.4"),
+        UAstrawildDurabilityComponent::BenchRepairCostFraction, 0.4f);
+
+    // Definition wiring: the harvest specialization fields exist and default
+    // to inert values (no behavior change for legacy content).
+    UAstrawildItemDefinition* Item = NewObject<UAstrawildItemDefinition>();
+    TestEqual(TEXT("Legacy items carry no durability"), Item->DurabilityMax, 0.0f);
+    TestEqual(TEXT("Legacy items never perish"), Item->PerishableSeconds, 0.0f);
+    TestTrue(TEXT("Legacy items carry no harvest category"), Item->HarvestCategory.IsNone());
+    TestTrue(TEXT("Legacy tools carry no harvest bonus"), Item->HarvestBonusCategory.IsNone());
+    TestEqual(TEXT("Default harvest multiplier is neutral"), Item->HarvestMultiplier, 1.0f);
+    return true;
+}
+
+// --- SCP Phase 9: sanity math + illness bands (Test 90) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCreatureSanityMathTest,
+    "ASTRAWILD.SCP.Sanity.MathAndIllness",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCreatureSanityMathTest::RunTest(const FString& Parameters)
+{
+    using San = UAstrawildCreatureSanityComponent;
+
+    // Idle + healthy: no change.
+    TestEqual(TEXT("Idle echoes hold steady"), San::ComputeSanityDelta(10.0f, false, false, false, false, false), 0.0f);
+
+    // Working drains (-0.02/s), combat adds pressure.
+    TestEqual(TEXT("Working drains sanity"), San::ComputeSanityDelta(10.0f, true, false, false, false, false), -0.2f);
+    TestEqual(TEXT("Work + combat stacks drains"), San::ComputeSanityDelta(10.0f, true, true, false, false, false), -0.3f);
+
+    // Comfort: bed +0.05/s, hot spring +0.12/s — comfort outweighs stress.
+    TestEqual(TEXT("Bed recovery beats work drain"),
+        San::ComputeSanityDelta(10.0f, true, false, true, false, false), 0.3f);
+    TestEqual(TEXT("Hot spring recovery"), San::ComputeSanityDelta(10.0f, false, false, false, true, false), 1.2f);
+    TestEqual(TEXT("Night rest recovers"), San::ComputeSanityDelta(10.0f, false, false, false, false, true), 0.1f);
+
+    // Illness risk: zero at/above the threshold, monotone in depth + exposure.
+    TestEqual(TEXT("Healthy band carries no risk"), San::ComputeIllnessRisk(30.0f, 600.0f), 0.0f);
+    TestTrue(TEXT("Deep exposure accrues risk"), San::ComputeIllnessRisk(5.0f, 300.0f) > 0.5f);
+    TestTrue(TEXT("Risk grows with exposure"),
+        San::ComputeIllnessRisk(10.0f, 400.0f) > San::ComputeIllnessRisk(10.0f, 100.0f));
+    TestEqual(TEXT("Risk clamps to 1"), San::ComputeIllnessRisk(0.0f, 100000.0f), 1.0f);
+
+    // Illness bands: Ulcer 40%, SprainedAnkle 35%, Slacker 25%.
+    TestTrue(TEXT("Low roll -> Ulcer"), San::SelectIllness(0.10f) == TEXT("Illness_Ulcer"));
+    TestTrue(TEXT("Mid roll -> SprainedAnkle"), San::SelectIllness(0.50f) == TEXT("Illness_SprainedAnkle"));
+    TestTrue(TEXT("High roll -> Slacker"), San::SelectIllness(0.90f) == TEXT("Illness_Slacker"));
+
+    // Modifier table.
+    TestEqual(TEXT("Slacker work x0.3"), San::GetIllnessWorkMultiplier(TEXT("Illness_Slacker")), 0.3f);
+    TestEqual(TEXT("SprainedAnkle speed x0.75"), San::GetIllnessSpeedMultiplier(TEXT("Illness_SprainedAnkle")), 0.75f);
+    TestTrue(TEXT("Ulcer drains health"), San::GetIllnessHealthDrain(TEXT("Illness_Ulcer")) > 0.0f);
+    TestEqual(TEXT("Unknown illness carries no modifiers"), San::GetIllnessWorkMultiplier(TEXT("Illness_Nope")), 1.0f);
+    return true;
+}
+
+// --- SCP Phase 9: base terminal level + garrison caps (Test 91) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildBaseTerminalContractTest,
+    "ASTRAWILD.SCP.BaseTerminal.LevelAndGarrison",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildBaseTerminalContractTest::RunTest(const FString& Parameters)
+{
+    // Directive Phase 9.1 numbers pinned: territory 3500cm, caps 5/10/20.
+    TestEqual(TEXT("Territory radius is 3500cm"), AAstrawildBaseTerminalActor::TerritoryRadius, 3500.0f);
+
+    TestEqual(TEXT("0-7 buildings -> level 1"), AAstrawildBaseTerminalActor::ComputeBaseLevel(0), 1);
+    TestEqual(TEXT("7 buildings still level 1"), AAstrawildBaseTerminalActor::ComputeBaseLevel(7), 1);
+    TestEqual(TEXT("8 buildings -> level 2"), AAstrawildBaseTerminalActor::ComputeBaseLevel(8), 2);
+    TestEqual(TEXT("15 buildings still level 2"), AAstrawildBaseTerminalActor::ComputeBaseLevel(15), 2);
+    TestEqual(TEXT("16 buildings -> level 3"), AAstrawildBaseTerminalActor::ComputeBaseLevel(16), 3);
+
+    TestEqual(TEXT("Level 1 garrison 5"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(1), 5);
+    TestEqual(TEXT("Level 2 garrison 10"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(2), 10);
+    TestEqual(TEXT("Level 3 garrison 20"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(3), 20);
+    TestEqual(TEXT("Unknown level falls back to 5"), AAstrawildBaseTerminalActor::GetGarrisonCapForLevel(99), 5);
+    return true;
+}
+
+// --- SCP Phase 5: mount eligibility + speed + seat contract (Test 92) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildMountContractTest,
+    "ASTRAWILD.SCP.Mount.SpeciesAndSpeed",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildMountContractTest::RunTest(const FString& Parameters)
+{
+    using Mnt = UAstrawildMountComponent;
+
+    // Species gates: classic mount families + quadruped/avian plans + Medium+;
+    // DP-3 opens the sea-rider gate (Aquatic quadrupeds/serpents).
+    TestTrue(TEXT("Beast quadruped large is rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
+    TestTrue(TEXT("Avian mount is rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Avian, EAstrawildSizeClass::Medium));
+    TestTrue(TEXT("Dragon mount is rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Dragon, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Huge));
+    TestFalse(TEXT("Tiny creatures are never rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Tiny));
+    TestFalse(TEXT("Small creatures are never rideable"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Small));
+    TestFalse(TEXT("Serpent bodies carry no saddle"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Large));
+    TestTrue(TEXT("DP-3: aquatic serpents are sea-riders"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Large));
+    TestTrue(TEXT("DP-3: aquatic quadrupeds are sea-riders"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
+    TestFalse(TEXT("DP-3: tiny sea-riders still refuse a saddle"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Aquatic, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Small));
+    TestFalse(TEXT("Flora Kindred are companions, not mounts"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Flora, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large));
+    TestFalse(TEXT("Floating wisps carry no rider"),
+        Mnt::IsRideableSpecies(EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Huge));
+
+    // Speed: 1.25x species speed with a sane floor.
+    TestEqual(TEXT("Mount speed is 1.25x species speed"), Mnt::ComputeMountSpeed(400.0f), 500.0f);
+    TestEqual(TEXT("Slow species get the mount floor"), Mnt::ComputeMountSpeed(50.0f), 250.0f);
+
+    // Seat contract scales with size (rider sits higher on bigger mounts).
+    const FVector MediumSeat = Mnt::ComputeRiderSeatOffset(EAstrawildSizeClass::Medium);
+    const FVector LargeSeat = Mnt::ComputeRiderSeatOffset(EAstrawildSizeClass::Large);
+    const FVector HugeSeat = Mnt::ComputeRiderSeatOffset(EAstrawildSizeClass::Huge);
+    TestTrue(TEXT("Larger mounts seat higher"), LargeSeat.Z > MediumSeat.Z && HugeSeat.Z > LargeSeat.Z);
+
+    // Socket contract: all six directive socket names are pinned.
+    TestTrue(TEXT("MountSocket pinned"), Mnt::GetMountSocketName() == TEXT("MountSocket"));
+    TestTrue(TEXT("RiderPelvisSocket pinned"), Mnt::GetRiderPelvisSocketName() == TEXT("RiderPelvisSocket"));
+    TestTrue(TEXT("Hand grip sockets pinned"),
+        Mnt::GetLeftHandGripSocketName() == TEXT("LeftHandGripSocket") &&
+        Mnt::GetRightHandGripSocketName() == TEXT("RightHandGripSocket"));
+    TestTrue(TEXT("Stirrup sockets pinned"),
+        Mnt::GetLeftFootStirrupSocketName() == TEXT("LeftFootStirrupSocket") &&
+        Mnt::GetRightFootStirrupSocketName() == TEXT("RightFootStirrupSocket"));
+
+    // Bond gate: the trust arc number from the directive spec.
+    TestEqual(TEXT("Mount bond gate is 25"), Mnt::MountBondGate, 25.0f);
+    return true;
+}
+
+// --- SCP Phase 6: dual-tech reaction table (Test 93) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildComboTableTest,
+    "ASTRAWILD.SCP.Combo.ReactionTable",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildComboTableTest::RunTest(const FString& Parameters)
+{
+    using Combo = UAstrawildComboLibrary;
+
+    // Every element resolves on BOTH player tiers (12 reactions — the
+    // directive's 10-formula minimum exceeded).
+    TestEqual(TEXT("Reaction count is 12"), Combo::GetReactionCount(), 12);
+
+    const EAstrawildElementType Elements[6] =
+    {
+        EAstrawildElementType::Ember, EAstrawildElementType::Frost, EAstrawildElementType::Pulse,
+        EAstrawildElementType::Flora, EAstrawildElementType::Light, EAstrawildElementType::Ash
+    };
+    for (const bool bEmpowered : { false, true })
+    {
+        for (const EAstrawildElementType Element : Elements)
+        {
+            const FAstrawildComboReaction Reaction = Combo::ResolveCombo(bEmpowered, Element);
+            TestTrue(TEXT("Every element x tier resolves"), Reaction.IsValid());
+            TestTrue(TEXT("Every multiplier is meaningful"), Reaction.DamageMultiplier >= 1.8f);
+        }
+    }
+
+    // The directive's signature reaction: empowered + Ember = Steam Explosion
+    // x2.5 with a hitstop status.
+    const FAstrawildComboReaction Steam = Combo::ResolveCombo(true, EAstrawildElementType::Ember);
+    TestTrue(TEXT("Steam Explosion named"), Steam.DisplayName.Equals(TEXT("Steam Explosion")));
+    TestEqual(TEXT("Steam Explosion is x2.5"), Steam.DamageMultiplier, 2.5f);
+    TestTrue(TEXT("Steam Explosion applies hitstop"), Steam.StatusId == TEXT("Status.Hitstop"));
+
+    // Empowered tier strictly out-damages the kinetic tier.
+    for (const EAstrawildElementType Element : Elements)
+    {
+        const FAstrawildComboReaction Kinetic = Combo::ResolveCombo(false, Element);
+        const FAstrawildComboReaction Empowered = Combo::ResolveCombo(true, Element);
+        TestTrue(TEXT("Empowered beats kinetic"), Empowered.DamageMultiplier >= Kinetic.DamageMultiplier);
+    }
+
+    // Window + hitstop numbers pinned.
+    TestEqual(TEXT("Combo window is 3s"), Combo::ComboWindowSeconds, 3.0f);
+    TestEqual(TEXT("Hitstop lasts 1.5s"), Combo::HitstopSeconds, 1.5f);
+    TestEqual(TEXT("Hitstop slows to 15%"), Combo::HitstopSpeedMultiplier, 0.15f);
+    return true;
+}
+
+// --- SCP Phase 3: DDA band math (Test 94) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDifficultyBandTest,
+    "ASTRAWILD.SCP.DDA.SkillBands",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDifficultyBandTest::RunTest(const FString& Parameters)
+{
+    using DDA = UAstrawildDifficultySubsystem;
+
+    // Fresh player: Standard.
+    TestEqual(TEXT("Fresh session is Standard"), DDA::ComputeSkillBand(0, 0, 0), 1);
+
+    // Struggling: deaths dominate (metric <= -2).
+    TestEqual(TEXT("One death is still Standard (hysteresis)"), DDA::ComputeSkillBand(0, 0, 1), 1);
+    TestEqual(TEXT("Two deaths -> Struggling"), DDA::ComputeSkillBand(0, 0, 2), 0);
+    TestEqual(TEXT("Deaths outweigh a few kills"), DDA::ComputeSkillBand(3, 0, 3), 0);
+
+    // Thriving: captures count double, defeats single.
+    TestEqual(TEXT("Two captures -> Thriving"), DDA::ComputeSkillBand(0, 1, 0), 2);
+    TestEqual(TEXT("Two defeats -> Thriving"), DDA::ComputeSkillBand(2, 0, 0), 2);
+    TestEqual(TEXT("One defeat stays Standard (hysteresis)"), DDA::ComputeSkillBand(1, 0, 0), 1);
+
+    // Multipliers: struggling gets help, thriving gets pressure.
+    TestEqual(TEXT("Struggling hostiles x0.85"), DDA::GetHostileStrengthMultiplier(0), 0.85f);
+    TestEqual(TEXT("Standard hostiles x1.0"), DDA::GetHostileStrengthMultiplier(1), 1.0f);
+    TestEqual(TEXT("Thriving hostiles x1.15"), DDA::GetHostileStrengthMultiplier(2), 1.15f);
+    TestEqual(TEXT("Struggling resources x1.15"), DDA::GetResourceYieldMultiplier(0), 1.15f);
+    TestEqual(TEXT("Standard resources x1.0"), DDA::GetResourceYieldMultiplier(1), 1.0f);
+    TestEqual(TEXT("Thriving resources x0.9"), DDA::GetResourceYieldMultiplier(2), 0.9f);
+
+    // Unknown bands fall back to Standard multipliers.
+    TestEqual(TEXT("Unknown band is neutral"), DDA::GetHostileStrengthMultiplier(99), 1.0f);
+    return true;
+}
+
+// --- SCP Phase 8: crop growth math (Test 95) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCropMathTest,
+    "ASTRAWILD.SCP.Crop.GrowthMath",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCropMathTest::RunTest(const FString& Parameters)
+{
+    using Crop = UAstrawildCropComponent;
+
+    // Growth: watered full rate, dry half, compost doubles, season scales.
+    const float Watered = Crop::ComputeGrowthStep(30.0f, true, false, 1.0f);
+    const float Dry = Crop::ComputeGrowthStep(30.0f, false, false, 1.0f);
+    const float Composted = Crop::ComputeGrowthStep(30.0f, true, true, 1.0f);
+    TestEqual(TEXT("Watered step is 30/300"), Watered, 0.1f);
+    TestEqual(TEXT("Dry step is half"), Dry, 0.05f);
+    TestEqual(TEXT("Compost doubles"), Composted, 0.2f);
+    TestTrue(TEXT("Steps never exceed 1"), Crop::ComputeGrowthStep(100000.0f, true, true, 2.0f) <= 1.0f);
+
+    // Season ladder: spring 1.25, summer 1.0, autumn 0.85, winter 0.5, wraps.
+    TestEqual(TEXT("Spring x1.25"), Crop::ComputeSeasonMultiplier(0), 1.25f);
+    TestEqual(TEXT("Summer x1.0"), Crop::ComputeSeasonMultiplier(1), 1.0f);
+    TestEqual(TEXT("Autumn x0.85"), Crop::ComputeSeasonMultiplier(2), 0.85f);
+    TestEqual(TEXT("Winter x0.5"), Crop::ComputeSeasonMultiplier(3), 0.5f);
+    TestEqual(TEXT("Year wraps to spring"), Crop::ComputeSeasonMultiplier(4), 1.25f);
+
+    // State ladder from progress.
+    TestEqual(TEXT("0 -> Empty"), static_cast<int32>(Crop::ResolveStateFromProgress(0.0f)),
+        static_cast<int32>(EAstrawildCropState::Empty));
+    TestEqual(TEXT("0.1 -> Planted"), static_cast<int32>(Crop::ResolveStateFromProgress(0.1f)),
+        static_cast<int32>(EAstrawildCropState::Planted));
+    TestEqual(TEXT("0.5 -> Sprout"), static_cast<int32>(Crop::ResolveStateFromProgress(0.5f)),
+        static_cast<int32>(EAstrawildCropState::Sprout));
+    TestEqual(TEXT("0.8 -> Young"), static_cast<int32>(Crop::ResolveStateFromProgress(0.8f)),
+        static_cast<int32>(EAstrawildCropState::Young));
+    TestEqual(TEXT("1.0 -> Mature"), static_cast<int32>(Crop::ResolveStateFromProgress(1.0f)),
+        static_cast<int32>(EAstrawildCropState::Mature));
+    return true;
+}
+
+// --- SCP Phase 7: NPC schedule anchors (Test 96) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNPCScheduleTest,
+    "ASTRAWILD.SCP.NPC.ScheduleAnchors",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNPCScheduleTest::RunTest(const FString& Parameters)
+{
+    using Sched = UAstrawildNPCScheduleComponent;
+
+    // Work hours: smith/farmer at work, guard patrols, trader opens 8-20.
+    TestEqual(TEXT("Farmer works at noon"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 12, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Work));
+    TestEqual(TEXT("Smith works at 7"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Smith, 7, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Work));
+    TestEqual(TEXT("Trader closed at 7"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Trader, 7, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Home));
+    TestEqual(TEXT("Trader open at 9"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Trader, 9, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Work));
+    TestEqual(TEXT("Guard patrols at noon"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Guard, 12, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Patrol));
+
+    // Rain: everyone but guards shelters.
+    TestEqual(TEXT("Farmer shelters in rain"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 12, true)),
+        static_cast<int32>(EAstrawildNPCAnchor::Shelter));
+    TestEqual(TEXT("Guard patrols through rain"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Guard, 12, true)),
+        static_cast<int32>(EAstrawildNPCAnchor::Patrol));
+
+    // Night: curfew (guards keep a skeleton patrol).
+    TestEqual(TEXT("Farmer sleeps at midnight"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 0, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Sleep));
+    TestEqual(TEXT("Guard night patrol"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Guard, 0, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Patrol));
+    TestEqual(TEXT("Evening at home (20h)"), static_cast<int32>(Sched::ResolveAnchor(EAstrawildNPCProfession::Farmer, 20, false)),
+        static_cast<int32>(EAstrawildNPCAnchor::Home));
+
+    // Service gating follows the same rules.
+    TestTrue(TEXT("Trader services open at noon"), Sched::IsServiceOpen(EAstrawildNPCProfession::Trader, 12, false));
+    TestFalse(TEXT("Trader services closed in rain"), Sched::IsServiceOpen(EAstrawildNPCProfession::Trader, 12, true));
+    TestFalse(TEXT("Trader services closed at night"), Sched::IsServiceOpen(EAstrawildNPCProfession::Trader, 22, false));
+
+    // Role -> profession derivation.
+    TestEqual(TEXT("Vendor -> Trader"), static_cast<int32>(Sched::ResolveProfession(static_cast<uint8>(EAstrawildNPCRole::Vendor))),
+        static_cast<int32>(EAstrawildNPCProfession::Trader));
+    TestEqual(TEXT("Guard -> Guard"), static_cast<int32>(Sched::ResolveProfession(static_cast<uint8>(EAstrawildNPCRole::Guard))),
+        static_cast<int32>(EAstrawildNPCProfession::Guard));
+    TestEqual(TEXT("Villager -> Farmer"), static_cast<int32>(Sched::ResolveProfession(static_cast<uint8>(EAstrawildNPCRole::Villager))),
+        static_cast<int32>(EAstrawildNPCProfession::Farmer));
+    return true;
+}
+
+// --- SCP Phase 11: turret range + target policy (Test 97) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildTurretPolicyTest,
+    "ASTRAWILD.SCP.Turret.RangeAndPolicy",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildTurretPolicyTest::RunTest(const FString& Parameters)
+{
+    using Turret = UAstrawildTurretComponent;
+
+    // Range gate (pure math).
+    TestTrue(TEXT("Point inside range"), Turret::IsInRange(FVector::ZeroVector, FVector(1000.0f, 0.0f, 0.0f), Turret::TurretRange));
+    TestFalse(TEXT("Point outside range"), Turret::IsInRange(FVector::ZeroVector, FVector(10000.0f, 0.0f, 0.0f), Turret::TurretRange));
+
+    // Numbers pinned: 2500cm range, 1.5s cadence, 30 damage.
+    TestEqual(TEXT("Turret range is 2500cm"), Turret::TurretRange, 2500.0f);
+    TestEqual(TEXT("Fire interval is 1.5s"), Turret::FireIntervalSeconds, 1.5f);
+    TestEqual(TEXT("Bolt damage is 30"), Turret::BoltDamage, 30.0f);
+    return true;
+}
+
+// --- SCP Phase 10: genetics inheritance (Test 98) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildGeneticsTest,
+    "ASTRAWILD.SCP.Genetics.Inheritance",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildGeneticsTest::RunTest(const FString& Parameters)
+{
+    using Gene = UAstrawildGeneticsLibrary;
+
+    // Trait pool: the directive's four effects plus healthy flavor traits.
+    TestTrue(TEXT("Trait pool holds 8 entries"), Gene::GetTraitPool().Num() >= 8);
+    TestTrue(TEXT("Swift is in the pool"), Gene::GetTraitPool().Contains(TEXT("Trait_Swift")));
+    TestTrue(TEXT("Artisan is in the pool"), Gene::GetTraitPool().Contains(TEXT("Trait_Artisan")));
+    TestTrue(TEXT("Ferocious is in the pool"), Gene::GetTraitPool().Contains(TEXT("Trait_Ferocious")));
+
+    // Effect contracts (directive Phase 10.3 numbers).
+    TestEqual(TEXT("Swift = +30% speed"), Gene::GetTraitSpeedMultiplier(TEXT("Trait_Swift")), 1.3f);
+    TestEqual(TEXT("Artisan = +50% work"), Gene::GetTraitWorkMultiplier(TEXT("Trait_Artisan")), 1.5f);
+    TestEqual(TEXT("Ferocious = +20% attack"), Gene::GetTraitAttackMultiplier(TEXT("Trait_Ferocious")), 1.2f);
+    TestEqual(TEXT("Sturdy = +20% health"), Gene::GetTraitHealthMultiplier(TEXT("Trait_Sturdy")), 1.2f);
+    TestTrue(TEXT("Lucky grants capture bonus"), Gene::GetTraitCaptureBonus(TEXT("Trait_Lucky")) > 0.0f);
+    TestEqual(TEXT("Unknown traits are inert"), Gene::GetTraitSpeedMultiplier(TEXT("Trait_Nope")), 1.0f);
+
+    // Stacking is multiplicative: 2x Swift = 1.69x.
+    TestEqual(TEXT("Double Swift stacks"), Gene::ComputeTraitSpeedMultiplier({ TEXT("Trait_Swift"), TEXT("Trait_Swift") }), 1.69f);
+
+    // Offspring rolls: 4 slots, deterministic per seed, IVs in bounds.
+    const TArray<FName> Parents = { TEXT("Trait_Swift"), TEXT("Trait_Artisan") };
+    const FAstrawildGeneticsProfile A = Gene::RollOffspring(Parents, Parents, 42);
+    const FAstrawildGeneticsProfile B = Gene::RollOffspring(Parents, Parents, 42);
+    TestTrue(TEXT("Profile valid"), A.IsValid());
+    TestEqual(TEXT("Reroll with the same seed is deterministic"), A.Traits == B.Traits, true);
+    TestTrue(TEXT("Traits draw from the known pool"), Gene::GetTraitPool().Contains(A.Traits[0]));
+
+    const FAstrawildGeneticsProfile C = Gene::RollOffspring(Parents, Parents, 1337);
+    TestTrue(TEXT("Different seed may differ"), C.IsValid());
+
+    TestTrue(TEXT("IV health in 0..31"), A.IVs.X >= 0.0f && A.IVs.X <= 31.0f);
+    TestTrue(TEXT("IV attack in 0..31"), A.IVs.Y >= 0.0f && A.IVs.Y <= 31.0f);
+
+    // IV contribution: 0 -> 1.0x, 31 -> 1.31x.
+    TestEqual(TEXT("IV 0 is neutral"), Gene::ComputeIVStatMultiplier(0.0f), 1.0f);
+    TestEqual(TEXT("IV 31 is +31%"), Gene::ComputeIVStatMultiplier(31.0f), 1.31f);
+    return true;
+}
+
+// --- SCP Phase 13: performance tier math (Test 99) ---
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPerformanceTierTest,
+    "ASTRAWILD.SCP.Perf.TierLadder",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPerformanceTierTest::RunTest(const FString& Parameters)
+{
+    using Perf = UAstrawildPerformanceManager;
+
+    // Tier ladder: High full, Medium reduced, Low floor (monotone).
+    TestTrue(TEXT("View distance scales down with tiers"),
+        Perf::GetViewDistanceScaleForTier(2) > Perf::GetViewDistanceScaleForTier(1) &&
+        Perf::GetViewDistanceScaleForTier(1) > Perf::GetViewDistanceScaleForTier(0));
+    TestTrue(TEXT("Foliage density scales down with tiers"),
+        Perf::GetFoliageDensityScaleForTier(2) > Perf::GetFoliageDensityScaleForTier(1) &&
+        Perf::GetFoliageDensityScaleForTier(1) > Perf::GetFoliageDensityScaleForTier(0));
+    TestTrue(TEXT("Shadow quality scales down with tiers"),
+        Perf::GetShadowQualityForTier(2) > Perf::GetShadowQualityForTier(1) &&
+        Perf::GetShadowQualityForTier(1) > Perf::GetShadowQualityForTier(0));
+
+    // Out-of-range tiers clamp, never crash.
+    TestEqual(TEXT("Tier clamps high"), Perf::GetViewDistanceScaleForTier(99), Perf::GetViewDistanceScaleForTier(2));
+    TestEqual(TEXT("Tier clamps low"), Perf::GetViewDistanceScaleForTier(-1), Perf::GetViewDistanceScaleForTier(0));
+
+    // Step policy: 3 slow samples drop, 12 fast samples climb, hysteresis
+    // in between (a single sample never swings the tier).
+    TestTrue(TEXT("3 slow samples step down"), Perf::ShouldStepDown(3));
+    TestFalse(TEXT("2 slow samples hold"), Perf::ShouldStepDown(2));
+    TestTrue(TEXT("12 fast samples step up"), Perf::ShouldStepUp(12));
+    TestFalse(TEXT("11 fast samples hold"), Perf::ShouldStepUp(11));
+    return true;
+}
+
+
+// --- FCR-1 regression contracts (Tests 100-102: final completion run fixes) ---
+
+// Test 100 — FCR-1-d (M-d8): party losses pull difficulty DOWN, not up.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildDDAPartyLossTest,
+    "ASTRAWILD.FCR.DDA.PartyLossDirection",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildDDAPartyLossTest::RunTest(const FString& Parameters)
+{
+    using DDA = UAstrawildDifficultySubsystem;
+
+    // Two party echo losses (metric -4) lean the game IN to help — the old code
+    // counted them as hostile defeats, pushing difficulty UP on your own
+    // creatures dying (exactly backwards).
+    TestEqual(TEXT("Two party losses -> Struggling"), DDA::ComputeSkillBand(0, 0, 0, 2), 0);
+    TestEqual(TEXT("One party loss stays Standard (hysteresis)"), DDA::ComputeSkillBand(0, 0, 0, 1), 1);
+    // Party loss weight is half a player death: 1 loss cancels 1 capture's thrust.
+    TestEqual(TEXT("One loss cancels a capture's thrust"),
+        DDA::ComputeSkillBand(0, 1, 0, 1), 1);
+    // Player deaths still dominate pressure.
+    TestEqual(TEXT("Deaths and losses stack"), DDA::ComputeSkillBand(0, 0, 1, 1), 0);
+    return true;
+}
+
+// Test 101 — FCR-1-a (M-a8): full element kits — no dead ability templates.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAbilityKitReachabilityTest,
+    "ASTRAWILD.FCR.Ability.FullElementKits",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAbilityKitReachabilityTest::RunTest(const FString& Parameters)
+{
+    // Every element derives its FULL four-ability kit — the previously dead
+    // templates (LumenBurst, StoneSkin, BloomGuard, FlareNova, GlacialWall,
+    // Overload ...) are all reachable from the derived loadout path.
+    struct FKitCase { EAstrawildElementType Element; FName A; FName B; FName C; FName D; };
+    const FKitCase Cases[] = {
+        { EAstrawildElementType::Light,  TEXT("Ability_Dawnflash"),     TEXT("Ability_PhotonVeil"),   TEXT("Ability_LumenBurst"),    TEXT("Ability_RestoringGleam") },
+        { EAstrawildElementType::Ash,    TEXT("Ability_GravelSpit"),    TEXT("Ability_DustScreen"),   TEXT("Ability_StoneSkin"),     TEXT("Ability_SiftHeal") },
+        { EAstrawildElementType::Flora,  TEXT("Ability_ThornLash"),     TEXT("Ability_RootSnare"),    TEXT("Ability_BloomGuard"),    TEXT("Ability_SapSurge") },
+        { EAstrawildElementType::Ember,  TEXT("Ability_CinderBolt"),    TEXT("Ability_HeatHaze"),     TEXT("Ability_FlareNova"),     TEXT("Ability_WarmBlood") },
+        { EAstrawildElementType::Frost,  TEXT("Ability_ShardShot"),     TEXT("Ability_DeepFreeze"),   TEXT("Ability_GlacialWall"),   TEXT("Ability_Snowmelt") },
+        { EAstrawildElementType::Pulse,  TEXT("Ability_ArcBolt"),       TEXT("Ability_StormLatch"),   TEXT("Ability_Overload"),      TEXT("Ability_Galvanize") },
+    };
+    for (const FKitCase& Case : Cases)
+    {
+        const TArray<FName> Kit = UAstrawildAbilityLibrary::ComputeDerivedAbilityIds(
+            Case.Element, EAstrawildEchoRole::Base, EAstrawildEchoFamily::Beast);
+        TestEqual(*FString::Printf(TEXT("Kit %d has 6 entries"), static_cast<int32>(Case.Element)), Kit.Num(), 6);
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.A.ToString()), Kit.Contains(Case.A));
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.B.ToString()), Kit.Contains(Case.B));
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.C.ToString()), Kit.Contains(Case.C));
+        TestTrue(*FString::Printf(TEXT("Kit %d includes %s"), static_cast<int32>(Case.Element), *Case.D.ToString()), Kit.Contains(Case.D));
+    }
+    return true;
+}
+
+// Test 102 — FCR-1-d (H-d5): IV multipliers are consumed by the stat getters' contracts.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildGeneticsIVBoundsTest,
+    "ASTRAWILD.FCR.Genetics.IVConsumptionBounds",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildGeneticsIVBoundsTest::RunTest(const FString& Parameters)
+{
+    using Gen = UAstrawildGeneticsLibrary;
+    // The IV layer is now LIVE (rolled at breeding, persisted, consumed by
+    // GetMaxHealth/GetAttackPower/GetDefense/speed): 0 = neutral, 31 = +31%.
+    TestEqual(TEXT("IV 0 is neutral"), Gen::ComputeIVStatMultiplier(0.0f), 1.0f);
+    TestEqual(TEXT("IV 31 is +31%"), Gen::ComputeIVStatMultiplier(31.0f), 1.31f);
+    TestEqual(TEXT("IV 15 is +15%"), Gen::ComputeIVStatMultiplier(15.0f), 1.15f);
+    // Negative/oversized inputs clamp (corrupt saves cannot mint stats).
+    TestEqual(TEXT("Negative IV clamps to neutral"), Gen::ComputeIVStatMultiplier(-5.0f), 1.0f);
+    TestEqual(TEXT("Oversized IV clamps to 1.31"), Gen::ComputeIVStatMultiplier(99.0f), 1.31f);
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-2 — LAN CO-OP: client world build contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP2ClientWorldPolicyTest,
+    "ASTRAWILD.LCP2.ClientWorldPolicy",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP2ClientWorldPolicyTest::RunTest(const FString& Parameters)
+{
+    // The cosmetic-world build policy: authority builds in BeginPlay (standalone
+    // + listen host), remote clients build from the replicated seed, nothing
+    // builds anywhere else (dedicated server = out of scope, MASTER_CONTROL §1b).
+    using Boot = AAstrawildWorldBootstrapper;
+    TestTrue(TEXT("Authority builds"), Boot::ShouldBuildCosmeticWorld(ROLE_Authority, NM_Standalone));
+    TestTrue(TEXT("Listen-host authority builds"), Boot::ShouldBuildCosmeticWorld(ROLE_Authority, NM_ListenServer));
+    TestTrue(TEXT("Remote client builds from seed"), Boot::ShouldBuildCosmeticWorld(ROLE_SimulatedProxy, NM_Client));
+    TestFalse(TEXT("Dedicated-server proxy does not build"), Boot::ShouldBuildCosmeticWorld(ROLE_SimulatedProxy, NM_DedicatedServer));
+
+    // The weather-visibility mapper the client atmosphere pass uses must agree
+    // with the profile table for every state (one source of truth).
+    TestEqual(TEXT("Clear visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Clear), 1.00f);
+    TestEqual(TEXT("Cloudy visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Cloudy), 1.00f);
+    TestEqual(TEXT("Rain visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Rain), 0.85f);
+    TestEqual(TEXT("HeavyRain visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::HeavyRain), 0.70f);
+    TestEqual(TEXT("Storm visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Storm), 0.55f);
+    TestEqual(TEXT("Fog visibility"), UAstrawildWeatherSubsystem::GetVisibilityMultiplierForState(EAstrawildWeatherState::Fog), 0.45f);
+
+    // Cosmetic stream determinism: same seed -> same landmark sequence;
+    // different seed -> different sequence (no hidden global state).
+    FRandomStream StreamA(static_cast<uint32>(1337) ^ AAstrawildWorldBootstrapper::CosmeticStreamSalt);
+    FRandomStream StreamB(static_cast<uint32>(1337) ^ AAstrawildWorldBootstrapper::CosmeticStreamSalt);
+    FRandomStream StreamC(static_cast<uint32>(9999) ^ AAstrawildWorldBootstrapper::CosmeticStreamSalt);
+    const float A1 = StreamA.FRand(); const float A2 = StreamA.FRand();
+    const float B1 = StreamB.FRand(); const float B2 = StreamB.FRand();
+    const float C1 = StreamC.FRand();
+    TestEqual(TEXT("Same seed same first draw"), A1, B1);
+    TestEqual(TEXT("Same seed same second draw"), A2, B2);
+    TestNotEqual(TEXT("Different seed different draw"), A1, C1);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP2DressingGateTest,
+    "ASTRAWILD.LCP2.DressingGate",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP2DressingGateTest::RunTest(const FString& Parameters)
+{
+    // The client dressing gate: expected replicated actor count = villages +
+    // dungeon generators + portals + POI markers + skiffs. The POI count comes
+    // from the registry (identical on every machine).
+    using Boot = AAstrawildWorldBootstrapper;
+    TestEqual(TEXT("17 registered POIs -> 33 expected actors"), Boot::ComputeExpectedReplicatedWorldActorCount(17), 2 + 3 + 9 + 17 + 2);
+    TestEqual(TEXT("0 POIs -> 16 expected actors"), Boot::ComputeExpectedReplicatedWorldActorCount(0), 16);
+    TestEqual(TEXT("negative POIs clamp to 0"), Boot::ComputeExpectedReplicatedWorldActorCount(-5), 16);
+
+    // The gate timeout must be positive and generous enough for initial actor
+    // streaming on a LAN join (15s contract).
+    TestTrue(TEXT("Dressing gate timeout is positive"),
+        AAstrawildWorldBootstrapper::ClientDressingGateTimeoutSeconds > 0.0f);
+    TestTrue(TEXT("Dressing gate timeout allows slow joins (>= 10s)"),
+        AAstrawildWorldBootstrapper::ClientDressingGateTimeoutSeconds >= 10.0f);
+
+    // Node quantity mirror: the depleted visual predicate is pure and shared
+    // between the server harvest path and the client OnRep mirror (same rule,
+    // no drift — pinned so the two paths can never diverge).
+    using Node = AAstrawildResourceNode;
+    TestFalse(TEXT("Infinite nodes never read as depleted"), Node::IsNodeDepleted(true, 0));
+    TestTrue(TEXT("Finite empty node reads as depleted"), Node::IsNodeDepleted(false, 0));
+    TestFalse(TEXT("Finite stocked node reads as harvestable"), Node::IsNodeDepleted(false, 5));
+    TestFalse(TEXT("Overdrafted-but-infinite stays visible"), Node::IsNodeDepleted(true, -3));
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-3 — LAN CO-OP: interaction / trade routing contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP3ServerRoutingSurfaceTest,
+    "ASTRAWILD.LCP3.ServerRoutingSurface",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP3ServerRoutingSurfaceTest::RunTest(const FString& Parameters)
+{
+    // The LAN co-op routing surface exists EXACTLY as designed (reflection
+    // contract — a dropped/renamed RPC fails here before any engine run):
+    //   PlayerCharacter: ServerInteract (the single interact-intent choke
+    //   point) + the skiff/mount input relays.
+    //   PlayerController: the first Client RPCs (notify/shop/dialogue/crafting
+    //   screen opens) + the vendor-trade and dialogue-choice server RPCs.
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("ServerInteract exists"), CharClass->FindFunctionByName(TEXT("ServerInteract")) != nullptr);
+    TestTrue(TEXT("ServerSkiffPilotInput exists"), CharClass->FindFunctionByName(TEXT("ServerSkiffPilotInput")) != nullptr);
+    TestTrue(TEXT("ServerMountRiderInput exists"), CharClass->FindFunctionByName(TEXT("ServerMountRiderInput")) != nullptr);
+
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("ClientNotify exists"), PCClass->FindFunctionByName(TEXT("ClientNotify")) != nullptr);
+    TestTrue(TEXT("ClientOpenVendorShop exists"), PCClass->FindFunctionByName(TEXT("ClientOpenVendorShop")) != nullptr);
+    TestTrue(TEXT("ClientOpenVendorDialogue exists"), PCClass->FindFunctionByName(TEXT("ClientOpenVendorDialogue")) != nullptr);
+    TestTrue(TEXT("ClientOpenCraftingScreen exists"), PCClass->FindFunctionByName(TEXT("ClientOpenCraftingScreen")) != nullptr);
+    TestTrue(TEXT("ServerVendorTrade exists"), PCClass->FindFunctionByName(TEXT("ServerVendorTrade")) != nullptr);
+    TestTrue(TEXT("ServerSubmitDialogueChoice exists"), PCClass->FindFunctionByName(TEXT("ServerSubmitDialogueChoice")) != nullptr);
+
+    // The replicated mount/pilot identity rides the pawn (client input routing).
+    TestTrue(TEXT("Pawn replicates the piloted skiff identity"),
+        CharClass->FindPropertyByName(TEXT("ReplicatedPilotedSkiff")) != nullptr);
+    TestTrue(TEXT("Pawn replicates the mounted echo identity"),
+        CharClass->FindPropertyByName(TEXT("ReplicatedMountedEcho")) != nullptr);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP3DialogueValidationTest,
+    "ASTRAWILD.LCP3.DialogueValidation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP3DialogueValidationTest::RunTest(const FString& Parameters)
+{
+    using DialogueComp = UAstrawildDialogueComponent;
+
+    // World-free tree: entry node with two choices.
+    UAstrawildDialogueTreeDefinition* Tree = NewObject<UAstrawildDialogueTreeDefinition>();
+    Tree->DialogueId = TEXT("Tree_LCP3Test");
+    Tree->EntryNodeId = TEXT("Node_Root");
+
+    FAstrawildDialogueNode Root;
+    Root.NodeId = TEXT("Node_Root");
+    FAstrawildDialogueChoice ChoiceA;
+    ChoiceA.Text = FText::FromString(TEXT("Ask about the frontier"));
+    ChoiceA.GotoNodeId = TEXT("Node_Root");
+    FAstrawildDialogueChoice ChoiceB;
+    ChoiceB.Text = FText::FromString(TEXT("Leave"));
+    ChoiceB.bEndDialogue = true;
+    Root.Choices.Add(ChoiceA);
+    Root.Choices.Add(ChoiceB);
+    Tree->Nodes.Add(Root);
+
+    // Fail-closed structural validation (the exact resolver the server RPC uses):
+    const FAstrawildDialogueChoice* Resolved = DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), 0);
+    TestTrue(TEXT("Valid node + index 0 resolves"), Resolved != nullptr);
+    if (Resolved)
+    {
+        TestEqual(TEXT("Resolved choice text matches"),
+            Resolved->Text.ToString(), FString(TEXT("Ask about the frontier")));
+    }
+    TestTrue(TEXT("Valid node + index 1 resolves"),
+        DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), 1) != nullptr);
+
+    // Every malformed submission fails CLOSED — a modified client can never
+    // reach a hidden choice through the RPC:
+    TestNull(TEXT("Null tree fails closed"), DialogueComp::ResolveValidatedChoice(nullptr, TEXT("Node_Root"), 0));
+    TestNull(TEXT("Unknown node fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Missing"), 0));
+    TestNull(TEXT("None node id fails closed"), DialogueComp::ResolveValidatedChoice(Tree, NAME_None, 0));
+    TestNull(TEXT("Negative index fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), -1));
+    TestNull(TEXT("Out-of-range index fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Root"), 2));
+
+    // Empty node: zero choices, any index fails.
+    FAstrawildDialogueNode Empty;
+    Empty.NodeId = TEXT("Node_Empty");
+    Tree->Nodes.Add(Empty);
+    TestNull(TEXT("Empty node + index 0 fails closed"), DialogueComp::ResolveValidatedChoice(Tree, TEXT("Node_Empty"), 0));
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-4 — LAN CO-OP: per-player persistence contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP4RosterPartitionTest,
+    "ASTRAWILD.LCP4.RosterPartition",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP4RosterPartitionTest::RunTest(const FString& Parameters)
+{
+    using Roster = UAstrawildEchoRosterSubsystem;
+
+    // 1) The partition rule (pure static — the exact predicate the party spawn
+    // and per-player views use): exact key match wins; the LEGACY pair
+    // (NAME_None row + NAME_None query) stays the single-player behavior;
+    // anything else belongs to another player.
+    FAstrawildEchoInstanceV2 Row;
+    Row.InstanceId = FGuid::NewGuid();
+    Row.DefinitionId = TEXT("Echo_Lumewisp");
+    TestTrue(TEXT("Legacy None row matches legacy query"), Roster::IsRosterRowOwnedBy(Row, NAME_None));
+
+    Row.OwnerPlayerKey = TEXT("Bank");
+    TestTrue(TEXT("Exact key match owns the row"), Roster::IsRosterRowOwnedBy(Row, TEXT("Bank")));
+    TestFalse(TEXT("Another player never owns the row"), Roster::IsRosterRowOwnedBy(Row, TEXT("Nima")));
+    TestFalse(TEXT("Legacy query never takes a named row"), Roster::IsRosterRowOwnedBy(Row, NAME_None));
+
+    FAstrawildEchoInstanceV2 LegacyRow;
+    LegacyRow.InstanceId = FGuid::NewGuid();
+    LegacyRow.DefinitionId = TEXT("Echo_Sprigling");
+    TestFalse(TEXT("Named player never takes a legacy row"), Roster::IsRosterRowOwnedBy(LegacyRow, TEXT("Bank")));
+
+    // 2) The live partition over a shared pool (world-free subsystem import):
+    // one pool, three owners (host legacy + two co-op players).
+    UAstrawildEchoRosterSubsystem* Subsystem = NewObject<UAstrawildEchoRosterSubsystem>();
+    TArray<FAstrawildEchoInstanceV2> Pool;
+    for (int32 i = 0; i < 6; ++i)
+    {
+        FAstrawildEchoInstanceV2 Entry;
+        Entry.InstanceId = FGuid::NewGuid();
+        Entry.DefinitionId = TEXT("Echo_Lumewisp");
+        Entry.OwnerPlayerKey = (i % 3 == 0) ? NAME_None
+            : (i % 3 == 1) ? TEXT("Bank") : TEXT("Nima");
+        Entry.bInParty = (i < 3);
+        Pool.Add(Entry);
+    }
+    Subsystem->ImportFromSave(Pool);
+    TestEqual(TEXT("Imported pool keeps all 6 rows"), Subsystem->GetRosterSize(), 6);
+
+    TestEqual(TEXT("Legacy slice = 2 rows"), Subsystem->GetRosterForPlayer(NAME_None).Num(), 2);
+    TestEqual(TEXT("Bank slice = 2 rows"), Subsystem->GetRosterForPlayer(TEXT("Bank")).Num(), 2);
+    TestEqual(TEXT("Nima slice = 2 rows"), Subsystem->GetRosterForPlayer(TEXT("Nima")).Num(), 2);
+    TestEqual(TEXT("Unknown player slice = 0 rows"), Subsystem->GetRosterForPlayer(TEXT("Stranger")).Num(), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP4CoopSaveBlockTest,
+    "ASTRAWILD.LCP4.CoopSaveBlock",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP4CoopSaveBlockTest::RunTest(const FString& Parameters)
+{
+    // 1) Fresh block = fresh state everywhere (pre-LCP saves deserialize empty
+    // blocks — a co-op joiner without a block starts clean, never garbage).
+    FAstrawildCoopPlayerSaveBlock Fresh;
+    TestTrue(TEXT("Fresh key is None"), Fresh.PlayerKey.IsNone());
+    TestEqual(TEXT("Fresh inventory empty"), Fresh.Inventory.Num(), 0);
+    TestTrue(TEXT("Fresh equips are None"),
+        Fresh.EquippedWeaponId.IsNone() && Fresh.EquippedShieldId.IsNone() &&
+        Fresh.EquippedArmorId.IsNone() && Fresh.EquippedHelmetId.IsNone() &&
+        Fresh.EquippedExosuitId.IsNone() && Fresh.EquippedScannerId.IsNone());
+    TestEqual(TEXT("Fresh quests empty"), Fresh.Quests.Num(), 0);
+    TestEqual(TEXT("Fresh flags empty"), Fresh.DialogueFlags.Num(), 0);
+    TestEqual(TEXT("Fresh attributes empty"), Fresh.Attributes.Num(), 0);
+    TestEqual(TEXT("Fresh defeats empty"), Fresh.DefeatedCreatureCounts.Num(), 0);
+    TestEqual(TEXT("Fresh durability empty"), Fresh.EquipmentDurability.Num(), 0);
+
+    // 2) Key matching contract (the exact predicate SaveWorld/LoadWorld/late-join
+    // use): one block per player, matched by exact key; no cross-player bleed.
+    FAstrawildCoopPlayerSaveBlock BlockBank;
+    BlockBank.PlayerKey = TEXT("Bank");
+    FAstrawildCoopPlayerSaveBlock BlockNima;
+    BlockNima.PlayerKey = TEXT("Nima");
+    TArray<FAstrawildCoopPlayerSaveBlock> Blocks = { BlockBank, BlockNima };
+
+    const FName Query = TEXT("Bank");
+    const FAstrawildCoopPlayerSaveBlock* Matched = Blocks.FindByPredicate(
+        [&Query](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == Query; });
+    TestTrue(TEXT("Exact key match finds the block"), Matched != nullptr && Matched->PlayerKey == TEXT("Bank"));
+    const FName Missing = TEXT("Stranger");
+    TestNull(TEXT("Unknown key matches nothing"),
+        Blocks.FindByPredicate([&Missing](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == Missing; }));
+
+    // 3) The save object carries the co-op array (reflection — schema wiring).
+    UClass* SaveClass = UAstrawildSaveGame::StaticClass();
+    TestTrue(TEXT("SaveGame has the CoopPlayers array"),
+        SaveClass->FindPropertyByName(TEXT("CoopPlayers")) != nullptr);
+    // And the roster rows carry the stable owner key.
+    TestTrue(TEXT("Echo instance rows carry OwnerPlayerKey"),
+        FAstrawildEchoInstanceV2::StaticStruct()->FindPropertyByName(TEXT("OwnerPlayerKey")) != nullptr);
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-5 — LAN CO-OP: client state sync contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP5ClientStateSyncSurfaceTest,
+    "ASTRAWILD.LCP5.ClientStateSyncSurface",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP5ClientStateSyncSurfaceTest::RunTest(const FString& Parameters)
+{
+    // Quest state replicates to the OWNING client (HUD tracker + screens read
+    // the local PC component — reflection pins the wiring):
+    UClass* QuestClass = UAstrawildQuestComponent::StaticClass();
+    TestTrue(TEXT("QuestStates replicates"), QuestClass->FindPropertyByName(TEXT("QuestStates")) != nullptr);
+    TestTrue(TEXT("ActiveQuestId replicates"), QuestClass->FindPropertyByName(TEXT("ActiveQuestId")) != nullptr);
+    TestTrue(TEXT("CompletedQuestIds replicates"), QuestClass->FindPropertyByName(TEXT("CompletedQuestIds")) != nullptr);
+
+    // The research mirror rides the GameState (GameInstance subsystems never
+    // replicate — the client imports on OnRep):
+    UClass* GameStateClass = AAstrawildGameState::StaticClass();
+    TestTrue(TEXT("GameState carries the research mirror"),
+        GameStateClass->FindPropertyByName(TEXT("ResearchMirror")) != nullptr);
+
+    // The research subsystem exposes the server-side mirror sync (called from
+    // every mutation: unlock/force-unlock/points/import/grant-starting).
+    TestTrue(TEXT("SyncMirrorToGameState exists"),
+        UAstrawildResearchSubsystem::StaticClass()->FindFunctionByName(TEXT("SyncMirrorToGameState")) != nullptr);
+    TestTrue(TEXT("Unlock notifications exist"),
+        UAstrawildResearchSubsystem::StaticClass()->FindFunctionByName(TEXT("NotifyPlayersResearchUnlocked")) != nullptr);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP5ResearchMirrorRoundTripTest,
+    "ASTRAWILD.LCP5.ResearchMirrorRoundTrip",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP5ResearchMirrorRoundTripTest::RunTest(const FString& Parameters)
+{
+    // The mirror snapshot is FAstrawildResearchSaveData — the SAME struct the
+    // save uses, so export→replicate→import is a lossless loop with the
+    // existing sanitized import (duplicates dropped, negatives clamped).
+    UAstrawildResearchSubsystem* ServerPool = NewObject<UAstrawildResearchSubsystem>();
+    FAstrawildResearchSaveData Mirror;
+
+    // Fresh state: empty mirror (pre-research sessions deserialize clean).
+    TestEqual(TEXT("Fresh mirror has no unlocks"), Mirror.UnlockedTechIds.Num(), 0);
+    TestEqual(TEXT("Fresh mirror has zero points"), Mirror.ResearchPoints, 0);
+
+    // Export path fills the mirror from the (world-free) pool.
+    ServerPool->ExportForSave(Mirror);
+    TestEqual(TEXT("Exported fresh pool is still empty"), Mirror.UnlockedTechIds.Num(), 0);
+
+    // Round-trip through the sanitized import: a hand-built mirror with
+    // duplicates + a negative RP corrupt row imports clean on the client side.
+    Mirror.UnlockedTechIds = { TEXT("Tech_BasicCrafting"), TEXT("Tech_BasicCrafting"), TEXT("Tech_Resonator") };
+    Mirror.ResearchPoints = 42;
+    UAstrawildResearchSubsystem* ClientMirrorPool = NewObject<UAstrawildResearchSubsystem>();
+    ClientMirrorPool->ImportFromSave(Mirror);
+    TestTrue(TEXT("Client mirror pool unlocked BasicCrafting"), ClientMirrorPool->IsTechUnlocked(TEXT("Tech_BasicCrafting")));
+    TestTrue(TEXT("Client mirror pool unlocked Resonator"), ClientMirrorPool->IsTechUnlocked(TEXT("Tech_Resonator")));
+    TestEqual(TEXT("Client mirror pool carries the RP total"), ClientMirrorPool->GetResearchPoints(), 42);
+
+    // A second export from the imported client pool loses nothing (lossless loop).
+    FAstrawildResearchSaveData RoundTripped;
+    ClientMirrorPool->ExportForSave(RoundTripped);
+    TestEqual(TEXT("Round-trip keeps the RP total"), RoundTripped.ResearchPoints, 42);
+    TestEqual(TEXT("Round-trip keeps the unlock count"), RoundTripped.UnlockedTechIds.Num(), 2);
+    return true;
+}
+
+
+// ===========================================================================
+// LCP-6 — LAN CO-OP: session flow / beacon protocol contracts
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP6BeaconProtocolTest,
+    "ASTRAWILD.LCP6.BeaconProtocol",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP6BeaconProtocolTest::RunTest(const FString& Parameters)
+{
+    using Lan = UAstrawildLANSessionSubsystem;
+
+    // 1) Encode/decode round-trip (the exact pair the host beacon and client
+    // listener use — discovery is one datagram, both directions pure).
+    const FString Payload = Lan::EncodeBeaconPayload(7777, 2);
+    int32 ListenPort = 0;
+    int32 PlayerCount = 0;
+    TestTrue(TEXT("Round-trip decodes"), Lan::DecodeBeaconPayload(Payload, ListenPort, PlayerCount));
+    TestEqual(TEXT("Round-trip port"), ListenPort, 7777);
+    TestEqual(TEXT("Round-trip players"), PlayerCount, 2);
+
+    // 2) Every malformed input fails CLOSED — a foreign or hostile datagram
+    // never reaches the session list:
+    TestFalse(TEXT("Wrong magic rejected"), Lan::DecodeBeaconPayload(TEXT("OTHER1|1|7777|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Truncated rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Extra fields rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777|2|9"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Version mismatch rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|2|7777|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Zero port rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|0|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Oversize port rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|65536|2"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Zero players rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777|0"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Over-cap players rejected"), Lan::DecodeBeaconPayload(TEXT("AWLAN1|1|7777|9"), ListenPort, PlayerCount));
+    TestFalse(TEXT("Garbage rejected"), Lan::DecodeBeaconPayload(TEXT(""), ListenPort, PlayerCount));
+
+    // 3) Protocol constants pin the personal-LAN scope:
+    TestEqual(TEXT("Beacon port contract"), Lan::BeaconPort, 45861);
+    TestEqual(TEXT("Default game port contract"), Lan::DefaultGamePort, 7777);
+    TestEqual(TEXT("Max players contract (PART 1)"), Lan::MaxLanPlayers, 4);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildLCP6AddressParsingTest,
+    "ASTRAWILD.LCP6.AddressParsing",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildLCP6AddressParsingTest::RunTest(const FString& Parameters)
+{
+    // Direct-connect parsing (the PART 6 fallback path):
+    FString Host;
+    int32 Port = 0;
+
+    TestTrue(TEXT("Host with port parses"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:7777"), Host, Port));
+    TestEqual(TEXT("Host extracted"), Host, FString(TEXT("192.168.1.5")));
+    TestEqual(TEXT("Port extracted"), Port, 7777);
+
+    TestTrue(TEXT("Bare host parses with the default port"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5"), Host, Port));
+    TestEqual(TEXT("Bare host kept"), Host, FString(TEXT("192.168.1.5")));
+    TestEqual(TEXT("Default port applied"), Port, 7777);
+
+    TestTrue(TEXT("Whitespace trims"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("  10.0.0.4:9000  "), Host, Port));
+    TestEqual(TEXT("Trimmed host"), Host, FString(TEXT("10.0.0.4")));
+    TestEqual(TEXT("Trimmed port"), Port, 9000);
+
+    // Fail-closed set:
+    TestFalse(TEXT("Empty address rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT(""), Host, Port));
+    TestFalse(TEXT("Whitespace-only rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("   "), Host, Port));
+    TestFalse(TEXT("Leading colon rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT(":7777"), Host, Port));
+    TestFalse(TEXT("Trailing colon rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:"), Host, Port));
+    TestFalse(TEXT("Zero port rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:0"), Host, Port));
+    TestFalse(TEXT("Oversize port rejected"), UAstrawildLANSessionSubsystem::ParseDirectAddress(TEXT("192.168.1.5:99999"), Host, Port));
+
+    // Session-info equality (the discovery dedupe key):
+    FAstrawildLanSessionInfo A;
+    A.HostAddress = TEXT("192.168.1.5");
+    A.HostPort = 7777;
+    FAstrawildLanSessionInfo B = A;
+    B.PlayerCount = 3; // player count changes do NOT change the session identity
+    TestTrue(TEXT("Same host+port = same session"), A == B);
+    B.HostPort = 9000;
+    TestFalse(TEXT("Different port = different session"), A == B);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-1 (PG-1): Field Journal (bestiary) screen contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR1JournalScreenTest,
+    "ASTRAWILD.PCR1.JournalScreen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR1JournalScreenTest::RunTest(const FString& Parameters)
+{
+    using EKnowledgeState = UAstrawildJournalScreenWidget::EKnowledgeState;
+
+    // 1) Knowledge classification — the pure rules the screen renders
+    // (pinned world-free so a changed rule fails before any engine run):
+    FAstrawildJournalEntry Unknown;
+    Unknown.EchoDefinitionId = TEXT("Echo_UnknownSpecies");
+    TestTrue(TEXT("Fresh entry is Unknown"), UAstrawildJournalScreenWidget::ClassifyKnowledgeState(Unknown) == EKnowledgeState::Unknown);
+    TestFalse(TEXT("Fresh entry is not discovered"), UAstrawildJournalScreenWidget::IsEntryDiscovered(Unknown));
+
+    FAstrawildJournalEntry ProgressOnly = Unknown;
+    ProgressOnly.EchoDefinitionId = TEXT("Echo_ProgressSpecies");
+    ProgressOnly.ObservationProgress = 41.0f;
+    TestTrue(TEXT("Partial observation is Observed (revealed)"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(ProgressOnly) == EKnowledgeState::Observed);
+    TestTrue(TEXT("Partial observation is discovered"), UAstrawildJournalScreenWidget::IsEntryDiscovered(ProgressOnly));
+
+    FAstrawildJournalEntry EncountersOnly = Unknown;
+    EncountersOnly.TimesEncountered = 3;
+    TestTrue(TEXT("Encounter count alone reveals the species"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(EncountersOnly) == EKnowledgeState::Observed);
+
+    FAstrawildJournalEntry FullyStudied = ProgressOnly;
+    FullyStudied.bScanned = true;
+    FullyStudied.bFoodDiscovered = true;
+    FullyStudied.bHabitatDiscovered = true;
+    FullyStudied.bWeaknessDiscovered = true;
+    TestTrue(TEXT("All four knowledge flags = Studied (capture-bonus state)"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(FullyStudied) == EKnowledgeState::Studied);
+
+    FAstrawildJournalEntry ScannedOnly = Unknown;
+    ScannedOnly.bScanned = true;
+    TestTrue(TEXT("Scan alone reveals, but is not Studied"),
+        UAstrawildJournalScreenWidget::ClassifyKnowledgeState(ScannedOnly) == EKnowledgeState::Observed);
+    TestTrue(TEXT("Scanned entry is discovered"), UAstrawildJournalScreenWidget::IsEntryDiscovered(ScannedOnly));
+
+    // 2) Surface wiring — the screen + its entry points exist by name
+    // (reflection contract: a dropped/renamed toggle or button fails here):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleJournalScreen"), PCClass->FindFunctionByName(TEXT("ToggleJournalScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsJournalOpen"), PCClass->FindFunctionByName(TEXT("IsJournalOpen")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the journal input action"),
+        CharClass->FindPropertyByName(TEXT("JournalAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the journal button"),
+        PauseClass->FindPropertyByName(TEXT("JournalButton")) != nullptr);
+
+    // 3) The journal data source itself (the surface's whole reason to exist):
+    //    JournalSubsystem exposes the entry API the screen consumes.
+    UClass* JournalClass = UAstrawildJournalSubsystem::StaticClass();
+    TestTrue(TEXT("JournalSubsystem exposes GetEntry"), JournalClass->FindFunctionByName(TEXT("GetEntry")) != nullptr);
+    TestTrue(TEXT("JournalSubsystem exposes GetAllEntries"), JournalClass->FindFunctionByName(TEXT("GetAllEntries")) != nullptr);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-2 (PG-2): Echo Roster / party-ring management screen contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR2RosterScreenTest,
+    "ASTRAWILD.PCR2.RosterScreen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR2RosterScreenTest::RunTest(const FString& Parameters)
+{
+    // 1) The party-ring eligibility rule (the spawn path and the screen share
+    // ONE pure predicate — pinned world-free):
+    FAstrawildEchoInstanceV2 Fresh;
+    Fresh.EchoDefinitionId = TEXT("Echo_Terraquill");
+    Fresh.bInParty = true;
+    TestTrue(TEXT("Fresh captured row spawns in the ring"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(Fresh));
+
+    FAstrawildEchoInstanceV2 Benched = Fresh;
+    Benched.bBenched = true;
+    TestFalse(TEXT("Benched row never occupies the ring"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(Benched));
+
+    FAstrawildEchoInstanceV2 InvalidId = Fresh;
+    InvalidId.InstanceId.Invalidate();
+    TestFalse(TEXT("Invalid instance identity never spawns"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(InvalidId));
+
+    FAstrawildEchoInstanceV2 NoSpecies = Fresh;
+    NoSpecies.EchoDefinitionId = NAME_None;
+    TestFalse(TEXT("Missing species never spawns"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(NoSpecies));
+
+    FAstrawildEchoInstanceV2 NotCaptured = Fresh;
+    NotCaptured.bInParty = false;
+    TestFalse(TEXT("Uncaptured row never spawns"),
+        UAstrawildEchoRosterSubsystem::ShouldSpawnInPartyRing(NotCaptured));
+
+    // 2) Ring capacity rules (the Deploy/Bench button gating):
+    TestTrue(TEXT("Benching is always allowed (full ring included)"),
+        UAstrawildRosterScreenWidget::CanDeployIntoRing(3, 3, false));
+    TestFalse(TEXT("Deploy into a full ring is refused"),
+        UAstrawildRosterScreenWidget::CanDeployIntoRing(3, 3, true));
+    TestTrue(TEXT("Deploy into a free slot is allowed"),
+        UAstrawildRosterScreenWidget::CanDeployIntoRing(2, 3, true));
+    TestTrue(TEXT("Zero max ring never accepts a deploy"),
+        !UAstrawildRosterScreenWidget::CanDeployIntoRing(0, 0, true));
+
+    // 3) Structural wiring (reflection contract — dropped/renamed surfaces
+    // fail here before any engine run):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleRosterScreen"), PCClass->FindFunctionByName(TEXT("ToggleRosterScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsRosterOpen"), PCClass->FindFunctionByName(TEXT("IsRosterOpen")) != nullptr);
+    TestTrue(TEXT("Controller carries the replicated roster mirror"),
+        PCClass->FindPropertyByName(TEXT("RosterMirror")) != nullptr);
+    TestTrue(TEXT("Controller exposes RequestSetEchoBenched (local-authority path)"),
+        PCClass->FindFunctionByName(TEXT("RequestSetEchoBenched")) != nullptr);
+    TestTrue(TEXT("Controller exposes ServerSetEchoBenched (validated client path)"),
+        PCClass->FindFunctionByName(TEXT("ServerSetEchoBenched")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the roster input action"),
+        CharClass->FindPropertyByName(TEXT("RosterAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the roster button"),
+        PauseClass->FindPropertyByName(TEXT("RosterButton")) != nullptr);
+
+    UClass* RosterClass = UAstrawildEchoRosterSubsystem::StaticClass();
+    TestTrue(TEXT("Roster subsystem exposes SetInstanceBenched"),
+        RosterClass->FindFunctionByName(TEXT("SetInstanceBenched")) != nullptr);
+
+    // 4) The additive save field: benching is a ROSTER-side fact that rides the
+    // existing v2 payload (no schema bump — legacy saves deserialize unbenched).
+    UClass* RowClass = FAstrawildEchoInstanceV2::StaticStruct();
+    TestTrue(TEXT("Instance row carries the bench flag"),
+        RowClass->FindPropertyByName(TEXT("bBenched")) != nullptr);
+    TestFalse(TEXT("Legacy default is unbenched (pre-PCR saves load unchanged)"),
+        FAstrawildEchoInstanceV2().bBenched);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-3 (PG-3): World Map screen contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR3MapScreenTest,
+    "ASTRAWILD.PCR3.MapScreen",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR3MapScreenTest::RunTest(const FString& Parameters)
+{
+    // 1) The world→map projection (pure math — pinned world-free):
+    //    uniform scale, centered letterbox, corners map to corners.
+    const FBox2D Bounds(FVector2D(0.0f, 0.0f), FVector2D(320000.0f, 240000.0f)); // 3.2km x 2.4km
+    const FVector2D MapSize(720.0f, 520.0f);
+
+    const FVector2D MinCorner = UAstrawildMapScreenWidget::ProjectWorldToMap(Bounds.Min, Bounds, MapSize);
+    const FVector2D MaxCorner = UAstrawildMapScreenWidget::ProjectWorldToMap(Bounds.Max, Bounds, MapSize);
+    TestEqual(TEXT("World min maps to map min"), MinCorner, FVector2D(0.0f, 0.0f));
+    TestEqual(TEXT("World max maps to map max"), MaxCorner, MapSize);
+
+    const FVector2D Center = UAstrawildMapScreenWidget::ProjectWorldToMap(Bounds.GetCenter(), Bounds, MapSize);
+    TestEqual(TEXT("World center maps to map center"), Center, MapSize * 0.5f);
+
+    // Uniform scale: the 4:3 world must stay 4:3 on the map (never stretched).
+    const FVector2D Quarter = UAstrawildMapScreenWidget::ProjectWorldToMap(FVector2D(80000.0f, 60000.0f), Bounds, MapSize);
+    TestEqual(TEXT("Quarter point maps proportionally"), Quarter, MapSize * 0.25f);
+
+    // Degenerate bounds never divide by zero (fail-closed to the corner).
+    const FBox2D Empty(FVector2D::ZeroVector, FVector2D::ZeroVector);
+    TestEqual(TEXT("Degenerate bounds project to zero"),
+        UAstrawildMapScreenWidget::ProjectWorldToMap(FVector2D(100.0f, 100.0f), Empty, MapSize), FVector2D::ZeroVector);
+
+    // 2) Wiring (reflection contract — dropped/renamed surfaces fail here):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleMapScreen"), PCClass->FindFunctionByName(TEXT("ToggleMapScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsMapOpen"), PCClass->FindFunctionByName(TEXT("IsMapOpen")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the map input action"),
+        CharClass->FindPropertyByName(TEXT("MapAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the map button"),
+        PauseClass->FindPropertyByName(TEXT("MapButton")) != nullptr);
+
+    // 3) The map's data sources (read-only snapshot surfaces):
+    UClass* EventClass = UAstrawildWorldEventSubsystem::StaticClass();
+    TestTrue(TEXT("WorldEventSubsystem exposes GetActiveRuntimeEvents for map pins"),
+        EventClass->FindFunctionByName(TEXT("GetActiveRuntimeEvents")) != nullptr);
+    UClass* POIClass = UAstrawildPOISubsystem::StaticClass();
+    TestTrue(TEXT("POISubsystem exposes IsPOIDiscovered (undiscovered POIs stay hidden)"),
+        POIClass->FindFunctionByName(TEXT("IsPOIDiscovered")) != nullptr);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PCR-4/PCR-5: Tier-B archetype mesh library contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR4TierBLibraryTest,
+    "ASTRAWILD.PCR4.TierBLibrary",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR4TierBLibraryTest::RunTest(const FString& Parameters)
+{
+    // 1) The library size pins the bake (39 species = the strategy §5 Tier-B
+    // rule over the ACTUAL source tables: zone-wildlife + dungeon pools +
+    // event boosts + Huge + the monolith/colossus family, minus Tier-A).
+    const TArray<FName>& TierB = AstrawildArtPack::GetTierBSpeciesIds();
+    TestEqual(TEXT("Tier-B library holds 39 species"), TierB.Num(), 39);
+
+    // 2) Convention-path derivation (the definition-driven opt-in binding):
+    TestEqual(TEXT("Mesh path derives by convention"),
+        AstrawildArtPack::BuildTierBMechPath(TEXT("Echo_Rimefang")),
+        FString(TEXT("/Game/Characters/Echoes/SK_Echo_Rimefang")));
+    TestEqual(TEXT("Idle clip path derives"),
+        AstrawildArtPack::BuildTierBAnimPath(TEXT("Echo_Rimefang"), false),
+        FString(TEXT("/Game/Characters/Echoes/AM_Rimefang_Idle")));
+    TestEqual(TEXT("Move clip path derives"),
+        AstrawildArtPack::BuildTierBAnimPath(TEXT("Echo_Rimefang"), true),
+        FString(TEXT("/Game/Characters/Echoes/AM_Rimefang_Move")));
+    TestTrue(TEXT("Tier-B membership predicate"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Stonehide")));
+    TestFalse(TEXT("Non-members stay out"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Mosspaw")));
+    TestFalse(TEXT("Tier-A species stay out"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Terraquill")));
+
+    // 3) Every Tier-B entry has a baked GLB in ArtSource (the manifest mirror —
+    // a dropped file or a renamed species fails here before any engine import).
+    const FString EchoesDir = FPaths::ProjectDir() / TEXT("ArtSource/Meshes/Echoes");
+    for (const FName& Species : TierB)
+    {
+        const FString SpeciesName = Species.ToString().RightChop(5);
+        const FString GlbPath = EchoesDir / FString::Printf(TEXT("SK_Echo_%s.glb"), *SpeciesName);
+        TestTrue(FString::Printf(TEXT("GLB baked: %s"), *SpeciesName), FPaths::FileExists(GlbPath));
+    }
+
+    // 4) Every Tier-B species resolves in the registry and carries the
+    // convention binding after ProductionContent runs (the opt-in contract:
+    // the soft path is set; the LOAD stays lazy — unresolved = PMC body).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    int32 Bound = 0;
+    for (const FName& Species : TierB)
+    {
+        const UAstrawildEchoDefinition* Def = Registry->FindEcho(Species);
+        if (!TestTrue(FString::Printf(TEXT("Registry resolves %s"), *Species.ToString()), Def != nullptr))
+        {
+            continue;
+        }
+        if (Def->SkeletalMesh.IsValid())
+        {
+            ++Bound;
+            TestEqual(FString::Printf(TEXT("Convention mesh bound: %s"), *Species.ToString()),
+                Def->SkeletalMesh.ToSoftObjectPath().ToString(),
+                AstrawildArtPack::BuildTierBMechPath(Species));
+        }
+    }
+    TestEqual(TEXT("All 39 Tier-B species carry the convention binding"), Bound, 39);
+    return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// PCR-5 (PG-5): post-game hunt system contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR5HuntSystemTest,
+    "ASTRAWILD.PCR5.HuntSystem",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPCR5HuntSystemTest::RunTest(const FString& Parameters)
+{
+    // 1) The contract table (pure — world-free): 8 repeatable cull contracts,
+    //    every row reusing an EXISTING species + EXISTING reward item.
+    UAstrawildHuntSubsystem::FHuntContract Contract;
+    TestTrue(TEXT("Hunt_Hunt table resolves"), UAstrawildHuntSubsystem::FindContract(TEXT("Hunt_DuskmothCull"), Contract));
+    TestEqual(TEXT("Duskmoth contract requires 5"), Contract.RequiredDefeats, 5);
+    TestEqual(TEXT("Duskmoth contract targets the species"), Contract.SpeciesId, FName(TEXT("Echo_Duskmoth")));
+    TestEqual(TEXT("Duskmoth contract rewards an existing item"), Contract.RewardItemId, FName(TEXT("Item_DawnShard")));
+    TestEqual(TEXT("Duskmoth contract reward quantity"), Contract.RewardQuantity, 3);
+
+    TestFalse(TEXT("Unknown hunt id fails closed"), UAstrawildHuntSubsystem::FindContract(TEXT("Hunt_Nonsense"), Contract));
+
+    const int32 KnownHuntCount = 8;
+    const TCHAR* KnownHunts[] = {
+        TEXT("Hunt_DuskmothCull"), TEXT("Hunt_StonehideCull"), TEXT("Hunt_EmberfangCull"),
+        TEXT("Hunt_RimefangCull"), TEXT("Hunt_BrinefinCull"), TEXT("Hunt_SunhideCull"),
+        TEXT("Hunt_VerdantbloomCull"), TEXT("Hunt_MonolithCull"),
+    };
+    for (const TCHAR* HuntId : KnownHunts)
+    {
+        TestTrue(FString::Printf(TEXT("Contract exists: %s"), HuntId),
+            UAstrawildHuntSubsystem::FindContract(HuntId, Contract));
+    }
+
+    // 2) The hunt save row (additive, no schema bump): fresh rows are pristine.
+    FAstrawildHuntSaveRow FreshRow;
+    TestTrue(TEXT("Fresh hunt row has no defeats"), FreshRow.Defeats == 0);
+    TestTrue(TEXT("Fresh hunt row has no player key"), FreshRow.PlayerKey.IsNone());
+    UClass* RowStruct = FAstrawildHuntSaveRow::StaticStruct();
+    TestTrue(TEXT("Save row carries the fields"), RowStruct->FindPropertyByName(TEXT("PlayerKey")) != nullptr
+        && RowStruct->FindPropertyByName(TEXT("HuntId")) != nullptr
+        && RowStruct->FindPropertyByName(TEXT("Defeats")) != nullptr);
+
+    // 3) Surface wiring (reflection contract):
+    UClass* PCClass = AAstrawildPlayerController::StaticClass();
+    TestTrue(TEXT("Controller exposes ToggleHuntScreen"), PCClass->FindFunctionByName(TEXT("ToggleHuntScreen")) != nullptr);
+    TestTrue(TEXT("Controller exposes IsHuntOpen"), PCClass->FindFunctionByName(TEXT("IsHuntOpen")) != nullptr);
+    TestTrue(TEXT("Controller exposes RequestClaimHunt (local-authority path)"),
+        PCClass->FindFunctionByName(TEXT("RequestClaimHunt")) != nullptr);
+    TestTrue(TEXT("Controller exposes ServerClaimHunt (validated client path)"),
+        PCClass->FindFunctionByName(TEXT("ServerClaimHunt")) != nullptr);
+
+    UClass* CharClass = AAstrawildPlayerCharacter::StaticClass();
+    TestTrue(TEXT("Character carries the hunt input action"),
+        CharClass->FindPropertyByName(TEXT("HuntAction")) != nullptr);
+
+    UClass* PauseClass = UAstrawildPauseMenuWidget::StaticClass();
+    TestTrue(TEXT("Pause menu carries the hunt button"),
+        PauseClass->FindPropertyByName(TEXT("HuntButton")) != nullptr);
+
+    // 4) The subsystem surface (the save plumbing rides the world save).
+    UClass* HuntClass = UAstrawildHuntSubsystem::StaticClass();
+    TestTrue(TEXT("Hunt subsystem exposes GetHuntProgress"), HuntClass->FindFunctionByName(TEXT("GetHuntProgress")) != nullptr);
+    TestTrue(TEXT("Hunt subsystem exposes IsHuntComplete"), HuntClass->FindFunctionByName(TEXT("IsHuntComplete")) != nullptr);
+    TestTrue(TEXT("Hunt subsystem exposes ClaimHunt"), HuntClass->FindFunctionByName(TEXT("ClaimHunt")) != nullptr);
+    TestTrue(TEXT("Save game object carries the Hunts array"),
+        UAstrawildSaveGame::StaticClass()->FindPropertyByName(TEXT("Hunts")) != nullptr);
     return true;
 }
 

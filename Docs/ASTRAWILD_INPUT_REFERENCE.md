@@ -1,7 +1,7 @@
 # ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-08-30** (final production run sync — +scan/drone/robot/UI keys, **gamepad support live**; 25 actions)
+**Date: 2026-09-03** (PCR-5 sync — 32 actions incl. AWD_Journal Field Journal on P + AWD_Roster Echo Roster on L + AWD_Map World Map on M + AWD_Hunt Hunt Board on U; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,11 +11,10 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (25 keys → 25 actions)
+## 1. Complete Keybinding Table (32 actions)
 
-`BuildRuntimeInputDefaults` creates **25 runtime actions** (`MakeRuntimeAction` count) and the
-log line matches ("25 actions, WASD+mouse+wheel+UI"). Key count = physical keyboard keys (mouse
-inputs listed separately).
+`BuildRuntimeInputDefaults` creates **32 runtime actions** (`MakeRuntimeAction` count incl.
+Descend). Key count = physical keyboard keys (mouse inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
 |---|---|---|---|---|---|
@@ -40,6 +39,10 @@ inputs listed separately).
 | **J** | Deploy Robot (`AWD_DeployRobot`) | Started | `DeployRobot` | **Robotics (final run):** consumes `Item_UtilityRobot` → mans the nearest unmanned work site (flat rate, power-gated) | |
 | **TAB** | Inventory (`AWD_Inventory`) | Started | `ToggleInventoryScreenInput` | **UI (final run):** pack screen — stacks/weight/6-slot loadout, Use/Equip buttons | Closes other screens |
 | **K** | Research (`AWD_Research`) | Started | `ToggleResearchScreenInput` | **UI (final run):** research tree screen — costs/prereqs/unlock buttons | Also opens from the Research Desk [E] |
+| **P** | Field Journal (`AWD_Journal`) | Started | `ToggleJournalScreenInput` | **UI (PCR-1):** Field Journal bestiary screen — every species' scan/food/habitat/weakness knowledge, observation %, encounter count, collection totals | Undiscovered species read "???" (the collection pull); gamepad reaches it via the pause-menu button |
+| **L** | Echo Roster (`AWD_Roster`) | Started | `ToggleRosterScreenInput` | **UI (PCR-2):** captured-Echo roster — identity/level/bond/top-work per Echo + Bench/Deploy ring management (server-authoritative; replicated mirror for LAN clients) | Ring = MaxPartySize (3); gamepad reaches it via the pause-menu button |
+| **M** | World Map (`AWD_Map`) | Started | `ToggleMapScreenInput` | **UI (PCR-3):** world map — 12-zone grid (name/threat/hazard tint), discovered-POI dots, villages, dungeons, active world-event pins, player marker, active-objective line + quest-target POI highlight | Read-only snapshot (reopen to refresh); undiscovered POIs stay hidden; gamepad reaches it via the pause-menu button |
+| **U** | Hunt Board (`AWD_Hunt`) | Started | `ToggleHuntScreenInput` | **UI (PCR-5):** post-game hunt board — 8 repeatable cull contracts with live progress + Claim buttons (server-authoritative; rewards land via AddItemSilent) | Rounds reset on claim — repeatable forever; gamepad reaches it via the pause-menu button |
 | **Escape** | Pause (`AWD_Pause`) | Started | `TogglePauseMenuInput` | **UI (final run):** pause menu — Resume / Save Now / Quit To Desktop (world paused) | Also on gamepad Start |
 | **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema v3) | Server/authority only |
 | **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world (work sites, battery, drones, robots included) | Server/authority only |
@@ -131,3 +134,11 @@ time-scale testing of decay rates.
   `DefaultMappingContext` on the player Blueprint (the runtime build then skips itself).
 - **Planned:** real IMC/IA assets (M9) + settings screen with full remap, sensitivity, invert, toggle/hold,
   aim assist per master plan §5/§12.
+
+
+## Gameplay Depth Pack additions (v3.4)
+
+| Key | Gamepad | Action | Since |
+|-----|---------|--------|-------|
+| T | Right stick click | Party ability cast — every owned Echo casts its best ready ability (heal when hurt, offense otherwise) | GDP-1 |
+| Y | — (radial menu pass owns gamepad smart-cast) | Player smart-cast — priority ladder picks the best ready unlocked skill (SecondWind > Whirlwind > PowerStrike > HuntersFocus > Dash > Overcharge) | GDP-3 |

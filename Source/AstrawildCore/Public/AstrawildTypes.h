@@ -171,6 +171,21 @@ enum class EAstrawildWeatherState : uint8
 };
 
 /**
+ * Final Run — Act 3 "The Storm Crown" ending state (directive §11 FINAL STORY SPEC).
+ * None = the story is still in play. The two endings are one-way and persisted
+ * (save schema v5); post-game free-roam continues under the chosen sky.
+ * Appended-only, save-safe (serialized as int32).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildEndingState : uint8
+{
+    None UMETA(DisplayName="The Storm Crown Stirs"),
+    TheDawnThatStays UMETA(DisplayName="The Dawn That Stays"),
+    TheStormThatSleeps UMETA(DisplayName="The Storm That Sleeps"),
+    Count UMETA(Hidden)
+};
+
+/**
  * World zones of the Shattered Vale (Batch 7 — directive §21/M-13; Batch 8 expands
  * the grid from 3x2 to 4x3): twelve rectangular regions tiling the 3.2km x 2.4km
  * surface world. Zone lookup is a pure static (see UAstrawildZoneSubsystem) so HUD
@@ -479,6 +494,23 @@ struct ASTRAWILDCORE_API FAstrawildStatusEffect
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
     float DamagePerSecond = 0.0f;
 
+    /**
+     * DP-6 (additive): optional stamina regen per second while active — the
+     * positive mirror of DamagePerSecond (field-ration buff verb). 0 = none.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
+    float StaminaRegenPerSecond = 0.0f;
+
+    /**
+     * DP-9 (additive): optional passive stamina-regen suppression per second
+     * while active — the room-level ash-lung verb (Hollow Underlight uncleared
+     * rooms). Mirrors the DP-7 zone ash-lung contract exactly: consumed by the
+     * passive regen branch CLAMPED at zero net regen, so a status can never
+     * turn regen into a hidden drain. 0 = none.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
+    float StaminaRegenPenaltyPerSecond = 0.0f;
+
     /** Optional movement speed multiplier while active. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Status", meta=(ClampMin="0.0"))
     float SpeedMultiplier = 1.0f;
@@ -520,6 +552,56 @@ struct ASTRAWILDCORE_API FAstrawildEchoInstanceV2
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
     bool bInParty = false;
+
+    /**
+     * PCR-2 (additive, no schema bump): player's party-ring selection. false
+     * (default) = eligible for the ≤MaxPartySize spawn ring — identical to all
+     * pre-PCR behavior. true = benched: the Echo stays captured and in the
+     * roster (bInParty untouched) but does NOT occupy a party ring slot, so the
+     * player chooses which companions follow. Pre-PCR saves deserialize as
+     * false everywhere (nothing benched).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    bool bBenched = false;
+
+    /**
+     * Final-audit M-2 (additive, no schema bump): health at save time. 0 = the
+     * pre-audit sentinel (legacy saves / fresh entries) — restore full. Otherwise
+     * restored clamped to [1, MaxHealth] so a load can neither revive a defeated
+     * echo for free nor mint overheal.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0"))
+    float CurrentHealth = 0.0f;
+
+    /**
+     * SCP Phase 9 (additive, no schema bump): creature sanity at save time.
+     * 0 = legacy sentinel — 100 (healthy) on restore. Absent in pre-SCP saves.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo", meta=(ClampMin="0.0", ClampMax="100.0"))
+    float Sanity = 0.0f;
+
+    /** SCP Phase 9 (additive): active illness id (NAME_None = healthy). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    FName IllnessId = NAME_None;
+
+    /** SCP Phase 10 (additive): passive traits rolled at breeding (4 slots). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    TArray<FName> Traits;
+
+    /**
+     * LCP-4 (additive, LAN co-op): STABLE owner key for roster partition and
+     * per-player save blocks (player name / slot id — NOT the live pawn name,
+     * which stays on the actor's OwnerPlayerId for the H-1 consumer contract).
+     * NAME_None = legacy/host-owned row (single-player saves stay loadable).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    FName OwnerPlayerKey = NAME_None;
+
+    /** FCR-1-d (H-d5, additive): hidden IVs — Health / Attack / Defense / Speed,
+     *  0-31 each (+1%/pt). Rolled at breeding, persisted, consumed by the stat
+     *  getters. Legacy saves default to zero (neutral). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo")
+    FVector4 IVs = FVector4::ZeroVector;
 };
 
 /** Quest objective definition + runtime progress (directive §25). */
@@ -582,6 +664,50 @@ struct ASTRAWILDCORE_API FAstrawildBuildingSaveData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     FName OwnerPlayerId = NAME_None;
+
+    /**
+     * FR-2 (Final Run redo): material snapshot so a load whose building definition
+     * was removed from the registry can still refund the player instead of eating
+     * the materials. Additive — older saves deserialize with NAME_None/0 and the
+     * fail-closed path falls back to destroying the ghost building (logged).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName RefundItemId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0"))
+    int32 RefundItemCount = 0;
+
+    /**
+     * Final Run (FR-9): door open state (additive — older saves deserialize
+     * closed, which matches the pre-door world exactly).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bIsOpen = false;
+
+    /**
+     * Final Run (FR-9): storage crate contents (additive — older saves
+     * deserialize empty crates; nothing is lost, nothing is minted).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FAstrawildItemStack> StoredItems;
+
+    // --- SCP Phase 8 (additive): farm plot crop lifecycle ---
+
+    /** Crop seed item (NAME_None on empty plots). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName CropSeedId = NAME_None;
+
+    /** Crop state as uint8-cast EAstrawildCropState (0 = Empty). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    uint8 CropState = 0;
+
+    /** Crop growth 0..1. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    float CropGrowth = 0.0f;
+
+    /** True while the plot is composted (x2 growth). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    bool bCropFertilized = false;
 };
 
 /**
@@ -767,6 +893,12 @@ struct ASTRAWILDCORE_API FAstrawildWorkSiteSaveData
     /** Output produced per completed work cycle (definition default 1). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="1"))
     int32 OutputQuantity = 1;
+
+    /** FCR-1-d fix (L-d16, additive): UTC ticks this site's offline production
+     *  was credited THROUGH — a crash between load and the next autosave used
+     *  to re-credit the same window on reload. 0 = never credited (legacy). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int64 LastOfflineCreditUtcTicks = 0;
 };
 
 /** Utility drone snapshot (save schema v3). */
@@ -973,4 +1105,370 @@ struct ASTRAWILDCORE_API FAstrawildWorldEventScheduleSaveData
     /** Per-event cooldown end (absolute in-world minute); pruned as they expire. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
     TMap<FName, int32> CooldownEndMinutes;
+};
+
+// ===========================================================================
+// Gameplay Depth Pack (GDP) — real variety layer on top of the frozen core.
+// Every piece is additive: old saves keep loading, existing systems read the
+// bonuses opportunistically, and all data is code-default registered so the
+// zero-asset build path stays intact.
+// ===========================================================================
+
+/** GDP-1: what an Echo ability does when it resolves. */
+UENUM(BlueprintType)
+enum class EAstrawildAbilityCategory : uint8
+{
+    Offensive UMETA(DisplayName="Offensive (elemental strike)"),
+    Debuff UMETA(DisplayName="Debuff (status on target)"),
+    Defensive UMETA(DisplayName="Defensive (self shield)"),
+    Restore UMETA(DisplayName="Restore (party heal)"),
+    Mobility UMETA(DisplayName="Mobility (self surge)")
+};
+
+/** GDP-1: one Echo ability template (code-default registered, data-driven). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildAbilityData
+{
+    GENERATED_BODY()
+
+    /** Stable ability id (Ability_XXX). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    FName AbilityId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    FText DisplayName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(MultiLine=true))
+    FText Description;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    EAstrawildAbilityCategory Category = EAstrawildAbilityCategory::Offensive;
+
+    /** Element carried — offensive bolts ride the elemental damage pipeline. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    EAstrawildElementType Element = EAstrawildElementType::None;
+
+    /** Damage (offensive/debuff DoT scale) or heal amount (restore). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="0.0"))
+    float Power = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="1.0"))
+    float CooldownSeconds = 6.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="100.0"))
+    float Range = 900.0f;
+
+    /** Echo level required before the ability is known. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="1"))
+    int32 UnlockLevel = 1;
+
+    /** Optional status applied on resolve (target for debuff, self for defensive/mobility). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability")
+    FName StatusId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="0.0"))
+    float StatusSeconds = 0.0f;
+
+    /** Movement speed multiplier carried by the applied status. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Ability", meta=(ClampMin="0.0"))
+    float StatusSpeedMultiplier = 1.0f;
+};
+
+/**
+ * DP-3: one element-pair party resonance row. When the active party holds at
+ * least two DIFFERENT elements, the dominant pair (first in canon table order)
+ * grants this named bonus to every captured party Echo of that owner — an
+ * additive layer beside the four species passives, never stacking with them.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildPartyResonance
+{
+    GENERATED_BODY()
+
+    /** Stable resonance id (Resonance_XXX). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance")
+    FName ResonanceId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance")
+    FText DisplayName;
+
+    /** Fraction of incoming damage removed from every party Echo (0.08 = 8%). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance", meta=(ClampMin="0.0", ClampMax="0.5"))
+    float DamageMitigation = 0.0f;
+
+    /** Fraction added to offensive/restore ability power of party Echoes (0.10 = 10%). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance", meta=(ClampMin="0.0", ClampMax="0.5"))
+    float AbilityPowerBonus = 0.0f;
+
+    /** Fraction added to debuff status damage/duration applied by party Echoes (0.10 = 10%). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Echo|Resonance", meta=(ClampMin="0.0", ClampMax="0.5"))
+    float StatusPotencyBonus = 0.0f;
+
+    /** False when no pair is present (the default row carries no id). */
+    bool IsValid() const { return !ResonanceId.IsNone(); }
+};
+
+/** GDP-2: how a species moves through the world. */
+UENUM(BlueprintType)
+enum class EAstrawildLocomotionClass : uint8
+{
+    /** Definition did not set one — derived deterministically from family/home zone. */
+    Auto UMETA(DisplayName="Auto (derived)"),
+    Land UMETA(DisplayName="Land"),
+    Water UMETA(DisplayName="Water (amphibious, faster in home water)"),
+    Flying UMETA(DisplayName="Flying (true flight, ignores ground nav)")
+};
+
+/** GDP-3: player growth attributes (each 1..10, fed by doing the thing). */
+UENUM(BlueprintType)
+enum class EAstrawildAttributeType : uint8
+{
+    Might UMETA(DisplayName="Might (melee damage)"),
+    Vigor UMETA(DisplayName="Vigor (max health)"),
+    Agility UMETA(DisplayName="Agility (stamina & speed)"),
+    Instinct UMETA(DisplayName="Instinct (capture & observation)"),
+    Craft UMETA(DisplayName="Craft (crafting speed & refunds)")
+};
+
+/** GDP-3: live state of one attribute. */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildAttributeStat
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Attribute", meta=(ClampMin="1", ClampMax="10"))
+    int32 Level = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Attribute", meta=(ClampMin="0.0"))
+    float XP = 0.0f;
+};
+
+/** GDP-3: active player skills unlocked by attribute milestones. */
+UENUM(BlueprintType)
+enum class EAstrawildPlayerSkillId : uint8
+{
+    None UMETA(DisplayName="None"),
+    PowerStrike UMETA(DisplayName="Power Strike (Might 3)"),
+    Whirlwind UMETA(DisplayName="Whirlwind (Might 6)"),
+    Dash UMETA(DisplayName="Dash (Agility 3)"),
+    SecondWind UMETA(DisplayName="Second Wind (Vigor 4)"),
+    HuntersFocus UMETA(DisplayName="Hunter's Focus (Instinct 4)"),
+    Masterwork UMETA(DisplayName="Masterwork (Craft 5)"),
+    Overcharge UMETA(DisplayName="Overcharge (Instinct 7)")
+};
+
+/** GDP-3: save payload for one attribute (additive schema v5 field). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildAttributeSaveData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    EAstrawildAttributeType Type = EAstrawildAttributeType::Might;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="1", ClampMax="10"))
+    int32 Level = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0"))
+    float XP = 0.0f;
+
+    /**
+     * DP-4: the player's 3-slot skill loadout rides on the FIRST row of the
+     * attribute payload (index = slot, None = empty slot). Additive v5 field —
+     * pre-DP-4 rows deserialize with an empty array, which reads as an
+     * all-empty loadout (legacy smart-cast behavior). (The enum above is the
+     * pre-existing skill id — this batch only moved its declaration above the
+     * struct so the field can reference it; pure reorder, no semantic change.)
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<EAstrawildPlayerSkillId> BoundSkills;
+};
+
+/** GDP-4: NPC relationship persistence (additive schema v5 field). */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildNPCAffinitySaveData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    FName NPCId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save", meta=(ClampMin="0.0", ClampMax="100.0"))
+    float Affinity = 0.0f;
+
+    // FCR-1-b fix (M-b5): the once-per-day affinity gates persist too — a
+    // save/load inside one in-world day used to reset them and let the player
+    // farm +2 per reload. -1 = no gain yet (legacy saves stay compatible).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 LastTalkGainDay = -1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 LastTradeGainDay = -1;
+};
+
+/**
+ * LCP-4 (LAN co-op, additive v5 payload — no schema bump): one block per
+ * non-host player. The HOST player keeps the legacy singular fields
+ * (byte-identical single-player behavior); players 2..4 persist here, keyed
+ * by the STABLE player key (player name / slot id). The world block (quests
+ * chain of record, roster with owner keys, research, buildings, affinity...)
+ * stays shared/host-authoritative — this block carries each individual's
+ * inventory, equipment, vitals, position, growth, quest VIEW, dialogue flags
+ * and equipment wear. Absent in pre-LCP saves = fresh states.
+ */
+USTRUCT(BlueprintType)
+/**
+ * PCR-5 (PG-5): post-game hunt progress row (additive, no schema bump — rides
+ * the world save as one flat array keyed by the stable player key; pre-PCR
+ * saves deserialize with zero rows = no hunt history, nothing lost).
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildHuntSaveRow
+{
+    GENERATED_BODY()
+
+    /** Stable per-player key (LCP-4 GetPlayerKey; NAME_None = single-player row). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Hunt")
+    FName PlayerKey = NAME_None;
+
+    /** Hunt contract id. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Hunt")
+    FName HuntId = NAME_None;
+
+    /** Defeats counted toward the current round (resets on claim). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Hunt", meta=(ClampMin="0"))
+    int32 Defeats = 0;
+};
+
+struct ASTRAWILDCORE_API FAstrawildCoopPlayerSaveBlock
+{
+    GENERATED_BODY()
+
+    /** Stable per-player identity (player name; slot fallback). NAME_None rows never match a live player. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName PlayerKey = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FAstrawildItemStack> Inventory;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedWeaponId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedShieldId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedArmorId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedHelmetId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedExosuitId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FName EquippedScannerId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FAstrawildSurvivalStats Survival;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    FTransform Transform;
+
+    /** GDP-3 attributes + skill loadout (rides the rows). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FAstrawildAttributeSaveData> Attributes;
+
+    /** Per-player quest state view (the host's chain remains the world record). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FAstrawildQuestSaveData> Quests;
+
+    /** Per-player lifetime defeat counters (one-shot back-fill source). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TMap<FName, int32> DefeatedCreatureCounts;
+
+    /** Per-player story flags (dialogue component state). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TArray<FName> DialogueFlags;
+
+    /** Per-player equipment wear pools. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Save|Coop")
+    TMap<FName, float> EquipmentDurability;
+};
+
+/**
+ * DP-5 — which of the four canonical boss special sets drives an encounter's
+ * specials. Resolved purely from DefeatEventTargetId (the stable per-boss
+ * identity); unknown ids fall back to the Underlight Warden set, which is the
+ * pre-DP-5 shared pipeline behavior. Appended-only (no save serialization).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildBossSpecialSet : uint8
+{
+    UnderlightWarden UMETA(DisplayName="Underlight Warden (default)"),
+    SunkenVault UMETA(DisplayName="Sunken Vault"),
+    GlassTyrant UMETA(DisplayName="Glass Tyrant"),
+    EyeOfTheMaelstrom UMETA(DisplayName="Eye of the Maelstrom")
+};
+
+/**
+ * DP-5 — pure tuning bundle for one boss special set. The shared
+ * TickSpecials pipeline reads these values; every set recombines the SAME
+ * primitives (energy bolts, telegraphed blasts, arena hazards, phase-2
+ * summons) — no new special mechanic types.
+ */
+USTRUCT(BlueprintType)
+struct ASTRAWILDCORE_API FAstrawildBossSpecialSetParams
+{
+    GENERATED_BODY()
+
+    /** Seconds between special volleys (phase 3 halves this — enrage pressure). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1.0"))
+    float SpecialAttackCooldownSeconds = 7.0f;
+
+    /** Energy bolts per volley (fanned around the target). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="5"))
+    int32 BoltCount = 1;
+
+    /** Telegraphed blasts per volley (phase 2+; the first sits on the player, the rest ring around them). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="3"))
+    int32 BlastCount = 1;
+
+    /** AoE blast radius (cm). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="50.0"))
+    float SpecialBlastRadius = 350.0f;
+
+    /** Hazards spawned per hazard wave (phase 2+, ring around the arena center). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="1", ClampMax="6"))
+    int32 HazardWaveCount = 1;
+
+    /** Damage per second of each spawned arena hazard. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials", meta=(ClampMin="0.0"))
+    float HazardDamagePerSecond = 6.0f;
+
+    /** Phase-2 summon species override (the room's explicit FR-7 override still wins). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Boss|Specials")
+    FName SummonSpeciesId = TEXT("Echo_Gloomfang");
+};
+
+/**
+ * DP-7 (world depth) — per-zone hazard identity. Each surface zone carries one
+ * ambient pressure the survival tick consumes while the player stands in that
+ * zone, LAYERED ON TOP of the global weather offset (Frostveil reads colder
+ * than Dawn Fields under the same sky; the Sunscar reads hotter):
+ * - ColdPressure/HeatPressure: thermal — shift the ambient temperature by
+ *   ±HazardPressure °C, riding the existing cold/heat threshold + insulation
+ *   bands (no new damage verb).
+ * - AshLung: respiratory — suppress passive stamina regen by HazardPressure
+ *   points/second (non-lethal breathing pressure, clamped at zero net regen).
+ * Appended-only enum, save-safe (consumed live from the zone descriptor; never
+ * serialized into a save).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildZoneHazard : uint8
+{
+    None UMETA(DisplayName="No ambient hazard"),
+    ColdPressure UMETA(DisplayName="Cold pressure (colder than weather)"),
+    HeatPressure UMETA(DisplayName="Heat pressure (hotter than weather)"),
+    AshLung UMETA(DisplayName="Ash lung (stamina regen suppression)")
 };

@@ -7,6 +7,7 @@
 #include "AstrawildNPCCharacter.generated.h"
 
 class UAstrawildNPCDefinition;
+class UAstrawildNPCScheduleComponent;
 class UStaticMeshComponent;
 class UPointLightComponent;
 class AAstrawildVillageActor;
@@ -51,6 +52,25 @@ public:
 
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     TObjectPtr<UAstrawildNPCDefinition> NpcDefinition;
+
+    /**
+     * LCP-2: stable NPC identity for replication. The definition OBJECT pointer
+     * cannot replicate (data assets don't), so remote clients resolve the same
+     * definition from their identical local registry and rebuild the appearance.
+     */
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC", ReplicatedUsing=OnRep_NpcDefinitionId)
+    FName NpcDefinitionId = NAME_None;
+
+    /** LCP-2: client-side appearance rebuild after the id replicates. */
+    UFUNCTION()
+    void OnRep_NpcDefinitionId();
+
+    /** LCP-2: resolve NpcDefinition from NpcDefinitionId through the local registry (all machines). */
+    void ResolveNpcDefinitionFromId();
+
+    /** SCP Phase 7: daily schedule (work/home/shelter/sleep anchors + service gating). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Schedule")
+    TObjectPtr<UAstrawildNPCScheduleComponent> ScheduleComponent;
 
     /** Home village — waypoint provider for the patrol AI (set by the bootstrapper). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC")
@@ -105,11 +125,58 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC")
     void RefreshAppearanceFromDefinition();
 
+    // ------------------------------------------------------------------
+    // GDP-4 — NPC affinity (relationship growth with the player).
+    // ------------------------------------------------------------------
+
+    /** Current affinity 0..100 (grows by talking/trading; saved per NPC id). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Affinity")
+    float Affinity = 0.0f;
+
+    /** Relationship tier 0..3 (Stranger / Acquaintance / Friend / Confidant). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    int32 GetAffinityTier() const;
+
+    /** Tier title for prompts/UI. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    FText GetAffinityTierTitle() const;
+
+    /** Vendor discount fraction by tier (0 / 5 / 10 / 15%). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    float GetVendorDiscountFraction() const;
+
+    /** Stable id for save persistence (definition NpcId, NAME_None without one). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|NPC|Affinity")
+    FName GetStableNPCId() const;
+
+    /** Server-side affinity grant with per-channel once-per-in-world-day gates
+     *  (FCR-1-b H-b3: talk +2 and trade +1 have SEPARATE gates). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|NPC|Affinity")
+    void AddAffinity(float Amount, bool bTradeChannel = false);
+
+    /** FCR-1-b (M-b5): save-side accessors for the per-day gate stamps. */
+    int32 GetLastTalkAffinityDay() const { return LastTalkAffinityDay; }
+    int32 GetLastTradeAffinityDay() const { return LastTradeAffinityDay; }
+    void SetAffinityGateDays(int32 TalkDay, int32 TradeDay);
+
 protected:
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 
 private:
     int32 PatrolIndex = 0;
     double LastInteractedTime = -BIG_NUMBER;
     TWeakObjectPtr<AActor> LastInteractedActor;
+
+    /** GDP-4: in-world day of the last TALK affinity gain (once-per-day gate).
+     *  FCR-1-b fix: split into talk/trade gates so trading actually counts. */
+    UPROPERTY()
+    int32 LastTalkAffinityDay = -1;
+
+    /** GDP-4 (FCR-1-b): in-world day of the last TRADE affinity gain. */
+    UPROPERTY()
+    int32 LastTradeAffinityDay = -1;
+
+    /** Current in-world day (absolute minutes / 1440). */
+    int32 GetCurrentWorldDay() const;
 };
