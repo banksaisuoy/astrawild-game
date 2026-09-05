@@ -1,6 +1,6 @@
 # ASTRAWILD — LAN CO-OP SPEC (4-PLAYER PERSONAL BUILD)
 
-**Status**: SOURCE WORK IN PROGRESS (LCP-1..LCP-8 batches; engine-verification pending)
+**Status**: LCP-1..LCP-8 COMPLETE — LAN 4-player source support closed; READY_FOR_FINAL_BUILD re-declared (source-side). Engine verification = HANDOFF §22 (host + 3 clients), Antigravity-exclusive.
 **Authoritative for**: every multiplayer/replication decision on `final-completion`
 **Companion to**: `Docs/ASTRAWILD_MASTER_CONTROL.md` (v6.0), `Docs/ASTRAWILD_MULTIPLAYER.md`
 **Product decision date**: user directive — PERSONAL LAN CO-OP + FREE ASSET PRODUCTION MODE
@@ -224,8 +224,8 @@ Target: **4 players maximum** — reliability over scale.
 | LCP-4 | Per-player persistence: additive per-player save blocks + roster owner partition + stable PlayerKey + late-join/reconnect restore | **DONE** (+2: LCP4.RosterPartition / LCP4.CoopSaveBlock) |
 | LCP-5 | Client state sync: QuestComponent replication, research + roster mirrors on GameState, client notifications | **DONE** (+2: LCP5.ClientStateSyncSurface / LCP5.ResearchMirrorRoundTrip; roster mirror deferred — no client roster UI exists, party echoes replicate as actors) |
 | LCP-6 | LAN session flow: `UAstrawildLANSessionSubsystem` (host/find/join/direct IP) + pause menu LAN panel + HUD mode line | **DONE** (+2: LCP6.BeaconProtocol / LCP6.AddressParsing) |
-| LCP-7 | Free-asset ledger doc + approved Quaternius acquisition (separate concern, same session) | — |
-| LCP-8 | Final gate: validators, HANDOFF §22 LAN acceptance, READINESS re-affirm, registry close, worklog | — |
+| LCP-7 | Free-asset ledger + approved Quaternius acquisition | **DONE** (6/6 packs acquired, 264 files, dual license gates) |
+| LCP-8 | Final gate: validators, HANDOFF §22 LAN acceptance, READINESS re-affirm, registry close, worklog | **DONE** (READY_FOR_FINAL_BUILD re-declared, source-side) |
 
 All code follows the standing rules: server-authoritative mutation, additive-only
 save schema, appended-only enums, world-free automation contracts per fix,

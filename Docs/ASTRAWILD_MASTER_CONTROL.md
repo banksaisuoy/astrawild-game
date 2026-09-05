@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — MASTER CONTROL (CANONICAL SINGLE SOURCE OF TRUTH)
 
-**Document Version**: 6.0 (LAN CO-OP PACK (LCP): user-issued product scope change — 4-player personal LAN co-op + free-asset policy; source work LCP-1..)
+**Document Version**: 6.1 (LAN CO-OP PACK COMPLETE: LCP-1..LCP-8 closed — READY_FOR_FINAL_BUILD re-declared with the expanded stop conditions)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
 **Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch: ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FCR + ASSET ACQUISITION (26a7c7b, a09e566) + DEPTH PASSES DP-1..DP-10 (981250d → 00354da) + LAN CO-OP PACK LCP-1.. (this commit onward) — all pushed)
@@ -263,15 +263,17 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | Documentation single control | YES — this file |
 | Task registry | YES — ASTRAWILD_MASTER_TASK_REGISTRY.md |
 | P0 source blockers | NONE KNOWN (static level) |
-| **LAN 4-player source support** | **IN PROGRESS (LCP-1..8)** — user directive reopened scope after DP-10; see §1b + LAN_COOP_SPEC |
+| **LAN 4-player source support** | **YES (source-side)** — LCP-1..8 complete: client world, interaction/trade routing, per-player persistence + reconnect, client state sync, LAN session flow; ENGINE-UNVERIFIED until §22 |
+| **Free-asset ledger (verified licenses)** | YES — `Docs/ASTRAWILD_FREE_ASSET_LEDGER.md` (15 CC0 Kenney + 6 CC0 Quaternius packs, 3,942 files total, per-file SHA-256 manifests, LICENSE_UNCLEAR never enters) |
 
-**Overall status (v6.0): IN PROGRESS — LCP.** READY_FOR_FINAL_BUILD (source-side)
-was declared and re-affirmed through DP-10 (00354da), but the user's LAN CO-OP
-product decision re-opened the source scope: the readiness verdict is suspended
-until the LCP ledger (LAN 4-player source support + free-asset ledger, §1b)
-closes, then READY_FOR_FINAL_BUILD re-declares with the expanded stop-condition
-list (HANDOFF §21) and the one-time engine integration pass (§8 + §22 LAN
-acceptance) converts this to GAME-COMPLETE or returns engine-specific defects.
+**Overall status (v6.1): READY_FOR_FINAL_BUILD (source-side, LAN scope closed).**
+Declared at DP-10 (00354da), suspended by the user's LAN CO-OP scope decision,
+RE-DECLARED at the LCP-8 gate: LAN 4-player source support (LCP-2..6),
+per-player co-op persistence (LCP-4) and the verified-license free-asset
+ledger (LCP-7) all landed; the 13+2-point stop conditions (HANDOFF §21/§21b)
+hold. The one-time engine integration pass (§8 + the new §22 LAN acceptance
+test — host + 3 clients) converts this to GAME-COMPLETE or returns
+engine-specific defects. Nothing in this document claims engine verification.
 
 ## 11. Known engine-unverified items (honest ledger)
 
@@ -310,6 +312,7 @@ CONTENT_PACK/* · all system design docs under Docs/ (accurate per their commit 
 | 2026 | **v3.8 (GLM FCR — Phases 2-18 COMPLETE)**: mechanical verification sweep of every player-facing pillar (Phases 2-12 ALL PASS) · cross-cutting invariants clean (R2/R7 sweeps, input map 28 actions no-dup, zero dead recipe stacks, all objective types have producers) · performance tick scan clean · Phase 17 deferred review: CV-5 economy CLOSED (Duskmoth loot), CV-4/CV-6/SCP-7 stay deferred with reasons (none block READY) · pipeline idempotency contract issued (HANDOFF §20a) · suite 102 with exact gate · **READY_FOR_FINAL_BUILD re-affirmed at the final FCR SHA** — one-time engine integration (AG-1..6) remains the exclusive conversion gate |
 | 2026 | **v4.0 (GLM ASSET ACQUISITION BATCH 2 — wayfinder charted, live user-approved)**: acquisition decision layer charted as a wayfinder map (`.scratch/` outside repo, 6 decision tickets; gap-analysis + OGA-policy research resolved by parallel subagents — Kenney full-catalog walk 214 packs, OGA YES-WITH-CONSTRAINTS) → batch-2 approved 9 CC0 packs (Particle/UI-SciFi/Survival/City-Industrial/Modular-Space/Modular-Dungeon/Animated-Characters/Skyboxes/Crosshair) · pipeline extended (Textures category with sub-path-preserving dests, FBX/TTF validators, rel-path curation, incremental manifest merge) · flat-dest collision bug caught in-run and fixed (0 BLOCKED at close) · 2,607 new files / 32.4MB, combined 15 packs / 3,678 / 3,360 IMPORT_READY / 75.8MB · idempotency re-proven · HANDOFF §20b acquired-asset checklist issued for the engine run · READY_FOR_FINAL_BUILD unchanged (IMPORT_READY ≠ UE5_VERIFIED) |
 | 2026 | **v5.0 (GLM DP-10 FINAL GATE — DEPTH PASSES COMPLETE)**: full source audit at tip 018a95a — both validators PASS (validate_repository.sh v2 + validate_final_run.py 61 checks incl. the 109-test gate and the 15 census equality gates); doc-consistency sweep executed (stale current-state counts corrected across the matrix/manifest/registry/readiness/handoff — historical/dated rows untouched); content readiness matrix re-verified at 14 categories (Tier-A meshes IMPORT_READY, skill loadout live, affinity-gated dialogue, themed dungeons — statuses stay honest, nothing BOUND); readiness report re-affirms **READY_FOR_FINAL_BUILD (source-side)** with the residual ledger (Tier-B rig library P1 / engine import+binding queue §20b+§20c / tone-weapon-particle-ACS decisions awaiting engine evidence); HANDOFF coherence pass (109 tests as repo truth, §20b+§20c referenced from the §20 sequence, 12 golden-path verify items, 12-point stop-condition list from the user directive); registry §I closed — DP-1..DP-10 all COMPLETE, no orphans; branch frozen for the Antigravity one-time integration run |
+| 2026 | **v6.1 (GLM LCP-8 — LAN CO-OP PACK COMPLETE, READY_FOR_FINAL_BUILD re-declared)**: LCP-2 client world (deterministic cosmetic build from the replicated seed + replicated gameplay actors incl. the DP-9 client-shell fix) · LCP-3 interaction/trade routing (ServerInteract choke point, first Client RPCs, fail-closed dialogue/trade validation, mount/pilot input relays, cheat client gate) · LCP-4 per-player persistence (coop save blocks, roster owner partition, stable player keys, late-join/reconnect) · LCP-5 client state sync (quest replication, research mirror, unlock/completion feedback everywhere) · LCP-6 LAN session flow (UDP beacon, pause panel, HUD mode line, travel-autoload) · LCP-7 free-asset ledger + 6 CC0 Quaternius Ultimate packs (264 files, dual license gates, Drive-crawl downloader) · LCP-8 this gate — suite 109→119, validators PASS ×2, HANDOFF §21b+§22, READINESS §O, registry §J closed; engine queue = AG-2..5 + §22 |
 | 2026 | **v6.0 (GLM LCP-1 — LAN CO-OP PACK OPENED)**: user-issued product decision reopens scope: ASTRAWILD is a private 4-player LAN co-op game (listen server, host-authoritative, free-asset production mode) — §1b added, `ASTRAWILD_LAN_COOP_SPEC.md` issued (full PART-3 source audit: 43 replicated props / 14 classes, 8 Server RPCs, 0 Client RPCs; client-visible world BROKEN-for-clients, co-op save MISSING, session flow MISSING, quest/research client sync PARTIAL — every verdict source-grounded), MULTIPLAYER.md refreshed to the audit truth, registry §I reopened with the LCP-1..LCP-8 ledger; DP-era freeze lifted for LCP batches only; depth-pass canon UNCHANGED; engine gates unchanged (AG-2..5 + new §22 LAN acceptance) |
 
 

@@ -517,3 +517,58 @@ status at the DP-10 final gate):
 All 12 hold at the DP-10 final-gate commit → **READY_FOR_FINAL_BUILD** (source-side).
 Engine-side verification (AG-1..6) remains the exclusive conversion gate — nothing in
 this document claims it.
+
+---
+
+## 21b. LCP stop-condition additions (LAN CO-OP directive — extends §21 to 13+2 points)
+
+13. **LAN 4-player source support** — LCP-1..LCP-6 COMPLETE in registry §J:
+    the client-visible world (LCP-2), interaction/trade routing with the first
+    Client RPCs + fail-closed server validation (LCP-3), per-player
+    persistence + reconnect restore (LCP-4), quest/research client sync
+    (LCP-5), and the LAN session flow (host/find/join/direct, beacon
+    protocol, mode indication — LCP-6). Party rules + documented v1
+    exceptions live in `Docs/ASTRAWILD_LAN_COOP_SPEC.md`.
+14. **Free-asset ledger** — `Docs/ASTRAWILD_FREE_ASSET_LEDGER.md`: every
+    acquired asset (15 CC0 Kenney packs + 6 CC0 Quaternius Ultimate packs,
+    264 files / ~130 MB in batch LCP-7) carries source, license, license
+    URL, file path, per-file hashes (JSON manifests), usage, attribution and
+    status; LICENSE_UNCLEAR never enters the repo (dual license gates).
+
+All 12 (§21) + 2 (§21b) hold → **READY_FOR_FINAL_BUILD re-declared at the LCP
+gate (source-side)**. The engine-side conversion now includes §22.
+
+## 22. LAN ACCEPTANCE TEST (engine-side, Antigravity-owned — the PART 22 contract)
+
+The final build is NOT LAN-ready until this passes on the Windows machine:
+
+SETUP: 1 host + 3 client machines (or processes) on one LAN.
+HOST:   launch → ESC → LAN CO-OP → **Host LAN Game** (world rehosts as listen
+        server; HUD reads "LAN HOST — you hold the authoritative world").
+CLIENT ×3: ESC → LAN CO-OP → **Find + Join LAN Game** (beacon discovery,
+        ~1–2 s) — or Direct Connect by IP. HUD reads "LAN CLIENT".
+
+Verify ALL of the following (host authoritative throughout):
+
+| # | Check | Pass criterion |
+| :-- | :--- | :--- |
+| 1 | World visible to clients | terrain/sea/landmarks/dressing build locally from the replicated seed; gameplay actors (nodes/NPCs/villages/stations/dungeons) replicate — no empty world |
+| 2 | Movement + mutual visibility | all four players move and see each other |
+| 3 | Interact routing | every client can harvest nodes, open crafting stations, rest, read POIs, use portals/pillars (E routes through ServerInteract; re-validated server-side) |
+| 4 | Combat | client attacks damage host-rolled enemies; weak-point windows visible on clients |
+| 5 | Gather → craft → build | a client gathers, crafts at a station (screen opens via ClientOpenCraftingScreen), places a building |
+| 6 | Echo capture | a client captures a wild Echo (capture feedback toast reaches their screen); ownership = that player's key |
+| 7 | Echo party + abilities | each player's party spawns from THEIR roster slice; T-cast abilities + resonance work from clients |
+| 8 | Mounts + skiff | a client boards a mount/skiff; pilot input relays steer the server-owned actor |
+| 9 | Vendor trade | client buys/sells (ServerVendorTrade; inventory replicates back; result toast) |
+| 10 | Dialogue | client talks to NPCs (screen opens via ClientOpenVendorDialogue); choices apply server-side (ServerSubmitDialogueChoice) |
+| 11 | Quests + research | client HUD tracker live (QuestComponent replication); research unlock toasts on ALL screens; research screen state matches the host |
+| 12 | Dungeons + bosses | clients enter dungeons, fight bosses (themed shells visible via replicated Template), room clears share |
+| 13 | Save (host) | host Save Now / autosave persists world + every connected player block; log names the co-op blocks |
+| 14 | Reconnect | a client quits + rejoins: session-cache restore returns their inventory/roster/quest/position |
+| 15 | Late join | a 4th player joins after progression: PostLogin restores their disk block (if one exists) |
+| 16 | Authority sanity | a client cannot self-grant: cheat execs no-op on clients; forged RPCs fail the server re-validation (spot-check via dev console on a client) |
+| 17 | Session flow honesty | HUD/pause-menu mode lines always state SINGLE PLAYER / LAN HOST (N/4) / LAN CLIENT |
+
+Capture raw logs (host + one client) into `Docs/ENGINE_LOGS/raw/` with the SHA
+in the filename; any failure files AG-6 with the failing row number.

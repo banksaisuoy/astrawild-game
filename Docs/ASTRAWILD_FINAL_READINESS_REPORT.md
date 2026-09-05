@@ -2,7 +2,8 @@
 
 **Report date**: 2026 (FINAL GAME COMPLETION RUN → FCR → DEPTH PASSES — re-affirmed at the DP-10 final gate) · **Author**: GLM 5.3
 **Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + all Final Run / FINAL-AUDIT / GDP / SCP / FCR / ASSET ACQUISITION (26a7c7b, a09e566) / DEPTH PASS DP-1..DP-9 (981250d → 018a95a) / DP-10 final-gate batches — all pushed)
-**Top-level status**: **READY_FOR_FINAL_BUILD** (source-side). The final content manifest
+**Top-level status**: **READY_FOR_FINAL_BUILD** (source-side; RE-DECLARED at the LCP gate —
+the LAN CO-OP scope addition closed through LCP-1..LCP-8, see §O). The final content manifest
 (`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 459/459 LFS objects verified live
 on GitHub, all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
@@ -203,3 +204,41 @@ readiness is binary per gate, evidence lives in the rows above.
 
 **Overall**: **READY_FOR_FINAL_BUILD** — source-complete, statically validated, content-verified,
 documented, and waiting for exactly one controlled engine integration pass.
+
+---
+
+## O. LCP gate re-declaration (LAN CO-OP + free-asset policy — this session)
+
+The user's LAN CO-OP product decision reopened the source scope after DP-10.
+The LCP batches closed it:
+
+| LCP | Scope | Status |
+| :-- | :--- | :--- |
+| LCP-1 | Spec + PART-3 source audit + MASTER_CONTROL v6.0 | COMPLETE |
+| LCP-2 | Client-visible world (deterministic cosmetic build + gameplay actor replication) | COMPLETE |
+| LCP-3 | Interaction/trade routing (ServerInteract + first Client RPCs + fail-closed validation + cheat gate) | COMPLETE |
+| LCP-4 | Per-player persistence (coop save blocks + roster partition + reconnect/late-join) | COMPLETE |
+| LCP-5 | Client state sync (quest replication + research mirror + feedback to every screen) | COMPLETE |
+| LCP-6 | LAN session flow (beacon host/find/join + direct IP + mode indication) | COMPLETE |
+| LCP-7 | Free-asset ledger + 6 CC0 Quaternius packs acquired (264 files, dual license gates) | COMPLETE |
+| LCP-8 | This gate: docs/validators/registry/worklog closure | COMPLETE |
+
+Checks: the 13-point stop list (HANDOFF §21) + the 2 LCP additions (§21b) hold;
+suite 119/119 contracts (ENGINE-UNVERIFIED); both validators ALL PASS at tip;
+census gates unchanged (no gameplay-content rows touched by LCP — the LCP
+batches add networking/persistence code, not content).
+
+Residual (LAN-specific, none blocks READY):
+- The LCP source work is **ENGINE-UNVERIFIED** until the §22 LAN acceptance
+  test runs on the Antigravity machine (17 rows, host + 3 clients).
+- Dialogue choice VISIBILITY on clients evaluates against locally-available
+  state (server re-validates submissions fail-closed — no exploit, possible
+  stale display of gated replies); documented in LAN_COOP_SPEC.
+- NPC affinity + perishable freshness are party-shared in co-op v1
+  (documented exceptions, LAN_COOP_SPEC §3).
+- Roster client mirror deliberately not built (no client roster UI exists;
+  party echoes replicate as actors).
+
+**Re-declared verdict: READY_FOR_FINAL_BUILD (source-side, LAN scope closed).**
+The engine-side conversion queue is now §20 (build/automation/PIE/package) +
+§22 (LAN acceptance) — Antigravity-exclusive as ever.
