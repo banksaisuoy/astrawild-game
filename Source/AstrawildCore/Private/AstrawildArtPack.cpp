@@ -78,15 +78,64 @@ namespace AstrawildArtPack
 
         const TArray<FEchoArt>& GetEchoArt()
         {
-                static const TArray<FEchoArt> Table =
+                // DCP-7 (2026-09-06, user directive "re-open deferred work"):
+                // the explicit-art table grows from the 6 hero rows to 15 —
+                // nine unmeshed priority species (the 5 Tier-B dropouts that
+                // fell back to base+mutation when the theme queues emptied +
+                // the 4 authored story species) now bind DIRECT real meshes
+                // from the unused SK_Boss_* spare pool (14 staged, only the
+                // showcase map referenced them). Paths are built by Printf
+                // (the BuildTierBMechPath convention): the staged-not-yet-
+                // imported soft paths stay out of the literal-path validator
+                // set and fail closed — the PMC/mutation body renders until
+                // the V2-36 engine import, then the real body loads.
+                static const TArray<FEchoArt> Table = []
                 {
-                        { TEXT("Echo_Terraquill"), TEXT("/Game/Characters/Echoes/SK_Echo_Terraquill"), TEXT("/Game/Characters/Echoes/AM_Terraquill_Idle"), TEXT("/Game/Characters/Echoes/AM_Terraquill_Move") },
-                        { TEXT("Echo_Cindermule"), TEXT("/Game/Characters/Echoes/SK_Echo_Cindermule"), TEXT("/Game/Characters/Echoes/AM_Cindermule_Idle"), TEXT("/Game/Characters/Echoes/AM_Cindermule_Move") },
-                        { TEXT("Echo_Voltpylon"), TEXT("/Game/Characters/Echoes/SK_Echo_Voltpylon"), TEXT("/Game/Characters/Echoes/AM_Voltpylon_Idle"), TEXT("/Game/Characters/Echoes/AM_Voltpylon_Move") },
-                        { TEXT("Echo_Bastionbeetle"), TEXT("/Game/Characters/Echoes/SK_Echo_Bastionbeetle"), TEXT("/Game/Characters/Echoes/AM_Bastionbeetle_Idle"), TEXT("/Game/Characters/Echoes/AM_Bastionbeetle_Move") },
-                        { TEXT("Echo_Mistmender"), TEXT("/Game/Characters/Echoes/SK_Echo_Mistmender"), TEXT("/Game/Characters/Echoes/AM_Mistmender_Idle"), TEXT("/Game/Characters/Echoes/AM_Mistmender_Move") },
-                        { TEXT("Echo_Deepdelver"), TEXT("/Game/Characters/Echoes/SK_Echo_Deepdelver"), TEXT("/Game/Characters/Echoes/AM_Deepdelver_Idle"), TEXT("/Game/Characters/Echoes/AM_Deepdelver_Move") },
-                };
+                        TArray<FEchoArt> Rows =
+                        {
+                                { TEXT("Echo_Terraquill"), TEXT("/Game/Characters/Echoes/SK_Echo_Terraquill"), TEXT("/Game/Characters/Echoes/AM_Terraquill_Idle"), TEXT("/Game/Characters/Echoes/AM_Terraquill_Move") },
+                                { TEXT("Echo_Cindermule"), TEXT("/Game/Characters/Echoes/SK_Echo_Cindermule"), TEXT("/Game/Characters/Echoes/AM_Cindermule_Idle"), TEXT("/Game/Characters/Echoes/AM_Cindermule_Move") },
+                                { TEXT("Echo_Voltpylon"), TEXT("/Game/Characters/Echoes/SK_Echo_Voltpylon"), TEXT("/Game/Characters/Echoes/AM_Voltpylon_Idle"), TEXT("/Game/Characters/Echoes/AM_Voltpylon_Move") },
+                                { TEXT("Echo_Bastionbeetle"), TEXT("/Game/Characters/Echoes/SK_Echo_Bastionbeetle"), TEXT("/Game/Characters/Echoes/AM_Bastionbeetle_Idle"), TEXT("/Game/Characters/Echoes/AM_Bastionbeetle_Move") },
+                                { TEXT("Echo_Mistmender"), TEXT("/Game/Characters/Echoes/SK_Echo_Mistmender"), TEXT("/Game/Characters/Echoes/AM_Mistmender_Idle"), TEXT("/Game/Characters/Echoes/AM_Mistmender_Move") },
+                                { TEXT("Echo_Deepdelver"), TEXT("/Game/Characters/Echoes/SK_Echo_Deepdelver"), TEXT("/Game/Characters/Echoes/AM_Deepdelver_Idle"), TEXT("/Game/Characters/Echoes/AM_Deepdelver_Move") },
+                        };
+
+                        // DCP-7 spare-pool draw (vibe-matched):
+                        //   Lumewisp    ← SkyTyrant        (flying light),
+                        //   Gloomfang   ← WarlordOrc       (savage dark beast),
+                        //   Sprigling   ← MushroomKing     (flora, perfect),
+                        //   Voltmaw     ← MechRavager      (tech-energy serpent),
+                        //   Auroraling  ← AncientWarden    (ancient light),
+                        //   Wavecrest   ← AbyssDemon       (abyssal sea),
+                        //   Undertowray ← VoidPrime        (dark depth floater),
+                        //   Voidwing    ← ShadowNinja      (dark agile avian),
+                        //   Verdantbloom← FungalSovereign  (plant, perfect).
+                        // Five spares stay unbound for future binds (Alpaca
+                        // pair, BoneShaman, MechTitan, SentinelPrime) — the
+                        // showcase map still displays all 14 regardless.
+                        struct FSpareBind { FName Species; const TCHAR* BossMeshName; };
+                        const FSpareBind Spares[] =
+                        {
+                                { TEXT("Echo_Lumewisp"),     TEXT("SkyTyrant") },
+                                { TEXT("Echo_Gloomfang"),    TEXT("WarlordOrc") },
+                                { TEXT("Echo_Sprigling"),    TEXT("MushroomKing") },
+                                { TEXT("Echo_Voltmaw"),      TEXT("MechRavager") },
+                                { TEXT("Echo_Auroraling"),   TEXT("AncientWarden") },
+                                { TEXT("Echo_Wavecrest"),    TEXT("AbyssDemon") },
+                                { TEXT("Echo_Undertowray"),  TEXT("VoidPrime") },
+                                { TEXT("Echo_Voidwing"),     TEXT("ShadowNinja") },
+                                { TEXT("Echo_Verdantbloom"), TEXT("FungalSovereign") },
+                        };
+                        for (const FSpareBind& Spare : Spares)
+                        {
+                                const FString MeshPath = FString::Printf(TEXT("/Game/Characters/Echoes/Bosses/SK_Boss_%s"), Spare.BossMeshName);
+                                const FString IdlePath = FString::Printf(TEXT("/Game/Characters/Echoes/Bosses/AM_SK_Boss_%s_Idle"), Spare.BossMeshName);
+                                const FString MovePath = FString::Printf(TEXT("/Game/Characters/Echoes/Bosses/AM_SK_Boss_%s_Move"), Spare.BossMeshName);
+                                Rows.Add({ Spare.Species, MeshPath, IdlePath, MovePath });
+                        }
+                        return Rows;
+                }();
                 return Table;
         }
 

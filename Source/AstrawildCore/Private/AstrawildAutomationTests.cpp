@@ -5571,7 +5571,12 @@ bool FAstrawildPCR4TierBLibraryTest::RunTest(const FString& Parameters)
                 AstrawildArtPack::BuildTierBMechPath(Species));
         }
     }
-    TestEqual(TEXT("All 39 Tier-B species carry the convention binding"), Bound, 39);
+    // DCP-7 fix (latent engine-run failure): the final count must DERIVE from
+    // the pinned table size — the old hardcoded 39 was a v9.3 stale leftover
+    // (39 bakes era) that could never be reached with a 36-row table and would
+    // have failed the first real engine test run.
+    TestEqual(TEXT("Every Tier-B species carries the convention binding (count derives from the table)"),
+        Bound, TierB.Num());
     return true;
 }
 
@@ -6405,6 +6410,109 @@ bool FAstrawildGamepadSmartCastChordTest::RunTest(const FString& Parameters)
     // loadout) regardless of which mapping fired it — one ladder, two devices.
     const int32 SmartCastLadderEntries = 6;
     TestEqual(TEXT("The smart-cast ladder has exactly 6 rungs"), SmartCastLadderEntries, 6);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DCP-7 — unique-mesh coverage expansion (boss spare pool → priority species).
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildMeshCoverageExpansionTest,
+    "ASTRAWILD.DCP7.MeshCoverageExpansion",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildMeshCoverageExpansionTest::RunTest(const FString& Parameters)
+{
+    // --- The explicit-art table grew 6 → 15 (9 boss-spare binds) ---
+    const TArray<AstrawildArtPack::FEchoArt>& Art = AstrawildArtPack::GetEchoArt();
+    TestEqual(TEXT("Explicit art table holds 15 rows (6 heroes + 9 DCP-7 spares)"), Art.Num(), 15);
+
+    // Every row resolves a distinct species + a distinct mesh path (1:1 — the
+    // palette-swap guard of the v9.3 overhaul, extended to the spare pool).
+    TSet<FName> SpeciesIds;
+    TSet<FString> MeshPaths;
+    for (const AstrawildArtPack::FEchoArt& Row : Art)
+    {
+        TestFalse(FString::Printf(TEXT("Species %s bound once"), *Row.EchoId.ToString()),
+            SpeciesIds.Contains(Row.EchoId));
+        TestFalse(FString::Printf(TEXT("Mesh for %s used once"), *Row.EchoId.ToString()),
+            MeshPaths.Contains(Row.MeshPath));
+        SpeciesIds.Add(Row.EchoId);
+        MeshPaths.Add(Row.MeshPath);
+    }
+    TestEqual(TEXT("15 species bound"), SpeciesIds.Num(), 15);
+    TestEqual(TEXT("15 distinct meshes (zero shared bodies)"), MeshPaths.Num(), 15);
+
+    // --- The 9 priority species: the Tier-B dropouts + authored story set ---
+    const FName Priority[] = {
+        TEXT("Echo_Lumewisp"), TEXT("Echo_Gloomfang"), TEXT("Echo_Sprigling"),
+        TEXT("Echo_Voltmaw"), TEXT("Echo_Auroraling"), TEXT("Echo_Wavecrest"),
+        TEXT("Echo_Undertowray"), TEXT("Echo_Voidwing"), TEXT("Echo_Verdantbloom"),
+    };
+    for (const FName Species : Priority)
+    {
+        TestTrue(FString::Printf(TEXT("%s has an explicit art row"), *Species.ToString()),
+            AstrawildArtPack::FindEchoArt(Species) != nullptr);
+        // The binds point into the boss spare pool (Printf-convention paths —
+        // distinct from both the hero Echo dir and the Tier-B convention dir).
+        if (const AstrawildArtPack::FEchoArt* Row = AstrawildArtPack::FindEchoArt(Species))
+        {
+            TestTrue(FString::Printf(TEXT("%s binds a boss-spare mesh"), *Species.ToString()),
+                Row->MeshPath.Contains(TEXT("SK_Boss_")));
+            TestFalse(FString::Printf(TEXT("%s does not collide with Tier-B convention"), *Species.ToString()),
+                AstrawildArtPack::IsTierBSpecies(Species));
+        }
+    }
+
+    // 5 spares stay unbound (future headroom — the showcase shows all 14):
+    const TCHAR* UnboundSpares[] = { TEXT("AlpacaColossus"), TEXT("AlpacaWarlord"), TEXT("BoneShaman"), TEXT("MechTitan"), TEXT("SentinelPrime") };
+    for (const TCHAR* Spare : UnboundSpares)
+    {
+        const FString SparePath = FString::Printf(TEXT("SK_Boss_%s"), Spare);
+        bool bBound = false;
+        for (const AstrawildArtPack::FEchoArt& Row : Art)
+        {
+            if (Row.MeshPath.Contains(SparePath))
+            {
+                bBound = true;
+            }
+        }
+        TestFalse(FString::Printf(TEXT("Spare %s stays unbound (headroom)"), Spare), bBound);
+    }
+
+    // --- Registry round-trip: the binds survive BuildAll and win precedence --
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    int32 ExplicitBound = 0;
+    for (const AstrawildArtPack::FEchoArt& Row : Art)
+    {
+        const UAstrawildEchoDefinition* Def = Registry->FindEcho(Row.EchoId);
+        if (!TestTrue(FString::Printf(TEXT("Registry resolves %s"), *Row.EchoId.ToString()), Def != nullptr))
+        {
+            continue;
+        }
+        if (Def->SkeletalMesh.IsValid() && Def->SkeletalMesh.ToSoftObjectPath().ToString() == Row.MeshPath)
+        {
+            ++ExplicitBound;
+        }
+    }
+    // The 6 hero rows bind literally; the 9 spares bind by Printf path — all
+    // 15 must round-trip through the binding loop (soft paths set, loads lazy).
+    TestEqual(TEXT("All 15 explicit art rows round-trip through BuildAll"), ExplicitBound, 15);
+
+    // Direct species verification (the dropout set finally owns real geometry):
+    if (const UAstrawildEchoDefinition* Wavecrest = Registry->FindEcho(TEXT("Echo_Wavecrest")))
+    {
+        TestTrue(TEXT("Wavecrest (Tier-B dropout) now carries a direct real mesh"),
+            Wavecrest->SkeletalMesh.IsValid());
+    }
+    if (const UAstrawildEchoDefinition* Lumewisp = Registry->FindEcho(TEXT("Echo_Lumewisp")))
+    {
+        TestTrue(TEXT("Lumewisp (the first quest's species) now carries a direct real mesh"),
+            Lumewisp->SkeletalMesh.IsValid());
+    }
 
     return true;
 }
