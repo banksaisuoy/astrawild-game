@@ -68,7 +68,7 @@ commits (oldest→newest, ALL pushed to origin/final-completion):
            World Map M / Hunt Board U + Tier-B library 39 GLBs + hunt system + ownership
            defect fix; tests 120-124)
   cca4cfc  [FPP-1] Player-facing presentation pass — crafting-screen P0 (concrete native
-           UI) + skills/journal/roster/boss/feedback presentation (+test 125)
+           UI) + skills/journal/roster/boss/feedback presentation (+test 126 [SCI])
   948d75a  [FPP-2] Player rules + doc sync — ASTRAWILD_PLAYER_RULES.md + control set v8.0
            + freeze declarations
   <TIP>    [FPP-3] FINAL SOURCE FREEZE RECORD (SOURCE_PRODUCT_FROZEN — this commit; the
@@ -265,7 +265,7 @@ Post-game: world events, hunts, dungeons, automation and vendors keep running.
 ## 19. KNOWN ENGINE-ONLY RISKS
 
 - UBT ExitCode 6 recurrence (FZ-A1) — capture UBA logs immediately if seen.
-- 125 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
+- 126 tests have never executed in a real engine (the audit's C-1 drone fix removed a likely
   build blocker; the first compile is the real proof).
 - Eye dungeon floats 400 m up — verify no float-precision drift in room placement during PIE.
 - Enhanced Input runtime mapping (32 actions) — verify no duplicate-context warnings in the log.
@@ -297,7 +297,7 @@ working tree:
 - **Validators**: pure read-only static checks — any number of runs is safe and
   MUST PASS before every stage transition.
 - **Drift tripwires**: the validator's census equality gates (15 content-count
-  contracts + the exact 125-test gate) fail loudly if a pipeline stage ever
+  contracts + the exact 126-test gate) fail loudly if a pipeline stage ever
   duplicated or dropped content.
 
 A second full execution of the sequence therefore converges to the same state —
@@ -308,7 +308,7 @@ no duplicated assets, no double imports, no corrupted Content.
 ```text
 1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 125/125 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 126/126 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
@@ -416,7 +416,7 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **125/125** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4 → 124 at PCR-5 → 125 at FPP-1; the validator gate enforces the exact value — always read the count from the repo, never from memory).
+6. Automation now expects **126/126** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4 → 124 at PCR-5 → 125 at FPP-1 → 126 at SCI; the validator gate enforces the exact value — always read the count from the repo, never from memory).
 7. PCR screens (the four new player surfaces): press **P** (Field Journal — species rows show knowledge flags + observation %; undiscovered read "???"), **L** (Echo Roster — rows show identity/level/bond/top-work; Bench one Echo → its actor despawns, Deploy → respawns; save/load preserves bench state), **M** (World Map — 12 zone cells render with threat/hazard, discovered POI dots appear, player ● marker sits in the current zone), **U** (Hunt Board — 8 contracts list with progress; cull 1 Duskmoth → progress ticks; claim at 5 rewards Dawn Shard x3 and resets).
 8. Tier-B creature bodies: after the §20b baseline import (the 39 new Tier-B GLBs import exactly like the 6 heroes — flat folder /Game/Characters/Echoes/), spawn/observe one zone signature species per zone (e.g. Duskmoth in Dusk Marsh, Rimefang in Frostveil) — each must render its unique skinned body (NOT the PMC box) with idle/move clips. Until the import lands, the PMC body is the documented opt-in contract, not a defect.
 9. DP-4 skill loadout (ESC pause menu — SKILL LOADOUT section): cycle a slot onto an unlocked

@@ -289,3 +289,31 @@ PIE golden path incl. FPP-1 verification items + package + the §20b/§20c
 import sub-sequences + the landscape-material manual step in §19) + §22 (LAN
 acceptance). Post-freeze changes are evidence-driven only (actual integration
 failures / runtime bugs / engine-discovered visual defects).
+
+---
+
+## §M SCI-FANTASY MONSTER DIRECTIVE (SCI — current session, user directive "204 UNIQUE ECHOES + CURRENT-HEAD ASSET TRUTH AUDIT")
+
+Directive: (audit first) verify the ACTUAL remote HEAD asset truth with no
+stale-diagnosis reuse, statuses RAW_PRESENT..ENGINE_UNVERIFIED, 0 fabricated
+results; (then) regroup the 204 generated bestiary species into 8 Sci-Fantasy
+themes and give every Echo a runtime mutation identity — base archetypes +
+code mutation, Pokémon-style visual diversity, no 204 unique models required,
+free CC0 sources only, full ledger discipline.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| AUD | Current-head asset truth audit | `Docs/ASTRAWILD_CURRENT_ASSET_TRUTH.md` — remote HEAD verified 68c2b07 (user's 4bb7be5 = 4 commits stale), LFS 459/459 objects fetched+OID-matched (232 MB), 416/416 Content binaries genuine UE packages (magic + version forensics), 98/114 code /Game/ refs resolve (16 unresolved = prefixes/format-strings/Tier-B probes + 1 inert nested Survivor path), manifest 112/159 imported (47 = 53 Echo GLBs − 6 hero, pending final-tip import BY DESIGN), TRUE_MISSING=0, statuses issued per the directive vocabulary, final block (CURRENT_HEAD/CONTENT_BINARY_COUNT/.../ENGINE_UNVERIFIED_ITEMS) | GLM | COMPLETE | Old Survivor/Manny diagnosis confirmed STALE (fallbacks all present at HEAD); no runtime claims; commit 58b3fcd |
+| SCI-1 | Phase 1 — theme regroup + asset mapping | 8-theme deterministic assignment (keyword → family → plan-bucket priority) + `Scripts/generate_echo_mutations.py` + `Docs/ASTRAWILD_SCI_FANTASY_THEMES.md` (counts: PlantMonster 40, ElementalBeast 50, VoidAbomination 29, EtherealSpirit 26, AncientConstruct 24, MutatedFauna 16, ArmoredOrganic 11, MechanicalHybrid 8) | GLM | COMPLETE | Parsed from the ACTUAL bestiary (204 rows) — never hand-copied |
+| SCI-2 | Phase 2 — runtime mutation system | `FEchoMutationSpec` + 204-row generated table (`AstrawildEchoMutationData.cpp`) + `FAstrawildEchoMutator` (`AstrawildEchoMutator.h/.cpp`: 4 vocabularies [8 themes / 7 attachments / 8 materials / 8 VFX types], per-part scale + deterministic instance jitter, theme color math, derived opt-in paths, persistent element VFX via SpawnSystemAttached) + EchoCharacter integration (PMC per-part scaling in all 8 body plans + `AppendMutationParts` attachment geometry + theme palette; skinned root jitter; weakness-hit vocal cue hook opt-in) | GLM | COMPLETE | Static-validated: braces/parens balanced, 19/19 declared methods defined; ENGINE-UNVERIFIED |
+| SCI-3 | Phase 3 — base bake + acquisition/staging | `Tools/ArtSourceGen/gen_sci_fantasy_bases.py` → 16 SK_Base_* rigged GLBs (theme identity geometry + Idle/Move/Hit clips, validate PASS ×16, manifest-recorded at /Game/Characters/Echoes/BaseMeshes) + `tools/download_scifi_fantasy_assets.py` (curated CC0 ledger: 4 local packs LICENSE_VERIFIED, Poly Haven REJECTED-with-reason, Sketchfab APPROVED-NOT-REQUIRED; 16 SFXSet_* cues staged from local Kenney CC0; SHA-256 manifest `Docs/ASTRAWILD_SCI_FANTASY_ACQUISITION.json`) | GLM | COMPLETE | Network was down during staging — remote fetches skipped honestly; local CC0 sources covered 100% of the pipeline |
+| SCI-4 | Phase 4 — UE5 import/materials/VFX pipeline | `Content/Python/AwPipeline/import_echo_bases.py` (16 skeletal imports + clip-name normalization + 16 SoundWave cues + 7 NS_AW_Elem_* templates + 6 parameterized theme master materials on MaterialEditingLibrary; report contract total_missing==0 / errors==[]) | GLM | COMPLETE (source) / NOT_RUN (engine) | REQUIRES LOCAL EXECUTION on the UE 5.8 machine (V2-35); command block in the script header |
+| SCI-5 | Phase 5 — binding + verification | ProductionContent opt-in base binding for every bestiary species (precedence Tier-A art > Tier-B bake > SK_Base, never overwrite existing) + test 126 `ASTRAWILD.SCI_FANTASY.MutationSystem` (table census 204, 8 themes, 16 valid bases, scale/mask ranges, signature diversity ≥170 [actual 202/204], deterministic fallback, attachment bits, theme color math, derived paths, display names, theme×plan buckets) + validator §9c + ledger §4 + MASTER_CONTROL v9.0 + queue V2-35 + census gate unchanged (229 species) | GLM | COMPLETE | Static validator: ALL CHECKS PASSED; runtime visuals ENGINE-UNVERIFIED (V2-35) |
+
+**§M closing note:** AUD + SCI-1..SCI-5 all COMPLETE source-side. The directive
+explicitly superseded the FPP-3 freeze for this pass (user-ordered content
+re-open AFTER the audit gate). Census UNCHANGED — the 204 existing species
+gained Sci-Fantasy visual identities via base + mutation (no species/quest/
+boss/recipe inflation). All engine-facing claims stay ENGINE-UNVERIFIED; the
+single conversion gate is queue row V2-35 (import report + PIE clips) inside
+the existing Antigravity §20 sequence.

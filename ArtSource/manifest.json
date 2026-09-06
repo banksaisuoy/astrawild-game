@@ -324,6 +324,454 @@
       "seconds": 0.9,
       "ue_path": "/Game/Audio/A_Weapon_Singularity_Fire"
     },
+    "SK_Base_ArmoredBeetle": {
+      "animations": [
+        "AM_SK_Base_ArmoredBeetle_Idle",
+        "AM_SK_Base_ArmoredBeetle_Move",
+        "AM_SK_Base_ArmoredBeetle_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "insectoid",
+      "bones": 12,
+      "bytes": 65124,
+      "category": "mesh",
+      "joints": 12,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 13,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredBeetle.glb",
+      "skins": 1,
+      "theme": "ArmoredOrganic",
+      "tier": "S",
+      "triangles": 738,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ArmoredBeetle",
+      "validate": "PASS"
+    },
+    "SK_Base_ArmoredCrab": {
+      "animations": [
+        "AM_SK_Base_ArmoredCrab_Idle",
+        "AM_SK_Base_ArmoredCrab_Move",
+        "AM_SK_Base_ArmoredCrab_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 95004,
+      "category": "mesh",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredCrab.glb",
+      "skins": 1,
+      "theme": "ArmoredOrganic",
+      "tier": "S",
+      "triangles": 1170,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ArmoredCrab",
+      "validate": "PASS"
+    },
+    "SK_Base_CyborgBeast": {
+      "animations": [
+        "AM_SK_Base_CyborgBeast_Idle",
+        "AM_SK_Base_CyborgBeast_Move",
+        "AM_SK_Base_CyborgBeast_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 96384,
+      "category": "mesh",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgBeast.glb",
+      "skins": 1,
+      "theme": "MechanicalHybrid",
+      "tier": "S",
+      "triangles": 1327,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_CyborgBeast",
+      "validate": "PASS"
+    },
+    "SK_Base_CyborgSerpent": {
+      "animations": [
+        "AM_SK_Base_CyborgSerpent_Idle",
+        "AM_SK_Base_CyborgSerpent_Move",
+        "AM_SK_Base_CyborgSerpent_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 8,
+      "bytes": 58144,
+      "category": "mesh",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgSerpent.glb",
+      "skins": 1,
+      "theme": "MechanicalHybrid",
+      "tier": "S",
+      "triangles": 721,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_CyborgSerpent",
+      "validate": "PASS"
+    },
+    "SK_Base_ElemDrake": {
+      "animations": [
+        "AM_SK_Base_ElemDrake_Idle",
+        "AM_SK_Base_ElemDrake_Move",
+        "AM_SK_Base_ElemDrake_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 104088,
+      "category": "mesh",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemDrake.glb",
+      "skins": 1,
+      "theme": "ElementalBeast",
+      "tier": "S",
+      "triangles": 1598,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ElemDrake",
+      "validate": "PASS"
+    },
+    "SK_Base_ElemWisp": {
+      "animations": [
+        "AM_SK_Base_ElemWisp_Idle",
+        "AM_SK_Base_ElemWisp_Move",
+        "AM_SK_Base_ElemWisp_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "floating",
+      "bones": 5,
+      "bytes": 53032,
+      "category": "mesh",
+      "joints": 5,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 6,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemWisp.glb",
+      "skins": 1,
+      "theme": "ElementalBeast",
+      "tier": "S",
+      "triangles": 980,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ElemWisp",
+      "validate": "PASS"
+    },
+    "SK_Base_GolemQuadruped": {
+      "animations": [
+        "AM_SK_Base_GolemQuadruped_Idle",
+        "AM_SK_Base_GolemQuadruped_Move",
+        "AM_SK_Base_GolemQuadruped_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 93768,
+      "category": "mesh",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_GolemQuadruped.glb",
+      "skins": 1,
+      "theme": "AncientConstruct",
+      "tier": "S",
+      "triangles": 1178,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_GolemQuadruped",
+      "validate": "PASS"
+    },
+    "SK_Base_MonolithColossus": {
+      "animations": [
+        "AM_SK_Base_MonolithColossus_Idle",
+        "AM_SK_Base_MonolithColossus_Move",
+        "AM_SK_Base_MonolithColossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 71724,
+      "category": "mesh",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MonolithColossus.glb",
+      "skins": 1,
+      "theme": "AncientConstruct",
+      "tier": "S",
+      "triangles": 958,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MonolithColossus",
+      "validate": "PASS"
+    },
+    "SK_Base_Mushroomling": {
+      "animations": [
+        "AM_SK_Base_Mushroomling_Idle",
+        "AM_SK_Base_Mushroomling_Move",
+        "AM_SK_Base_Mushroomling_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "floating",
+      "bones": 5,
+      "bytes": 48736,
+      "category": "mesh",
+      "joints": 5,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 6,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_Mushroomling.glb",
+      "skins": 1,
+      "theme": "PlantMonster",
+      "tier": "S",
+      "triangles": 706,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_Mushroomling",
+      "validate": "PASS"
+    },
+    "SK_Base_MutantAvian": {
+      "animations": [
+        "AM_SK_Base_MutantAvian_Idle",
+        "AM_SK_Base_MutantAvian_Move",
+        "AM_SK_Base_MutantAvian_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "avian",
+      "bones": 9,
+      "bytes": 52592,
+      "category": "mesh",
+      "joints": 9,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 10,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantAvian.glb",
+      "skins": 1,
+      "theme": "MutatedFauna",
+      "tier": "S",
+      "triangles": 604,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MutantAvian",
+      "validate": "PASS"
+    },
+    "SK_Base_MutantBeast": {
+      "animations": [
+        "AM_SK_Base_MutantBeast_Idle",
+        "AM_SK_Base_MutantBeast_Move",
+        "AM_SK_Base_MutantBeast_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "quadruped",
+      "bones": 16,
+      "bytes": 96912,
+      "category": "mesh",
+      "joints": 16,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 17,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantBeast.glb",
+      "skins": 1,
+      "theme": "MutatedFauna",
+      "tier": "S",
+      "triangles": 1289,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MutantBeast",
+      "validate": "PASS"
+    },
+    "SK_Base_PlantMaw": {
+      "animations": [
+        "AM_SK_Base_PlantMaw_Idle",
+        "AM_SK_Base_PlantMaw_Move",
+        "AM_SK_Base_PlantMaw_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "biped",
+      "bones": 14,
+      "bytes": 76396,
+      "category": "mesh",
+      "joints": 14,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 15,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_PlantMaw.glb",
+      "skins": 1,
+      "theme": "PlantMonster",
+      "tier": "S",
+      "triangles": 1098,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_PlantMaw",
+      "validate": "PASS"
+    },
+    "SK_Base_SpiritOrb": {
+      "animations": [
+        "AM_SK_Base_SpiritOrb_Idle",
+        "AM_SK_Base_SpiritOrb_Move",
+        "AM_SK_Base_SpiritOrb_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "amorphous",
+      "bones": 8,
+      "bytes": 56120,
+      "category": "mesh",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritOrb.glb",
+      "skins": 1,
+      "theme": "EtherealSpirit",
+      "tier": "S",
+      "triangles": 974,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_SpiritOrb",
+      "validate": "PASS"
+    },
+    "SK_Base_SpiritWisp": {
+      "animations": [
+        "AM_SK_Base_SpiritWisp_Idle",
+        "AM_SK_Base_SpiritWisp_Move",
+        "AM_SK_Base_SpiritWisp_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "floating",
+      "bones": 5,
+      "bytes": 43568,
+      "category": "mesh",
+      "joints": 5,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 6,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritWisp.glb",
+      "skins": 1,
+      "theme": "EtherealSpirit",
+      "tier": "S",
+      "triangles": 746,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_SpiritWisp",
+      "validate": "PASS"
+    },
+    "SK_Base_VoidBlob": {
+      "animations": [
+        "AM_SK_Base_VoidBlob_Idle",
+        "AM_SK_Base_VoidBlob_Move",
+        "AM_SK_Base_VoidBlob_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "amorphous",
+      "bones": 8,
+      "bytes": 56660,
+      "category": "mesh",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidBlob.glb",
+      "skins": 1,
+      "theme": "VoidAbomination",
+      "tier": "S",
+      "triangles": 881,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_VoidBlob",
+      "validate": "PASS"
+    },
+    "SK_Base_VoidTentacle": {
+      "animations": [
+        "AM_SK_Base_VoidTentacle_Idle",
+        "AM_SK_Base_VoidTentacle_Move",
+        "AM_SK_Base_VoidTentacle_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "body_plan": "serpent",
+      "bones": 8,
+      "bytes": 57864,
+      "category": "mesh",
+      "joints": 8,
+      "materials": [
+        "Echo_Body",
+        "Echo_Armor",
+        "Echo_Emissive",
+        "Echo_Eye"
+      ],
+      "meshes": 1,
+      "nodes": 9,
+      "path": "/home/z/my-project/astrawild-game/ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidTentacle.glb",
+      "skins": 1,
+      "theme": "VoidAbomination",
+      "tier": "S",
+      "triangles": 672,
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_VoidTentacle",
+      "validate": "PASS"
+    },
     "SK_Echo_Abyssjelly": {
       "animations": [
         "AM_Abyssjelly_Idle",

@@ -6,6 +6,7 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoMutator.h"
 #include "AstrawildGeneticsLibrary.h"
 #include "AstrawildMountComponent.h"
 #include "AstrawildEchoAIController.h"
@@ -233,6 +234,58 @@ namespace
         default:                          return 1.0f;
         }
     }
+
+    /**
+     * Sci-Fantasy directive Phase 2 — mutation attachment geometry (PMC path).
+     *
+     * Appends the spec's attachment set onto the baked body as extra parts:
+     * dorsal spikes, extra wings, a third eye, extra arms, a horn crown,
+     * glow nodes and a tail fin. Generic silhouette-relative positions — the
+     * parts read at gameplay distance on every body plan without per-plan
+     * hand placement (deterministic, no RNG).
+     */
+    void AppendMutationParts(FAstrawildBodyPart& Part, const float S, const FEchoMutationSpec& Spec,
+        const FColor& PatternColor, const FColor& StructuralColor)
+    {
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::DorsalSpikes))
+        {
+            for (const float X : { -22.0f, -2.0f, 18.0f })
+            {
+                AddConePart(Part, FVector(X * S, 0.0f, 72.0f * S), FVector(X * S, 0.0f, 100.0f * S), 7.0f * S, StructuralColor, 5);
+            }
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::Wings))
+        {
+            AddBoxPart(Part, FVector(-10.0f * S, 42.0f * S, 82.0f * S), FVector(24.0f * S, 5.0f * S, 16.0f * S), StructuralColor);
+            AddBoxPart(Part, FVector(-10.0f * S, -42.0f * S, 82.0f * S), FVector(24.0f * S, 5.0f * S, 16.0f * S), StructuralColor);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::ThirdEye))
+        {
+            AddSpherePart(Part, FVector(44.0f * S, 0.0f, 98.0f * S), 6.0f * S, PatternColor, 8);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::ExtraArms))
+        {
+            AddCylinderPart(Part, FVector(20.0f * S, 18.0f * S, 66.0f * S), FVector(46.0f * S, 40.0f * S, 88.0f * S), 4.0f * S, StructuralColor, 5);
+            AddCylinderPart(Part, FVector(-20.0f * S, 18.0f * S, 66.0f * S), FVector(-46.0f * S, 40.0f * S, 88.0f * S), 4.0f * S, StructuralColor, 5);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::HornCrown))
+        {
+            AddConePart(Part, FVector(34.0f * S, 12.0f * S, 92.0f * S), FVector(44.0f * S, 18.0f * S, 112.0f * S), 3.0f * S, StructuralColor, 5);
+            AddConePart(Part, FVector(34.0f * S, -12.0f * S, 92.0f * S), FVector(44.0f * S, -18.0f * S, 112.0f * S), 3.0f * S, StructuralColor, 5);
+            AddConePart(Part, FVector(38.0f * S, 0.0f, 96.0f * S), FVector(52.0f * S, 0.0f, 120.0f * S), 4.0f * S, StructuralColor, 5);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::GlowNodes))
+        {
+            AddSpherePart(Part, FVector(10.0f * S, 20.0f * S, 78.0f * S), 5.0f * S, PatternColor, 6);
+            AddSpherePart(Part, FVector(-14.0f * S, -18.0f * S, 70.0f * S), 5.0f * S, PatternColor, 6);
+            AddSpherePart(Part, FVector(-6.0f * S, 24.0f * S, 60.0f * S), 4.0f * S, PatternColor, 6);
+            AddSpherePart(Part, FVector(18.0f * S, -22.0f * S, 88.0f * S), 4.0f * S, PatternColor, 6);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::TailFin))
+        {
+            AddBoxPart(Part, FVector(-62.0f * S, 0.0f, 70.0f * S), FVector(12.0f * S, 22.0f * S, 4.0f * S), StructuralColor);
+        }
+    }
 }
 
 void AAstrawildEchoCharacter::BuildProceduralBody()
@@ -262,6 +315,25 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         255);
     const float S = BodyScaleForSize(EchoDefinition->SizeClass);
 
+    // Sci-Fantasy directive Phase 2: mutate the silhouette. Table row for
+    // bestiary species, deterministic derived spec otherwise — every Echo
+    // mutates (per-part scale multipliers + theme material language +
+    // independent pattern tint + attachment set).
+    const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId);
+    FEchoMutationSpec DeterministicSpec;
+    if (!MutationSpec)
+    {
+        DeterministicSpec = FAstrawildEchoMutator::BuildDeterministicSpec(EchoDefinition);
+        MutationSpec = &DeterministicSpec;
+    }
+    float HeadScale = 1.0f, TorsoScale = 1.0f, LimbScale = 1.0f, TailScale = 1.0f;
+    const int32 InstanceSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
+    FAstrawildEchoMutator::ComputePartScales(*MutationSpec, InstanceSeed, HeadScale, TorsoScale, LimbScale, TailScale);
+    FColor MutPrimary = Primary;
+    FColor MutSecondary = Secondary;
+    FAstrawildEchoMutator::ApplyThemeToBodyColors(Primary, Secondary, *MutationSpec, MutPrimary, MutSecondary);
+    const FColor PatternAccent = MutationSpec->PatternTint.ToFColor(true);
+
     FAstrawildBodyPart Body;
 
     switch (EchoDefinition->BodyPlan)
@@ -269,27 +341,27 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
     case EAstrawildBodyPlan::Quadruped:
     {
         // Torso + head + four legs + tail cone.
-        AddSpherePart(Body, FVector(0, 0, 55 * S), 42 * S, Primary, 8);
-        AddSpherePart(Body, FVector(52 * S, 0, 78 * S), 24 * S, Secondary, 8);
-        AddConePart(Body, FVector(52 * S, 0, 78 * S), FVector(80 * S, 0, 92 * S), 9 * S, Accent, 6); // snout/horn
+        AddSpherePart(Body, FVector(0, 0, 55 * S), 42 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(52 * S, 0, 78 * S), 24 * S * HeadScale, MutSecondary, 8);
+        AddConePart(Body, FVector(52 * S, 0, 78 * S), FVector(80 * S * HeadScale, 0, 92 * S), 9 * S * HeadScale, Accent, 6); // snout/horn
         const float LegX = 30 * S;
         const float LegY = 26 * S;
         for (const FVector2D Corner : { FVector2D(LegX, LegY), FVector2D(LegX, -LegY), FVector2D(-LegX, LegY), FVector2D(-LegX, -LegY) })
         {
-            AddCylinderPart(Body, FVector(Corner.X, Corner.Y, 40 * S), FVector(Corner.X, Corner.Y, 2 * S), 9 * S, Secondary, 6);
+            AddCylinderPart(Body, FVector(Corner.X, Corner.Y, 40 * S * LimbScale), FVector(Corner.X, Corner.Y, 2 * S), 9 * S * LimbScale, MutSecondary, 6);
         }
-        AddConePart(Body, FVector(-44 * S, 0, 62 * S), FVector(-92 * S, 0, 74 * S), 10 * S, Secondary, 6);
+        AddConePart(Body, FVector(-44 * S, 0, 62 * S), FVector(-92 * S * TailScale, 0, 74 * S), 10 * S * TailScale, MutSecondary, 6);
         break;
     }
     case EAstrawildBodyPlan::Biped:
     {
-        AddSpherePart(Body, FVector(0, 0, 72 * S), 38 * S, Primary, 8);
-        AddSpherePart(Body, FVector(0, 0, 122 * S), 22 * S, Secondary, 8);
-        AddConePart(Body, FVector(0, 0, 138 * S), FVector(0, 0, 172 * S), 10 * S, Accent, 6); // crest
-        AddCylinderPart(Body, FVector(16 * S, 0, 58 * S), FVector(30 * S, 0, 96 * S), 8 * S, Secondary, 6); // arms
-        AddCylinderPart(Body, FVector(-16 * S, 0, 58 * S), FVector(-30 * S, 0, 96 * S), 8 * S, Secondary, 6);
-        AddCylinderPart(Body, FVector(14 * S, 0, 36 * S), FVector(14 * S, 0, 2 * S), 10 * S, Secondary, 6); // legs
-        AddCylinderPart(Body, FVector(-14 * S, 0, 36 * S), FVector(-14 * S, 0, 2 * S), 10 * S, Secondary, 6);
+        AddSpherePart(Body, FVector(0, 0, 72 * S), 38 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(0, 0, 122 * S), 22 * S * HeadScale, MutSecondary, 8);
+        AddConePart(Body, FVector(0, 0, 138 * S), FVector(0, 0, 172 * S * HeadScale), 10 * S * HeadScale, Accent, 6); // crest
+        AddCylinderPart(Body, FVector(16 * S, 0, 58 * S), FVector(30 * S, 0, 96 * S * LimbScale), 8 * S * LimbScale, MutSecondary, 6); // arms
+        AddCylinderPart(Body, FVector(-16 * S, 0, 58 * S), FVector(-30 * S, 0, 96 * S * LimbScale), 8 * S * LimbScale, MutSecondary, 6);
+        AddCylinderPart(Body, FVector(14 * S, 0, 36 * S * LimbScale), FVector(14 * S, 0, 2 * S), 10 * S * LimbScale, MutSecondary, 6); // legs
+        AddCylinderPart(Body, FVector(-14 * S, 0, 36 * S * LimbScale), FVector(-14 * S, 0, 2 * S), 10 * S * LimbScale, MutSecondary, 6);
         break;
     }
     case EAstrawildBodyPlan::Serpent:
@@ -300,73 +372,78 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         const float SegR[6] = { 9, 15, 21, 25, 22, 17 };
         for (int32 i = 0; i < 6; ++i)
         {
-            AddSpherePart(Body, FVector(SegX[i] * S, 0, SegZ[i] * S), SegR[i] * S, i % 2 == 0 ? Primary : Secondary, 8);
+            AddSpherePart(Body, FVector(SegX[i] * S, 0, SegZ[i] * S), SegR[i] * S * TorsoScale, i % 2 == 0 ? MutPrimary : MutSecondary, 8);
         }
-        AddConePart(Body, FVector(66 * S, 0, 96 * S), FVector(112 * S, 0, 108 * S), 14 * S, Accent, 6); // head wedge
+        AddConePart(Body, FVector(66 * S, 0, 96 * S), FVector(112 * S * HeadScale, 0, 108 * S), 14 * S * HeadScale, Accent, 6); // head wedge
         break;
     }
     case EAstrawildBodyPlan::Floating:
     {
-        AddSpherePart(Body, FVector(0, 0, 95 * S), 34 * S, Primary, 10);
-        AddSpherePart(Body, FVector(30 * S, 22 * S, 108 * S), 12 * S, Secondary, 6);
-        AddSpherePart(Body, FVector(-28 * S, 24 * S, 88 * S), 10 * S, Secondary, 6);
-        AddSpherePart(Body, FVector(-24 * S, -26 * S, 112 * S), 11 * S, Secondary, 6);
-        AddConePart(Body, FVector(0, 0, 62 * S), FVector(0, 0, 18 * S), 20 * S, Accent, 6); // energy tail
+        AddSpherePart(Body, FVector(0, 0, 95 * S), 34 * S * TorsoScale, MutPrimary, 10);
+        AddSpherePart(Body, FVector(30 * S, 22 * S, 108 * S), 12 * S * HeadScale, MutSecondary, 6);
+        AddSpherePart(Body, FVector(-28 * S, 24 * S, 88 * S), 10 * S * HeadScale, MutSecondary, 6);
+        AddSpherePart(Body, FVector(-24 * S, -26 * S, 112 * S), 11 * S * HeadScale, MutSecondary, 6);
+        AddConePart(Body, FVector(0, 0, 62 * S), FVector(0, 0, 18 * S * TailScale), 20 * S * TailScale, Accent, 6); // energy tail
         break;
     }
     case EAstrawildBodyPlan::Insectoid:
     {
-        AddSpherePart(Body, FVector(34 * S, 0, 55 * S), 17 * S, Secondary, 8); // head
-        AddSpherePart(Body, FVector(6 * S, 0, 52 * S), 24 * S, Primary, 8); // thorax
-        AddSpherePart(Body, FVector(-34 * S, 0, 48 * S), 28 * S, Primary, 8); // abdomen
-        AddCylinderPart(Body, FVector(34 * S, 10 * S, 66 * S), FVector(50 * S, 16 * S, 92 * S), 3 * S, Secondary, 5); // antennae
-        AddCylinderPart(Body, FVector(34 * S, -10 * S, 66 * S), FVector(50 * S, -16 * S, 92 * S), 3 * S, Secondary, 5);
+        AddSpherePart(Body, FVector(34 * S, 0, 55 * S), 17 * S * HeadScale, MutSecondary, 8); // head
+        AddSpherePart(Body, FVector(6 * S, 0, 52 * S), 24 * S * TorsoScale, MutPrimary, 8); // thorax
+        AddSpherePart(Body, FVector(-34 * S, 0, 48 * S), 28 * S * TorsoScale, MutPrimary, 8); // abdomen
+        AddCylinderPart(Body, FVector(34 * S, 10 * S, 66 * S), FVector(50 * S, 16 * S, 92 * S * HeadScale), 3 * S * HeadScale, MutSecondary, 5); // antennae
+        AddCylinderPart(Body, FVector(34 * S, -10 * S, 66 * S), FVector(50 * S, -16 * S, 92 * S * HeadScale), 3 * S * HeadScale, MutSecondary, 5);
         const float LegX[4] = { 24, 8, -16, -34 };
         for (int32 i = 0; i < 4; ++i)
         {
-            AddCylinderPart(Body, FVector(LegX[i] * S, 14 * S, 44 * S), FVector(LegX[i] * S, 30 * S, 4 * S), 4 * S, Secondary, 5);
-            AddCylinderPart(Body, FVector(LegX[i] * S, -14 * S, 44 * S), FVector(LegX[i] * S, -30 * S, 4 * S), 4 * S, Secondary, 5);
+            AddCylinderPart(Body, FVector(LegX[i] * S, 14 * S, 44 * S * LimbScale), FVector(LegX[i] * S, 30 * S, 4 * S), 4 * S * LimbScale, MutSecondary, 5);
+            AddCylinderPart(Body, FVector(LegX[i] * S, -14 * S, 44 * S * LimbScale), FVector(LegX[i] * S, -30 * S, 4 * S), 4 * S * LimbScale, MutSecondary, 5);
         }
         break;
     }
     case EAstrawildBodyPlan::Avian:
     {
-        AddSpherePart(Body, FVector(0, 0, 62 * S), 30 * S, Primary, 8); // keeled body
-        AddSpherePart(Body, FVector(30 * S, 0, 86 * S), 16 * S, Primary, 8); // head
-        AddConePart(Body, FVector(42 * S, 0, 84 * S), FVector(64 * S, 0, 88 * S), 6 * S, Accent, 5); // beak
+        AddSpherePart(Body, FVector(0, 0, 62 * S), 30 * S * TorsoScale, MutPrimary, 8); // keeled body
+        AddSpherePart(Body, FVector(30 * S, 0, 86 * S), 16 * S * HeadScale, MutPrimary, 8); // head
+        AddConePart(Body, FVector(42 * S, 0, 84 * S), FVector(64 * S, 0, 88 * S), 6 * S * HeadScale, Accent, 5); // beak
         // Folded wings (flattened boxes).
-        AddBoxPart(Body, FVector(-6 * S, 34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S), Secondary);
-        AddBoxPart(Body, FVector(-6 * S, -34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S), Secondary);
-        AddBoxPart(Body, FVector(-34 * S, 0, 58 * S), FVector(14 * S, 16 * S, 4 * S), Secondary); // tail fan
-        AddCylinderPart(Body, FVector(6 * S, 8 * S, 34 * S), FVector(8 * S, 8 * S, 6 * S), 4 * S, Secondary, 5); // legs
-        AddCylinderPart(Body, FVector(6 * S, -8 * S, 34 * S), FVector(8 * S, -8 * S, 6 * S), 4 * S, Secondary, 5);
+        AddBoxPart(Body, FVector(-6 * S, 34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S * LimbScale), MutSecondary);
+        AddBoxPart(Body, FVector(-6 * S, -34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S * LimbScale), MutSecondary);
+        AddBoxPart(Body, FVector(-34 * S, 0, 58 * S), FVector(14 * S, 16 * S, 4 * S * TailScale), MutSecondary); // tail fan
+        AddCylinderPart(Body, FVector(6 * S, 8 * S, 34 * S * LimbScale), FVector(8 * S, 8 * S, 6 * S), 4 * S * LimbScale, MutSecondary, 5); // legs
+        AddCylinderPart(Body, FVector(6 * S, -8 * S, 34 * S * LimbScale), FVector(8 * S, -8 * S, 6 * S), 4 * S * LimbScale, MutSecondary, 5);
         break;
     }
     case EAstrawildBodyPlan::Crystalline:
     {
         // Faceted shard crown: big center + orbiting shards.
-        AddConePart(Body, FVector(0, 0, 4 * S), FVector(0, 0, 120 * S), 34 * S, Primary, 4);
-        AddConePart(Body, FVector(28 * S, 0, 4 * S), FVector(34 * S, 0, 78 * S), 14 * S, Secondary, 4);
-        AddConePart(Body, FVector(-26 * S, 10 * S, 4 * S), FVector(-32 * S, 14 * S, 64 * S), 12 * S, Secondary, 4);
-        AddConePart(Body, FVector(-20 * S, -18 * S, 4 * S), FVector(-24 * S, -24 * S, 52 * S), 10 * S, Secondary, 4);
+        AddConePart(Body, FVector(0, 0, 4 * S), FVector(0, 0, 120 * S * TorsoScale), 34 * S * TorsoScale, MutPrimary, 4);
+        AddConePart(Body, FVector(28 * S, 0, 4 * S), FVector(34 * S, 0, 78 * S), 14 * S * HeadScale, MutSecondary, 4);
+        AddConePart(Body, FVector(-26 * S, 10 * S, 4 * S), FVector(-32 * S, 14 * S, 64 * S), 12 * S * HeadScale, MutSecondary, 4);
+        AddConePart(Body, FVector(-20 * S, -18 * S, 4 * S), FVector(-24 * S, -24 * S, 52 * S), 10 * S * HeadScale, MutSecondary, 4);
         break;
     }
     case EAstrawildBodyPlan::Amorphous:
     {
-        AddSpherePart(Body, FVector(0, 0, 48 * S), 34 * S, Primary, 8);
-        AddSpherePart(Body, FVector(24 * S, 14 * S, 62 * S), 22 * S, Primary, 8);
-        AddSpherePart(Body, FVector(-22 * S, 18 * S, 54 * S), 18 * S, Primary, 8);
-        AddSpherePart(Body, FVector(-14 * S, -22 * S, 66 * S), 20 * S, Primary, 8);
-        AddSpherePart(Body, FVector(18 * S, -20 * S, 44 * S), 16 * S, Primary, 8);
-        AddSpherePart(Body, FVector(0, 0, 58 * S), 12 * S, Accent, 8); // inner glow core
+        AddSpherePart(Body, FVector(0, 0, 48 * S), 34 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(24 * S, 14 * S, 62 * S), 22 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(-22 * S, 18 * S, 54 * S), 18 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(-14 * S, -22 * S, 66 * S), 20 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(18 * S, -20 * S, 44 * S), 16 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(0, 0, 58 * S), 12 * S * HeadScale, Accent, 8); // inner glow core
         break;
     }
     default:
     {
-        AddSpherePart(Body, FVector(0, 0, 55 * S), 36 * S, Primary, 8);
+        AddSpherePart(Body, FVector(0, 0, 55 * S), 36 * S * TorsoScale, MutPrimary, 8);
         break;
     }
     }
+
+    // Sci-Fantasy directive Phase 2: append the mutation attachment set
+    // (spikes / wings / third eye / extra arms / horn crown / glow nodes /
+    // tail fin) onto the baked silhouette.
+    AppendMutationParts(Body, S, *MutationSpec, PatternAccent, MutSecondary);
 
     if (Body.Vertices.Num() > 0)
     {
@@ -823,6 +900,23 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
     {
         BuildProceduralBody();
     }
+
+    // Sci-Fantasy directive Phase 2: persistent element VFX (BOTH render
+    // paths — opt-in: binds only after the NS_AW_Elem_* systems import; the
+    // element glow light stays the visual floor until then, fail-closed).
+    {
+        const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId);
+        FEchoMutationSpec DeterministicSpec;
+        if (!MutationSpec)
+        {
+            DeterministicSpec = FAstrawildEchoMutator::BuildDeterministicSpec(EchoDefinition);
+            MutationSpec = &DeterministicSpec;
+        }
+        if (MutationSpec)
+        {
+            FAstrawildEchoMutator::ApplyElementVfx(this, *MutationSpec);
+        }
+    }
     return true;
 }
 
@@ -848,7 +942,13 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
     EchoBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     EchoBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     // Size-class scale mirrors BodyScaleForSize so Huge/Large/Small species read.
-    const float S = BodyScaleForSize(EchoDefinition->SizeClass);
+    // SCI-Fantasy directive Phase 2: skinned-path mutation — deterministic
+    // whole-body jitter on top of the size-class scale (per-bone skeletal
+    // scaling is deliberately NOT attempted here; documented as an
+    // engine-verification item, never a silent fake).
+    float S = BodyScaleForSize(EchoDefinition->SizeClass);
+    const int32 InstanceSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
+    S *= FAstrawildEchoMutator::ComputeRootScaleJitter(EchoDefinition->DefinitionId, InstanceSeed);
     const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : (60.0f * S);
     EchoBodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
     EchoBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
@@ -1125,13 +1225,29 @@ void AAstrawildEchoCharacter::NotifyWeaknessHit(const float AppliedDamage)
         return;
     }
 
-    // 2) Audio cue: the ArtPack-bound energy impact sound — the SAME binding
-    // the weapons use (no new /Game/ reference; LoadSynchronous short-circuits
+    // 2) Audio cue: the Sci-Fantasy sound-set vocalization first (opt-in —
+    // the SFXSet_* cues resolve only after the Phase 4 import lands them),
+    // then the ArtPack-bound energy impact sound — the SAME binding the
+    // weapons use (no new /Game/ reference; LoadSynchronous short-circuits
     // once the asset is resident, matching the weapon impact path).
-    const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
-    if (USoundBase* ImpactSound = Cue.LoadSynchronous())
+    USoundBase* ChosenCue = nullptr;
+    if (IsValid(EchoDefinition))
     {
-        UGameplayStatics::PlaySoundAtLocation(World, ImpactSound, GetActorLocation());
+        if (const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId))
+        {
+            const TSoftObjectPtr<USoundBase> Vocal(FSoftObjectPath(
+                FAstrawildEchoMutator::BuildSoundSetCuePath(MutationSpec->SoundSetId, 0)));
+            ChosenCue = Vocal.LoadSynchronous();
+        }
+    }
+    if (!ChosenCue)
+    {
+        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+        ChosenCue = Cue.LoadSynchronous();
+    }
+    if (ChosenCue)
+    {
+        UGameplayStatics::PlaySoundAtLocation(World, ChosenCue, GetActorLocation());
     }
 
     // 3) Attacker-facing HUD toast, routed through the established

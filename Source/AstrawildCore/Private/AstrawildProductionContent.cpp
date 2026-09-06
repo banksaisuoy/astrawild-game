@@ -1,6 +1,7 @@
 #include "AstrawildProductionContent.h"
 
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoMutator.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildArtPack.h"
@@ -1361,6 +1362,38 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
             EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::BuildTierBMechPath(TierBId)));
             EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, false)));
             EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, true)));
+        }
+    }
+
+    // SCI-FANTASY DIRECTIVE (Phase 5 — data binding): base-archetype opt-in
+    // binding for every remaining bestiary species. Each mutation-table row
+    // carries a 16-base BaseMeshId (2 per theme); species with NO art binding
+    // above get the derived SK_Base_* path + baked Idle/Move clips. Same
+    // fail-closed contract as Tier-B: before the engine import the paths do
+    // not resolve, the PMC MUTATED body stays, and gameplay is unchanged —
+    // after import the 204-species roster reads as skinned Sci-Fantasy bases.
+    for (const FEchoMutationSpec& MutationSpec : AstrawildEchoMutation::GetMutationSpecs())
+    {
+        if (AstrawildArtPack::FindEchoArt(MutationSpec.SpeciesId))
+        {
+            continue; // Tier-A hero art always wins
+        }
+        if (AstrawildArtPack::IsTierBSpecies(MutationSpec.SpeciesId))
+        {
+            continue; // Tier-B bespoke bakes always win over shared bases
+        }
+        if (UAstrawildEchoDefinition* EchoDef = Registry->FindEcho(MutationSpec.SpeciesId))
+        {
+            if (EchoDef->SkeletalMesh.IsValid())
+            {
+                continue; // never overwrite an existing binding
+            }
+            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(
+                FAstrawildEchoMutator::BuildSciFantasyBaseMeshPath(MutationSpec.BaseMeshId)));
+            EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(
+                FAstrawildEchoMutator::BuildSciFantasyAnimPath(MutationSpec.BaseMeshId, false)));
+            EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(
+                FAstrawildEchoMutator::BuildSciFantasyAnimPath(MutationSpec.BaseMeshId, true)));
         }
     }
 }

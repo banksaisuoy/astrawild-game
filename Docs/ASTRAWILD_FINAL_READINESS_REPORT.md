@@ -10,7 +10,7 @@ is the sole remaining work; post-freeze changes are evidence-driven engine fixes
 (`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 459/459 LFS objects verified live
 on GitHub, all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
-(validator equality gates), and the automation suite holds **125 world-free contract
+(validator equality gates), and the automation suite holds **126 world-free contract
 tests** behind an exact gate. The FINAL GAME COMPLETION RUN's five-agent deep audit fixed
 2 compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects (FCR-1-A/B/C), and the DEPTH
 PASS batch (DP-1..DP-9, per the user directive "MAKE IT A REAL GAME") landed the real-game
@@ -34,7 +34,7 @@ matrix re-verified. Engine verification (AG-2..5 per HANDOFF §20) is the sole r
 > [!NOTE]
 > **REDO LANDED (2026-09-03)**: every pillar below was re-implemented on branch
 > `final-completion` and pushed batch-by-batch (BATCH-0..5). The static validator runs
-> ALL CHECKS PASSED (now 61 checks incl. the 15 census equality gates) and the automation suite holds 125 world-free contract tests
+> ALL CHECKS PASSED (now 61 checks incl. the 15 census equality gates) and the automation suite holds 126 world-free contract tests
 > (inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`). Specs remain LOCKED as MASTER_CONTROL
 > v5.0 — the redo and the depth passes changed no canon, only extended it.
 
@@ -91,12 +91,12 @@ Side content: 23 SQ roster remains staged (deferred by design, MASTER_CONTROL D)
 - All P0 findings fixed (FR-0001..FR-0017, commit f310698): inventory duplication exploit, save thread-freeze, orphaned quest chain, false quest credits, fail-open building restores, silent reward loss, unsanitized roster import, chassis downgrade-on-reload.
 - P1/P2 fixed in aee4cc8: element matrix canon, building shell completion, 5 NPC dialogue trees, skiff mesh/seed, Azure POI, stale docs.
 - UObject lifetime audit: clean (TObjectPtr/TWeakObjectPtr everywhere; no raw dangles found).
-- Honest status: every fix is **statically validated only** (125 automation tests, compile-pending; ENGINE-UNVERIFIED).
+- Honest status: every fix is **statically validated only** (126 automation tests, compile-pending; ENGINE-UNVERIFIED).
 
 ## G. Automation Readiness
 
 - `Scripts/validate_repository.sh` v2 — PASS (structural ruleset).
-- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 125-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
+- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 126-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
 - 109 world-free automation contracts (57 baseline + 4 hardening + 6 Final-Run + 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth passes DP-3..DP-9) — never yet executed in an engine (AG-3).
 - Deterministic content: single code-default library, same-id .uasset override contract, ArtSource generators + AwPipeline importer.
 - Git: conventional commits, FR/DP-id traceability; every batch pushed to `origin/final-completion` (the binding push-after-every-batch rule honored live — `git ls-remote` shows the full chain through the DP-10 final-gate commit).
@@ -194,7 +194,7 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
   strategy/matrix docs. Claimed exactly to that extent and no further.
 - **STATIC-VERIFIED** — code + data machine-checked without an engine: the full C++
   module under both validators (`validate_repository.sh` v2 ruleset,
-  `validate_final_run.py` 61+ checks incl. the 125-test exact gate, the 15 census
+  `validate_final_run.py` 61+ checks incl. the 126-test exact gate, the 15 census
   equality gates and the 39-species Tier-B coherence gate) and the world-free
   automation contracts. Never executed, never rendered.
 - **ENGINE-UNVERIFIED** — everything that requires UE5.8.2/MSVC on the Antigravity
@@ -268,7 +268,7 @@ audited the product itself and closed every player-valued gap:
 | PCR-5 | PG-5 post-game hunt system (Hunt Board) | COMPLETE |
 | PCR-6 | This gate: matrix closure + residual rewrite + re-declaration | COMPLETE |
 
-Checks: both validators ALL PASS at tip (125-test exact gate; 15 census equality
+Checks: both validators ALL PASS at tip (126-test exact gate; 15 census equality
 gates UNCHANGED — screens/art/hunts ride existing content; the 39-species
 Tier-B coherence gate); input contract 28→32 actions; every active doc carries
 ONE test count (125); the post-game "hunts" claim is now backed by the hunt

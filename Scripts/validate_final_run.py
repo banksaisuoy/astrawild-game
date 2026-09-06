@@ -150,7 +150,7 @@ check(f"Asset path references resolve ({len(refs)} refs)", len(unresolved) == 0,
 # --- 9. Automation test count ---
 TESTS = read("Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
 count = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", TESTS))
-check("Automation tests == 125 (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 session flow + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation contract)", count == 125, f"count={count} — update this gate + all active docs together")
+check("Automation tests == 126 (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 session flow + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation + 1 SCI-FANTASY mutation)", count == 126, f"count={count} — update this gate + all active docs together")
 
 # --- 9b. PCR-4/PCR-5: Tier-B archetype library coherence ---
 ARTPACK = read("Source/AstrawildCore/Private/AstrawildArtPack.cpp")
@@ -164,6 +164,41 @@ if os.path.isdir(echoes_dir):
             glb_files.add("Echo_" + fn[len("SK_Echo_"):-4])
 missing_glbs = [sid for sid in tierb_table if sid not in glb_files]
 check(f"Tier-B code list == 39 species with baked GLBs ({len(tierb_table)} listed)", len(tierb_table) == 39 and not missing_glbs, f"listed={len(tierb_table)} missing_glbs={missing_glbs[:5]}")
+
+# --- 9c. SCI-FANTASY directive: mutation table + base archetype coherence ---
+MUTDATA = read("Source/AstrawildCore/Private/AstrawildEchoMutationData.cpp")
+MUTATOR = read("Source/AstrawildCore/Private/AstrawildEchoMutator.cpp")
+ECHOCHAR = read("Source/AstrawildCore/Private/AstrawildEchoCharacter.cpp")
+BD_9C = read("Source/AstrawildCore/Private/AstrawildBestiaryData.cpp")
+mutation_rows = re.findall(r'TEXT\("(Echo_[A-Za-z0-9_]+)"\),\s*EAstrawildSciFantasyTheme::(\w+)', MUTDATA)
+bestiary_ids = set(re.findall(r'\{ TEXT\("(Echo_[A-Za-z0-9_]+)"\), TEXT\("', BD_9C))
+mutation_ids = [m[0] for m in mutation_rows]
+check("Sci-Fantasy mutation table == 204 rows (one per bestiary species)",
+      len(mutation_rows) == 204 and set(mutation_ids) == bestiary_ids,
+      f"rows={len(mutation_rows)} unique={len(set(mutation_ids))} bestiary={len(bestiary_ids)} drift={sorted(set(mutation_ids) ^ bestiary_ids)[:5]}")
+THEMES_9C = {"AncientConstruct", "ElementalBeast", "MutatedFauna", "ArmoredOrganic",
+             "EtherealSpirit", "MechanicalHybrid", "PlantMonster", "VoidAbomination"}
+seen_themes = {m[1] for m in mutation_rows}
+check("All 8 Sci-Fantasy themes populated", seen_themes == THEMES_9C, f"missing={THEMES_9C - seen_themes}")
+base_dir = os.path.join(ROOT, "ArtSource", "Meshes", "Echoes", "BaseMeshes")
+base_glbs = {fn[:-4] for fn in os.listdir(base_dir) if fn.endswith(".glb")} if os.path.isdir(base_dir) else set()
+SCI_BASES = {"SK_Base_GolemQuadruped", "SK_Base_MonolithColossus", "SK_Base_ElemDrake", "SK_Base_ElemWisp",
+             "SK_Base_MutantBeast", "SK_Base_MutantAvian", "SK_Base_ArmoredBeetle", "SK_Base_ArmoredCrab",
+             "SK_Base_SpiritWisp", "SK_Base_SpiritOrb", "SK_Base_CyborgBeast", "SK_Base_CyborgSerpent",
+             "SK_Base_PlantMaw", "SK_Base_Mushroomling", "SK_Base_VoidBlob", "SK_Base_VoidTentacle"}
+check("16 Sci-Fantasy base archetypes baked on disk", base_glbs == SCI_BASES,
+      f"on_disk={len(base_glbs)} missing={sorted(SCI_BASES - base_glbs)[:5]}")
+bound_bases = set(re.findall(r'TEXT\("(SK_Base_\w+)"\)', MUTDATA))
+check("Every mutation row binds one of the 16 bases", bound_bases <= SCI_BASES,
+      f"unknown={sorted(bound_bases - SCI_BASES)[:5]}")
+check("Mutation consumption wired (EchoCharacter + ProductionContent + mutator)",
+      "FAstrawildEchoMutator::" in ECHOCHAR and "AstrawildEchoMutation::GetMutationSpecs()" in PC
+      and "FindSpec" in MUTATOR and "AppendMutationParts" in ECHOCHAR,
+      "EchoCharacter/ProductionContent/Mutator must all consume the table")
+echo_audio_dir = os.path.join(ROOT, "ArtSource", "Audio", "Echoes")
+staged_cues = {fn[:-4] for fn in os.listdir(echo_audio_dir) if fn.endswith(".wav")} if os.path.isdir(echo_audio_dir) else set()
+check("16 theme sound cues staged (8 sets x 2)", len(staged_cues) == 16,
+      f"staged={len(staged_cues)}")
 
 # --- 10. Building catalog completeness ---
 cats = ["Foundation", "Wall", "Floor", "Roof", "Door", "Storage", "Workstation", "Farm", "Power", "Research"]

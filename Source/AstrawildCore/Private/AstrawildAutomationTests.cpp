@@ -27,6 +27,7 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildEchoMutator.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
@@ -5704,6 +5705,229 @@ bool FAstrawildFPP1PresentationContractTest::RunTest(const FString& Parameters)
             Ability->DisplayName.IsEmpty());
         TestFalse(FString::Printf(TEXT("Ability %s has a description"), *AbilityId.ToString()),
             Ability->Description.IsEmpty());
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// SCI-FANTASY MONSTER DIRECTIVE — mutation system contract
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSciFantasyMutationTest,
+    "ASTRAWILD.SCI_FANTASY.MutationSystem",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildSciFantasyMutationTest::RunTest(const FString& Parameters)
+{
+    // 1) Table census: the generator pins 204 rows with unique species ids
+    //    (one per generated bestiary species — a dropped or duplicated row
+    //    fails here before anything engine-side).
+    const TArray<FEchoMutationSpec>& Specs = AstrawildEchoMutation::GetMutationSpecs();
+    TestEqual(TEXT("Mutation table holds 204 species"), Specs.Num(), 204);
+    TestEqual(TEXT("FindSpec-count mirror"), FAstrawildEchoMutator::GetMutationSpecCount(), 204);
+    TSet<FName> SeenIds;
+    for (const FEchoMutationSpec& Spec : Specs)
+    {
+        SeenIds.Add(Spec.SpeciesId);
+    }
+    TestEqual(TEXT("Mutation ids are unique"), SeenIds.Num(), Specs.Num());
+    TestNotNull(TEXT("A known bestiary species resolves"), FAstrawildEchoMutator::FindSpec(TEXT("Echo_Mosspaw")));
+    TestNull(TEXT("A hero species has no table row (derived instead)"), FAstrawildEchoMutator::FindSpec(TEXT("Echo_Terraquill")));
+
+    // 2) Every theme represented — 8 groups, none empty.
+    bool bThemeSeen[8] = { false, false, false, false, false, false, false, false };
+    int32 ThemeCounts[8] = { 0 };
+    for (const FEchoMutationSpec& Spec : Specs)
+    {
+        const int32 Index = static_cast<int32>(Spec.Theme);
+        if (Index >= 0 && Index < 8)
+        {
+            bThemeSeen[Index] = true;
+            ++ThemeCounts[Index];
+        }
+    }
+    for (int32 i = 0; i < 8; ++i)
+    {
+        TestTrue(FString::Printf(TEXT("Theme %d represented"), i), bThemeSeen[i]);
+    }
+
+    // 3) The 16 base archetypes — every BaseMeshId is one of them.
+    const FName ValidBases[] = {
+        TEXT("SK_Base_GolemQuadruped"), TEXT("SK_Base_MonolithColossus"),
+        TEXT("SK_Base_ElemDrake"), TEXT("SK_Base_ElemWisp"),
+        TEXT("SK_Base_MutantBeast"), TEXT("SK_Base_MutantAvian"),
+        TEXT("SK_Base_ArmoredBeetle"), TEXT("SK_Base_ArmoredCrab"),
+        TEXT("SK_Base_SpiritWisp"), TEXT("SK_Base_SpiritOrb"),
+        TEXT("SK_Base_CyborgBeast"), TEXT("SK_Base_CyborgSerpent"),
+        TEXT("SK_Base_PlantMaw"), TEXT("SK_Base_Mushroomling"),
+        TEXT("SK_Base_VoidBlob"), TEXT("SK_Base_VoidTentacle"),
+    };
+    const TSet<FName> ValidBaseSet(ValidBases, ARRAY_COUNT(ValidBases));
+    for (const FEchoMutationSpec& Spec : Specs)
+    {
+        TestTrue(FString::Printf(TEXT("%s binds a valid base"), *Spec.SpeciesId.ToString()),
+            ValidBaseSet.Contains(Spec.BaseMeshId));
+        TestTrue(FString::Printf(TEXT("%s mask nonzero"), *Spec.SpeciesId.ToString()),
+            Spec.AttachmentMask > 0 && Spec.AttachmentMask <= 0x7F);
+        for (const float Scale : { Spec.HeadScale, Spec.TorsoScale, Spec.LimbScale, Spec.TailScale })
+        {
+            TestTrue(FString::Printf(TEXT("%s scale in range"), *Spec.SpeciesId.ToString()),
+                Scale >= 0.7f && Scale <= 1.5f);
+        }
+        TestFalse(FString::Printf(TEXT("%s sound set set"), *Spec.SpeciesId.ToString()),
+            Spec.SoundSetId.IsNone());
+        if (!TestTrue(FString::Printf(TEXT("%s pattern tint opaque"), *Spec.SpeciesId.ToString()),
+            FMath::IsNearlyEqual(Spec.PatternTint.A, 1.0f)))
+        {
+            AddError(FString::Printf(TEXT("%s pattern tint alpha %f"), *Spec.SpeciesId.ToString(), Spec.PatternTint.A));
+        }
+    }
+
+    // 4) Visual diversity contract: bucketed signature (theme + base +
+    //    scale buckets + attachments + material + vfx) must stay near-unique
+    //    — 170/204 floor (the generator currently sits at 202/204).
+    TSet<uint32> Signatures;
+    for (const FEchoMutationSpec& Spec : Specs)
+    {
+        const uint32 Signature = static_cast<uint32>(Spec.AttachmentMask)
+            ^ (static_cast<uint32>(Spec.Theme) << 12)
+            ^ (static_cast<uint32>(FMath::Clamp<int32>(Spec.HeadScale * 4.0f, 0, 7)) << 16)
+            ^ (static_cast<uint32>(FMath::Clamp<int32>(Spec.TorsoScale * 4.0f, 0, 7)) << 20)
+            ^ (static_cast<uint32>(FMath::Clamp<int32>(Spec.LimbScale * 4.0f, 0, 7)) << 24)
+            ^ (static_cast<uint32>(Spec.MaterialTheme) << 28)
+            ^ (static_cast<uint32>(FAstrawildEchoMutator::GetAttachmentBits(EAstrawildEchoAttachment::GlowNodes) & Spec.AttachmentMask ? 1u : 0u));
+        Signatures.Add(Signature);
+    }
+    TestTrue(FString::Printf(TEXT("Signature diversity >= 170/204 (got %d)"), Signatures.Num()),
+        Signatures.Num() >= 170);
+
+    // 5) Deterministic fallback: the same definition derives the identical
+    //    spec twice (hero species ride this path).
+    UAstrawildEchoDefinition* ProbeDef = NewObject<UAstrawildEchoDefinition>(GetTransientPackage());
+    ProbeDef->DefinitionId = TEXT("Echo_Terraquill");
+    ProbeDef->Family = EAstrawildEchoFamily::Beast;
+    ProbeDef->BodyPlan = EAstrawildBodyPlan::Quadruped;
+    ProbeDef->Element = EAstrawildElementType::Flora;
+    const FEchoMutationSpec First = FAstrawildEchoMutator::BuildDeterministicSpec(ProbeDef);
+    const FEchoMutationSpec Second = FAstrawildEchoMutator::BuildDeterministicSpec(ProbeDef);
+    TestEqual(TEXT("Derived spec is deterministic (theme)"),
+        static_cast<int32>(First.Theme), static_cast<int32>(Second.Theme));
+    TestTrue(TEXT("Derived spec is deterministic (base)"),
+        First.BaseMeshId == Second.BaseMeshId);
+    TestEqual(TEXT("Derived spec is deterministic (mask)"),
+        First.AttachmentMask, Second.AttachmentMask);
+    TestEqual(TEXT("Derived spec is deterministic (head scale)"),
+        First.HeadScale, Second.HeadScale);
+    TestTrue(TEXT("Derived spec has a valid base"), ValidBaseSet.Contains(First.BaseMeshId));
+    TestTrue(TEXT("Derived spec mask nonzero"), First.AttachmentMask > 0);
+
+    // 6) Pure helpers: instance jitter, root jitter, attachment bits,
+    //    theme colors, derived paths.
+    const FEchoMutationSpec* Mosspaw = FAstrawildEchoMutator::FindSpec(TEXT("Echo_Mosspaw"));
+    if (TestNotNull(TEXT("Mosspaw spec"), Mosspaw))
+    {
+        float H = 0.0f, T = 0.0f, L = 0.0f, X = 0.0f;
+        FAstrawildEchoMutator::ComputePartScales(*Mosspaw, 0, H, T, L, X);
+        TestTrue(TEXT("Instance scales stay in 0.6..1.6"),
+            H >= 0.6f && H <= 1.6f && T >= 0.6f && T <= 1.6f && L >= 0.6f && L <= 1.6f && X >= 0.6f && X <= 1.6f);
+        float H2 = 0.0f, T2 = 0.0f, L2 = 0.0f, X2 = 0.0f;
+        FAstrawildEchoMutator::ComputePartScales(*Mosspaw, 777, H2, T2, L2, X2);
+        TestTrue(TEXT("Different instance salt changes at least one scale"),
+            !FMath::IsNearlyEqual(H, H2) || !FMath::IsNearlyEqual(T, T2)
+            || !FMath::IsNearlyEqual(L, L2) || !FMath::IsNearlyEqual(X, X2));
+    }
+    for (int32 Salt = 0; Salt < 8; ++Salt)
+    {
+        const float Root = FAstrawildEchoMutator::ComputeRootScaleJitter(TEXT("Echo_Mosspaw"), Salt);
+        TestTrue(FString::Printf(TEXT("Root jitter %d in 0.94..1.06"), Salt),
+            Root >= 0.94f && Root <= 1.06f);
+    }
+
+    TestEqual(TEXT("DorsalSpikes bit"), FAstrawildEchoMutator::GetAttachmentBits(EAstrawildEchoAttachment::DorsalSpikes), 1);
+    TestEqual(TEXT("Wings bit"), FAstrawildEchoMutator::GetAttachmentBits(EAstrawildEchoAttachment::Wings), 2);
+    TestEqual(TEXT("TailFin bit"), FAstrawildEchoMutator::GetAttachmentBits(EAstrawildEchoAttachment::TailFin), 64);
+    TestEqual(TEXT("None attachment bit"), FAstrawildEchoMutator::GetAttachmentBits(EAstrawildEchoAttachment::None), 0);
+    {
+        FEchoMutationSpec MaskSpec;
+        MaskSpec.AttachmentMask = 1 | 2 | 32; // spikes + wings + glow nodes
+        TestTrue(TEXT("HasAttachment reads the mask"),
+            FAstrawildEchoMutator::HasAttachment(MaskSpec, EAstrawildEchoAttachment::DorsalSpikes)
+            && FAstrawildEchoMutator::HasAttachment(MaskSpec, EAstrawildEchoAttachment::Wings)
+            && FAstrawildEchoMutator::HasAttachment(MaskSpec, EAstrawildEchoAttachment::GlowNodes));
+        TestFalse(TEXT("HasAttachment rejects absent bits"),
+            FAstrawildEchoMutator::HasAttachment(MaskSpec, EAstrawildEchoAttachment::ThirdEye));
+    }
+
+    // 7) Theme color math: outputs stay opaque and in range, and the
+    //    material language visibly changes the palette.
+    {
+        const FColor InPrimary(140, 120, 90, 255);
+        const FColor InSecondary(80, 70, 60, 255);
+        for (int32 ThemeIndex = 0; ThemeIndex < 8; ++ThemeIndex)
+        {
+            FEchoMutationSpec ColorSpec;
+            ColorSpec.SpeciesId = TEXT("Echo_ColorProbe");
+            ColorSpec.Theme = static_cast<EAstrawildSciFantasyTheme>(ThemeIndex);
+            ColorSpec.MaterialTheme = static_cast<EAstrawildMutationMaterialTheme>(ThemeIndex);
+            ColorSpec.PatternTint = FAstrawildEchoMutator::ResolveThemeTint(ColorSpec.Theme);
+            FColor OutPrimary(0, 0, 0, 0);
+            FColor OutSecondary(0, 0, 0, 0);
+            FAstrawildEchoMutator::ApplyThemeToBodyColors(InPrimary, InSecondary, ColorSpec, OutPrimary, OutSecondary);
+            TestEqual(FString::Printf(TEXT("Theme %d keeps alpha"), ThemeIndex), OutPrimary.A, 255);
+            TestTrue(FString::Printf(TEXT("Theme %d channels in range"), ThemeIndex),
+                OutPrimary.R <= 255 && OutPrimary.G <= 255 && OutPrimary.B <= 255
+                && OutSecondary.R <= 255 && OutSecondary.G <= 255 && OutSecondary.B <= 255);
+            TestTrue(FString::Printf(TEXT("Theme %d changes the body color"), ThemeIndex),
+                OutPrimary != InPrimary);
+        }
+    }
+
+    // 8) Derived engine paths (opt-in convention — mirror the Tier-B style).
+    TestEqual(TEXT("Base mesh path derives"),
+        FAstrawildEchoMutator::BuildSciFantasyBaseMeshPath(TEXT("SK_Base_GolemQuadruped")),
+        FString(TEXT("/Game/Characters/Echoes/BaseMeshes/SK_Base_GolemQuadruped.SK_Base_GolemQuadruped")));
+    TestEqual(TEXT("Base idle path derives"),
+        FAstrawildEchoMutator::BuildSciFantasyAnimPath(TEXT("SK_Base_GolemQuadruped"), false),
+        FString(TEXT("/Game/Characters/Echoes/BaseMeshes/AM_SK_Base_GolemQuadruped_Idle.AM_SK_Base_GolemQuadruped_Idle")));
+    TestEqual(TEXT("Base move path derives"),
+        FAstrawildEchoMutator::BuildSciFantasyAnimPath(TEXT("SK_Base_GolemQuadruped"), true),
+        FString(TEXT("/Game/Characters/Echoes/BaseMeshes/AM_SK_Base_GolemQuadruped_Move.AM_SK_Base_GolemQuadruped_Move")));
+    TestEqual(TEXT("Element vfx path derives"),
+        FAstrawildEchoMutator::BuildElementVfxSystemPath(EAstrawildEchoVfxType::Frost),
+        FString(TEXT("/Game/VFX/NS_AW_Elem_Frost.NS_AW_Elem_Frost")));
+    TestEqual(TEXT("Sound cue path derives"),
+        FAstrawildEchoMutator::BuildSoundSetCuePath(TEXT("SFXSet_PlantMonster"), 0),
+        FString(TEXT("/Game/Audio/Echoes/SFXSet_PlantMonster_0.SFXSet_PlantMonster_0")));
+
+    // 9) Theme display names render for every vocabulary value (the
+    //    roster/journal lines consume them — no silent empty text).
+    for (int32 ThemeIndex = 0; ThemeIndex < 8; ++ThemeIndex)
+    {
+        TestFalse(FString::Printf(TEXT("Theme %d display name"), ThemeIndex),
+            FAstrawildEchoMutator::GetThemeDisplayName(static_cast<EAstrawildSciFantasyTheme>(ThemeIndex)).IsEmpty());
+    }
+    for (int32 MatIndex = 0; MatIndex < 8; ++MatIndex)
+    {
+        TestFalse(FString::Printf(TEXT("Material %d display name"), MatIndex),
+            FAstrawildEchoMutator::GetMaterialThemeDisplayName(static_cast<EAstrawildMutationMaterialTheme>(MatIndex)).IsEmpty());
+    }
+
+    // 10) Every theme×plan bucket resolves one of the 16 valid bases.
+    const EAstrawildBodyPlan AllPlans[] = {
+        EAstrawildBodyPlan::Quadruped, EAstrawildBodyPlan::Biped, EAstrawildBodyPlan::Serpent,
+        EAstrawildBodyPlan::Floating, EAstrawildBodyPlan::Insectoid, EAstrawildBodyPlan::Avian,
+        EAstrawildBodyPlan::Crystalline, EAstrawildBodyPlan::Amorphous,
+    };
+    for (int32 ThemeIndex = 0; ThemeIndex < 8; ++ThemeIndex)
+    {
+        for (const EAstrawildBodyPlan Plan : AllPlans)
+        {
+            const FName Resolved = FAstrawildEchoMutator::ResolveBaseMeshId(
+                static_cast<EAstrawildSciFantasyTheme>(ThemeIndex), Plan);
+            TestTrue(FString::Printf(TEXT("Theme %d plan %d base valid"), ThemeIndex, static_cast<int32>(Plan)),
+                ValidBaseSet.Contains(Resolved));
+        }
     }
 
     return true;

@@ -128,6 +128,7 @@ per the production directive PHASE 16.
 | V2-32 | Biome real scatter | Dawn Fields: broadleaf/conifer trees + granite rocks + grass tufts via ISM (placeholders disabled), terrain shows 4-layer M_Landscape_SciFiFrontier (grass flats / granite slopes / sand near water), ambience loop audible | clip + log |
 | V2-33 | Resource node meshes | Astraite/Pyronite/Voidstone/AncientVein nodes render crystal clusters (rarity shapes retired) | clip |
 | V2-34 | Weapon FX + audio | after authoring NS_AW_MuzzleFlash (RUNBOOK §3): fire Scrapshot → Niagara muzzle + A_Weapon_Scrap_Fire audible; bind NS_AW_Weap_Trail → projectile trail follows | clip |
+| V2-35 | Sci-Fantasy mutation visuals | run `py "Content/Python/AwPipeline/import_echo_bases.py"` in editor → report `Saved/AwPipelineReport/echo_base_report.json` shows `total_missing: 0`, `errors: []`; PIE: spawn 2+ bestiary species from DIFFERENT themes → skinned SK_Base_* body (theme identity: construct plates / energy mane / void tendrils visible) + mutation attachments (spikes/wings/third-eye) + persistent element VFX attached + hit a weak point → theme sound-set cue; before import the mutated PMC body is the correct fallback (NOT a failure) | report + clip |
 
 **STATUS NOTE (FPP-2, source-side)**: V2-29's acceptance bar was MET once on the
 engine machine at SHA `8313c61` (branch `agent/antigravity-ue5-v2`, 2026-09-02) —
@@ -138,6 +139,12 @@ re-import inside the §20 sequence (idempotent — the report re-derives). V2-30
 V2-31 remain **NOT_RUN at the final tip** (no PIE clip artifacts exist); do not
 mark them PASS without the clip evidence. The landscape-material assignment
 (V2-32 prerequisite) is an editor-only manual step — see HANDOFF §19.
+
+**STATUS NOTE (SCI, source-side)**: V2-35 added by the Sci-Fantasy directive —
+`import_echo_bases.py` + the 16 baked SK_Base_* GLBs + 16 staged SFXSet_* cues
+are committed source-side; nothing engine-side has run (no
+`Saved/AwPipelineReport/echo_base_report.json` exists in the repo). The mutated
+PMC fallback is BY DESIGN until that import executes.
 
 ---
 

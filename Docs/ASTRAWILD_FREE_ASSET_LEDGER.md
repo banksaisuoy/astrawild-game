@@ -104,7 +104,43 @@ Pack" — same pack, URL/title mismatch recorded here.
 
 ---
 
-## 4. Binding rules (standing)
+## 4. Sci-Fantasy monster directive batch (SCI — 204-Echo mutation system)
+
+Acquisition + staging pass for the user-ordered Sci-Fantasy visual identity
+directive. Record of decision: `Docs/ASTRAWILD_SCI_FANTASY_ACQUISITION.json`
+(file-level SHA-256). Downloader/stager: `tools/download_scifi_fantasy_assets.py`
+(local CC0 pack reuse + curated-source ledger + theme-cue staging; network
+unreachable during the run — remote fetches skipped and recorded, local sources
+covered the pipeline 100%).
+
+**Folder-mapping note (deliberate, honest deviation):** the directive named
+`Content/Characters/Echoes/BaseMeshes/` and `Content/Audio/Echoes/` as the
+organization targets. This repo's binding convention keeps RAW sources in
+`ArtSource/` and lands ENGINE packages under `/Game/...`: raw bases + cues
+therefore stage at `ArtSource/Meshes/Echoes/BaseMeshes/` and
+`ArtSource/Audio/Echoes/`, and the UE import pass
+(`Content/Python/AwPipeline/import_echo_bases.py`) creates the packages at
+exactly `/Game/Characters/Echoes/BaseMeshes/` + `/Game/Audio/Echoes/` — the
+directive's folder intent, engine-correct.
+
+| # | Asset | File path (repo) | Usage (integration target) | Files | Status |
+| :-- | :--- | :--- | :--- | :-- | :-- |
+| S-1 | Baked Sci-Fantasy base archetypes (project-authored, CC0-equivalent) | `ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_*.glb` | 16 rigged theme archetypes (2 per theme: GolemQuadruped/MonolithColossus, ElemDrake/ElemWisp, MutantBeast/MutantAvian, ArmoredBeetle/ArmoredCrab, SpiritWisp/SpiritOrb, CyborgBeast/CyborgSerpent, PlantMaw/Mushroomling, VoidBlob/VoidTentacle) — the shared base library the 204 species mutate over | 16 GLB (rigged + 3 clips each) | BAKED / IMPORT_PENDING (V2-35) |
+| S-2 | Sci-Fantasy theme sound sets (staged from in-repo Kenney CC0) | `ArtSource/Audio/Echoes/SFXSet_<Theme>_{0,1}.wav` | 8 themes × 2 cues (vocal + alternate) — weakness-hit vocalization hook (opt-in path `/Game/Audio/Echoes/SFXSet_*`) | 16 WAV | LICENSE_VERIFIED / STAGED / IMPORT_PENDING |
+| S-3 | Quaternius Ultimate Monsters (reuse of §2 #17) | `ArtSource/Models/Quaternius_UltimateMonsters/` | Sci-Fantasy monster archetype REFERENCE library (Big/Blob/Flying) — the 16 baked bases implement the engine-compatible path; these stay reserve/dressing candidates | 61 files | LICENSE_VERIFIED (no new acquisition) |
+| S-4 | Kenney Sci-fi + Interface + Impact Sounds (reuse of §1 #1-3) | `ArtSource/Audio/Kenney_*/` | Source pool the 16 SFXSet cues stage from | ~600 files | LICENSE_VERIFIED (no new acquisition) |
+
+Curated-source decisions this pass (full reasoning in the acquisition JSON):
+
+| Source | Decision | Reason |
+| :--- | :--- | :--- |
+| Poly Haven | **REJECTED** | No creature/monster 3D model catalog exists there (photo/HDR/texture library) — the directive's "creatures/rocks" expectation is unfulfillable; baked bases cover the need |
+| Sketchfab (CC0 monster filter) | **APPROVED-NOT-REQUIRED** | 16 baked archetypes satisfy the base-model target; every future Sketchfab CC0 asset still needs per-asset license verification before download (standing rule) |
+| OGA | unchanged | See §3 (viable future source) |
+
+---
+
+## 5. Binding rules (standing)
 
 1. LICENSE_UNCLEAR **never** enters the repository — the Quaternius script
    aborts the whole pack (not just the file) on any license-gate failure.
