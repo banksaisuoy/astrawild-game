@@ -87,11 +87,13 @@ disabled in the final audit — no code referenced them), target `ASTRAWILDEdito
 ## 3. REQUIRED LFS STATE
 
 `.gitattributes` routes `*.uasset/*.umap/*.glb/*.png/*.wav/...` through Git LFS.
-**Verified in this sandbox: 459/459 LFS objects resolve with byte-exact sizes (233 MB).**
+**Verified in this sandbox: 491/491 LFS objects resolve with OID-matched sha256 (236.5 MB)
+— re-derived at the FINAL-EXECUTION tip (459 pre-SCI objects + 32 SCI source files:
+16 SK_Base_*.glb + 16 SFXSet_*.wav).**
 Pre-flight on Windows:
 ```powershell
 git lfs install
-git lfs ls-files | Measure-Object -Line        # expect 459
+git lfs ls-files | Measure-Object -Line        # expect 491
 git lfs fetch --all                            # pulls every object
 # spot-check one object resolves:
 git show HEAD:Content/Vehicles/SM_Vehicle_DawnSkiff.uasset | Select-Object -First 3
@@ -546,7 +548,8 @@ status at the DP-10 final gate):
    signatures (DP-3), party resonance, water mounts, weak-point windows (DP-5).
 9. Final story fully playable — MQ-01..17 + two endings + post-game (source-side,
    engine walk pending AG-4).
-10. Content manifest complete — FINAL_CONTENT_MANIFEST (459/459 LFS, 65/65 /Game refs,
+10. Content manifest complete — FINAL_CONTENT_MANIFEST (491/491 LFS at the v1.6
+    re-verification, 65/65 /Game refs,
     every content family has a CODE_DEFAULT single source of truth).
 11. Final source audit passes — both validators ALL PASS at tip; doc-consistency sweep
     executed at DP-10; census values unified across live docs.

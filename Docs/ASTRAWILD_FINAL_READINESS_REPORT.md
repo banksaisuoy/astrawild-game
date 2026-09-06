@@ -11,10 +11,11 @@ v9.1 material-swap wiring was exactly that class — an audit-found dead-end clo
 Current state: 229 species with the Sci-Fantasy mutation system (204 bestiary rows ×
 8 themes × 16 SK_Base_* bases × per-part scale/attachments/theme-material swap/
 pattern tints/element VFX — runtime consumers all wired, opt-in fail-closed), 126
-world-free contract tests, LFS 459/459. The Antigravity one-time engine integration
+world-free contract tests, LFS 491/491 (re-derived at the FINAL-EXECUTION tip —
+459 pre-SCI + 32 SCI source files). The Antigravity one-time engine integration
 (AG-2..AG-5 + HANDOFF §20/§20b/§20c/§20d + §22) is the sole remaining work.
 **ENGINE_UNVERIFIED — nothing in this report claims a runtime PASS.** The final content manifest
-(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 459/459 LFS objects verified live
+(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 491/491 LFS objects verified live
 on GitHub, all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
 (validator equality gates), and the automation suite holds **126 world-free contract
@@ -86,7 +87,7 @@ Side content: 23 SQ roster remains staged (deferred by design, MASTER_CONTROL D)
 
 | Asset class | Source of truth | Status |
 | :--- | :--- | :--- |
-| 115 ArtPack uassets (meshes/anims/audio) | Git LFS | **VERIFIED: 459/459 LFS objects byte-size-exact (233 MB)** |
+| 115 ArtPack uassets (meshes/anims/audio) | Git LFS | **VERIFIED: 491/491 LFS objects OID-matched, 236.5 MB (v1.6 FINAL-EXECUTION re-verification; was 459/459 · 233 MB pre-SCI)** |
 | Survivor + 6 hero Echo meshes + weapons | ArtPack + Content paths | bound via ArtPack soft refs |
 | Skiff mesh | Content/Vehicles/SM_Vehicle_DawnSkiff | bound in Final Run (orientation engine-verified) |
 | Capture audio | Content/Audio/A_Echo_Capture_Success | referenced in Final Run (was dead content) |
@@ -171,12 +172,12 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 | 9 | Ending B integrated | **PASS** | Ending_StormSleeps → storm remains |
 | 10 | Post-game integrated | **PASS** | one-way SetEndingState + persisted banner; world systems keep running |
 | 11 | Save V5 model complete | **PASS** | AUD-2 checklist a–k: item-loss class fixed (chassis/drone refund/echo health); additive defeat counters |
-| 12 | Content/LFS manifest complete | **PASS** | FINAL_CONTENT_MANIFEST v1.1 (459/459 LFS live-verified) |
+| 12 | Content/LFS manifest complete | **PASS** | FINAL_CONTENT_MANIFEST v1.6 (491/491 LFS re-verified at the FINAL-EXECUTION tip; v1.1-era 459/459 was pre-SCI) |
 | 13 | Asset paths validated | **PASS** | 65/65 /Game references resolve (validator) |
-| 14 | Tests complete at source level | **PASS** | 125 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation contracts (ENGINE-UNVERIFIED) |
+| 14 | Tests complete at source level | **PASS** | 126 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation + 1 SCI-Fantasy mutation contracts (ENGINE-UNVERIFIED) |
 | 15 | Final handoff executable | **PASS** | HANDOFF §1–20: live branch + SHAs, no dead references, corrected controls |
 | 16 | No duplicate gameplay architectures | **PASS** | one Echo platform (authored + bestiary share it); crafting screen single surface; no second combat/save stack |
-| 17 | No active contradictory documentation | **PASS** | ONE test count (125) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc |
+| 17 | No active contradictory documentation | **PASS** | ONE test count (126) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc; FINAL-EXECUTION round re-derived LFS (491/491) + manifest (175 entries) counts at tip |
 | 18 | Final branch/commit recorded | **PASS** | §J + HANDOFF §1 (tip = the DP-10 final-gate commit) |
 
 **Gate verdict: READY_FOR_FINAL_BUILD (18/18 + branch record, re-checked at the DP-10 final gate).**

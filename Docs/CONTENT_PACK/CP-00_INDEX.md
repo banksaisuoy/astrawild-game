@@ -1,5 +1,12 @@
 # ASTRAWILD — PRODUCTION CONTENT PACK (CP-00 MASTER INDEX)
 
+> **[STATUS QUALIFIER]** The "48/48 automation tests green on UE 5.8.2" referenced
+> below is the 2026-08-31 BATCH8 engine-session evidence (frozen to that date, per
+> `Docs/ENGINE_LOGS/BATCH8_PLAYTEST_LOG.md`). The suite at the current tip is
+> **126 world-free automation contracts, ENGINE-UNVERIFIED** — the spec content of
+> this pack is unaffected; only the test count is era-specific. Canonical state:
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1).
+
 **Purpose:** The complete asset/content specification that turns the verified zero-asset runtime
 (48/48 automation tests green on UE 5.8.2 — see `Docs/ENGINE_LOGS/BATCH8_PLAYTEST_LOG.md`) into a
 produced game. Every spec below binds to **existing C++ data contracts** — no new systems, no

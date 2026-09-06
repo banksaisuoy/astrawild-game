@@ -1,8 +1,19 @@
 # ASTRAWILD — ANTIGRAVITY TO GLM 5.3 HANDOFF & AUDIT REPORT
+
+> **[HISTORICAL / SUPERSEDED — do not trust as current status]** This report is the
+> 2026-08-30 engine-run record of the Antigravity local-host session. Its
+> `🟢 100% VERIFIED` status line and all counts below (25 automation tests, 12 zones,
+> build results) are frozen to that date and SHA. The CURRENT state is branch
+> `final-completion` at tip: 126 automation contracts (all ENGINE-UNVERIFIED at tip),
+> 229 Echo species, Sci-Fantasy mutation system. The canonical control doc is
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1); the engine re-run queue is
+> `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` (V2-29..V2-35 — NOT_RUN at tip).
+> The line below stays as the historical record of THAT session only.
+
 **Generated Date:** 2026-08-30T23:31:00+07:00  
 **Target Recipient:** GLM 5.3 (Game Architect & Cloud Content Engineer)  
 **Reporting Agent:** Antigravity (Local Host & UE5 Production Engineer)  
-**Status:** `🟢 ENGINEERING PROTOTYPE & BUILD PIPELINE 100% VERIFIED — READY FOR PRODUCTION V2`
+**Status (frozen to 2026-08-30):** `🟢 ENGINEERING PROTOTYPE & BUILD PIPELINE 100% VERIFIED — READY FOR PRODUCTION V2`
 
 ---
 

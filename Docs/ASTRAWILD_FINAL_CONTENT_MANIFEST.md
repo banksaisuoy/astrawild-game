@@ -1,7 +1,7 @@
 ﻿# ASTRAWILD — FINAL CONTENT MANIFEST
 
-**Document version**: 1.1 · **Issued**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run Batch 5 + Final Source Completion Pass amendment)
-**Branch**: `final-completion` (99e4105..HEAD — all batches + FINAL-AUDIT A/B/C/D pushed)
+**Document version**: 1.6 · **Issued**: 2026-09-03 · **Author**: GLM 5.3 (Final Completion Run Batch 5 + Final Source Completion Pass amendment + FINAL-EXECUTION truth re-verification)
+**Branch**: `final-completion` (99e4105..HEAD — all batches + FINAL-AUDIT A/B/C/D + SCI + FINAL-EXECUTION pushed)
 **Purpose**: prove that the final repository supplies EVERY piece of UE5 content the
 game needs — from a clean `git clone` + `git lfs pull`, a deterministic build, to a
 playable game with both endings. This manifest is the LAST gate before
@@ -10,14 +10,20 @@ playable game with both endings. This manifest is the LAST gate before
 **Verification performed for this manifest (all in this sandbox, all reproducible)**:
 1. `git ls-tree -r HEAD` blob walk + `git cat-file -p` → every tracked binary is a
    valid Git LFS pointer (oid sha256 + byte size).
-2. GitHub LFS Batch API (`POST /info/lfs/objects/batch`, authenticated) →
-   **459/459 objects resolve with matching sizes; 233.0 MB total payload.**
-3. Full `Content/` filesystem walk → per-folder asset counts (416 runtime binaries).
+2. GitHub LFS Batch API (`POST /info/lfs/objects/batch`, authenticated) → at the
+   v1.1 gate: 459/459 objects (233.0 MB). **Re-verified at the v1.6 tip
+   (FINAL-EXECUTION round, commit 4daa113): 491/491 objects resolve on disk with
+   OID-matched sha256 (459 + the 32 SCI-tracked files: 16 SK_Base_*.glb +
+   16 SFXSet_*.wav); 236.5 MB total payload.** The engine-side re-check command is
+   `git lfs ls-files -l | Measure-Object -Line` → expect **491** (see HANDOFF §3).
+3. Full `Content/` filesystem walk → per-folder asset counts (416 runtime binaries —
+   re-verified at v1.6: 416/416 carry genuine UE package magic 0x9E2A83C1).
 4. Full-source regex sweep of every `/Game/...` reference (hardcoded + `TEXT()` forms)
    → every full asset path resolves to a tracked file (65/65; the 10 short prefixes
    are TEST constants, not asset paths).
-5. `Scripts/validate_final_run.py` → **46/46 ALL CHECKS PASSED** (includes the LFS
-   pointer sweep, asset-path resolution and content-presence gates).
+5. `Scripts/validate_final_run.py` → **ALL CHECKS PASSED** (re-run at v1.6: 126-test
+   exact gate + 15 census equality gates; includes the LFS pointer sweep,
+   asset-path resolution and content-presence gates).
 
 **Statuses used below** (closed set):
 `LFS_OK` (tracked + object verified on GitHub) · `PRESENT` (committed directly, not LFS-routed)
@@ -123,14 +129,15 @@ MaterialInstance, AnimSequence, NiagaraSystem, SoundWave, Texture, PhysicsAsset,
 World) exactly as the C++ consumers request them (`TSoftObjectPtr<T>`,
 `LoadObject<T>`, `ConstructorHelpers`).
 
-## §9. GIT LFS — full verification (459/459)
+## §9. GIT LFS — full verification (491/491 at the v1.6 tip)
 
 | CHECK | RESULT |
 | :--- | :--- |
 | `.gitattributes` coverage | `*.uasset`, `*.umap`, `*.fbx`, `*.glb`, `*.wav`, `*.png`, … all routed through LFS (`*.r16 -text` documented exception) |
-| Content/ binaries (414 `.uasset` + 2 `.umap`) | 416/416 valid LFS pointers at HEAD; **416/416 objects verified via GitHub LFS Batch API** |
-| ArtSource/ art sources (43 `.png`) | 43/43 LFS pointers; 43/43 objects verified (`.wav`/`.glb` source masters are committed directly — they are pipeline inputs, not engine content; no runtime dependency) |
-| **TOTAL** | **459/459 LFS objects resolve · 233.0 MB payload** — matches the V12-era byte-exact audit |
+| Content/ binaries (414 `.uasset` + 2 `.umap`) | 416/416 valid LFS pointers at HEAD; 416/416 objects on disk, OID-verified (v1.6 re-check: genuine UE package magic on all 416) |
+| ArtSource/ art sources (43 `.png`) | 43/43 LFS pointers; 43/43 objects verified (raw Kenney/Quaternius pack files are committed directly — they are pipeline inputs, not engine content; no runtime dependency) |
+| SCI sources (16 `.glb` + 16 `.wav`, added 0b55072) | 32/32 LFS pointers; 32/32 objects on disk, OID-matched (v1.6 re-check: sha256 verified on all 32) |
+| **TOTAL** | **491/491 LFS objects resolve · 236.5 MB payload (v1.6 re-verification; v1.1-era basis was 459/459 · 233.0 MB — the +32 delta is exactly the SCI source set)** |
 | Pointer integrity | each pointer's `oid sha256` + `size` parsed and cross-checked against the Batch API response (operation=download) |
 | Reproduction | `git clone … && git lfs pull` → all binaries materialize (byte-exact); GLM-side script: `tool-results/verify_lfs4.py` pattern (ls-tree → cat-file → Batch API) |
 
@@ -191,8 +198,9 @@ depth passes' documentation gate — the manifest's verification basis (459/459 
 65/65 /Game refs, CODE_DEFAULT registries) is unchanged.
 
 **MANIFEST VERDICT**: the final repository — as pushed on `final-completion` —
-supplies 100% of the required UE5 content: **459/459 LFS objects verified live on
-GitHub, all 65 hardcoded asset references resolve, all data-driven definitions
+supplies 100% of the required UE5 content: **491/491 LFS objects verified (re-checked
+at the v1.6 tip; the v1.1-era 459/459 basis is historical), all 65 hardcoded asset
+references resolve, all data-driven definitions
 carry a single CODE_DEFAULT source of truth, the 12-zone overworld is generated
 deterministically from world data (by design, not by omission), and every visual
 family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
@@ -268,3 +276,49 @@ family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
 - Verdict: source-side COMPLETE (the Sci-Fantasy visual identity layer is fully
   wired source-side incl. the material swap); runtime visuals ENGINE-UNVERIFIED
   until the §20d/V2-35 engine pass. The engine run remains the sole remaining gate.
+
+## FINAL-EXECUTION Amendment (v1.6 — truth re-verification + false-100% banner sweep)
+
+- **LFS basis number corrected (the one real stale count this round found)**:
+  the v1.1-era basis "459/459 · 233.0 MB" was still cited as CURRENT in several
+  live surfaces after 0b55072 added 32 LFS-tracked SCI source files. True state
+  re-derived with actual commands at 4daa113: `git lfs ls-files` = **491 pointers**;
+  491/491 objects present under `.git/lfs/objects`; sha256 OID-match verified on
+  all 32 SCI files + a random 6-file sample; payload = **236.5 MB**; `git lfs fsck`
+  exit 0. Content/ binaries re-walked: **416 files, 416/416 genuine UE package
+  magic 0x9E2A83C1, zero bad** — the 416 count is UNCHANGED (GLB/WAV are raw
+  sources, not engine packages). All current-facing 459 mentions now read 491
+  (README, MASTER_CONTROL W-21 + §N row, readiness, HANDOFF §3 pre-flight
+  "expect 491", asset-truth final block); version-history rows keep their
+  era-correct 459 as dated history.
+- **Manifest count corrected**: `ArtSource/manifest.json` now carries **175
+  entries** (159 + 16 SK_Base_* BaseMeshes rows added by the SCI commit);
+  ue_path presence = **112/175**; pending = **63** = 47 GLB-backed Echo IDs
+  (39 Tier-B + 3 boss/summon + 5 ContentLibrary species) + 16 SK_Base base
+  meshes. Both pending groups import at the §20d/V2-35 engine pass (Echo bases
+  via `import_echo_bases.py`, the 47 via the manifest-driven `import_all.py`
+  re-run of V2-29) — opt-in/fail-closed by design, PMC fallback active until
+  then. TRUE_MISSING stays **0**.
+- **False-100% banner sweep (5 more surfaces)**: docs that presented old
+  engine-era 100% claims without historical banners got them —
+  `Docs/ASTRAWILD_ANTIGRAVITY_TO_GLM_HANDOFF.md` ("100% VERIFIED" status line),
+  `Docs/ASTRAWILD_PRODUCTION_V2_WORKLOG.md` (48-test era),
+  `Docs/ASTRAWILD_PROJECT_MASTER_STATUS_AND_GLM_HANDOFF.md` (53-test era,
+  also classified in MASTER_CONTROL §12), `Docs/ANTIGRAVITY_RUNTIME_FAILURES.md`
+  ("100% OPERATIONAL"), `Docs/CONTENT_PACK/CP-00_INDEX.md` (inline 48/48 count
+  qualifier). Every 100% in the repo is now either banner-qualified history or
+  a factually-true percentage (LFS fractions, gameplay refund rates, census
+  fractions).
+- **Static validators re-run at this tip (evidence, not doc claims)**:
+  `Scripts/validate_final_run.py` ALL CHECKS PASSED (126-test gate, 204-row
+  mutation table, 8 themes, 16 bases, consumption wiring, 15 census gates at
+  229/126); `Scripts/validate_repository.sh` v2 PASS; `py_compile` PASS on
+  the two pipeline scripts; 21/21 declared mutator methods defined; C++ brace
+  balance checked.
+- **Engine-side rows unchanged and honest**: V2-29..V2-35 remain **NOT_RUN at
+  tip** — no UE5/MSVC exists on this Linux sandbox (re-verified this round:
+  no Unreal installation, no Windows mounts). Engine claims belong ONLY to the
+  Windows UE 5.8.2 Antigravity machine per HANDOFF §20/§20d.
+- Verdict: manifest basis re-proven at the FINAL-EXECUTION tip. No engine
+  package, binding, or code-default changed in this amendment — it is a
+  truth/documentation gate only.

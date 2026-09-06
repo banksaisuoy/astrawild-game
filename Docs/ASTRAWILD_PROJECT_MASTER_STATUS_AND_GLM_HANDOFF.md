@@ -1,5 +1,14 @@
 ﻿# ASTRAWILD Project Master Status & Comprehensive AI Handoff Runbook
 
+> **[HISTORICAL / SUPERSEDED — classified in MASTER_CONTROL §12]** This runbook is
+> the 2026-09-01 snapshot of the Vertical-Slice era (its "53/53 Tests PASS (100%)"
+> and "~73–75% completion" are frozen to that date — the suite is now 126 contracts,
+> and Sci-Fantasy + product-completion work landed after it). Do NOT use this file
+> for integration decisions. The canonical control doc is
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1); the live readiness state is
+> `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`; the engine re-run queue is
+> `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` (V2-29..V2-35 — NOT_RUN at tip).
+
 > **Target Audience:** GLM 5.3, Antigravity, Qwen, and any incoming AI Game Engineers / Technical Directors.  
 > **Last Updated:** 2026-09-01 20:25:00 (+07:00)  
 > **Repository:** `banksaisuoy/astrawild-game`  

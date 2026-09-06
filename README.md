@@ -1,14 +1,16 @@
 # ASTRAWILD — Echoes of the First Dawn
 
 > [!NOTE]
-> **Current status (SCI v9.1 amendment, 2026)**: the repository is source-complete on branch
+> **Current status (v9.2 FINAL-EXECUTION truth re-verification, 2026)**: the repository is source-complete on branch
 > `final-completion` — 126 world-free automation contracts, full 12-zone world, 229 Echo
 > species (204 of them regrouped into 8 Sci-Fantasy themes with a runtime mutation system:
 > 16 baked SK_Base_* base meshes + per-part scaling/attachments/theme materials/pattern
-> tints/element VFX), MQ-01..17 + two endings, save schema V5, LFS 459/459 verified.
+> tints/element VFX), MQ-01..17 + two endings, save schema V5, LFS 491/491 verified
+> (re-derived at the FINAL-EXECUTION tip; the older "459/459" figure was the pre-SCI
+> count — the SCI commit added 32 LFS-tracked source files).
 > **Everything engine-side is ENGINE-UNVERIFIED at this tip** — the one-time integration
 > run (build, 126 tests, PIE, package, V2-29..V2-35 queue) belongs to the Windows UE 5.8
-> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.1 §8 and
+> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.2 §8 and
 > `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The canonical control doc is
 > **`Docs/ASTRAWILD_MASTER_CONTROL.md`**. The narrative text below this note is the
 > Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54 tests" snapshot
@@ -21,10 +23,10 @@ ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal 
 ## Current repository status
 
 > [!TIP]
-> **LATEST STATUS**: **SOURCE-COMPLETE / ENGINE-UNVERIFIED (SCI v9.1)** —
+> **LATEST STATUS**: **SOURCE-COMPLETE / ENGINE-UNVERIFIED (v9.2 FINAL-EXECUTION)** —
 > `final-completion`, 126 automation contracts, 229 species, Sci-Fantasy mutation
-> system wired (incl. runtime theme-material swap), LFS 459/459.
-> The complete current-state truth is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1)**;
+> system wired (incl. runtime theme-material swap), LFS 491/491.
+> The complete current-state truth is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.2)**;
 > engine-run history (the 54/54 + packaged-exe evidence at SHA 8313c61) is
 > [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) (HISTORICAL)
 > and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).

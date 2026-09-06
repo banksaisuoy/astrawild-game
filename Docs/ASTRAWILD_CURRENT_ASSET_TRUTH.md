@@ -88,7 +88,7 @@ Total `.uasset`/`.umap` = **416**; plus 12 `.r16` + 2 `.py` + 2 misc = 432.
 
 | Group | Count | Storage |
 |---|---|---|
-| `ArtSource/manifest.json` | 1 | 159 asset entries (categories: mesh 79, textures 44, audio 36) |
+| `ArtSource/manifest.json` | 1 | 175 asset entries (categories: mesh 95, textures 44, audio 36 — 159 pre-SCI + 16 SK_Base_* BaseMeshes mesh rows added by 0b55072; v9.2 re-count) |
 | `ArtSource/Textures/T_*.png` (production) | 43 | **LFS_OBJECT_VERIFIED** |
 | `ArtSource/Meshes/Echoes/*.glb` | 53 | RAW_PRESENT (glTF magic verified) — 39 Tier-B + 6 hero + 3 boss/summon (DrownedSovereign, GlassTyrant, EyeSentinel) + 5 ContentLibrary species (Auroraling, Dawnfang, Gloomfang, Lumewisp, Sprigling) |
 | `ArtSource/Meshes/{Environment,Weapons,Vehicles,Characters}` | 26 | RAW_PRESENT GLBs (19 env + 5 weapons + 1 vehicle + 1 character) |
@@ -104,7 +104,7 @@ Raw (non-LFS) payload: 222.6 MB.
   - 12 are **prefix/format constants, not asset paths** (`/Game/Audio/A_Amb_`, `/Game/Audio/A_Weapon_`, `/Game/Characters/Echoes/AM_%s_%s`, `/Game/Characters/Echoes/SK_Echo_%s`, `/Game/Environment/`, `/Game/VFX/NS_AW_`, `/Game/Weapons/`, etc. — used by tests/pipeline to BUILD paths);
   - 3 are Tier-B convention probes in automation tests (`SK_Echo_Rimefang`, `AM_Rimefang_*` — string-contract tests, and `Echo_Rimefang` has its GLB on disk);
   - 1 is the nested Survivor mesh variant `/Game/Characters/Survivor/SK_Survivor_Exosuit/SkeletalMeshes/SK_Survivor_Exosuit` — a **secondary LoadObject attempt that is never reached** because the flat `SK_Survivor_Exosuit.uasset` resolves first (see PATH_MISMATCH note, §9).
-- **Manifest `ue_path` → Content: 112 / 159 present.** The 47 absent entries are exactly the 47 not-yet-engine-imported GLB meshes (53 Echo GLBs − 6 hero = 47). These are NOT missing — their source GLBs are RAW_PRESENT and the bindings are opt-in by design (PMC fallback until the final-tip re-import).
+- **Manifest `ue_path` → Content: 112 / 175 present (v9.2 re-derivation).** The 63 absent entries = 47 not-yet-engine-imported Echo GLB meshes (53 Echo GLBs − 6 hero) + 16 SK_Base_* base-mesh rows (also pending engine import, via the separate `import_echo_bases.py` / V2-35 pass). These are NOT missing — their source GLBs are RAW_PRESENT and the bindings are opt-in by design (PMC fallback until the final-tip re-import).
 - Binding architecture verified in source:
   - `UAstrawildProductionContent` applies `AstrawildArtPack::GetEchoArt()` (6 hero) and `BuildTierBMechPath()` (39 Tier-B, derived paths — validator check 8 clean);
   - `AAstrawildPlayerCharacter::TryActivateSkeletalBody()` — Survivor → nested Survivor → `SKM_Manny_Simple` → PMC, with all 7 clip fallback chains;
@@ -115,7 +115,7 @@ Raw (non-LFS) payload: 222.6 MB.
 ## 7. Engine-import evidence status
 
 - A completed import run **exists**: `Docs/ENGINE_LOGS/raw/import_report.json` — `total_missing: 0`, `errors: []`, stages: textures 44 / audio 72 / meshes 32 imported. Per the verification-queue status note, that run was executed on the engine machine at SHA `8313c61` (branch `agent/antigravity-ue5-v2`, 2026-09-02) — it **predates the Tier-B library (39 GLBs), the PCR screens, and the FPP freeze commits**.
-- Consequence: at the CURRENT tip, `import_all.py` (manifest-driven, covers all 159 entries incl. the 53 GLBs) has **not been re-run**; the 47 newer manifest entries have no engine package yet. The queue rows V2-29 (re-import baseline), V2-30/V2-31 (PIE clips) correctly remain **NOT_RUN at the final tip** in `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` — this audit changes none of those rows.
+- Consequence: at the CURRENT tip, `import_all.py` (manifest-driven, covers all 175 entries incl. the 53 Echo GLBs + the 16 SK_Base rows) has **not been re-run**; the 63 newer manifest entries have no engine package yet. The queue rows V2-29 (re-import baseline), V2-30/V2-31 (PIE clips) correctly remain **NOT_RUN at the final tip** in `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` — this audit changes none of those rows.
 
 ## 8. Status vocabulary (as used below)
 
@@ -172,6 +172,27 @@ every runtime claim above is deferred to the Antigravity engine machine per the 
 `ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 sequence. This document is the asset-truth baseline for
 any subsequent content-development decision.
 
+## 10b. Final block — v9.2 FINAL-EXECUTION re-derivation (current HEAD 4daa113)
+
+The §10 block above is the frozen 68c2b07 audit snapshot. Every number below was
+re-derived with actual commands at the CURRENT tip (this round — docs are not
+evidence; `git lfs ls-files` / sha256 / filesystem walks are):
+
+```
+CURRENT_HEAD            = 4daa113b4224c58a0d3ee1e636c4f1240f11c937 (branch final-completion, in sync w/ remote, clean tree)
+CONTENT_BINARY_COUNT    = 416 (.uasset/.umap — re-walked, 416/416 genuine UE package magic 0x9E2A83C1, 0 bad)
+LFS_OBJECTS_VERIFIED    = 491 / 491 (236.5 MB on-disk, sha256 OID-match verified on all 32 SCI files + 6 random; git lfs fsck exit 0;
+                          composition: 416 Content + 43 ArtSource textures + 16 SK_Base_*.glb + 16 SFXSet_*.wav)
+PLAYER_ASSET_STATUS     = unchanged (BOUND_READY; runtime ENGINE_UNVERIFIED)
+ECHO_ASSET_STATUS       = 6 hero BOUND_READY; 47 GLB-backed Echo ids RAW_PRESENT (opt-in, PMC fallback by design);
+                          + 16 SK_Base base meshes RAW_PRESENT (import via import_echo_bases.py, V2-35); runtime ENGINE_UNVERIFIED
+MANIFEST_STATUS         = 175 entries (159 + 16 SK_Base rows); ue_path present 112 / 175; pending 63 = 47 Echo ids + 16 base meshes
+WORLD/WEAPON/AUDIO/VFX  = unchanged from §10 (BOUND_READY; runtime ENGINE_UNVERIFIED)
+TRUE_MISSING_ASSETS     = 0
+ENGINE_UNVERIFIED_ITEMS = V2-29..V2-35 all NOT_RUN at tip (queue §5); 63 not-yet-imported manifest ue_paths;
+                          Niagara authoring depth; no UE/MSVC on this Linux sandbox (re-verified this round)
+```
+
 ---
 
 ## 11. SCI v9.1 amendment (FINAL EXECUTION round — appended, original audit above unchanged)
@@ -195,8 +216,10 @@ any subsequent content-development decision.
   are no longer import-authoring-only; the skinned path swaps them in as dynamic
   material instances (Tint/PatternTint/GlowIntensity per species). Fail-closed before
   import: the GLB's own materials stay.
-- **47 GLB ue_paths pending import: UNCHANGED** (39 Tier-B + 3 boss/summon + 5
-  ContentLibrary species — opt-in by design, PMC mutated fallback active).
+- **GLB ue_paths pending import: 63 manifest rows (v9.2 re-count) = 47 Echo IDs
+  (39 Tier-B + 3 boss/summon + 5 ContentLibrary species — opt-in by design, PMC
+  mutated fallback active) + 16 SK_Base_* base meshes (import via
+  import_echo_bases.py at the same engine pass)** — TRUE_MISSING stays 0.
 - **Runtime claims: still NONE.** Everything above stays ENGINE-UNVERIFIED until the
   V2-35 engine run (import report total_missing==0 incl. materials + PIE clips incl.
   theme material swap). Sandbox truth re-verified this round: no UE/MSVC exists on
