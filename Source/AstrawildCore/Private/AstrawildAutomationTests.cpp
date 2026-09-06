@@ -5511,11 +5511,16 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPCR4TierBLibraryTest,
 
 bool FAstrawildPCR4TierBLibraryTest::RunTest(const FString& Parameters)
 {
-    // 1) The library size pins the bake (39 species = the strategy §5 Tier-B
-    // rule over the ACTUAL source tables: zone-wildlife + dungeon pools +
-    // event boosts + Huge + the monolith/colossus family, minus Tier-A).
+    // 1) The library size pins the real-mesh catalog (36 species = the 33
+    // Tier-B species holding a unique real CC0 mesh — deterministic theme-
+    // queue draw from the ASSET OVERHAUL fetch script — plus the 3 production
+    // boss species DrownedSovereign/EyeSentinel/GlassTyrant, Act-3 chain).
     const TArray<FName>& TierB = AstrawildArtPack::GetTierBSpeciesIds();
-    TestEqual(TEXT("Tier-B library holds 39 species"), TierB.Num(), 39);
+    TestEqual(TEXT("Tier-B library holds 36 real-mesh species"), TierB.Num(), 36);
+    TestTrue(TEXT("production bosses carry direct real meshes"),
+        AstrawildArtPack::IsTierBSpecies(TEXT("Echo_GlassTyrant")) &&
+        AstrawildArtPack::IsTierBSpecies(TEXT("Echo_EyeSentinel")) &&
+        AstrawildArtPack::IsTierBSpecies(TEXT("Echo_DrownedSovereign")));
 
     // 2) Convention-path derivation (the definition-driven opt-in binding):
     TestEqual(TEXT("Mesh path derives by convention"),
@@ -5529,6 +5534,7 @@ bool FAstrawildPCR4TierBLibraryTest::RunTest(const FString& Parameters)
         FString(TEXT("/Game/Characters/Echoes/AM_Rimefang_Move")));
     TestTrue(TEXT("Tier-B membership predicate"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Stonehide")));
     TestFalse(TEXT("Non-members stay out"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Mosspaw")));
+    TestFalse(TEXT("Superseded species moved to base+mutation"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Wavecrest")));
     TestFalse(TEXT("Tier-A species stay out"), AstrawildArtPack::IsTierBSpecies(TEXT("Echo_Terraquill")));
 
     // 3) Every Tier-B entry has a baked GLB in ArtSource (the manifest mirror —

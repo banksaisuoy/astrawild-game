@@ -295,6 +295,8 @@ family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
   entries** (159 + 16 SK_Base_* BaseMeshes rows added by the SCI commit);
   ue_path presence = **112/175**; pending = **63** = 47 GLB-backed Echo IDs
   (39 Tier-B + 3 boss/summon + 5 ContentLibrary species) + 16 SK_Base base
+  *(v1.6-era counts — SUPERSEDED by the v1.7 ASSET OVERHAUL below: 189 entries,
+  189 present, 0 pending, 109 real unique CC0 mesh rows)*
   meshes. Both pending groups import at the §20d/V2-35 engine pass (Echo bases
   via `import_echo_bases.py`, the 47 via the manifest-driven `import_all.py`
   re-run of V2-29) — opt-in/fail-closed by design, PMC fallback active until
@@ -322,3 +324,31 @@ family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
 - Verdict: manifest basis re-proven at the FINAL-EXECUTION tip. No engine
   package, binding, or code-default changed in this amendment — it is a
   truth/documentation gate only.
+
+
+---
+
+## MANIFEST v1.7 — ASSET OVERHAUL (NO PLACEHOLDERS / NO PALETTE SWAPS)
+
+**Supersedes every mesh-era count above.** `Scripts/fetch_free_assets.py` regenerated
+`ArtSource/manifest.json` from the REAL curated CC0 catalog:
+
+- **189 entries / 189 `status: "present"` / 0 pending** (source-file truth; the
+  engine import is the separate Setup_And_Play.bat / import_all.py stage, V2-36).
+- **109 mesh rows** (75 skeletal, 34 static): 3 survivor armor tiers + 42 Echo
+  species + 16 base archetypes + 14 showcase bosses + 5 weapons + 4 vehicles +
+  4 ore nodes + 21 environment props. **109 unique source models — 1:1, zero
+  reuses (palette-swap guard), all CC0 1.0 Universal (Quaternius + Kenney).**
+- Every mesh row carries: source_pack, source_model, license + license_url,
+  source_page, path (repo-relative, verified on disk), bytes, meshes, verts,
+  materials, joints/bones, sha256, animations + clip_map (AM_<Asset>_<Role> ->
+  source clip), asset_type.
+- 15 superseded procedural GLBs purged (11 species -> real base + mutation spec;
+  4 environment GLBs -> real Kenney/Quaternius meshes).
+- Per-asset license provenance: `Docs/ASTRAWILD_REAL_ASSET_CREDITS.json`;
+  run evidence: `Docs/ASTRAWILD_ASSET_OVERHAUL_REPORT.json`.
+- **VERDICT: source catalog 100% REAL-FILE-BACKED (109/109 magic-verified,
+  189/189 manifest present, 0 pending, 0 palette swaps). Engine import =
+  V2-36 (Setup_And_Play.bat → import_report.json total_missing == 0 incl.
+  the AM_ clips + showcase-map PIE). Runtime visuals remain ENGINE_UNVERIFIED
+  until that run — never faked here.**

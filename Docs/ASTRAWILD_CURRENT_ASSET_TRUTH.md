@@ -1,5 +1,7 @@
 # ASTRAWILD — CURRENT-HEAD ASSET TRUTH AUDIT
 
+> **CURRENT MESH TRUTH (v9.3 ASSET OVERHAUL): see §12 — every staged ArtSource mesh is now a REAL unique CC0 model; manifest 189/189 present / 0 pending; the procedural-recolor counts in §1-§10 are era-correct audit history.**
+
 > **Audit date:** 2026-09-06 (GLM source-side audit, sandbox `git` + `git-lfs 3.7.0`)
 > **Scope:** ground-truth verification of the ACTUAL remote HEAD of `final-completion`.
 > This document supersedes every earlier "asset truth" statement (including the
@@ -225,3 +227,45 @@ ENGINE_UNVERIFIED_ITEMS = V2-29..V2-35 all NOT_RUN at tip (queue §5); 63 not-ye
   theme material swap). Sandbox truth re-verified this round: no UE/MSVC exists on
   this Linux sandbox (checked: no Unreal installation, no /mnt/c, network-limited) —
   the engine run is exclusively the Antigravity Windows machine's.
+
+---
+
+## 12. ASSET OVERHAUL v9.3 (NO PLACEHOLDERS / NO PALETTE SWAPS — supersedes the mesh-era counts above)
+
+User executive directive: transition from the interim Procedural Recolor system to REAL,
+uniquely-shaped 3D models. Executed source-side at this commit; engine import = V2-36.
+
+**The mesh inventory is now 100% real, 100% unique, 100% CC0:**
+
+| Group | Count | Truth |
+|---|---|---|
+| `ArtSource/Meshes/Characters/Survivor` | 3 | REAL rigged CC0 humanoids — SK_Survivor_Exosuit (Swat, Tier-3 Singularity Exosuit) + SK_Survivor_T1_Scavenger (Adventurer) + SK_Survivor_T2_Astraite (Spacesuit); 62 bones, 24 anims each (incl. Gun_Shoot / Idle_Gun_Pointing / Interact / Roll) |
+| `ArtSource/Meshes/Echoes` | 42 | REAL unique CC0 meshes — 6 hero + 33 Tier-B + 3 production bosses (GlassTyrant/EyeSentinel/DrownedSovereign) |
+| `ArtSource/Meshes/Echoes/BaseMeshes` | 16 | REAL unique CC0 base archetypes (Quaternius: Dragon, Ghost, Wolf, Yeti, Goleling, Armabee, Squidle, Cactoro, Mushnub, GreenBlob, Hywirl, Glub, Ghost_Skull, Demon, Birb, Armabee_Evolved) |
+| `ArtSource/Meshes/Echoes/Bosses` | 14 | REAL unique CC0 showcase bosses (Evolved variants + MushroomKing/Orc/BlueDemon/Ninja + 2 Mechs + Enemy_Large) |
+| `ArtSource/Meshes/Weapons` | 5 | REAL geometry-distinct Kenney blasters (820/668/1386/1056/1506 verts — no two alike) |
+| `ArtSource/Meshes/Vehicles` | 4 | REAL — Dawn Skiff hover + Ground Rover + Support Skiff + Heavy Rover |
+| `ArtSource/Meshes/Environment` | 25 | REAL — 4 ore nodes (Kenney crystal clusters + ruins Column_Round_Short) + trees/rocks/flora/ruins (Kenney NatureKit/SpaceKit + Quaternius ModularRuins FBX) |
+
+- **1:1 source uniqueness enforced**: 109 staged assets ← 109 distinct source models; the fetch
+  script's palette-swap guard hard-fails on any reuse. Verified by the validator gate
+  "Mesh rows carry unique source models — no palette swaps".
+- **Manifest regenerated (v2.0)**: 189 entries / 189 `status: "present"` / **0 pending**;
+  every mesh row records source_pack + source_model + license (CC0) + sha256 + clip_map;
+  stale absolute paths (previous repo root) normalized to repo-relative. Per-asset license
+  provenance: `Docs/ASTRAWILD_REAL_ASSET_CREDITS.json`.
+- **Tier-B code table 39 → 36** (33 real-mesh species + the 3 production bosses — the
+  production bosses now carry DIRECT real meshes); 11 superseded procedural species GLBs
+  purged — those species render via their theme's REAL base mesh + their unique deterministic
+  mutation spec (real geometry + real mutation, never a recolor).
+- **Superseded procedural files purged**: 15 (11 Echo GLBs + 4 Environment GLBs) — git
+  history preserves the interim era.
+- **Pipeline**: `Scripts/fetch_free_assets.py` (catalog + live-verified Kenney remote fetch
+  + glTF→GLB self-contained conversion with embedded images) → `import_all.py` (clip_map
+  AM_ renames + PBR node emissive + sockets + direct-binding coverage incl. clips) →
+  `build_showcase_map.py` (PlayerStart + every mesh placed on real ground) →
+  **`Setup_And_Play.bat`** (Windows one-click).
+- **Runtime claims: still NONE.** Engine import stays NOT_RUN on this sandbox (no UE —
+  re-verified). V2-36: run `Setup_And_Play.bat` on the Windows machine; evidence =
+  `Saved/AwPipelineReport/import_report.json` (total_missing == 0 including the AM_ clips)
+  + showcase-map PIE. TRUE_MISSING stays 0.

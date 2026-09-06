@@ -7,6 +7,7 @@ registered content, verifies quest-chain closure, LFS pointer integrity, and
 asset path references. Complements Scripts/validate_repository.sh (structural)
 and the 119 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
 """
+import json
 import os
 import re
 import sys
@@ -163,7 +164,50 @@ if os.path.isdir(echoes_dir):
         if fn.startswith("SK_Echo_") and fn.endswith(".glb"):
             glb_files.add("Echo_" + fn[len("SK_Echo_"):-4])
 missing_glbs = [sid for sid in tierb_table if sid not in glb_files]
-check(f"Tier-B code list == 39 species with baked GLBs ({len(tierb_table)} listed)", len(tierb_table) == 39 and not missing_glbs, f"listed={len(tierb_table)} missing_glbs={missing_glbs[:5]}")
+check(f"Tier-B code list == 36 species with unique real-mesh GLBs ({len(tierb_table)} listed)", len(tierb_table) == 36 and not missing_glbs, f"listed={len(tierb_table)} missing_glbs={missing_glbs[:5]}")
+PROD_BOSSES_9B = {"Echo_DrownedSovereign", "Echo_EyeSentinel", "Echo_GlassTyrant"}
+check("Production bosses carry direct real meshes (Act-3 chain)",
+      PROD_BOSSES_9B <= set(tierb_table), f"missing={sorted(PROD_BOSSES_9B - set(tierb_table))}")
+
+# --- 9b-2. ASSET OVERHAUL: real unique-mesh catalog + manifest truth ---------
+try:
+    MANIFEST = json.loads(read("ArtSource/manifest.json"))
+    MA = MANIFEST.get("assets", {})
+    mesh_rows = {k: v for k, v in MA.items() if v.get("category") == "mesh"}
+    statuses = {v.get("status") for v in MA.values()}
+    check(f"Manifest 100% present / 0 pending ({len(MA)} entries)", statuses == {"present"},
+          f"statuses={statuses}")
+    src_pairs = [v.get("source_model") for v in mesh_rows.values() if v.get("source_model")]
+    check(f"Mesh rows carry unique source models — no palette swaps ({len(mesh_rows)} rows)",
+          len(src_pairs) == len(set(src_pairs)), f"dupe sources={[s for s in set(src_pairs) if src_pairs.count(s) > 1][:5]}")
+    missing_files = [k for k, v in mesh_rows.items()
+                     if not os.path.isfile(os.path.join(ROOT, v.get("path", "Z:none")))]
+    check("Every mesh row maps a real file on disk", not missing_files, f"missing={missing_files[:5]}")
+    no_license = [k for k, v in mesh_rows.items() if "CC0" not in str(v.get("license", ""))]
+    check("Every mesh row records a CC0 license", not no_license, f"no_license={no_license[:5]}")
+    boss_dir = os.path.join(ROOT, "ArtSource", "Meshes", "Echoes", "Bosses")
+    boss_files = {fn[:-4] for fn in os.listdir(boss_dir)} if os.path.isdir(boss_dir) else set()
+    check(f"Boss showcase meshes staged (14 distinct real models)", len(boss_files) == 14,
+          f"count={len(boss_files)}")
+    survivor_dir = os.path.join(ROOT, "ArtSource", "Meshes", "Characters", "Survivor")
+    survivor_files = {fn[:-4] for fn in os.listdir(survivor_dir)} if os.path.isdir(survivor_dir) else set()
+    check("3 survivor armor-tier meshes staged (T1 Scavenger / T2 Astraite / T3 Exosuit)",
+          survivor_files == {"SK_Survivor_Exosuit", "SK_Survivor_T1_Scavenger", "SK_Survivor_T2_Astraite"},
+          f"on_disk={sorted(survivor_files)}")
+    for w in ("SM_Weapon_ScrapRifle", "SM_Weapon_PlasmaCarbine", "SM_Weapon_ArcCannon",
+              "SM_Weapon_Railgun", "SM_Weapon_SingularityCannon"):
+        if w in mesh_rows:
+            continue
+        check(f"Weapon mesh row present: {w}", False, "row missing from manifest")
+    check("5 weapon meshes distinct (unique source models)",
+          all(w in mesh_rows for w in ("SM_Weapon_ScrapRifle", "SM_Weapon_PlasmaCarbine",
+                                       "SM_Weapon_ArcCannon", "SM_Weapon_Railgun",
+                                       "SM_Weapon_SingularityCannon"))
+          and len({mesh_rows[w].get("source_model") for w in
+                   ("SM_Weapon_ScrapRifle", "SM_Weapon_PlasmaCarbine", "SM_Weapon_ArcCannon",
+                    "SM_Weapon_Railgun", "SM_Weapon_SingularityCannon")}) == 5, "weapon rows not 1:1")
+except Exception as exc:  # noqa: BLE001
+    check("ASSET OVERHAUL manifest gates parse", False, f"exception={exc}")
 
 # --- 9c. SCI-FANTASY directive: mutation table + base archetype coherence ---
 MUTDATA = read("Source/AstrawildCore/Private/AstrawildEchoMutationData.cpp")

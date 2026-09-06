@@ -352,6 +352,23 @@ inside the step 4-5 PIE window, in this order, with their own report-back rules:
   swap (energy glow vs stone matte — `FAstrawildEchoMutator::ApplyThemeMaterial`)
   + persistent element VFX + weak-point theme cue. The mutated PMC fallback before
   import is BY DESIGN, not a failure.
+- **§20e ASSET OVERHAUL real-mesh import + showcase (V2-36 — the v9.3 directive)** —
+  the ONE-CLICK path: run **`Setup_And_Play.bat`** at the repo root (auto-locates
+  UE 5.4–5.8 or honors `%UE_ROOT%`; verifies the catalog by re-running
+  `Scripts/fetch_free_assets.py`; then launches the editor with
+  `-ExecutePythonScript="Content/Python/AwPipeline/run_overhaul.py"`).
+  `run_overhaul.py` = `import_all.py` (109 real CC0 meshes incl. 75 rigged with
+  `clip_map` AM_ renames — survivor Idle/Walk/Run/Roll→Jump/Idle_Gun_Pointing→Aim/
+  Gun_Shoot→Fire/Interact→Gather; PBR ore-node emissive instances; weapon Muzzle +
+  survivor Weapon_R sockets) followed by `build_showcase_map.py`
+  (creates/opens `/Game/Maps/L_Showcase_ArtOverhaul`: PlayerStart + 3-tier armor
+  podium + hero row + 16-base grid + Tier-B grid + boss arena + weapon rack +
+  vehicle pad + ore-node garden — every real mesh on real ground with its idle clip).
+  Acceptance: `Saved/AwPipelineReport/import_report.json` `total_missing == 0`
+  **including every clip_map AM_ path** (direct-binding evidence: species → real
+  mesh + real clips) AND PIE in the showcase level (player pawn in the real Tier-3
+  Exosuit mesh; display rows playing real idle clips; ore nodes glowing).
+  Manual equivalent: `py "Content/Python/AwPipeline/run_overhaul.py"` in the editor.
 
 **Completion declaration**: when 1–9 pass, ASTRAWILD is GAME-COMPLETE (source-complete +
 engine-verified + packaged). Record the final SHA + log manifest in

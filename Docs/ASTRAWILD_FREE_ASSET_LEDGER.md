@@ -141,7 +141,34 @@ Curated-source decisions this pass (full reasoning in the acquisition JSON):
 
 ---
 
-## 5. Binding rules (standing)
+## 5. ASSET OVERHAUL real-mesh catalog (v9.3 — 109 unique CC0 models, 1:1)
+
+Curated and staged by `Scripts/fetch_free_assets.py` (the fetch script's palette-swap
+guard enforces 1:1 source uniqueness — a reused source model is a hard error). Every
+entry carries per-asset provenance in `Docs/ASTRAWILD_REAL_ASSET_CREDITS.json`
+(source pack, source model, license, license URL, official page) + sha256 in the
+manifest. All external sources are **CC0 1.0 Universal**, verified from the in-pack
+`LICENSE_CC0.txt` / `License.txt` files.
+
+| Catalog group | Count | Source packs |
+|---|---|---|
+| Survivor armor tiers (T1 Scavenger / T2 Astraite / T3 Singularity Exosuit) | 3 | Quaternius Ultimate Modular Men (Swat / Adventurer / Spacesuit — rigged, 24 anims incl. Gun_Shoot) |
+| Hero Echoes | 6 | Quaternius Animated Animals (Stag/Donkey) + Ultimate Monsters (Monkroose/Dino/Wizard/Bunny) |
+| Tier-B species + production bosses | 36 | Quaternius Ultimate Monsters (Big/Blob/Flying pools, theme-aware deterministic draw) + SpaceKit Characters |
+| Base archetypes (mutation geometry layer) | 16 | Quaternius Ultimate Monsters (Dragon/Ghost/Goleling/Armabee/Squidle/Cactoro/…) + Animated Animals (Wolf) |
+| Showcase bosses | 14 | Quaternius Ultimate Monsters Evolved variants + MushroomKing/Orc/Orc_Skull/BlueDemon/Ninja + SpaceKit Mechs |
+| Weapons (Scrap Rifle / Plasma Carbine / Arc Cannon / Railgun / Singularity Cannon) | 5 | Kenney Blaster Kit (blaster-a/c/e/g/p — geometry-distinct, colormap embedded) |
+| Vehicles (Dawn Skiff hover / Ground Rover / Support Skiff / Heavy Rover) | 4 | Quaternius Ultimate Space Kit (Spaceships + Rovers) |
+| Ore nodes (Astraite / Pyronite / Voidstone / Ancient Vein) | 4 | Kenney Space Kit (rock_crystals*) + Quaternius Modular Ruins (Column_Round_Short) |
+| Environment (trees/rocks/flora/ruins/flowers/mushrooms) | 21 | Kenney Nature Kit + Kenney Space Kit + Quaternius Modular Ruins (FBX) |
+
+Remote acquisition: the Kenney direct-download pattern is LIVE-VERIFIED (official
+asset page → download modal → media zip URL → download → unzip → verify, exercised
+with blaster-kit: 211 files). Quaternius pack delivery is login-walled on itch.io
+(free games still require an account claim) — recorded honestly; the in-repo
+LFS-tracked CC0 packs cover those sources (license files on disk).
+
+## 6. Binding rules (standing)
 
 1. LICENSE_UNCLEAR **never** enters the repository — the Quaternius script
    aborts the whole pack (not just the file) on any license-gate failure.
