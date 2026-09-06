@@ -234,3 +234,37 @@ family has a zero-asset fallback.** A clean clone + `git lfs pull` + the HANDOFF
 - Verdict: **SOURCE_PRODUCT_FROZEN** (source-side; READY_FOR_FINAL_BUILD
   carried through). Engine verification (AG-2..5 + §22) is the sole remaining
   gate.
+
+## SCI Amendment (v1.5 — Sci-Fantasy Monster Directive + v9.1 material-swap wiring)
+
+- **New ArtSource RAW assets (16 GLB + 16 WAV, LFS-tracked)**:
+  `ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_*.glb` (16 rigged theme archetypes,
+  Idle/Move/Hit clips baked) + `ArtSource/Audio/Echoes/SFXSet_<Theme>_{0,1}.wav`
+  (16 CC0-staged theme cues; SHA-256 ledger `Docs/ASTRAWILD_SCI_FANTASY_ACQUISITION.json`).
+  These are NOT engine packages yet — they import via the §20d pass below. TRUE_MISSING stays 0.
+- **New ENGINE-side packages authored by the one-time import (§20d / queue V2-35)**:
+  `/Game/Characters/Echoes/BaseMeshes/` 16 skeletal meshes + 48 AM_* clips ·
+  `/Game/Audio/Echoes/` 16 SoundWaves · `/Game/VFX/NS_AW_Elem_{7}` templates ·
+  `/Game/Materials/M_SciFi_{8}` theme masters — **8, not 6 (v9.1)**:
+  MetallicRobot / EnergyBody / StonyGolem / Slime / Chitin / VoidFlesh /
+  OrganicHide / FocusCrystal — one per EAstrawildMutationMaterialTheme, all
+  parameterized (Tint/PatternTint/GlowIntensity/Metallic/Roughness) and all
+  counted in `echo_base_report.json` coverage (missing master = ERROR +
+  total_missing includes it — no false-clean report possible).
+- **Runtime consumers (binding model unchanged — opt-in / fail-closed)**:
+  `FAstrawildEchoMutator::BuildSciFantasyBaseMeshPath/BuildSciFantasyAnimPath`
+  (base binding via ProductionContent, precedence Tier-A > Tier-B > SK_Base) ·
+  `BuildElementVfxSystemPath` + `ApplyElementVfx` (persistent element VFX) ·
+  `BuildSoundSetCuePath` (weakness-hit vocal cue) · **`BuildThemeMaterialPath` +
+  `ApplyThemeMaterial` (v9.1 — runtime material/theme swap on the skinned path:
+  dynamic instances of the 8 masters per species, fail-closed to the GLB's own
+  materials before import)**.
+- **Verification basis re-validated at the v9.1 tip**: `validate_final_run.py`
+  ALL CHECKS PASS — 126-test exact gate, 15 census equality gates UNCHANGED
+  (229 species / 78 items / 58 recipes / 26 buildings / 17 techs / 17 quests /
+  11 loot / 11 NPCs / 8 weapons / 10 nodes / 8 sites / 16 events / 17 POIs /
+  11 dialogue trees / 3 robots); LFS pointer sweep clean; mutation table
+  deterministic (regeneration byte-identical).
+- Verdict: source-side COMPLETE (the Sci-Fantasy visual identity layer is fully
+  wired source-side incl. the material swap); runtime visuals ENGINE-UNVERIFIED
+  until the §20d/V2-35 engine pass. The engine run remains the sole remaining gate.

@@ -1,13 +1,18 @@
 # ASTRAWILD — Echoes of the First Dawn
 
 > [!NOTE]
-> **Current status (DP-10 final gate, 2026)**: the repository is source-complete on branch
-> `final-completion` — 109 world-free automation contracts, full 12-zone world, 229 Echo
-> species, MQ-01..17 + two endings, save schema V5, ready for the one-time engine
-> integration run. The canonical control doc is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v5.0)**;
-> the engine runbook is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The narrative text below
-> this note is the Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54
-> tests" snapshot refers to the 2026-09-01 Antigravity V2 session).
+> **Current status (SCI v9.1 amendment, 2026)**: the repository is source-complete on branch
+> `final-completion` — 126 world-free automation contracts, full 12-zone world, 229 Echo
+> species (204 of them regrouped into 8 Sci-Fantasy themes with a runtime mutation system:
+> 16 baked SK_Base_* base meshes + per-part scaling/attachments/theme materials/pattern
+> tints/element VFX), MQ-01..17 + two endings, save schema V5, LFS 459/459 verified.
+> **Everything engine-side is ENGINE-UNVERIFIED at this tip** — the one-time integration
+> run (build, 126 tests, PIE, package, V2-29..V2-35 queue) belongs to the Windows UE 5.8
+> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.1 §8 and
+> `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The canonical control doc is
+> **`Docs/ASTRAWILD_MASTER_CONTROL.md`**. The narrative text below this note is the
+> Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54 tests" snapshot
+> refers to the 2026-09-01 Antigravity V2 session).
 
 **Current world (Batch 7): The Shattered Vale** — six 800 m zones (Dawn Fields, Dusk Marsh, Glimmerwood, Ember Ridge, Frostveil Expanse, Hollow Approach) over a 2.4 km × 1.6 km procedural terrain, each zone with its own wildlife, resources, landmarks and signature light. Runtime world needs zero assets; an optional editor Landscape path ships in `Content/Heightmaps/`.
 
@@ -16,8 +21,16 @@ ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal 
 ## Current repository status
 
 > [!TIP]
-> **LATEST STATUS**: **PLAYABLE VERTICAL SLICE LOCKED & RE-CERTIFIED**  
-> For the complete summary and how to run the game, see [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).
+> **LATEST STATUS**: **SOURCE-COMPLETE / ENGINE-UNVERIFIED (SCI v9.1)** —
+> `final-completion`, 126 automation contracts, 229 species, Sci-Fantasy mutation
+> system wired (incl. runtime theme-material swap), LFS 459/459.
+> The complete current-state truth is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1)**;
+> engine-run history (the 54/54 + packaged-exe evidence at SHA 8313c61) is
+> [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) (HISTORICAL)
+> and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).
+> **The old claim below ("compiles with 0 errors across 54/54 tests") is the
+> 8313c61-era record, NOT the current tip** — the re-run queue is
+> `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` (V2-29..V2-35).
 
 This repository contains the verified Unreal Engine 5.8.2 C++ core, data contracts, and ArtPack ingestion pipeline. The core playable loop (Spawn -> Move -> Look -> Jump -> Sprint -> Interact -> Inventory -> Build -> Scan -> Attack) is physically verified and compiles with 0 errors across 54/54 automated tests and packaged standalone binaries.
 

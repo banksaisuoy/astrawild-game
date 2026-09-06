@@ -19,7 +19,10 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildLog.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Misc/Crc.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -483,6 +486,88 @@ FString FAstrawildEchoMutator::BuildSoundSetCuePath(const FName& SoundSetId, con
 {
     const FString Id = SoundSetId.IsNone() ? FString(TEXT("SFXSet_MutatedFauna")) : SoundSetId.ToString();
     return FString::Printf(TEXT("/Game/Audio/Echoes/%s_%d.%s_%d"), *Id, CueIndex, *Id, CueIndex);
+}
+
+FString FAstrawildEchoMutator::BuildThemeMaterialPath(const EAstrawildMutationMaterialTheme MaterialTheme)
+{
+    const TCHAR* Name = TEXT("M_SciFi_OrganicHide");
+    switch (MaterialTheme)
+    {
+    case EAstrawildMutationMaterialTheme::Metallic:    Name = TEXT("M_SciFi_MetallicRobot"); break;
+    case EAstrawildMutationMaterialTheme::Stony:       Name = TEXT("M_SciFi_StonyGolem"); break;
+    case EAstrawildMutationMaterialTheme::Energy:      Name = TEXT("M_SciFi_EnergyBody"); break;
+    case EAstrawildMutationMaterialTheme::Slime:       Name = TEXT("M_SciFi_Slime"); break;
+    case EAstrawildMutationMaterialTheme::Chitin:      Name = TEXT("M_SciFi_Chitin"); break;
+    case EAstrawildMutationMaterialTheme::Organic:     Name = TEXT("M_SciFi_OrganicHide"); break;
+    case EAstrawildMutationMaterialTheme::Crystalline: Name = TEXT("M_SciFi_FocusCrystal"); break;
+    case EAstrawildMutationMaterialTheme::Void:        Name = TEXT("M_SciFi_VoidFlesh"); break;
+    default: break;
+    }
+    return FString::Printf(TEXT("/Game/Materials/%s.%s"), Name, Name);
+}
+
+bool FAstrawildEchoMutator::ApplyThemeMaterial(USkeletalMeshComponent* MeshComponent,
+    const UAstrawildEchoDefinition* Definition, const FEchoMutationSpec& Spec)
+{
+    if (!MeshComponent || !MeshComponent->GetSkeletalMeshAsset() || !MeshComponent->GetWorld())
+    {
+        return false;
+    }
+    if (MeshComponent->GetWorld()->IsNetMode(NM_DedicatedServer))
+    {
+        return false; // cosmetic only — never touch materials on the headless server
+    }
+
+    const FString MaterialPath = BuildThemeMaterialPath(Spec.MaterialTheme);
+    UMaterial* Master = LoadObject<UMaterial>(nullptr, *MaterialPath);
+    if (!Master)
+    {
+        // Opt-in contract: the M_SciFi_* master has not imported yet — the
+        // GLB's own imported materials stay (no silent fake).
+        UE_LOG(LogAstrawildAI, Verbose, TEXT("SciFantasy theme master not imported (%s) — skinned materials stay as imported."), *MaterialPath);
+        return false;
+    }
+
+    // Species identity parameters (mirrors the PMC path's vertex-color
+    // language): the definition's primary tint pushed toward the theme
+    // tint, the spec's independent pattern tint, and the material
+    // language's glow default (energy bodies glow, stone barely does).
+    FLinearColor Tint = ResolveThemeTint(Spec.Theme);
+    if (Definition)
+    {
+        Tint = FMath::Lerp(Definition->PrimaryTint, ResolveThemeTint(Spec.Theme), 0.35f);
+    }
+    float GlowIntensity = 0.20f;
+    switch (Spec.MaterialTheme)
+    {
+    case EAstrawildMutationMaterialTheme::Energy:      GlowIntensity = 2.20f; break;
+    case EAstrawildMutationMaterialTheme::Crystalline: GlowIntensity = 0.90f; break;
+    case EAstrawildMutationMaterialTheme::Void:        GlowIntensity = 0.80f; break;
+    case EAstrawildMutationMaterialTheme::Slime:       GlowIntensity = 0.45f; break;
+    case EAstrawildMutationMaterialTheme::Metallic:    GlowIntensity = 0.35f; break;
+    case EAstrawildMutationMaterialTheme::Chitin:      GlowIntensity = 0.30f; break;
+    case EAstrawildMutationMaterialTheme::Stony:       GlowIntensity = 0.12f; break;
+    case EAstrawildMutationMaterialTheme::Organic:
+    default:                                          GlowIntensity = 0.20f; break;
+    }
+
+    const int32 NumSlots = MeshComponent->GetNumMaterials();
+    int32 Applied = 0;
+    for (int32 SlotIndex = 0; SlotIndex < NumSlots; ++SlotIndex)
+    {
+        UMaterialInstanceDynamic* Instance = MeshComponent->CreateDynamicMaterialInstance(SlotIndex, Master);
+        if (!Instance)
+        {
+            continue;
+        }
+        Instance->SetVectorParameterValue(TEXT("Tint"), Tint);
+        Instance->SetVectorParameterValue(TEXT("PatternTint"), Spec.PatternTint);
+        Instance->SetScalarParameterValue(TEXT("GlowIntensity"), GlowIntensity);
+        ++Applied;
+    }
+    UE_LOG(LogAstrawildAI, Log, TEXT("SciFantasy theme material bound (%s, %d/%d slots, tint %s)."),
+        *MaterialPath, Applied, NumSlots, *Tint.ToString());
+    return Applied > 0;
 }
 
 // ---------------------------------------------------------------------------

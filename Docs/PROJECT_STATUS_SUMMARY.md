@@ -1,10 +1,21 @@
 ﻿# ASTRAWILD — PROJECT STATUS SUMMARY (สรุปสถานะโปรเจกต์ล่าสุด)
 
-**สถานะปัจจุบัน**: ✅ **PLAYABLE VERTICAL SLICE LOCKED & RE-CERTIFIED**  
-**Branch ล่าสุด**: `agent/antigravity-ue5-v2`  
-**Commit SHA ที่ผ่านการทดสอบจริง**: `8313c6181f91a5962e4732df3dd30a0b9dab1864`  
-**Pull Request ไปยัง `main`**: [**PR #4 (fix(player): restore real playable input, camera controls, and character presentation)**](https://github.com/banksaisuoy/astrawild-game/pull/4) *(สถานะ: OPEN พร้อม Merge)*  
-**วันที่บันทึก**: 2 กันยายน 2026  
+> **[HISTORICAL / SUPERSEDED — engine-run evidence record, NOT current status]**
+> เอกสารนี้บันทึกผล engine-run จริงที่ SHA `8313c61` บน branch `agent/antigravity-ue5-v2`
+> (2026-09-02) และถูกเก็บไว้เป็นหลักฐานประวัติศาสตร์เท่านั้น — ตัวเลข 54/54 tests,
+> "เล่นได้จริง 100%" และ packaged exe ด้านล่างเป็นความจริง**ของ SHA นั้นเท่านั้น**
+> ไม่ใช่สถานะของ branch ปัจจุบัน สถานะปัจจุบันที่แท้จริงคือ:
+> branch `final-completion` (source-side ครบ: 126 automation contracts, 229 species,
+> Sci-Fantasy mutation system, LFS 459/459) และ **ENGINE-UNVERIFIED ที่ tip นี้**
+> (build/automation/PIE/package ต้องรันซ้ำที่ SHA ล่าสุดตาม
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.1 §8 + `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md`)
+> อย่าใช้เอกสารนี้ตัดสินใจ integration — ใช้ MASTER_CONTROL เท่านั้น
+
+**สถานะ (ณ วันที่บันทึกนั้น)**: ✅ **PLAYABLE VERTICAL SLICE LOCKED & RE-CERTIFIED**
+**Branch ล่าสุด (ของ session นั้น)**: `agent/antigravity-ue5-v2`
+**Commit SHA ที่ผ่านการทดสอบจริง**: `8313c6181f91a5962e4732df3dd30a0b9dab1864`
+**Pull Request ไปยัง `main`**: [**PR #4 (fix(player): restore real playable input, camera controls, and character presentation)**](https://github.com/banksaisuoy/astrawild-game/pull/4) *(สถานะ: OPEN พร้อม Merge — ปัจจุบันถูก subsume โดย `final-completion` ตาม MASTER_CONTROL §5)*
+**วันที่บันทึก**: 2 กันยายน 2026
 
 ---
 

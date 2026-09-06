@@ -13,14 +13,18 @@ Imports the Sci-Fantasy mutation-system additions into the engine:
      (/Game/VFX/NS_AW_Elem_{Fire,Frost,Electric,Void,Poison,Spore,Radiant})
      — template systems (same pattern as the hero weapon systems); full
      visual authoring is the engine-verification pass, never faked here.
-  4. The 6 Sci-Fantasy master materials with exposed parameters
+  4. The 8 Sci-Fantasy master materials with exposed parameters
      (M_SciFi_MetallicRobot, M_SciFi_EnergyBody, M_SciFi_StonyGolem,
-     M_SciFi_Slime, M_SciFi_Chitin, M_SciFi_VoidFlesh) — parameterized
+     M_SciFi_Slime, M_SciFi_Chitin, M_SciFi_VoidFlesh, M_SciFi_OrganicHide,
+     M_SciFi_FocusCrystal) — parameterized
      (Tint / PatternTint / GlowIntensity / Roughness / Metallic) so the
-     runtime material-swap language has an authoring surface.
+     runtime material-swap language (FAstrawildEchoMutator::ApplyThemeMaterial
+     — one distinct master per EAstrawildMutationMaterialTheme) has a full
+     authoring surface: all 8 material languages resolve.
 
 Writes Saved/AwPipelineReport/echo_base_report.json.
-Acceptance: total_missing == 0 and errors == [].
+Acceptance: total_missing == 0 and errors == [] (the coverage check includes
+the 8 theme masters — a failed master creation is an ERROR, not a warning).
 
 REQUIRES LOCAL EXECUTION (UE 5.8 editor):
   & "E:\\Epic Games\\UnrealEngine\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe" `
@@ -61,14 +65,22 @@ ELEMENT_VFX = ["Fire", "Frost", "Electric", "Void", "Poison", "Spore", "Radiant"
 SOUND_SETS = ["AncientConstruct", "ElementalBeast", "MutatedFauna", "ArmoredOrganic",
               "EtherealSpirit", "MechanicalHybrid", "PlantMonster", "VoidAbomination"]
 
-# (material asset name, theme, metallic, roughness, emissive intensity)
+# (material asset name, material-language it serves, metallic, roughness, emissive intensity)
+# ALL 8 EAstrawildMutationMaterialTheme values are covered 1:1 — the runtime
+# swap (FAstrawildEchoMutator::BuildThemeMaterialPath/ApplyThemeMaterial)
+# resolves a distinct master for each language, so a missing master would
+# leave that language's species on imported GLB materials (fail-closed at
+# runtime, and counted MISSING here so the report can never show a false
+# clean total).
 THEME_MASTERS = [
-    ("M_SciFi_MetallicRobot", "MechanicalHybrid", 0.92, 0.28, 0.35),
-    ("M_SciFi_EnergyBody",    "ElementalBeast",   0.10, 0.22, 2.20),
-    ("M_SciFi_StonyGolem",    "AncientConstruct", 0.05, 0.85, 0.12),
-    ("M_SciFi_Slime",         "VoidAbomination",  0.02, 0.12, 0.45),
-    ("M_SciFi_Chitin",        "ArmoredOrganic",   0.55, 0.45, 0.30),
-    ("M_SciFi_VoidFlesh",     "VoidAbomination",  0.00, 0.35, 0.80),
+    ("M_SciFi_MetallicRobot", "Metallic",    0.92, 0.28, 0.35),
+    ("M_SciFi_EnergyBody",    "Energy",      0.10, 0.22, 2.20),
+    ("M_SciFi_StonyGolem",    "Stony",       0.05, 0.85, 0.12),
+    ("M_SciFi_Slime",         "Slime",       0.02, 0.12, 0.45),
+    ("M_SciFi_Chitin",        "Chitin",      0.55, 0.45, 0.30),
+    ("M_SciFi_VoidFlesh",     "Void",        0.00, 0.35, 0.80),
+    ("M_SciFi_OrganicHide",   "Organic",     0.05, 0.62, 0.20),
+    ("M_SciFi_FocusCrystal",  "Crystalline", 0.30, 0.18, 0.90),
 ]
 
 
@@ -221,9 +233,11 @@ def create_theme_master_materials() -> None:
         PatternTint (VectorParam) x GlowIntensity (ScalarParam) -> Emissive
         Metallic    / Roughness    (ScalarParam)  -> Metallic / Roughness
 
-    One master per theme family, built with the SAME expression-graph API
-    aw_materials.py uses (MaterialEditingLibrary). The runtime material-swap
-    language (EAstrawildMutationMaterialTheme) maps onto these package paths.
+    One master per MATERIAL LANGUAGE (1:1 with the 8
+    EAstrawildMutationMaterialTheme values), built with the SAME
+    expression-graph API aw_materials.py uses (MaterialEditingLibrary). The
+    runtime material-swap (FAstrawildEchoMutator::BuildThemeMaterialPath +
+    ApplyThemeMaterial) consumes exactly these 8 package paths.
     """
     stage = REPORT["stages"].setdefault("theme_materials", {"created": 0})
     mel = unreal.MaterialEditingLibrary
@@ -284,7 +298,10 @@ def create_theme_master_materials() -> None:
             stage["created"] += 1
             log(f"Created theme master: {mat_path}")
         except Exception as e:
-            warn(f"theme master {mat_name}: {e} — author manually per runbook")
+            # Coverage-required asset: a failed master is an ERROR (the
+            # report's total_missing must never look clean while a material
+            # language is unresolvable at runtime).
+            err(f"theme master {mat_name}: {e} — author manually per runbook")
 
 
 # ---------------------------------------------------------------- report
@@ -315,6 +332,12 @@ def verify_coverage() -> None:
             ok += 1
         else:
             missing.append(vfx)
+    for mat_name, _lang, _metal, _rough, _glow in THEME_MASTERS:
+        mat = f"/Game/Materials/{mat_name}"
+        if unreal.EditorAssetLibrary.does_asset_exist(mat):
+            ok += 1
+        else:
+            missing.append(mat)
 
     REPORT["coverage"] = {"resolved": ok, "missing": missing}
     REPORT["missing"] = missing

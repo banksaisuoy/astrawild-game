@@ -326,7 +326,7 @@ no duplicated assets, no double imports, no corrupted Content.
    with the logs; do NOT redesign systems
 ```
 
-**Asset sub-sequences inside this run (not optional, not blockers)** — both execute
+**Asset sub-sequences inside this run (not optional, not blockers)** — all execute
 inside the step 4-5 PIE window, in this order, with their own report-back rules:
 
 - **§20b acquired-asset checklist** (Kenney imports + fitness/retarget/tone checks +
@@ -337,6 +337,19 @@ inside the step 4-5 PIE window, in this order, with their own report-back rules:
   apply the verbatim `GetEchoArt()` binding rows → re-run both validators → PIE
   spot-check. The cone placeholder stays until the mesh resolves — that is the
   contract, not a defect.
+- **§20d Sci-Fantasy echo-base import (V2-35)** — run in the same window, command:
+  `py "Content/Python/AwPipeline/import_echo_bases.py"` in the editor (or
+  `-run=pythonscript -script="Content/Python/AwPipeline/import_echo_bases.py" -stdout -unattended`).
+  Imports the 16 SK_Base_* skeletal meshes + normalizes the 48 AM_* clips + 16
+  SFXSet_* sound cues + creates 7 NS_AW_Elem_* templates + authors the **8 M_SciFi_*
+  theme master materials** (parameterized Tint/PatternTint/GlowIntensity/Metallic/
+  Roughness on MaterialEditingLibrary). Acceptance: `Saved/AwPipelineReport/
+  echo_base_report.json` shows `total_missing: 0` AND `errors: []` — **material
+  coverage counts** (a failed master = ERROR, v9.1). Then PIE V2-35: two bestiary
+  species from different themes → skinned base body + attachments + theme material
+  swap (energy glow vs stone matte — `FAstrawildEchoMutator::ApplyThemeMaterial`)
+  + persistent element VFX + weak-point theme cue. The mutated PMC fallback before
+  import is BY DESIGN, not a failure.
 
 **Completion declaration**: when 1–9 pass, ASTRAWILD is GAME-COMPLETE (source-complete +
 engine-verified + packaged). Record the final SHA + log manifest in

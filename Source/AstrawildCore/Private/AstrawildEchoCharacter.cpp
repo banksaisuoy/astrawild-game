@@ -955,6 +955,25 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
     EchoBodyMesh->SetRelativeScale3D(FVector(S));
     EchoBodyMesh->RegisterComponent();
 
+    // Sci-Fantasy directive Phase 2 amendment: material/theme switching on
+    // the skinned path — dynamic instance of the M_SciFi_* theme master
+    // (parameterized per species) over every material slot. Opt-in /
+    // fail-closed: before import_echo_bases.py lands the masters, the GLB's
+    // own materials stay (ApplyThemeMaterial no-ops honestly).
+    {
+        const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId);
+        FEchoMutationSpec DeterministicSpec;
+        if (!MutationSpec)
+        {
+            DeterministicSpec = FAstrawildEchoMutator::BuildDeterministicSpec(EchoDefinition);
+            MutationSpec = &DeterministicSpec;
+        }
+        if (MutationSpec)
+        {
+            FAstrawildEchoMutator::ApplyThemeMaterial(EchoBodyMesh, EchoDefinition, *MutationSpec);
+        }
+    }
+
     // Warm the locomotion clips + start the idle loop.
     EchoDefinition->IdleAnimation.LoadSynchronous();
     EchoDefinition->MoveAnimation.LoadSynchronous();

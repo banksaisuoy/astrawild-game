@@ -133,9 +133,11 @@ namespace AstrawildEchoMutation
  *   - PMC procedural body: per-part scale multipliers + attachment geometry +
  *     theme-modulated palette (vertex-color material language), applied inside
  *     the character's BuildProceduralBody (it owns the local part helpers).
- *   - Skinned body: root scale jitter + persistent element VFX (+ optional
- *     sound-set cue) — per-bone skeletal scaling is explicitly NOT attempted
- *     here (documented engine-verification item, not a silent fake).
+ *   - Skinned body: root scale jitter + theme material swap (dynamic instance
+ *     of the M_SciFi_* master, parameterized per species) + persistent
+ *     element VFX (+ optional sound-set cue) — per-bone skeletal scaling is
+ *     explicitly NOT attempted here (documented engine-verification item,
+ *     not a silent fake).
  *
  * Everything is deterministic (species id + instance salt → identical output),
  * pure helpers are world-free and automation-tested, and every engine-asset
@@ -201,6 +203,29 @@ struct ASTRAWILDCORE_API FAstrawildEchoMutator
     static FString BuildSciFantasyAnimPath(const FName& BaseMeshId, bool bMoveClip);
     static FString BuildElementVfxSystemPath(EAstrawildEchoVfxType VfxType);
     static FString BuildSoundSetCuePath(const FName& SoundSetId, int32 CueIndex);
+
+    /**
+     * Derived engine path of the theme MASTER material for one material
+     * language (the 8 M_SciFi_* masters import_echo_bases.py authors —
+     * MetallicRobot / EnergyBody / StonyGolem / Slime / Chitin / VoidFlesh /
+     * OrganicHide / FocusCrystal). Convention path, never a literal; resolves
+     * only after the Phase 4 import pass, fail-closed otherwise.
+     */
+    static FString BuildThemeMaterialPath(EAstrawildMutationMaterialTheme MaterialTheme);
+
+    /**
+     * Material/theme switching on the SKINNED path (Phase 2 amendment — the
+     * runtime consumer of the M_SciFi_* masters): creates one dynamic
+     * material instance of the theme master over every material slot of the
+     * component, parameterized by the species identity — Tint = the
+     * definition's primary tint pushed toward the theme tint, PatternTint =
+     * the spec's independent pattern tint, GlowIntensity = the material
+     * language's default. Opt-in / fail-closed: when the master has not
+     * imported, the GLB's own imported materials stay untouched (returns
+     * false; no silent fake). Returns true when the swap applied.
+     */
+    static bool ApplyThemeMaterial(class USkeletalMeshComponent* MeshComponent,
+        const UAstrawildEchoDefinition* Definition, const FEchoMutationSpec& Spec);
 
     /**
      * Persistent element VFX (Phase 2 — VFX binding): attaches an

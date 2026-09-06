@@ -1,11 +1,12 @@
 # ASTRAWILD — Build Status
 
 > [!NOTE]
-> **DP-10 snapshot qualifier (final gate)**: this file is the DATED engine-verification
+> **SCI v9.1 snapshot qualifier (latest)**: this file is the DATED engine-verification
 > record of the Antigravity V2 session (last updated 2026-09-01 @ commit `03c2fe6` —
 > 54/54 tests at that SHA). It is retained as historical engine evidence, NOT as the
-> current-state doc. Current source-side state: `Docs/ASTRAWILD_MASTER_CONTROL.md` v5.0
-> (109-test suite, census 78 items / 58 recipes / 8 sites / 16 events / 17 POIs) with the
+> current-state doc. Current source-side state: `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.1
+> (126-test suite, census 78 items / 58 recipes / 8 sites / 16 events / 17 POIs, 229
+> species, Sci-Fantasy mutation system with runtime theme-material swap) with the
 > readiness verdict in `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`; the one-time re-verification
 > at the final SHA is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 (engine-verified claims
 > belong only to that future run — the numbers below are frozen to their date).

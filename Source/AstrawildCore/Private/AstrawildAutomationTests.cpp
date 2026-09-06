@@ -5900,6 +5900,32 @@ bool FAstrawildSciFantasyMutationTest::RunTest(const FString& Parameters)
         FAstrawildEchoMutator::BuildSoundSetCuePath(TEXT("SFXSet_PlantMonster"), 0),
         FString(TEXT("/Game/Audio/Echoes/SFXSet_PlantMonster_0.SFXSet_PlantMonster_0")));
 
+    // 8b) Material/theme switching surface: every material language maps
+    //     onto ONE distinct M_SciFi_* master (the 8 masters
+    //     import_echo_bases.py authors; the skinned path consumes them via
+    //     dynamic instances — ApplyThemeMaterial). Path form + uniqueness.
+    TSet<FString> MasterPaths;
+    for (int32 MatIndex = 0; MatIndex < 8; ++MatIndex)
+    {
+        const FString MatPath = FAstrawildEchoMutator::BuildThemeMaterialPath(
+            static_cast<EAstrawildMutationMaterialTheme>(MatIndex));
+        TestTrue(FString::Printf(TEXT("Material %d master path derives"), MatIndex),
+            MatPath.StartsWith(TEXT("/Game/Materials/M_SciFi_")));
+        TestTrue(FString::Printf(TEXT("Material %d master path is a full package ref"), MatIndex),
+            MatPath.Contains(TEXT(".")) && !MatPath.EndsWith(TEXT(".")));
+        MasterPaths.Add(MatPath);
+    }
+    TestEqual(TEXT("All 8 material languages map to distinct masters"), MasterPaths.Num(), 8);
+    TestEqual(TEXT("Metallic master path derives"),
+        FAstrawildEchoMutator::BuildThemeMaterialPath(EAstrawildMutationMaterialTheme::Metallic),
+        FString(TEXT("/Game/Materials/M_SciFi_MetallicRobot.M_SciFi_MetallicRobot")));
+    TestEqual(TEXT("Organic master path derives"),
+        FAstrawildEchoMutator::BuildThemeMaterialPath(EAstrawildMutationMaterialTheme::Organic),
+        FString(TEXT("/Game/Materials/M_SciFi_OrganicHide.M_SciFi_OrganicHide")));
+    TestEqual(TEXT("Crystalline master path derives"),
+        FAstrawildEchoMutator::BuildThemeMaterialPath(EAstrawildMutationMaterialTheme::Crystalline),
+        FString(TEXT("/Game/Materials/M_SciFi_FocusCrystal.M_SciFi_FocusCrystal")));
+
     // 9) Theme display names render for every vocabulary value (the
     //    roster/journal lines consume them — no silent empty text).
     for (int32 ThemeIndex = 0; ThemeIndex < 8; ++ThemeIndex)

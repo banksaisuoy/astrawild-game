@@ -171,3 +171,34 @@ ENGINE_UNVERIFIED_ITEMS = V2-29 final-tip re-import baseline; V2-30 PIE survivor
 every runtime claim above is deferred to the Antigravity engine machine per the existing
 `ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20 sequence. This document is the asset-truth baseline for
 any subsequent content-development decision.
+
+---
+
+## 11. SCI v9.1 amendment (FINAL EXECUTION round — appended, original audit above unchanged)
+
+- **Baseline note**: §1-§10 above are the audit record at HEAD `68c2b07` (commit 58b3fcd).
+  The Sci-Fantasy directive landed at `0b55072` after it; this amendment documents the
+  asset-truth deltas of that commit + the v9.1 material-swap amendment, without rewriting history.
+- **New source assets (0 new engine packages, all RAW_PRESENT / engine-side pending)**:
+  16 × `SK_Base_*.glb` (ArtSource/Meshes/Echoes/BaseMeshes, rigged + Idle/Move/Hit clips),
+  16 × `SFXSet_*.wav` (ArtSource/Audio/Echoes, CC0 Kenney-staged, SHA-256 ledger
+  `Docs/ASTRAWILD_SCI_FANTASY_ACQUISITION.json`), 1 import script
+  (`Content/Python/AwPipeline/import_echo_bases.py`). TRUE_MISSING stays **0**.
+- **New ENGINE-side packages to be authored by the one-time import** (all opt-in/fail-closed
+  until then, counted in `echo_base_report.json` coverage): 16 skeletal meshes +
+  48 anim clips + 16 sound cues + 7 NS_AW_Elem_* templates + **8 M_SciFi_* theme master
+  materials (v9.1: was 6 — M_SciFi_OrganicHide + M_SciFi_FocusCrystal added so every
+  EAstrawildMutationMaterialTheme resolves; a missing master now counts in
+  total_missing as an ERROR, killing the false-clean-report risk)**.
+- **New runtime consumer (v9.1 — was the real dead-end this round closed)**:
+  `FAstrawildEchoMutator::BuildThemeMaterialPath` + `ApplyThemeMaterial` — the masters
+  are no longer import-authoring-only; the skinned path swaps them in as dynamic
+  material instances (Tint/PatternTint/GlowIntensity per species). Fail-closed before
+  import: the GLB's own materials stay.
+- **47 GLB ue_paths pending import: UNCHANGED** (39 Tier-B + 3 boss/summon + 5
+  ContentLibrary species — opt-in by design, PMC mutated fallback active).
+- **Runtime claims: still NONE.** Everything above stays ENGINE-UNVERIFIED until the
+  V2-35 engine run (import report total_missing==0 incl. materials + PIE clips incl.
+  theme material swap). Sandbox truth re-verified this round: no UE/MSVC exists on
+  this Linux sandbox (checked: no Unreal installation, no /mnt/c, network-limited) —
+  the engine run is exclusively the Antigravity Windows machine's.

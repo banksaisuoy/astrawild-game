@@ -27,6 +27,28 @@
 - **Pattern tint:** สีลายสุ่มอิสระจากสีพื้น (ธีม palette + deterministic jitter)
 - **VFX type (8):** Fire / Frost / Electric / Void / Poison / Spore / Radiant / None — ผูกกับธาตุ
 
+### Material language → master material (Phase 2 amendment: runtime swap จริง)
+
+ทุก material language มี master 1 ตัว (import_echo_bases.py สร้างครบ 8 ตัว และนับเป็น coverage
+ของ echo_base_report.json — ขาด = MISSING ไม่ใช่ warning) ผูกเข้ากับ runtime ผ่าน
+`FAstrawildEchoMutator::BuildThemeMaterialPath` + `ApplyThemeMaterial` (สร้าง dynamic material
+instance พร้อมพารามิเตอร์ Tint/PatternTint/GlowIntensity ต่อสายพันธุ์ บนทุก material slot ของ
+skinned body — opt-in fail-closed: ก่อน import ใช้วัสดุจาก GLB ตามที่ import มา):
+
+| Material | Master (/Game/Materials/) | Glow default |
+|---|---|---|
+| Metallic | M_SciFi_MetallicRobot | 0.35 |
+| Energy | M_SciFi_EnergyBody | 2.20 |
+| Stony | M_SciFi_StonyGolem | 0.12 |
+| Slime | M_SciFi_Slime | 0.45 |
+| Chitin | M_SciFi_Chitin | 0.30 |
+| Void | M_SciFi_VoidFlesh | 0.80 |
+| Organic | M_SciFi_OrganicHide | 0.20 |
+| Crystalline | M_SciFi_FocusCrystal | 0.90 |
+
+ทาง PMC ใช้ภาษาเดียวกันผ่าน vertex color (`ApplyThemeToBodyColors` — ตารางสีเดียวกันนี้):
+ธีมเดียวกันอ่านเป็นภาษาวัสดุเดียวกันทั้งสอง render path โดยไม่ต้องแปลงซ้ำ
+
 ### VFX distribution
 
 | VfxType | จำนวน | | Material | จำนวน |
