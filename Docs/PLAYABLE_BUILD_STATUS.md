@@ -1,4 +1,4 @@
-# ASTRAWILD — Playable Build Status & Production Readiness Report
+﻿# ASTRAWILD — Playable Build Status & Production Readiness Report
 
 > **[HISTORICAL / SUPERSEDED — 2026-09-06, pointer refreshed v9.4 MASTER SYNC]** This report
 > describes the pre-Final-Run vertical-slice state at the 2026-08-31 SHAs and is
@@ -8,7 +8,7 @@
 > real, the radar/journal are not in the current source. (PCR-1 later shipped a
 > Field Journal screen; this historical note describes its own date only.) The
 > live control set is `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.4 — Sci-Fantasy
-> mutation system + v9.3 real-mesh catalog + 126-test suite, ENGINE-UNVERIFIED
+> mutation system + v9.3 real-mesh catalog + v9.5 DCP pack (post-game quests + NG+ + ending cinematics + Vess/Ione + journal detail + toast cues + gamepad chord + mesh coverage) + 133-test suite, ENGINE-UNVERIFIED
 > at tip); the live task state is
 > **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical)**; the live readiness
 > state is `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`.

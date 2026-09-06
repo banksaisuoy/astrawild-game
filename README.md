@@ -1,20 +1,21 @@
-# ASTRAWILD — Echoes of the First Dawn
+﻿# ASTRAWILD — Echoes of the First Dawn
 
 > [!NOTE]
-> **Current status (v9.3 ASSET OVERHAUL — NO PLACEHOLDERS / NO PALETTE SWAPS, 2026)**: the repository is source-complete on branch
-> `final-completion` — 126 world-free automation contracts, full 12-zone world, 229 Echo
-> species, MQ-01..17 + two endings, save schema V5 — and the staged art is now **109 REAL
+> **Current status (v9.5 DEFERRED COMPLETION PACK — every deferred item delivered, 2026)**: the repository is source-complete on branch
+> `final-completion` — 133 world-free automation contracts, full 12-zone world, 229 Echo
+> species, MQ-01..17 + 5 post-game side quests + two endings (each now with a pure-C++ staged cinematic) + NEW GAME PLUS,
+> save schema V5 (+ additive NGPlusCycle) — and the staged art is now **109 REAL
 > unique CC0 meshes** (no cylinders, no recolors): 3 survivor armor tiers (T1 Scavenger /
 > T2 Astraite / T3 Singularity Exosuit, rigged 62-bone humanoids with gun anims), 42 Echo
-> species + 16 base archetypes + 14 showcase bosses (Quaternius creatures), 5
+> species + 16 base archetypes + 14 showcase bosses (Quaternius creatures; 9 of them now bound as direct species bodies — direct-mesh coverage 51/229), 5
 > geometry-distinct weapons, 4 vehicles (Dawn Skiff hover + ground rover), 4 ore nodes,
 > 21 environment props — manifest **189/189 present / 0 pending**, 1:1 source uniqueness
 > enforced, per-asset CC0 provenance (`Docs/ASTRAWILD_REAL_ASSET_CREDITS.json`).
 > **One-click on Windows: run `Setup_And_Play.bat`** — it imports everything, builds the
 > showcase map (`/Game/Maps/L_Showcase_ArtOverhaul`) and opens the editor; press Play.
 > **Everything engine-side is ENGINE-UNVERIFIED at this tip** — the one-time integration
-> run (build, 126 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
-> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.3 §8 and
+> run (build, 133 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
+> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.5 §8 and
 > `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The canonical control doc is
 > **`Docs/ASTRAWILD_MASTER_CONTROL.md`**. The narrative text below this note is the
 > Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54 tests" snapshot
@@ -27,12 +28,12 @@ ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal 
 ## Current repository status
 
 > [!TIP]
-> **LATEST STATUS**: **SOURCE-COMPLETE / REAL-ART-CATALOG / ENGINE-UNVERIFIED (v9.3 ASSET OVERHAUL)** —
+> **LATEST STATUS**: **SOURCE-COMPLETE / REAL-ART-CATALOG / DEFERRED-PACK-COMPLETE / ENGINE-UNVERIFIED (v9.5 DCP)** —
 > `final-completion` @ `2637c13`, 126 automation contracts, 229 species, Sci-Fantasy mutation
 > system wired (incl. runtime theme-material swap), LFS 586/586 pointers resolved.
 > The live task-state truth is **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`** (canonical,
 > created 2026-09-06); the product rulebook is
-> **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.4)**;
+> **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.5)**;
 > engine-run history (the 54/54 + packaged-exe evidence at SHA 8313c61) is
 > [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) (HISTORICAL)
 > and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).

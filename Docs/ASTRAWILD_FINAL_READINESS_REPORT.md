@@ -16,7 +16,7 @@ scale/attachments/theme-material swap/pattern tints/element VFX — runtime
 consumers all wired, opt-in fail-closed), **109 REAL unique CC0 meshes staged
 (manifest 189/189 present / 0 pending — no cylinders, no palette swaps; 3
 survivor armor tiers, 5 distinct weapons, 4 vehicles, 4 ore nodes, 21 env
-props)**, 126 world-free contract tests, LFS 586/586 pointers resolved at tip.
+props)**, 133 world-free contract tests (126 + 7 v9.5 DCP), LFS 586/586 pointers resolved at tip.
 The Antigravity one-time engine integration (AG-2..AG-5 + HANDOFF
 §20/§20b-e + §22; one-click `Setup_And_Play.bat` for V2-36) is the sole
 remaining work.
@@ -24,7 +24,7 @@ remaining work.
 (`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 586/586 LFS pointers resolved at the
 current tip (491/491 at the v1.6 re-verification + 95 v9.3 real-mesh source files), all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
-(validator equality gates), and the automation suite holds **126 world-free contract
+(validator equality gates), and the automation suite holds **133 world-free contract
 tests** behind an exact gate. The FINAL GAME COMPLETION RUN's five-agent deep audit fixed
 2 compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects (FCR-1-A/B/C), and the DEPTH
 PASS batch (DP-1..DP-9, per the user directive "MAKE IT A REAL GAME") landed the real-game
@@ -48,7 +48,7 @@ matrix re-verified. Engine verification (AG-2..5 per HANDOFF §20) is the sole r
 > [!NOTE]
 > **REDO LANDED (2026-09-03)**: every pillar below was re-implemented on branch
 > `final-completion` and pushed batch-by-batch (BATCH-0..5). The static validator runs
-> ALL CHECKS PASSED (now 61 checks incl. the 15 census equality gates) and the automation suite holds 126 world-free contract tests
+> ALL CHECKS PASSED (now 61 checks incl. the 15 census equality gates) and the automation suite holds 133 world-free contract tests (126 + 7 DCP)
 > (inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md`). Specs remain LOCKED as MASTER_CONTROL
 > v5.0 — the redo and the depth passes changed no canon, only extended it.
 
@@ -105,12 +105,12 @@ Side content: 23 SQ roster remains staged (deferred by design, MASTER_CONTROL D)
 - All P0 findings fixed (FR-0001..FR-0017, commit f310698): inventory duplication exploit, save thread-freeze, orphaned quest chain, false quest credits, fail-open building restores, silent reward loss, unsanitized roster import, chassis downgrade-on-reload.
 - P1/P2 fixed in aee4cc8: element matrix canon, building shell completion, 5 NPC dialogue trees, skiff mesh/seed, Azure POI, stale docs.
 - UObject lifetime audit: clean (TObjectPtr/TWeakObjectPtr everywhere; no raw dangles found).
-- Honest status: every fix is **statically validated only** (126 automation tests, compile-pending; ENGINE-UNVERIFIED).
+- Honest status: every fix is **statically validated only** (133 automation tests, compile-pending; ENGINE-UNVERIFIED).
 
 ## G. Automation Readiness
 
 - `Scripts/validate_repository.sh` v2 — PASS (structural ruleset).
-- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 126-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
+- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 133-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
 - 109 world-free automation contracts (57 baseline + 4 hardening + 6 Final-Run + 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth passes DP-3..DP-9) — never yet executed in an engine (AG-3).
 - Deterministic content: single code-default library, same-id .uasset override contract, ArtSource generators + AwPipeline importer.
 - Git: conventional commits, FR/DP-id traceability; every batch pushed to `origin/final-completion` (the binding push-after-every-batch rule honored live — `git ls-remote` shows the full chain through the DP-10 final-gate commit).
@@ -180,10 +180,10 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 | 11 | Save V5 model complete | **PASS** | AUD-2 checklist a–k: item-loss class fixed (chassis/drone refund/echo health); additive defeat counters |
 | 12 | Content/LFS manifest complete | **PASS** | FINAL_CONTENT_MANIFEST v1.6 (491/491 LFS re-verified at the FINAL-EXECUTION tip; v1.1-era 459/459 was pre-SCI) |
 | 13 | Asset paths validated | **PASS** | 65/65 /Game references resolve (validator) |
-| 14 | Tests complete at source level | **PASS** | 126 world-free contracts incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation + 1 SCI-Fantasy mutation contracts (ENGINE-UNVERIFIED) |
+| 14 | Tests complete at source level | **PASS** | 133 world-free contracts (126 + 7 v9.5 DCP: post-game quests + NG+ + ending cinematics + Act 3 NPCs + journal detail/toast + gamepad chord + mesh coverage) incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation + 1 SCI-Fantasy mutation contracts (ENGINE-UNVERIFIED) |
 | 15 | Final handoff executable | **PASS** | HANDOFF §1–20: live branch + SHAs, no dead references, corrected controls |
 | 16 | No duplicate gameplay architectures | **PASS** | one Echo platform (authored + bestiary share it); crafting screen single surface; no second combat/save stack |
-| 17 | No active contradictory documentation | **PASS** | ONE test count (126) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc; FINAL-EXECUTION round re-derived LFS (491/491) + manifest (175 entries) counts at tip |
+| 17 | No active contradictory documentation | **PASS** | ONE test count (133) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc; FINAL-EXECUTION round re-derived LFS (491/491) + manifest (175 entries) counts at tip |
 | 18 | Final branch/commit recorded | **PASS** | §J + HANDOFF §1 (tip = the DP-10 final-gate commit) |
 
 **Gate verdict: READY_FOR_FINAL_BUILD (18/18 + branch record, re-checked at the DP-10 final gate).**

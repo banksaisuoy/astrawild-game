@@ -1,4 +1,4 @@
-# ASTRAWILD — Build Status
+﻿# ASTRAWILD — Build Status
 
 > [!NOTE]
 > **v9.4 MASTER SYNC qualifier (latest)**: this file is the DATED engine-verification
@@ -7,7 +7,7 @@
 > current-state doc. Current source-side state: `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.4
 > + **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical live execution state)** —
 > tip `2637c13` (v9.3 real-mesh catalog: 109 unique CC0 models, manifest 189/189
-> present / 0 pending, 126-test suite, census 78 items / 58 recipes / 8 sites / 16
+> present / 0 pending, 133-test suite (126 + 7 DCP), census 78 items / 58 recipes / 8 sites / 16
 > events / 17 POIs, 229 species, Sci-Fantasy mutation system, LFS 586/586 pointers)
 > with the readiness verdict in `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`; the one-time re-verification
 > at the final SHA is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20e (engine-verified claims

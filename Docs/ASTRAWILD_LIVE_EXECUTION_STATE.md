@@ -20,12 +20,12 @@
 |---|---|
 | **CURRENT_HEAD** | `2637c1390f8c6756796ed553fbe34cbfa8e10b06` (v9.3 ASSET OVERHAUL — the product/content tip this state describes) · repo tip = that + the v9.4 SYNC-LOCK docs-only commits (see §5; a live-state file always trails its own last commit by one docs-only commit) |
 | **ACTIVE_BRANCH** | `final-completion` (authoritative until real final engine acceptance; `main` @ `94a398c939678963e1d0e0a8baac8cddba2e8d90` is the frozen baseline mirror — never the dev base, never merged into during sync passes) |
-| **LAST_SYNC_TIME** | 2026-09-06 07:59 UTC (MASTER SYNC session — this file created) |
-| **CURRENT_PHASE** | DCP (DEFERRED COMPLETION PACK) — user-authorized re-opening of every deferred item; playable-first ordering; ENGINE-RUN-1 remains the queue head for engine evidence |
-| **CURRENT_TASK** | **DCP-1..DCP-7 — DEFERRED COMPLETION PACK** (user directive 2026-09-06, quote: "งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน"): re-open ALL deferred-by-design items, implement them source-side, playable-first. LIVE at §3 |
-| **NEXT_TASK** | V2-36 engine run (see §3 NOW) |
+| **LAST_SYNC_TIME** | 2026-09-06 (DCP session — see §5 change log) |
+| **CURRENT_PHASE** | POST-DCP / ENGINE-VERIFICATION HANDOFF — every deferred item delivered source-side (v9.5 DCP pack, commits e90a773..1c1563c); the one-time engine run (ENGINE-RUN-1) is the only remaining product-critical work |
+| **CURRENT_TASK** | none in flight (DCP-1..DCP-7 all delivered this session — see §3 DONE; validators ALL PASS at tip 1c1563c) |
+| **NEXT_TASK** | ENGINE-RUN-1 / V2-36 engine run (see §3 NOW — unchanged, external) |
 | **BLOCKED_TASKS** | V2-29..V2-36 (external: no UE5/MSVC on the Linux source sandbox — the Windows UE 5.8.2 machine is the exclusive runtime authority) |
-| **CURRENT_TEST_COUNT** | 126 world-free automation contracts (validator 126-test gate PASS at tip) |
+| **CURRENT_TEST_COUNT** | 133 world-free automation contracts (126 + 7 DCP; validator 133-test gate PASS at tip) |
 | **CURRENT_CONTENT_COUNT** | 416 genuine UE packages in `Content/` (magic 0x9E2A83C1 re-walked; 0 bad) |
 | **CURRENT_LFS_COUNT** | 586/586 pointers resolve with on-disk objects (491 pre-v9.3 + 95 v9.3 real-mesh source files); `git lfs push --dry-run` = 0 pending upload; see the fsck caveat in §8 |
 | **CURRENT_ASSET_IMPORT_PENDING** | Manifest (file-truth basis): **189/189 `present` / 0 pending**; engine import of the 109 real meshes + clips = **NOT_RUN** (V2-36 one-click `Setup_And_Play.bat`); TRUE_MISSING = 0 |
@@ -68,16 +68,9 @@ verified + manifest + correct intended integration state; DOCUMENTATION task
 
 ## 3. ACTIVE TASK QUEUE (the single execution queue)
 
-### NOW (in flight — DCP user directive 2026-09-06)
+### NOW (in flight)
 | ID | Task | State | Owner | Notes |
 |---|---|---|---|---|
-| **DCP-1** | SQ-23 post-game side-quest batch (side quests are real content the game currently lacks — playable-first) | IN_PROGRESS | GLM | BuildPostGameQuests() + dialogue activation gated on Quest_FirstDawnAgain |
-| **DCP-2** | NG+ rules (New Game Plus carryover + reset path — replayability) | PLANNED | GLM | additive save fields + StartNewGamePlus + pause entry |
-| **DCP-3** | Ending cinematics (pure-C++ staged camera + letterbox + fade; no Sequencer) | PLANNED | GLM | OnEndingTriggered has zero subscribers today; OnRep_EndingState reserved |
-| **DCP-4** | Vess/Ione Act 3 NPCs with distinct real-mesh visuals | PLANNED | GLM | two new NPC rows + VisualMesh field + spawn + trees (census 11→13) |
-| **DCP-5** | UI toast sounds + journal per-species detail view | PLANNED | GLM | A_UI_* cues exist unreferenced; journal rows read-only today |
-| **DCP-6** | Gamepad smart-cast chord | PLANNED | GLM | UInputModifierChordAction; INPUT_REFERENCE update |
-| **DCP-7** | Unique-mesh coverage expansion (14 unused SK_Boss_* spares → priority species via explicit art rows) | PLANNED | GLM | Wavecrest/Undertowray/Voidwing/Verdantbloom/Voltmaw + authored story species |
 | **ENGINE-RUN-1** | One-time engine integration: `Setup_And_Play.bat` → import 109 real meshes + clips (`import_report.json` total_missing == 0 incl. AM_ clips) → showcase map PIE (`/Game/Maps/L_Showcase_ArtOverhaul`) → build → 126+DCP tests → PIE golden path §2 → package → V2-29..V2-36 rows | **BLOCKED (external)** | Antigravity | Windows UE 5.8.2 machine only. Runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b/§20c/§20d/§20e + queue rows. Evidence: report files + clips + BUILD_STATUS playtest table. Fix-forward on FAIL, never silently defer. |
 
 ### NEXT (after ENGINE-RUN-1 clears, or if it surfaces real defects)
@@ -93,10 +86,11 @@ verified + manifest + correct intended integration state; DOCUMENTATION task
 | Mutation runtime visuals (V2-35 acceptance) | same external blocker |
 | Showcase-map PIE (V2-36 acceptance) | same external blocker |
 
-### DONE (source-side; latest first — full ledger in MASTER_TASK_REGISTRY §A..§N)
+### DONE (source-side; latest first — full ledger in MASTER_TASK_REGISTRY §A..§O)
 | ID | Task | Final state |
 |---|---|---|
-| SYNC-LOCK (this session) | MASTER SYNCHRONIZATION + LIVE EXECUTION_STATE created + false-100%/stale-count fixes + registry §N | STATIC_VERIFIED |
+| **DCP-1..DCP-7 (v9.5 DEFERRED COMPLETION PACK, this session)** | user directive "ทำให้ครบหมด ตีกรอบเอง เอาที่เล่นได้ก่อน" — SQ-23 post-game quests (5) + NG+ (full reset/carryover authority + cycle tuning + pause entry) + ending cinematics (pure-C++ staged shots + letterbox, OnEndingTriggered now live) + Vess/Ione (census 11→13, real survivor bodies) + toast cues + journal detail view + gamepad smart-cast chord (LB+X) + mesh coverage 42→51 (9 boss-spare binds; PCR4 latent 39-bug fixed) | **STATIC_VERIFIED** (commits e90a773, b228f88, 43100db, e90e8c6, fb50ee3, adbd603, 1c1563c; tests 126→133; all ENGINE-UNVERIFIED until ENGINE-RUN-1) |
+| SYNC-LOCK (prior session) | MASTER SYNCHRONIZATION + LIVE EXECUTION_STATE created + false-100%/stale-count fixes + registry §N | STATIC_VERIFIED |
 | AO-1..AO-5 (v9.3 ASSET OVERHAUL) | 109 real unique CC0 meshes; manifest 189/189 present/0 pending; import_all/showcase/Setup_And_Play.bat; Tier-B 39→36 | STATIC_VERIFIED (commit `2637c13`) |
 | FINAL-EXEC-2 (v9.2) | truth re-verification: LFS 459→491, manifest 159→175, 5 more false-100% banners | STATIC_VERIFIED (commit `08af72b`) |
 | SCI-1..SCI-5 (v9.0/v9.1) | 204-spec Sci-Fantasy mutation system + 16 SK_Base + runtime theme-material wiring | STATIC_VERIFIED (commits `0b55072`, `4daa113`) |
@@ -131,7 +125,8 @@ UPDATE LIVE EXECUTION STATE → UPDATE TASK REGISTRY → NEXT TASK.
 | 2026-09-06 | prior state: ASSET-OVERHAUL v9.3 delivered (`2637c13`) — recorded here retroactively because the v9.3 session updated MASTER_CONTROL/asset-truth/manifest/queue/README but did NOT register its tasks in MASTER_TASK_REGISTRY (fixed by §N this session) | `2637c13` |
 | 2026-09-06 | change-log hygiene: pinned the creation row to `38733dc`; no state change | `69349e9` |
 | 2026-09-06 | FINAL sync commit of this session — §5 rows for the sync's own commits + repo-tip convention documented; validators re-run ALL PASS before push; remote HEAD verified after each push | this commit |
-| 2026-09-06 | USER DIRECTIVE — DEFERRED COMPLETION PACK (DCP-1..DCP-7): user re-opened ALL deferred-by-design items ("งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน"); playable-first order = SQ-23 quests → NG+ → ending cinematics → Vess/Ione → toast sounds/journal detail → gamepad chord → mesh coverage; registry §O opened | (this row) |
+| 2026-09-06 | USER DIRECTIVE — DEFERRED COMPLETION PACK (DCP-1..DCP-7): user re-opened ALL deferred-by-design items ("งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน"); playable-first order = SQ-23 quests → NG+ → ending cinematics → Vess/Ione → toast sounds/journal detail → gamepad chord → mesh coverage; registry §O opened | (registration) |
+| 2026-09-06 | **DCP PACK DELIVERED** — all 7 tasks implemented + committed (e90a773..1c1563c, one logical commit each with validators re-run ALL PASS pre-commit): quests 17→22 (census synced), NPC/tree census 11→13, tests 126→133, direct-mesh coverage 42→51/229, OnEndingTriggered wired (was zero subscribers), first PlaySound2D + first SetViewTargetWithBlend in module, NG+ gate = first real bPostGameActive consumer, PCR4 latent 39-assert fixed; docs synced (MASTER_CONTROL v9.5, READINESS, HANDOFF, TEST_INVENTORY, INPUT_REFERENCE, canon line) | `1c1563c` |
 
 ---
 
@@ -216,7 +211,7 @@ factually-true fraction — none presents as current status after this sync.
 | Surface | Role |
 |---|---|
 | **THIS FILE** | canonical LIVE EXECUTION STATE (task queue, head, risks) |
-| `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.3 + sync amendment) | canonical GAME/PRODUCT rulebook |
+| `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.5) | canonical GAME/PRODUCT rulebook |
 | `Docs/ASTRAWILD_MASTER_TASK_REGISTRY.md` §A..§N | task ledger (persistent history) |
 | `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` | engine rows V2-29..V2-36 + status notes |
 | `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` | Antigravity runbook (§20/§20b-e, §22 LAN) |
