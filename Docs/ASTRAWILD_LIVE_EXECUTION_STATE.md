@@ -18,12 +18,12 @@
 
 | Field | Value (evidence-derived at this sync) |
 |---|---|
-| **CURRENT_HEAD** | `2637c1390f8c6756796ed553fbe34cbfa8e10b06` (v9.3 ASSET OVERHAUL — the product/content tip this state describes) · repo tip = that + the v9.4 SYNC-LOCK docs-only commits (see §5; a live-state file always trails its own last commit by one docs-only commit) |
+| **CURRENT_HEAD** | `1699d588e995cff876d309b2a36fe79388ff6a99` + the v9.5 DCP docs close + the v9.6 FMP commit (a live-state file always trails its own last commit by one docs commit — the pinned SHA is the product tip the queue describes) |
 | **ACTIVE_BRANCH** | `final-completion` (authoritative until real final engine acceptance; `main` @ `94a398c939678963e1d0e0a8baac8cddba2e8d90` is the frozen baseline mirror — never the dev base, never merged into during sync passes) |
-| **LAST_SYNC_TIME** | 2026-09-06 (DCP session — see §5 change log) |
-| **CURRENT_PHASE** | POST-DCP / ENGINE-VERIFICATION HANDOFF — every deferred item delivered source-side (v9.5 DCP pack, commits e90a773..1c1563c); the one-time engine run (ENGINE-RUN-1) is the only remaining product-critical work |
-| **CURRENT_TASK** | none in flight (DCP-1..DCP-7 all delivered this session — see §3 DONE; validators ALL PASS at tip 1c1563c) |
-| **NEXT_TASK** | ENGINE-RUN-1 / V2-36 engine run (see §3 NOW — unchanged, external) |
+| **LAST_SYNC_TIME** | 2026-09-06 (FMP session — see §5 change log) |
+| **CURRENT_PHASE** | POST-FMP / ENGINE-VERIFICATION HANDOFF — source-side complete incl. the DCP pack (v9.5) AND the fresh-machine onboarding pack (v9.6 FMP: playbook + preflight + checklist + agent directive); the one-time engine run (ENGINE-RUN-1) is the only remaining product-critical work |
+| **CURRENT_TASK** | none in flight (FMP-1 delivered this session — see §3 DONE; validators ALL PASS at the FMP tip) |
+| **NEXT_TASK** | ENGINE-RUN-1 / V2-36 engine run (see §3 NOW — unchanged, external; fresh machines start with `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md`) |
 | **BLOCKED_TASKS** | V2-29..V2-36 (external: no UE5/MSVC on the Linux source sandbox — the Windows UE 5.8.2 machine is the exclusive runtime authority) |
 | **CURRENT_TEST_COUNT** | 133 world-free automation contracts (126 + 7 DCP; validator 133-test gate PASS at tip) |
 | **CURRENT_CONTENT_COUNT** | 416 genuine UE packages in `Content/` (magic 0x9E2A83C1 re-walked; 0 bad) |
@@ -86,9 +86,10 @@ verified + manifest + correct intended integration state; DOCUMENTATION task
 | Mutation runtime visuals (V2-35 acceptance) | same external blocker |
 | Showcase-map PIE (V2-36 acceptance) | same external blocker |
 
-### DONE (source-side; latest first — full ledger in MASTER_TASK_REGISTRY §A..§O)
+### DONE (source-side; latest first — full ledger in MASTER_TASK_REGISTRY §A..§P)
 | ID | Task | Final state |
 |---|---|---|
+| **FMP-1 (v9.6 FRESH-MACHINE PLAYBOOK PACK, this session)** | user directive "คู่มือ/แผน/รายการให้ AI agent บนเครื่องเปล่ามาอ่าน — ไล่ตั้งแต่ติดตั้งโปรแกรม เช็คพื้นที่ เช็คโปรแกรม อะไรไม่พร้อมก็ทำให้พร้อม": `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md` (P0→P13 spine) + `Scripts/fresh_machine_preflight.ps1` (readiness gate) + `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json` (43 steps) + `Docs/ASTRAWILD_FRESH_MACHINE_AI_DIRECTIVE.md` (paste-ready prompt) + 8 wrapper .ps1 scripts env-adaptive (legacy defaults preserved) + HANDOFF/README/queue/MANIFEST pointers synced | **STATIC_VERIFIED** (one logical commit; validators ALL PASS at tip; engine-side usage itself lands with ENGINE-RUN-1) |
 | **DCP-1..DCP-7 (v9.5 DEFERRED COMPLETION PACK, this session)** | user directive "ทำให้ครบหมด ตีกรอบเอง เอาที่เล่นได้ก่อน" — SQ-23 post-game quests (5) + NG+ (full reset/carryover authority + cycle tuning + pause entry) + ending cinematics (pure-C++ staged shots + letterbox, OnEndingTriggered now live) + Vess/Ione (census 11→13, real survivor bodies) + toast cues + journal detail view + gamepad smart-cast chord (LB+X) + mesh coverage 42→51 (9 boss-spare binds; PCR4 latent 39-bug fixed) | **STATIC_VERIFIED** (commits e90a773, b228f88, 43100db, e90e8c6, fb50ee3, adbd603, 1c1563c; tests 126→133; all ENGINE-UNVERIFIED until ENGINE-RUN-1) |
 | SYNC-LOCK (prior session) | MASTER SYNCHRONIZATION + LIVE EXECUTION_STATE created + false-100%/stale-count fixes + registry §N | STATIC_VERIFIED |
 | AO-1..AO-5 (v9.3 ASSET OVERHAUL) | 109 real unique CC0 meshes; manifest 189/189 present/0 pending; import_all/showcase/Setup_And_Play.bat; Tier-B 39→36 | STATIC_VERIFIED (commit `2637c13`) |
@@ -127,6 +128,7 @@ UPDATE LIVE EXECUTION STATE → UPDATE TASK REGISTRY → NEXT TASK.
 | 2026-09-06 | FINAL sync commit of this session — §5 rows for the sync's own commits + repo-tip convention documented; validators re-run ALL PASS before push; remote HEAD verified after each push | this commit |
 | 2026-09-06 | USER DIRECTIVE — DEFERRED COMPLETION PACK (DCP-1..DCP-7): user re-opened ALL deferred-by-design items ("งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน"); playable-first order = SQ-23 quests → NG+ → ending cinematics → Vess/Ione → toast sounds/journal detail → gamepad chord → mesh coverage; registry §O opened | (registration) |
 | 2026-09-06 | **DCP PACK DELIVERED** — all 7 tasks implemented + committed (e90a773..1c1563c, one logical commit each with validators re-run ALL PASS pre-commit): quests 17→22 (census synced), NPC/tree census 11→13, tests 126→133, direct-mesh coverage 42→51/229, OnEndingTriggered wired (was zero subscribers), first PlaySound2D + first SetViewTargetWithBlend in module, NG+ gate = first real bPostGameActive consumer, PCR4 latent 39-assert fixed; docs synced (MASTER_CONTROL v9.5, READINESS, HANDOFF, TEST_INVENTORY, INPUT_REFERENCE, canon line) | `1c1563c` |
+| 2026-09-06 | **FMP PACK DELIVERED (v9.6)** — user directive "คู่มือ AI บนเครื่องเปล่า ละเอียดยิบ ไล่ตั้งแต่ต้น": fresh-machine onboarding pack (playbook P0→P13 + preflight gate + 43-step JSON checklist + paste-ready agent directive) + 8 wrapper .ps1 scripts made env-adaptive with legacy E:\ defaults preserved (fresh machines could never run the hardcoded paths — the stale-value defect class applied to paths, now closed) + HANDOFF current-facing test counts 124/126→133 + README/queue/registry pointers | this commit |
 
 ---
 
@@ -211,9 +213,10 @@ factually-true fraction — none presents as current status after this sync.
 | Surface | Role |
 |---|---|
 | **THIS FILE** | canonical LIVE EXECUTION STATE (task queue, head, risks) |
-| `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.5) | canonical GAME/PRODUCT rulebook |
-| `Docs/ASTRAWILD_MASTER_TASK_REGISTRY.md` §A..§N | task ledger (persistent history) |
+| `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.6) | canonical GAME/PRODUCT rulebook |
+| `Docs/ASTRAWILD_MASTER_TASK_REGISTRY.md` §A..§P | task ledger (persistent history) |
 | `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` | engine rows V2-29..V2-36 + status notes |
+| **`Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md`** | fresh-machine onboarding spine P0→P13 (blank Windows PC → playing; with `Scripts/fresh_machine_preflight.ps1`, `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json`, `Docs/ASTRAWILD_FRESH_MACHINE_AI_DIRECTIVE.md` — v9.6 FMP) |
 | `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` | Antigravity runbook (§20/§20b-e, §22 LAN) |
 | `Docs/ASTRAWILD_CURRENT_ASSET_TRUTH.md` | asset truth (§12 = v9.3 real-mesh truth; §1-§10b era-correct history) |
 | `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md` | readiness verdict (top status synced to v9.3) |

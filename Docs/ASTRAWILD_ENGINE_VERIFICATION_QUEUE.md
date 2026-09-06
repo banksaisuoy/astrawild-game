@@ -5,6 +5,14 @@
 > Verifying agent: open `ASTRAWILD.uproject` (UE 5.8) → build `ASTRAWILDEditor Win64 Development`
 > → run the queue top-to-bottom. Mark each row PASS / FAIL + evidence in `BUILD_STATUS.md`
 > (playtest table). On FAIL: fix-forward (small source fixes allowed), never silently defer.
+>
+> **FRESH MACHINE? (v9.6)**: starting on a blank Windows PC (no Git/Python/VS/UE yet)?
+> Run the fresh-machine pack first — `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md` (install
+> spine P0→P13) + `Scripts/fresh_machine_preflight.ps1` (readiness gate) +
+> `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json` (43-step tick-off) — then execute this
+> queue top-to-bottom. Test-count note: §1's "54 tests" line below is the HISTORICAL
+> Antigravity-V2-era wording; the current gate is **133** (pinned by
+> `Scripts/validate_final_run.py` — always read the count from the repo).
 
 ---
 

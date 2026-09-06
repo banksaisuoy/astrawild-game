@@ -1,10 +1,18 @@
-﻿Write-Host "========================================" -ForegroundColor Cyan
+﻿# v9.6 env-adaptive paths (FMP-1): UE_ROOT / ASTRAWILD_UPROJECT /
+# ASTRAWILD_AUTOMATION_OUTPUT override the legacy layout for non-default
+# installs (fresh machines); with no env vars set the legacy E:\ values are
+# preserved exactly.
+$EngineRoot = if ($env:UE_ROOT) { $env:UE_ROOT } else { "E:\Epic Games\UnrealEngine" }
+$ProjectPath = if ($env:ASTRAWILD_UPROJECT) { $env:ASTRAWILD_UPROJECT } else { "E:\AstrawildGame\ASTRAWILD.uproject" }
+$OutputFile = if ($env:ASTRAWILD_AUTOMATION_OUTPUT) { $env:ASTRAWILD_AUTOMATION_OUTPUT } else { Join-Path (Split-Path $ProjectPath -Parent) "Automation_Output.txt" }
+Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " ASTRAWILD Automation Test Suite (QA Pipeline)" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
+Write-Host " Editor      : $EngineRoot"
+Write-Host " Project     : $ProjectPath"
+Write-Host " Output file : $OutputFile"
 
-$EditorCmdPath = "E:\Epic Games\UnrealEngine\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
-$ProjectPath = "E:\AstrawildGame\ASTRAWILD.uproject"
-$OutputFile = "E:\AstrawildGame\Automation_Output.txt"
+$EditorCmdPath = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 & $EditorCmdPath $ProjectPath -ExecCmds="Automation RunTests Astrawild; Quit" -nullrhi -unattended -nopause -testexit="Automation Test Queue Empty" -stdout -NoUBA | Out-File -FilePath $OutputFile -Encoding utf8

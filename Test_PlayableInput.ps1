@@ -58,9 +58,15 @@ public class Win32PlayInput {
 }
 "@
 
-$EditorPath = "E:\Epic Games\UnrealEngine\Engine\Binaries\Win64\UnrealEditor.exe"
-$ProjectPath = "E:\AstrawildGame\ASTRAWILD.uproject"
-$LogPath = "E:\AstrawildGame\Saved\Logs\PlayableInput_Test.log"
+# v9.6 env-adaptive paths (FMP-1): UE_ROOT / ASTRAWILD_UPROJECT override the
+# legacy layout for non-default installs (fresh machines); with no env vars
+# set the legacy E:\ values are preserved exactly.
+$EngineRoot = if ($env:UE_ROOT) { $env:UE_ROOT } else { "E:\Epic Games\UnrealEngine" }
+$ProjectPath = if ($env:ASTRAWILD_UPROJECT) { $env:ASTRAWILD_UPROJECT } else { "E:\AstrawildGame\ASTRAWILD.uproject" }
+$EditorPath = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor.exe"
+$LogPath = Join-Path (Split-Path $ProjectPath -Parent) "Saved\Logs\PlayableInput_Test.log"
+Write-Host " Editor  : $EditorPath"
+Write-Host " Project : $ProjectPath"
 
 if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
 

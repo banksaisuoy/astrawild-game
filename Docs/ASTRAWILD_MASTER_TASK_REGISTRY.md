@@ -375,3 +375,25 @@ IS the authorization. Live state truth: `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`
 on this sandbox; ENGINE-UNVERIFIED is the expected terminal state for each
 until ENGINE-RUN-1 clears. Validators + census gates must stay green after
 every batch (commit per task batch, push per directive §12).
+
+---
+
+## §P FRESH-MACHINE PLAYBOOK PACK (FMP — 2026-09-06 session, user directive "คู่มือ AI บนเครื่องเปล่า")
+
+Directive: user ordered the final source-side deliverable — a manual, plan,
+checklist AND command prompt for the AI agent that will land on a completely
+blank Windows machine, walking it from OS check → program installs → repo
+checkout → build → import → play → test → package → LAN, "อะไรไม่พร้อมก็
+ทำให้พร้อม" (whatever is not ready, make it ready), extremely detailed.
+Live state truth: `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FMP-1 | Fresh-machine onboarding pack | `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md` (spine P0→P13: hardware/OS/disk/RAM/GPU pre-flight → Git+LFS/Python/VS2022-NativeGame/UE5.8.2 installs with winget + manual fallbacks + verify commands → clone+LFS 586 + both validators → preflight gate → Build → Setup_And_Play.bat import + echo-bases + landscape-material manual step → PIE census boot → Test.ps1 133 → full gameplay verification incl. the DCP feature matrix → save stress ×3 → package → LAN §22 → evidence/close, plus a 16-row troubleshooting matrix, expected-numbers appendix, one-page command spine, env-var contract appendix) + `Scripts/fresh_machine_preflight.ps1` (automated readiness gate: OS/RAM/GPU/drives/git/lfs/python/VS-workload/UE-scan/repo state, every FAIL prints its playbook fix section, exit-code contract) + `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json` (43 machine-readable steps with command/expect/on_fail/evidence/status) + `Docs/ASTRAWILD_FRESH_MACHINE_AI_DIRECTIVE.md` (paste-ready agent prompt + Thai owner guide) + 8 wrapper scripts env-adaptive (Build/Test/Build_Package/Verify_Runtime/Test_RealSaveLoad/Evidence_Playtest/Test_V30/Test_PlayableInput: UE_ROOT/ASTRAWILD_UPROJECT/ASTRAWILD_REPO/ASTRAWILD_ARCHIVE/ASTRAWILD_PACKAGED_EXE/ASTRAWILD_AUTOMATION_OUTPUT overrides, legacy E:\ defaults preserved exactly, resolved paths printed) + HANDOFF fresh-machine banner + stale test counts 124/126→133 (§9/§20/GDP chain) + queue fresh-machine note + README v9.6 pointers | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | single logical commit; validators ALL PASS at tip; the pack's own engine-side exercise lands with ENGINE-RUN-1 (the fresh machine IS the engine machine) |
+
+**§P closing note:** the pack intentionally embeds no runtime claims — its
+content is procedure + gates. Expected numbers are caveated "read from the
+validator" everywhere (the project's stale-number discipline). The 8 script
+patches are the path-flavored fix of the exact false-alarm class the v9.2
+round closed for numbers: hardcoded `E:\` layout would have failed every
+fresh-machine run at the first Build.ps1 invocation.
