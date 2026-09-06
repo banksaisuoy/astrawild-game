@@ -69,6 +69,10 @@ private:
     UFUNCTION()
     void HandleHuntClicked();
 
+    /** DCP-2: begin a New Game Plus cycle (host only; guarded by StartNewGamePlus's own post-game gate). */
+    UFUNCTION()
+    void HandleNGPlusClicked();
+
     UFUNCTION()
     void HandleQuitClicked();
 
@@ -143,6 +147,10 @@ private:
     /** PCR-5: Hunt Board entry point for gamepad players (keyboard: U). */
     UPROPERTY()
     TObjectPtr<UButton> HuntButton;
+
+    /** DCP-2: New Game+ entry — only VISIBLE while post-game is active (an ending was chosen). One click = StartNewGamePlus. */
+    UPROPERTY()
+    TObjectPtr<UButton> NGPlusButton;
 
     UPROPERTY()
     TObjectPtr<UButton> QuitButton;

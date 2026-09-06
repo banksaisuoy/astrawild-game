@@ -21,6 +21,7 @@ void AAstrawildGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(AAstrawildGameState, ResearchMirror); // LCP-5
     DOREPLIFETIME(AAstrawildGameState, EndingState);
     DOREPLIFETIME(AAstrawildGameState, bPostGameActive);
+    DOREPLIFETIME(AAstrawildGameState, NGPlusCycle); // DCP-2
 }
 
 float AAstrawildGameState::GetTimeOfDayNormalized() const
@@ -146,6 +147,40 @@ void AAstrawildGameState::OnRep_EndingState()
 {
     // Client hook for the ending banner presentation (HUD polls the replicated
     // state directly; this stays available for sequencer/audio polish).
+}
+
+// --- DCP-2 (New Game Plus) ---
+
+float AAstrawildGameState::ComputeNGPlusHostileScale(const int32 Cycle)
+{
+    // +10% hostile HP/ATK per counted cycle, capped at NGPlusCyclesCounted.
+    // Negative/garbage cycles read as a fresh run (fail-closed to 1.0).
+    const int32 Counted = FMath::Clamp(Cycle, 0, NGPlusCyclesCounted);
+    return 1.0f + 0.10f * static_cast<float>(Counted);
+}
+
+float AAstrawildGameState::ComputeNGPlusResearchMultiplier(const int32 Cycle)
+{
+    // +15% research per counted cycle, capped at NGPlusCyclesCounted.
+    // Negative/garbage cycles read as a fresh run (fail-closed to 1.0).
+    const int32 Counted = FMath::Clamp(Cycle, 0, NGPlusCyclesCounted);
+    return 1.0f + 0.15f * static_cast<float>(Counted);
+}
+
+void AAstrawildGameState::SetNGPlusCycle(const int32 InCycle)
+{
+    if (!HasAuthority())
+    {
+        return;
+    }
+    const int32 Clamped = FMath::Max(0, InCycle);
+    if (NGPlusCycle == Clamped)
+    {
+        return;
+    }
+    UE_LOG(LogAstrawildWorld, Log, TEXT("NG+ cycle set: %d (hostile scale %.2f, research x%.2f)."),
+        Clamped, ComputeNGPlusHostileScale(Clamped), ComputeNGPlusResearchMultiplier(Clamped));
+    NGPlusCycle = Clamped;
 }
 
 void AAstrawildGameState::OnRep_TimeOfDayMinutes()

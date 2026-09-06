@@ -75,6 +75,43 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|World|Ending")
     FAstrawildEndingTriggered OnEndingTriggered;
 
+    // --- DCP-2 (2026-09-06): New Game Plus (NG+) ---
+
+    /**
+     * DCP-2: NG+ cycle count (0 = fresh run, 1 = first NG+...). Replicated so
+     * clients can read the difficulty/reward rules. Written ONLY by the save
+     * subsystem's StartNewGamePlus (server) and LoadWorld restore.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|World|NGPlus", Replicated)
+    int32 NGPlusCycle = 0;
+
+    /** DCP-2: hostile stat scale for the current cycle (1.0 in a fresh game). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|NGPlus")
+    float GetNGPlusHostileScale() const { return ComputeNGPlusHostileScale(NGPlusCycle); }
+
+    /** DCP-2: research gain multiplier for the current cycle (1.0 in a fresh game). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|NGPlus")
+    float GetNGPlusResearchMultiplier() const { return ComputeNGPlusResearchMultiplier(NGPlusCycle); }
+
+    /** DCP-2: true once a New Game Plus cycle is running. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|NGPlus")
+    bool IsNGPlusActive() const { return NGPlusCycle > 0; }
+
+    /** DCP-2 world-free math: +10% hostile HP/ATK per cycle, capped at 5 counted cycles. */
+    static float ComputeNGPlusHostileScale(int32 Cycle);
+
+    /** DCP-2 world-free math: +15% research per cycle, capped at 5 counted cycles. */
+    static float ComputeNGPlusResearchMultiplier(int32 Cycle);
+
+    /** DCP-2: scale cap — cycles beyond this count for tuning but not for math. */
+    static constexpr int32 NGPlusCyclesCounted = 5;
+
+    /** DCP-2: the highest-bond party Echoes that carry over into the next cycle. */
+    static constexpr int32 NGPlusCarriedEchoes = 3;
+
+    /** DCP-2 server-only cycle write (StartNewGamePlus / LoadWorld restore). */
+    void SetNGPlusCycle(int32 InCycle);
+
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|World|Time")
     float GetTimeOfDayNormalized() const;
 

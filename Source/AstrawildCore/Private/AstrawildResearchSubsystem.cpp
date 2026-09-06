@@ -28,10 +28,29 @@ void UAstrawildResearchSubsystem::AddResearchPoints(const int32 Amount)
     {
         return;
     }
-    ResearchPoints += Amount;
+
+    // DCP-2 (NG+): every research gain scales with the active cycle (+15% per
+    // counted cycle, capped). The single chokepoint — quest rewards, dialogue
+    // grants, scan milestones and cheats all funnel through here, so the rule
+    // stays consistent everywhere. Server-side by construction (this subsystem
+    // mutates only on the host; clients import the replicated mirror).
+    int32 ScaledAmount = Amount;
+    if (const UWorld* World = GetWorld())
+    {
+        if (const AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>())
+        {
+            const float Multiplier = AAstrawildGameState::ComputeNGPlusResearchMultiplier(GameState->NGPlusCycle);
+            if (Multiplier > 1.0f)
+            {
+                ScaledAmount = FMath::Max(Amount, FMath::RoundToInt(static_cast<float>(Amount) * Multiplier));
+            }
+        }
+    }
+
+    ResearchPoints += ScaledAmount;
     OnResearchPointsChanged.Broadcast(ResearchPoints);
     SyncMirrorToGameState(); // LCP-5: remote client screens stay current
-    UE_LOG(LogAstrawildEconomy, Log, TEXT("Research points +%d (total %d)."), Amount, ResearchPoints);
+    UE_LOG(LogAstrawildEconomy, Log, TEXT("Research points +%d (total %d)."), ScaledAmount, ResearchPoints);
 }
 
 TArray<FName> UAstrawildResearchSubsystem::GetMissingPrerequisites(const FName TechId) const

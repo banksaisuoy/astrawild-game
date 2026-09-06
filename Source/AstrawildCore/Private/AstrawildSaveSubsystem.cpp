@@ -97,6 +97,8 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         // ending survives save/load and re-asserts its world rules on restore.
         SaveGame->EndingState = static_cast<int32>(GameState->EndingState);
         SaveGame->bPostGameUnlocked = GameState->bPostGameActive;
+        // DCP-2: the NG+ cycle rides along (additive v5 — legacy saves read 0).
+        SaveGame->NGPlusCycle = GameState->NGPlusCycle;
     }
 
     // --- Player (first player — single-player-first architecture) ---
@@ -474,6 +476,10 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         const int32 SavedEnding = FMath::Clamp(SaveGame->EndingState,
             0, static_cast<int32>(EAstrawildEndingState::Count) - 1);
         GameState->SetEndingState(static_cast<EAstrawildEndingState>(SavedEnding));
+
+        // DCP-2: restore the NG+ cycle (0 on legacy/fresh saves — no scaling).
+        // Direct write: SetNGPlusCycle is server-only and this IS the server path.
+        GameState->NGPlusCycle = FMath::Max(0, SaveGame->NGPlusCycle);
     }
 
     // --- Research ---
@@ -1075,6 +1081,304 @@ bool UAstrawildSaveSubsystem::DeleteSave(const FString& SlotName, const int32 Us
         return false;
     }
     return UGameplayStatics::DeleteGameInSlot(SlotName, UserIndex);
+}
+
+// ===========================================================================
+// DCP-2 — New Game Plus (user directive 2026-09-06: "re-open every deferred
+// item, playable-first"). The ONE reset/carryover authority. Design contract
+// lives on the header doc-block; the sweep mirrors LoadWorld's proven order.
+// ===========================================================================
+
+bool UAstrawildSaveSubsystem::StartNewGamePlus(UWorld* World, const int32 UserIndex)
+{
+    if (!World || World->GetNetMode() == NM_Client)
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("StartNewGamePlus rejected: needs a server/host world."));
+        return false;
+    }
+
+    AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>();
+    if (!GameState)
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("StartNewGamePlus rejected: no game state."));
+        return false;
+    }
+
+    // Fail-closed gate: NG+ exists only after an ending was chosen. This is
+    // the first real gameplay consumer of bPostGameActive (GDP directive
+    // listed post-game as "hunt board + free roam" — NG+ adds the replay loop).
+    if (!GameState->IsPostGameActive())
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("StartNewGamePlus refused: no ending has been chosen yet (post-game inactive)."));
+        return false;
+    }
+
+    APlayerController* PC = World->GetFirstPlayerController();
+    AAstrawildPlayerCharacter* Player = PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+
+    // --- 1. Snapshot the carryover (from the LIVE world, pre-reset) ---
+
+    TArray<FAstrawildAttributeSaveData> CarryAttributes;
+    if (Player && Player->AttributeComponent)
+    {
+        CarryAttributes = Player->AttributeComponent->ToSaveData();
+    }
+
+    TArray<FAstrawildJournalEntry> CarryJournal;
+    if (const UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+    {
+        Journal->ExportForSave(CarryJournal);
+    }
+
+    TMap<FName, int32> CarryDefeatCounts;
+    if (PC)
+    {
+        if (const UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quests->ExportDefeatCounts(CarryDefeatCounts);
+        }
+    }
+
+    // NPC affinities: sweep the live NPCs (the SaveWorld pattern).
+    TArray<FAstrawildNPCAffinitySaveData> CarryAffinities;
+    for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+    {
+        AAstrawildNPCCharacter* Npc = *NpcIt;
+        if (Npc && !Npc->GetStableNPCId().IsNone() && Npc->Affinity > 0.0f)
+        {
+            FAstrawildNPCAffinitySaveData Row;
+            Row.NpcId = Npc->GetStableNPCId();
+            Row.Affinity = FMath::Clamp(Npc->Affinity, 0.0f, 100.0f);
+            Row.LastTalkGainDay = Npc->GetLastTalkAffinityDay();
+            Row.LastTradeGainDay = Npc->GetLastTradeAffinityDay();
+            CarryAffinities.Add(Row);
+        }
+    }
+
+    // Top-N highest-bond Echoes carry over (AAstrawildGameState::NGPlusCarriedEchoes).
+    // Bond is the emotional core of a capture game — the strongest friendships
+    // survive the reset. Everything else is released (fresh ecosystem).
+    TArray<FAstrawildEchoInstanceV2> CarryRoster;
+    if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance() ? World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr)
+    {
+        TArray<FAstrawildEchoInstanceV2> Current = Roster->GetRoster();
+        Current.Sort([](const FAstrawildEchoInstanceV2& A, const FAstrawildEchoInstanceV2& B) { return A.Bond > B.Bond; });
+        const int32 CarryCount = FMath::Min<int32>(AAstrawildGameState::NGPlusCarriedEchoes, Current.Num());
+        for (int32 i = 0; i < CarryCount; ++i)
+        {
+            FAstrawildEchoInstanceV2 Row = Current[i];
+            Row.bInParty = true;        // the carried friends rejoin the party.
+            Row.bBenched = false;
+            Row.InstanceId = FGuid::NewGuid(); // fresh identity in the new cycle.
+            CarryRoster.Add(Row);
+        }
+        // Despawn every spawned party member BEFORE the roster swap (fresh
+        // actors spawn around the player after the import — the Audit H-2 order).
+        for (AAstrawildEchoCharacter* Echo : Roster->GetSpawnedParty())
+        {
+            if (IsValid(Echo))
+            {
+                Echo->Destroy();
+            }
+        }
+    }
+
+    // --- 2. Reset the world (the story replays) ---
+
+    // Player-placed structures and automation go first (their BeginPlay hooks
+    // would otherwise re-register with the power grid mid-reset).
+    for (TActorIterator<AAstrawildBuildingActor> It(World); It; ++It)
+    {
+        if (IsValid(*It))
+        {
+            It->Destroy();
+        }
+    }
+    for (TActorIterator<AAstrawildWorkSiteActor> SiteIt(World); SiteIt; ++SiteIt)
+    {
+        if (IsValid(*SiteIt))
+        {
+            SiteIt->Destroy();
+        }
+    }
+    for (TActorIterator<AAstrawildUtilityRobotActor> RobotIt(World); RobotIt; ++RobotIt)
+    {
+        if (IsValid(*RobotIt))
+        {
+            RobotIt->Destroy();
+        }
+    }
+    for (TActorIterator<AAstrawildUtilityDroneActor> DroneIt(World); DroneIt; ++DroneIt)
+    {
+        if (IsValid(*DroneIt))
+        {
+            DroneIt->Destroy();
+        }
+    }
+
+    // Dungeons regenerate fresh rooms + encounters (Generate() clears previous
+    // generation by design — "regeneration support" is built into the actor).
+    for (TActorIterator<AAstrawildDungeonGeneratorActor> DungeonIt(World); DungeonIt; ++DungeonIt)
+    {
+        DungeonIt->Generate();
+    }
+
+    // Game state: cycle++, ending cleared, post-game OFF, fresh clock/weather.
+    // EndingState/bPostGameActive are written DIRECTLY: SetEndingState is a
+    // one-way verdict by canon — only the NG+ authority may reset it, and it
+    // must (the MQ chain replays to a new ending choice).
+    const int32 NewCycle = GameState->NGPlusCycle + 1;
+    GameState->NGPlusCycle = NewCycle;
+    GameState->EndingState = EAstrawildEndingState::None;
+    GameState->bPostGameActive = false;
+    GameState->DayNumber = 1;
+    GameState->SetTimeOfDayMinutes(8 * 60);
+    GameState->SetWeatherState(EAstrawildWeatherState::Clear);
+    // WorldSeed is DELIBERATELY kept: the same Vale, a new dawn (layout,
+    // camps, dungeons and portals persist; discovery state resets below).
+
+    // Fresh science + carried ecosystem.
+    if (World->GetGameInstance())
+    {
+        if (UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
+        {
+            Research->ImportFromSave(FAstrawildResearchSaveData());
+        }
+        if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+        {
+            Roster->ImportFromSave(CarryRoster);
+        }
+    }
+
+    // Player: fresh vitals, veteran kit, carried growth.
+    if (Player)
+    {
+        if (Player->SurvivalComponent)
+        {
+            Player->SurvivalComponent->SetStatsForRestore(FAstrawildSurvivalStats());
+        }
+        if (Player->InventoryComponent)
+        {
+            FAstrawildItemStack VeteranShards;
+            VeteranShards.ItemId = TEXT("Item_DawnShard");
+            VeteranShards.Quantity = 5;
+            FAstrawildItemStack VeteranBandages;
+            VeteranBandages.ItemId = TEXT("Item_Bandage");
+            VeteranBandages.Quantity = 2;
+            Player->InventoryComponent->SetItemStacks({ VeteranShards, VeteranBandages });
+        }
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->ImportFromSaveData(CarryAttributes);
+        }
+        if (Player->DurabilityComponent)
+        {
+            Player->DurabilityComponent->ImportFromSave(TMap<FName, float>());
+        }
+    }
+
+    // Components + world subsystems: reset the story surfaces, keep the memory.
+    if (PC)
+    {
+        if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quests->ImportFromSave(TArray<FAstrawildQuestSaveData>()); // story replays
+            Quests->ImportDefeatCounts(CarryDefeatCounts);             // history kept (G-3).
+            Quests->StartQuest(TEXT("Quest_FirstLight"));              // MQ-01 restarts.
+        }
+        if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+        {
+            Dialogue->ImportFromSave(TArray<FName>()); // one-time beats replay (incl. the crown choice).
+        }
+    }
+    if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
+    {
+        Spoilage->ImportFromSave(TMap<FName, float>());
+    }
+    if (UAstrawildZoneSubsystem* ZoneSub = World->GetSubsystem<UAstrawildZoneSubsystem>())
+    {
+        ZoneSub->ImportFromSave(TArray<EAstrawildZone>()); // exploration replays.
+    }
+    if (UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
+    {
+        POIs->ImportFromSave(TArray<FName>());
+    }
+    if (UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
+    {
+        WorldEvents->ImportFromSave(FAstrawildWorldEventScheduleSaveData());
+    }
+    if (UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>())
+    {
+        Hunts->ImportFromSave(TArray<FAstrawildHuntSaveRow>()); // post-game hunts re-arm next cycle.
+    }
+    if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+    {
+        Journal->ImportFromSave(CarryJournal); // the Vale remembers its species.
+    }
+
+    // NPC affinities: relationships survive the reset (GDP-4 tiers persist).
+    for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+    {
+        AAstrawildNPCCharacter* Npc = *NpcIt;
+        if (!Npc)
+        {
+            continue;
+        }
+        bool bCarried = false;
+        for (const FAstrawildNPCAffinitySaveData& Row : CarryAffinities)
+        {
+            if (Row.NpcId == Npc->GetStableNPCId())
+            {
+                Npc->Affinity = FMath::Clamp(Row.Affinity, 0.0f, 100.0f);
+                Npc->SetAffinityGateDays(Row.LastTalkGainDay, Row.LastTradeGainDay);
+                bCarried = true;
+                break;
+            }
+        }
+        if (!bCarried)
+        {
+            Npc->Affinity = 0.0f;
+        }
+    }
+
+    // Power grid: no buildings left — resolve to a clean zeroed state.
+    if (UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
+    {
+        Power->ResolveGridNow();
+        Power->SetStoredEnergy(0.0f);
+    }
+
+    // Respawn the carried party around the player (Audit H-2 order: import
+    // happened above; this is the recreate step).
+    if (World->GetGameInstance())
+    {
+        if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+        {
+            Roster->SpawnPartyActors(PC);
+        }
+    }
+
+    // Co-op session blocks: the new cycle is a fresh session contract.
+    SessionPlayerBlocks.Reset();
+
+    // --- 3. Persist the new cycle + purge the stale autosave ---
+
+    // The autosave still holds the PRE-reset world; LoadLatest would otherwise
+    // resurrect the ended story. Delete it — the fresh cycle is the only truth.
+    DeleteSave(TEXT("ASTRAWILD_Auto"), UserIndex);
+
+    if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+    {
+        AstrawildPC->Notify(FText::FromString(FString::Printf(
+            TEXT("NEW GAME+ (cycle %d) — the Vale remembers. Story reset; %d Echo friends stayed."),
+            NewCycle, CarryRoster.Num())));
+    }
+
+    UE_LOG(LogAstrawildSave, Log, TEXT("StartNewGamePlus: cycle %d begun — carried %d attributes rows, %d journal rows, %d affinity rows, %d defeat counters, %d echoes; reset quests/flags/zones/POIs/events/hunts/buildings/dungeons."),
+        NewCycle, CarryAttributes.Num(), CarryJournal.Num(), CarryAffinities.Num(), CarryDefeatCounts.Num(), CarryRoster.Num());
+
+    // Save the new cycle immediately (slot ASTRAWILD_Main — the canonical slot).
+    return SaveWorld(World, TEXT("ASTRAWILD_Main"), UserIndex);
 }
 
 

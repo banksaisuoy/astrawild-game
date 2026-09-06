@@ -850,6 +850,23 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
 
     EchoDefinition = InDefinition;
     CachedStats = InDefinition->BaseStats;
+
+    // DCP-2 (NG+): hostile world scaling. Wild hostiles only — captured party
+    // members and boss actors are untouched (boss choreography stays
+    // canon-tuned; allies scale with the player, not against them).
+    if (InDefinition->bHostileToPlayers && !bCaptured)
+    {
+        if (const AAstrawildGameState* GS = GetWorld() ? GetWorld()->GetGameState<AAstrawildGameState>() : nullptr)
+        {
+            const float NGPlusScale = AAstrawildGameState::ComputeNGPlusHostileScale(GS->NGPlusCycle);
+            if (NGPlusScale > 1.0f)
+            {
+                CachedStats.MaxHealth = FMath::Max(1.0f, CachedStats.MaxHealth * NGPlusScale);
+                CachedStats.AttackPower = CachedStats.AttackPower * NGPlusScale;
+            }
+        }
+    }
+
     CurrentHealth = FMath::Max(1.0f, CachedStats.MaxHealth);
     Trust = FMath::Max(0.0f, Trust);
     InstanceId = OptionalInstanceId.IsValid() ? OptionalInstanceId : FGuid::NewGuid();

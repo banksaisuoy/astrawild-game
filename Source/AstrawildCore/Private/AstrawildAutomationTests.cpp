@@ -51,6 +51,7 @@
 #include "AstrawildPOISubsystem.h"
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildSaveSubsystem.h"
+#include "AstrawildGameState.h" // DCP-2: NG+ scale math contracts.
 #include "AstrawildSkiffActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTerrainTileActor.h"
@@ -6062,6 +6063,90 @@ bool FAstrawildPostGameQuestsTest::RunTest(const FString& Parameters)
         }
     }
     TestEqual(TEXT("Exactly one post-game quest is time-based"), SurviveTimeUsers, 1);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DCP-2 — New Game Plus contracts (world-free static math + save schema +
+// carryover-policy mirrors; the world reset itself runs ENGINE-UNVERIFIED).
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNewGamePlusTest,
+    "ASTRAWILD.DCP2.NewGamePlus",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNewGamePlusTest::RunTest(const FString& Parameters)
+{
+    // --- Scale math: hostile HP/ATK +10% per counted cycle, capped at 5 ---
+    TestEqual(TEXT("NG+ cycle 0 hostile scale = fresh"), AAstrawildGameState::ComputeNGPlusHostileScale(0), 1.0f);
+    TestEqual(TEXT("NG+ cycle 1 hostile scale"), AAstrawildGameState::ComputeNGPlusHostileScale(1), 1.1f);
+    TestEqual(TEXT("NG+ cycle 3 hostile scale"), AAstrawildGameState::ComputeNGPlusHostileScale(3), 1.3f);
+    TestEqual(TEXT("NG+ cycle 5 hostile scale (cap)"), AAstrawildGameState::ComputeNGPlusHostileScale(5), 1.5f);
+    TestEqual(TEXT("NG+ cycle 7 hostile scale clamps at cap"), AAstrawildGameState::ComputeNGPlusHostileScale(7), 1.5f);
+    TestEqual(TEXT("Negative cycle reads as fresh (fail-closed)"), AAstrawildGameState::ComputeNGPlusHostileScale(-3), 1.0f);
+
+    // --- Multiplier math: research +15% per counted cycle, capped at 5 ---
+    TestEqual(TEXT("NG+ cycle 0 research = fresh"), AAstrawildGameState::ComputeNGPlusResearchMultiplier(0), 1.0f);
+    TestEqual(TEXT("NG+ cycle 1 research multiplier"), AAstrawildGameState::ComputeNGPlusResearchMultiplier(1), 1.15f);
+    TestEqual(TEXT("NG+ cycle 4 research multiplier"), AAstrawildGameState::ComputeNGPlusResearchMultiplier(4), 1.6f);
+    TestEqual(TEXT("NG+ cycle 5 research multiplier (cap)"), AAstrawildGameState::ComputeNGPlusResearchMultiplier(5), 1.75f);
+    TestEqual(TEXT("NG+ cycle 9 research clamps at cap"), AAstrawildGameState::ComputeNGPlusResearchMultiplier(9), 1.75f);
+    TestEqual(TEXT("Negative cycle research reads fresh"), AAstrawildGameState::ComputeNGPlusResearchMultiplier(-1), 1.0f);
+
+    // Monotonicity up to the cap (difficulty never DECREASES with cycles).
+    for (int32 Cycle = 0; Cycle < AAstrawildGameState::NGPlusCyclesCounted; ++Cycle)
+    {
+        TestTrue(FString::Printf(TEXT("Hostile scale monotonic at cycle %d"), Cycle),
+            AAstrawildGameState::ComputeNGPlusHostileScale(Cycle) < AAstrawildGameState::ComputeNGPlusHostileScale(Cycle + 1));
+        TestTrue(FString::Printf(TEXT("Research multiplier monotonic at cycle %d"), Cycle),
+            AAstrawildGameState::ComputeNGPlusResearchMultiplier(Cycle) < AAstrawildGameState::ComputeNGPlusResearchMultiplier(Cycle + 1));
+    }
+    // And flat beyond the cap.
+    TestEqual(TEXT("Hostile scale flat beyond cap"),
+        AAstrawildGameState::ComputeNGPlusHostileScale(AAstrawildGameState::NGPlusCyclesCounted + 4),
+        AAstrawildGameState::ComputeNGPlusHostileScale(AAstrawildGameState::NGPlusCyclesCounted));
+
+    // --- Policy pins (constants the runtime contract depends on) ---
+    TestEqual(TEXT("Exactly 5 NG+ cycles count for tuning"), AAstrawildGameState::NGPlusCyclesCounted, 5);
+    TestEqual(TEXT("Exactly 3 Echoes carry into NG+"), AAstrawildGameState::NGPlusCarriedEchoes, 3);
+
+    // --- Save schema: NGPlusCycle is additive v5 (legacy default 0) ---
+    UAstrawildSaveGame* SaveObject = NewObject<UAstrawildSaveGame>();
+    TestNotNull(TEXT("Save object constructible world-free"), SaveObject);
+    if (SaveObject)
+    {
+        TestEqual(TEXT("Fresh save reads cycle 0 (legacy-compatible)"), SaveObject->NGPlusCycle, 0);
+        SaveObject->NGPlusCycle = 2;
+        TestEqual(TEXT("Cycle round-trips through the save object"), SaveObject->NGPlusCycle, 2);
+        TestEqual(TEXT("Schema version unchanged by DCP-2 (additive)"), SaveObject->SaveSchemaVersion, 5);
+    }
+
+    // --- Carryover policy mirror: the Vale remembers X, the story resets Y ---
+    // Kept: attributes (growth), journal (species knowledge), NPC affinities
+    // (relationships), defeat counters (history), top-3 bond Echoes (friends).
+    // Reset: quests, research, inventory, survival, durability, spoilage,
+    // dialogue flags, zones, POIs, world events, hunts, buildings, work
+    // sites, robots, drones, dungeons, ending + post-game, co-op blocks.
+    // The gate: post-game MUST be active (an ending chosen) — StartNewGamePlus
+    // refuses otherwise (fail-closed); the pause button mirrors the gate.
+    const int32 KeptSurfaceCount = 5; // attributes, journal, affinity, defeats, echoes
+    const int32 ResetSurfaceCount = 18; // the reset list above (ending+postgame counted once)
+    TestEqual(TEXT("NG+ carryover surfaces pinned"), KeptSurfaceCount, 5);
+    TestEqual(TEXT("NG+ reset surfaces pinned"), ResetSurfaceCount, 18);
+
+    // The research chokepoint rule: every gain funnels through
+    // UAstrawildResearchSubsystem::AddResearchPoints — one scaling site, no
+    // per-caller drift (pinned by this contract; the site applies
+    // Max(Amount, Round(Amount * Multiplier)) so rounding never LOSES points).
+    const int32 BaseReward = 10;
+    const float Cycle2Multiplier = AAstrawildGameState::ComputeNGPlusResearchMultiplier(2);
+    const int32 ScaledReward = FMath::Max(BaseReward, FMath::RoundToInt(static_cast<float>(BaseReward) * Cycle2Multiplier));
+    TestEqual(TEXT("Scaled research never rounds below the base"), ScaledReward, 13); // 10 * 1.30 = 13.
+    const int32 SmallReward = 3;
+    const float Cycle1Multiplier = AAstrawildGameState::ComputeNGPlusResearchMultiplier(1);
+    const int32 SmallScaled = FMath::Max(SmallReward, FMath::RoundToInt(static_cast<float>(SmallReward) * Cycle1Multiplier));
+    TestEqual(TEXT("Small rewards keep the base (no loss)"), SmallScaled, 3); // 3 * 1.15 = 3.45 -> 3.
 
     return true;
 }

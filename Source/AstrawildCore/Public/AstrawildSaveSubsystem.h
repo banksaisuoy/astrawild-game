@@ -171,6 +171,12 @@ public:
     /** PCR-5: post-game hunt progress rows (additive v5 payload — no schema bump). */
     UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Save")
     TArray<FAstrawildHuntSaveRow> Hunts;
+
+    // --- DCP-2 (additive v5, no schema bump) — New Game Plus ---
+
+    /** NG+ cycle count (0 = fresh run; written by StartNewGamePlus, restored on load). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    int32 NGPlusCycle = 0;
 };
 
 UCLASS()
@@ -201,6 +207,32 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Save")
     bool LoadSnapshot(TArray<FAstrawildItemStack>& OutInventory, TArray<FAstrawildEchoInstanceSaveData>& OutEchoRoster, TArray<FAstrawildRestPointSaveData>& OutRestPoints, FGuid& OutActiveRestPointId, const FString& SlotName = TEXT("ASTRAWILD_Main"), int32 UserIndex = 0);
+
+    /**
+     * DCP-2 — New Game Plus: restart the story on the SAME world with the
+     * Vale's memory carried over. REQUIREMENT: post-game must be active (an
+     * ending was chosen) — otherwise refused (fail-closed, logged).
+     *
+     * Carried over (the Vale remembers): player attributes (growth), the
+     * journal (species knowledge), NPC affinities (relationships), lifetime
+     * defeat counters (history), and the top-3 highest-bond Echoes (they
+     * rejoin the party; the rest are released).
+     * Reset (the story replays): quest chain (MQ-01 restarts), research
+     * (fresh science), inventory/equipment (a small veteran kit instead),
+     * survival vitals, buildings/work sites/robots/drones, dungeon room
+     * state (generators regenerate), zones/POIs/world events/hunt rows,
+     * dialogue flags (one-time story beats replay — including the crown
+     * choice), durability/spoilage/co-op session blocks.
+     * World layout (seed/terrain) persists by design — "the same Vale,
+     * a new dawn."
+     *
+     * Server/host only. Writes the fresh cycle to ASTRAWILD_Main and DELETES
+     * the autosave slot (a stale pre-reset world must never resurrect via
+     * LoadLatest). NG+ tuning (hostile scale / research bonus) lives on the
+     * game state (ComputeNGPlusHostileScale / ComputeNGPlusResearchMultiplier).
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Save")
+    bool StartNewGamePlus(UWorld* World, int32 UserIndex = 0);
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Save")
     bool DoesSaveExist(const FString& SlotName = TEXT("ASTRAWILD_Main"), int32 UserIndex = 0) const;

@@ -2,6 +2,7 @@
 
 #include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
+#include "AstrawildGameState.h" // DCP-2: post-game gate for the NG+ button.
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildSaveSubsystem.h"
@@ -109,6 +110,18 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     HuntButton = MakeMenuButton(TEXT("PauseHunt"), TEXT("Hunt Board [U]"), FLinearColor(0.5f, 0.35f, 0.2f, 1.0f));
     HuntButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleHuntClicked);
 
+    // DCP-2: the New Game+ entry. Visible ONLY while post-game is active —
+    // the widget is rebuilt on every open (the controller toggles create a
+    // fresh instance), so a construct-time visibility check is sufficient.
+    // StartNewGamePlus independently re-checks the gate (fail-closed).
+    NGPlusButton = MakeMenuButton(TEXT("PauseNGPlus"), TEXT("New Game+ (the Vale remembers)"), FLinearColor(0.55f, 0.35f, 0.55f, 1.0f));
+    NGPlusButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleNGPlusClicked);
+    {
+        const AAstrawildGameState* GameState = GetWorld() ? GetWorld()->GetGameState<AAstrawildGameState>() : nullptr;
+        const bool bPostGame = GameState && GameState->IsPostGameActive();
+        NGPlusButton->SetVisibility(bPostGame ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    }
+
     QuitButton = MakeMenuButton(TEXT("PauseQuit"), TEXT("Quit To Desktop"), FLinearColor(0.5f, 0.2f, 0.16f, 1.0f));
     QuitButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleQuitClicked);
 
@@ -197,6 +210,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     {
         HuntSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         HuntSlot->SetPadding(FMargin(0.0f, 6.0f));
+    }
+    if (UVerticalBoxSlot* NGPlusSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(NGPlusButton)))
+    {
+        NGPlusSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        NGPlusSlot->SetPadding(FMargin(0.0f, 6.0f));
     }
     if (UVerticalBoxSlot* LoadoutTitleSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SkillLoadoutText)))
     {
@@ -358,6 +376,34 @@ void UAstrawildPauseMenuWidget::HandleQuitClicked()
 {
     // PIE ends the session; packaged builds exit to desktop (loop stage QUIT).
     UKismetSystemLibrary::QuitGame(this, GetOwningPlayer(), EQuitPreference::Quit, false);
+}
+
+void UAstrawildPauseMenuWidget::HandleNGPlusClicked()
+{
+    // DCP-2: one-click NG+ hand-off. The save subsystem owns the entire
+    // reset/carryover authority; the button just routes to it (host only —
+    // StartNewGamePlus refuses client worlds fail-closed).
+    bool bStarted = false;
+    UWorld* World = GetWorld();
+    if (World && World->GetGameInstance())
+    {
+        if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+        {
+            bStarted = SaveSubsystem->StartNewGamePlus(World);
+        }
+    }
+
+    if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+    {
+        if (bStarted)
+        {
+            PC->TogglePauseMenu(); // close the menu — the new cycle is live.
+        }
+        else
+        {
+            PC->Notify(FText::FromString(TEXT("New Game+ needs a chosen ending and host authority.")));
+        }
+    }
 }
 
 void UAstrawildPauseMenuWidget::HandleSkillSlot0Clicked()
