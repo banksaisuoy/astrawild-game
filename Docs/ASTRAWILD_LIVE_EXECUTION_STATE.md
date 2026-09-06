@@ -121,7 +121,7 @@ UPDATE LIVE EXECUTION STATE → UPDATE TASK REGISTRY → NEXT TASK.
 
 | Date | Change | Commit |
 |---|---|---|
-| 2026-09-06 | FILE CREATED by the MASTER SYNCHRONIZATION directive: snapshot at `2637c13`, queue reconciled, registry §N back-registered, stale-491→586 fixed in live surfaces (HANDOFF §3 pre-flight included), readiness/BUILD_STATUS/PLAYABLE pointers refreshed, Next.js console KPI fallback re-synced + era-classified, fsck honest correction recorded in §8 | (this commit) |
+| 2026-09-06 | FILE CREATED by the MASTER SYNCHRONIZATION directive: snapshot at `2637c13`, queue reconciled, registry §N back-registered, stale-491→586 fixed in live surfaces (HANDOFF §3 pre-flight included), readiness/BUILD_STATUS/PLAYABLE pointers refreshed, Next.js console KPI fallback re-synced + era-classified, fsck honest correction recorded in §8 | `38733dc` |
 | 2026-09-06 | prior state: ASSET-OVERHAUL v9.3 delivered (`2637c13`) — recorded here retroactively because the v9.3 session updated MASTER_CONTROL/asset-truth/manifest/queue/README but did NOT register its tasks in MASTER_TASK_REGISTRY (fixed by §N this session) | `2637c13` |
 
 ---
