@@ -18,7 +18,7 @@
 
 | Field | Value (evidence-derived at this sync) |
 |---|---|
-| **CURRENT_HEAD** | `2637c1390f8c6756796ed553fbe34cbfa8e10b06` (v9.3 ASSET OVERHAUL) |
+| **CURRENT_HEAD** | `2637c1390f8c6756796ed553fbe34cbfa8e10b06` (v9.3 ASSET OVERHAUL — the product/content tip this state describes) · repo tip = that + the v9.4 SYNC-LOCK docs-only commits (see §5; a live-state file always trails its own last commit by one docs-only commit) |
 | **ACTIVE_BRANCH** | `final-completion` (authoritative until real final engine acceptance; `main` @ `94a398c939678963e1d0e0a8baac8cddba2e8d90` is the frozen baseline mirror — never the dev base, never merged into during sync passes) |
 | **LAST_SYNC_TIME** | 2026-09-06 07:59 UTC (MASTER SYNC session — this file created) |
 | **CURRENT_PHASE** | POST-v9.3 SYNC / ENGINE-VERIFICATION HANDOFF — source work gated by the live queue; the only remaining product-critical work is the one-time engine run (external) |
@@ -123,6 +123,8 @@ UPDATE LIVE EXECUTION STATE → UPDATE TASK REGISTRY → NEXT TASK.
 |---|---|---|
 | 2026-09-06 | FILE CREATED by the MASTER SYNCHRONIZATION directive: snapshot at `2637c13`, queue reconciled, registry §N back-registered, stale-491→586 fixed in live surfaces (HANDOFF §3 pre-flight included), readiness/BUILD_STATUS/PLAYABLE pointers refreshed, Next.js console KPI fallback re-synced + era-classified, fsck honest correction recorded in §8 | `38733dc` |
 | 2026-09-06 | prior state: ASSET-OVERHAUL v9.3 delivered (`2637c13`) — recorded here retroactively because the v9.3 session updated MASTER_CONTROL/asset-truth/manifest/queue/README but did NOT register its tasks in MASTER_TASK_REGISTRY (fixed by §N this session) | `2637c13` |
+| 2026-09-06 | change-log hygiene: pinned the creation row to `38733dc`; no state change | `69349e9` |
+| 2026-09-06 | FINAL sync commit of this session — §5 rows for the sync's own commits + repo-tip convention documented; validators re-run ALL PASS before push; remote HEAD verified after each push | this commit |
 
 ---
 
