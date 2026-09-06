@@ -83,7 +83,7 @@ one replicated GameState enum, one save field + migration).
 
 ## D. Story Completion
 
-3 acts · 17 main quests · reveals R1–R3 (artificial storm / drowned civilization / Echoes
+3 acts · 17 main quests + 5 post-game side quests (DCP-1) · reveals R1–R3 (artificial storm / drowned civilization / Echoes
 are the Sovereign's dream) · final objective chain (anchors → coil → Eye → Sovereign →
 homecoming) · ending choice with world-state consequences · post-game loop.
 Ending states: EndingBreak (weather pinned Clear) / EndingBefriend (storm remains).

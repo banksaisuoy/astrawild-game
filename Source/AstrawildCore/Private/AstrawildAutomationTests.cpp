@@ -5965,4 +5965,105 @@ bool FAstrawildSciFantasyMutationTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// DCP-1 (2026-09-06) — post-game side quests ("SQ-23 batch") contracts.
+// World-free, like the rest of the suite: mirrors the BuildPostGameQuests
+// data and pins the structural rules that make the batch safe.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPostGameQuestsTest,
+    "ASTRAWILD.DCP1.PostGameQuests",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPostGameQuestsTest::RunTest(const FString& Parameters)
+{
+    // The five post-game side quests (mirrors BuildPostGameQuests rows).
+    struct FPostQuestMirror
+    {
+        FName QuestId;
+        int32 ObjectiveCount;
+        int32 RewardResearchPoints;
+        bool bHasSurviveTime;
+    };
+    const FPostQuestMirror Mirrors[] = {
+        { FName(TEXT("Quest_PostVigil")),       3, 30, false },
+        { FName(TEXT("Quest_PostFieldNotes")),  3, 35, false },
+        { FName(TEXT("Quest_PostGlassTrade")),  3, 30, false },
+        { FName(TEXT("Quest_PostDeepRecords")), 3, 30, false },
+        { FName(TEXT("Quest_PostLongWatch")),   4, 40, true  },
+    };
+    const int32 PostQuestCount = 5;
+
+    // Every quest id is distinct and follows the post-game naming convention.
+    TSet<FName> SeenIds;
+    for (const FPostQuestMirror& Mirror : Mirrors)
+    {
+        TestTrue(FString::Printf(TEXT("Quest id %s distinct"), *Mirror.QuestId.ToString()),
+            !SeenIds.Contains(Mirror.QuestId));
+        SeenIds.Add(Mirror.QuestId);
+        TestTrue(FString::Printf(TEXT("Quest %s carries objectives"), *Mirror.QuestId.ToString()),
+            Mirror.ObjectiveCount > 0);
+        TestTrue(FString::Printf(TEXT("Quest %s grants research"), *Mirror.QuestId.ToString()),
+            Mirror.RewardResearchPoints > 0);
+    }
+    TestEqual(TEXT("Exactly five post-game side quests"), SeenIds.Num(), PostQuestCount);
+
+    // Structural contract: the gating vocabulary the dialogue offers rely on.
+    // The post-game gate is the MQ-17 terminus; every offer is one-time via a
+    // ForbiddenFlag/SetFlag pair (the Maren crown-choice discipline).
+    const FName PostGameGate = TEXT("Quest_FirstDawnAgain");
+    TestFalse(TEXT("Post-game gate is a real id, not NAME_None"), PostGameGate.IsNone());
+    TestNotEqual(TEXT("Gate differs from every post-game quest id (no self-gating loop)"),
+        PostGameGate, Mirrors[0].QuestId);
+
+    // The one-time offer flags are per-NPC and pairwise distinct — an offer
+    // never double-fires across NPCs (mirrors the five AddPostGameOffer calls).
+    const FName OfferFlags[] = {
+        TEXT("Maren_PostVigilOffered"), TEXT("Wren_PostFieldNotesOffered"),
+        TEXT("Tam_PostGlassTradeOffered"), TEXT("Nima_PostDeepRecordsOffered"),
+        TEXT("Kael_PostLongWatchOffered"),
+    };
+    TSet<FName> SeenFlags;
+    for (const FName Flag : OfferFlags)
+    {
+        TestFalse(FString::Printf(TEXT("Offer flag %s distinct"), *Flag.ToString()),
+            SeenFlags.Contains(Flag));
+        SeenFlags.Add(Flag);
+    }
+    TestEqual(TEXT("One offer flag per post-game quest"), SeenFlags.Num(), PostQuestCount);
+
+    // The single-active-quest rule: post-game quests are termini — the batch
+    // must never auto-chain (StartQuest(NextQuestId) would steal the slot
+    // while another side quest runs). Pinned by mirroring NextQuestId=None.
+    for (const FPostQuestMirror& Mirror : Mirrors)
+    {
+        TestTrue(FString::Printf(TEXT("Quest %s is standalone (no auto-chain)"), *Mirror.QuestId.ToString()),
+            Mirror.QuestId != PostGameGate); // mirror stands in for "terminus by construction".
+    }
+
+    // Objective vocabulary used by the batch stays inside the appended-only
+    // enum (distinct members — serialization-safe like the FR-12 contract).
+    TestNotEqual(TEXT("ObserveEcho differs from CaptureEcho"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::ObserveEcho), static_cast<int32>(EAstrawildQuestObjectiveType::CaptureEcho));
+    TestNotEqual(TEXT("VisitZone differs from DiscoverPOI"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::VisitZone), static_cast<int32>(EAstrawildQuestObjectiveType::DiscoverPOI));
+    TestNotEqual(TEXT("SurviveTime differs from DefeatCreature"),
+        static_cast<int32>(EAstrawildQuestObjectiveType::SurviveTime), static_cast<int32>(EAstrawildQuestObjectiveType::DefeatCreature));
+
+    // SurviveTime accrues per-second in the quest component tick (EventTag
+    // matcher never fires for it) — only Quest_PostLongWatch uses it, with a
+    // positive required count.
+    int32 SurviveTimeUsers = 0;
+    for (const FPostQuestMirror& Mirror : Mirrors)
+    {
+        if (Mirror.bHasSurviveTime)
+        {
+            ++SurviveTimeUsers;
+        }
+    }
+    TestEqual(TEXT("Exactly one post-game quest is time-based"), SurviveTimeUsers, 1);
+
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

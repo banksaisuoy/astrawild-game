@@ -351,3 +351,27 @@ conversion gate. Census gates UNCHANGED (229 species / 126 tests). The
 post-delivery LFS fsck honest correction (pre-existing raw-pack convention
 mismatch, ~3,954 flags, zero under ArtSource/Meshes) is recorded in
 LIVE_EXECUTION_STATE §8.
+
+## §O DEFERRED COMPLETION PACK (DCP — 2026-09-06 session, user directive "งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน")
+
+Directive: user explicitly re-opened ALL deferred-by-design items (Registry
+§D + LIVE_EXECUTION_STATE DEFERRED) and ordered them done to completion,
+playable-first. GLM framed the order: post-game quests → NG+ → ending
+cinematics → Act 3 NPC presence → QoL (toast audio, journal detail, gamepad
+chord) → unique-mesh coverage. Per the NO-ENDLESS-SCOPE rule this directive
+IS the authorization. Live state truth: `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| DCP-1 | Post-game side quests (the "SQ-23" batch, expanded) | BuildPostGameQuests() content pass: post-game quest rows gated on Quest_FirstDawnAgain completion + NPC dialogue activation choices + automation contracts | GLM | IN_PROGRESS | exploration proved zero side quests exist today; single-active-quest rule respected (standalone chains, NextQuestId=NAME_None except intra-batch chains) |
+| DCP-2 | NG+ rules | Additive save fields (NGPlusCycle + carryover) + UAstrawildSaveSubsystem::StartNewGamePlus reset/carryover routine + pause-menu entry + contracts | GLM | PLANNED | exploration proved NO new-game/reset path exists; one-way EndingState must be direct-written on reset |
+| DCP-3 | Ending cinematics | Pure-C++ staged camera sequence on OnEndingTriggered/OnRep_EndingState (no Sequencer): keyframed view targets, letterbox + fade UMG overlay, input lock/restore, per-client in co-op + contracts | GLM | PLANNED | OnEndingTriggered has ZERO subscribers today; OnRep_EndingState empty + reserved; DialogueWidget AdvanceLine is the staging precedent |
+| DCP-4 | Vess/Ione Act 3 NPCs | Two new NPC rows (Vess = storm-scholar QuestGiver, Ione = relic-trader Vendor) + VisualMesh field on UAstrawildNPCDefinition + real hero-mesh visuals + spawn + dialogue trees + census updates | GLM | PLANNED | Vess/Ione have zero code presence today (doc label only); hero SK_Echo_* meshes available for distinct real visuals |
+| DCP-5 | UI toast sounds + journal detail view | PushNotification audio hook (first PlaySound2D; A_UI_* cues exist unreferenced) + journal clickable rows + per-species detail panel incl. stats/mutation spec + contracts | GLM | PLANNED | journal rows are read-only UTextBlocks today; RosterRowWidget is the clickable-row precedent |
+| DCP-6 | Gamepad smart-cast chord | UInputModifierChordAction mapping (LB+face) in BuildGamepadInputDefaults + INPUT_REFERENCE/PLAYER_RULES doc updates | GLM | PLANNED | currently KB/M-only (Y); comment says radial-menu pass owns it — user directive supersedes |
+| DCP-7 | Unique-mesh coverage expansion | Bind the 14 unused staged SK_Boss_* spares (+2 survivors if fitting) to priority unmeshed species via explicit GetEchoArt() rows + Tier-B census/test/doc sync | GLM | PLANNED | priority: Wavecrest/Undertowray/Voidwing/Verdantbloom/Voltmaw (Tier-B dropouts) + authored story species (Lumewisp/Sprigling/Gloomfang/Auroraling) |
+
+**§O opening note (2026-09-06):** every item above is source-side implementable
+on this sandbox; ENGINE-UNVERIFIED is the expected terminal state for each
+until ENGINE-RUN-1 clears. Validators + census gates must stay green after
+every batch (commit per task batch, push per directive §12).

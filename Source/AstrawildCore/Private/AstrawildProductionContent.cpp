@@ -2906,6 +2906,301 @@ void UAstrawildProductionContent::BuildFinalRunContent(UAstrawildItemRegistrySub
 }
 
 // ---------------------------------------------------------------------------
+// DCP-1 (2026-09-06 user directive — "re-open every deferred item,
+// playable-first") — the SQ-23 post-game side-quest batch.
+//
+// Design contract (docs pinned this as the deferred "post-game content
+// batch"; the directive re-opens it):
+//  - FIVE standalone post-game quests, each offered by an EXISTING NPC
+//    through their EXISTING dialogue tree (one new gated choice + one new
+//    flavor node per tree — the tree census stays 11).
+//  - Gating: RequiredQuestCompletedId = Quest_FirstDawnAgain (the MQ-17
+//    chain terminus — completing it IS post-game by definition) plus a
+//    per-NPC one-time offer flag (ForbiddenFlag/SetFlag pair), the exact
+//    discipline Maren's crown choices use.
+//  - Single-active-quest rule: every post-game quest is terminus
+//    (NextQuestId = NAME_None) — no chain steals the active slot.
+//  - Every objective target resolves against EXISTING content ids —
+//    authored species, bestiary species, existing items, existing POIs,
+//    existing zones. No new world spawns, no new subsystems.
+//  - Rewards ride the existing GrantRewards pipeline (items + research).
+// ---------------------------------------------------------------------------
+
+void UAstrawildProductionContent::BuildPostGameQuests(UAstrawildItemRegistrySubsystem* Registry)
+{
+    if (!Registry)
+    {
+        return;
+    }
+
+    // Helper: append a one-time post-game offer (entry choice + flavor node)
+    // to an existing NPC tree. Mirrors the Maren crown-choice discipline.
+    const auto AddPostGameOffer = [Registry](const TCHAR* TreeId, const TCHAR* OfferFlag,
+        const TCHAR* QuestId, const TCHAR* ChoiceText, std::initializer_list<const TCHAR*> NodeLines)
+    {
+        UAstrawildDialogueTreeDefinition* Tree = Registry->FindDialogueTree(TreeId);
+        if (!Tree)
+        {
+            UE_LOG(LogAstrawildEconomy, Warning,
+                TEXT("DCP-1 post-game offer skipped: dialogue tree %s not found."), TreeId);
+            return;
+        }
+        FAstrawildDialogueNode* Entry = Tree->Nodes.FindByPredicate(
+            [](const FAstrawildDialogueNode& Node) { return Node.NodeId == TEXT("hello"); });
+        if (!Entry)
+        {
+            UE_LOG(LogAstrawildEconomy, Warning,
+                TEXT("DCP-1 post-game offer skipped: tree %s has no 'hello' entry node."), TreeId);
+            return;
+        }
+
+        FAstrawildDialogueChoice Offer;
+        Offer.Text = FText::FromString(ChoiceText);
+        Offer.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain"); // post-game gate.
+        Offer.ForbiddenFlagId = OfferFlag;                            // one-time offer.
+        Offer.SetFlagId = OfferFlag;
+        Offer.StartQuestId = QuestId;
+        Offer.GotoNodeId = TEXT("postgame");
+        Entry->Choices.Add(Offer);
+
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("postgame");
+        for (const TCHAR* NodeLine : NodeLines)
+        {
+            Node.Lines.Add(Line(nullptr, NodeLine));
+        }
+        {
+            FAstrawildDialogueChoice Leave;
+            Leave.Text = FText::FromString(TEXT("Leave"));
+            Leave.bEndDialogue = true;
+            Node.Choices.Add(Leave);
+        }
+        Tree->Nodes.Add(Node);
+    };
+
+    // --- SQ-23 "The Warden's Vigil" (Maren — hostile cull patrol) ---
+
+    UAstrawildQuestDefinition* PostVigil = NewObject<UAstrawildQuestDefinition>(Registry);
+    PostVigil->QuestId = TEXT("Quest_PostVigil");
+    PostVigil->Title = FText::FromString(TEXT("The Warden's Vigil"));
+    PostVigil->Summary = FText::FromString(TEXT("The crown is settled, but the Vale's old hunger is not. Maren wants the predators thinned before the first traders take the new roads."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Echo_Gloomfang");
+        Obj.RequiredCount = 3;
+        Obj.ObjectiveText = FText::FromString(TEXT("Cull 3 Gloomfangs in the Dusk Marsh"));
+        PostVigil->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Echo_Emberfang");
+        Obj.RequiredCount = 3;
+        Obj.ObjectiveText = FText::FromString(TEXT("Cull 3 Emberfangs on the Ember Ridge"));
+        PostVigil->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DefeatCreature;
+        Obj.TargetId = TEXT("Echo_Rimefang");
+        Obj.RequiredCount = 2;
+        Obj.ObjectiveText = FText::FromString(TEXT("Cull 2 Rimefangs in the Frostveil"));
+        PostVigil->Objectives.Add(Obj);
+    }
+    PostVigil->RewardItems = { Stack(TEXT("Item_DawnShard"), 8) };
+    PostVigil->RewardResearchPoints = 30;
+    PostVigil->NextQuestId = NAME_None; // Standalone — single-active-quest rule.
+    Registry->RegisterQuest(PostVigil);
+
+    AddPostGameOffer(TEXT("Dialogue_WardenMaren"), TEXT("Maren_PostVigilOffered"),
+        TEXT("Quest_PostVigil"), TEXT("\"The roads need watching. Take the Vigil.\""),
+        {
+            TEXT("The traders talk of new roads already — glass from the wreck, silver from the peaks. Roads mean walkers, walkers mean teeth."),
+            TEXT("Thin the marsh and ridge predators for me. The hunt board pays per head; the Vigil pays for the whole road.")
+        });
+
+    // --- SQ-24 "First Light, Field Notes" (Wren — observe/capture science) ---
+
+    UAstrawildQuestDefinition* PostFieldNotes = NewObject<UAstrawildQuestDefinition>(Registry);
+    PostFieldNotes->QuestId = TEXT("Quest_PostFieldNotes");
+    PostFieldNotes->Title = FText::FromString(TEXT("First Light, Field Notes"));
+    PostFieldNotes->Summary = FText::FromString(TEXT("With the storms settled, Wren can finally finish the Vale's first honest species survey. Observation first — then a living sample."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ObserveEcho;
+        Obj.TargetId = TEXT("Echo_Lumewisp");
+        Obj.RequiredCount = 3;
+        Obj.ObjectiveText = FText::FromString(TEXT("Observe 3 Lumewisps in the dawn fields"));
+        PostFieldNotes->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::ObserveEcho;
+        Obj.TargetId = TEXT("Echo_Auroraling");
+        Obj.RequiredCount = 2;
+        Obj.ObjectiveText = FText::FromString(TEXT("Observe 2 Auroralings (any light zone)"));
+        PostFieldNotes->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::CaptureEcho;
+        Obj.TargetId = TEXT("Echo_Sprigling");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Capture a living Sprigling for the survey"));
+        PostFieldNotes->Objectives.Add(Obj);
+    }
+    PostFieldNotes->RewardItems = { Stack(TEXT("Item_Bandage"), 4), Stack(TEXT("Item_Berry"), 10) };
+    PostFieldNotes->RewardResearchPoints = 35;
+    PostFieldNotes->NextQuestId = NAME_None;
+    Registry->RegisterQuest(PostFieldNotes);
+
+    AddPostGameOffer(TEXT("Dialogue_HerbalistWren"), TEXT("Wren_PostFieldNotesOffered"),
+        TEXT("Quest_PostFieldNotes"), TEXT("\"The survey can finally be finished.\""),
+        {
+            TEXT("Every survey since the storms is half guesswork — the light species scattered every time the crown stirred."),
+            TEXT("Now the sky holds still. Three Lumewisp sightings, two Auroralings, and one Sprigling in a resonator — that's a page of honest science.")
+        });
+
+    // --- SQ-25 "The Glass Trade" (Tam — economy beat) ---
+
+    UAstrawildQuestDefinition* PostGlassTrade = NewObject<UAstrawildQuestDefinition>(Registry);
+    PostGlassTrade->QuestId = TEXT("Quest_PostGlassTrade");
+    PostGlassTrade->Title = FText::FromString(TEXT("The Glass Trade"));
+    PostGlassTrade->Summary = FText::FromString(TEXT("Storm-fused glass is the new currency, and Tam wants first pick of it — straight from the wreck the tide finally opened."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::CollectItem;
+        Obj.TargetId = TEXT("Item_MaelstromGlass");
+        Obj.RequiredCount = 6;
+        Obj.ObjectiveText = FText::FromString(TEXT("Collect 6 Maelstrom Glass"));
+        PostGlassTrade->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::CollectItem;
+        Obj.TargetId = TEXT("Item_DuneGlass");
+        Obj.RequiredCount = 4;
+        Obj.ObjectiveText = FText::FromString(TEXT("Collect 4 Dune Glass"));
+        PostGlassTrade->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_TidebreakerWreck");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Survey the Tidebreaker Wreck's open hold"));
+        PostGlassTrade->Objectives.Add(Obj);
+    }
+    PostGlassTrade->RewardItems = { Stack(TEXT("Item_StormSilver"), 4) };
+    PostGlassTrade->RewardResearchPoints = 30;
+    PostGlassTrade->NextQuestId = NAME_None;
+    Registry->RegisterQuest(PostGlassTrade);
+
+    AddPostGameOffer(TEXT("Dialogue_TraderTam"), TEXT("Tam_PostGlassTradeOffered"),
+        TEXT("Quest_PostGlassTrade"), TEXT("\"There's a new trade in town, friend.\""),
+        {
+            TEXT("Maelstrom glass. Rings like a bell, holds an edge like obsidian — and every workshop from here to the reef wants a sheet of it."),
+            TEXT("Six shards, four of the desert make, and a look inside the old wreck's hold while you're out — the tide's finally given it up.")
+        });
+
+    // --- SQ-26 "The Deep Records" (Nima — sea POI + capture beat) ---
+
+    UAstrawildQuestDefinition* PostDeepRecords = NewObject<UAstrawildQuestDefinition>(Registry);
+    PostDeepRecords->QuestId = TEXT("Quest_PostDeepRecords");
+    PostDeepRecords->Title = FText::FromString(TEXT("The Deep Records"));
+    PostDeepRecords->Summary = FText::FromString(TEXT("Nima has been waiting years for calm water. Two sunken places the storms kept hidden, and the Brinefin runs that thread between them."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_PearlseaTidecache");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Find the Pearlsea Tidecache"));
+        PostDeepRecords->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::DiscoverPOI;
+        Obj.TargetId = TEXT("POI_ShallowsSextant");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Find the Shallows Sextant"));
+        PostDeepRecords->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::CaptureEcho;
+        Obj.TargetId = TEXT("Echo_Brinefin");
+        Obj.RequiredCount = 2;
+        Obj.ObjectiveText = FText::FromString(TEXT("Capture 2 Brinefins from the calm shoals"));
+        PostDeepRecords->Objectives.Add(Obj);
+    }
+    PostDeepRecords->RewardItems = { Stack(TEXT("Item_RawMeat"), 10) };
+    PostDeepRecords->RewardResearchPoints = 30;
+    PostDeepRecords->NextQuestId = NAME_None;
+    Registry->RegisterQuest(PostDeepRecords);
+
+    AddPostGameOffer(TEXT("Dialogue_FisherNima"), TEXT("Nima_PostDeepRecordsOffered"),
+        TEXT("Quest_PostDeepRecords"), TEXT("\"The water's finally quiet. Help me finish the map.\""),
+        {
+            TEXT("Grandfather marked two places on his charts that no boat could hold a line to while the crown raged — a tidecache and a sextant, both still down there."),
+            TEXT("And if you bring up two Brinefins alive on the way, the reef folk will trade calm-water news for them.")
+        });
+
+    // --- SQ-27 "The Long Watch" (Kael — zone tour + survival) ---
+
+    UAstrawildQuestDefinition* PostLongWatch = NewObject<UAstrawildQuestDefinition>(Registry);
+    PostLongWatch->QuestId = TEXT("Quest_PostLongWatch");
+    PostLongWatch->Title = FText::FromString(TEXT("The Long Watch"));
+    PostLongWatch->Summary = FText::FromString(TEXT("Kael's skiffs are mapping the whole Vale for the first time in a generation. Walk the far markers and hold each one for the survey — the Vale deserves one honest look."));
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::VisitZone;
+        Obj.TargetId = TEXT("Zone_Stormcrest");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Walk the Stormcrest Highlands survey line"));
+        PostLongWatch->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::VisitZone;
+        Obj.TargetId = TEXT("Zone_Frostveil");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Walk the Frostveil Expanse survey line"));
+        PostLongWatch->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::VisitZone;
+        Obj.TargetId = TEXT("Zone_TidebreakerIsles");
+        Obj.RequiredCount = 1;
+        Obj.ObjectiveText = FText::FromString(TEXT("Walk the Tidebreaker Isles survey line"));
+        PostLongWatch->Objectives.Add(Obj);
+    }
+    {
+        FAstrawildQuestObjective Obj;
+        Obj.Type = EAstrawildQuestObjectiveType::SurviveTime;
+        Obj.TargetId = NAME_None; // Time-based — accrued by the quest component tick.
+        Obj.RequiredCount = 300;
+        Obj.ObjectiveText = FText::FromString(TEXT("Hold the watch: survive 5 minutes of open country"));
+        PostLongWatch->Objectives.Add(Obj);
+    }
+    PostLongWatch->RewardItems = { Stack(TEXT("Item_EnergyCell"), 6) };
+    PostLongWatch->RewardResearchPoints = 40;
+    PostLongWatch->NextQuestId = NAME_None;
+    Registry->RegisterQuest(PostLongWatch);
+
+    AddPostGameOffer(TEXT("Dialogue_SkiffWardenKael"), TEXT("Kael_PostLongWatchOffered"),
+        TEXT("Quest_PostLongWatch"), TEXT("\"One last chart, then the Vale is ours on paper.\""),
+        {
+            TEXT("A generation of storms, and not one honest chart of this Vale. The skiffs can hold a line now — the legs that walk it are yours."),
+            TEXT("Three survey lines — the highlands, the expanse, the isles. Hold each one long enough for a fix, five minutes of open country total.")
+        });
+
+    UE_LOG(LogAstrawildEconomy, Log,
+        TEXT("DCP-1 post-game content registered: 5 standalone side quests (PostVigil/PostFieldNotes/PostGlassTrade/PostDeepRecords/PostLongWatch) + 5 one-time NPC offers (Maren/Wren/Tam/Nima/Kael) gated on Quest_FirstDawnAgain — quests 17→22."));
+}
+
+// ---------------------------------------------------------------------------
 
 void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Registry)
 {
@@ -2927,7 +3222,8 @@ void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Regi
     BuildProductionQuests(Registry);
     BuildDialogueTrees(Registry);
     BuildFinalRunContent(Registry); // FR-5: Act 3 "The Storm Crown" + the two endings.
+    BuildPostGameQuests(Registry);  // DCP-1: SQ-23 batch — five post-game side quests.
 
     UE_LOG(LogAstrawildEconomy, Log,
-        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 quests (17 total), 6 + 5 dialogue trees (11 total — every NPC converses)."));
+        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 + 5 quests (22 total), 6 + 5 dialogue trees (11 total — every NPC converses), 5 post-game side-quest offers (DCP-1)."));
 }

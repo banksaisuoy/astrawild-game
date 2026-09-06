@@ -202,7 +202,7 @@ E:\Astrawild_Packaged\Windows\ASTRAWILD.exe
 Editor/PIE: MainMap loads → WorldBootstrapper builds the 12-zone world → camp with
 workbench/campfire/rest point, 2 skiffs, Dawnstead village; HUD shows
 Day 1 08:00, weather Clear, Research: 0 RP, quest tracker "First Light: Wood 0/10 …".
-Log markers (approximate): `Content library registered (live census): 78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies, 17 quests, 11 loot tables, 11 NPCs, 8 weapon profiles, 10 resource nodes, 8 work sites, 16 world events, 17 POIs, 12 biomes, 11 dialogue trees, 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
+Log markers (approximate): `Content library registered (live census): 78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies, 22 quests (17 MQ + 5 post-game DCP-1), 11 loot tables, 11 NPCs, 8 weapon profiles, 10 resource nodes, 8 work sites, 16 world events, 17 POIs, 12 biomes, 11 dialogue trees, 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
 `Final Run Act 3 content registered: …`, `Production V2 content registered: …`.
 Packaged exe: same, after the loading screen.
 

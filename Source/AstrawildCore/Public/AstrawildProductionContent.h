@@ -50,4 +50,21 @@ public:
      *    Ending_StormSleeps → the two endings).
      */
     static void BuildFinalRunContent(UAstrawildItemRegistrySubsystem* Registry);
+
+    /**
+     * DCP-1 — the SQ-23 post-game side-quest batch (user directive
+     * "re-open every deferred item, playable-first"). Five standalone
+     * post-game quests (the single-active-quest rule is respected: no
+     * NextQuestId chaining, each completes on its own), offered through
+     * NPC dialogue gated on the MQ-17 terminus (Quest_FirstDawnAgain
+     * completed = post-game by definition) + one-time offer flags:
+     *  - Quest_PostVigil       (Maren)  — hostile cull patrol,
+     *  - Quest_PostFieldNotes  (Wren)   — observe/capture science beat,
+     *  - Quest_PostGlassTrade  (Tam)    — maelstrom-glass economy beat,
+     *  - Quest_PostDeepRecords (Nima)   — sea POI + capture beat,
+     *  - Quest_PostLongWatch   (Kael)   — zone tour + survival watch.
+     * Every objective target resolves against EXISTING content ids
+     * (species / items / POIs / zones) — no new world spawns required.
+     */
+    static void BuildPostGameQuests(UAstrawildItemRegistrySubsystem* Registry);
 };

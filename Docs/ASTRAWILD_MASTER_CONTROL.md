@@ -136,7 +136,7 @@ No cheat-command dependency anywhere in the chain.
   resonance-pillar puzzle rooms; boss specials stay DP-5's per-boss sets.
 - **Content totals** (machine-checked census — the single authoritative set, enforced by
   `Scripts/validate_final_run.py` §11 equality gates and re-derived live by the
-  engine-side "live census" registry log): **78 items, 58 recipes, 17 techs, 17 quests,
+  engine-side "live census" registry log): **78 items, 58 recipes, 17 techs, 22 quests (17 MQ + 5 post-game DCP-1),
   229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 11 NPCs,
   11 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots**.
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
