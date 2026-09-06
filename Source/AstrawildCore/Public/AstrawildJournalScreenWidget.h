@@ -6,10 +6,12 @@
 #include "AstrawildJournalScreenWidget.generated.h"
 
 class UButton;
+class UBorder;
 class UCanvasPanel;
 class UTextBlock;
 class UScrollBox;
 class UVerticalBox;
+class UAstrawildEchoDefinition;
 
 /**
  * PCR-1 (PG-1 gap closed): the Field Journal (bestiary) screen. The
@@ -24,6 +26,12 @@ class UVerticalBox;
  *   │   Scanned ✓  Food ✓  Habitat ✗  Weakness ✗   74% · 9 encounters │
  *   │ ???             signal unresolved — observe to reveal            │
  *   └──────────────────────────────────────────────────────────────────┘
+ *
+ * DCP-5 (2026-09-06): discovered rows are now CLICKABLE (the row widget
+ * below) and open a per-species detail panel — full identity, description,
+ * stats, weakness/resist, habits, habitat/food (knowledge-gated), ability
+ * kit, mutation spec, evolution line, loot and capture difficulty. The list
+ * and the detail view swap in the same frame region; [Back] returns.
  */
 UCLASS()
 class ASTRAWILDCORE_API UAstrawildJournalScreenWidget : public UUserWidget
@@ -51,8 +59,22 @@ public:
     /** True when the entry should be listed as a discovered species. */
     static bool IsEntryDiscovered(const FAstrawildJournalEntry& Entry);
 
+    /**
+     * DCP-5: the per-species detail line set (pure — world-free, the test
+     * contract pins the knowledge-gating rules). Returns the detail body for
+     * a discovered species: everything the codex knows, gated exactly like
+     * the row list (weakness/habitat/food hidden until discovered).
+     */
+    static FString BuildSpeciesDetailText(const UAstrawildEchoDefinition* Def, const FAstrawildJournalEntry& Entry);
+
     /** Rebuild the species listing (call on open; entries change while scanning). */
     void RefreshJournal();
+
+    /** DCP-5: open the per-species detail view (hides the list until Back). */
+    void ShowSpeciesDetail(FName SpeciesId);
+
+    /** DCP-5: return from the detail view to the full list. */
+    void BackToList();
 
     UAstrawildJournalScreenWidget();
 
@@ -65,6 +87,9 @@ private:
 
     UFUNCTION()
     void HandleCloseClicked();
+
+    UFUNCTION()
+    void HandleBackToListClicked();
 
     UPROPERTY()
     TObjectPtr<UCanvasPanel> RootCanvas;
@@ -80,4 +105,54 @@ private:
 
     UPROPERTY()
     TObjectPtr<UButton> CloseButton;
+
+    // --- DCP-5: the detail view (swaps with SpeciesList in the same region) ---
+
+    UPROPERTY()
+    TObjectPtr<UBorder> DetailPanel;
+
+    UPROPERTY()
+    TObjectPtr<UScrollBox> DetailScroll;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> DetailText;
+
+    UPROPERTY()
+    TObjectPtr<UButton> BackButton;
+
+    /** The species currently detailed (NAME_None = list mode). */
+    FName DetailSpeciesId = NAME_None;
+};
+
+/**
+ * DCP-5: one clickable journal row (the RosterRow pattern). Read-only text
+ * inside a subtle button; the click routes to the owning screen's detail
+ * view. Unknown species keep the bare TextBlock (nothing to detail).
+ */
+UCLASS()
+class ASTRAWILDCORE_API UAstrawildJournalRowWidget : public UUserWidget
+{
+    GENERATED_BODY()
+
+public:
+    /** Bind to the owning screen + species; sets the row label. */
+    void InitializeRow(UAstrawildJournalScreenWidget* InParent, FName InSpeciesId, const FString& RowText, const FLinearColor& RowColor);
+
+protected:
+    virtual void NativeConstruct() override;
+
+private:
+    UFUNCTION()
+    void HandleClicked();
+
+    UPROPERTY()
+    TObjectPtr<UButton> RowButton;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> RowLabel;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildJournalScreenWidget> ParentScreen;
+
+    FName SpeciesId = NAME_None;
 };

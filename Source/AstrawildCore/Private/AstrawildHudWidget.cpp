@@ -29,6 +29,7 @@
 #include "Components/TextBlock.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h" // DCP-5: toast cue.
 
 void UAstrawildHudWidget::NativeConstruct()
 {
@@ -214,6 +215,17 @@ void UAstrawildHudWidget::PushNotification(const FText& Message)
     {
         NotificationText->SetText(Message);
         NotificationRemaining = 4.0f;
+    }
+
+    // DCP-5 (user directive: re-open deferred work): toasts carry a UI cue.
+    // First PlaySound2D in the module — the A_UI_Confirm package exists in
+    // Content/Audio (imported with the audio batch; the literal-path
+    // LoadObject idiom mirrors CaptureComponent's capture stinger). Fail
+    // closed: a missing/renamed cue logs nothing and the toast still shows —
+    // audio is enrichment, never a gate.
+    if (USoundBase* ToastCue = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/A_UI_Confirm")))
+    {
+        UGameplayStatics::PlaySound2D(this, ToastCue, 0.35f);
     }
 }
 

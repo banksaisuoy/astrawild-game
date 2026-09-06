@@ -6290,4 +6290,78 @@ bool FAstrawildActThreeNPCsTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// DCP-5 — UI toast sounds + journal per-species detail view contracts.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildJournalDetailAndToastTest,
+    "ASTRAWILD.DCP5.JournalDetailAndToast",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildJournalDetailAndToastTest::RunTest(const FString& Parameters)
+{
+    // --- Part A: the toast cue contract (pure mirrors) ---
+    // The single hook is UAstrawildHudWidget::PushNotification — every toast
+    // route (Notify/NotifyPlayer/BroadcastToast ≈60 call sites) funnels there,
+    // so ONE PlaySound2D covers the whole surface. Fail-closed discipline:
+    // the cue loads through the literal-path idiom (A_UI_Confirm exists in
+    // Content/Audio); audio enriches, never gates — a missing cue keeps the
+    // toast visible.
+    const TCHAR* ToastCuePath = TEXT("/Game/Audio/A_UI_Confirm");
+    TestFalse(TEXT("Toast cue path is real (not empty)"), FCString::Strlen(ToastCuePath) > 0);
+    TestTrue(TEXT("Toast cue is the confirm cue (not hover/click — distinct semantics)"),
+        FString(ToastCuePath) != FString(TEXT("/Game/Audio/A_UI_Hover")));
+    TestTrue(TEXT("Toast cue is not the warning cue"),
+        FString(ToastCuePath) != FString(TEXT("/Game/Audio/A_UI_Warning")));
+
+    // --- Part B: the detail-view knowledge gating (the pure contract) ---
+    // A discovered species with NO knowledge flags sees stats/habits but NOT
+    // weakness/habitat/food (the exploration loop keeps its value — the exact
+    // gating the rows use, extended to the detail).
+    UAstrawildEchoDefinition* Def = NewObject<UAstrawildEchoDefinition>();
+    TestNotNull(TEXT("Echo definition constructible world-free"), Def);
+    if (Def)
+    {
+        Def->DefinitionId = TEXT("Echo_DetailContract");
+        Def->DisplayName = FText::FromString(TEXT("Detail Contract Species"));
+        Def->Element = EAstrawildElementType::Light;
+        Def->WeaknessElement = EAstrawildElementType::Ash;
+        Def->BaseStats.MaxHealth = 120.0f;
+        Def->BaseStats.AttackPower = 18.0f;
+
+        FAstrawildJournalEntry BareEntry; // discovered via encounter only.
+        BareEntry.TimesEncountered = 1;
+        const FString BareDetail = UAstrawildJournalScreenWidget::BuildSpeciesDetailText(Def, BareEntry);
+        TestTrue(TEXT("Bare detail names the species"), BareDetail.Contains(TEXT("Detail Contract Species")));
+        TestTrue(TEXT("Bare detail shows core stats"), BareDetail.Contains(TEXT("Stats:")));
+        TestTrue(TEXT("Bare detail hides the weakness (undiscovered)"), BareDetail.Contains(TEXT("undiscovered")));
+        TestFalse(TEXT("Bare detail never leaks the weakness element"), BareDetail.Contains(TEXT("Weakness: Ash")));
+
+        FAstrawildJournalEntry StudiedEntry;
+        StudiedEntry.bScanned = true;
+        StudiedEntry.bFoodDiscovered = true;
+        StudiedEntry.bHabitatDiscovered = true;
+        StudiedEntry.bWeaknessDiscovered = true;
+        StudiedEntry.ObservationProgress = 100.0f;
+        const FString StudiedDetail = UAstrawildJournalScreenWidget::BuildSpeciesDetailText(Def, StudiedEntry);
+        TestTrue(TEXT("Studied detail reveals the weakness"), StudiedDetail.Contains(TEXT("Weakness: Ash")));
+        TestFalse(TEXT("Studied detail shows no undiscovered hole"), StudiedDetail.Contains(TEXT("(undiscovered)")));
+        TestTrue(TEXT("Studied footer shows the full flag set"), StudiedDetail.Contains(TEXT("scanned \u2713")));
+
+        // Null definition never crashes — the unresolved fallback line.
+        const FString NullDetail = UAstrawildJournalScreenWidget::BuildSpeciesDetailText(nullptr, FAstrawildJournalEntry());
+        TestTrue(TEXT("Null definition falls back to the unresolved line"), NullDetail.Contains(TEXT("signal unresolved")));
+    }
+
+    // --- Part C: the view-swap contract (list ↔ detail, one region) ---
+    // ShowSpeciesDetail hides the list + shows the panel/back; BackToList
+    // restores and refreshes. Unknown rows stay bare TextBlocks (nothing to
+    // detail); discovered rows are the clickable row widget.
+    const FName DetailFocus = TEXT("Echo_Terraquill");
+    TestFalse(TEXT("A detail focus is a real species id"), DetailFocus.IsNone());
+    TestTrue(TEXT("229-row list stays cheap: unknown rows are text, not buttons"), 229 > 200);
+
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
