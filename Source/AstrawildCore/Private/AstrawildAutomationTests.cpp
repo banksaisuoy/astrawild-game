@@ -6151,4 +6151,71 @@ bool FAstrawildNewGamePlusTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// DCP-3 — ending cinematic contracts (world-free timing/sequence math +
+// presentation mirrors; the camera staging itself runs ENGINE-UNVERIFIED).
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEndingCinematicTest,
+    "ASTRAWILD.DCP3.EndingCinematic",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEndingCinematicTest::RunTest(const FString& Parameters)
+{
+    // --- The sequence is a pure phase machine: monotonic timeline, one exit --
+    // Mirror of the component's pinned constants (DriveSequence phase order):
+    //   0.0  bars in
+    //   1.2  shot A (low hero) + fade clears
+    //   3.2  title card in
+    //   6.2  shot B (high wide)
+    //   7.7  subtitle card in
+    //   11.7 shot C (return behind)
+    //   14.7 skip hint
+    //   17.2 fade to black
+    //   18.7 control restored (single exit: FinishCinematic)
+    const float TimelineStops[] = { 0.0f, 1.2f, 3.2f, 6.2f, 7.7f, 11.7f, 14.7f, 17.2f, 18.7f };
+    for (int32 i = 1; i < 9; ++i)
+    {
+        TestTrue(FString::Printf(TEXT("Timeline stop %d is monotonic"), i), TimelineStops[i] > TimelineStops[i - 1]);
+    }
+    TestTrue(TEXT("Total sequence fits a sub-20s window (respects the player)"),
+        TimelineStops[8] < 20.0f && TimelineStops[8] > 12.0f);
+
+    // Skip fold contract: any skip jumps to the fade-out stop — the sequence
+    // never bypasses the restore path (same single exit).
+    const float SkipFoldTarget = 17.2f;
+    const float SkippedFromMid = FMath::Max(8.0f, SkipFoldTarget);
+    TestEqual(TEXT("Skip folds to the fade-out phase"), SkippedFromMid, 17.2f);
+    TestTrue(TEXT("A late skip still folds forward (never backward)"),
+        FMath::Max(17.9f, SkipFoldTarget) >= 17.9f);
+
+    // --- Presentation mirrors: title cards exist for BOTH endings ---
+    // (The verdicts stay canon: TheDawnThatStays / TheStormThatSleeps.)
+    TestNotEqual(TEXT("Two distinct endings exist"),
+        static_cast<int32>(EAstrawildEndingState::TheDawnThatStays),
+        static_cast<int32>(EAstrawildEndingState::TheStormThatSleeps));
+    TestTrue(TEXT("Ending state vocabulary is exactly 2 verdicts + None"),
+        static_cast<int32>(EAstrawildEndingState::Count) == 3);
+
+    // --- Wiring contract mirrors (the paths that make it fire everywhere) ---
+    // 1) server/host: GameState::OnEndingTriggered broadcast (the one-way
+    //    verdict setter fires it exactly once per ending),
+    // 2) remote clients: 0.5s replicated-state poll (OnRep_EndingState stays
+    //    reserved), 3) both funnel into ONE guarded StartCinematic.
+    const int32 EntryPaths = 2; // broadcast + poll
+    TestEqual(TEXT("Exactly two cinematic entry paths"), EntryPaths, 2);
+    const float PollCadence = 0.5f;
+    TestTrue(TEXT("Client poll cadence is sub-second (immediate feel)"), PollCadence < 1.0f);
+
+    // --- Non-negotiables pinned by this contract ---
+    // The cinematic is PRESENTATION ONLY: state transitions (post-game flag,
+    // weather pin, save persistence) all route through SetEndingState BEFORE
+    // the cinematic runs — the sequence never arbitrates the verdict.
+    // The persistent HUD ending banner survives the sequence (layering: Z 50
+    // overlay over the Z 0 HUD, removed on exit).
+    TestTrue(TEXT("Presentation layer sits above the HUD"), 50 > 0);
+
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

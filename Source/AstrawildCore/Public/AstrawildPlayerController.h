@@ -6,6 +6,7 @@
 
 class AAstrawildNPCCharacter;
 class UAstrawildQuestComponent;
+class UAstrawildEndingCinematicComponent;
 class UAstrawildHudWidget;
 class UAstrawildCraftingScreenWidget;
 class UAstrawildInventoryScreenWidget;
@@ -39,6 +40,10 @@ public:
     /** Production V2 Batch 3: persistent dialogue state (story flags + consequence routing). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
     TObjectPtr<UAstrawildDialogueComponent> DialogueComponent;
+
+    /** DCP-3: ending cinematic sequence driver (letterbox + staged shots; local presentation only). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Ending")
+    TObjectPtr<UAstrawildEndingCinematicComponent> EndingCinematic;
 
     /** Dialogue screen class override point (defaults to the pure-C++ dialogue widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")

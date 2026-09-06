@@ -7,6 +7,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDialogueWidget.h"
+#include "AstrawildEndingCinematicComponent.h" // DCP-3: ending sequence driver subobject.
 #include "AstrawildHudWidget.h"
 #include "AstrawildInventoryScreenWidget.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -36,6 +37,9 @@ AAstrawildPlayerController::AAstrawildPlayerController()
     // Batch 3 — persistent dialogue state lives beside the quest component so
     // story flags survive death/respawn (saved with the v4 payload).
     DialogueComponent = CreateDefaultSubobject<UAstrawildDialogueComponent>(TEXT("Dialogue"));
+    // DCP-3 — the ending cinematic driver (pure-C++ staged shots; ticks only
+    // while a sequence runs — see the component's PrimaryComponentTick setup).
+    EndingCinematic = CreateDefaultSubobject<UAstrawildEndingCinematicComponent>(TEXT("EndingCinematic"));
 }
 
 void AAstrawildPlayerController::BeginPlay()
