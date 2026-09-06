@@ -75,6 +75,13 @@ commits (oldest→newest, ALL pushed to origin/final-completion):
            exact tip SHA comes from `git rev-parse HEAD` / `git ls-remote origin
            final-completion`; `git log --oneline -40` must show the full list above).
 ```
+
+> **v9.4 sync note (2026-09-06)**: the CURRENT TIP is `2637c13` (v9.3 ASSET
+> OVERHAUL) — the commits after `4bb7be5` are `0b55072` [SCI-1..5], `4daa113`
+> [SCI-AMEND], `08af72b` [v9.2 truth re-verification], `2637c13` [v9.3 real CC0
+> mesh catalog + production pipeline]. The tip SHA is authoritative live state:
+> `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` §1.
+
 **PR #4 is subsumed** — merging `final-completion` into `main` closes it (do not re-merge
 PR #4 separately).
 
@@ -87,13 +94,19 @@ disabled in the final audit — no code referenced them), target `ASTRAWILDEdito
 ## 3. REQUIRED LFS STATE
 
 `.gitattributes` routes `*.uasset/*.umap/*.glb/*.png/*.wav/...` through Git LFS.
-**Verified in this sandbox: 491/491 LFS objects resolve with OID-matched sha256 (236.5 MB)
-— re-derived at the FINAL-EXECUTION tip (459 pre-SCI objects + 32 SCI source files:
-16 SK_Base_*.glb + 16 SFXSet_*.wav).**
+**Verified in this sandbox: 586/586 LFS pointers resolve with on-disk OID-matched
+objects — re-derived at the v9.4 sync (491 pre-v9.3 objects + 95 v9.3 real-mesh
+source files: the 109-asset CC0 catalog; `git lfs push --dry-run` = 0 pending
+upload).** Honest fsck caveat: `git lfs fsck` exits 1 with ~3,954
+"should have been a pointer" flags — ALL in pre-existing raw pack-source dirs
+(`ArtSource/Textures/Kenney*`, `Models/Kenney`, `Audio/Kenney`,
+`Models/Quaternius`), zero under `ArtSource/Meshes` (a pre-v9.3 acquisition-batch
+convention mismatch, not corruption — every current pointer's object resolves;
+details in `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` §8).
 Pre-flight on Windows:
 ```powershell
 git lfs install
-git lfs ls-files | Measure-Object -Line        # expect 491
+git lfs ls-files | Measure-Object -Line        # expect 586
 git lfs fetch --all                            # pulls every object
 # spot-check one object resolves:
 git show HEAD:Content/Vehicles/SM_Vehicle_DawnSkiff.uasset | Select-Object -First 3
@@ -566,8 +579,8 @@ status at the DP-10 final gate):
 9. Final story fully playable — MQ-01..17 + two endings + post-game (source-side,
    engine walk pending AG-4).
 10. Content manifest complete — FINAL_CONTENT_MANIFEST (491/491 LFS at the v1.6
-    re-verification, 65/65 /Game refs,
-    every content family has a CODE_DEFAULT single source of truth).
+    re-verification; v1.7 asset-overhaul era = 586/586 pointers at tip 2637c13, 65/65
+    /Game refs, every content family has a CODE_DEFAULT single source of truth).
 11. Final source audit passes — both validators ALL PASS at tip; doc-consistency sweep
     executed at DP-10; census values unified across live docs.
 12. FINAL_BUILD_HANDOFF executable — this document: one executable path, counts read

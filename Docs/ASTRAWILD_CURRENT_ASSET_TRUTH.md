@@ -2,6 +2,17 @@
 
 > **CURRENT MESH TRUTH (v9.3 ASSET OVERHAUL): see §12 — every staged ArtSource mesh is now a REAL unique CC0 model; manifest 189/189 present / 0 pending; the procedural-recolor counts in §1-§10 are era-correct audit history.**
 
+> **v9.4 sync correction (2026-09-06, honest):** the §10b final block's "git lfs fsck
+> exit 0" statement was INACCURATE — fsck exits 1 with ~3,954 "should have been a
+> pointer" flags, all in pre-existing raw pack-source dirs (ArtSource/Textures/Kenney* /
+> Models/Kenney / Audio/Kenney / Models/Quaternius), zero under ArtSource/Meshes, and
+> the same failure exists at the pre-v9.3 tip 08af72b (verified via worktree). It is an
+> acquisition-batch convention mismatch, not corruption: every current LFS pointer's
+> object resolves OID-matched, and the v9.3 commit itself was all-proper-pointers
+> (111/111 uploaded; it REDUCED the raw flag count by 79). Current counts at tip
+> 2637c13: **586 LFS pointers (491 + 95 v3 real-mesh sources), 586/586 objects
+> on-disk, 0 pending push.** Full details: LIVE_EXECUTION_STATE §8.
+
 > **Audit date:** 2026-09-06 (GLM source-side audit, sandbox `git` + `git-lfs 3.7.0`)
 > **Scope:** ground-truth verification of the ACTUAL remote HEAD of `final-completion`.
 > This document supersedes every earlier "asset truth" statement (including the

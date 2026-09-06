@@ -2,21 +2,27 @@
 
 **Report date**: 2026 (FINAL GAME COMPLETION RUN → FCR → DEPTH PASSES — re-affirmed at the DP-10 final gate) · **Author**: GLM 5.3
 **Baseline**: `final-completion` (main 94a398c + PR #4 f31f5e1 + all Final Run / FINAL-AUDIT / GDP / SCP / FCR / ASSET ACQUISITION (26a7c7b, a09e566) / DEPTH PASS DP-1..DP-9 (981250d → 018a95a) / DP-10 final-gate batches — all pushed)
-**Top-level status**: **SOURCE-COMPLETE / SCI-CONTENT-REOPENED (v9.1)** — the FPP-3
-freeze was superseded twice by explicit USER directives (PCR product-completion run;
-Sci-Fantasy monster directive after the current-head asset truth audit), so
-"SOURCE_PRODUCT_FROZEN" in the strict sense now reads: **source-side feature work
-closed for everything EXCEPT evidence-driven Sci-Fantasy/audit amendments** (the
-v9.1 material-swap wiring was exactly that class — an audit-found dead-end closed).
-Current state: 229 species with the Sci-Fantasy mutation system (204 bestiary rows ×
-8 themes × 16 SK_Base_* bases × per-part scale/attachments/theme-material swap/
-pattern tints/element VFX — runtime consumers all wired, opt-in fail-closed), 126
-world-free contract tests, LFS 491/491 (re-derived at the FINAL-EXECUTION tip —
-459 pre-SCI + 32 SCI source files). The Antigravity one-time engine integration
-(AG-2..AG-5 + HANDOFF §20/§20b/§20c/§20d + §22) is the sole remaining work.
+**Top-level status**: **SOURCE-COMPLETE / REAL-ART-CATALOG / ENGINE-UNVERIFIED (v9.3 ASSET OVERHAUL + v9.4 MASTER SYNC)** —
+the FPP-3 freeze was superseded by explicit USER directives in sequence (PCR
+product-completion run; Sci-Fantasy monster directive; v9.3 asset-overhaul
+directive), so "source-side feature work closed" now reads: **closed except
+evidence-driven audit amendments** (the v9.1 material-swap wiring and the
+v9.4 synchronization were exactly that class). Live task state:
+**`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical, 2026-09-06)** —
+CURRENT_HEAD `2637c13`, NOW task = ENGINE-RUN-1 (V2-29..V2-36, BLOCKED on the
+external Windows UE machine). Current state: 229 species with the Sci-Fantasy
+mutation system (204 bestiary rows × 8 themes × real-mesh bases × per-part
+scale/attachments/theme-material swap/pattern tints/element VFX — runtime
+consumers all wired, opt-in fail-closed), **109 REAL unique CC0 meshes staged
+(manifest 189/189 present / 0 pending — no cylinders, no palette swaps; 3
+survivor armor tiers, 5 distinct weapons, 4 vehicles, 4 ore nodes, 21 env
+props)**, 126 world-free contract tests, LFS 586/586 pointers resolved at tip.
+The Antigravity one-time engine integration (AG-2..AG-5 + HANDOFF
+§20/§20b-e + §22; one-click `Setup_And_Play.bat` for V2-36) is the sole
+remaining work.
 **ENGINE_UNVERIFIED — nothing in this report claims a runtime PASS.** The final content manifest
-(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 491/491 LFS objects verified live
-on GitHub, all 65 hardcoded /Game/ references resolve, every content family carries a
+(`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 586/586 LFS pointers resolved at the
+current tip (491/491 at the v1.6 re-verification + 95 v9.3 real-mesh source files), all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
 (validator equality gates), and the automation suite holds **126 world-free contract
 tests** behind an exact gate. The FINAL GAME COMPLETION RUN's five-agent deep audit fixed

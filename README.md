@@ -28,9 +28,11 @@ ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal 
 
 > [!TIP]
 > **LATEST STATUS**: **SOURCE-COMPLETE / REAL-ART-CATALOG / ENGINE-UNVERIFIED (v9.3 ASSET OVERHAUL)** —
-> `final-completion`, 126 automation contracts, 229 species, Sci-Fantasy mutation
-> system wired (incl. runtime theme-material swap), LFS 491/491.
-> The complete current-state truth is **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.2)**;
+> `final-completion` @ `2637c13`, 126 automation contracts, 229 species, Sci-Fantasy mutation
+> system wired (incl. runtime theme-material swap), LFS 586/586 pointers resolved.
+> The live task-state truth is **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`** (canonical,
+> created 2026-09-06); the product rulebook is
+> **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.4)**;
 > engine-run history (the 54/54 + packaged-exe evidence at SHA 8313c61) is
 > [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) (HISTORICAL)
 > and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).

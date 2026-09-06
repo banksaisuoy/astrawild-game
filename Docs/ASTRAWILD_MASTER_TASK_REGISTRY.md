@@ -317,3 +317,37 @@ gained Sci-Fantasy visual identities via base + mutation (no species/quest/
 boss/recipe inflation). All engine-facing claims stay ENGINE-UNVERIFIED; the
 single conversion gate is queue row V2-35 (import report + PIE clips) inside
 the existing Antigravity §20 sequence.
+
+---
+
+## §N ASSET OVERHAUL & PRODUCTION PIPELINE (AO — v9.3 session, user directive "NO PLACEHOLDERS / NO PALETTE SWAPS")
+
+Directive: transition from the interim Procedural Recolor system to REAL
+uniquely-shaped 3D models — download free-license (CC0/PD/MIT) models
+(`Scripts/fetch_free_assets.py`), organize ArtSource (Meshes/ + Textures/),
+manifest 100% present / 0 pending, upgrade `import_all.py` + direct Data-Asset
+mesh binding (no cylinder fallback, no fake recolor), build a showcase map,
+ship a Windows one-click `Setup_And_Play.bat`, run the download script, verify
+real files, push.
+
+> Back-registered by the 2026-09-06 MASTER SYNCHRONIZATION session: the v9.3
+> session delivered + pushed commit `2637c13` but did not record its tasks in
+> this registry (the exact persistence gap the synchronization directive §6
+> exists to close). Task-state truth now lives in
+> `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical live execution state).
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| AO-1 | Free-asset download script + real catalog | `Scripts/fetch_free_assets.py` — curated 109-asset CC0 catalog ← 109 UNIQUE source models (1:1 palette-swap guard = hard error), LIVE-VERIFIED Kenney remote-download pattern, glTF→GLB self-contained conversion (base64 buffers + embedded images), Kenney colormap embedding, deterministic theme-aware Tier-B draw, auto clip-map derivation from real animation lists; run evidence `Docs/ASTRAWILD_ASSET_OVERHAUL_REPORT.json` + per-asset provenance `Docs/ASTRAWILD_REAL_ASSET_CREDITS.json` | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | 109/109 staged real meshes verified on disk (49.5 MB); 15 superseded procedural GLBs purged; network probed honestly (poly.pizza 403, itch.io login-walled — recorded) |
+| AO-2 | ArtSource organization + manifest 100% | `ArtSource/Meshes/{Characters,Echoes{,/BaseMeshes,/Bosses},Weapons,Vehicles,Environment}` + Textures; manifest regenerated v2.0: **189 entries / 189 `present` / 0 pending** (file-truth basis; engine import tracked by V2-36); stale absolute paths normalized; Tier-B code table 39→36 (33 real species + 3 production bosses) | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | 3 survivor armor tiers (rigged 62-bone, 24 anims); 16 real base archetypes; 6 hero Echoes; 36 Tier-B; 14 showcase bosses; 5 distinct weapons; 4 vehicles; 4 ore nodes; 21 env props |
+| AO-3 | AwPipeline upgrade + direct binding | `Content/Python/AwPipeline/import_all.py` — clip_map AM_ renames (runtime soft paths bind REAL clips), PBR node emissive per ore type, weapon Muzzle + survivor Weapon_R sockets, coverage counts meshes + clips as direct-binding evidence | GLM | COMPLETE (source) / NOT_RUN (engine) | Cylinder fallback / fake recolor path eliminated at the source level: every staged mesh is real; species without direct meshes render via real theme-base + unique deterministic mutation spec |
+| AO-4 | Showcase map + Windows one-click | `Content/Python/AwPipeline/build_showcase_map.py` (PlayerStart + armor podium + hero row + 16-base grid + Tier-B grid + boss arena + weapon rack + vehicle pad + node garden — idempotent) + `run_overhaul.py` + **`Setup_And_Play.bat`** (locate UE → verify catalog → import + build showcase → editor open) | GLM | COMPLETE (source) / NOT_RUN (engine) | V2-36 queue row = the engine gate; evidence = import_report.json total_missing==0 incl. clips + showcase PIE |
+| AO-5 | C++/test/validator/doc sync | ArtPack Tier-B 39→36 + PCR-4 test re-pinned (36 + prod-boss asserts + Wavecrest exclusion) + validator gate 36 + 8 new ASSET-OVERHAUL gates (manifest 100% present, no-dup sources, files-on-disk, CC0 license fields, 14 bosses, 3 tiers, 5 distinct weapons) + MASTER_CONTROL v9.3 + asset-truth §12 + manifest v1.7 + queue V2-36 + TEST_INVENTORY + FREE_ASSET_LEDGER §5 + HANDOFF §20e + README v9.3 | GLM | COMPLETE | validators ALL PASS at `2637c13` (126-test gate, census 229/126 unchanged, manifest 189/189) |
+
+**§N closing note:** delivered as commit `2637c13` (pushed, remote HEAD at
+delivery). Engine import + showcase PIE remain NOT_RUN on this sandbox —
+V2-36 via `Setup_And_Play.bat` on the Windows UE machine is the sole
+conversion gate. Census gates UNCHANGED (229 species / 126 tests). The
+post-delivery LFS fsck honest correction (pre-existing raw-pack convention
+mismatch, ~3,954 flags, zero under ArtSource/Meshes) is recorded in
+LIVE_EXECUTION_STATE §8.

@@ -14,8 +14,11 @@ playable game with both endings. This manifest is the LAST gate before
    v1.1 gate: 459/459 objects (233.0 MB). **Re-verified at the v1.6 tip
    (FINAL-EXECUTION round, commit 4daa113): 491/491 objects resolve on disk with
    OID-matched sha256 (459 + the 32 SCI-tracked files: 16 SK_Base_*.glb +
-   16 SFXSet_*.wav); 236.5 MB total payload.** The engine-side re-check command is
-   `git lfs ls-files -l | Measure-Object -Line` → expect **491** (see HANDOFF §3).
+   16 SFXSet_*.wav); 236.5 MB total payload.** **Re-verified at the v1.7/v9.4 tip
+   (2637c13): 586/586 pointers resolve with on-disk objects (491 + the 95 v9.3
+   real-mesh source files); 0 pending upload.** The engine-side re-check command is
+   `git lfs ls-files -l | Measure-Object -Line` → expect **586** (see HANDOFF §3
+   + the fsck caveat in LIVE_EXECUTION_STATE §8).
 3. Full `Content/` filesystem walk → per-folder asset counts (416 runtime binaries —
    re-verified at v1.6: 416/416 carry genuine UE package magic 0x9E2A83C1).
 4. Full-source regex sweep of every `/Game/...` reference (hardcoded + `TEXT()` forms)
