@@ -1,4 +1,4 @@
-# ASTRAWILD — Input Reference
+﻿# ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
 **Date: 2026-09-03** (PCR-5 sync — 32 actions incl. AWD_Journal Field Journal on P + AWD_Roster Echo Roster on L + AWD_Map World Map on M + AWD_Hunt Hunt Board on U; screens close with their advertised keys; crafting stations open the crafting screen on E)
@@ -67,7 +67,7 @@ objects — gamepad and KB/M work simultaneously, zero configuration needed.
 | Face Button Left (X/square) | Dodge | |
 | Face Button Top (Y/triangle) | Build Mode | |
 | Right Shoulder | Sprint | |
-| Left Shoulder | Block (hold) | |
+| Left Shoulder | Block (hold) — held with X = Smart-Cast chord | DCP-6 |
 | Right Trigger | Light Attack / Pulse Lance | Same auto-routing as LMB |
 | Left Trigger | Heavy Attack | |
 | D-pad Up | Party Command | |
@@ -78,7 +78,8 @@ objects — gamepad and KB/M work simultaneously, zero configuration needed.
 | Special Right (start) | Pause Menu | The natural pause button |
 
 *(Scan/drone/robot/save/load remain keyboard-only on gamepad — the four face buttons and D-pad are
-fully allocated; a future radial menu can host them.)*
+fully allocated; a future radial menu can host them. DCP-6 closed the smart-cast gap: LB+X is a
+chord on the committed bindings, not a new allocation — plain X stays Dodge.)*
 
 ---
 
@@ -141,4 +142,4 @@ time-scale testing of decay rates.
 | Key | Gamepad | Action | Since |
 |-----|---------|--------|-------|
 | T | Right stick click | Party ability cast — every owned Echo casts its best ready ability (heal when hurt, offense otherwise) | GDP-1 |
-| Y | — (radial menu pass owns gamepad smart-cast) | Player smart-cast — priority ladder picks the best ready unlocked skill (SecondWind > Whirlwind > PowerStrike > HuntersFocus > Dash > Overcharge) | GDP-3 |
+| Y | LB + X (chord — DCP-6) | Player smart-cast — priority ladder picks the best ready unlocked skill (SecondWind > Whirlwind > PowerStrike > HuntersFocus > Dash > Overcharge) | GDP-3 |

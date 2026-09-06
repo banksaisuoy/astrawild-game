@@ -933,9 +933,22 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
 
     // D-pad: up command, right feed, down consume, left equip-best.
     Context->MapKey(CommandAction, EKeys::Gamepad_DPad_Up);
-    // GDP: party ability = right stick click. The player smart-cast stays
-    // KB/M-only for now (Y) — every face/d-pad button is already committed, and
-    // the radial menu pass (documented in INPUT_REFERENCE) will own it.
+    // DCP-6 (user directive: re-open deferred work): the player smart-cast
+    // comes to gamepad as a CHORD — LB (hold-block) + X (dodge). The
+    // UInputModifierChordAction modifier disambiguates the plain X press
+    // (dodge) from the LB-held press (smart-cast), so no committed binding
+    // changes: the old "radial menu pass owns it" note is superseded by the
+    // directive (INPUT_REFERENCE §1b/§2 updated with it).
+    if (PlayerSkillAction)
+    {
+        FEnhancedActionKeyMapping& SkillMapping = Context->MapKey(PlayerSkillAction, EKeys::Gamepad_FaceButton_Left);
+        if (UInputModifierChordAction* Chord = NewObject<UInputModifierChordAction>(this))
+        {
+            Chord->Key = EKeys::Gamepad_LeftShoulder; // LB held + X = smart-cast.
+            SkillMapping.Modifiers.Add(Chord);
+        }
+    }
+    // GDP: party ability = right stick click.
     if (PartyAbilityAction)
     {
         Context->MapKey(PartyAbilityAction, EKeys::Gamepad_RightThumbstick);
@@ -954,7 +967,7 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
     Context->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
 
     GamepadMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (16 mappings)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (17 mappings — DCP-6: LB+X smart-cast chord)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

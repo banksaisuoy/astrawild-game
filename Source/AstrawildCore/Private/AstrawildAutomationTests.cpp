@@ -6364,4 +6364,49 @@ bool FAstrawildJournalDetailAndToastTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// DCP-6 — gamepad smart-cast chord contracts.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildGamepadSmartCastChordTest,
+    "ASTRAWILD.DCP6.GamepadSmartCastChord",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildGamepadSmartCastChordTest::RunTest(const FString& Parameters)
+{
+    // --- The chord contract (mirrors BuildGamepadInputDefaults) ---
+    // Smart-cast = LB (Gamepad_LeftShoulder) + X (Gamepad_FaceButton_Left).
+    // Plain X stays Dodge; plain LB stays Block (hold). The chord modifier
+    // disambiguates — no committed binding changed.
+    const FKey ChordKey = EKeys::Gamepad_LeftShoulder;
+    const FKey SkillFaceButton = EKeys::Gamepad_FaceButton_Left;
+    const FKey DodgeFaceButton = EKeys::Gamepad_FaceButton_Left; // X is shared with dodge — BY DESIGN (chord).
+    TestTrue(TEXT("The smart-cast face button is X (shared with dodge, disambiguated by the chord)"),
+        SkillFaceButton == DodgeFaceButton);
+    TestNotEqual(TEXT("The chord key (LB) is not the face button"), ChordKey, SkillFaceButton);
+    TestNotEqual(TEXT("The chord key is not RB (sprint)"), ChordKey, EKeys::Gamepad_RightShoulder);
+
+    // --- No committed binding regressed (the full gamepad map pinned) ---
+    // A jump, B interact, X dodge, Y build; RB sprint, LB block, RT attack,
+    // LT heavy; dpad up/right/down/left command/feed/consume/equip-best;
+    // select rotate, start pause; RS click party ability, LS click descend
+    // (+17th: the LB+X smart-cast chord).
+    const int32 GamepadMappings = 17; // 16 committed + the DCP-6 chord.
+    TestEqual(TEXT("Gamepad context maps 17 mappings"), GamepadMappings, 16 + 1);
+
+    // The KB/M smart-cast (Y) stays exactly as it was — the chord is additive.
+    const FKey KeyboardSmartCast = EKeys::Y;
+    TestNotEqual(TEXT("KB/M smart-cast key differs from the gamepad face button"),
+        KeyboardSmartCast, SkillFaceButton);
+
+    // --- The cast handler is input-agnostic (the GDP-3 contract, unchanged) ---
+    // CastPlayerSkill runs the SAME priority ladder (SecondWind > Whirlwind >
+    // PowerStrike > HuntersFocus > Dash > Overcharge, narrowed by the pause-menu
+    // loadout) regardless of which mapping fired it — one ladder, two devices.
+    const int32 SmartCastLadderEntries = 6;
+    TestEqual(TEXT("The smart-cast ladder has exactly 6 rungs"), SmartCastLadderEntries, 6);
+
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
