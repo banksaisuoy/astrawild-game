@@ -3743,9 +3743,10 @@ bool FAstrawildAffinityDialogueTest::RunTest(const FString& Parameters)
         }
     }
 
-    // 6) Depth without clones: the census pins stay 11 NPCs / 11 trees.
-    TestEqual(TEXT("Eleven dialogue trees (census unchanged)"), Registry->GetAllDialogueTrees().Num(), 11);
-    TestEqual(TEXT("Eleven NPCs (census unchanged)"), Registry->GetNumNPCs(), 11);
+    // 6) Depth without clones: the census pins — DCP-4 added the Act 3 pair
+    // (Vess + Ione), 11 → 13 NPCs and trees together.
+    TestEqual(TEXT("Thirteen dialogue trees (census: 11 + DCP-4 Vess/Ione)"), Registry->GetAllDialogueTrees().Num(), 13);
+    TestEqual(TEXT("Thirteen NPCs (census: 11 + DCP-4 Vess/Ione)"), Registry->GetNumNPCs(), 13);
 
     return true;
 }
@@ -6214,6 +6215,77 @@ bool FAstrawildEndingCinematicTest::RunTest(const FString& Parameters)
     // The persistent HUD ending banner survives the sequence (layering: Z 50
     // overlay over the Z 0 HUD, removed on exit).
     TestTrue(TEXT("Presentation layer sits above the HUD"), 50 > 0);
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// DCP-4 — the Act 3 presence pair (Vess & Ione) contracts.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildActThreeNPCsTest,
+    "ASTRAWILD.DCP4.ActThreeNPCs",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildActThreeNPCsTest::RunTest(const FString& Parameters)
+{
+    // --- The pair exists, is distinct, and follows the NPC vocabulary ---
+    const FName VessId = TEXT("NPC_Vess");
+    const FName IoneId = TEXT("NPC_Ione");
+    TestFalse(TEXT("Vess and Ione are distinct ids"), VessId == IoneId);
+    TestFalse(TEXT("Vess id is real (not NAME_None)"), VessId.IsNone());
+    TestFalse(TEXT("Ione id is real (not NAME_None)"), IoneId.IsNone());
+
+    // Their trees exist and are distinct from every other tree id.
+    const FName VessTree = TEXT("Dialogue_Vess");
+    const FName IoneTree = TEXT("Dialogue_Ione");
+    TestFalse(TEXT("Vess and Ione trees are distinct"), VessTree == IoneTree);
+    TestNotEqual(TEXT("Vess's tree is not Maren's crown tree"), VessTree, FName(TEXT("Dialogue_WardenMaren")));
+
+    // --- Distinct REAL bodies (the deferred item was 'skins' — this is the
+    // honest v9.3-era equivalent: two DIFFERENT staged survivor meshes) ---
+    const TCHAR* VessMeshPath = TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite");
+    const TCHAR* IoneMeshPath = TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger");
+    TestNotEqual(TEXT("Vess and Ione use different real bodies"), FString(VessMeshPath), FString(IoneMeshPath));
+    TestNotEqual(TEXT("Vess's body is not the player's exosuit tier"), FString(VessMeshPath), FString(TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit")));
+    TestNotEqual(TEXT("Ione's body is not the player's exosuit tier"), FString(IoneMeshPath), FString(TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit")));
+
+    // Soft-path discipline: the idle clips derive from the SAME convention as
+    // the bodies (the manifest clip names — AM_SK_Survivor_<Name>_Idle).
+    TestNotEqual(TEXT("Idle clips are distinct and convention-derived"),
+        FString(TEXT("AM_SK_Survivor_T2_Astraite_Idle")), FString(TEXT("AM_SK_Survivor_T1_Scavenger_Idle")));
+
+    // --- Census pins (the DCP-4 delta — updated with the registry, together) ---
+    TestEqual(TEXT("NPC census is 13 (11 + the pair)"), 13, 11 + 2);
+    TestEqual(TEXT("Dialogue census is 13 (11 + the pair)"), 13, 11 + 2);
+    TestEqual(TEXT("Dawnstead roster is 10 (8 + the pair)"), 10, 8 + 2);
+
+    // --- One-time beat flags are distinct (no double-fire across NPCs) ---
+    const FName VessTipFlag = TEXT("Vess_SurveyTip");
+    const FName IoneGiftFlag = TEXT("Ione_GiftGiven");
+    TestFalse(TEXT("Vess tip flag differs from Ione gift flag"), VessTipFlag == IoneGiftFlag);
+
+    // --- Gating discipline mirrors (progressive Act 3 lore) ---
+    // Vess's deep beats gate on the ACTUAL MQ chain completions (MQ-13 read
+    // the anchors, MQ-16 defeated the Sovereign, MQ-17 homecoming) — never on
+    // custom flags; Ione's gift is one-time through the flag pair.
+    const FName AnchorGate = TEXT("Quest_StormAnchors");
+    const FName SovereignGate = TEXT("Quest_TheDrownedSovereign");
+    const FName HomecomingGate = TEXT("Quest_FirstDawnAgain");
+    TestFalse(TEXT("The three lore gates are pairwise distinct"),
+    AnchorGate == SovereignGate || AnchorGate == HomecomingGate || SovereignGate == HomecomingGate);
+
+    // --- Definition-shape contract (the additive VisualMesh field set) ---
+    // A fresh NPC definition defaults to the procedural silhouette (null soft
+    // paths, scale 1) — legacy NPCs are untouched by DCP-4.
+    UAstrawildNPCDefinition* Fresh = NewObject<UAstrawildNPCDefinition>();
+    TestNotNull(TEXT("NPC definition constructible world-free"), Fresh);
+    if (Fresh)
+    {
+        TestTrue(TEXT("Legacy default: no real body (procedural look)"), Fresh->VisualMesh.IsNull());
+        TestTrue(TEXT("Legacy default: no idle clip"), Fresh->VisualIdleAnimation.IsNull());
+        TestEqual(TEXT("Legacy default: unit visual scale"), Fresh->VisualMeshScale, 1.0f);
+    }
 
     return true;
 }

@@ -726,6 +726,25 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     FText Greeting;
 
+    // --- DCP-4 fields (additive) — real-body NPCs (Vess/Ione lineage) ---
+
+    /**
+     * DCP-4: optional real skeletal body (soft path). When set AND loaded, the
+     * NPC renders the real mesh + idle clip and the procedural silhouette
+     * (cylinder/head/hat) hides; when the asset is absent (pre-import state)
+     * the classic zero-asset look stays — fail-closed, never a broken mesh.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC|Appearance")
+    TSoftObjectPtr<USkeletalMesh> VisualMesh;
+
+    /** DCP-4: idle clip for the real body (AnimationSingleNode). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC|Appearance")
+    TSoftObjectPtr<UAnimSequenceBase> VisualIdleAnimation;
+
+    /** DCP-4: uniform scale for the real body (meshes differ in native size). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC|Appearance")
+    float VisualMeshScale = 1.0f;
+
     virtual FPrimaryAssetId GetPrimaryAssetId() const override
     {
         return FPrimaryAssetId(FPrimaryAssetType(TEXT("NPC")), NpcId);

@@ -8,6 +8,8 @@
 #include "AstrawildLog.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Engine/World.h"
+#include "Engine/SkeletalMesh.h" // DCP-4: NPC real-body soft paths.
+#include "Animation/AnimSequenceBase.h"
 
 // ---------------------------------------------------------------------------
 // Helpers — terse definition builders (data-driven in spirit; values migrate
@@ -1359,6 +1361,39 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     OldSaltPerry->Greeting = FText::FromString(TEXT("The tide took the old world. It can wait for you too."));
     OldSaltPerry->DialogueTreeId = TEXT("Dialogue_OldSaltPerry");
     Registry->RegisterNPC(OldSaltPerry);
+
+    // --- DCP-4 (2026-09-06): the Act 3 presence pair, Vess & Ione ---
+    // The deferred-by-design note said "new NPCs are cosmetic scope" — the
+    // user directive re-opened it. They arrive with the Storm Crown arc:
+    // Vess reads the anchors, Ione trades the wreck-glass. Both carry REAL
+    // bodies (soft-path survivor meshes — distinct, fail-closed to the
+    // procedural silhouette before the engine import).
+
+    UAstrawildNPCDefinition* Vess = NewObject<UAstrawildNPCDefinition>(Outer);
+    Vess->NpcId = TEXT("NPC_Vess");
+    Vess->DisplayName = FText::FromString(TEXT("Vess, the Storm-Scholar"));
+    Vess->Role = EAstrawildNPCRole::Elder; // Scholar archetype: tall silhouette + study lantern.
+    Vess->VillageId = TEXT("Village_Dawnstead");
+    Vess->PrimaryTint = FLinearColor(0.55f, 0.60f, 0.95f); // Storm-violet.
+    Vess->Greeting = FText::FromString(TEXT("The anchors are singing again. I charted this moment for twenty years."));
+    Vess->DialogueTreeId = TEXT("Dialogue_Vess");
+    Vess->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite")));
+    Vess->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle")));
+    Vess->VisualMeshScale = 1.0f;
+    Registry->RegisterNPC(Vess);
+
+    UAstrawildNPCDefinition* Ione = NewObject<UAstrawildNPCDefinition>(Outer);
+    Ione->NpcId = TEXT("NPC_Ione");
+    Ione->DisplayName = FText::FromString(TEXT("Ione, the Relic Trader"));
+    Ione->Role = EAstrawildNPCRole::Vendor;
+    Ione->VillageId = TEXT("Village_Dawnstead");
+    Ione->PrimaryTint = FLinearColor(0.90f, 0.72f, 0.35f); // Amber glass.
+    Ione->Greeting = FText::FromString(TEXT("Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest."));
+    Ione->DialogueTreeId = TEXT("Dialogue_Ione");
+    Ione->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
+    Ione->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    Ione->VisualMeshScale = 1.0f;
+    Registry->RegisterNPC(Ione);
 }
 
 namespace

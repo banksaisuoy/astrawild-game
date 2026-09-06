@@ -10,6 +10,7 @@ class UAstrawildNPCDefinition;
 class UAstrawildNPCScheduleComponent;
 class UStaticMeshComponent;
 class UPointLightComponent;
+class USkeletalMeshComponent; // DCP-4: real-body NPCs.
 class AAstrawildVillageActor;
 class UNavigationInvokerComponent;
 
@@ -49,6 +50,10 @@ public:
     /** Batch 8 — role-colored lantern so roles read at a glance (zero-asset look). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Appearance")
     TObjectPtr<UPointLightComponent> RoleLight;
+
+    /** DCP-4 — real skeletal body (soft-path load; replaces the procedural silhouette when present). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|NPC|Appearance")
+    TObjectPtr<USkeletalMeshComponent> VisualBodyMesh;
 
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|NPC")
     TObjectPtr<UAstrawildNPCDefinition> NpcDefinition;

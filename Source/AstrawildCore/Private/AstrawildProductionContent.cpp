@@ -2679,6 +2679,229 @@ void UAstrawildProductionContent::BuildDialogueTrees(UAstrawildItemRegistrySubsy
         }
     }
     Registry->RegisterDialogueTree(Nima);
+
+    // --- DCP-4 (2026-09-06): Vess & Ione — the Act 3 presence pair ---
+    // Vess charts the storm crown (progressive lore gated on the MQ-13..17
+    // beats); Ione trades the wreck-glass (a one-time starter gift + trade
+    // talk that bridges into SQ-25 "The Glass Trade"). Both follow the exact
+    // tree discipline of the eleven before them (gated choices, one-time
+    // flags, consequence routing — never toasts as state).
+    // Census note: trees 11 → 13, NPCs 11 → 13 (registry + validators + docs
+    // updated together — never one side alone).
+
+    UAstrawildDialogueTreeDefinition* Vess = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Vess->DialogueId = TEXT("Dialogue_Vess");
+    Vess->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("You feel it too, don't you? The pressure dropped three fingers at dawn. The crown is turning over in its sleep.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Tell me about the storm crown"));
+            Choice.GotoNodeId = TEXT("crown");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What are you doing in Dawnstead?"));
+            Choice.GotoNodeId = TEXT("survey");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("crown");
+        Node.Lines = {
+            Line(nullptr, TEXT("Before the storms, this Vale had a name. I found it carved under the Frostveil ice — a request, not a warning: 'keep the sleeper fed with light.'")),
+            Line(nullptr, TEXT("The three anchors — Frostveil, Sunscar, Stormcrest — aren't towers. They're feeders. Whoever built them knew what slept below the Eye."))
+        };
+        {
+            // MQ-13 beat: the anchors read — she interprets them.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What did the anchors say?"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_StormAnchors");
+            Choice.GotoNodeId = TEXT("anchors");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // MQ-16 beat: the Sovereign truth.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("The Sovereign — what WAS it?"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_TheDrownedSovereign");
+            Choice.GotoNodeId = TEXT("sovereign");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("anchors");
+        Node.Lines = {
+            Line(nullptr, TEXT("You read them yourself — all three, in order. Frostveil counts the sleeper's pulse. Sunscar marks its hunger. Stormcrest is the latch.")),
+            Line(nullptr, TEXT("The latch is what your Warden's core came from. Whatever else happens: the latch must be answered, or the storms come back worse. Maren knows. She's been avoiding knowing."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("sovereign");
+        Node.Lines = {
+            Line(nullptr, TEXT("A warden. The drowned civilization built it to keep the sleeper fed — and when the seas rose, it drowned at its post still trying.")),
+            Line(nullptr, TEXT("Everything it wore, every crown-piece, was a tool for measuring light. That's why your dawn-weapons cut it like paper. You didn't kill a king. You retired a lamp-keeper."))
+        };
+        {
+            // Post-game beat: the settled Vale, through the scholar's eye.
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("So what happens to the Vale now?"));
+            Choice.RequiredQuestCompletedId = TEXT("Quest_FirstDawnAgain");
+            Choice.GotoNodeId = TEXT("dawn");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("dawn");
+        Node.Lines = {
+            Line(nullptr, TEXT("Now? We live in an answered question. The anchors stand silent, the pulse is quiet, and for the first time in my life the horizon is just weather.")),
+            Line(nullptr, TEXT("I'll keep the charts anyway. A Vale that changed once can change twice — and someone should remember which choice was made, and why."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("survey");
+        Node.Lines = {
+            Line(nullptr, TEXT("Waiting. Twenty years of storm-glass records are in my packs, and every page of them ends with the same margin note: 'verify after the crown stirs.'")),
+            Line(nullptr, TEXT("It's stirring. Take the margin notes to your research bench — I copied them fair, and I won't need them where I'm going next."))
+        };
+        {
+            // One-time research grant (the Tam/Wren tip discipline).
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Take the storm-glass notes"));
+            Choice.ForbiddenFlagId = TEXT("Vess_SurveyTip");
+            Choice.SetFlagId = TEXT("Vess_SurveyTip");
+            Choice.GiveResearchPoints = 15;
+            Choice.GotoNodeId = TEXT("surveyed");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("surveyed");
+        Node.Lines = { Line(nullptr, TEXT("The bench will make more of them than I ever could. That's the point of a bench.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Vess->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Vess);
+
+    UAstrawildDialogueTreeDefinition* Ione = NewObject<UAstrawildDialogueTreeDefinition>(Registry);
+    Ione->DialogueId = TEXT("Dialogue_Ione");
+    Ione->EntryNodeId = TEXT("hello");
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("hello");
+        Node.Lines = { Line(nullptr, TEXT("You're the one who walked into the Eye and walked back out. That makes you my favorite kind of customer: still breathing.")) };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("What's the trade in town?"));
+            Choice.GotoNodeId = TEXT("glass");
+            Node.Choices.Add(Choice);
+        }
+        {
+            // One-time starter gift — Act 3 flavor (the wreck-glass sample).
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Accept the trader's sample"));
+            Choice.ForbiddenFlagId = TEXT("Ione_GiftGiven");
+            Choice.SetFlagId = TEXT("Ione_GiftGiven");
+            Choice.GiveItemId = TEXT("Item_MaelstromGlass");
+            Choice.GiveItemQuantity = 2;
+            Choice.GotoNodeId = TEXT("gift");
+            Node.Choices.Add(Choice);
+        }
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Leave"));
+            Choice.bEndDialogue = true;
+            Node.Choices.Add(Choice);
+        }
+        Ione->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("glass");
+        Node.Lines = {
+            Line(nullptr, TEXT("Maelstrom glass. The storms fused sand into it for a hundred years and nobody could reach the beds. Now the tide's opened the old wreck's hold, and the first honest salvage of my life is sitting right there.")),
+            Line(nullptr, TEXT("Tam buys at nine. I sell at eight, because Tam measures twice and I measure once. Watch the Sunscar beds too — the desert make anneals differently, ringier. Crafters care. Crafters pay."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Ione->Nodes.Add(Node);
+    }
+    {
+        FAstrawildDialogueNode Node;
+        Node.NodeId = TEXT("gift");
+        Node.Lines = {
+            Line(nullptr, TEXT("First shard's free — the second one you owe me a story about. That's the whole contract, printed nowhere.")),
+            Line(nullptr, TEXT("Fair warning: hold that glass up during a storm roll and it sings before the clouds do. Old sailor's tell? Ask Perry. Everything I know that's true, I learned from that man's lies."))
+        };
+        {
+            FAstrawildDialogueChoice Choice;
+            Choice.Text = FText::FromString(TEXT("Back"));
+            Choice.GotoNodeId = TEXT("hello");
+            Node.Choices.Add(Choice);
+        }
+        Ione->Nodes.Add(Node);
+    }
+    Registry->RegisterDialogueTree(Ione);
 }
 
 // ---------------------------------------------------------------------------

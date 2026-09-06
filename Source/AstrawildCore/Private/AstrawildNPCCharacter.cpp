@@ -8,6 +8,9 @@
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCAIController.h"
+#include "Components/SkeletalMeshComponent.h" // DCP-4: real-body NPCs.
+#include "Engine/SkeletalMesh.h"
+#include "Animation/AnimSequenceBase.h"
 #include "AstrawildNPCScheduleComponent.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
@@ -153,6 +156,85 @@ void AAstrawildNPCCharacter::RefreshAppearanceFromDefinition()
     if (!IsValid(NpcDefinition))
     {
         return;
+    }
+
+    // DCP-4 (real-body NPCs): a definition with a VisualMesh tries the soft
+    // load FIRST — on success the real skeletal body + idle clip replaces the
+    // procedural silhouette (cylinder/head/hat hide, lantern stays for role
+    // identity). Fail-closed: asset not imported yet → classic look below.
+    if (!NpcDefinition->VisualMesh.IsNull())
+    {
+        USkeletalMesh* RealBody = NpcDefinition->VisualMesh.LoadSynchronous();
+        if (RealBody)
+        {
+            if (!VisualBodyMesh)
+            {
+                VisualBodyMesh = NewObject<USkeletalMeshComponent>(this, TEXT("NPCVisualBody"));
+                if (VisualBodyMesh)
+                {
+                    VisualBodyMesh->SetupAttachment(GetCapsuleComponent());
+                    VisualBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                    VisualBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+                    // GLB-forward meshes face +X; characters face -X — the
+                    // EchoCharacter TryActivateSkeletalBody rotation idiom.
+                    VisualBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+                    VisualBodyMesh->RegisterComponent();
+                }
+            }
+            if (VisualBodyMesh)
+            {
+                VisualBodyMesh->SetSkeletalMesh(RealBody);
+                const float BodyScale = FMath::Max(0.05f, NpcDefinition->VisualMeshScale);
+                VisualBodyMesh->SetRelativeScale3D(FVector(BodyScale));
+                if (UAnimSequenceBase* IdleClip = NpcDefinition->VisualIdleAnimation.IsValid()
+                    ? NpcDefinition->VisualIdleAnimation.Get()
+                    : NpcDefinition->VisualIdleAnimation.LoadSynchronous())
+                {
+                    VisualBodyMesh->PlayAnimation(IdleClip, true);
+                }
+                if (PlaceholderMesh)
+                {
+                    PlaceholderMesh->SetVisibility(false);
+                }
+                if (HeadMesh)
+                {
+                    HeadMesh->SetVisibility(false);
+                }
+                if (HatMesh)
+                {
+                    HatMesh->SetVisibility(false);
+                }
+                if (RoleLight)
+                {
+                    RoleLight->SetLightColor(NpcDefinition->PrimaryTint);
+                }
+                return; // Real body owns the silhouette — role tuning below never runs.
+            }
+        }
+        else
+        {
+            UE_LOG(LogAstrawildLog, Log,
+                TEXT("NPC %s visual mesh not imported yet — keeping the procedural silhouette (fail-closed)."),
+                *NpcDefinition->NpcId.ToString());
+        }
+    }
+    else if (VisualBodyMesh)
+    {
+        // Definition switched away from a real body — restore the classic look.
+        VisualBodyMesh->DestroyComponent();
+        VisualBodyMesh = nullptr;
+        if (PlaceholderMesh)
+        {
+            PlaceholderMesh->SetVisibility(true);
+        }
+        if (HeadMesh)
+        {
+            HeadMesh->SetVisibility(true);
+        }
+        if (HatMesh)
+        {
+            HatMesh->SetVisibility(true);
+        }
     }
 
     // Role identity: lantern color + silhouette proportions.

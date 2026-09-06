@@ -227,5 +227,5 @@ factually-true fraction — none presents as current status after this sync.
 
 Everything else in `Docs/` is HISTORICAL evidence unless explicitly listed
 here. Product canon (v9.5 DCP update): 12 zones · 229 Echo species · 22 quests (17 MQ + 5 post-game DCP-1) · 17
-techs · 58 recipes · 26 building pieces · 11 NPCs · 3 dungeons · 4 bosses ·
+techs · 58 recipes · 26 building pieces · 13 NPCs (11 + DCP-4 Vess/Ione) · 3 dungeons · 4 bosses ·
 Ending A/B + post-game · private LAN 4-player.

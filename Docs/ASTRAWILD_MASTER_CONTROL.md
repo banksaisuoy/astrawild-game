@@ -128,7 +128,7 @@ No cheat-command dependency anywhere in the chain.
   and boss pipelines in the final audit). All 19 authored species, all 204 bestiary-generated rows and all
   4 bosses obey this matrix (FR-3 + final audit H-1/H-2/H-4). The Glass Tyrant's Light weakness is the one
   documented encounter DESIGN exception (Ash otherwise has no weakness — see ProductionContent.cpp).
-- **2 villages** (Dawnstead 8 NPCs + Driftwood Landing 3), all 11 NPCs now have dialogue trees.
+- **2 villages** (Dawnstead 10 NPCs — 8 + the DCP-4 Act 3 pair Vess/Ione — + Driftwood Landing 3), all 13 NPCs conversational.
 - **3 dungeons**: Hollow Underlight (5 rooms, Warden), Sunken Vault (4 rooms, Colossus),
   Eye of the Maelstrom (5 rooms, Drowned Sovereign — Final Run). Each now reads distinctly IN-ROOM
   (DP-9): per-dungeon themed shells (tint/proportions/side walls), deterministic ArtPack dressing,
@@ -137,8 +137,8 @@ No cheat-command dependency anywhere in the chain.
 - **Content totals** (machine-checked census — the single authoritative set, enforced by
   `Scripts/validate_final_run.py` §11 equality gates and re-derived live by the
   engine-side "live census" registry log): **78 items, 58 recipes, 17 techs, 22 quests (17 MQ + 5 post-game DCP-1),
-  229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 11 NPCs,
-  11 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots**.
+  229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 13 NPCs,
+  13 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots** (NPCs/trees 11→13 = DCP-4 Vess/Ione).
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
   superseded. The automation suite holds **126 world-free contract tests** (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 LAN co-op + 1 PCR-1 Field Journal + 1 PCR-2 Echo Roster + 1 PCR-3 World Map + 1 PCR-4 Tier-B library + 1 PCR-5 hunt system + 1 FPP-1 presentation contract + 1 SCI-FANTASY mutation contract). The player-facing rulebook is `Docs/ASTRAWILD_PLAYER_RULES.md` (every number sourced from live code at the freeze SHA).
 
@@ -224,7 +224,7 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 | W-13 | Dungeons (×3) | LIVE + Eye of the Maelstrom | saved state, gates, loot |
 | W-14 | Bosses (Warden/Colossus/Tyrant/Sovereign) | LIVE | display names fixed |
 | W-15 | World (12 zones/weather/events/POIs) | LIVE + Azure POI | |
-| W-16 | NPC/villages/dialogue | LIVE + 5 trees | all 11 NPCs conversational |
+| W-16 | NPC/villages/dialogue | LIVE + 5 trees + 2 DCP-4 trees | all 13 NPCs conversational (11 + Vess/Ione) |
 | W-17 | Skiff | LIVE + Stratos Coil + mesh binding | ceiling gate = Act 3 |
 | W-18 | Save/Load | LIVE + schema V5 + FR-0004..10 | day cap, slot fallback, robot chassis |
 | W-19 | HUD/UI | LIVE + ending banner + boss labels | |

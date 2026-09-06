@@ -1135,16 +1135,20 @@ void AAstrawildWorldBootstrapper::SpawnVillages()
         Dawnstead->HutCount = 7;
         Dawnstead->VillageRadius = 1800.0f;
 
-        // Roster: warden (quest), two traders, blacksmith, elder, two guards, farmer.
+        // Roster: warden (quest), two traders, blacksmith, elder, two guards,
+        // farmer, + the DCP-4 Act 3 pair (Vess the storm-scholar, Ione the
+        // relic trader — they arrive as the crown stirs).
         const FName DawnsteadRoster[] = {
             TEXT("NPC_WardenMaren"), TEXT("NPC_VendorTam"), TEXT("NPC_HerbalistWren"),
             TEXT("NPC_BlacksmithBorin"), TEXT("NPC_ElderRowan"), TEXT("NPC_GuardSela"),
-            TEXT("NPC_GuardBram"), TEXT("NPC_FarmerJori")
+            TEXT("NPC_GuardBram"), TEXT("NPC_FarmerJori"),
+            TEXT("NPC_Vess"), TEXT("NPC_Ione")
         };
+        constexpr int32 DawnsteadRosterSize = 10;
         int32 Slot = 0;
         for (const FName NpcId : DawnsteadRoster)
         {
-            const float Angle = 2.0f * PI * (Slot + 0.5f) / 8;
+            const float Angle = 2.0f * PI * (Slot + 0.5f) / DawnsteadRosterSize;
             const FVector SpawnPoint = Dawnstead->GetActorLocation() + FVector(
                 FMath::Cos(Angle) * 2400.0f, FMath::Sin(Angle) * 2400.0f, 100.0f);
             if (AAstrawildNPCCharacter* Npc = World->SpawnActor<AAstrawildNPCCharacter>(
