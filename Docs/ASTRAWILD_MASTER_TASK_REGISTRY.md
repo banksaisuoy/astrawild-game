@@ -397,3 +397,27 @@ validator" everywhere (the project's stale-number discipline). The 8 script
 patches are the path-flavored fix of the exact false-alarm class the v9.2
 round closed for numbers: hardcoded `E:\` layout would have failed every
 fresh-machine run at the first Build.ps1 invocation.
+
+## §Q VISUAL EXPERIENCE PASS (VIS — current session, user directive "FINAL PRODUCT VISION / CUTE SCI-FI CREATURE COMPLETION PASS")
+
+Directive: the final ASTRAWILD experience must read as a modern, hi-tech, colorful sci-fi creature
+RPG with CUTE creatures (Aniimo-class experience quality as REFERENCE CLASS, never cloned —
+ASTRAWILD keeps its own SCI-FI SURVIVAL FRONTIER identity). This is the LAST source-side product
+pass before the one-time engine run: creature visual-band spectrum (cute/cool/strange) +
+personality presentation + zone fauna identity + world/zone/NPC coherence. The v9.6 "source-side
+complete incl. DCP + FMP" state is the BASE this pass builds on; no DCP/FMP/SCI/AO work is
+discarded. Census UNCHANGED (15 gates incl. 229/204/22 quests/13 NPCs); no second architectures
+(mutation system/AI/bond/traversal/skills/bosses stay as-is); free-license policy unchanged.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| VIS-0 | Registration + research | LIVE_EXECUTION_STATE queue updated (VIS-001 registered IN_PROGRESS, ENGINE-RUN-1 stays BLOCKED-external as the only NOW-adjacent row) + §Q opened + MASTER_CONTROL v9.7 header + creature-collector research pass (web-search: Aniimo = free-to-play open-world creature RPG, continent Idyll — experience qualities noted as REFERENCE-ONLY: creature personality visible to player, habitat identity/variants, bond + traversal utility, home system, adorable profile-first presentation; NO proprietary design copied) | GLM | COMPLETE | docs-only batch; validators re-run PASS at the commit; no source changes |
+| VIS-1 | Creature identity layer (code) | `EAstrawildVisualBand` (Cute/Cool/Strange, additive enum) + pure static `AAstrawildEchoCharacter::ComputeVisualBand(Family, BodyPlan, SizeClass)` deterministic rule + journal ROW band line + journal DETAIL build/band line + roster row personality+band line (per-INSTANCE personality — the Aniimo-quality "my creature is Curious") + personality-driven idle play-rate + PMC Tier-C cuteness pass (cute-band head/eye proportion + dark eye pair on headed plans — the 178 PMC-species fallback path) + test 134 `ASTRAWILD.VIS1.CreatureIdentityContract` + validator gate 133→134 | GLM | IN_PROGRESS | census UNCHANGED (enum + presentation only, zero content inflation) |
+| VIS-2 | Tier-B cuteness art pass | aw_archetypes.py band-aware proportion modulators (cute: head↑ eyes↑ limbs↓ bulk↑; cool: horns/spikes↑ legs↑; strange: elongation + emissive accents) + gen_tier_b.py band derivation (mirrors the C++ rule from the same parsed source tables) + re-bake the 36 Tier-B GLBs + validate_glb PASS ×36 + ArtSource manifest sync + LFS | GLM | PLANNED | same 36 species, same convention paths — §9b gate stays 36/36; import contract unchanged |
+| VIS-3 | World/zone/NPC coherence docs | CREATURE_VISUAL_STRATEGY v2.0 (cute/cool/strange spectrum § + personality mapping + zone fauna composition + the research reference section) + ZONE_WORLD v2 (12-zone visual identity: palette direction/mood/landmark + per-zone fauna roster from the ACTUAL spawn tables) + NPC visual-role coverage + base/home experience coherence | GLM | PLANNED | docs-only; zone canon UNCHANGED (identity direction documents existing tints/fauna) |
+| VIS-4 | Review packet + gate | `Docs/ASTRAWILD_FINAL_PRODUCT_REVIEW_PACKET.md` (VIS summary/changed files/new+rejected assets/risks/evidence/engine-unverified items) + VIS-001 = READY_FOR_REVIEW + independent 5-question review (real P0/P1 gap? source contradiction? dead-end system? false asset claim? visual inconsistency?) + apply only genuine findings + re-freeze (MASTER_CONTROL v9.x SOURCE_PRODUCT_FROZEN re-declared, LIVE_STATE VIS-001 → ACCEPTED, ENGINE-RUN-1 → NEXT unblocked) | GLM | PLANNED | validators PASS ×2 at every commit; final report in the directive §30 format |
+
+**§Q ground rules** (binding): all changes source-side/statically validatable; census content
+counts UNCHANGED; no new AI/bond/traversal/skill/boss/mutation architecture; no new asset
+acquisition (existing self-generated + CC0 libraries cover the pass — TRUE_MISSING stays 0);
+every batch commit+push with task ID; ENGINE-RUN-1 stays BLOCKED (external) until VIS-001 closes.

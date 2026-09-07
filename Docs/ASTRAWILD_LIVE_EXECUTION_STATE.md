@@ -18,12 +18,12 @@
 
 | Field | Value (evidence-derived at this sync) |
 |---|---|
-| **CURRENT_HEAD** | `1699d588e995cff876d309b2a36fe79388ff6a99` + the v9.5 DCP docs close + the v9.6 FMP commit (a live-state file always trails its own last commit by one docs commit — the pinned SHA is the product tip the queue describes) |
+| **CURRENT_HEAD** | `a094eda` (v9.6 FMP tip) — VIS-0 registration lands on top (a live-state file always trails its own last docs commit by one docs commit; the pinned SHA is the product tip the queue describes) |
 | **ACTIVE_BRANCH** | `final-completion` (authoritative until real final engine acceptance; `main` @ `94a398c939678963e1d0e0a8baac8cddba2e8d90` is the frozen baseline mirror — never the dev base, never merged into during sync passes) |
 | **LAST_SYNC_TIME** | 2026-09-06 (FMP session — see §5 change log) |
-| **CURRENT_PHASE** | POST-FMP / ENGINE-VERIFICATION HANDOFF — source-side complete incl. the DCP pack (v9.5) AND the fresh-machine onboarding pack (v9.6 FMP: playbook + preflight + checklist + agent directive); the one-time engine run (ENGINE-RUN-1) is the only remaining product-critical work |
-| **CURRENT_TASK** | none in flight (FMP-1 delivered this session — see §3 DONE; validators ALL PASS at the FMP tip) |
-| **NEXT_TASK** | ENGINE-RUN-1 / V2-36 engine run (see §3 NOW — unchanged, external; fresh machines start with `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md`) |
+| **CURRENT_PHASE** | VIS — the user's FINAL PRODUCT VISION directive (cute sci-fi creature experience pass) re-opened source-side scope ON TOP of the v9.6 complete base (FMP + DCP included); after VIS closes, ENGINE-RUN-1 returns to being the only remaining product-critical work |
+| **CURRENT_TASK** | **VIS-001 — MODERN CUTE SCI-FI CREATURE / WORLD EXPERIENCE PASS** (IN_PROGRESS since VIS-0; batches VIS-0..VIS-4 in registry §Q) |
+| **NEXT_TASK** | finish VIS-001 (batches VIS-1..VIS-4) → then ENGINE-RUN-1 / V2-36 engine run (fresh machines start with `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md`) |
 | **BLOCKED_TASKS** | V2-29..V2-36 (external: no UE5/MSVC on the Linux source sandbox — the Windows UE 5.8.2 machine is the exclusive runtime authority) |
 | **CURRENT_TEST_COUNT** | 133 world-free automation contracts (126 + 7 DCP; validator 133-test gate PASS at tip) |
 | **CURRENT_CONTENT_COUNT** | 416 genuine UE packages in `Content/` (magic 0x9E2A83C1 re-walked; 0 bad) |
@@ -71,7 +71,8 @@ verified + manifest + correct intended integration state; DOCUMENTATION task
 ### NOW (in flight)
 | ID | Task | State | Owner | Notes |
 |---|---|---|---|---|
-| **ENGINE-RUN-1** | One-time engine integration: `Setup_And_Play.bat` → import 109 real meshes + clips (`import_report.json` total_missing == 0 incl. AM_ clips) → showcase map PIE (`/Game/Maps/L_Showcase_ArtOverhaul`) → build → 126+DCP tests → PIE golden path §2 → package → V2-29..V2-36 rows | **BLOCKED (external)** | Antigravity | Windows UE 5.8.2 machine only. Runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b/§20c/§20d/§20e + queue rows. Evidence: report files + clips + BUILD_STATUS playtest table. Fix-forward on FAIL, never silently defer. |
+| **VIS-001** | MODERN CUTE SCI-FI CREATURE / WORLD EXPERIENCE PASS — the user's FINAL PRODUCT VISION directive: cute/cool/strange creature band spectrum + personality presentation + zone fauna identity + world visual coherence; batches VIS-0..VIS-4 (registry §Q); census/architecture/license constraints inherited; completion gate = the directive §25 checklist evidenced in `Docs/ASTRAWILD_FINAL_PRODUCT_REVIEW_PACKET.md` | **IN_PROGRESS** (VIS-0 delivered) | GLM | research pass done (Aniimo experience qualities as reference class, never cloned); freeze re-arms at VIS closure |
+| **ENGINE-RUN-1** | One-time engine integration: `Setup_And_Play.bat` → import 109 real meshes + clips (`import_report.json` total_missing == 0 incl. AM_ clips) → showcase map PIE (`/Game/Maps/L_Showcase_ArtOverhaul`) → build → 126+DCP tests → PIE golden path §2 → package → V2-29..V2-36 rows | **BLOCKED (external)** — waits for VIS-001 | Antigravity | Windows UE 5.8.2 machine only. Runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b/§20c/§20d/§20e + queue rows. Evidence: report files + clips + BUILD_STATUS playtest table. Fix-forward on FAIL, never silently defer. |
 
 ### NEXT (after ENGINE-RUN-1 clears, or if it surfaces real defects)
 | ID | Task | State | Owner | Notes |
@@ -128,7 +129,8 @@ UPDATE LIVE EXECUTION STATE → UPDATE TASK REGISTRY → NEXT TASK.
 | 2026-09-06 | FINAL sync commit of this session — §5 rows for the sync's own commits + repo-tip convention documented; validators re-run ALL PASS before push; remote HEAD verified after each push | this commit |
 | 2026-09-06 | USER DIRECTIVE — DEFERRED COMPLETION PACK (DCP-1..DCP-7): user re-opened ALL deferred-by-design items ("งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน"); playable-first order = SQ-23 quests → NG+ → ending cinematics → Vess/Ione → toast sounds/journal detail → gamepad chord → mesh coverage; registry §O opened | (registration) |
 | 2026-09-06 | **DCP PACK DELIVERED** — all 7 tasks implemented + committed (e90a773..1c1563c, one logical commit each with validators re-run ALL PASS pre-commit): quests 17→22 (census synced), NPC/tree census 11→13, tests 126→133, direct-mesh coverage 42→51/229, OnEndingTriggered wired (was zero subscribers), first PlaySound2D + first SetViewTargetWithBlend in module, NG+ gate = first real bPostGameActive consumer, PCR4 latent 39-assert fixed; docs synced (MASTER_CONTROL v9.5, READINESS, HANDOFF, TEST_INVENTORY, INPUT_REFERENCE, canon line) | `1c1563c` |
-| 2026-09-06 | **FMP PACK DELIVERED (v9.6)** — user directive "คู่มือ AI บนเครื่องเปล่า ละเอียดยิบ ไล่ตั้งแต่ต้น": fresh-machine onboarding pack (playbook P0→P13 + preflight gate + 43-step JSON checklist + paste-ready agent directive) + 8 wrapper .ps1 scripts made env-adaptive with legacy E:\ defaults preserved (fresh machines could never run the hardcoded paths — the stale-value defect class applied to paths, now closed) + HANDOFF current-facing test counts 124/126→133 + README/queue/registry pointers | this commit |
+| 2026-09-06 | **FMP PACK DELIVERED (v9.6)** — user directive "คู่มือ AI บนเครื่องเปล่า ละเอียดยิบ ไล่ตั้งแต่ต้น": fresh-machine onboarding pack (playbook P0→P13 + preflight gate + 43-step JSON checklist + paste-ready agent directive) + 8 wrapper .ps1 scripts made env-adaptive with legacy E:\ defaults preserved (fresh machines could never run the hardcoded paths — the stale-value defect class applied to paths, now closed) + HANDOFF current-facing test counts 124/126→133 + README/queue/registry pointers | `a094eda` |
+| 2026-09-06 | **USER DIRECTIVE — VIS-001 (FINAL PRODUCT VISION / CUTE SCI-FI CREATURE COMPLETION PASS)**: the final experience must read as a modern, hi-tech, colorful sci-fi creature RPG with CUTE creatures (Aniimo-class experience quality as reference, never cloned); last source-side product pass before the engine run; research pass complete; registry §Q opened; ENGINE-RUN-1 stays BLOCKED-external and waits for VIS closure; v9.6 freeze superseded by this explicit scope expansion (nothing discarded — VIS is strictly additive over the FMP/DCP/SCI/AO base) | (registration) |
 
 ---
 
