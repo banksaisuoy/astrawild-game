@@ -1,22 +1,27 @@
 #include "AstrawildSaveSubsystem.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDungeonGeneratorActor.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildHuntSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameState.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildPOISubsystem.h"
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPowerSubsystem.h"
+#include "AstrawildSpoilageSubsystem.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchSubsystem.h"
 #include "AstrawildRestPoint.h"
@@ -48,6 +53,19 @@ uint32 UAstrawildSaveSubsystem::ComputeChecksum(const int32 SchemaVersion, const
     return Hash;
 }
 
+namespace
+{
+    /**
+     * FR-2 (Final Run redo): clamp a restored float, treating NaN/Inf as the fallback.
+     * FMath::Clamp alone lets NaN through (NaN comparisons are always false), which
+     * poisons health/stamina/charge for the rest of the session from one bad save.
+     */
+    float SanitizeSavedFloat(const float Value, const float Fallback)
+    {
+        return (FMath::IsNaN(Value) || !FMath::IsFinite(Value)) ? Fallback : Value;
+    }
+}
+
 bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, const int32 UserIndex)
 {
     if (!World || World->GetNetMode() == NM_Client || SlotName.IsEmpty())
@@ -74,6 +92,13 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         SaveGame->WorldState.DayNumber = GameState->DayNumber;
         SaveGame->WorldState.Weather = GameState->WeatherState;
         SaveGame->WorldState.Seed = GameState->WorldSeed;
+
+        // Final Run (FR-6, schema v5): the ending verdict persists — a chosen
+        // ending survives save/load and re-asserts its world rules on restore.
+        SaveGame->EndingState = static_cast<int32>(GameState->EndingState);
+        SaveGame->bPostGameUnlocked = GameState->bPostGameActive;
+        // DCP-2: the NG+ cycle rides along (additive v5 — legacy saves read 0).
+        SaveGame->NGPlusCycle = GameState->NGPlusCycle;
     }
 
     // --- Player (first player — single-player-first architecture) ---
@@ -116,12 +141,86 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
         {
             Quests->ExportForSave(SaveGame->Quests);
+            // Final-audit G-3: lifetime defeat counters ride beside the quests.
+            Quests->ExportDefeatCounts(SaveGame->DefeatedCreatureCounts);
         }
 
         // Batch 3 — persistent story flags live beside them.
         if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
         {
             Dialogue->ExportForSave(SaveGame->DialogueFlags);
+        }
+
+        // GDP-3 + SCP Phase 12 (FCR-1 fix): AttributeComponent/DurabilityComponent are
+        // PAWN members — re-derive the pawn here (the earlier cast scope closed above).
+        if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
+        {
+            if (Player->AttributeComponent)
+            {
+                SaveGame->Attributes = Player->AttributeComponent->ToSaveData();
+            }
+
+            if (Player->DurabilityComponent)
+            {
+                SaveGame->EquipmentDurability = Player->DurabilityComponent->ExportForSave();
+            }
+        }
+    }
+
+    // LCP-4 (LAN co-op): one block per CONNECTED non-host player. The host
+    // block above stays the legacy singular fields — single-player saves are
+    // byte-identical. Each remote player's server-side pawn/components carry
+    // their authoritative state (clients never write world state, PART 7).
+    {
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            APlayerController* PC = Cast<APlayerController>(*It);
+            if (!PC || PC == World->GetFirstPlayerController())
+            {
+                continue; // host handled by the legacy block above
+            }
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+            {
+                SaveGame->CoopPlayers.Add(BuildCoopPlayerBlock(AstrawildPC));
+            }
+        }
+        // Keep the in-session cache fresh for reconnect restores (host + co-op players).
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(*It))
+            {
+                SnapshotPlayerForSession(AstrawildPC);
+            }
+        }
+    }
+
+    // SCP Phase 12: perishable freshness (world subsystem owns the aging).
+    if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
+    {
+        SaveGame->FoodFreshness = Spoilage->ExportForSave();
+    }
+
+    // GDP-4: NPC affinity snapshot (every NPC with a stable id).
+    // FCR-1-b fix (M-b5): the per-day gate stamps persist too — reloading inside
+    // one in-world day must NOT reopen the talk/trade affinity faucets.
+    SaveGame->NPCAffinities.Reset();
+    // FCR-1-b fix (L-b10): export dedupes by stable id (first actor wins) to
+    // match the import's SeenNpcIds skip — duplicate-id NPCs no longer silently
+    // reset affinity to 0 on load (only the first row restored before).
+    TSet<FName> ExportedNpcIds;
+    for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+    {
+        AAstrawildNPCCharacter* Npc = *NpcIt;
+        if (Npc && !Npc->GetStableNPCId().IsNone() && Npc->Affinity > 0.0f &&
+            !ExportedNpcIds.Contains(Npc->GetStableNPCId()))
+        {
+            ExportedNpcIds.Add(Npc->GetStableNPCId());
+            FAstrawildNPCAffinitySaveData Row;
+            Row.NPCId = Npc->GetStableNPCId();
+            Row.Affinity = FMath::Clamp(Npc->Affinity, 0.0f, 100.0f);
+            Row.LastTalkGainDay = Npc->GetLastTalkAffinityDay();
+            Row.LastTradeGainDay = Npc->GetLastTradeAffinityDay();
+            SaveGame->NPCAffinities.Add(Row);
         }
     }
 
@@ -169,6 +268,11 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
         RobotData.OwnerPlayerId = RobotIt->GetOwnerPlayerId();
         RobotData.Transform = RobotIt->GetActorTransform();
         RobotData.AssignedSiteId = RobotIt->GetAssignedSiteId();
+        // Final-audit H-2: the chassis id MUST be written or specialist robots
+        // (Borebot/Cultivator/Sentinel — distinct recipes + rates) silently degrade
+        // to the generic 0.8x frame on every save/load; the load path (below)
+        // has branched on this field since it was introduced, but nothing wrote it.
+        RobotData.RobotDefinitionId = RobotIt->RobotDefinitionId;
         SaveGame->Robots.Add(RobotData);
     }
 
@@ -201,6 +305,10 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
     if (const UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
     {
         WorldEvents->ExportForSave(SaveGame->WorldEvents);
+        if (UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>())
+        {
+            Hunts->ExportForSave(SaveGame->Hunts);
+        }
     }
     if (const UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
     {
@@ -275,6 +383,23 @@ void UAstrawildSaveSubsystem::MigrateV3ToV4(UAstrawildSaveGame* SaveGame) const
     UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v3 to v4 (additive)."));
 }
 
+void UAstrawildSaveSubsystem::MigrateV4ToV5(UAstrawildSaveGame* SaveGame) const
+{
+    if (!SaveGame || SaveGame->SaveSchemaVersion != 4)
+    {
+        return;
+    }
+
+    // v4 -> v5 (Final Run): purely additive — the Act 3 ending defaults to None
+    // (the story is still in play on legacy saves) and post-game stays locked.
+    // A saved ending re-asserts on load through SetEndingState (weather pin for
+    // "The Dawn That Stays" included).
+    SaveGame->EndingState = 0;
+    SaveGame->bPostGameUnlocked = false;
+    SaveGame->SaveSchemaVersion = 5;
+    UE_LOG(LogAstrawildSave, Log, TEXT("Migrated save from schema v4 to v5 (additive — ending = None)."));
+}
+
 bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, const int32 UserIndex)
 {
     if (!World || World->GetNetMode() == NM_Client || !DoesSaveExist(SlotName, UserIndex))
@@ -302,18 +427,59 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         MigrateV1ToV2(SaveGame);
         MigrateV2ToV3(SaveGame);
         MigrateV3ToV4(SaveGame);
+        MigrateV4ToV5(SaveGame);
+    }
+    else if (SaveGame->SaveSchemaVersion > CurrentSchemaVersion)
+    {
+        // FR-2 (Final Run redo): refuse FUTURE schemas. A save written by a newer
+        // binary deserializes unknown fields as defaults — a silent partial load that
+        // looks fine while eating progress. Fail closed: the file stays on disk; the
+        // player needs the matching binary (LoadLatest falls back to the other slot).
+        UE_LOG(LogAstrawildSave, Error, TEXT("LoadWorld: slot %s schema %d is newer than supported %d — refusing to load."),
+            *SlotName, SaveGame->SaveSchemaVersion, CurrentSchemaVersion);
+        return false;
     }
 
     // --- World state ---
     if (AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>())
     {
-        GameState->SetTimeOfDayMinutes(SaveGame->WorldState.ElapsedWorldMinutes);
-        while (GameState->DayNumber < SaveGame->WorldState.DayNumber)
+        GameState->SetTimeOfDayMinutes(SanitizeSavedFloat(SaveGame->WorldState.ElapsedWorldMinutes, 0.0f));
+
+        // FR-2 (Final Run redo): corrupted DayNumber (e.g. 2 billion) used to spin the
+        // catch-up loop below for billions of iterations — the classic boot freeze.
+        // Anything beyond current day + MaxCatchUpDays is treated as corruption:
+        // clamped (logged), never trusted, never infinite.
+        int32 TargetDay = SaveGame->WorldState.DayNumber;
+        if (TargetDay < 1)
+        {
+            UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: invalid day %d in slot %s — treating as day 1."), TargetDay, *SlotName);
+            TargetDay = 1;
+        }
+        const int32 MaxReachableDay = FMath::Max(1, GameState->DayNumber) + MaxCatchUpDays;
+        if (TargetDay > MaxReachableDay)
+        {
+            UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: day %d exceeds catch-up cap (current + %d) — clamped. Slot %s is likely corrupt."),
+                TargetDay, MaxCatchUpDays, *SlotName);
+            TargetDay = MaxReachableDay;
+        }
+        while (GameState->DayNumber < TargetDay)
         {
             GameState->AdvanceDay();
         }
         GameState->SetWeatherState(SaveGame->WorldState.Weather);
         GameState->SetWorldSeed(SaveGame->WorldState.Seed);
+
+        // Final Run (FR-6, schema v5): restore the ending verdict. SetEndingState
+        // re-asserts the world rules (Clear pin for "The Dawn That Stays") and
+        // flips post-game on — but never overwrites a live ending (one-way rule).
+        // The clamp refuses out-of-range values from corrupt saves (fail-closed).
+        const int32 SavedEnding = FMath::Clamp(SaveGame->EndingState,
+            0, static_cast<int32>(EAstrawildEndingState::Count) - 1);
+        GameState->SetEndingState(static_cast<EAstrawildEndingState>(SavedEnding));
+
+        // DCP-2: restore the NG+ cycle (0 on legacy/fresh saves — no scaling).
+        // Direct write: SetNGPlusCycle is server-only and this IS the server path.
+        GameState->NGPlusCycle = FMath::Max(0, SaveGame->NGPlusCycle);
     }
 
     // --- Research ---
@@ -334,12 +500,34 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     {
         if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
         {
-            Player->SetActorTransform(SaveGame->PlayerTransform, false, nullptr, ETeleportType::TeleportPhysics);
+            // FR-2 (Final Run redo): NaN vitals slip through FMath::Clamp — sanitize
+            // every restored stat before it reaches the survival component.
+            FAstrawildSurvivalStats SafeSurvival = SaveGame->PlayerSurvival;
+            SafeSurvival.Health = SanitizeSavedFloat(SafeSurvival.Health, 100.0f);
+            SafeSurvival.MaxHealth = SanitizeSavedFloat(SafeSurvival.MaxHealth, 100.0f);
+            SafeSurvival.Stamina = SanitizeSavedFloat(SafeSurvival.Stamina, 100.0f);
+            SafeSurvival.MaxStamina = SanitizeSavedFloat(SafeSurvival.MaxStamina, 100.0f);
+            SafeSurvival.Hunger = SanitizeSavedFloat(SafeSurvival.Hunger, 100.0f);
+            SafeSurvival.Thirst = SanitizeSavedFloat(SafeSurvival.Thirst, 100.0f);
+            SafeSurvival.Temperature = SanitizeSavedFloat(SafeSurvival.Temperature, 20.0f);
+
+            // FR-2 (Final Run redo): identity-transform guard. A NaN/zero saved
+            // transform (classic "pawn was missing when saving") must NOT teleport
+            // the freshly-possessed pawn to the world origin — keep the spawn point.
+            const FVector SavedLocation = SaveGame->PlayerTransform.GetLocation();
+            if (!SavedLocation.ContainsNaN() && !SavedLocation.IsNearlyZero())
+            {
+                Player->SetActorTransform(SaveGame->PlayerTransform, false, nullptr, ETeleportType::TeleportPhysics);
+            }
+            else
+            {
+                UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: player transform in slot %s is NaN/identity — keeping spawn point."), *SlotName);
+            }
             if (Player->SurvivalComponent)
             {
                 // Audit H-1: restore the saved vitals snapshot instead of FullRestore(),
                 // which silently reset hunger/thirst/health on every load.
-                Player->SurvivalComponent->SetStatsForRestore(SaveGame->PlayerSurvival);
+                Player->SurvivalComponent->SetStatsForRestore(SafeSurvival);
             }
             if (Player->InventoryComponent)
             {
@@ -403,6 +591,9 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
 
         if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
         {
+            // Final-audit G-3: restore the lifetime defeat counters FIRST — the
+            // quest import back-fills one-shot objectives from them.
+            Quests->ImportDefeatCounts(SaveGame->DefeatedCreatureCounts);
             Quests->ImportFromSave(SaveGame->Quests);
         }
 
@@ -411,6 +602,69 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         {
             Dialogue->ImportFromSave(SaveGame->DialogueFlags);
         }
+
+        // GDP-3 + SCP Phase 12 (FCR-1 fix): pawn members — re-derive the pawn (the
+        // earlier cast scope closed above).
+        if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
+        {
+            // GDP-3: restore attribute levels/XP (sanitized import — duplicates dropped,
+            // levels clamped; old saves without the array keep fresh 1/0 states).
+            if (Player->AttributeComponent)
+            {
+                Player->AttributeComponent->ImportFromSaveData(SaveGame->Attributes);
+            }
+
+            // SCP Phase 12: restore equipment wear (sanitized on import — unknown
+            // ids drop, values clamp to each item's pool).
+            if (Player->DurabilityComponent)
+            {
+                Player->DurabilityComponent->ImportFromSave(SaveGame->EquipmentDurability);
+            }
+
+            // GDP-3: apply the restored Vigor to max health immediately (the level-up
+            // delegate only fires on live gains, not on import).
+            if (Player->SurvivalComponent)
+            {
+                Player->SurvivalComponent->RefreshVigorMaxHealth();
+            }
+        }
+    }
+
+    // SCP Phase 12: restore perishable freshness (sanitized import).
+    if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
+    {
+        Spoilage->ImportFromSave(SaveGame->FoodFreshness);
+    }
+
+    // GDP-4: restore NPC affinity (id lookup; duplicates first-seen-wins).
+    if (SaveGame->NPCAffinities.Num() > 0)
+    {
+        TSet<FName> SeenNpcIds;
+        for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+        {
+            AAstrawildNPCCharacter* Npc = *NpcIt;
+            if (!Npc)
+            {
+                continue;
+            }
+            const FName Id = Npc->GetStableNPCId();
+            if (Id.IsNone() || SeenNpcIds.Contains(Id))
+            {
+                continue;
+            }
+            SeenNpcIds.Add(Id);
+            for (const FAstrawildNPCAffinitySaveData& Row : SaveGame->NPCAffinities)
+            {
+                if (Row.NPCId == Id)
+                {
+                    Npc->Affinity = FMath::Clamp(Row.Affinity, 0.0f, 100.0f);
+                    // FCR-1-b fix (M-b5): restore the per-day gate stamps with the
+                    // affinity (legacy saves: -1 defaults = faucets open, correct).
+                    Npc->SetAffinityGateDays(Row.LastTalkGainDay, Row.LastTradeGainDay);
+                    break;
+                }
+            }
+        }
     }
 
     // --- Buildings: remove placed, respawn from data ---
@@ -418,16 +672,68 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     {
         It->Destroy();
     }
+
+    // FR-2 (Final Run redo): fail-closed building restore. The refund inventory is
+    // resolved up front so the loop below stays branch-free on the happy path.
+    UAstrawildInventoryComponent* RefundInventory = nullptr;
+    if (APlayerController* RefundPC = World->GetFirstPlayerController())
+    {
+        if (AAstrawildPlayerCharacter* RefundPlayer = Cast<AAstrawildPlayerCharacter>(RefundPC->GetPawn()))
+        {
+            RefundInventory = RefundPlayer->InventoryComponent;
+        }
+    }
+
+    int32 DroppedBuildings = 0;
     for (const FAstrawildBuildingSaveData& Data : SaveGame->Buildings)
     {
-        FActorSpawnParameters Params;
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-        AAstrawildBuildingActor* Building = World->SpawnActor<AAstrawildBuildingActor>(
-            AAstrawildBuildingActor::StaticClass(), Data.Transform.GetLocation(),
-            Data.Transform.Rotator(), Params);
+        AAstrawildBuildingActor* Building = nullptr;
+        if (!Data.Transform.GetLocation().ContainsNaN())
+        {
+            // SCP Phase 9: save-load routes through the same factory as
+            // placement so Base Terminals restore as their subclass.
+            const UAstrawildItemRegistrySubsystem* Registry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+            const UAstrawildBuildingDefinition* BuildingDef = Registry ? Registry->FindBuilding(Data.DefinitionId) : nullptr;
+            Building = BuildingDef
+                ? AAstrawildBuildingActor::SpawnForDefinition(World, BuildingDef,
+                    Data.Transform.GetLocation(), Data.Transform.Rotator())
+                : nullptr;
+
+            if (!Building)
+            {
+                FActorSpawnParameters Params;
+                Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+                Building = World->SpawnActor<AAstrawildBuildingActor>(
+                    AAstrawildBuildingActor::StaticClass(), Data.Transform.GetLocation(),
+                    Data.Transform.Rotator(), Params);
+            }
+        }
+
+        if (Building && Building->FromSaveData(Data))
+        {
+            continue; // restored cleanly
+        }
+
+        // Fail-closed: a building whose definition was removed from the registry used
+        // to linger as an unkillable ghost collider blocking the base forever. Destroy
+        // the actor and silently refund the construction material (AddItemSilent —
+        // refunds must not fire ItemCollected and auto-complete CollectItem quests).
         if (Building)
         {
-            Building->FromSaveData(Data);
+            Building->Destroy();
+        }
+        ++DroppedBuildings;
+        UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: building %s (definition %s) failed to restore — destroyed."),
+            *Data.BuildingId.ToString(), *Data.DefinitionId.ToString());
+        if (RefundInventory && !Data.RefundItemId.IsNone() && Data.RefundItemCount > 0)
+        {
+            RefundInventory->AddItemSilent(Data.RefundItemId, Data.RefundItemCount);
+            UE_LOG(LogAstrawildSave, Log, TEXT("LoadWorld: refunded %d x %s for the lost building."),
+                Data.RefundItemCount, *Data.RefundItemId.ToString());
+        }
+        else
+        {
+            UE_LOG(LogAstrawildSave, Warning, TEXT("LoadWorld: lost building carried no refund snapshot (pre-V4.1 save) — material lost."));
         }
     }
 
@@ -455,6 +761,20 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         }
 
         SiteIt->ImportFromSave(*Found);
+
+        // SCP Phase 8: offline production — credit elapsed wall time between
+        // save and load (capped 48h at half rate inside the site itself).
+        // FCR-1-d fix (L-d16): the window is measured from the site's CREDITED-
+        // THROUGH stamp when present — a crash between load and the next autosave
+        // used to re-credit the same window on reload (SaveGame->SavedAtUtc had
+        // not moved yet). The site stamps itself on every credit; the next save
+        // persists the stamp.
+        const FDateTime WindowStart = SiteIt->GetOfflineCreditUtcTicks() > 0
+            ? FDateTime(SiteIt->GetOfflineCreditUtcTicks())
+            : SaveGame->SavedAtUtc;
+        const float OfflineSeconds = static_cast<float>(
+            FMath::Max(0.0, (FDateTime::UtcNow() - WindowStart).GetTotalSeconds()));
+        SiteIt->CreditOfflineProduction(OfflineSeconds);
 
         if (World->GetGameInstance())
         {
@@ -559,6 +879,10 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
     if (UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
     {
         WorldEvents->ImportFromSave(SaveGame->WorldEvents);
+        if (UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>())
+        {
+            Hunts->ImportFromSave(SaveGame->Hunts);
+        }
     }
     if (UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
     {
@@ -590,11 +914,48 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         // Final production run (v3): restore buffered charge AFTER the grid totals
         // are known (SetStoredEnergy clamps to live battery capacity).
         Power->ResolveGridNow();
-        Power->SetStoredEnergy(SaveGame->PowerGrid.StoredEnergy);
+        Power->SetStoredEnergy(SanitizeSavedFloat(SaveGame->PowerGrid.StoredEnergy, 0.0f));
+        // Final-audit L-4 (AUD-4): the first resolve ran with an EMPTY battery —
+        // a saved charged bank was ignored for the first <=2s (first-frame brownout
+        // contradicting the "no flicker" intent). Resolve again with the charge applied.
+        Power->ResolveGridNow();
     }
 
-    UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings, %d work sites, %d robots, grid %.0f)."),
-        *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num(), SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->PowerGrid.StoredEnergy);
+    // LCP-4 (LAN co-op): restore every CONNECTED non-host player whose block
+    // is present. Late joins (a client connecting after this load) restore
+    // through TryRestoreLateJoinPlayer at PostLogin instead.
+    {
+        int32 RestoredPlayers = 0;
+        for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+        {
+            APlayerController* PC = Cast<APlayerController>(*It);
+            if (!PC || PC == World->GetFirstPlayerController())
+            {
+                continue;
+            }
+            AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+            if (!AstrawildPC)
+            {
+                continue;
+            }
+            const FName PlayerKey = AstrawildPC->GetPlayerKey();
+            const FAstrawildCoopPlayerSaveBlock* Block = SaveGame->CoopPlayers.FindByPredicate(
+                [&PlayerKey](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == PlayerKey; });
+            if (Block)
+            {
+                ApplyCoopPlayerBlock(AstrawildPC, *Block);
+                SnapshotPlayerForSession(AstrawildPC); // reconnect cache
+                ++RestoredPlayers;
+            }
+        }
+        if (RestoredPlayers > 0)
+        {
+            UE_LOG(LogAstrawildSave, Log, TEXT("LCP-4: restored %d co-op player blocks from slot %s."), RestoredPlayers, *SlotName);
+        }
+    }
+
+    UE_LOG(LogAstrawildSave, Log, TEXT("World loaded from slot %s (day %d, %d buildings (%d dropped + refunded), %d work sites, %d robots, grid %.0f)."),
+        *SlotName, SaveGame->WorldState.DayNumber, SaveGame->Buildings.Num(), DroppedBuildings, SaveGame->WorkSites.Num(), SaveGame->Robots.Num(), SaveGame->PowerGrid.StoredEnergy);
     return true;
 }
 
@@ -633,10 +994,20 @@ bool UAstrawildSaveSubsystem::LoadLatest(UWorld* World, const int32 UserIndex)
         AutoTime = AutoSave->SavedAtUtc;
     }
 
-    const FString& Chosen = (AutoTime > MainTime) ? FString(AutoSlot) : FString(MainSlot);
+    const FString PreferredSlot = (AutoTime > MainTime) ? FString(AutoSlot) : FString(MainSlot);
+    const FString FallbackSlot = (AutoTime > MainTime) ? FString(MainSlot) : FString(AutoSlot);
     UE_LOG(LogAstrawildSave, Log, TEXT("LoadLatest: choosing slot %s (auto %s vs main %s)."),
-        *Chosen, *AutoTime.ToString(), *MainTime.ToString());
-    return LoadWorld(World, Chosen, UserIndex);
+        *PreferredSlot, *AutoTime.ToString(), *MainTime.ToString());
+    if (LoadWorld(World, PreferredSlot, UserIndex))
+    {
+        return true;
+    }
+
+    // FR-2 (Final Run redo): the chosen (newest) slot failing to load used to abort
+    // the boot outright — checksum mismatches and future schemas now fall back to
+    // the alternative slot instead of stranding the player at a dead title screen.
+    UE_LOG(LogAstrawildSave, Warning, TEXT("LoadLatest: slot %s failed to load — falling back to %s."), *PreferredSlot, *FallbackSlot);
+    return LoadWorld(World, FallbackSlot, UserIndex);
 }
 
 bool UAstrawildSaveSubsystem::SaveSnapshot(const TArray<FAstrawildItemStack>& Inventory, const TArray<FAstrawildEchoInstanceSaveData>& EchoRoster, const TArray<FAstrawildRestPointSaveData>& RestPoints, const FGuid& ActiveRestPointId, const FString& SlotName, const int32 UserIndex)
@@ -710,4 +1081,491 @@ bool UAstrawildSaveSubsystem::DeleteSave(const FString& SlotName, const int32 Us
         return false;
     }
     return UGameplayStatics::DeleteGameInSlot(SlotName, UserIndex);
+}
+
+// ===========================================================================
+// DCP-2 — New Game Plus (user directive 2026-09-06: "re-open every deferred
+// item, playable-first"). The ONE reset/carryover authority. Design contract
+// lives on the header doc-block; the sweep mirrors LoadWorld's proven order.
+// ===========================================================================
+
+bool UAstrawildSaveSubsystem::StartNewGamePlus(UWorld* World, const int32 UserIndex)
+{
+    if (!World || World->GetNetMode() == NM_Client)
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("StartNewGamePlus rejected: needs a server/host world."));
+        return false;
+    }
+
+    AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>();
+    if (!GameState)
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("StartNewGamePlus rejected: no game state."));
+        return false;
+    }
+
+    // Fail-closed gate: NG+ exists only after an ending was chosen. This is
+    // the first real gameplay consumer of bPostGameActive (GDP directive
+    // listed post-game as "hunt board + free roam" — NG+ adds the replay loop).
+    if (!GameState->IsPostGameActive())
+    {
+        UE_LOG(LogAstrawildSave, Warning, TEXT("StartNewGamePlus refused: no ending has been chosen yet (post-game inactive)."));
+        return false;
+    }
+
+    APlayerController* PC = World->GetFirstPlayerController();
+    AAstrawildPlayerCharacter* Player = PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+
+    // --- 1. Snapshot the carryover (from the LIVE world, pre-reset) ---
+
+    TArray<FAstrawildAttributeSaveData> CarryAttributes;
+    if (Player && Player->AttributeComponent)
+    {
+        CarryAttributes = Player->AttributeComponent->ToSaveData();
+    }
+
+    TArray<FAstrawildJournalEntry> CarryJournal;
+    if (const UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+    {
+        Journal->ExportForSave(CarryJournal);
+    }
+
+    TMap<FName, int32> CarryDefeatCounts;
+    if (PC)
+    {
+        if (const UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quests->ExportDefeatCounts(CarryDefeatCounts);
+        }
+    }
+
+    // NPC affinities: sweep the live NPCs (the SaveWorld pattern).
+    TArray<FAstrawildNPCAffinitySaveData> CarryAffinities;
+    for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+    {
+        AAstrawildNPCCharacter* Npc = *NpcIt;
+        if (Npc && !Npc->GetStableNPCId().IsNone() && Npc->Affinity > 0.0f)
+        {
+            FAstrawildNPCAffinitySaveData Row;
+            Row.NpcId = Npc->GetStableNPCId();
+            Row.Affinity = FMath::Clamp(Npc->Affinity, 0.0f, 100.0f);
+            Row.LastTalkGainDay = Npc->GetLastTalkAffinityDay();
+            Row.LastTradeGainDay = Npc->GetLastTradeAffinityDay();
+            CarryAffinities.Add(Row);
+        }
+    }
+
+    // Top-N highest-bond Echoes carry over (AAstrawildGameState::NGPlusCarriedEchoes).
+    // Bond is the emotional core of a capture game — the strongest friendships
+    // survive the reset. Everything else is released (fresh ecosystem).
+    TArray<FAstrawildEchoInstanceV2> CarryRoster;
+    if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance() ? World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>() : nullptr)
+    {
+        TArray<FAstrawildEchoInstanceV2> Current = Roster->GetRoster();
+        Current.Sort([](const FAstrawildEchoInstanceV2& A, const FAstrawildEchoInstanceV2& B) { return A.Bond > B.Bond; });
+        const int32 CarryCount = FMath::Min<int32>(AAstrawildGameState::NGPlusCarriedEchoes, Current.Num());
+        for (int32 i = 0; i < CarryCount; ++i)
+        {
+            FAstrawildEchoInstanceV2 Row = Current[i];
+            Row.bInParty = true;        // the carried friends rejoin the party.
+            Row.bBenched = false;
+            Row.InstanceId = FGuid::NewGuid(); // fresh identity in the new cycle.
+            CarryRoster.Add(Row);
+        }
+        // Despawn every spawned party member BEFORE the roster swap (fresh
+        // actors spawn around the player after the import — the Audit H-2 order).
+        for (AAstrawildEchoCharacter* Echo : Roster->GetSpawnedParty())
+        {
+            if (IsValid(Echo))
+            {
+                Echo->Destroy();
+            }
+        }
+    }
+
+    // --- 2. Reset the world (the story replays) ---
+
+    // Player-placed structures and automation go first (their BeginPlay hooks
+    // would otherwise re-register with the power grid mid-reset).
+    for (TActorIterator<AAstrawildBuildingActor> It(World); It; ++It)
+    {
+        if (IsValid(*It))
+        {
+            It->Destroy();
+        }
+    }
+    for (TActorIterator<AAstrawildWorkSiteActor> SiteIt(World); SiteIt; ++SiteIt)
+    {
+        if (IsValid(*SiteIt))
+        {
+            SiteIt->Destroy();
+        }
+    }
+    for (TActorIterator<AAstrawildUtilityRobotActor> RobotIt(World); RobotIt; ++RobotIt)
+    {
+        if (IsValid(*RobotIt))
+        {
+            RobotIt->Destroy();
+        }
+    }
+    for (TActorIterator<AAstrawildUtilityDroneActor> DroneIt(World); DroneIt; ++DroneIt)
+    {
+        if (IsValid(*DroneIt))
+        {
+            DroneIt->Destroy();
+        }
+    }
+
+    // Dungeons regenerate fresh rooms + encounters (Generate() clears previous
+    // generation by design — "regeneration support" is built into the actor).
+    for (TActorIterator<AAstrawildDungeonGeneratorActor> DungeonIt(World); DungeonIt; ++DungeonIt)
+    {
+        DungeonIt->Generate();
+    }
+
+    // Game state: cycle++, ending cleared, post-game OFF, fresh clock/weather.
+    // EndingState/bPostGameActive are written DIRECTLY: SetEndingState is a
+    // one-way verdict by canon — only the NG+ authority may reset it, and it
+    // must (the MQ chain replays to a new ending choice).
+    const int32 NewCycle = GameState->NGPlusCycle + 1;
+    GameState->NGPlusCycle = NewCycle;
+    GameState->EndingState = EAstrawildEndingState::None;
+    GameState->bPostGameActive = false;
+    GameState->DayNumber = 1;
+    GameState->SetTimeOfDayMinutes(8 * 60);
+    GameState->SetWeatherState(EAstrawildWeatherState::Clear);
+    // WorldSeed is DELIBERATELY kept: the same Vale, a new dawn (layout,
+    // camps, dungeons and portals persist; discovery state resets below).
+
+    // Fresh science + carried ecosystem.
+    if (World->GetGameInstance())
+    {
+        if (UAstrawildResearchSubsystem* Research = World->GetGameInstance()->GetSubsystem<UAstrawildResearchSubsystem>())
+        {
+            Research->ImportFromSave(FAstrawildResearchSaveData());
+        }
+        if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+        {
+            Roster->ImportFromSave(CarryRoster);
+        }
+    }
+
+    // Player: fresh vitals, veteran kit, carried growth.
+    if (Player)
+    {
+        if (Player->SurvivalComponent)
+        {
+            Player->SurvivalComponent->SetStatsForRestore(FAstrawildSurvivalStats());
+        }
+        if (Player->InventoryComponent)
+        {
+            FAstrawildItemStack VeteranShards;
+            VeteranShards.ItemId = TEXT("Item_DawnShard");
+            VeteranShards.Quantity = 5;
+            FAstrawildItemStack VeteranBandages;
+            VeteranBandages.ItemId = TEXT("Item_Bandage");
+            VeteranBandages.Quantity = 2;
+            Player->InventoryComponent->SetItemStacks({ VeteranShards, VeteranBandages });
+        }
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->ImportFromSaveData(CarryAttributes);
+        }
+        if (Player->DurabilityComponent)
+        {
+            Player->DurabilityComponent->ImportFromSave(TMap<FName, float>());
+        }
+    }
+
+    // Components + world subsystems: reset the story surfaces, keep the memory.
+    if (PC)
+    {
+        if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quests->ImportFromSave(TArray<FAstrawildQuestSaveData>()); // story replays
+            Quests->ImportDefeatCounts(CarryDefeatCounts);             // history kept (G-3).
+            Quests->StartQuest(TEXT("Quest_FirstLight"));              // MQ-01 restarts.
+        }
+        if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+        {
+            Dialogue->ImportFromSave(TArray<FName>()); // one-time beats replay (incl. the crown choice).
+        }
+    }
+    if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
+    {
+        Spoilage->ImportFromSave(TMap<FName, float>());
+    }
+    if (UAstrawildZoneSubsystem* ZoneSub = World->GetSubsystem<UAstrawildZoneSubsystem>())
+    {
+        ZoneSub->ImportFromSave(TArray<EAstrawildZone>()); // exploration replays.
+    }
+    if (UAstrawildPOISubsystem* POIs = World->GetSubsystem<UAstrawildPOISubsystem>())
+    {
+        POIs->ImportFromSave(TArray<FName>());
+    }
+    if (UAstrawildWorldEventSubsystem* WorldEvents = World->GetSubsystem<UAstrawildWorldEventSubsystem>())
+    {
+        WorldEvents->ImportFromSave(FAstrawildWorldEventScheduleSaveData());
+    }
+    if (UAstrawildHuntSubsystem* Hunts = World->GetSubsystem<UAstrawildHuntSubsystem>())
+    {
+        Hunts->ImportFromSave(TArray<FAstrawildHuntSaveRow>()); // post-game hunts re-arm next cycle.
+    }
+    if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+    {
+        Journal->ImportFromSave(CarryJournal); // the Vale remembers its species.
+    }
+
+    // NPC affinities: relationships survive the reset (GDP-4 tiers persist).
+    for (TActorIterator<AAstrawildNPCCharacter> NpcIt(World); NpcIt; ++NpcIt)
+    {
+        AAstrawildNPCCharacter* Npc = *NpcIt;
+        if (!Npc)
+        {
+            continue;
+        }
+        bool bCarried = false;
+        for (const FAstrawildNPCAffinitySaveData& Row : CarryAffinities)
+        {
+            if (Row.NpcId == Npc->GetStableNPCId())
+            {
+                Npc->Affinity = FMath::Clamp(Row.Affinity, 0.0f, 100.0f);
+                Npc->SetAffinityGateDays(Row.LastTalkGainDay, Row.LastTradeGainDay);
+                bCarried = true;
+                break;
+            }
+        }
+        if (!bCarried)
+        {
+            Npc->Affinity = 0.0f;
+        }
+    }
+
+    // Power grid: no buildings left — resolve to a clean zeroed state.
+    if (UAstrawildPowerSubsystem* Power = World->GetSubsystem<UAstrawildPowerSubsystem>())
+    {
+        Power->ResolveGridNow();
+        Power->SetStoredEnergy(0.0f);
+    }
+
+    // Respawn the carried party around the player (Audit H-2 order: import
+    // happened above; this is the recreate step).
+    if (World->GetGameInstance())
+    {
+        if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+        {
+            Roster->SpawnPartyActors(PC);
+        }
+    }
+
+    // Co-op session blocks: the new cycle is a fresh session contract.
+    SessionPlayerBlocks.Reset();
+
+    // --- 3. Persist the new cycle + purge the stale autosave ---
+
+    // The autosave still holds the PRE-reset world; LoadLatest would otherwise
+    // resurrect the ended story. Delete it — the fresh cycle is the only truth.
+    DeleteSave(TEXT("ASTRAWILD_Auto"), UserIndex);
+
+    if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+    {
+        AstrawildPC->Notify(FText::FromString(FString::Printf(
+            TEXT("NEW GAME+ (cycle %d) — the Vale remembers. Story reset; %d Echo friends stayed."),
+            NewCycle, CarryRoster.Num())));
+    }
+
+    UE_LOG(LogAstrawildSave, Log, TEXT("StartNewGamePlus: cycle %d begun — carried %d attributes rows, %d journal rows, %d affinity rows, %d defeat counters, %d echoes; reset quests/flags/zones/POIs/events/hunts/buildings/dungeons."),
+        NewCycle, CarryAttributes.Num(), CarryJournal.Num(), CarryAffinities.Num(), CarryDefeatCounts.Num(), CarryRoster.Num());
+
+    // Save the new cycle immediately (slot ASTRAWILD_Main — the canonical slot).
+    return SaveWorld(World, TEXT("ASTRAWILD_Main"), UserIndex);
+}
+
+
+// ===========================================================================
+// LCP-4 — LAN co-op per-player persistence
+// ===========================================================================
+
+FAstrawildCoopPlayerSaveBlock UAstrawildSaveSubsystem::BuildCoopPlayerBlock(APlayerController* PC) const
+{
+    FAstrawildCoopPlayerSaveBlock Block;
+    Block.PlayerKey = NAME_None;
+    if (const AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
+    {
+        Block.PlayerKey = AstrawildPC->GetPlayerKey();
+    }
+
+    AAstrawildPlayerCharacter* Player = PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+    if (Player)
+    {
+        Block.Transform = Player->GetActorTransform();
+        if (Player->SurvivalComponent)
+        {
+            Block.Survival = Player->SurvivalComponent->GetStats();
+        }
+        if (Player->InventoryComponent)
+        {
+            Block.Inventory = Player->InventoryComponent->GetItemStacks();
+            Block.EquippedWeaponId = Player->InventoryComponent->EquippedItemId;
+            Block.EquippedShieldId = Player->InventoryComponent->EquippedShieldItemId;
+            Block.EquippedArmorId = Player->InventoryComponent->EquippedArmorItemId;
+            Block.EquippedHelmetId = Player->InventoryComponent->EquippedHelmetItemId;
+            Block.EquippedExosuitId = Player->InventoryComponent->EquippedExosuitItemId;
+            Block.EquippedScannerId = Player->InventoryComponent->EquippedScannerItemId;
+        }
+        if (Player->AttributeComponent)
+        {
+            Block.Attributes = Player->AttributeComponent->ToSaveData();
+        }
+        if (Player->DurabilityComponent)
+        {
+            Block.EquipmentDurability = Player->DurabilityComponent->ExportForSave();
+        }
+    }
+
+    if (PC)
+    {
+        if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+        {
+            Quests->ExportForSave(Block.Quests);
+            Quests->ExportDefeatCounts(Block.DefeatedCreatureCounts);
+        }
+        if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+        {
+            Dialogue->ExportForSave(Block.DialogueFlags);
+        }
+    }
+    return Block;
+}
+
+void UAstrawildSaveSubsystem::ApplyCoopPlayerBlock(APlayerController* PC, const FAstrawildCoopPlayerSaveBlock& Block)
+{
+    if (!PC || Block.PlayerKey.IsNone())
+    {
+        return;
+    }
+
+    AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn());
+    if (Player)
+    {
+        // Identity-transform guard (same rule as the host restore).
+        const FVector SavedLocation = Block.Transform.GetLocation();
+        if (!SavedLocation.ContainsNaN() && !SavedLocation.IsNearlyZero())
+        {
+            Player->SetActorTransform(Block.Transform, false, nullptr, ETeleportType::TeleportPhysics);
+        }
+
+        if (Player->SurvivalComponent)
+        {
+            // Sanitize vitals with the same policy as the host restore (NaN never survives).
+            FAstrawildSurvivalStats SafeSurvival = Block.Survival;
+            SafeSurvival.Health = SanitizeSavedFloat(SafeSurvival.Health, 100.0f);
+            SafeSurvival.MaxHealth = SanitizeSavedFloat(SafeSurvival.MaxHealth, 100.0f);
+            SafeSurvival.Stamina = SanitizeSavedFloat(SafeSurvival.Stamina, 100.0f);
+            SafeSurvival.MaxStamina = SanitizeSavedFloat(SafeSurvival.MaxStamina, 100.0f);
+            SafeSurvival.Hunger = SanitizeSavedFloat(SafeSurvival.Hunger, 100.0f);
+            SafeSurvival.Thirst = SanitizeSavedFloat(SafeSurvival.Thirst, 100.0f);
+            SafeSurvival.Temperature = SanitizeSavedFloat(SafeSurvival.Temperature, 20.0f);
+            Player->SurvivalComponent->SetStatsForRestore(SafeSurvival);
+        }
+
+        if (Player->InventoryComponent)
+        {
+            Player->InventoryComponent->SetItemStacks(Block.Inventory);
+            Player->InventoryComponent->EquippedItemId = Block.EquippedWeaponId;
+            Player->InventoryComponent->EquippedShieldItemId = Block.EquippedShieldId;
+            Player->InventoryComponent->EquippedArmorItemId = Block.EquippedArmorId;
+            Player->InventoryComponent->EquippedHelmetItemId = Block.EquippedHelmetId;
+            Player->InventoryComponent->EquippedExosuitItemId = Block.EquippedExosuitId;
+            Player->InventoryComponent->EquippedScannerItemId = Block.EquippedScannerId;
+        }
+
+        if (Player->AttributeComponent)
+        {
+            Player->AttributeComponent->ImportFromSaveData(Block.Attributes);
+        }
+
+        if (Player->DurabilityComponent)
+        {
+            Player->DurabilityComponent->ImportFromSave(Block.EquipmentDurability);
+        }
+    }
+
+    if (UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
+    {
+        Quests->ImportFromSave(Block.Quests);
+        Quests->ImportDefeatCounts(Block.DefeatedCreatureCounts);
+    }
+    if (UAstrawildDialogueComponent* Dialogue = PC->FindComponentByClass<UAstrawildDialogueComponent>())
+    {
+        Dialogue->ImportFromSave(Block.DialogueFlags);
+    }
+}
+
+void UAstrawildSaveSubsystem::SnapshotPlayerForSession(APlayerController* PC)
+{
+    if (!PC)
+    {
+        return;
+    }
+    const AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+    if (!AstrawildPC || AstrawildPC->GetPlayerKey().IsNone())
+    {
+        return;
+    }
+    SessionPlayerBlocks.FindOrAdd(AstrawildPC->GetPlayerKey()) = BuildCoopPlayerBlock(AstrawildPC);
+}
+
+bool UAstrawildSaveSubsystem::TryRestoreLateJoinPlayer(APlayerController* PC)
+{
+    if (!PC)
+    {
+        return false;
+    }
+    AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC);
+    if (!AstrawildPC)
+    {
+        return false;
+    }
+    const FName PlayerKey = AstrawildPC->GetPlayerKey();
+
+    // 1) In-session cache (reconnect while the world lives).
+    if (const FAstrawildCoopPlayerSaveBlock* Cached = SessionPlayerBlocks.Find(PlayerKey))
+    {
+        ApplyCoopPlayerBlock(AstrawildPC, *Cached);
+        UE_LOG(LogAstrawildSave, Log, TEXT("LCP-4: session-cache restore for player %s."), *PlayerKey.ToString());
+        return true;
+    }
+
+    // 2) Latest disk save co-op blocks (late join after a load happened earlier).
+    if (UWorld* World = PC->GetWorld())
+    {
+        UAstrawildSaveGame* Latest = nullptr;
+        static const TCHAR* Slots[] = { TEXT("ASTRAWILD_Auto"), TEXT("ASTRAWILD_Main") };
+        for (const TCHAR* Slot : Slots)
+        {
+            if (DoesSaveExist(Slot, 0))
+            {
+                if (UAstrawildSaveGame* Candidate = Cast<UAstrawildSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0)))
+                {
+                    if (!Latest || Candidate->SavedAtUtc > Latest->SavedAtUtc)
+                    {
+                        Latest = Candidate;
+                    }
+                }
+            }
+        }
+        if (Latest)
+        {
+            if (const FAstrawildCoopPlayerSaveBlock* Block = Latest->CoopPlayers.FindByPredicate(
+                [&PlayerKey](const FAstrawildCoopPlayerSaveBlock& Row) { return Row.PlayerKey == PlayerKey; }))
+            {
+                ApplyCoopPlayerBlock(AstrawildPC, *Block);
+                SnapshotPlayerForSession(AstrawildPC);
+                UE_LOG(LogAstrawildSave, Log, TEXT("LCP-4: disk-save restore for late joiner %s."), *PlayerKey.ToString());
+                return true;
+            }
+        }
+    }
+    return false;
 }

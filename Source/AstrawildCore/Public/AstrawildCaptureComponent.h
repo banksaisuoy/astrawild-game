@@ -58,4 +58,7 @@ private:
     double LastCaptureTimeSeconds = -BIG_NUMBER;
 
     class UAstrawildInventoryComponent* GetInventory() const;
+
+    /** FR-11: the owning player's controller (HUD toast sink). */
+    class AAstrawildPlayerController* GetOwnerPlayerController() const;
 };

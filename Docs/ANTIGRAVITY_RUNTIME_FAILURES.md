@@ -1,8 +1,16 @@
 # ASTRAWILD — Runtime QA, Failure Analysis & Certification
 
+> **[HISTORICAL / SUPERSEDED — engine-session evidence, frozen to its date]** This
+> certification is the 2026-08-30 Antigravity engine-run record (25-test era). Its
+> `100% OPERATIONAL & VERIFIED` status is true of THAT session only — it is NOT the
+> current tip state. Current: branch `final-completion`, 126 automation contracts,
+> **ENGINE-UNVERIFIED at tip** (engine claims belong only to a future V2-29..V2-35
+> run per `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md`). Canonical:
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1).
+
 **Date:** August 30, 2026  
 **Agent:** Antigravity (Google DeepMind)  
-**Status:** **100% OPERATIONAL & VERIFIED (0 CRITICAL / 0 HIGH BLOCKERS)**
+**Status (frozen to 2026-08-30):** **100% OPERATIONAL & VERIFIED (0 CRITICAL / 0 HIGH BLOCKERS)**
 
 ---
 

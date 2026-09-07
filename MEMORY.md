@@ -1,5 +1,12 @@
 # ASTRAWILD Working Memory
 
+> **[HISTORICAL — early-session memory, frozen to its date]** The "Verified facts"
+> below describe the pre-Final-Run repository (main branch, no binary assets) and
+> are superseded: the live branch is `final-completion` — source-complete, 126
+> automation contracts, 229 species, 416 genuine UE packages, LFS 459/459
+> (ENGINE-UNVERIFIED at tip). Canonical control: `Docs/ASTRAWILD_MASTER_CONTROL.md`
+> (v9.1); asset truth: `Docs/ASTRAWILD_CURRENT_ASSET_TRUTH.md`.
+
 ## Verified facts
 
 - GitHub repository is private and currently has `main` as the verified branch.

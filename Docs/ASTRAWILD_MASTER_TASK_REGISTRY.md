@@ -1,0 +1,423 @@
+﻿# ASTRAWILD — MASTER TASK REGISTRY
+
+**Companion to**: `Docs/ASTRAWILD_MASTER_CONTROL.md` v5.0
+**Scope**: every task relevant to the Final Run; no orphans, no duplicates, no undocumented blockers.
+**Statuses**: PLANNED / IN_PROGRESS / IMPLEMENTED / BUILT / TESTED / UE5_VERIFIED / ACCEPTED (+ ENGINE-UNVERIFIED qualifier)
+
+> Verification legend: `static` = machine-checked without an engine (this sandbox).
+> `engine` = requires the Antigravity Windows/UE5 machine. GLM never claims engine PASS.
+
+> [!NOTE]
+> **REDO COMPLETE (2026-09-03, Final Completion Run)**: FR-1..12 were re-implemented
+> on branch `final-completion` and PUSHED per batch (binding user rule — zero unpushed
+> batches). Every implementation commit below is live on GitHub. The static validator
+> (`Scripts/validate_final_run.py`) runs **46/46 ALL CHECKS PASSED** at the final state.
+> Engine verification (AG-2..5) remains Antigravity-owned and pending.
+
+## A. Final Run tasks (final-completion branch — REDONE & PUSHED)
+
+| ID | Category | Description | Owner | Status | Dependency | Files | Commit | Verification | Blocker | Next |
+| :-- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| FR-1 | Inventory | RemoveItem qty guard (dup exploit + FindChecked crash); ConsumeItems aggregation; SetItemStacks sanitize | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | none | InventoryComponent.cpp | 61c45e6 | ASTRAWILD.Inventory.TransactionSafety | none | engine test |
+| FR-2 | Save | Future-schema refusal; day-catch-up cap 365; identity-transform guard; LoadLatest slot fallback; building fail-closed + refund (+ v5 chain + ending restore) | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | none | SaveSubsystem.*, BuildingActor.cpp | 61c45e6, 93ee929 | ASTRAWILD.Save.ConsistencyContracts, ASTRAWILD.Save.SchemaV5Ending | none | engine test |
+| FR-3 | Quests | One-active-quest guard; silent rewards; negative-amount event guard; element matrix alignment (7-species canon) | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-1 | QuestComponent.cpp, ContentLibrary.cpp, ProductionContent.cpp | 61c45e6, b9c1bd6 | ASTRAWILD.Quest.FinalRunChain, ASTRAWILD.Quest.ImportSafety | none | engine test |
+| FR-4 | Economy | Silent refunds; roster import sanitize; node identity fallback | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-1 | CraftingComponent.cpp, BuildingComponent.cpp, EchoRosterSubsystem.cpp, ResourceNode.cpp | 61c45e6 | ASTRAWILD.Inventory.TransactionSafety, ASTRAWILD.Echo.RosterImportSafety | none | engine test |
+| FR-5 | Story | Act 3 content pack: MQ-13..17 + 3 bosses + items/tech/recipe/loot + ending dialogue | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-3 | ProductionContent.cpp/.h | 93ee929 | ASTRAWILD.Quest.FinalRunChain, ASTRAWILD.Echo.FinalRunBosses, ASTRAWILD.Tech.SkiffEngineering, ASTRAWILD.Dialogue.EndingChoice | none | engine test |
+| FR-6 | Ending system | EAstrawildEndingState + SetEndingState + weather pin + TriggerEndingId consequence + HUD banner + save V5 | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-5 | GameState.*, DataAssets.h, DialogueComponent.cpp, WeatherSubsystem.cpp, SaveSubsystem.*, HudWidget.*, Types.h | 93ee929 | ASTRAWILD.Save.SchemaV5Ending, ASTRAWILD.Dialogue.EndingChoice | none | engine test |
+| FR-7 | World gen | Eye of the Maelstrom dungeon + portals/markers; Glass Tyrant world boss; Dawnstead marker; zone helpers | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-5 | WorldBootstrapper.cpp/.h | 93ee929 | Scripts/validate_final_run.py (static — 8/8 wiring checks) | none | engine test |
+| FR-8 | Traversal | Stratos Coil ceiling gate (120m→160m); skiff mesh binding; world-seed ground probe | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-5 | SkiffActor.cpp/.h | 93ee929 | ASTRAWILD.Skiff.CeilingGate; static mesh-path resolve | none | engine test (mesh orientation) |
+| FR-9 | Buildings | Floor/Roof/Door/StorageCrate + door toggle + crate deposit/withdraw + save | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | none | ContentLibrary.cpp, BuildingActor.*, BuildingComponent.cpp, Types.h | b9c1bd6 | static (category population + validator 46/46) | none | engine test |
+| FR-10 | Villages | 5 NPC dialogue trees (Wren/Borin/Bram/Jori/Nima) + Azure Shallows POI | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | none | ProductionContent.cpp, ContentLibrary.cpp | b9c1bd6 | static (registry checks + validator) | none | engine test |
+| FR-11 | Feedback | Capture toast + A_Echo_Capture_Success audio; boss display names | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | none | CaptureComponent.*, EchoBossCharacter.*, HudWidget.cpp | 93ee929 | ASTRAWILD.Echo.FinalRunBosses | none | engine test |
+| FR-12 | Tests | +6 world-free contracts (61 → 67 total; validator gate ≥63 ✓) | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FR-1..6 | AutomationTests.cpp | 93ee929 | static count 67; engine run pending | none | engine test |
+| FR-13 | Validation | validate_final_run.py — **46/46 ALL CHECKS PASSED** at final state | GLM | PASS (static) | none | Scripts/validate_final_run.py | (each batch) | full run output in worklog | none | re-run at AG-2 |
+| FR-14 | Docs | MASTER_CONTROL v3.2 + this registry + HANDOFF + READINESS + TEST_INVENTORY | GLM | UPDATED | FR-1..13 | Docs/*.md | (docs commit) | review | none | Antigravity review |
+
+### A.2 Final source completion pass (FINAL-AUDIT — 2026-09-03, all pushed)
+
+| ID | Category | Description | Owner | Status | Dependency | Files | Commit | Verification | Blocker | Next |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| FA-1 | Audit | Full-repository audit Phases A–O (5 parallel subagent reports: gameplay loop/player, echo/save, quest/boss, world/automation, input/UI/MP/perf) | GLM | COMPLETE | none | /home/z/my-project/audit/*.md (session evidence) | 1be6e20 | audit reports (in sandbox worklog) | none | — |
+| FA-2 | P0/P1 fixes | 11 defects: drone Owner compile/crash (C-1), POI one-shot quest stall (G-1), MQ-17 ending gate (G-2), boss defeat back-fill (G-3), view-axis aiming (F-01), crafting screen wiring (F-02), echo owner identity (H-1), robot chassis save (H-2), camp respawn, CampKitchen spawn, MainMap default map (H-3) | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-1 | 19 files | 1be6e20 | ASTRAWILD.Quest.OneShotBackFill etc. | none | engine test |
+| FA-3 | Medium/low | 20 defects: element canon unification (151 bestiary rows + 4 species + boss resist), echo health persist, species DefeatLoot live, research import sanitize, AI perception + fight-back + stranded recall, worker presence, screen key closes, Thai strings, config cleanups, FastForward cheat, evolution hook | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-2 | 40 files | 69a1d65 | static (validator 46/46) + tests below | none | engine test |
+| FA-4 | Regression | +5 world-free contracts: OneShotBackFill, DefeatCountImportSafety, DismantleIsNotPlacement, Research.ImportSafety, Save.FinalAuditContracts | GLM | IMPLEMENTED (ENGINE-UNVERIFIED) | FA-2/3 | AutomationTests.cpp | a5aa74d | static count 72; engine run pending | none | engine test |
+| FA-5 | Docs | Phase Q reconciliation: 72-test truth everywhere, dead glm/final-run references fixed in HANDOFF, control list corrected, readiness gate re-checked | GLM | UPDATED | FA-2..4 | Docs/*.md | (this docs commit) | review | none | Antigravity review |
+
+> Automation suite: **109 world-free contract tests** (57 baseline + 4 hardening from
+> BATCH-1 + 6 Final Run from BATCH-2 + 5 final-audit regressions + 12 GDP + 15 SCP +
+> 3 FCR + 7 depth passes DP-3..DP-9).
+> Full inventory: `Docs/ASTRAWILD_TEST_INVENTORY.md` (rows 1-109). One authoritative value
+> per metric — enforced by the validator's §11 census gates.
+
+## B. Antigravity integration tasks (engine machine)
+
+| ID | Category | Description | Owner | Status | Dependency | Verification | Blocker | Next |
+| :-- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| AG-1 | Git | Pull/merge final-completion; push main; close PR #4 as absorbed | Antigravity | PLANNED | FA-5 | git log / PR state | credentials | execute after AG-2..5 |
+| AG-2 | Build | MSVC compile of final SHA (0 errors) | Antigravity | PLANNED | FR-* | raw build log | UE 5.8.2 machine | run |
+| AG-3 | Tests | 109/109 automation green (count read from the repo — the validator exact gate pins it) | Antigravity | PLANNED | AG-2 | raw automation log | none | run |
+| AG-4 | Playtest | PIE golden path: MQ chain → Eye → Sovereign → ending A/B → post-game; save/load round-trip; door/crate interactions | Antigravity | PLANNED | AG-3 | raw PIE log + per-checkpoint trace | none | run |
+| AG-5 | Package | Cook+package exit 0; packaged exe boots to MainMap | Antigravity | PLANNED | AG-2 | raw UAT log | FZ-A1 recurrence watch | run |
+| AG-6 | Fix loop | Any engine-only defect → smallest fix on a branch; architectural problems return to GLM | Antigravity | PLANNED | AG-4/5 | fix commits | none | as found |
+
+## C. Carry-over tasks (pre-Final-Run state, tracked to closure)
+
+| ID | Category | Description | Owner | Status | Notes |
+| :-- | :--- | :--- | :--- | :--- | :--- |
+| CV-1 | Assets | 115 ArtPack .uasset to Git LFS | Antigravity | ACCEPTED | f31f5e1; GLM verified 459/459 LFS objects resolve |
+| CV-2 | Hardening | GLM source hardening SH-01..04 + 57 tests | Antigravity | TESTED (declared) | c65d734; re-run with 99 at AG-3 |
+| CV-3 | Input | Playable input/camera fix chain 520c78e+df8df83 | Antigravity | TESTED (declared) | re-verify at AG-4 |
+| CV-4 | QA | Gamepad actuation (V-31) | Antigravity | BLOCKED | physical controller hardware |
+| CV-5 | Economy | Duskmoth has no loot / berry faucet thin (FZ-ECO-2/3) | GLM | CLOSED (source) | FCR Phase 17: Duskmoth DefeatLoot added (Dawnbloom x1 + Fiber x2); numeric balance stays PIE-tuning |
+| CV-6 | MP | Dedicated-server co-op (H-9) | GLM | PLANNED (P3) | single-player-first by design; portals/skiff client paths early-return |
+| CV-7 | Docs | Historical doc banners | GLM | ACCEPTED | HISTORICAL/SUPERSEDED stamps per MASTER_CONTROL §12 |
+
+## D. Deferred-by-design (explicitly out of Final Run scope)
+
+| Item | Reason |
+| :-- | :-- |
+| Vess/Ione NPC skins for Act 3 | quests chain automatically; Maren carries the ending — new NPCs are cosmetic scope |
+| SQ-23 side quests | post-game content batch after engine verification |
+| Ending cinematics | ending = world-state + banner + dialogue by design (no Sequencer dependency) |
+| 214-species unique meshes | data-driven bestiary + body plans + ArtPack hero species per §5 scope rule |
+| NG+ rules | post-game loop covers the same fantasy without a new mode |
+
+---
+
+**Orphan check**: none (every task has an owner + status + next).
+**Contradiction check**: none (single active quest rule documented; element matrix single-sourced).
+**Duplicate check**: none (Act 3 content registered once; PR #4 content classified, not re-implemented).
+
+## E. Gameplay Depth Pack (GDP — user-directed expansion, post-freeze)
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| GDP-1 | Echo combat | Ability engine: 44 templates + per-species loadouts (authored AbilityIds + derived element/role/family kits), level gates, replicated cooldowns, AI combat casting, T-key party cast, Shell/negative-DPS status semantics | GLM | IMPLEMENTED | `AstrawildAbilityLibrary` + `AstrawildEchoCharacter` + `AstrawildEchoAIController` + HUD line; ENGINE-UNVERIFIED |
+| GDP-2 | Locomotion | Land/Water/Flying classes with derivation rule, MOVE_Flying + 3D steering for flyers, sea-zone speed tuning for swimmers | GLM | IMPLEMENTED | Deterministic; covers all 210+ species; ENGINE-UNVERIFIED |
+| GDP-3 | Player growth | 5 attributes + XP wiring at combat/capture/craft/survival sites, 7 milestone skills with smart-cast ladder (Y), passive bonuses consumed by existing systems, save round-trip | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
+| GDP-4 | NPC affinity | 0-100 tiers, talk/trade gains with daily gate, up to 15% vendor discount, per-NPC-id persistence | GLM | IMPLEMENTED | Additive v5 field; ENGINE-UNVERIFIED |
+| GDP-5 | Quality | 12 automation contracts (84 cumulative at GDP time — now 99 with SCP), validator gate, docs updated | GLM | IMPLEMENTED | `ASTRAWILD.Ability.*`, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*`, `ASTRAWILD.NPC.Affinity*` |
+
+
+## §F SCP — Systems Completion Pack (2026 session)
+
+| ID | System | Phase | Status | Commit |
+|---|---|---|---|---|
+| SCP-1a | DataValidator (static + registry + checksum) | 1.2 | IMPLEMENTED | a7a827f |
+| SCP-1b | AssetFallback + ErrorReporter | 2.1/2.3 | IMPLEMENTED | a7a827f |
+| SCP-1c | Durability + Spoilage + tools + Repair Bench/Ice Box | 12 | IMPLEMENTED | a7a827f |
+| SCP-2 | Base Terminal + Creature Sanity + healthcare | 9 | IMPLEMENTED | 394ac81 |
+| SCP-3 | Mount/Rider + socket contract | 5.3 | IMPLEMENTED | edc6b08 |
+| SCP-4 | Dual-Tech combos + DDA | 6.3/3.2 | IMPLEMENTED | 6cd29e4 |
+| SCP-5 | NPC schedules + crops + offline production + turret | 7/8/11 | IMPLEMENTED | bbe2e3c |
+| SCP-6 | Genetics + Breeding/Incubator + Perf manager | 10/13.1 | IMPLEMENTED | 9864cce |
+| SCP-7 | Object pooling + TeamAgent + RPC limiter | 13.2/4 | DEFERRED | engine-verify first |
+
+## §G FINAL GAME COMPLETION RUN (current session — user-ordered autonomous completion)
+
+Directive: continue autonomously until the repository honestly reaches
+READY_FOR_FINAL_BUILD; reconcile every contradictory registry value from actual
+source; audit + fix; keep canon locked; deterministic handoff.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FCR-0 | Registry reconciliation | One authoritative value per metric: test count unified to **102** (from AutomationTests.cpp + validator); content census established (76 items / 56 recipes / 229 species / 26 buildings / 17 techs / 17 quests / 11 loot / 13 POIs / 9 events / 11 NPCs / 11 dialogues / 8 weapons / 10 nodes / 4 sites / 3 robots); census enforced by validator §11 equality gates; live engine census log added (hardcoded stale counts removed from ContentLibrary) | GLM | IMPLEMENTED | commit in this run; ENGINE-UNVERIFIED (log fires at engine boot) |
+| FCR-1 | Source audit | Fresh full audit of GDP+SCP code (baca0f6 + a7a827f..f9892b6 — not covered by the prior 5-audit pass) + fix every real defect found | GLM | COMPLETE | 5 parallel agents found 2 CRITICAL + 17 HIGH + 13 MEDIUM + 15 LOW; every one verified against source and fixed in FCR-1-A (9bca989) / FCR-1-B (30e9e44) / FCR-1-C (aea01ed: +3 regression contracts, suite 102) |
+| FCR-2 | Player experience verification (Phase 2 checklist) | movement/camera/sprint/stamina/jump/dodge/interact/melee/ranged/scan/capture/inventory/equipment/consume/build/dismantle/repair/death/respawn/save/load/pause — 28 runtime actions, no duplicate bindings | GLM | VERIFIED (static) | mechanical checklist ALL PASS + input map integrity |
+| FCR-3 | Survival/inventory/crafting verification (Phase 3) | all pillars present; exploit paths closed by FCR-1 fixes (negative-qty, offline mint, crop regrow, refund gaps); zero dead recipe stacks | GLM | VERIFIED (static) | recipe cross-check script |
+| FCR-4 | Echo platform verification (Phase 4) | ONE architecture confirmed (single AAstrawildEchoCharacter, no duplicates); capture→work→save loop live; locomotion possess-race fixed | GLM | VERIFIED (static) | R2 sweep + audits |
+| FCR-5 | Combat verification (Phase 5) | full matrix present; friendly fire + wild bolt damage + combo boss resolution fixed this run | GLM | VERIFIED (static) | |
+| FCR-6 | Base/power/automation (Phase 6) | BUILD→POWER→ASSIGN→WORK→PRODUCTION→OUTPUT→STORAGE chain live; garrison caps enforced; offline gates closed | GLM | VERIFIED (static) | |
+| FCR-7 | World 12 zones (Phase 7) | zone data + runtime generation + transitions verified (prior audits + validator) | GLM | VERIFIED (static) | |
+| FCR-8 | NPC/quest/story (Phases 8-9) | MQ-01..17 + endings A/B + post-game; all 11 objective types have matchers + producers; schedule origin-march + profession + shop-hours fixed this run | GLM | VERIFIED (static) | |
+| FCR-9 | Dungeons/bosses/skiff (Phases 10-11) | 3 dungeons, 4 bosses, skiff + Stratos Coil gate verified | GLM | VERIFIED (static) | |
+| FCR-10 | UI/UX (Phase 12) | all player-facing screens present; ability/combo toasts wired this run | GLM | VERIFIED (static) | |
+| FCR-11 | Content + pipeline (Phases 13-14) | manifest current (459 LFS + ArtSource direct); import idempotent (does_asset_exist guards); pipeline idempotency contract documented (HANDOFF §20a) | GLM | VERIFIED (static) | |
+| FCR-12 | Test quality (Phase 15) | 102 tests, exact validator gate, 3 new FCR regressions, no tautologies (all drive real code paths) | GLM | COMPLETE | |
+| FCR-13 | Performance audit (Phase 16) | tick scan clean (turret cadence-gated, spoilage one-pass); O(N^2) CastPartyAbility hoisted; perf manager respects user pins | GLM | COMPLETE | |
+| FCR-14 | Deferred review (Phase 17) | CV-4 gamepad BLOCKED (hardware) stays · CV-5 economy CLOSED (Duskmoth loot) · CV-6 co-op P3 stays by design · SCP-7 pooling/TeamAgent/RPC stays deferred (no static evidence it is required; ownership checks already prevent friendly fire) | GLM | COMPLETE | no deferred item blocks READY_FOR_FINAL_BUILD |
+
+## §H ASSET ACQUISITION PACK (2026 session — free CC0 source assets)
+
+Directive: acquire, validate, deduplicate, organize and document legally usable
+FREE assets (Kenney priority-1) that materially improve ASTRAWILD's
+visual/audio quality — WITHOUT touching gameplay code, bindings or the
+existing ArtSource contract. Sources: kenney.nl official publisher downloads
+only; per-pack CC0 license verified on each pack page + in-archive License.txt.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| AA-1 | Pipeline | Reusable acquisition tooling `Scripts/download_assets.py` + `Scripts/download_assets.ps1`: approved-URL-only downloader (retry/partial-detection/zip integrity), SHA256 dedup, path-traversal/symlink/zip-bomb-safe extraction, WAV/OGG/GLB/GLTF/PNG format validators, OGG→WAV 16-bit PCM conversion (originals preserved), idempotent commit (never overwrite; differing content = BLOCKED) | GLM | IMPLEMENTED | 6 packs processed; second-run idempotency verified (identical stats, no duplicates) |
+| AA-2 | Audio | Kenney CC0 packs: Impact Sounds (130), Interface Sounds (100), Sci-fi Sounds (73) → `ArtSource/Audio/Kenney_*/` (Ogg originals + Wav conversions + License.txt) | GLM | IMPORT_READY | UE5 imports the WAVs; OGG kept as provenance (UE5 does not import OGG) |
+| AA-3 | Models | Kenney CC0 packs: Nature Kit (314 GLB — biome/farm/village/ruins dressing), Space Kit (107 GLB — dungeon/ancient-tech dressing, turret candidates), Blaster Kit (40 GLB + colormap — CANDIDATE_REPLACEMENT weapon pool) → `ArtSource/Models/Kenney_*/GLB/` | GLM | IMPORT_READY | FBX/OBJ/DAE/STL format duplicates + 2D previews dropped at selection; space-kit character/vehicle/rocket models excluded (deferred scope) |
+| AA-4 | Documentation | `ASSETS_CREDITS.md` + `ASSET_MANIFEST.json` (root), `Docs/ASSET_ACQUISITION_REPORT.md` + `Docs/ASSET_ACQUISITION_MANIFEST.json`, `Docs/ThirdPartyLicenses.md` rows for all 6 packs | GLM | COMPLETE | 1,071 accepted records / 763 import-ready / 43.4 MB; 4 in-pack duplicates detected+skipped; 61 files rejected by curation; 0 missing dependencies; 0 blocked |
+| AA-5 | Guardrails | No `.uasset`/`.umap` fabricated; existing ArtSource assets untouched (never auto-replaced); pack subfolders are outside the flat auto-import folders so `import_all.py` contract unchanged; both static validators re-run PASS at the acquisition commit | GLM | VERIFIED (static) | Engine import/binding belongs to the Antigravity one-time integration (IMPORT_READY ≠ UE5_VERIFIED) |
+| AA-6 | Textures P0 | Batch 2 (wayfinder-approved): Kenney CC0 Particle Pack (96 transparent-background VFX sprites + pre-rotated frames; the baked-black-bg duplicate set excluded by curation) + UI Pack: Sci-Fi (690 panel/button/icon PNGs across 6 color families × Default/Double states + Kenney Future/Narrow TTF fonts for UMG) → `ArtSource/Textures/Kenney_*/` | GLM | IMPORT_READY | Feeds the P0 combat-VFX and UI-art gaps from the acquisition gap analysis; SVG vector sources and preview/sample images dropped at selection |
+| AA-7 | Models P0/P1 | Batch 2: Kenney CC0 Survival Kit (80 GLB — camps/fires/crates/tools, all 12 zones), City Kit Industrial (38 GLB — Ember Ridge/Stormcrest/research props), Modular Space Kit (41 GLB — dungeon modular tiles), Modular Dungeon Kit (40 GLB — stone/ancient tiles), Animated Characters: Survivors (4 FBX — 1 medium humanoid + idle/run/jump animations, retarget reference) → `ArtSource/Models/Kenney_*/` | GLM | IMPORT_READY | ACS ships NO GLB (classic FBX + 2D-skin pack — research inference corrected at acquisition against the actual archive); FBX validated by container magic, mesh/rig check belongs to engine import |
+| AA-8 | Textures P1 | Batch 2: Kenney CC0 Skyboxes (5 equirectangular PNGs — day/morning/night/alien/space) + Crosshair Pack (1,600 reticle PNGs in 4 styles × 2 resolutions, sub-path preserved) → `ArtSource/Textures/Kenney_*/` | GLM | IMPORT_READY | Tilesheet atlases dropped (duplicates of the individual PNGs); Sample renders/Previews excluded; reticles replace the text-glyph HudWidget crosshair at integration |
+| AA-9 | Pipeline extension | Batch 2 tooling: new `Textures` category with sub-path-preserving destinations (style/state folders reuse base filenames — flat dests collided, caught and fixed with 0 remaining BLOCKED), FBX + TTF validators, rel-path curation matching, incremental manifest merge (`--packs` subset runs still regenerate the single authoritative manifest; stale-pack records dropped) | GLM | IMPLEMENTED | Idempotency re-proven on batch-2: re-run identical stats (3,678/3,360/75.8MB, 0 blocked), no new files; merge carried batch-1 records verbatim (1,071/43.4MB match the v3.9 commit exactly) |
+
+Rejected (documented in the report): Sci-Fi RTS (2D sprite pack — REJECTED_FORMAT), Digital Audio (8-bit aesthetic), UI Audio (duplicate role vs Interface Sounds), RPG Audio (fantasy-specific), Kenney 2D creature/character family (Monster Builder/Animal/Alien UFO/Robot/Fish/Toon/Shape — REJECTED_FORMAT, no 3D creature catalog exists at Kenney), Quaternius newer packs (REJECTED_LICENSE — QAL forbids redistribution). OpenGameArt researched and DEFERRED (machine-parseable per-asset CC0 licenses + anonymous direct downloads verified — viable for a future batch once the downloader gains a per-asset license gate); Quaternius Ultimate Animated Animals DEFERRED (CC0 page, but Google Drive folder delivery is not a direct URL); Poly Haven/ambientCG NOT_ACQUIRED (site-wide CC0 verified, realistic style = P2 upgrade path).
+
+**Batch-2 totals** (approved via wayfinder ticket 03, live user approval): 9 packs / 2,607 accepted files / 32.4 MB — combined with batch 1: **15 packs / 3,678 accepted / 3,360 IMPORT_READY / 75.8 MB** (602 audio + 661 models + 2,396 PNG + 2 TTF + 17 metadata); 54 in-pack duplicates hash-skipped; 172 files rejected by curation; 0 missing dependencies; 0 blocked. Storage: 75.8 MB of the 10 GB soft cap.
+
+## §I DEPTH PASSES (2026 session — user directive "MAKE IT A REAL GAME")
+
+Directive (user, 2026-09-05): ASTRAWILD must become a real, complete game — not a
+technically-complete source project. Batch-2 acquisition is done (§H); the remaining
+sequence is: CREATURE VISUAL STRATEGY → CONTENT INTEGRATION PREP → GAMEPLAY DEPTH
+HARDENING → WORLD DEPTH PASS → NPC/RELATIONSHIP PASS → DUNGEON DEPTH PASS → FINAL
+CONTENT READINESS + SOURCE AUDIT → READY_FOR_FINAL_BUILD. All passes EXTEND the
+existing GDP/SCP architecture (no second architecture, no canon redesign); census
+counts may change only inside coherent batches that update EXPECTED_CENSUS + all
+census docs together; engine-side verification remains Antigravity-exclusive.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| DP-1 | Creature visuals | `Docs/ASTRAWILD_CREATURE_VISUAL_STRATEGY.md` — Tier A/B/C system over the 229 species: 20 bespoke (12 hero+evolution meshes exist, 8 new: 4 bosses + Gloomfang/Lumewisp/Sprigling/Auroraling), ≈55 archetype-rig Tier B via shared ArtSourceGen rig library (8 body plans), ≈154 procedural Tier C with strengthened identity; deterministic tier rules; import/binding per HANDOFF §20b | GLM | COMPLETE | SOURCE-VERIFIED strategy (v1.2); all mesh work lands as IMPORT_READY via ArtSourceGen only — never .uasset forgery + P0 boss meshes ×4 delivered (V25-C1) + P0 story meshes ×4 (V25-C2) — Tier-A bespoke set complete (14 echo meshes IMPORT_READY) + boss opt-in skeletal path with cone fallback (source-side) + HANDOFF §20c verbatim binding-patch sequence (assets-first, binding-second) |
+| DP-2 | Integration matrix | `Docs/ASTRAWILD_CONTENT_INTEGRATION_MATRIX.md` — 14-category readiness matrix + per-pack "where is this used" tables + P0/P1 gap rows | GLM | COMPLETE | 14 categories (native = STATIC_VALIDATED, packs = IMPORT_READY, boss/NPC-body/Tier-A meshes = MISSING) + 15-pack tables with NOT_INTEGRATION_SCOPE palette subsets (crosshairs/UI families/audio extras) + batch-2 purpose mapping + gap-closure ledger; nothing BOUND — binding ENGINE_UNVERIFIED per §20b; §20b "602 WAV" corrected to 301 importable WAV + 301 OGG provenance |
+| DP-3 | Echo depth | locomotion signature abilities (53 templates: +6 water/aerial +3 family; Water/Flying species carry a 7th signature pick), 15-pair party element resonance (mitigation/ability-power/status-potency wired into ApplyElementalDamage + ExecuteAbility), water mounts (Aquatic quadruped/serpent sea-riders: MOVE_Swimming in sea zones, SPACE/CTRL dive/surface, shore walks; mount contract test + sea-rider assertions + resonance test 103) | GLM | COMPLETE | test count 102→103 (gate + 6 docs updated together); legacy 3-arg derivation pinned at six by test 101 |
+| DP-4 | Player depth | player-chosen 3-slot skill loadout (build identity) on `UAstrawildAttributeComponent` — `BoundSkills` (None = empty slot) + `BindSkillToSlot`/`ClearSlot`/`IsSkillBound`/`GetBoundSkills` with unlock-gate enforcement at bind time; non-empty loadout narrows the Y smart-cast ladder to the bound skills, all-empty (fresh/pre-DP-4 saves) keeps the legacy all-unlocked ladder exactly; selection surface = ESC pause-menu SKILL LOADOUT section (3 cycling slot buttons, pure-C++ UMG, HUD toast feedback) + HUD skill line bound-count readout; save v5 additive (rides the first `FAstrawildAttributeSaveData` row, sanitized import) | GLM | COMPLETE | test 104 `ASTRAWILD.DP4.SkillLoadout`; count 103→104 (validator gate + 5 docs updated together); enum declaration moved above the attribute save struct (additive reorder, no semantic change) |
+| DP-5 | Combat depth | creature weak-point windows (Large/Huge wild game only: replicated `bWeakPointExposed` + server ~20s/4s cadence, ×1.5 direct hits before defense subtraction, existing element light pulses during the window, OnRep mirrors, Tiny/Small/Medium + bosses fail closed) · weakness-hit readability (new `OnWeaknessHit` multicast on the ×1.5 branch + "WEAKNESS HIT" HUD toast via the Notify→PushNotification path + ArtPack-bound energy impact cue + log) · per-boss special sets (`EAstrawildBossSpecialSet` + pure `ResolveBossSpecialSet(DefeatEventTargetId)` + params table: bolt count/cadence, blast count/radius, hazard wave count/dps, summon species — shared TickSpecials reads the set; default = byte-exact legacy tuning; wired in InitializeFromBossDefinition + dungeon boss room + Tyrant world spawn) | GLM | COMPLETE | test 105 `ASTRAWILD.DP5.BossSpecialSets`; count 104→105 (validator gate + 5 docs updated together); no new special mechanic types (same four primitives recombined); audio reuses the existing `/Game/Audio/A_Weapon_Impact_Energy` binding (validator check 8 clean) |
+| DP-6 | Base depth | work-site coverage for the 11 work types (4 new data-row sites in `BuildWorkSites`: Site_TidebreakerDepot Transport/TidebreakerIsles + Site_VerdantLab ResearchAssist/VerdantReach + Site_StormcrestDynamo PowerGeneration/StormcrestHighlands + Site_HollowBulwark Defense/HollowApproach — all definition-placed outside the camp, covering the 4 highest species-affinity uncovered types; 8 of 10 actionable types covered, Crafting Assistance + Construction documented exceptions) · research branch wiring audited (census premise "7 branchless techs" was stale — `MakeTech` has set `Tech->Branch` since v2-batch-1; DP-6 ships per-tech rationale comments + the 17/17 assignment pin) · production→progression field consumables (Field Ration: timed `Status.RationVigor` stamina-regen through the survival status-effect system via additive `StaminaRegenPerSecond` + `OnConsumeStatus` item field; Pulse Tonic: 30s bottled Hunter's-Focus capture window via additive `CaptureFocusSeconds` — both applied by `ApplyFieldConsumableEffects` on the two consumption paths; each has a recipe mirror + a producing site: depot consumes kitchen meat + farm berries → rations, lab brews tonics) | GLM | COMPLETE | test 106 `ASTRAWILD.DP6.BaseDepth` (registry-backed world-free census — new pattern: ownerless `BuildDefaults`); count 105→106 (validator gate + 5 docs updated together); census deltas: items 76→78, recipes 56→58, work sites 4→8 (techs/loot untouched); Dynamo Hall outputs EnergyCells ×2 (power loop), Bulwark outputs HerbalSalves (combat feed) |
+| DP-7 | World depth | zone events for the 7 bare zones (7 new `BuildWorldEvents` rows, one per previously-bare zone — Mist Tide DuskMarsh forced fog + Sprigling flora boost · Cinder Fall EmberRidge Emberfang boost + 3 bonus EmberAsh vents · Dune-Buried Cache Sunscar Loot_POIAncient + 3 RP · Reef Bloom AzureShallows Brinefin×4 + 3 bonus SeaPearl beds · Wreck Surge TidebreakerIsles Loot_POIRuin + hostile Dawnfang×2 pressure · Storm Front Stormcrest forced storm + Magmawing×3 pulse herd · Pearlsong PearlseaReef rare Pearlcrest×1 + 3 RP — all from the EXISTING effect vocabulary, kinds reused, existing loot tables, no new effect types) · per-zone hazard identity (`EAstrawildZoneHazard` appended-only enum + additive `HazardType`/`HazardPressure` descriptor fields; ColdPressure/HeatPressure = ±°C thermal layer ON TOP of the global weather offset consumed by `UpdateTemperature` through the existing cold/heat threshold + insulation bands, AshLung = passive stamina-regen suppression clamped at zero net regen — Frostveil −12° colder than Dawn Fields, Sunscar +12°, Ember Ridge +10°, Hollow Approach ash lung 6, 10 of 12 zones carry an identity, Dawn Fields + Glimmerwood stay hazard-free by design) · zone secrets (4 scanner-gated `SignalSource` POIs mirroring the FrostveilSignalSource gating pattern — Undergate Vault HollowApproach, Machine Coffin Sunscar, Hold Room TidebreakerIsles, Tidecache PearlseaReef — real Loot_POIAncient + 6 RP on discovery) | GLM | COMPLETE | traversal differentiators stay as-is (Eye Gate altitude + sea-zone identities already differentiate traversal; not extended this batch — directive scoped events/hazards/secrets); test 107 `ASTRAWILD.DP7.WorldDepth` (pure zone-table hazard pins + ownerless `BuildDefaults` registry census); count 106→107 (validator gate + docs updated together); census deltas: world events 9→16, POIs 13→17 (loot/species/nodes untouched — events reuse existing tables/species/node ids) |
+| DP-8 | NPC depth | affinity-gated dialogue evolution (additive `RequiredMinAffinity` on `FAstrawildDialogueChoice` — 0 = ungated, fail-closed beside the quest/flag conditions in `EvaluateChoiceConditions`; the dialogue component tracks the TALKING NPC via transient weak ptr set/cleared by OpenDialogue/CloseDialogue so the gate reads the LIVE relationship; pure `MeetsAffinityGate` static + 3 evolved trees: Trader Tam Friend-50 supply-line beat that bridges into the shop + Elder Rowan Confidant-75 "old doors" deep lore + Fisher Nima Friend-50 rare-goods beat with shop bridge) · regional knowledge lines (4 NPCs × honest world info in the existing authoring style: Tam trade-route resource map, Rowan far-lands rare-material map + Frostveil star-falls, Guard Sela ungated per-zone hazard map + Acquaintance-25 patrol chart of the three dungeon gates, Farmer Jori zone-event weather almanac — every fact pinned by the real zone-resource/event tables) · all gated choices are one-time beats with real consequences (forbidden flags + research points / bOpenShop shop bridges — existing consequence verbs only, no new types) | GLM | COMPLETE | census stays 11 NPCs / 11 dialogue trees (depth, not clones — user directive); schedule-aware lines SKIPPED by scope rule: the choice-condition vocabulary has NO time/hour concept and adding one would force a new condition type (the task forbids it) — the schedule system itself (IsServiceOpen) is untouched and remains shop-hour gating only; test 108 `ASTRAWILD.DP8.AffinityDialogue` (pure gate resolver + fail-closed component path + live registry census pin of the 4 gated trees); count 107→108 (validator gate + docs updated together) |
+| DP-9 | Dungeon depth | per-dungeon room themes (additive `EAstrawildDungeonTheme` on the room template resolved by pure `ResolveDungeonTheme(DungeonId)` from the STABLE save-mapping ids — bootstrapper literals byte-identical, unknown ids fail closed to the legacy unthemed shell; `MakeThemeProfile` data table: tinted floor + perimeter side walls via the ResourceNode MID idiom, themed accent point light, deterministic room-local ArtPack dressing scatter seeded per room+theme (≤6-attempt rejection keeping the encounter clear-space clean, VISUAL ONLY — no blocking scatter in combat rooms, ISM built once at shell time — zero per-tick cost, ONLY existing ArtPack biome/node binding paths — no new /Game/ refs, validator check 8 clean); Underlight = darkest tint + tight ×0.85 footprint + low 260cm oppressive slabs + cliff-shard/spore-bush dressing, Sunken Vault = wide ×1.3 flooded halls + 190cm walls + moss-boulder + glow-reed dressing + water-film floor accent (existing `WaterPlaneActor` through the additive `BuildPlaneAtZ` — thin 20cm walkable film, never a progression blocker at the gate line), Eye = tall 520cm monolith shells + granite rocks elongated ×2.6 into standing pillars + spore-bush/ancient-vein (tech) accents + pulsing storm accent light on the room's existing 0.5s tick) · puzzle room substance = resonance pillars (3 interactable `AAstrawildResonancePillarActor` per puzzle room mirroring the portal interactable pattern — traceable collision, replicated lit state, prompt carries the required order numeral; the ROOM runs the sequence state machine over pure tested verbs: attunement must follow pillar order I→II→III within a 45s window, wrong order OR window expiry resets all three, sequence solved + light guard defeated = room clear → gate unseals through the existing room-clear path; fail-open when pillars fail to spawn so progression never stalls; pillars lock lit on clear/restore) · per-dungeon room hazards while uncleared (server-side on the room's existing tick, cleared rooms shed the effect — statuses explicitly removed, pulse tiles destroyed): Underlight = mild ash-lung 4/s stamina-regen suppression through additive `FAstrawildStatusEffect.StaminaRegenPenaltyPerSecond` consumed CLAMPED at zero net regen (the DP-7 zone-verb contract, summed with the zone penalty), Sunken Vault = `Waterlogged` 0.8× movement slow through the existing Chill/Shock `SpeedMultiplier` status vocabulary, Eye = periodic energy-pulse tiles (3 tiles / 9s cadence / 170cm radius / 3 dps / 4.5s lifetime, deterministic rotating ring) reusing the existing `AAstrawildBossHazardActor` arena-hazard pattern (armor-mitigated, self-dissipating) | GLM | COMPLETE | boss differentiation deliberately NOT re-touched (DP-5 per-boss special sets remain the boss identity — room hazards are room-side, mild by design and don't alter boss tuning); traversal mechanics stay as-is per DP-7's scope note (Eye Gate altitude + sea-zone identities differentiate traversal); room-owned spawnlings (pillars/tiles/water accents) die with the room via EndPlay so regeneration never leaks; room shell visuals are server-authored in the shared single-player/listen-server world — same posture as the pre-DP-9 floor plate (Template not replicated); test 109 `ASTRAWILD.DP9.DungeonIdentity` (pure statics: 3 canonical ids → 3 distinct themes + unknown fail-closed, profile pairwise-distinct identity data + hazard bands + ArtPack-resolvable dressing vocab + unthemed legacy default, pillar sequence verbs + window contract); count 108→109 (validator gate + docs updated together); census UNCHANGED (dungeon/room counts are not census metrics — species/quests/POIs untouched) |
+| DP-10 | Final gate | content readiness matrix re-verified at 14 categories against the post-depth-pass source (ECHOS: 14 Tier-A meshes IMPORT_READY + locomotion signature identity; PLAYER: skill loadout live; NPCS: affinity-gated dialogue; DUNGEONS: themed rooms/puzzles/hazards source-side; VFX/UI/WEAPONS unchanged; statuses stay honest — nothing became BOUND by docs), full source audit at tip (both validators PASS: validate_repository.sh v2 + validate_final_run.py 61 checks incl. the 109-test exact gate + 15 census equality gates; doc-consistency sweep across live docs; ArtSource manifest-vs-disk cross-check 120/120 zero drift; git tree clean, no generated files), readiness report re-affirmed READY_FOR_FINAL_BUILD (source-side) with the residual ledger + SOURCE-VERIFIED/STATIC-VERIFIED/ENGINE-UNVERIFIED separation, HANDOFF coherence pass (109 tests as repo truth, §20b/§20c referenced from the §20 sequence, 12 golden-path verify items, 12-point stop-condition list §21), MASTER_CONTROL v5.0, registry §I closed (no orphans) | GLM | COMPLETE | READY_FOR_FINAL_BUILD declared after the 12-point stop condition held at every point; census unchanged at the DP-10 gate (78 items / 58 recipes / 8 sites / 16 events / 17 POIs / 17 techs / 229 species / 11 NPCs / 11 trees / 8 weapons / 10 nodes / 3 robots / 26 buildings / 12 zones / 11 loot / 109 tests); docs-only commit — zero gameplay code touched |
+
+**§I closing note (residual ledger — the honest remainder after DP-1..DP-10):**
+
+- **(a) Tier-B archetype rig library** (~55 spawned-wild/Huge/Epic+ species on procedural
+  PMC bodies with strengthened material identity) — P1 source-side art backlog owned by
+  `ASTRAWILD_CREATURE_VISUAL_STRATEGY.md` §10; graceful degradation until it lands; not a
+  final-build blocker.
+- **(b) Engine-side import/binding queue** — HANDOFF §20b (Kenney packs +
+  fitness/retarget/tone checks) and §20c (Tier-A/boss creature-mesh binding patch);
+  IMPORT_READY ≠ bound; executes only in the Antigravity one-time run (AG-2..5).
+- **(c) Open decisions awaiting engine evidence** — Kenney tone verdict, weapon
+  replacement (compare-first), particle sprite fitness, ACS retarget, skybox-space
+  consumer, UI family/reticle picks (matrix §4b queue D1-D7; each has a pre-committed
+  keep-procedural fallback).
+
+No §I row is PENDING or orphaned: DP-1..DP-10 all COMPLETE. Engine-side conversion
+remains Antigravity-exclusive (§B AG-1..AG-6).
+
+---
+
+## §J LAN CO-OP PACK (LCP — current session, user directive "PERSONAL LAN CO-OP + FREE ASSET PRODUCTION MODE")
+
+Directive (user, this session): ASTRAWILD is a private personal 4-player LAN co-op game
+(1 listen-server host + 3 LAN clients, host-authoritative, free assets with verified
+licenses only, no asset-collage identity drift). This REOPENS the source scope after
+DP-10's freeze (MASTER_CONTROL v6.0 §1b): every depth-pass canon stays UNCHANGED; all
+LCP work extends the existing server-authoritative replication foundation (no parallel
+networking architecture, no dedicated server, no MMO systems). Readiness verdict is
+SUSPENDED until §J closes, then READY_FOR_FINAL_BUILD re-declares with the expanded
+stop-condition list (HANDOFF §21 + new §22 LAN acceptance test). Spec + PART-3 audit:
+`Docs/ASTRAWILD_LAN_COOP_SPEC.md`.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| LCP-1 | Scope + audit | LAN_COOP_SPEC (product decision §1, PART-3 source audit at 00354da: 43 replicated props/14 classes, 8 Server RPCs, 0 Client RPCs; client world BROKEN-for-clients, co-op save MISSING, session flow MISSING, quest/research/roster client sync PARTIAL — every verdict grep-grounded) + MASTER_CONTROL v6.0 (§1b multiplayer target + scope-guard + ledger + overall status IN PROGRESS-LCP) + MULTIPLAYER.md wave-5 re-audit header + §J ledger opened | GLM | COMPLETE | docs-only batch — zero source changes; DP-era freeze lifted for LCP batches only; engine gates unchanged |
+| LCP-2 | Client world build | DELIVERED: bootstrapper replicates + client path (GameState bWorldSeedSynced gate -> BuildClientCosmeticWorld: lighting/terrain/sea/landmarks via dedicated CosmeticStream (seed^salt) so scatter is machine-order-independent; dressing waits for the replicated exclusion-bubble actors (gate = 2 villages+3 generators+9 portals+N POI markers+2 skiffs, 15s timeout fail-open with warning)) + atmosphere/sun/flicker tick locally on built clients (weather read from replicated WeatherState through the new static GetVisibilityMultiplierForState) + gameplay actor replication: ResourceNode (NodeDefinitionId/RemainingQuantity/bInfinite + OnRep visual mirror + 0.5Hz), NPCCharacter (NpcDefinitionId + registry resolve + appearance rebuild), VillageActor (identity props + BuildVillage on all machines), RestPoint (WorldObjectId/bActive), CraftingStationActor (StationId), POIMarkerActor (PoiId + OnRep beacon), DungeonRoomActor (Template + RoomIndex + OnRep themed-shell rebuild — closes the DP-9 "Template not replicated" client gap) | GLM | COMPLETE | tests 109→111 (ASTRAWILD.LCP2.ClientWorldPolicy + ASTRAWILD.LCP2.DressingGate; validator gate + master-control/readiness/handoff/test-inventory updated together); single-player/listen-host behavior preserved (authority path untouched, village BuildVillage now runs on all machines incl. authority = same result); no census changes |
+| LCP-3 | Interaction/trade routing | DELIVERED: `ServerInteract` on PlayerCharacter (the single client→server interact choke point — server re-validates alive/interface/range ×1.5 then runs the SAME authority ladder via the extracted ExecuteInteractIntent: dismount-first → mount → generic interactable → capture → evolve, byte-identical for host/standalone) + first Client RPCs on PlayerController (ClientNotify/ClientOpenVendorShop/ClientOpenVendorDialogue/ClientOpenCraftingScreen + NotifyPlayer delivery helper) + ServerVendorTrade (distance ×600 + quantity sanity → authority-guarded TryPurchase/TrySell + result feedback) + ServerSubmitDialogueChoice (ResolveValidatedChoice structural fail-closed + server-side EvaluateChoiceConditions + authority ApplyChoiceConsequences; widget submits node+index) + replicated mount/pilot identity on the pawn (ReplicatedPilotedSkiff/ReplicatedMountedEcho + OnRep weak mirrors) + ServerSkiffPilotInput/ServerMountRiderInput relays (Unreliable, tracked vertical/boost state so held keys never cancel) + NPC/station screen-open routing + capture/evolve feedback via NotifyPlayer + dialogue choice rows carry indices + cheat execs blocked on NM_Client (AreCheatsAllowed) | GLM | COMPLETE | tests 111→113 (ASTRAWILD.LCP3.ServerRoutingSurface reflection contract + ASTRAWILD.LCP3.DialogueValidation fail-closed resolver; validator gate + 5 docs updated together); TryPurchase/TrySell were already authority-guarded — this batch adds the routing they were waiting for || LCP-4 | Per-player persistence | DELIVERED: additive `FAstrawildCoopPlayerSaveBlock` (player key + inventory/6 equip slots/vitals/transform/GDP-3 attributes+loadout/quest view/defeat counters/dialogue flags/durability) on the save object (v5 payload extension, no schema bump — legacy saves load as empty blocks) + SaveWorld writes one block per connected non-host player (host block stays the legacy singular fields — single-player saves byte-identical) + LoadWorld applies blocks to connected players + `TryRestoreLateJoinPlayer` (PostLogin: session cache first, then the newest disk save; PART 7 reconnect contract) + `SnapshotPlayerForSession` (Logout: reconnect source) + roster `OwnerPlayerKey` partition (AddToRoster stamps the stable key; `GetRosterForPlayer`/`IsRosterRowOwnedBy`; SpawnPartyActors filters per-owner — legacy None pool keeps single-player behavior; live-actor OwnerPlayerId pawn-name convention UNTOUCHED per final-audit H-1) + stable `GetPlayerKey` (PlayerState name, PlayerSlot_id fallback — name-keyed cross-session restore documented) | GLM | COMPLETE | tests 113→115 (LCP4.RosterPartition + LCP4.CoopSaveBlock; validator gate + 5 docs updated together); NPC affinity stays PARTY-SHARED in co-op v1 (documented exception, LAN_COOP_SPEC §3); spoilage/freshness stays world-shared || LCP-5 | Client state sync | DELIVERED: QuestComponent replication (SetIsReplicatedByDefault + QuestStates/ActiveQuestId/CompletedQuestIds DOREPLIFETIME — the owning client's HUD tracker/screens read live progression; mutations stay server-side, the client receives data only) + GameState research mirror (FAstrawildResearchSaveData ReplicatedUsing=OnRep_ResearchMirror → client's local GameInstance subsystem imports — every read path unchanged) + SyncMirrorToGameState at every research mutation (unlock/force-unlock/points/import/grant-starting) + NotifyPlayersResearchUnlocked toasts every screen on unlock (PART 18) + quest completion toast via NotifyPlayer (host + remote) | GLM | COMPLETE | tests 115→117 (LCP5.ClientStateSyncSurface + LCP5.ResearchMirrorRoundTrip; validator gate + 5 docs updated together); roster mirror deliberately NOT built — no client-side roster UI exists (party echoes are replicated actors); documented in LAN_COOP_SPEC §8 || LCP-6 | LAN session flow | DELIVERED: `UAstrawildLANSessionSubsystem` (GameInstance) — HostLANGame (save world → ServerTravel '<current map>?listen?autoload=1' → beacon goes live once the listen world starts, core-ticker netmode check) + UDP beacon broadcast (1 Hz, port 45861, magic AWLAN1|version|listenPort|players, fail-closed decode) + discovery listener (SO_REUSEADDR for multi-instance test machines, 2 Hz poll, 8s expiry, dedupe by host+port) + JoinSession/ConnectDirect (ClientTravel; ParseDirectAddress fail-closed) + pause-menu LAN CO-OP panel (Host / Find+Join / editable direct-address + status line) + HUD session-mode line (SINGLE PLAYER / LAN HOST (N/4 players) / LAN CLIENT — DescribeSessionMode) + GameMode InitGame parses the travel 'autoload' option (rehost continues from the pre-travel save via the H-3 machinery) | GLM | COMPLETE | tests 117→119 (LCP6.BeaconProtocol + LCP6.AddressParsing; validator gate + 5 docs updated together); Build.cs +Sockets; gameplay networking = engine IpConnection replication unchanged (beacon is discovery-only) || LCP-7 | Free-asset ledger | DELIVERED: `Docs/ASTRAWILD_FREE_ASSET_LEDGER.md` (PART 10/19 column contract: asset/source/license/license URL/file path/hashes/usage/attribution/status for every acquired pack; APPROVED-NOT-REQUIRED decisions for Poly Haven/Freesound; binding rules incl. LICENSE_UNCLEAR-never-enters) + `Scripts/download_quaternius.py` (deterministic Drive crawler: pack-page CC0 gate + per-pack License.txt CC0 gate BEFORE any download, idempotent, SHA-256 manifest, interstitial retries) + the six user-approved packs acquired: Ultimate Animated Animals (12 animated gltf) / Monsters (54 gltf+atlas) / Nature (51 fbx) / Space Kit (78 gltf+atlas) / Modular Ruins (55 fbx+textures) / Modular Men (13 gltf — page title 'Ultimate Modular Men Pack') → `ArtSource/Models/Quaternius_*/` | GLM | COMPLETE | 264 files / ~130 MB; 0 failed downloads; 0 HTML-contaminated files; both validators PASS at the acquisition commit; import/binding stays Antigravity-side (IMPORT_READY ≠ UE5_VERIFIED) |
+| LCP-8 | Final gate | DELIVERED: validators PASS ×2 at tip (119-test exact gate + 15 census equality gates — census UNCHANGED, LCP adds networking/persistence code not content) + HANDOFF §21b (2 LCP stop conditions) + §22 LAN acceptance test (17 rows, host + 3 clients, engine-side) + READINESS §O re-declaration + MASTER_CONTROL v6.1 + this registry closed | GLM | COMPLETE | READY_FOR_FINAL_BUILD re-declared (source-side, LAN scope closed); residuals: §22 engine run + the three documented v1 co-op exceptions (affinity shared / freshness shared / client dialogue visibility stale-possible — all in LAN_COOP_SPEC §3/§8) |
+
+**§J closing note:** LCP-1..LCP-8 all COMPLETE — no PENDING/orphan rows. The
+LAN CO-OP scope is closed source-side; the Antigravity one-time integration
+now runs §20 (build/automation/PIE/package) + §22 (LAN acceptance: host + 3
+clients). READY_FOR_FINAL_BUILD re-declared at the LCP-8 gate.
+
+**§J ground rules** (from the directive, binding): server-authoritative mutation
+everywhere; host owns the world save; clients never grant themselves items/XP/research/
+quest completion/boss rewards/Echo ownership/building ownership; 4-player performance
+target only; free assets = license-verified CC0-or-clearly-permitted only; no UE5
+integration in this sandbox (Antigravity one-time final run remains the exclusive
+engine gate, now with §22).
+
+---
+
+## §K PRODUCT COMPLETION RUN (PCR — current session, user directive "FINAL PRODUCT COMPLETION RUN — DO NOT STOP AT SOURCE-COMPLETE")
+
+Directive (user, this session): the real goal is a COMPLETE, VARIED, VISUALLY
+CREDIBLE, FUN ASTRAWILD that Antigravity finishes in ONE engine pass. Documentation
+status is NOT the stop condition — audit the actual product, then close every
+remaining source-side gap with player value. Baseline audit at 4e52548 produced
+`Docs/ASTRAWILD_PRODUCT_GAP_MATRIX.md` (PG-1..PG-6; the actionable set — everything
+else audited as a verified non-gap). LCP-era freeze lifted for PCR batches only;
+canon UNCHANGED; census content counts must stay unchanged (screens/art/hunts ride
+existing content). Engine gates unchanged (AG-2..5 + §22).
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| PCR-0 | Audit + matrix | PRODUCT_GAP_MATRIX (PG-1 bestiary UI / PG-2 roster UI / PG-3 map UI / PG-4 Tier-B library / PG-5 post-game hunts / PG-6 doc-claim sync) + §K opened + MASTER_CONTROL v7.0 header | GLM | COMPLETE | docs-only batch; both validators re-ran PASS at baseline |
+| PCR-1 | PG-1 Field Journal screen | `AstrawildJournalScreenWidget` — species codex (scanned/food/habitat/weakness knowledge, observation %, encounters, capture-bonus hint, totals), key **P**, pause-menu button, HUD hint line, gamepad-reachable | GLM | COMPLETE | DELIVERED: `UAstrawildJournalScreenWidget` (scrollable 229-species list — discovered rows show name/element/role/rarity + 4 knowledge flags + observation % + encounters, undiscovered rows read "??? signal unresolved" so the collection pull is visible; totals derive from the registry live, never hardcoded) + pure `ClassifyKnowledgeState`/`IsEntryDiscovered` (Unknown/Observed/Studied) + controller `ToggleJournalScreen`/`IsJournalOpen` with full screen-exclusivity wiring (all four existing toggles close it as a sibling) + `AWD_Journal` action on **P** + pause-menu "Field Journal [P]" button (the gamepad-reachable path) + test 120 (ASTRAWILD.PCR1.JournalScreen — classification rules + reflection wiring); input contract 28→29 actions; validator gate 119→120; census gates unchanged (UI surface only) |
+| PCR-2 | PG-2 Echo Roster screen | `AstrawildRosterScreenWidget` — per-Echo row (element/role/level/bond/abilities/work affinities + party membership toggle), key **L**, pause-menu button, co-op owner filtering | GLM | COMPLETE | DELIVERED: `UAstrawildRosterScreenWidget` + `UAstrawildRosterRowWidget` (identity/level/bond/trust + top-work affinity per row, IN PARTY RING / BENCHED status, Bench/Deploy buttons gated by ring capacity) + **bBenched additive field** on FAstrawildEchoInstanceV2 (roster-side fact, rides the v2 payload — no schema bump; legacy saves load unbenched; SpawnPartyActors skips benched rows via the pure `ShouldSpawnInPartyRing`) + `SetInstanceBenched` (authority + ownership validated; ring rebuilds immediately) + **replicated RosterMirror on PlayerController** (per-player slice; host pushes at capture/remove/evolve/import/late-join — supersedes the LCP-5 "no client roster UI" exception; mutations route RequestSetEchoBenched → ServerSetEchoBenched, never client-authoritative) + `AWD_Roster` action on **L** + pause-menu "Echo Roster [L]" button + **DEFECT FIX: ExportForSave live-actor refresh used to wholesale-replace rows with ToSaveDataV2() structs that default OwnerPlayerKey to NAME_None — every co-op save round-trip stripped ownership from spawned rows, orphaning parties after reload** (now ownership + bench state are preserved through the refresh) + test 121; input 29→30 actions; validator gate 120→121; census unchanged |
+| PCR-3 | PG-3 World Map screen | `AstrawildMapScreenWidget` — 12-zone grid (name/threat/hazard tint), discovered POIs, villages, dungeons, active world-event pulses, player marker, quest-target zone highlight, key **M** | GLM | COMPLETE | DELIVERED: `UAstrawildMapScreenWidget` (zone rects drawn from FBox2D bounds with GroundTint shading + name/threat/hazard, discovered-POI ◆ dots from registry truth + POISubsystem discovery state — undiscovered stay hidden, live village V / dungeon D markers from world actors, active world-event ! pins from the new `GetActiveRuntimeEvents` snapshot, ● player marker + current-zone subtitle, active-objective lines + quest-target POI highlight) + pure `ProjectWorldToMap` (uniform scale, centered letterbox, degenerate-bounds fail-closed) + `AWD_Map` action on **M** + pause-menu "World Map [M]" button + full screen-exclusivity wiring + test 122; input 30→31 actions; validator gate 121→122; census unchanged |
+| PCR-4 | PG-4 (FULL library — parts 1+2 merged) | Tier-B archetype mesh library: 8 parameterized body-plan builders + species table parsed from the ACTUAL source tables + **39 unique GLBs** (every zone signature, both dungeon pools, the monolith/colossus line, Huge species) + convention-path opt-in binding | GLM | COMPLETE | DELIVERED: aw_archetypes.py (8 plans, per-species proportions/features/palette via name-hash jitter + bestiary row colors; 3 clips each) + gen_tier_b.py (parses bestiary/appearance/wildlife/dungeon/event tables — never hand-copied) → 39 GLBs / 4.8 MB / validate_glb PASS ×39 / LFS + manifest + GetTierBSpeciesIds + BuildTierBMechPath/AnimPath + definition-driven opt-in binding in ProductionContent (derived paths, zero engine-side patch; PMC stays until import — the boss opt-in contract) + validator §9b + test 123; census/input unchanged |
+| PCR-5 | PG-5 post-game hunts | Post-game hunt system: `UAstrawildHuntSubsystem` + Hunt Board screen [U] + save rows + claim routing | GLM | COMPLETE | DELIVERED: 8 repeatable cull contracts (existing species + existing reward items — census gates re-ran UNCHANGED), defeat-event progress via the event bus (server-side; world-shared co-op counting = documented v1 exception class), ClaimHunt authority+completion-validated with AddItemSilent rewards and round reset (repeatable forever), additive FAstrawildHuntSaveRow world-save rows (fail-closed import), HuntScreenWidget + key U + pause button + Request/ServerClaimHunt routing, +test 124; input 31→32 actions |
+| PCR-6 | Final gate | validators PASS ×2 + census equality re-run + doc-consistency sweep (test counts, hunt-claim sync, residual ledger rewrite, HANDOFF PIE expectations + 4 new screens) + READINESS §P + MASTER_CONTROL v7.3 + gap-matrix closure ledger + registry §K close + FREEZE | GLM | COMPLETE | 124-test gate; census gates UNCHANGED (screens/art/hunts ride existing content); Tier-B coherence gate PASS; stop condition satisfied: PG-1..PG-6 all CLOSED (see the matrix closure ledger) |
+
+**§K closing note:** PCR-0..PCR-6 all COMPLETE — no PENDING/orphan rows. The
+Product Completion Run closed every gap from the product audit: the four
+player-facing UI surfaces (Journal/Roster/Map/Hunt Board), the Tier-B visual
+library (39 unique GLBs + convention binding), the post-game hunt system, and
+the doc-claim sync. READY_FOR_FINAL_BUILD re-declared at the PCR-6 gate with
+the product-completion scope closed; the Antigravity one-time integration now
+runs §20 (build + 124 automation + PIE golden path incl. the new screens +
+package, with the 39 Tier-B GLBs importing on the §20b baseline pass) + §22
+(LAN acceptance: host + 3 clients).
+
+## §L FINAL PLAYER-FACING PRESENTATION PASS (FPP — current session, user directive "FINAL PLAYER-FACING GAMEPLAY PRESENTATION PASS + finish the remaining work")
+
+Directive: NOT more systems — make every important existing system actually
+player-facing, understandable and visually actionable; no content inflation;
+player rules doc; then freeze source development.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FPP-0 | Presentation audit (5-way, parallel) | Player-skill / Echo-ability / boss / progression+feedback / rulebook-data audits against the live repo with file:line evidence | GLM + 5 audit agents | COMPLETE | Found: 1× P0 (crafting screen cannot open — abstract class + no WBP), skill descriptions/level-up/cooldown invisible, journal/roster zero ability rendering + wrong own-echo prompt + silent bond gates, boss hit-confirm/melee-telegraph/defeat feedback missing + HUD first-found boss bar + bosses not journal-observable, craft/loot/power/supply-drop feedback silent + raw-id/actor-name leaks |
+| FPP-1 | Dead-end fixes (smallest compatible, no new systems) | Crafting screen concrete native UI (P0) + skill presentation (description table, pause slot name/desc/READY-recharging, GROWTH line, level-up + new-skill toast, Y no-ready/cast toasts, Masterwork passive label + refund toast) + journal/roster ability kits/passive/rideable lines + weakness element + own-echo prompt truth + mount bond-gate toast + boss presentation (weakness/weak-point HIT toast+SFX, 0.5s melee windup + whiff window, element-tinted telegraph lights, weak-point pulse, phase/enrage/defeat/loot toasts + defeat sound, boss bar nearest-within-4000cm) + boss journal observation (shared ObserveCandidate) + feedback toasts (craft refusal/success both paths, kill loot, supply drop, brownout/restore, quest Title, bond 25/40) + WorkSite display names | GLM | COMPLETE | +test 125 FPP1.PresentationContract + validator gate 124→125; census UNCHANGED (zero content inflation); commit cca4cfc |
+| FPP-2 | Player rules + doc sync | `Docs/ASTRAWILD_PLAYER_RULES.md` (START/SURVIVAL/COMBAT/ECHO/CRAFTING/BUILDING/RESEARCH/WORLD/QUEST/BOSS/ENDGAME/POST-GAME/CONTROLS — every number from live source) + MASTER_CONTROL v8.0 + READINESS §Q + HANDOFF §13/§18/§19/§20 (stale journal-UI note fixed, 32 actions, gamepad note, landscape-material manual step, V2-29 evidence note) + queue STATUS NOTE + manifest/registry sync | GLM | COMPLETE | test count 125 single truth across active docs |
+| FPP-3 | Final source freeze | SOURCE_PRODUCT_FROZEN declared (MASTER_CONTROL v8.0 overall status + READINESS top status + §Q); final SHA recorded in HANDOFF §1; post-freeze work = evidence-driven engine fixes only | GLM | COMPLETE | Stop condition: skills player-facing · Echo abilities understandable · boss presentation paths · explicit progression · reward feedback · no known player-facing dead ends · PLAYER_RULES exists · docs synchronized |
+
+**§L closing note:** FPP-0..FPP-3 all COMPLETE — the presentation pass closed
+every real player-facing dead end the audits found, with zero new systems and
+zero content inflation. **SOURCE_PRODUCT_FROZEN.** The one remaining work item
+is the Antigravity engine integration: HANDOFF §20 (build + 125 automation +
+PIE golden path incl. FPP-1 verification items + package + the §20b/§20c
+import sub-sequences + the landscape-material manual step in §19) + §22 (LAN
+acceptance). Post-freeze changes are evidence-driven only (actual integration
+failures / runtime bugs / engine-discovered visual defects).
+
+---
+
+## §M SCI-FANTASY MONSTER DIRECTIVE (SCI — current session, user directive "204 UNIQUE ECHOES + CURRENT-HEAD ASSET TRUTH AUDIT")
+
+Directive: (audit first) verify the ACTUAL remote HEAD asset truth with no
+stale-diagnosis reuse, statuses RAW_PRESENT..ENGINE_UNVERIFIED, 0 fabricated
+results; (then) regroup the 204 generated bestiary species into 8 Sci-Fantasy
+themes and give every Echo a runtime mutation identity — base archetypes +
+code mutation, Pokémon-style visual diversity, no 204 unique models required,
+free CC0 sources only, full ledger discipline.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| AUD | Current-head asset truth audit | `Docs/ASTRAWILD_CURRENT_ASSET_TRUTH.md` — remote HEAD verified 68c2b07 (user's 4bb7be5 = 4 commits stale), LFS 459/459 objects fetched+OID-matched (232 MB), 416/416 Content binaries genuine UE packages (magic + version forensics), 98/114 code /Game/ refs resolve (16 unresolved = prefixes/format-strings/Tier-B probes + 1 inert nested Survivor path), manifest 112/159 imported (47 = 53 Echo GLBs − 6 hero, pending final-tip import BY DESIGN), TRUE_MISSING=0, statuses issued per the directive vocabulary, final block (CURRENT_HEAD/CONTENT_BINARY_COUNT/.../ENGINE_UNVERIFIED_ITEMS) | GLM | COMPLETE | Old Survivor/Manny diagnosis confirmed STALE (fallbacks all present at HEAD); no runtime claims; commit 58b3fcd |
+| SCI-1 | Phase 1 — theme regroup + asset mapping | 8-theme deterministic assignment (keyword → family → plan-bucket priority) + `Scripts/generate_echo_mutations.py` + `Docs/ASTRAWILD_SCI_FANTASY_THEMES.md` (counts: PlantMonster 40, ElementalBeast 50, VoidAbomination 29, EtherealSpirit 26, AncientConstruct 24, MutatedFauna 16, ArmoredOrganic 11, MechanicalHybrid 8) | GLM | COMPLETE | Parsed from the ACTUAL bestiary (204 rows) — never hand-copied |
+| SCI-2 | Phase 2 — runtime mutation system | `FEchoMutationSpec` + 204-row generated table (`AstrawildEchoMutationData.cpp`) + `FAstrawildEchoMutator` (`AstrawildEchoMutator.h/.cpp`: 4 vocabularies [8 themes / 7 attachments / 8 materials / 8 VFX types], per-part scale + deterministic instance jitter, theme color math, derived opt-in paths, persistent element VFX via SpawnSystemAttached) + EchoCharacter integration (PMC per-part scaling in all 8 body plans + `AppendMutationParts` attachment geometry + theme palette; skinned root jitter + **theme material swap via `ApplyThemeMaterial`** [dynamic M_SciFi_* instances per slot, v9.1 amendment]; weakness-hit vocal cue hook opt-in) | GLM | COMPLETE | Static-validated: braces/parens balanced, 21/21 declared methods defined (was 19/19 pre-amendment); ENGINE-UNVERIFIED |
+| SCI-3 | Phase 3 — base bake + acquisition/staging | `Tools/ArtSourceGen/gen_sci_fantasy_bases.py` → 16 SK_Base_* rigged GLBs (theme identity geometry + Idle/Move/Hit clips, validate PASS ×16, manifest-recorded at /Game/Characters/Echoes/BaseMeshes) + `tools/download_scifi_fantasy_assets.py` (curated CC0 ledger: 4 local packs LICENSE_VERIFIED, Poly Haven REJECTED-with-reason, Sketchfab APPROVED-NOT-REQUIRED; 16 SFXSet_* cues staged from local Kenney CC0; SHA-256 manifest `Docs/ASTRAWILD_SCI_FANTASY_ACQUISITION.json`) | GLM | COMPLETE | Network was down during staging — remote fetches skipped honestly; local CC0 sources covered 100% of the pipeline |
+| SCI-4 | Phase 4 — UE5 import/materials/VFX pipeline | `Content/Python/AwPipeline/import_echo_bases.py` (16 skeletal imports + clip-name normalization + 16 SoundWave cues + 7 NS_AW_Elem_* templates + **8 parameterized theme master materials on MaterialEditingLibrary** [v9.1: was 6 — M_SciFi_OrganicHide + M_SciFi_FocusCrystal close the Organic/Crystalline languages; material coverage now counted in the report's total_missing, failed master = ERROR]; report contract total_missing==0 / errors==[]) + runtime consumer `FAstrawildEchoMutator::BuildThemeMaterialPath/ApplyThemeMaterial` (v9.1 — the masters are no longer authoring-only) | GLM | COMPLETE (source) / NOT_RUN (engine) | REQUIRES LOCAL EXECUTION on the UE 5.8 machine (V2-35); command block in the script header |
+| SCI-5 | Phase 5 — binding + verification | ProductionContent opt-in base binding for every bestiary species (precedence Tier-A art > Tier-B bake > SK_Base, never overwrite existing) + test 126 `ASTRAWILD.SCI_FANTASY.MutationSystem` (table census 204, 8 themes, 16 valid bases, scale/mask ranges, signature diversity ≥170 [actual 202/204], deterministic fallback, attachment bits, theme color math, derived paths, **8b: 8 distinct M_SciFi_* master paths [v9.1]**, display names, theme×plan buckets) + validator §9c + ledger §4 + MASTER_CONTROL v9.0→v9.1 + queue V2-35 + census gate unchanged (229 species) | GLM | COMPLETE | Static validator: ALL CHECKS PASSED; runtime visuals ENGINE-UNVERIFIED (V2-35) |
+
+**§M closing note:** AUD + SCI-1..SCI-5 all COMPLETE source-side. The directive
+explicitly superseded the FPP-3 freeze for this pass (user-ordered content
+re-open AFTER the audit gate). Census UNCHANGED — the 204 existing species
+gained Sci-Fantasy visual identities via base + mutation (no species/quest/
+boss/recipe inflation). All engine-facing claims stay ENGINE-UNVERIFIED; the
+single conversion gate is queue row V2-35 (import report + PIE clips) inside
+the existing Antigravity §20 sequence.
+
+---
+
+## §N ASSET OVERHAUL & PRODUCTION PIPELINE (AO — v9.3 session, user directive "NO PLACEHOLDERS / NO PALETTE SWAPS")
+
+Directive: transition from the interim Procedural Recolor system to REAL
+uniquely-shaped 3D models — download free-license (CC0/PD/MIT) models
+(`Scripts/fetch_free_assets.py`), organize ArtSource (Meshes/ + Textures/),
+manifest 100% present / 0 pending, upgrade `import_all.py` + direct Data-Asset
+mesh binding (no cylinder fallback, no fake recolor), build a showcase map,
+ship a Windows one-click `Setup_And_Play.bat`, run the download script, verify
+real files, push.
+
+> Back-registered by the 2026-09-06 MASTER SYNCHRONIZATION session: the v9.3
+> session delivered + pushed commit `2637c13` but did not record its tasks in
+> this registry (the exact persistence gap the synchronization directive §6
+> exists to close). Task-state truth now lives in
+> `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical live execution state).
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| AO-1 | Free-asset download script + real catalog | `Scripts/fetch_free_assets.py` — curated 109-asset CC0 catalog ← 109 UNIQUE source models (1:1 palette-swap guard = hard error), LIVE-VERIFIED Kenney remote-download pattern, glTF→GLB self-contained conversion (base64 buffers + embedded images), Kenney colormap embedding, deterministic theme-aware Tier-B draw, auto clip-map derivation from real animation lists; run evidence `Docs/ASTRAWILD_ASSET_OVERHAUL_REPORT.json` + per-asset provenance `Docs/ASTRAWILD_REAL_ASSET_CREDITS.json` | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | 109/109 staged real meshes verified on disk (49.5 MB); 15 superseded procedural GLBs purged; network probed honestly (poly.pizza 403, itch.io login-walled — recorded) |
+| AO-2 | ArtSource organization + manifest 100% | `ArtSource/Meshes/{Characters,Echoes{,/BaseMeshes,/Bosses},Weapons,Vehicles,Environment}` + Textures; manifest regenerated v2.0: **189 entries / 189 `present` / 0 pending** (file-truth basis; engine import tracked by V2-36); stale absolute paths normalized; Tier-B code table 39→36 (33 real species + 3 production bosses) | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | 3 survivor armor tiers (rigged 62-bone, 24 anims); 16 real base archetypes; 6 hero Echoes; 36 Tier-B; 14 showcase bosses; 5 distinct weapons; 4 vehicles; 4 ore nodes; 21 env props |
+| AO-3 | AwPipeline upgrade + direct binding | `Content/Python/AwPipeline/import_all.py` — clip_map AM_ renames (runtime soft paths bind REAL clips), PBR node emissive per ore type, weapon Muzzle + survivor Weapon_R sockets, coverage counts meshes + clips as direct-binding evidence | GLM | COMPLETE (source) / NOT_RUN (engine) | Cylinder fallback / fake recolor path eliminated at the source level: every staged mesh is real; species without direct meshes render via real theme-base + unique deterministic mutation spec |
+| AO-4 | Showcase map + Windows one-click | `Content/Python/AwPipeline/build_showcase_map.py` (PlayerStart + armor podium + hero row + 16-base grid + Tier-B grid + boss arena + weapon rack + vehicle pad + node garden — idempotent) + `run_overhaul.py` + **`Setup_And_Play.bat`** (locate UE → verify catalog → import + build showcase → editor open) | GLM | COMPLETE (source) / NOT_RUN (engine) | V2-36 queue row = the engine gate; evidence = import_report.json total_missing==0 incl. clips + showcase PIE |
+| AO-5 | C++/test/validator/doc sync | ArtPack Tier-B 39→36 + PCR-4 test re-pinned (36 + prod-boss asserts + Wavecrest exclusion) + validator gate 36 + 8 new ASSET-OVERHAUL gates (manifest 100% present, no-dup sources, files-on-disk, CC0 license fields, 14 bosses, 3 tiers, 5 distinct weapons) + MASTER_CONTROL v9.3 + asset-truth §12 + manifest v1.7 + queue V2-36 + TEST_INVENTORY + FREE_ASSET_LEDGER §5 + HANDOFF §20e + README v9.3 | GLM | COMPLETE | validators ALL PASS at `2637c13` (126-test gate, census 229/126 unchanged, manifest 189/189) |
+
+**§N closing note:** delivered as commit `2637c13` (pushed, remote HEAD at
+delivery). Engine import + showcase PIE remain NOT_RUN on this sandbox —
+V2-36 via `Setup_And_Play.bat` on the Windows UE machine is the sole
+conversion gate. Census gates UNCHANGED (229 species / 126 tests). The
+post-delivery LFS fsck honest correction (pre-existing raw-pack convention
+mismatch, ~3,954 flags, zero under ArtSource/Meshes) is recorded in
+LIVE_EXECUTION_STATE §8.
+
+## §O DEFERRED COMPLETION PACK (DCP — 2026-09-06 session, user directive "งานที่ถูก defer ทำให้ครบหมด... ตีกรอบเอง เอาที่เล่นได้ก่อน")
+
+Directive: user explicitly re-opened ALL deferred-by-design items (Registry
+§D + LIVE_EXECUTION_STATE DEFERRED) and ordered them done to completion,
+playable-first. GLM framed the order: post-game quests → NG+ → ending
+cinematics → Act 3 NPC presence → QoL (toast audio, journal detail, gamepad
+chord) → unique-mesh coverage. Per the NO-ENDLESS-SCOPE rule this directive
+IS the authorization. Live state truth: `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| DCP-1 | Post-game side quests (the "SQ-23" batch, expanded) | BuildPostGameQuests() content pass: post-game quest rows gated on Quest_FirstDawnAgain completion + NPC dialogue activation choices + automation contracts | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit e90a773 — 5 quests (PostVigil/PostFieldNotes/PostGlassTrade/PostDeepRecords/PostLongWatch) + 5 one-time offers; test 127 | exploration proved zero side quests exist today; single-active-quest rule respected (standalone chains, NextQuestId=NAME_None except intra-batch chains) |
+| DCP-2 | NG+ rules | Additive save fields (NGPlusCycle + carryover) + UAstrawildSaveSubsystem::StartNewGamePlus reset/carryover routine + pause-menu entry + contracts | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit b228f88 — full carryover/reset authority + cycle scaling + first bPostGameActive consumer; test 128 | exploration proved NO new-game/reset path exists; one-way EndingState must be direct-written on reset |
+| DCP-3 | Ending cinematics | Pure-C++ staged camera sequence on OnEndingTriggered/OnRep_EndingState (no Sequencer): keyframed view targets, letterbox + fade UMG overlay, input lock/restore, per-client in co-op + contracts | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit 43100db — OnEndingTriggered wired (was zero subscribers), 2 new files; test 129 | OnEndingTriggered has ZERO subscribers today; OnRep_EndingState empty + reserved; DialogueWidget AdvanceLine is the staging precedent |
+| DCP-4 | Vess/Ione Act 3 NPCs | Two new NPC rows (Vess = storm-scholar, Ione = relic-trader) + VisualMesh field on UAstrawildNPCDefinition + real survivor-mesh visuals + spawn + dialogue trees + census updates | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit e90e8c6 — census 11→13 everywhere; test 130 | Vess/Ione have zero code presence today (doc label only); hero SK_Echo_* meshes available for distinct real visuals |
+| DCP-5 | UI toast sounds + journal detail view | PushNotification audio hook (first PlaySound2D; A_UI_* cues exist unreferenced) + journal clickable rows + per-species detail panel incl. stats/mutation spec + contracts | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit fb50ee3 — knowledge-gated detail; test 131 | journal rows are read-only UTextBlocks today; RosterRowWidget is the clickable-row precedent |
+| DCP-6 | Gamepad smart-cast chord | UInputModifierChordAction mapping (LB+face) in BuildGamepadInputDefaults + INPUT_REFERENCE/PLAYER_RULES doc updates | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit adbd603 — LB+X, zero bindings changed; test 132 | currently KB/M-only (Y); comment says radial-menu pass owns it — user directive supersedes |
+| DCP-7 | Unique-mesh coverage expansion | Bind 9 of the 14 unused staged SK_Boss_* spares to priority unmeshed species via explicit GetEchoArt() rows + census/test/doc sync | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | commit 1c1563c — 42→51 direct meshes; PCR4 latent 39-assert bug fixed; test 133 | priority: Wavecrest/Undertowray/Voidwing/Verdantbloom/Voltmaw (Tier-B dropouts) + authored story species (Lumewisp/Sprigling/Gloomfang/Auroraling) |
+
+**§O opening note (2026-09-06):** every item above is source-side implementable
+on this sandbox; ENGINE-UNVERIFIED is the expected terminal state for each
+until ENGINE-RUN-1 clears. Validators + census gates must stay green after
+every batch (commit per task batch, push per directive §12).
+
+---
+
+## §P FRESH-MACHINE PLAYBOOK PACK (FMP — 2026-09-06 session, user directive "คู่มือ AI บนเครื่องเปล่า")
+
+Directive: user ordered the final source-side deliverable — a manual, plan,
+checklist AND command prompt for the AI agent that will land on a completely
+blank Windows machine, walking it from OS check → program installs → repo
+checkout → build → import → play → test → package → LAN, "อะไรไม่พร้อมก็
+ทำให้พร้อม" (whatever is not ready, make it ready), extremely detailed.
+Live state truth: `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FMP-1 | Fresh-machine onboarding pack | `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md` (spine P0→P13: hardware/OS/disk/RAM/GPU pre-flight → Git+LFS/Python/VS2022-NativeGame/UE5.8.2 installs with winget + manual fallbacks + verify commands → clone+LFS 586 + both validators → preflight gate → Build → Setup_And_Play.bat import + echo-bases + landscape-material manual step → PIE census boot → Test.ps1 133 → full gameplay verification incl. the DCP feature matrix → save stress ×3 → package → LAN §22 → evidence/close, plus a 16-row troubleshooting matrix, expected-numbers appendix, one-page command spine, env-var contract appendix) + `Scripts/fresh_machine_preflight.ps1` (automated readiness gate: OS/RAM/GPU/drives/git/lfs/python/VS-workload/UE-scan/repo state, every FAIL prints its playbook fix section, exit-code contract) + `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json` (43 machine-readable steps with command/expect/on_fail/evidence/status) + `Docs/ASTRAWILD_FRESH_MACHINE_AI_DIRECTIVE.md` (paste-ready agent prompt + Thai owner guide) + 8 wrapper scripts env-adaptive (Build/Test/Build_Package/Verify_Runtime/Test_RealSaveLoad/Evidence_Playtest/Test_V30/Test_PlayableInput: UE_ROOT/ASTRAWILD_UPROJECT/ASTRAWILD_REPO/ASTRAWILD_ARCHIVE/ASTRAWILD_PACKAGED_EXE/ASTRAWILD_AUTOMATION_OUTPUT overrides, legacy E:\ defaults preserved exactly, resolved paths printed) + HANDOFF fresh-machine banner + stale test counts 124/126→133 (§9/§20/GDP chain) + queue fresh-machine note + README v9.6 pointers | GLM | COMPLETE (source) / ENGINE-UNVERIFIED | single logical commit; validators ALL PASS at tip; the pack's own engine-side exercise lands with ENGINE-RUN-1 (the fresh machine IS the engine machine) |
+
+**§P closing note:** the pack intentionally embeds no runtime claims — its
+content is procedure + gates. Expected numbers are caveated "read from the
+validator" everywhere (the project's stale-number discipline). The 8 script
+patches are the path-flavored fix of the exact false-alarm class the v9.2
+round closed for numbers: hardcoded `E:\` layout would have failed every
+fresh-machine run at the first Build.ps1 invocation.
+
+## §Q VISUAL EXPERIENCE PASS (VIS — current session, user directive "FINAL PRODUCT VISION / CUTE SCI-FI CREATURE COMPLETION PASS")
+
+Directive: the final ASTRAWILD experience must read as a modern, hi-tech, colorful sci-fi creature
+RPG with CUTE creatures (Aniimo-class experience quality as REFERENCE CLASS, never cloned —
+ASTRAWILD keeps its own SCI-FI SURVIVAL FRONTIER identity). This is the LAST source-side product
+pass before the one-time engine run: creature visual-band spectrum (cute/cool/strange) +
+personality presentation + zone fauna identity + world/zone/NPC coherence. The v9.6 "source-side
+complete incl. DCP + FMP" state is the BASE this pass builds on; no DCP/FMP/SCI/AO work is
+discarded. Census UNCHANGED (15 gates incl. 229/204/22 quests/13 NPCs); no second architectures
+(mutation system/AI/bond/traversal/skills/bosses stay as-is); free-license policy unchanged.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| VIS-0 | Registration + research | LIVE_EXECUTION_STATE queue updated (VIS-001 registered IN_PROGRESS, ENGINE-RUN-1 stays BLOCKED-external as the only NOW-adjacent row) + §Q opened + MASTER_CONTROL v9.7 header + creature-collector research pass (web-search: Aniimo = free-to-play open-world creature RPG, continent Idyll — experience qualities noted as REFERENCE-ONLY: creature personality visible to player, habitat identity/variants, bond + traversal utility, home system, adorable profile-first presentation; NO proprietary design copied) | GLM | COMPLETE | docs-only batch; validators re-run PASS at the commit; no source changes |
+| VIS-1 | Creature identity layer (code) | `EAstrawildVisualBand` (Cute/Cool/Strange, additive enum) + pure static `AAstrawildEchoCharacter::ComputeVisualBand(Family, BodyPlan, SizeClass)` deterministic rule + journal ROW band line + journal DETAIL build/band line + roster row personality+band line (per-INSTANCE personality — the Aniimo-quality "my creature is Curious") + personality-driven idle play-rate + PMC Tier-C cuteness pass (cute-band head/eye proportion + dark eye pair on headed plans — the 178 PMC-species fallback path) + test 134 `ASTRAWILD.VIS1.CreatureIdentityContract` + validator gate 133→134 | GLM | **COMPLETE (source) / ENGINE-UNVERIFIED** | commit 06077c9 — census UNCHANGED; band distribution over the live 204-row bestiary: Cute 71 / Cool 41 / Strange 92, all three bands non-empty in every zone; the cute pass composes with the mutation system (head fold rides HeadScale) and applies to BOTH render paths (PMC proportions + eye pair; skinned = personality playback rate) |
+| VIS-2 | Tier-B cuteness art pass — **RE-SCOPED (architecture-superseded, folded into VIS-1)** | Original plan (band-aware procedural re-bake) is SUPERSEDED BY DESIGN: the v9.3 ASSET-OVERHAUL replaced procedural Tier-B bakes with REAL unique CC0 models (36 + 3 bosses, 1:1 palette-swap-guarded) + 16 real bases with mutation specs — re-baking procedural GLBs would violate the no-placeholder/no-palette-swap canon. The cuteness runtime pass landed in VIS-1 on BOTH paths (PMC baby-schema head fold ×1.18 + dark eye pair, composing with HeadScale mutation; real-mesh personality playback rate); the real CC0 models carry their own animal/monster charm; per-bone skeletal squash NOT attempted (axis-risk without engine feedback — documented non-goal); no new acquisition (TRUE_MISSING stays 0); aw_archetypes/gen_tier_b kept as superseded history, never re-run | GLM | **SUPERSEDED → delivered via VIS-1** | §9b gate unchanged (36/36 real meshes); validators ALL PASS |
+| VIS-3 | World/zone/NPC coherence docs | CREATURE_VISUAL_STRATEGY v2.0 (cute/cool/strange spectrum § + personality mapping + zone fauna composition + the research reference section) + ZONE_WORLD v2 (12-zone visual identity: palette direction/mood/landmark + per-zone fauna roster from the ACTUAL spawn tables) + NPC visual-role coverage + base/home experience coherence | GLM | **COMPLETE** | CREATURE_VISUAL_STRATEGY v2.0 delivered (§13 spectrum rule + distribution · §14 personality body-language · §15 12-zone fauna composition contract computed from the live tables — signatures/mix/hostile density/charm read per zone · §16 research reference with identity guard · §17 status ledger incl. the superseded bake path) + ZONE_WORLD historical banner → strategy §15; NPC roles (13 NPCs, distinct roles/dialogue/locations incl. DCP-4 Vess/Ione real bodies) and base/home coherence (26 pieces incl. farm/pen/incubator/workshop/power/research/automation) evidenced in the review packet; docs-only, zone canon UNCHANGED |
+| VIS-4 | Review packet + gate | `Docs/ASTRAWILD_FINAL_PRODUCT_REVIEW_PACKET.md` DELIVERED (VIS summary, complete changed-file list, 11-area experience audit, new/deleted/rejected assets = NONE/NONE/NONE, honest risks, static evidence, engine-unverified ledger, the review record §9) + VIS-001 = READY_FOR_REVIEW + the independent 5-question review executed (read-only evidence-based agent): **4 genuine findings — ALL applied in VIS-4b** (1 REAL BUG: the PMC eye pair was fully occluded inside the head spheres for 68/71 cute headed-plan species → now projected onto the mutated head surface, tracking HeadScale; 2 STALE DOCS: "both render paths" play-rate claim + nonexistent Python-mirror comments; 1 UNPROVEN CLAIM: 4 never-spawning species listed as spawn signatures) + re-freeze: MASTER_CONTROL v9.8 **SOURCE_PRODUCT_FROZEN**, LIVE_STATE VIS-001 → STATIC_VERIFIED (review-closed), ENGINE-RUN-1 = THE next task | GLM | **COMPLETE** | commits 889578d + 26b7600 + freeze docs; validators ALL PASS at every commit |
+
+**§Q ground rules** (binding): all changes source-side/statically validatable; census content
+counts UNCHANGED; no new AI/bond/traversal/skill/boss/mutation architecture; no new asset
+acquisition (existing self-generated + CC0 libraries cover the pass — TRUE_MISSING stays 0);
+every batch commit+push with task ID; ENGINE-RUN-1 stays BLOCKED (external) until VIS-001 closes.

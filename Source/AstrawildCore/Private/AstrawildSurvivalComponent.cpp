@@ -1,9 +1,13 @@
 #include "AstrawildSurvivalComponent.h"
 
+#include "AstrawildAttributeComponent.h"
 #include "AstrawildCore.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerCharacter.h"
 #include "AstrawildWeatherSubsystem.h"
+#include "AstrawildZoneSubsystem.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
 
@@ -23,6 +27,50 @@ void UAstrawildSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimePro
 void UAstrawildSurvivalComponent::BeginPlay()
 {
     Super::BeginPlay();
+
+    // GDP-3: Vigor scales max health — subscribe to level-ups so the bar grows
+    // live, and take the current level into account right away.
+    if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Attributes->OnAttributeLevelUp.AddDynamic(this, &UAstrawildSurvivalComponent::HandleAttributeLevelUp);
+        }
+    }
+    RefreshVigorMaxHealth();
+}
+
+void UAstrawildSurvivalComponent::HandleAttributeLevelUp(const EAstrawildAttributeType Attribute, const int32 NewLevel)
+{
+    if (Attribute == EAstrawildAttributeType::Vigor)
+    {
+        RefreshVigorMaxHealth();
+    }
+}
+
+void UAstrawildSurvivalComponent::RefreshVigorMaxHealth()
+{
+    if (GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    float Multiplier = 1.0f;
+    if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+    {
+        if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+        {
+            Multiplier = Attributes->GetMaxHealthMultiplier();
+        }
+    }
+
+    const float NewMax = BaseMaxHealth * Multiplier;
+    if (!FMath::IsNearlyEqual(Stats.MaxHealth, NewMax))
+    {
+        Stats.MaxHealth = NewMax;
+        Stats.Health = FMath::Min(Stats.Health, Stats.MaxHealth);
+        OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+    }
 }
 
 void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -58,7 +106,29 @@ void UAstrawildSurvivalComponent::TickComponent(const float DeltaTime, const ELe
     else
     {
         // Final production run: exosuit stamina-regen bonus stacks on the base rate.
-        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + (StaminaRegenPerSecond + GetExosuitStaminaRegenBonus()) * DeltaTime);
+        // GDP-3: Agility speeds the regen itself (1 + 4% per level above 1).
+        float Regen = StaminaRegenPerSecond + GetExosuitStaminaRegenBonus();
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (const UAstrawildAttributeComponent* Attributes = Player->AttributeComponent)
+            {
+                Regen *= Attributes->GetStaminaRegenMultiplier();
+            }
+        }
+        // DP-7 (world depth): ash-lung zones suppress passive regen — the
+        // Hollow Approach's ash-choked air tires anyone standing in it. Clamped
+        // at zero so a hazard can never turn regen into a hidden drain.
+        // DP-9 (dungeon depth): active statuses may carry the same suppression
+        // verb at room level (the Underlight's uncleared-room ash lung) — summed
+        // with the zone penalty under the SAME clamp (the status vocabulary's
+        // additive StaminaRegenPenaltyPerSecond field, default 0).
+        float StatusRegenPenalty = 0.0f;
+        for (const FAstrawildStatusEffect& Effect : StatusEffects)
+        {
+            StatusRegenPenalty += FMath::Max(0.0f, Effect.StaminaRegenPenaltyPerSecond);
+        }
+        Regen = FMath::Max(0.0f, Regen - GetZoneHazardStaminaRegenPenalty() - StatusRegenPenalty);
+        Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Regen * DeltaTime);
     }
 
     // --- Starvation / dehydration ---
@@ -108,8 +178,40 @@ void UAstrawildSurvivalComponent::UpdateTemperature()
 {
     UAstrawildWeatherSubsystem* Weather = GetWeatherSubsystem();
     const float WeatherOffset = Weather ? Weather->GetTemperatureOffsetCelsius() : 0.0f;
-    // Base temperate climate 20C + weather offset (time-of-day modulation could be added).
-    Stats.Temperature = 20.0f + WeatherOffset;
+    // DP-7 (world depth): per-zone hazard pressure layers ON TOP of the global
+    // weather offset — Frostveil reads colder than Dawn Fields under the same
+    // sky, the Sunscar hotter. Thermal hazards ride the existing cold/heat
+    // threshold + insulation bands below (no new damage verb); non-thermal
+    // hazards (ash lung) contribute 0 here and act on stamina regen instead.
+    const float ZoneOffset = GetZoneHazardTemperatureOffset();
+    // Base temperate climate 20C + weather offset + zone hazard (time-of-day modulation could be added).
+    Stats.Temperature = 20.0f + WeatherOffset + ZoneOffset;
+}
+
+float UAstrawildSurvivalComponent::GetZoneHazardTemperatureOffset() const
+{
+    // Pure zone-table lookup (rect containment — the same resolution the zone
+    // sweep/HUD banner use); zones without a thermal hazard return 0.
+    const AActor* Owner = GetOwner();
+    if (!Owner)
+    {
+        return 0.0f;
+    }
+    const FAstrawildZoneDescriptor* Zone =
+        UAstrawildZoneSubsystem::FindZone(UAstrawildZoneSubsystem::GetZoneAt(Owner->GetActorLocation()));
+    return Zone ? Zone->GetHazardTemperatureOffsetCelsius() : 0.0f;
+}
+
+float UAstrawildSurvivalComponent::GetZoneHazardStaminaRegenPenalty() const
+{
+    const AActor* Owner = GetOwner();
+    if (!Owner)
+    {
+        return 0.0f;
+    }
+    const FAstrawildZoneDescriptor* Zone =
+        UAstrawildZoneSubsystem::FindZone(UAstrawildZoneSubsystem::GetZoneAt(Owner->GetActorLocation()));
+    return Zone ? Zone->GetHazardStaminaRegenPenalty() : 0.0f;
 }
 
 UAstrawildWeatherSubsystem* UAstrawildSurvivalComponent::GetWeatherSubsystem() const
@@ -162,6 +264,12 @@ void UAstrawildSurvivalComponent::ApplyStatusTicks(const float DeltaTime)
         {
             Stats.Health = FMath::Max(0.0f, Stats.Health - Effect.DamagePerSecond * DeltaTime);
         }
+        // DP-6: positive regen mirror of the damage tick — the Field Ration's
+        // timed stamina buff rides the same status-effect loop (clamped at max).
+        if (Effect.StaminaRegenPerSecond > 0.0f)
+        {
+            Stats.Stamina = FMath::Min(Stats.MaxStamina, Stats.Stamina + Effect.StaminaRegenPerSecond * DeltaTime);
+        }
         if (Effect.RemainingSeconds <= 0.0f)
         {
             // Batch 3 — Item A: broadcast expiry so listeners (movement speed) refresh.
@@ -199,6 +307,31 @@ float UAstrawildSurvivalComponent::ApplyDamage(const float DamageAmount)
     const float Applied = FMath::Min(Stats.Health, DamageAmount);
     Stats.Health = FMath::Max(0.0f, Stats.Health - DamageAmount);
     OnStatsChanged.Broadcast(Stats.Health, Stats.Stamina);
+
+    // GDP-3: Vigor grows by surviving real hits (anything that hurts at least 5).
+    if (Applied >= 5.0f)
+    {
+        if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->AttributeComponent)
+            {
+                Player->AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Vigor, 1.0f);
+            }
+        }
+    }
+
+    // SCP Phase 12: worn armor abrades when it absorbs real hits (god-mode
+    // and zero-damage calls above never reach here).
+    if (Applied > 0.0f)
+    {
+        if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
+        {
+            if (Player->DurabilityComponent)
+            {
+                Player->DurabilityComponent->ApplyArmorWear();
+            }
+        }
+    }
 
     UE_LOG(LogAstrawildCombat, Verbose, TEXT("Player took %.1f damage (%.1f remaining)."), DamageAmount, Stats.Health);
 
@@ -320,6 +453,26 @@ bool UAstrawildSurvivalComponent::HasStatusEffect(const FName StatusId) const
 {
     return StatusEffects.ContainsByPredicate(
         [&StatusId](const FAstrawildStatusEffect& Item) { return Item.StatusId == StatusId; });
+}
+
+void UAstrawildSurvivalComponent::RemoveStatusEffect(const FName StatusId)
+{
+    // DP-9 (dungeon depth): room-level hazards clear their status when the room
+    // clears. REVIEW-3 semantics — broadcast the removal (listeners such as
+    // movement speed refresh) exactly like the natural-expiry path does.
+    if (GetOwnerRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    for (int32 i = StatusEffects.Num() - 1; i >= 0; --i)
+    {
+        if (StatusEffects[i].StatusId == StatusId)
+        {
+            StatusEffects.RemoveAt(i);
+            OnStatusEffectRemoved.Broadcast(StatusId);
+        }
+    }
 }
 
 float UAstrawildSurvivalComponent::GetStatusSpeedMultiplier() const

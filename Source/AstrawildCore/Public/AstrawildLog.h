@@ -4,7 +4,11 @@
 #include "Logging/LogMacros.h"
 
 // Logging categories per directive §40 — meaningful subsystem-level logging.
-// LogAstrawild (general) stays declared in AstrawildCore.h for backward compatibility.
+// FCR-1-b fix (L-b11): LogAstrawild (general) is declared HERE — 11 cpp files
+// used it via unity-build include bleed-through from AstrawildCore.h, which
+// breaks under non-unity/IWYU builds. AstrawildCore.h keeps a redundant include
+// of this header so both paths resolve.
+DECLARE_LOG_CATEGORY_EXTERN(LogAstrawild, Log, All);
 
 DECLARE_LOG_CATEGORY_EXTERN(LogAstrawildAI, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogAstrawildCombat, Log, All);

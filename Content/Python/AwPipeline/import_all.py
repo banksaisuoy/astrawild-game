@@ -4,16 +4,26 @@ ASTRAWILD AwPipeline — UE 5.8 editor-side import orchestration.
 Run inside the UE Editor (project open) via console:
     py "<ProjectRoot>/Content/Python/AwPipeline/import_all.py"
 
-Pipeline (art pack batch 1 — mirrors ArtSource/manifest.json):
+Pipeline (ASSET OVERHAUL — real unique CC0 meshes, mirrors ArtSource/manifest.json):
   1. Import textures (PNG -> /Game/Textures) with correct sRGB/compression.
   2. Import audio (WAV -> /Game/Audio).
-  3. Import meshes (GLB -> manifest ue_path) via Interchange, flattening nested folders.
-  4. Normalize animation sequence paths to /<Folder>/AM_<ClipName>.
-  5. Build master materials (M_Master_Surface, M_Landscape_SciFiFrontier) & Material Instances.
-  6. Add sockets (survivor Weapon_R/Scanner_L/Backpack_Spine + weapon Muzzle).
+  3. Import meshes (GLB/FBX -> manifest ue_path) via Interchange: real
+     skeletal/static meshes from the curated CC0 catalog (Quaternius
+     creatures/modular-men/space-kit, Kenney blasters/nature/space).
+  4. Rename imported animation clips to the AM_ convention USING the
+     manifest clip_map (AM_<Asset>_<Role> -> source clip name), so every
+     runtime binding (survivor locomotion set, echo Idle/Move/Hit, base
+     clips) resolves against the REAL imported clips.
+  5. Build master materials (M_Master_Surface, M_Landscape_SciFiFrontier),
+     material instances + slot binding; ore-node crystal slots get
+     emissive PBR instances (per node type).
+  6. Add sockets (weapon Muzzle from mesh bounds; survivor Weapon_R on
+     the right-hand bone).
   7. Create Hero Niagara Systems (/Game/VFX/NS_AW_*).
   8. Save dirty packages; write verification report:
      <ProjectRoot>/Saved/AwPipelineReport/import_report.json
+     — includes DIRECT-BINDING evidence: every manifest mesh ue_path +
+     every clip_map AM_ path must exist (species -> real mesh connected).
 """
 import glob
 import json
@@ -72,7 +82,7 @@ def resolve_src(root: str, path_str: str) -> str:
 def import_textures(manifest: dict, root: str) -> None:
     stage = REPORT["stages"].setdefault("textures", {"imported": 0, "failed": 0})
     assets = manifest.get("assets", {})
-    
+
     tex_entries = []
     for name, info in assets.items():
         cat = info.get("category", "")
@@ -80,7 +90,7 @@ def import_textures(manifest: dict, root: str) -> None:
         path = info.get("path", "")
         if name.startswith("T_") or path.endswith(".png") or ue_path.startswith("/Game/Textures") or cat == "texture":
             tex_entries.append((name, info))
-            
+
     tex_dir = os.path.join(root, "ArtSource", "Textures")
     if os.path.exists(tex_dir):
         manifest_paths = {resolve_src(root, info.get("path", "")) for _, info in tex_entries}
@@ -111,11 +121,11 @@ def import_textures(manifest: dict, root: str) -> None:
                 task.save = True
                 task.replace_existing = True
                 asset_tools.import_asset_tasks([task])
-                
+
             tex = unreal.EditorAssetLibrary.load_asset(ue_path)
             if not tex:
                 raise RuntimeError(f"import produced no asset at {ue_path}")
-                
+
             low = dest_name.lower()
             srgb = bool(info.get("srgb", low.endswith("_d")))
             tex.set_editor_property("srgb", srgb)
@@ -146,7 +156,7 @@ def import_textures(manifest: dict, root: str) -> None:
 def import_audio(manifest: dict, root: str) -> None:
     stage = REPORT["stages"].setdefault("audio", {"imported": 0, "failed": 0})
     assets = manifest.get("assets", {})
-    
+
     audio_entries = []
     for name, info in assets.items():
         cat = info.get("category", "")
@@ -154,7 +164,7 @@ def import_audio(manifest: dict, root: str) -> None:
         path = info.get("path", "")
         if name.startswith("A_") or path.endswith(".wav") or ue_path.startswith("/Game/Audio") or cat in ("ambience", "creature", "footstep", "player", "ui", "weapon", "audio"):
             audio_entries.append((name, info))
-            
+
     audio_dir = os.path.join(root, "ArtSource", "Audio")
     if os.path.exists(audio_dir):
         manifest_paths = {resolve_src(root, info.get("path", "")) for _, info in audio_entries}
@@ -206,7 +216,7 @@ def find_imported_mesh(folder: str, name: str):
     exact = f"{folder}/{name}"
     if unreal.EditorAssetLibrary.does_asset_exist(exact):
         return exact
-        
+
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     assets = ar.get_assets_by_path(folder, recursive=True)
     for asset in assets:
@@ -223,7 +233,7 @@ def import_meshes(manifest: dict, root: str) -> None:
     mesh_entries = [(name, info) for name, info in assets.items()
                     if info.get("category") == "mesh" or info.get("ue_path", "").startswith(("/Game/Characters", "/Game/Echoes", "/Game/Weapons", "/Game/Vehicles", "/Game/Environment"))]
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-    
+
     for name, info in mesh_entries:
         src = resolve_src(root, info.get("path", ""))
         ue_path = info.get("ue_path")
@@ -235,7 +245,7 @@ def import_meshes(manifest: dict, root: str) -> None:
             continue
         dest_path = os.path.dirname(ue_path)
         dest_name = os.path.basename(ue_path)
-        
+
         try:
             existing = find_imported_mesh(dest_path, dest_name)
             if existing:
@@ -243,7 +253,7 @@ def import_meshes(manifest: dict, root: str) -> None:
                     unreal.EditorAssetLibrary.rename_asset(existing, ue_path)
                 stage["imported"] += 1
                 continue
-                
+
             task = unreal.AssetImportTask()
             task.filename = src
             task.destination_path = dest_path
@@ -252,13 +262,13 @@ def import_meshes(manifest: dict, root: str) -> None:
             task.save = True
             task.replace_existing = True
             asset_tools.import_asset_tasks([task])
-            
+
             found = find_imported_mesh(dest_path, dest_name)
             if not found:
                 raise RuntimeError(f"no asset produced for {name} under {dest_path}")
             if found != ue_path:
                 unreal.EditorAssetLibrary.rename_asset(found, ue_path)
-                
+
             stage["imported"] += 1
         except Exception as e:
             stage["failed"] += 1
@@ -308,6 +318,63 @@ def normalize_animation_paths(manifest: dict) -> None:
                 if not found:
                     REPORT["missing"].append(expected)
                     warn(f"animation clip not found after import: {expected}")
+
+
+def rename_clips_by_map(manifest: dict) -> None:
+    """ASSET OVERHAUL stage: rename REAL imported clips to the AM_ convention
+    using each mesh row's clip_map (AM name -> source clip name from the
+    original glTF). This is what connects the runtime soft-path bindings
+    (survivor locomotion set, echo Idle/Move/Hit) to the real animations."""
+    stage = REPORT["stages"].setdefault("clip_renames", {"renamed": 0, "missing": 0})
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    for name, info in manifest.get("assets", {}).items():
+        clip_map = info.get("clip_map") or {}
+        if not clip_map:
+            continue
+        ue_path = info.get("ue_path", "")
+        folder = os.path.dirname(ue_path)
+        dest_name = os.path.basename(ue_path)
+        folder_assets = list(ar.get_assets_by_path(folder, recursive=True))
+        for am_name, src_clip in clip_map.items():
+            if not src_clip:
+                stage["missing"] += 1
+                REPORT["missing"].append(f"{folder}/{am_name}")
+                warn(f"{name}: no source clip mapped for {am_name}")
+                continue
+            expected = f"{folder}/{am_name}"
+            if unreal.EditorAssetLibrary.does_asset_exist(expected):
+                continue
+            # glTF import lands sequences named <Dest>_<Clip> or <Clip> —
+            # match on the SOURCE clip name (exact token, not substring,
+            # so HitReact does not steal HitRecieve_2).
+            candidates = []
+            for asset in folder_assets:
+                cls = str(asset.asset_class_path.asset_name)
+                aname = str(asset.asset_name)
+                if "AnimSequence" not in cls:
+                    continue
+                if aname == src_clip or aname.endswith(f"_{src_clip}") \
+                        or aname == f"{dest_name}_{src_clip}":
+                    candidates.append(str(asset.package_name))
+            if not candidates:  # fallback: loose contains match
+                for asset in folder_assets:
+                    cls = str(asset.asset_class_path.asset_name)
+                    aname = str(asset.asset_name)
+                    if "AnimSequence" in cls and src_clip in aname:
+                        candidates.append(str(asset.package_name))
+            if not candidates:
+                stage["missing"] += 1
+                REPORT["missing"].append(expected)
+                warn(f"{name}: source clip '{src_clip}' not found for {am_name}")
+                continue
+            try:
+                unreal.EditorAssetLibrary.rename_asset(candidates[0], expected)
+                stage["renamed"] += 1
+            except Exception as e:
+                stage["missing"] += 1
+                REPORT["missing"].append(expected)
+                warn(f"{name}: rename {candidates[0]} -> {expected} failed: {e}")
+    log(f"clip renames: renamed={stage['renamed']} missing={stage['missing']}")
 
 
 # ------------------------------------------------------------------ sockets
@@ -386,9 +453,130 @@ def create_hero_niagara_systems() -> None:
             warn(f"Could not create Niagara system {sys_path}: {e}")
 
 
+# ------------------------------------------------------------- node glow
+# ASSET OVERHAUL: ore-node crystal slots get emissive PBR instances so the
+# resource nodes read as energy veins in-world (Astraite cyan / Pyronite
+# ember / Voidstone violet / AncientVein gold).
+NODE_EMISSIVE = {
+    "SM_Node_Astraite":    (["crystal"], (0.10, 0.65, 0.95), 6.0),
+    "SM_Node_Pyronite":    (["crystal"], (0.95, 0.35, 0.05), 6.0),
+    "SM_Node_Voidstone":   (["crystal"], (0.55, 0.15, 0.85), 5.0),
+    "SM_Node_AncientVein": (["rock", "rockTrack", "Stone"], (0.85, 0.70, 0.20), 2.5),
+}
+
+def apply_node_emissive(manifest: dict) -> None:
+    stage = REPORT["stages"].setdefault("node_glow", {"applied": 0})
+    master = unreal.EditorAssetLibrary.load_asset("/Game/Materials/M_Master_Surface")
+    if not master:
+        warn("M_Master_Surface not built yet — node emissive skipped (materials stage order)")
+        return
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    for asset_id, (slot_names, tint, boost) in NODE_EMISSIVE.items():
+        info = manifest.get("assets", {}).get(asset_id)
+        if not info:
+            continue
+        mesh = unreal.EditorAssetLibrary.load_asset(info.get("ue_path", ""))
+        if not mesh:
+            warn(f"{asset_id}: mesh not imported — emissive skipped")
+            continue
+        mi_path = f"/Game/Materials/Instances/MI_{asset_id}"
+        mi = unreal.EditorAssetLibrary.load_asset(mi_path)
+        if not mi:
+            mi = asset_tools.create_asset(f"MI_{asset_id}", "/Game/Materials/Instances",
+                                           unreal.MaterialInstanceConstant,
+                                           unreal.MaterialInstanceConstantFactoryNew())
+        if not mi:
+            warn(f"could not create {mi_path}")
+            continue
+        try:
+            mi.set_editor_property("parent", master)
+            unreal.MaterialEditingLibrary.set_vector_parameter_value(mi, "EmissiveColor", unreal.LinearColor(*tint))
+            unreal.MaterialEditingLibrary.set_scalar_parameter_value(mi, "EmissiveBoost", boost)
+            unreal.MaterialEditingLibrary.set_scalar_parameter_value(mi, "RoughnessAdd", 0.05)
+            unreal.EditorAssetLibrary.save_asset(mi_path)
+            slots = mesh.get_editor_property("static_materials") if isinstance(mesh, unreal.StaticMesh) else []
+            bound = 0
+            for slot in slots:
+                slot_name = str(slot.get_editor_property("material_slot_name"))
+                if slot_name in slot_names:
+                    slot.set_editor_property("material", mi)
+                    bound += 1
+            stage["applied"] += bound
+            log(f"{asset_id}: emissive MI bound to {bound} slot(s)")
+        except Exception as e:
+            warn(f"{asset_id} emissive: {e}")
+
+
+# ------------------------------------------------------ weapon muzzle socket
+def add_weapon_muzzle_sockets(manifest: dict) -> None:
+    """Muzzle socket at the forward end of every weapon mesh (bounds-driven,
+    x-forward per the glTF import convention)."""
+    stage = REPORT["stages"].setdefault("weapon_sockets", {"added": 0})
+    for name, info in manifest.get("assets", {}).items():
+        if not name.startswith("SM_Weapon_"):
+            continue
+        mesh = unreal.EditorAssetLibrary.load_asset(info.get("ue_path", ""))
+        if not isinstance(mesh, unreal.StaticMesh):
+            warn(f"{name}: weapon mesh missing — muzzle skipped")
+            continue
+        try:
+            existing = mesh.get_editor_property("sockets") or []
+            if any(str(s.get_editor_property("socket_name")) == "Muzzle" for s in existing):
+                continue
+            bounds = mesh.get_bounds()
+            origin = bounds.origin
+            box = bounds.box_extent
+            muzzle = unreal.StaticMeshSocket()
+            muzzle.set_editor_property("socket_name", "Muzzle")
+            muzzle.set_editor_property("relative_location",
+                unreal.Vector(origin.x + box.x + 5.0, origin.y, origin.z))
+            existing.append(muzzle)
+            mesh.set_editor_property("sockets", existing)
+            stage["added"] += 1
+        except Exception as e:
+            warn(f"{name} muzzle: {e}")
+    log(f"weapon muzzle sockets added: {stage['added']}")
+
+
+def add_survivor_weapon_socket(manifest: dict) -> None:
+    """Weapon_R socket on the survivor mesh's right-hand bone (bone-name
+    probe: hand_r / Hand_R / RightHand — first hit wins, honest warning if
+    the rig names differ)."""
+    stage = REPORT["stages"].setdefault("survivor_sockets", {"added": 0})
+    for name, info in manifest.get("assets", {}).items():
+        if not name.startswith("SK_Survivor_"):
+            continue
+        mesh = unreal.EditorAssetLibrary.load_asset(info.get("ue_path", ""))
+        if not isinstance(mesh, unreal.SkeletalMesh):
+            warn(f"{name}: survivor skeletal mesh missing")
+            continue
+        try:
+            existing = mesh.get_editor_property("sockets") or []
+            if any(str(s.get_editor_property("socket_name")) == "Weapon_R" for s in existing):
+                continue
+            bones = [str(b.get_editor_property("name")) for b in mesh.get_editor_property("ref_skeleton").get_editor_property("final_ref_bone_info")]
+            hand = next((b for b in bones if b.lower() in ("hand_r", "righthand", "handright", "palm_r")), None)
+            if hand is None:
+                hand = next((b for b in bones if "hand" in b.lower() and ("r" == b.lower()[-1] or "right" in b.lower())), None)
+            if hand is None:
+                warn(f"{name}: no right-hand bone found ({bones[:6]}…) — Weapon_R not added")
+                continue
+            sk = unreal.SkeletalMeshSocket()
+            sk.set_editor_property("socket_name", "Weapon_R")
+            sk.set_editor_property("bone_name", hand)
+            existing.append(sk)
+            mesh.set_editor_property("sockets", existing)
+            stage["added"] += 1
+            log(f"{name}: Weapon_R on bone '{hand}'")
+        except Exception as e:
+            warn(f"{name} Weapon_R: {e}")
+    log(f"survivor Weapon_R sockets added: {stage['added']}")
+
+
 # ------------------------------------------------------------------- report
 def verify_coverage(manifest: dict) -> None:
     ok, missing = 0, []
+    # Direct-binding evidence: every manifest mesh ue_path must exist.
     for name, info in manifest.get("assets", {}).items():
         ue_path = info.get("ue_path")
         if not ue_path:
@@ -397,16 +585,27 @@ def verify_coverage(manifest: dict) -> None:
             ok += 1
         else:
             missing.append(ue_path)
-    
+    # Runtime clip bindings: every clip_map AM_ path must exist after the
+    # rename stages (survivor locomotion set + echo Idle/Move/Hit + bases).
+    clip_ok = 0
+    for name, info in manifest.get("assets", {}).items():
+        ue_path = info.get("ue_path", "")
+        folder = os.path.dirname(ue_path)
+        for am_name in (info.get("clip_map") or {}):
+            expected = f"{folder}/{am_name}"
+            if unreal.EditorAssetLibrary.does_asset_exist(expected):
+                clip_ok += 1
+            else:
+                missing.append(expected)
     for hero in ["/Game/VFX/NS_AW_MuzzleFlash", "/Game/VFX/NS_AW_Weap_Impact", "/Game/VFX/NS_AW_Weap_Trail"]:
         if unreal.EditorAssetLibrary.does_asset_exist(hero):
             ok += 1
         else:
             missing.append(hero)
-            
-    REPORT["coverage"] = {"resolved": ok, "missing": missing}
+
+    REPORT["coverage"] = {"resolved": ok, "clips": clip_ok, "missing": missing}
     REPORT["missing"] = missing
-    log(f"coverage: {ok} resolved, {len(missing)} missing")
+    log(f"coverage: {ok} assets + {clip_ok} clips resolved, {len(missing)} missing")
 
 
 def write_report(root: str) -> None:
@@ -431,48 +630,56 @@ def main() -> None:
     manifest = load_manifest(root)
     total = len(manifest.get("assets", {}))
     log(f"manifest: {total} assets")
-    
+
     try:
         import_textures(manifest, root)
     except Exception as e:
         err(f"texture stage crashed: {e}\n{traceback.format_exc()}")
-        
+
     try:
         import_audio(manifest, root)
     except Exception as e:
         err(f"audio stage crashed: {e}\n{traceback.format_exc()}")
-        
+
     try:
         import_meshes(manifest, root)
+        rename_clips_by_map(manifest)
         normalize_animation_paths(manifest)
     except Exception as e:
         err(f"mesh stage crashed: {e}\n{traceback.format_exc()}")
-        
+
     try:
         create_hero_niagara_systems()
     except Exception as e:
         err(f"niagara stage crashed: {e}\n{traceback.format_exc()}")
-        
+
     try:
         aw_materials.build_materials(manifest)
     except Exception as e:
         err(f"material stage crashed: {e}\n{traceback.format_exc()}")
-        
+
     try:
+        apply_node_emissive(manifest)
+    except Exception as e:
+        err(f"node emissive stage crashed: {e}\n{traceback.format_exc()}")
+
+    try:
+        add_weapon_muzzle_sockets(manifest)
+        add_survivor_weapon_socket(manifest)
         add_sockets(manifest)
     except Exception as e:
         err(f"socket stage crashed: {e}\n{traceback.format_exc()}")
-        
+
     try:
         verify_coverage(manifest)
     except Exception as e:
         err(f"verify stage crashed: {e}")
-        
+
     try:
         unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
     except Exception as e:
         err(f"save failed: {e}")
-        
+
     write_report(root)
 
 

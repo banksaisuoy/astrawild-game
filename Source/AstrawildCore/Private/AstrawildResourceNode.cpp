@@ -1,7 +1,11 @@
 #include "AstrawildResourceNode.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDifficultySubsystem.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -14,7 +18,12 @@
 AAstrawildResourceNode::AAstrawildResourceNode()
 {
     PrimaryActorTick.bCanEverTick = false;
-    SetReplicates(false);
+
+    // LCP-2: resource nodes replicate so LAN clients see the world's real
+    // harvest state. State changes are rare (harvest/respawn) — the net update
+    // frequency stays far below movement actors.
+    SetReplicates(true);
+    SetNetUpdateFrequency(0.5f);
 
     VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
     RootComponent = VisualMesh;
@@ -49,20 +58,39 @@ AAstrawildResourceNode::AAstrawildResourceNode()
 void AAstrawildResourceNode::BeginPlay()
 {
     Super::BeginPlay();
-
     // Production V2 (P0): definition-driven identity resolves FIRST; the legacy
     // direct-property path only logs. Deterministic identity means the node
     // either carries a valid item id or is explicitly disabled — the silent
     // no-op interact can no longer hide a bootstrap miss.
     ApplyNodeDefinition();
 
+    // FR-4 (Final Run redo): node identity fallback. A map-placed node with an
+    // unknown/missing NodeDefinitionId used to hard-disable itself — and when that
+    // node was the FirstLight harvest target, the very first quest stalled forever
+    // (defect D-1). Fall back to the Dawnwood stand (always registered by the
+    // production content library) so the world stays harvestable; the Warning
+    // still names the actor for the level author to fix.
     if (ResourceItemId.IsNone())
     {
-        UE_LOG(LogAstrawild, Error,
-            TEXT("Resource node %s has no identity (NodeDefinitionId=%s, ResourceItemId=none) — disabling interaction. "
-                 "Spawners must set NodeDefinitionId or ResourceItemId."),
-            *GetName(), *NodeDefinitionId.ToString());
-        SetActorEnableCollision(false);
+        const UWorld* World = GetWorld();
+        const UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+        if (const UAstrawildResourceNodeDefinition* Fallback = Registry ? Registry->FindResourceNode(TEXT("Node_Dawnwood")) : nullptr)
+        {
+            ResourceItemId = Fallback->ResourceItemId;
+            ResourceQuantityPerHarvest = FMath::Max(1, Fallback->QuantityPerHarvest);
+            RemainingQuantity = FMath::Max(1, Fallback->MaxQuantity);
+            RespawnDurationSeconds = FMath::Max(0.0f, Fallback->RespawnDurationSeconds);
+            UE_LOG(LogAstrawild, Warning,
+                TEXT("Resource node %s had no identity (NodeDefinitionId=%s) — fell back to Node_Dawnwood (%s). Fix the spawner."),
+                *GetName(), *NodeDefinitionId.ToString(), *ResourceItemId.ToString());
+        }
+        else
+        {
+            UE_LOG(LogAstrawild, Error,
+                TEXT("Resource node %s has no identity and the Node_Dawnwood fallback is unregistered — disabling interaction."),
+                *GetName());
+            SetActorEnableCollision(false);
+        }
     }
 }
 
@@ -100,6 +128,9 @@ void AAstrawildResourceNode::ApplyNodeDefinition()
     ResourceItemId = Def->ResourceItemId;
     ResourceQuantityPerHarvest = FMath::Max(1, Def->QuantityPerHarvest);
     RemainingQuantity = FMath::Max(1, Def->MaxQuantity);
+    // Final-audit M-7 (AUD-4): the respawn restores the DEFINED max, not the
+    // per-harvest rate — Node_Dawnwood (3 max, 2/harvest) used to respawn at 2 forever.
+    CachedMaxQuantity = FMath::Max(1, Def->MaxQuantity);
     RespawnDurationSeconds = FMath::Max(0.0f, Def->RespawnDurationSeconds);
 
     // Art pack (Batch 4, CP-04): real node mesh replaces the rarity shape when
@@ -204,7 +235,29 @@ void AAstrawildResourceNode::Interact_Implementation(AActor* InteractingActor)
         ? ResourceQuantityPerHarvest
         : FMath::Min(ResourceQuantityPerHarvest, RemainingQuantity);
 
-    if (!Inventory->AddItem(ResourceItemId, QuantityToGrant))
+    // SCP Phase 12: specialized tools multiply the yield when their category
+    // matches the resource (pick x3 ore, axe x3 wood, sickle x4 fiber — broken
+    // tools harvest at base rate) and take one point of wear per swing.
+    int32 MultipliedQuantity = QuantityToGrant;
+    UAstrawildDurabilityComponent* Durability = InteractingActor->FindComponentByClass<UAstrawildDurabilityComponent>();
+    if (Durability)
+    {
+        const float YieldMultiplier = Durability->GetHarvestYieldMultiplier(ResourceItemId);
+        MultipliedQuantity = FMath::Max(1, FMath::RoundToInt(QuantityToGrant * YieldMultiplier));
+        Durability->ApplyToolWear();
+    }
+
+    // SCP Phase 3: DDA generosity — struggling players find richer nodes
+    // (x1.15), thriving players lean on efficiency instead (x0.9).
+    if (const UWorld* DDAWorld = GetWorld())
+    {
+        if (const UAstrawildDifficultySubsystem* DDA = DDAWorld->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            MultipliedQuantity = FMath::Max(1, FMath::RoundToInt(MultipliedQuantity * DDA->GetResourceYieldScale()));
+        }
+    }
+
+    if (!Inventory->AddItem(ResourceItemId, MultipliedQuantity))
     {
         return;
     }
@@ -228,12 +281,46 @@ void AAstrawildResourceNode::Interact_Implementation(AActor* InteractingActor)
 
 FText AAstrawildResourceNode::GetInteractionPrompt_Implementation() const
 {
-    return FText::Format(NSLOCTEXT("ASTRAWILD", "HarvestPrompt", "เก็บ {0}"), FText::FromName(ResourceItemId));
+    return FText::Format(NSLOCTEXT("ASTRAWILD", "HarvestPrompt", "Harvest {0} [E]"), FText::FromName(ResourceItemId));
 }
 
 void AAstrawildResourceNode::RespawnNode()
 {
-    RemainingQuantity = FMath::Max(1, ResourceQuantityPerHarvest);
+    // Final-audit M-7 (AUD-4): restore the definition's MaxQuantity (cached at
+    // ApplyNodeDefinition; falls back to the per-harvest rate for nodes without one).
+    RemainingQuantity = FMath::Max(1, CachedMaxQuantity > 0 ? CachedMaxQuantity : ResourceQuantityPerHarvest);
     SetActorHiddenInGame(false);
     SetActorEnableCollision(true);
+}
+
+void AAstrawildResourceNode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildResourceNode, NodeDefinitionId);
+    DOREPLIFETIME(AAstrawildResourceNode, RemainingQuantity);
+    DOREPLIFETIME(AAstrawildResourceNode, bInfiniteResource);
+}
+
+void AAstrawildResourceNode::OnRep_RemainingQuantity()
+{
+    // LCP-2: mirror the server's depleted/respawned visual (the server hides
+    // the node and disables collision on depletion — clients follow the
+    // replicated quantity instead of a hidden flag so a mid-stream join
+    // converges without extra state).
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        ApplyQuantityVisual();
+    }
+}
+
+void AAstrawildResourceNode::ApplyQuantityVisual()
+{
+    const bool bDepleted = IsNodeDepleted(bInfiniteResource, RemainingQuantity);
+    SetActorHiddenInGame(bDepleted);
+    SetActorEnableCollision(!bDepleted);
+}
+
+bool AAstrawildResourceNode::IsNodeDepleted(const bool bInfinite, const int32 InRemainingQuantity)
+{
+    return !bInfinite && InRemainingQuantity <= 0;
 }

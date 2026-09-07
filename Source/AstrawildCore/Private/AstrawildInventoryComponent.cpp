@@ -203,18 +203,33 @@ bool UAstrawildInventoryComponent::AddItemSilent(const FName ItemId, const int32
 
 bool UAstrawildInventoryComponent::RemoveItem(const FName ItemId, const int32 Quantity)
 {
+    // FR-1 (Final Run redo): quantity sign gate FIRST. A negative or zero request
+    // used to pass HasItem ("0 >= -5") and then either crash in FindChecked (key
+    // missing) or MINT items (Count -= negative). Both are P0 exploits.
+    if (ItemId.IsNone() || Quantity <= 0)
+    {
+        UE_LOG(LogAstrawildEconomy, Warning, TEXT("RemoveItem rejected: invalid request (%s x%d)."), *ItemId.ToString(), Quantity);
+        return false;
+    }
+
     if (!HasItem(ItemId, Quantity))
     {
         return false;
     }
 
-    int32& Count = Items.FindChecked(ItemId);
-    Count -= Quantity;
-    if (Count <= 0)
+    // FindChecked would be safe after the HasItem gate, but fail-soft lookup keeps
+    // any future re-entrancy bug from turning into a crash.
+    int32* Count = Items.Find(ItemId);
+    if (!Count)
+    {
+        return false;
+    }
+    *Count -= Quantity;
+    if (*Count <= 0)
     {
         Items.Remove(ItemId);
     }
-    OnInventoryChanged.Broadcast(ItemId, Count);
+    OnInventoryChanged.Broadcast(ItemId, GetQuantity(ItemId));
     BroadcastWeight();
     return true;
 }
@@ -232,17 +247,38 @@ bool UAstrawildInventoryComponent::HasItem(const FName ItemId, const int32 Quant
 
 bool UAstrawildInventoryComponent::ConsumeItems(const TArray<FAstrawildItemStack>& RequiredItems)
 {
+    // FR-1 (Final Run redo): atomic consume. The old two-pass loop checked each
+    // stack in isolation, so a list like {Wood x5, Wood x5} with only 7 owned
+    // removed the first 5 and THEN failed — a partial consume (silent item loss).
+    // Duplicate ids are aggregated up front; all requirements must hold against
+    // the aggregated totals before ANY removal happens.
+    TMap<FName, int32> Aggregated;
     for (const FAstrawildItemStack& Required : RequiredItems)
     {
-        if (!HasItem(Required.ItemId, Required.Quantity))
+        if (Required.ItemId.IsNone() || Required.Quantity <= 0)
         {
+            continue; // malformed entries are ignored, never mint or drain
+        }
+        int32& Total = Aggregated.FindOrAdd(Required.ItemId);
+        Total += Required.Quantity;
+    }
+    if (Aggregated.IsEmpty())
+    {
+        return true; // nothing to consume
+    }
+
+    for (const TPair<FName, int32>& Pair : Aggregated)
+    {
+        if (!HasItem(Pair.Key, Pair.Value))
+        {
+            UE_LOG(LogAstrawildEconomy, Verbose, TEXT("ConsumeItems rejected: need %d x %s."), Pair.Value, *Pair.Key.ToString());
             return false;
         }
     }
 
-    for (const FAstrawildItemStack& Required : RequiredItems)
+    for (const TPair<FName, int32>& Pair : Aggregated)
     {
-        RemoveItem(Required.ItemId, Required.Quantity);
+        RemoveItem(Pair.Key, Pair.Value);
     }
     return true;
 }
@@ -266,13 +302,27 @@ TArray<FAstrawildItemStack> UAstrawildInventoryComponent::GetItemStacks() const
 
 void UAstrawildInventoryComponent::SetItemStacks(const TArray<FAstrawildItemStack>& InStacks)
 {
+    // FR-1 (Final Run redo): save-import sanitize. Invalid stacks (none id /
+    // non-positive quantity) are dropped; duplicate ids keep the FIRST entry
+    // (first-seen-wins — a corrupted save cannot inflate quantities by listing
+    // the same id twice). Every repair is logged.
     Items.Reset();
     for (const FAstrawildItemStack& Stack : InStacks)
     {
-        if (Stack.IsValid())
+        if (!Stack.IsValid())
         {
-            Items.Add(Stack.ItemId, Stack.Quantity);
+            if (!Stack.ItemId.IsNone() || Stack.Quantity != 0)
+            {
+                UE_LOG(LogAstrawildEconomy, Warning, TEXT("SetItemStacks: dropped invalid stack %s x%d."), *Stack.ItemId.ToString(), Stack.Quantity);
+            }
+            continue;
         }
+        if (Items.Contains(Stack.ItemId))
+        {
+            UE_LOG(LogAstrawildEconomy, Warning, TEXT("SetItemStacks: duplicate id %s — first entry wins."), *Stack.ItemId.ToString());
+            continue;
+        }
+        Items.Add(Stack.ItemId, Stack.Quantity);
     }
     OnInventoryChanged.Broadcast(NAME_None, 0);
     BroadcastWeight();

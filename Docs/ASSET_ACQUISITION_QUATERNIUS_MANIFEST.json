@@ -1,0 +1,1280 @@
+{
+  "schema": 1,
+  "generated": "2026-09-05T02:12:14Z",
+  "generator": "Scripts/download_quaternius.py (LCP-7)",
+  "source": "quaternius.com (official pages) -> public Google Drive folders",
+  "license": "CC0 1.0 Universal (verified per pack: page statement + pack License.txt)",
+  "license_url": "https://quaternius.com/license.html",
+  "packs": [
+    {
+      "pack": "Ultimate Animated Animals",
+      "page_title": "Quaternius \u2022 Ultimate Animated Animal Pack",
+      "source_url": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "drive_folder": "1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "date_checked": "2026-09-05",
+      "dest": "ArtSource/Models/Quaternius_UltimateAnimatedAnimals",
+      "planned_files": 13,
+      "status": "LICENSE_VERIFIED",
+      "files": [],
+      "accepted_files": 0,
+      "skipped_existing": 13,
+      "failed_files": 0
+    },
+    {
+      "pack": "Ultimate Monsters",
+      "page_title": "Quaternius \u2022 Ultimate Monsters",
+      "source_url": "https://quaternius.com/packs/ultimatemonsters.html",
+      "drive_folder": "18m4KpzpEzhC9wl7jzr6dUc0N8Jozr79C",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "date_checked": "2026-09-05",
+      "dest": "ArtSource/Models/Quaternius_UltimateMonsters",
+      "planned_files": 54,
+      "status": "LICENSE_VERIFIED",
+      "files": [
+        {
+          "path": "Blob/glTF/Atlas_Monsters.png",
+          "bytes": 9007,
+          "sha256": "b970ed1359ce749fd81a8395d58ff5f3044d843213e17fb94b97892d417c0af9"
+        },
+        {
+          "path": "Blob/glTF/Birb.gltf",
+          "bytes": 250210,
+          "sha256": "af555c16465c10e1ea4c1c3a8e6df15d199fc3cbcbfa4b3c788e1aff685ce11f"
+        },
+        {
+          "path": "Blob/glTF/Cactoro.gltf",
+          "bytes": 209646,
+          "sha256": "a11045fd73ea27f43ddc4ba989e76d29acf569c8a6e6de865f0b3794fc637434"
+        },
+        {
+          "path": "Blob/glTF/Cat.gltf",
+          "bytes": 175682,
+          "sha256": "59aba7e4ea6da3ac11be9d5220304e649de8cb8cf975eef588d30a003c6cd275"
+        },
+        {
+          "path": "Blob/glTF/Chicken.gltf",
+          "bytes": 213187,
+          "sha256": "a8ad394817989e1e68c111a3a60b3203b203a3ab4563350b4f3a6e1b5a6c98b1"
+        },
+        {
+          "path": "Blob/glTF/Dog.gltf",
+          "bytes": 142124,
+          "sha256": "21ed475bbf4d5fb7016085290f79663ad7107aedd2a5856318f2716c7ecc6402"
+        },
+        {
+          "path": "Blob/glTF/Fish.gltf",
+          "bytes": 239863,
+          "sha256": "97f6439faff6a85a4ea390a4eb85a54feaa358db8436d920af0be5a1a0432d7e"
+        },
+        {
+          "path": "Blob/glTF/GreenBlob.gltf",
+          "bytes": 148007,
+          "sha256": "e2d2049ebe8d243bd0f60a3f48a7e174444f641ebc40cbea2f6c23cb97a82519"
+        },
+        {
+          "path": "Blob/glTF/GreenSpikyBlob.gltf",
+          "bytes": 312327,
+          "sha256": "ff55e6424f20576cac02578d012b3527af642ef15e7bab4abd2fd8d1f51b3e7e"
+        },
+        {
+          "path": "Blob/glTF/Mushnub_Evolved.gltf",
+          "bytes": 246194,
+          "sha256": "ea6c90e8522eeeba7c6c4cece3a031706de55e9b7e660b362f261a4e5bfaff95"
+        },
+        {
+          "path": "Blob/glTF/Mushnub.gltf",
+          "bytes": 132465,
+          "sha256": "15e44e46e6c52ff677d946c70d41c4cbb1acb6598e7ec09f8642ee942d7751e2"
+        },
+        {
+          "path": "Blob/glTF/Ninja.gltf",
+          "bytes": 182184,
+          "sha256": "41974ce0c56d660950e554d672742e056776518a888e376341bebcce5951178e"
+        },
+        {
+          "path": "Blob/glTF/Orc.gltf",
+          "bytes": 213802,
+          "sha256": "23d3e6e15c9594e8d958e642208ddade1f369e31b762caf2b14c4ef89358b026"
+        },
+        {
+          "path": "Blob/glTF/Pigeon.gltf",
+          "bytes": 178568,
+          "sha256": "32a03c1018936d06e4dd0c8c5e93e0f6ff5ff73aad47a1653216a7be32e3c62f"
+        },
+        {
+          "path": "Blob/glTF/PinkBlob.gltf",
+          "bytes": 123900,
+          "sha256": "0cc6c64f3e2bad775a7ff82b3ccc11e26359266967a765740655cdaccc5c7ff4"
+        },
+        {
+          "path": "Blob/glTF/Wizard.gltf",
+          "bytes": 162486,
+          "sha256": "074302ab7039f3a6644c8f0be2580a0d747e8981bfa9725bcc6af422222c155a"
+        },
+        {
+          "path": "Blob/glTF/Yeti.gltf",
+          "bytes": 191774,
+          "sha256": "44b0627cc65112756642f2d0de529a1fba9d74c4fbc9829b572d90625bbb842f"
+        },
+        {
+          "path": "Flying/glTF/Alpaking_Evolved.gltf",
+          "bytes": 445787,
+          "sha256": "c91321aa08a94c58f4a05d73e1469adf4d0caec5472abeaccdb67ae001212c50"
+        },
+        {
+          "path": "Flying/glTF/Alpaking.gltf",
+          "bytes": 304328,
+          "sha256": "91763421d7f193d0a6693094031b251f5aee1c8c689ef04ef43124e5797cfba7"
+        },
+        {
+          "path": "Flying/glTF/Armabee_Evolved.gltf",
+          "bytes": 357537,
+          "sha256": "1ad3e42c088e01e0c179d54537c63efad0dd185031df61d2833b9f1709362730"
+        },
+        {
+          "path": "Flying/glTF/Armabee.gltf",
+          "bytes": 297261,
+          "sha256": "10ca05955ab7f7f6e2f9bd8fd85f28ed1351c945e390b1fd0fa84428b43a5916"
+        },
+        {
+          "path": "Flying/glTF/Atlas_Monsters.png",
+          "bytes": 9007,
+          "sha256": "b970ed1359ce749fd81a8395d58ff5f3044d843213e17fb94b97892d417c0af9"
+        },
+        {
+          "path": "Flying/glTF/Demon.gltf",
+          "bytes": 342726,
+          "sha256": "e836b7b97506b3032106528aa5c324fe4158df143f285209ac6d2b5b35e524f1"
+        },
+        {
+          "path": "Flying/glTF/Dragon_Evolved.gltf",
+          "bytes": 991335,
+          "sha256": "39ba6ea24b5f27acf68bbf4c19fe80ba070dbec167ff14bbe933453303426f5c"
+        },
+        {
+          "path": "Flying/glTF/Dragon.gltf",
+          "bytes": 427100,
+          "sha256": "d219a29b5e928da26c24218a64284bbf999b88484a508ac6c01e0edad9f1f56c"
+        },
+        {
+          "path": "Flying/glTF/Ghost_Skull.gltf",
+          "bytes": 682385,
+          "sha256": "5bf24cf0f22aa94b0b58315e7d879afc53a0964a5b326aa0c844ba3278cae1da"
+        },
+        {
+          "path": "Flying/glTF/Ghost.gltf",
+          "bytes": 643180,
+          "sha256": "40bea9d887874cc86b391b83e72cc5ac2cac340892e23f3d8068a568b6e61457"
+        },
+        {
+          "path": "Flying/glTF/Glub_Evolved.gltf",
+          "bytes": 395400,
+          "sha256": "5b9f9f35246eae72fa5907dc5120cf25c7f4810579d6e2b36fdf5d0aaa3ae6f6"
+        },
+        {
+          "path": "Flying/glTF/Glub.gltf",
+          "bytes": 308583,
+          "sha256": "54f638cef5aae04f4d00874d8cbbfadd863697157fedad7c5e6e5cb9724abbb0"
+        },
+        {
+          "path": "Flying/glTF/Goleling_Evolved.gltf",
+          "bytes": 494339,
+          "sha256": "a36f8c1636b692d44fd74fbca07e1164ad14acc5db71300a92d5e51bc1a476ca"
+        },
+        {
+          "path": "Flying/glTF/Goleling.gltf",
+          "bytes": 384972,
+          "sha256": "fad1c4d98e88b21a139fadd74e96c370f1c8ece8d1ae8c4b3bec80d1d7163c29"
+        },
+        {
+          "path": "Flying/glTF/Hywirl.gltf",
+          "bytes": 638684,
+          "sha256": "aed5759f91d18ce1922723d5698f5afad2c8d8b26f5c6f11b018ca967898fa50"
+        },
+        {
+          "path": "Flying/glTF/Pigeon.gltf",
+          "bytes": 368129,
+          "sha256": "502f0530567fd912b24ba15990e4a4ccca84cf4e4f63f1d7376d73202089a763"
+        },
+        {
+          "path": "Flying/glTF/Squidle.gltf",
+          "bytes": 805758,
+          "sha256": "ed41b8a3e4a49d0eb9522e52d3055a85e7c051607c6f1092aeb4242e0c87c77b"
+        },
+        {
+          "path": "Flying/glTF/Tribal.gltf",
+          "bytes": 777249,
+          "sha256": "689db4c3375bc14a82a831f8fc575c0791a85bee40d1fe42ec8ac16545940afa"
+        },
+        {
+          "path": "License.txt",
+          "bytes": 374,
+          "sha256": "de990ef6fc68cffd7fd1ae342c4d0c823b541b8848d8f76bca5d3339f4de6f6e"
+        }
+      ],
+      "accepted_files": 36,
+      "skipped_existing": 18,
+      "failed_files": 0
+    },
+    {
+      "pack": "Ultimate Nature Pack",
+      "page_title": "Quaternius \u2022 Ultimate Nature Pack",
+      "source_url": "https://quaternius.com/packs/ultimatenature.html",
+      "drive_folder": "1-Kl0L_Jg8awbh0S5T-z3zxh4mVlnxTpa",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "date_checked": "2026-09-05",
+      "dest": "ArtSource/Models/Quaternius_UltimateNature",
+      "planned_files": 51,
+      "status": "LICENSE_VERIFIED",
+      "files": [
+        {
+          "path": "FBX/BirchTree_1.fbx",
+          "bytes": 52332,
+          "sha256": "dee74ff72040b2893aed2091aa3d680868870653d23f10d5cd5b476c6287a85f"
+        },
+        {
+          "path": "FBX/BirchTree_2.fbx",
+          "bytes": 49564,
+          "sha256": "c61d3cd05399514ce77d668ebb9193d4fcb0b47fd6e939deb99efad30fbf10a0"
+        },
+        {
+          "path": "FBX/BirchTree_3.fbx",
+          "bytes": 53036,
+          "sha256": "01d9ee791255780431a4146a603f5fde3553ef7452dd78f7a14798f07fcbcb0b"
+        },
+        {
+          "path": "FBX/BirchTree_4.fbx",
+          "bytes": 65132,
+          "sha256": "c0609928c50503fe04df0c00f65a4d7079f66cecd45dde8b29093428ef09a297"
+        },
+        {
+          "path": "FBX/BirchTree_5.fbx",
+          "bytes": 53484,
+          "sha256": "304c403ad69e879c9c224a7f0a0d540df1cf7f77e0b8606864bedd2a6d7beb2a"
+        },
+        {
+          "path": "FBX/BirchTree_Autumn_1.fbx",
+          "bytes": 52316,
+          "sha256": "e7ee7cd6ebcf422f2449fb3f979965d5a6865181a04c2db6e29dd7d5c93b4ea7"
+        },
+        {
+          "path": "FBX/BirchTree_Autumn_2.fbx",
+          "bytes": 49548,
+          "sha256": "565c05480f271a7a0e7fa981f6c8bc7520ce660cc5a712d25a0fd0b0ff85e61f"
+        },
+        {
+          "path": "FBX/BirchTree_Autumn_3.fbx",
+          "bytes": 53052,
+          "sha256": "5847072d32286e4fdcf93f37d2b0075e01165ec1f7190508679987f5691a9ed9"
+        },
+        {
+          "path": "FBX/BirchTree_Autumn_4.fbx",
+          "bytes": 65196,
+          "sha256": "7bdf6e9584bfd17b24d18a6d1df43b13bcb55480a9850df85a4ee3f5e6fecf05"
+        },
+        {
+          "path": "FBX/BirchTree_Autumn_5.fbx",
+          "bytes": 53500,
+          "sha256": "ac88dcb6efaefe0a1dade650c07c8c5c3b966eb4a08054dcd2f0b480a58517a8"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_1.fbx",
+          "bytes": 32204,
+          "sha256": "0fdd91c6d94e2884ff4f7eff3b05544fb3d98b6dca3a87b4b30225532b6a7bdc"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_2.fbx",
+          "bytes": 42124,
+          "sha256": "817d2b2c0a6e9e8b559790b3ac6832936747f9d405ccc11327676470146cbe74"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_3.fbx",
+          "bytes": 43036,
+          "sha256": "50712473ff435873701714c3a40bd300044c06d5dc012147d6dc8e7f5e512e0a"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_4.fbx",
+          "bytes": 47372,
+          "sha256": "69cbc754bc327f60a5f176045387408b757277ff20cdf7b6373be8541158d23d"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_5.fbx",
+          "bytes": 40972,
+          "sha256": "189d44cb7e66bd624678b2aed5bc18466b14df892c4d6b9e4b37a51879f19188"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_Snow_1.fbx",
+          "bytes": 34460,
+          "sha256": "10ba3d1b0e59f2701f187f0aa95b5724bc6025db321ca2c1459bef4bbcb995f1"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_Snow_2.fbx",
+          "bytes": 45916,
+          "sha256": "03259601ca4b50e958334050f860c0427a253c3ff5423ca937eed8208b52309c"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_Snow_3.fbx",
+          "bytes": 45820,
+          "sha256": "d491c98a119af78f44fbef01a5b69edea9b92f9abd14528892f992dbfb12ab2d"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_Snow_4.fbx",
+          "bytes": 51628,
+          "sha256": "a48734ddaea7ab72c10c736c15c90eaecea8f36dfa021d88143739a68f5d247e"
+        },
+        {
+          "path": "FBX/BirchTree_Dead_Snow_5.fbx",
+          "bytes": 43148,
+          "sha256": "e89c86402fad2724dd9d224b8a4ce2b2ccf99555f4c23c2dbba5d69bd7c5d981"
+        },
+        {
+          "path": "FBX/BirchTree_Snow_1.fbx",
+          "bytes": 55596,
+          "sha256": "9b389792f6800494b0922c6801a149fe2c4bbb90a3ccba5bd193b1f2580ef58a"
+        },
+        {
+          "path": "FBX/BirchTree_Snow_2.fbx",
+          "bytes": 51596,
+          "sha256": "b09d662f1ad5b54d4318a308a4b32f6e441689f41ede3ff54572d1d620d9d9c6"
+        },
+        {
+          "path": "FBX/BirchTree_Snow_3.fbx",
+          "bytes": 55612,
+          "sha256": "f8bb6bd6105297010022fe0549ebb213ddf1024f812f978bd45a4c5a687d21ce"
+        },
+        {
+          "path": "FBX/BirchTree_Snow_4.fbx",
+          "bytes": 69356,
+          "sha256": "a7fe6df00ceaaa248c8a6aa4dcc0664a089296aec31ec9416dcefb129d61c445"
+        },
+        {
+          "path": "FBX/BirchTree_Snow_5.fbx",
+          "bytes": 56108,
+          "sha256": "ca87250e3e538063ba4233fa0059128a7c6f9213d73392def12507d4562bc1d1"
+        },
+        {
+          "path": "FBX/Bush_1.fbx",
+          "bytes": 22924,
+          "sha256": "ef4fd15c36fd95a19aa769a15b4acde2a22bbfea4ada7144ece5fd82c2e05a0f"
+        },
+        {
+          "path": "FBX/Bush_2.fbx",
+          "bytes": 20988,
+          "sha256": "73a9aa512b2967ad333451ffb4b4e460f400a7a17a73a0b90fc1656404273388"
+        },
+        {
+          "path": "FBX/Bush_Snow_1.fbx",
+          "bytes": 24924,
+          "sha256": "49b33c2b7379de7194af89c0262ef648ba99ea3c4de47e961c297e067ac7bd85"
+        },
+        {
+          "path": "FBX/Bush_Snow_2.fbx",
+          "bytes": 22492,
+          "sha256": "22ef7a5ffddfb257f09d96540349b7ed4c25cb04e5f9bf5be4836ea6eff346bc"
+        },
+        {
+          "path": "FBX/BushBerries_1.fbx",
+          "bytes": 33596,
+          "sha256": "1e70f836ae535b5e8bc7096abfa5f7fe2517ea8baa6d06964eff5296e39d7edc"
+        },
+        {
+          "path": "FBX/BushBerries_2.fbx",
+          "bytes": 31596,
+          "sha256": "02c360d6c2738e3ef42610aee3b00604ff2c5722cb6b773e23fa78f6d38cece4"
+        },
+        {
+          "path": "FBX/Cactus_1.fbx",
+          "bytes": 26012,
+          "sha256": "1d759855d5a04c08ba37d1f1db60f58f32b4e4d6942cb01e91ad7383fb8511f2"
+        },
+        {
+          "path": "FBX/Cactus_2.fbx",
+          "bytes": 27852,
+          "sha256": "a6cbd5dd51ed796ef0e6ccb50a724161968683675086b4419d95f4e0dd82ee08"
+        },
+        {
+          "path": "FBX/Cactus_3.fbx",
+          "bytes": 21020,
+          "sha256": "4b360e286681f9bb6e92f4d6166df5dac8718e61b056fd5dc10bbf8beffadbbd"
+        },
+        {
+          "path": "FBX/Cactus_4.fbx",
+          "bytes": 34140,
+          "sha256": "2be9d320c1b7984ce18ce52a52c44fa3461defeb8c9fcb998bfc00f52d895b0a"
+        },
+        {
+          "path": "FBX/Cactus_5.fbx",
+          "bytes": 24396,
+          "sha256": "d8f0072b4e7b78d8f8c875f3dff13534fd41cbb3b8c4efc0a6e68176a5deb7ed"
+        },
+        {
+          "path": "FBX/CactusFlower_1.fbx",
+          "bytes": 50444,
+          "sha256": "203723aa277e0297eccc145d2d9714fa4649dac84d475b9ed60957791cbfe9a0"
+        },
+        {
+          "path": "FBX/CactusFlowers_2.fbx",
+          "bytes": 44156,
+          "sha256": "28e9efc16d2e9dd4720444cea6d583c10a3a97845ab8ac55282d36c2d28d62a9"
+        },
+        {
+          "path": "FBX/CactusFlowers_3.fbx",
+          "bytes": 36044,
+          "sha256": "0dec00002d8e3b30ebb582e5bb15bef4496ddce5916ce175caceafc96d35609a"
+        },
+        {
+          "path": "FBX/CactusFlowers_4.fbx",
+          "bytes": 43596,
+          "sha256": "fb014c097af2ae320790eb263577e08003a8a489aa3d43cb26521d5f5d239035"
+        },
+        {
+          "path": "FBX/CactusFlowers_5.fbx",
+          "bytes": 29628,
+          "sha256": "72ed23784ac6523427f0b2bed0958365d346a4e160bf284c41d16ae56c7d62ce"
+        },
+        {
+          "path": "FBX/CommonTree_1.fbx",
+          "bytes": 73724,
+          "sha256": "0b744c9092a09bfb7228d5ecce26c665363e0f22725d3d89e356dc13789498c3"
+        },
+        {
+          "path": "FBX/CommonTree_2.fbx",
+          "bytes": 75516,
+          "sha256": "b3ca339781adc90ca0714d5d3fb081e5432f4a0e47f2697b7865a907b39c93cc"
+        },
+        {
+          "path": "FBX/CommonTree_3.fbx",
+          "bytes": 48396,
+          "sha256": "c6c09a4d4797d2b0651cdf8e56ea7baecefd8eb4b4a79fc680ef17747c42b70e"
+        },
+        {
+          "path": "FBX/CommonTree_4.fbx",
+          "bytes": 43500,
+          "sha256": "611134a64de288ba485ba429478978b8572ff9d74e5d1798f7389b4bbacf43d7"
+        },
+        {
+          "path": "FBX/CommonTree_5.fbx",
+          "bytes": 52076,
+          "sha256": "65f4b9dd21c242d311199406afbd7e6e20785cc66c57ee4db76d5a7c38d3dd4a"
+        },
+        {
+          "path": "FBX/CommonTree_Autumn_1.fbx",
+          "bytes": 72636,
+          "sha256": "d8548c4e4cb72621628249e1f5025d515ca596034f9a95704ebd978f256fd714"
+        },
+        {
+          "path": "FBX/CommonTree_Autumn_2.fbx",
+          "bytes": 75532,
+          "sha256": "087c807e82ea3aec7d217926a1ba78abfe70e1ac4b65ae5529b7b11a5284f0ae"
+        },
+        {
+          "path": "FBX/CommonTree_Autumn_3.fbx",
+          "bytes": 48396,
+          "sha256": "f3024a4eec5ee0a4e0b6236d0df75135cb5ae272d72bc5792190452450e08ded"
+        },
+        {
+          "path": "FBX/CommonTree_Autumn_4.fbx",
+          "bytes": 43516,
+          "sha256": "de691a983d674a92be75f5f7d18249e1d385392545bd96b70e19a6e8caae9e73"
+        },
+        {
+          "path": "License.txt",
+          "bytes": 364,
+          "sha256": "83d8959f9fc56353ed571fbe2dc52e4bcd64508e2399501cd45ac2ce3df0bf8c"
+        }
+      ],
+      "accepted_files": 51,
+      "skipped_existing": 0,
+      "failed_files": 0
+    },
+    {
+      "pack": "Ultimate Space Kit",
+      "page_title": "Quaternius \u2022 Ultimate Space Kit",
+      "source_url": "https://quaternius.com/packs/ultimatespacekit.html",
+      "drive_folder": "17F8HlI2zPTlo32aieW5YPPwOk78xo-2m",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "date_checked": "2026-09-05",
+      "dest": "ArtSource/Models/Quaternius_UltimateSpaceKit",
+      "planned_files": 78,
+      "status": "LICENSE_VERIFIED",
+      "files": [
+        {
+          "path": "Characters/GLTF/Astronaut_BarbaraTheBee.gltf",
+          "bytes": 1775147,
+          "sha256": "a63692767e66be75f1f09068f97a19b27be9ca427859c3dcc8889d88e1e1303a"
+        },
+        {
+          "path": "Characters/GLTF/Astronaut_FernandoTheFlamingo.gltf",
+          "bytes": 1707553,
+          "sha256": "68569c1ffb2c861783775dcfd474a0d5f622c643e7ea763c5cc9e06a3d932566"
+        },
+        {
+          "path": "Characters/GLTF/Astronaut_FinnTheFrog.gltf",
+          "bytes": 1747693,
+          "sha256": "a885549a96928e804a32ed82691074fc4faa24a6ffe8c7fde3635d88ea521e37"
+        },
+        {
+          "path": "Characters/GLTF/Astronaut_RaeTheRedPanda.gltf",
+          "bytes": 1778957,
+          "sha256": "521d5fe5e82ac2c0b5a709599205b93b1a3d709373404f95e07b8ffa38f72079"
+        },
+        {
+          "path": "Characters/GLTF/Enemy_ExtraSmall.gltf",
+          "bytes": 163710,
+          "sha256": "36761f354ac411d75a8ae02e92d746f26040615547ddd162f49f29ed7a9d65ec"
+        },
+        {
+          "path": "Characters/GLTF/Enemy_Flying.gltf",
+          "bytes": 284368,
+          "sha256": "b7084886786028345973698bbab9f9a9aa73788defe807b8d47fa342e8559224"
+        },
+        {
+          "path": "Characters/GLTF/Enemy_Large.gltf",
+          "bytes": 1213599,
+          "sha256": "8d950216a131f82691ebec7874cbcf1aab3539cd2bd6db0b73a05da1f938c323"
+        },
+        {
+          "path": "Characters/GLTF/Enemy_Small.gltf",
+          "bytes": 187271,
+          "sha256": "ce4dfac5a8041b7897c4839110ae4b8218c9b8b0e95cdeea7b64c55c8f4e6ed6"
+        },
+        {
+          "path": "Characters/GLTF/Mech_BarbaraTheBee.gltf",
+          "bytes": 877768,
+          "sha256": "ccda8177ceebc325b181f275fe835ba2271250ef67fb3cf435e1eadde21af364"
+        },
+        {
+          "path": "Characters/GLTF/Mech_FernandoTheFlamingo.gltf",
+          "bytes": 784850,
+          "sha256": "f0cb9c81d90138d1ac1eef8829ce2e1e856e2e8ef8b140a5d4f7386a886e6068"
+        },
+        {
+          "path": "Characters/GLTF/Mech_FinnTheFrog.gltf",
+          "bytes": 1037974,
+          "sha256": "2bf97a70893d0f1ba6663ee0ba64f34e57c70ca54396536edf482eebaae62c4f"
+        },
+        {
+          "path": "Characters/GLTF/Mech_RaeTheRedPanda.gltf",
+          "bytes": 775414,
+          "sha256": "5581ef1ac792484ab6909b3cd829c9491ffb21310b5b2a73582d9e098d6aa26d"
+        },
+        {
+          "path": "Environment/GLTF/Base_Large.gltf",
+          "bytes": 164167,
+          "sha256": "08fd1b72cd1a8656e48129323bc0b6286ed6eb5870674d1bab3cd72b4d883605"
+        },
+        {
+          "path": "Environment/GLTF/Building_L.gltf",
+          "bytes": 175908,
+          "sha256": "051c3b61baa9953658a46153e5f1adb401d6b20179be8b41d34ce5a4b2e84f40"
+        },
+        {
+          "path": "Environment/GLTF/Bush_1.gltf",
+          "bytes": 104424,
+          "sha256": "3d59f183e37dd47ea781b0621e5694eac22fed9ef7751c9525e998692db10e89"
+        },
+        {
+          "path": "Environment/GLTF/Bush_2.gltf",
+          "bytes": 72721,
+          "sha256": "3a99e5e077bff7a8df6665723597563b93e48efb7fd64a1ee2c58b3403272aae"
+        },
+        {
+          "path": "Environment/GLTF/Bush_3.gltf",
+          "bytes": 32103,
+          "sha256": "08ec060218b7ffbc1352d576d5a933a3280346489c6a5c937d28375411c7bc8f"
+        },
+        {
+          "path": "Environment/GLTF/Connector.gltf",
+          "bytes": 31511,
+          "sha256": "fcb637ff07af33fc2ecd9debd1a89a8f07dfb08c36c2c01db306754ced548982"
+        },
+        {
+          "path": "Environment/GLTF/GeodesicDome.gltf",
+          "bytes": 115880,
+          "sha256": "7abb59cfad09370fcb5f1508951fd4a630318a896a088cef55ff70ae2d04a942"
+        },
+        {
+          "path": "Environment/GLTF/Grass_1.gltf",
+          "bytes": 20794,
+          "sha256": "6cee71d1a8c13ab726eebe9510f5d44a92eb457153a949763d5be32fb9a37c3e"
+        },
+        {
+          "path": "Environment/GLTF/Grass_2.gltf",
+          "bytes": 13530,
+          "sha256": "977bedd1dce77081f3b3de7e75fba85ef639c5c2cc7cc56426eaa69a9c003a5b"
+        },
+        {
+          "path": "Environment/GLTF/Grass_3.gltf",
+          "bytes": 29865,
+          "sha256": "e4050f8c7609bdd21a33b4470901c79bb9afda23f414d335480903c0b130f739"
+        },
+        {
+          "path": "Environment/GLTF/House_Cylinder.gltf",
+          "bytes": 66395,
+          "sha256": "58d4f1edd8cf81f670184cc2678436366dd2b83a25f475b76809c74edd78ad9a"
+        },
+        {
+          "path": "Environment/GLTF/House_Long.gltf",
+          "bytes": 143586,
+          "sha256": "bab70c73d473e5567a4a9888da13dc458981e87ec983820135339e5b05d19303"
+        },
+        {
+          "path": "Environment/GLTF/House_Open.gltf",
+          "bytes": 55554,
+          "sha256": "ef7d304210d1c4a326d07f1c2f0027568df904723b23a260794a0e0cbaa08fae"
+        },
+        {
+          "path": "Environment/GLTF/House_OpenBack.gltf",
+          "bytes": 56393,
+          "sha256": "21cbe209e55764974a4714a9d245e8750b4eae22eeca9b8074747b31ca0d791e"
+        },
+        {
+          "path": "Environment/GLTF/House_Single_Support.gltf",
+          "bytes": 36715,
+          "sha256": "768adb582ea8a76b5b9d7f71185b58fe7bb0945b79f4ea66ae196b59a67734b8"
+        },
+        {
+          "path": "Environment/GLTF/House_Single.gltf",
+          "bytes": 49054,
+          "sha256": "3add23307666ab91cc401ea21d06f85202021d37db0434165f18378bd267e5b1"
+        },
+        {
+          "path": "Environment/GLTF/MetalSupport.gltf",
+          "bytes": 50722,
+          "sha256": "796070d5a2116ede96d7f25f208f665ef810c062fad29112798fdab594967b9f"
+        },
+        {
+          "path": "Environment/GLTF/Planet_1.gltf",
+          "bytes": 146885,
+          "sha256": "1a3070592f759b0e40535d3bd7ccfd5b7eeb6ded15a4c044cff679492ad3688a"
+        },
+        {
+          "path": "Environment/GLTF/Planet_2.gltf",
+          "bytes": 151318,
+          "sha256": "89c22ffe2789c8de0e33c8173b0df83ce85d717b6527945d9f4ddfb1dcab642b"
+        },
+        {
+          "path": "Environment/GLTF/Planet_3.gltf",
+          "bytes": 127212,
+          "sha256": "204132d2475472f28cf2fba0e263b3b7341da179ceb5cd3e55b1ec12b64357c0"
+        },
+        {
+          "path": "Environment/GLTF/Planet_4.gltf",
+          "bytes": 129884,
+          "sha256": "c3814e148549397de66710b61bd22a3c90a921296dbf995f65372c0c9ee55745"
+        },
+        {
+          "path": "Environment/GLTF/Planet_5.gltf",
+          "bytes": 62079,
+          "sha256": "c4937c1055d57203e3bf09028df962402ed04d3f9cc052f935ea956ab390caaa"
+        },
+        {
+          "path": "Environment/GLTF/Planet_6.gltf",
+          "bytes": 72451,
+          "sha256": "74d10703160be77339eb02da9f9d3dfda37afd5b93d624f799268f9088917310"
+        },
+        {
+          "path": "Environment/GLTF/Planet_7.gltf",
+          "bytes": 92855,
+          "sha256": "21ac2653724291be5d4da06a4202931cdd9da35e39c57b04296cefacd191d0d0"
+        },
+        {
+          "path": "Environment/GLTF/Planet_8.gltf",
+          "bytes": 54397,
+          "sha256": "76a420bbce6e8a6dfce4b2dd5ea6de8685f932b3c565961e237894822d3c6965"
+        },
+        {
+          "path": "Environment/GLTF/Planet_9.gltf",
+          "bytes": 80936,
+          "sha256": "12855fd0591e4ae9d1d73db6326c1acc87623d582876fb22d3f5d85a0f729716"
+        },
+        {
+          "path": "Environment/GLTF/Planet_10.gltf",
+          "bytes": 112356,
+          "sha256": "d243331c5b278c182e07bcb164b0023493501a6c7be95003418537be49a88dbe"
+        },
+        {
+          "path": "Environment/GLTF/Planet_11.gltf",
+          "bytes": 109176,
+          "sha256": "84710bfee3594cce221bec1e1b55b2faebc0d8f51bad66a6a4a2943c48cb0851"
+        },
+        {
+          "path": "Environment/GLTF/Plant_1.gltf",
+          "bytes": 31776,
+          "sha256": "93e8f8ff81650db07be87fd893603d285c9cc4d281a1d87d05c432e436831c8a"
+        },
+        {
+          "path": "Environment/GLTF/Plant_2.gltf",
+          "bytes": 17413,
+          "sha256": "8afe6147326dfed4e746b29e543053e6e94d4b928f9745ed2317dfb2f750ffd5"
+        },
+        {
+          "path": "Environment/GLTF/Plant_3.gltf",
+          "bytes": 91864,
+          "sha256": "a77b50f1d1c4c2500baf075f5d859e34b34e3454d64d1da929dd2e1a7a7bf3d9"
+        },
+        {
+          "path": "Environment/GLTF/Ramp.gltf",
+          "bytes": 21721,
+          "sha256": "aa5e56fc7ead246e58c45741759842e1ca30abbb7b4739d8d0e4e02d37282e38"
+        },
+        {
+          "path": "Environment/GLTF/Rock_1.gltf",
+          "bytes": 18607,
+          "sha256": "2d2f7f1a682e3d139f62f1587a21b2b85804beab2e4b3944fa91472c69ca95b6"
+        },
+        {
+          "path": "Environment/GLTF/Rock_2.gltf",
+          "bytes": 18199,
+          "sha256": "58c49713fbcc54c659b332f2570d54ee05ee0c08da62791f7f2fb6aedd2011de"
+        },
+        {
+          "path": "Environment/GLTF/Rock_3.gltf",
+          "bytes": 18393,
+          "sha256": "c9504983124efc901f5009d52244299bfd30e9f696cf85abcb3729598fd0a325"
+        },
+        {
+          "path": "Environment/GLTF/Rock_4.gltf",
+          "bytes": 32968,
+          "sha256": "db46be2ca4d9ee4da80651b2bdeca70b9021b9890981dc1288ecd4fae9f03d67"
+        },
+        {
+          "path": "Environment/GLTF/Rock_Large_1.gltf",
+          "bytes": 18891,
+          "sha256": "a67266c78c6a1c76c2355a00642ed2d4bf829ecda2972cdf708c744de79e50fc"
+        },
+        {
+          "path": "Environment/GLTF/Rock_Large_2.gltf",
+          "bytes": 33337,
+          "sha256": "04854e89c35b54cda8efbe7d5f18f1e2363fc605d98758b4cefe5da29391736a"
+        },
+        {
+          "path": "Environment/GLTF/Rock_Large_3.gltf",
+          "bytes": 33164,
+          "sha256": "722e0054c260ab17a364bceaf4d938b0de969f29a76666698ddd360fe345d199"
+        },
+        {
+          "path": "Environment/GLTF/Roof_Antenna.gltf",
+          "bytes": 33265,
+          "sha256": "7ff93aaad5883906d03e65d46a8d16582551967bfca59101fcab6bdb1a1165a4"
+        },
+        {
+          "path": "Environment/GLTF/Roof_Opening.gltf",
+          "bytes": 24275,
+          "sha256": "c34287377e242250c1ddbf3e221c40ddcb6781ca61df54f0c38fa0559d9c40ff"
+        },
+        {
+          "path": "Environment/GLTF/Roof_Radar.gltf",
+          "bytes": 52639,
+          "sha256": "a519c4ad16a00ffc02e403b2385752cadc33af491f7be2a98631a1c8819374c1"
+        },
+        {
+          "path": "Environment/GLTF/Roof_VentL.gltf",
+          "bytes": 11834,
+          "sha256": "5b6b729f3670c26d14fb27336af3a3c49be8c822f787e7440dcb8e968c0a3ab2"
+        },
+        {
+          "path": "Environment/GLTF/Roof_VentR.gltf",
+          "bytes": 11832,
+          "sha256": "795c2f3a44724dfae5362f0e7f41ed673acd0f3a3e78b8ae47f888aeb14c4f2e"
+        },
+        {
+          "path": "Environment/GLTF/SolarPanel_Ground.gltf",
+          "bytes": 37943,
+          "sha256": "39d73ce1438af148ee802597d683d19e1aba8cdfa060a5ab883f7e54f7c03cad"
+        },
+        {
+          "path": "Environment/GLTF/SolarPanel_Roof.gltf",
+          "bytes": 79692,
+          "sha256": "9417ca3291cd6a4496ea79689a67a6cff1c16782d94a1313d26120530ecb7dfa"
+        },
+        {
+          "path": "Environment/GLTF/SolarPanel_Structure.gltf",
+          "bytes": 135110,
+          "sha256": "b9897db8306a7d5fb00b3dd9d41f9488ce3ced4ef2f619a2fa19cc6f58069b48"
+        },
+        {
+          "path": "Environment/GLTF/Stairs.gltf",
+          "bytes": 24796,
+          "sha256": "cc77ff859a75b4ef79938643f5daf356304ceb0b590d77713c06d70fc2d1043c"
+        },
+        {
+          "path": "Environment/GLTF/Tree_Blob_1.gltf",
+          "bytes": 227362,
+          "sha256": "04e0e6b7d4f29b8f5e6a4d228fa35b6408c75307a7cbcb1a5044fd6cdbfb5d94"
+        },
+        {
+          "path": "Environment/GLTF/Tree_Blob_2.gltf",
+          "bytes": 213750,
+          "sha256": "dec5a4da49743c56c6adb9f5d04e9999ad6eb49c77eae11f105deabae5d005cc"
+        },
+        {
+          "path": "Items/GLTF/Pickup_Bullets.gltf",
+          "bytes": 36752,
+          "sha256": "5ad85b4b4ec0f50ea98b174d7f296eac18aacdc08dece59783fda4246cb6b937"
+        },
+        {
+          "path": "Items/GLTF/Pickup_Crate.gltf",
+          "bytes": 96016,
+          "sha256": "15e41b46a3d579cff5935c8551e6c78cacf84e9da4a2873dda2dfea965f060ce"
+        },
+        {
+          "path": "Items/GLTF/Pickup_Health.gltf",
+          "bytes": 58187,
+          "sha256": "3138bcb5c2b8d20ac707de06b027988a23729e3d0cb5fda3362b4490bf385aab"
+        },
+        {
+          "path": "Items/GLTF/Pickup_Jar.gltf",
+          "bytes": 22623,
+          "sha256": "a09482732cb221c2ef88b8cafb0f5ab1d10f802e176ac92f7cad8868920d78b0"
+        },
+        {
+          "path": "Items/GLTF/Pickup_KeyCard.gltf",
+          "bytes": 19987,
+          "sha256": "9aa28355518eee845514cc6ae64202ab1672e86401148f3588ba462857ea6963"
+        },
+        {
+          "path": "Items/GLTF/Pickup_Sphere.gltf",
+          "bytes": 92868,
+          "sha256": "0d326c34dd00fe52ac741bc1c38af41e8695c8b6401d0eb283d9ddc5040c8835"
+        },
+        {
+          "path": "Items/GLTF/Pickup_Thunder.gltf",
+          "bytes": 15578,
+          "sha256": "26f40026c4c744cf1bf6660bc2bc005ae791448bcfae1e154684ecc1e659670b"
+        },
+        {
+          "path": "Vehicles/GLTF/Rover_1.gltf",
+          "bytes": 441623,
+          "sha256": "45851ac7cb29e01f68b6d70b1bb14767ba6ea0920c2eae6b4a19fcea57d1f805"
+        },
+        {
+          "path": "Vehicles/GLTF/Rover_2.gltf",
+          "bytes": 481320,
+          "sha256": "0af82a03b6e19f301a2a0f67ec33c4e6df4a54aeea3457cec3fcf1b6ad1b9665"
+        },
+        {
+          "path": "Vehicles/GLTF/Rover_Round.gltf",
+          "bytes": 412138,
+          "sha256": "5f575251feddafe7c0e4a091c3fa265efb67b389509d02485f279beb78724df1"
+        },
+        {
+          "path": "Vehicles/GLTF/Spaceship_BarbaraTheBee.gltf",
+          "bytes": 347592,
+          "sha256": "f4c87d25e8ae226f42231b8760e73fbc37441d8be8c880b820125130073743e7"
+        },
+        {
+          "path": "Vehicles/GLTF/Spaceship_FernandoTheFlamingo.gltf",
+          "bytes": 220654,
+          "sha256": "91965162f9c6f81064969e2325c4c8f2e264c55328ed27761b5c699e4ad1b1f8"
+        },
+        {
+          "path": "Vehicles/GLTF/Spaceship_FinnTheFrog.gltf",
+          "bytes": 245407,
+          "sha256": "1d34827551a230e009a9c0b1746159d9299cd1de334b516992de8710008a6956"
+        },
+        {
+          "path": "Vehicles/GLTF/Spaceship_RaeTheRedPanda.gltf",
+          "bytes": 142993,
+          "sha256": "5197520f8c0085efefb31e1ead9b37c7f121db5940376460e4e87670016bf7e2"
+        },
+        {
+          "path": "Atlas.png",
+          "bytes": 5276,
+          "sha256": "516cefca3254dff7655d7cde0af2a21723f1354172ba2436fd748bb0f038a81a"
+        },
+        {
+          "path": "License.txt",
+          "bytes": 374,
+          "sha256": "de990ef6fc68cffd7fd1ae342c4d0c823b541b8848d8f76bca5d3339f4de6f6e"
+        }
+      ],
+      "accepted_files": 78,
+      "skipped_existing": 0,
+      "failed_files": 0
+    },
+    {
+      "pack": "Ultimate Modular Ruins Pack",
+      "page_title": "Quaternius \u2022 Ultimate Modular Ruins Pack",
+      "source_url": "https://quaternius.com/packs/ultimatemodularruins.html",
+      "drive_folder": "1ETp2ldaHaP0BkS4FBmkT-g9Yf88T_cIX",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "date_checked": "2026-09-05",
+      "dest": "ArtSource/Models/Quaternius_UltimateModularRuins",
+      "planned_files": 55,
+      "status": "LICENSE_VERIFIED",
+      "files": [
+        {
+          "path": "FBX/Arch_Gothic_RoundColumn.fbx",
+          "bytes": 78508,
+          "sha256": "621cb5a9405789bc4092fe27c5065625a3684c24fdabc021254354def3e527db"
+        },
+        {
+          "path": "FBX/Arch_Gothic.fbx",
+          "bytes": 74380,
+          "sha256": "af85f55a727388fbad67a62ffc7e30365b4a99241ff3b93e41711c15a5d5299f"
+        },
+        {
+          "path": "FBX/Arch_Round_RoundColumn.fbx",
+          "bytes": 78364,
+          "sha256": "039670b60b4648a269884cd8378f0bbf0ec13b2f424887f8a90dee7f6fca20e2"
+        },
+        {
+          "path": "FBX/Arch_Round.fbx",
+          "bytes": 74844,
+          "sha256": "0fa77eafe953ac058e63aedca68ce1a82f02b6bbe009f53a0d3f7fc0120abcc8"
+        },
+        {
+          "path": "FBX/Barrel.fbx",
+          "bytes": 47836,
+          "sha256": "22f3f4fdb6296fff10dcb59f42eb28dd7ceff02982efc67a5df9e33c657d8df4"
+        },
+        {
+          "path": "FBX/BearTrap_Closed.fbx",
+          "bytes": 27804,
+          "sha256": "d670326ada19a74849543bdc4e19dcc20cefb0e63825c7ed6e4d05e06c45b51f"
+        },
+        {
+          "path": "FBX/BearTrap_Open.fbx",
+          "bytes": 26332,
+          "sha256": "86300a66c0c6592e7cd7b4adf798c8f90f84f002c9320b0f24bf9e1d91c27da4"
+        },
+        {
+          "path": "FBX/Bookcase_Empty.fbx",
+          "bytes": 37372,
+          "sha256": "9addc32a7896c45e2b940af16ed2c505b0d3ed97dfb3ed0a78cb5e9eeb4b1d6f"
+        },
+        {
+          "path": "FBX/Bookcase_Full.fbx",
+          "bytes": 79036,
+          "sha256": "bef2b505c91a6f35ebd6ab09850febe137550b958a33e82baf9e4278e631c134"
+        },
+        {
+          "path": "FBX/Brick.fbx",
+          "bytes": 16940,
+          "sha256": "645a4a1aea7a9da72609cdff285f701629ee4cb6429c64ef1d1a96853772e4b8"
+        },
+        {
+          "path": "FBX/Bricks.fbx",
+          "bytes": 21388,
+          "sha256": "7f7d77c199b75e3c7cbb1534ed1c528215c08101b3d567f2a987c25feac273fa"
+        },
+        {
+          "path": "FBX/BridgeSection.fbx",
+          "bytes": 60332,
+          "sha256": "c26c4a11e868dfe3b342facd1a48aebe8b8fe3b49239fe649509753522deb960"
+        },
+        {
+          "path": "FBX/Bush_1x1.fbx",
+          "bytes": 29900,
+          "sha256": "d29d08697de595b8db9ce1ada61c91938908cba08da22feb1128a6a58dc0fc2a"
+        },
+        {
+          "path": "FBX/Bush_2x1.fbx",
+          "bytes": 33548,
+          "sha256": "6292e0899afc6459021be89620d4edf39dff8205090e719c20d9285281598724"
+        },
+        {
+          "path": "FBX/Bush_2x2.fbx",
+          "bytes": 41580,
+          "sha256": "fab69cbf740491e6af77d375744cc23cbb721430d0bfa2e03012143a4b1c0575"
+        },
+        {
+          "path": "FBX/Bush_Large.fbx",
+          "bytes": 24588,
+          "sha256": "fa46ff76366f7282498888000df388f4b4cd80d6754d868d1ed85549eab5cd92"
+        },
+        {
+          "path": "FBX/Bush_Round.fbx",
+          "bytes": 23276,
+          "sha256": "169563a0ae83a0d6a26a35841f9a91745399b0a55b1f3c3aa38a4b309b95464d"
+        },
+        {
+          "path": "FBX/Candles_1.fbx",
+          "bytes": 35324,
+          "sha256": "7fbbb017fe3d4db8fa8c9dd9a96175b8d2841358810ac116c1038866e28252ab"
+        },
+        {
+          "path": "FBX/Candles_2.fbx",
+          "bytes": 44060,
+          "sha256": "9cae0f888a3af8dc16f07f6aa9eb57a98186cdcb2f0a6e8684d410054f18e656"
+        },
+        {
+          "path": "FBX/Cart.fbx",
+          "bytes": 50988,
+          "sha256": "04d89e1d53bb01888aac3450103d45517ee4e63b1584ffc97d7375a177a74b16"
+        },
+        {
+          "path": "FBX/Character_Animated.fbx",
+          "bytes": 4255116,
+          "sha256": "94041101b52d7cc752d6eb51f6419a0803f46ff65289ce287ba43c476ea0c5a8"
+        },
+        {
+          "path": "FBX/Chest_Gold.fbx",
+          "bytes": 423772,
+          "sha256": "74fbd0933f36002ed2395e069c885b62407d4b65bbecc0749d3e43ea3cabb52d"
+        },
+        {
+          "path": "FBX/Chest.fbx",
+          "bytes": 48348,
+          "sha256": "624e038db7b6334ed2c5e55d5726db2158c8c7185ebbde96b3455c7f1c3ae3dc"
+        },
+        {
+          "path": "FBX/Column_BridgeSupport.fbx",
+          "bytes": 38508,
+          "sha256": "fd951b16e2e9d0d13ad0b3fea92a374b7a9b89ffee8737386d17a0979e122938"
+        },
+        {
+          "path": "FBX/Column_Round_Short.fbx",
+          "bytes": 25756,
+          "sha256": "f9c66da3c80b2576163afc2beee1e6dcbfbb3d65dc9307fb1a134163b9421ad0"
+        },
+        {
+          "path": "FBX/Column_Round.fbx",
+          "bytes": 35020,
+          "sha256": "c9b3f643c5eca4b39e3490023555a053d0b490ae81a1838ed10940d1c3244d3e"
+        },
+        {
+          "path": "FBX/Column_Square.fbx",
+          "bytes": 28732,
+          "sha256": "df263445e20b73c2f5983036d55d0c6287984500be5700327b7208eed2e2dcbe"
+        },
+        {
+          "path": "FBX/Crate.fbx",
+          "bytes": 32220,
+          "sha256": "7418c22870df0c8181996712515abda96d5a0c50f2cb3ee938e69f47dec8a4b9"
+        },
+        {
+          "path": "FBX/Curve_1_Overgrown.fbx",
+          "bytes": 63004,
+          "sha256": "0800b0f311c484c0d9d88d2de64367e391ef2e807ccdfcce0b68714af0624aa5"
+        },
+        {
+          "path": "FBX/Curve_1.fbx",
+          "bytes": 58364,
+          "sha256": "b71fac13f0efb2982f8ce92989e3558c4d0ef3420e55ecffb3d63f28cff09f23"
+        },
+        {
+          "path": "FBX/Curve_2_Overgrown.fbx",
+          "bytes": 62796,
+          "sha256": "cd485ae515393468257c0b0d5fd8945b1eb5d6386d383f01ed19451c6afae594"
+        },
+        {
+          "path": "FBX/Curve_2.fbx",
+          "bytes": 58284,
+          "sha256": "abd6246b9b84a9da85785633b9766282785056165fa7c97f8ae81de6525e8b89"
+        },
+        {
+          "path": "FBX/DeadTree_1.fbx",
+          "bytes": 29468,
+          "sha256": "ee1875d8cf56a48fa9f6608707ac18e12cdb46c7971bdaf45d6339b0c2977d2d"
+        },
+        {
+          "path": "FBX/DeadTree_2.fbx",
+          "bytes": 31308,
+          "sha256": "47b94b14259c1078e81a6993bae4a0f7c25feb20b9c62979dcec953654358d7d"
+        },
+        {
+          "path": "FBX/DeadTree_3.fbx",
+          "bytes": 59676,
+          "sha256": "9db151f24cd7c40d2af2ae3dfd5bb72ca65c6a9e4653538f9d2d6e3450d5f90f"
+        },
+        {
+          "path": "FBX/Doors_GothicArch_Covered.fbx",
+          "bytes": 52316,
+          "sha256": "3a0a8fee5227882b0a92c17eb3ebdf05c6cad45b61bb544445462019fe2afa39"
+        },
+        {
+          "path": "FBX/Doors_GothicArch.fbx",
+          "bytes": 58668,
+          "sha256": "e53eb814c1490e46e783076e1a029a48dbba2ff69aba5bb01cdfea4048190692"
+        },
+        {
+          "path": "FBX/Doors_RoundArch_Covered.fbx",
+          "bytes": 52220,
+          "sha256": "d3743f34b81bd98956a727b0bfd8e2be18a0adccacf97931073d1ec51c1aa399"
+        },
+        {
+          "path": "FBX/Doors_RoundArch.fbx",
+          "bytes": 58636,
+          "sha256": "4534d98ed94418f65b3ca1137437fc303bfd9fd604bdf3f83cf37241986c412d"
+        },
+        {
+          "path": "FBX/Flag_GothicArch.fbx",
+          "bytes": 18524,
+          "sha256": "c4f0276b818c406b2ecbeb67042e49fbbd61039ea75a3345d38cfabeb4a39183"
+        },
+        {
+          "path": "FBX/Flag_RoundArch.fbx",
+          "bytes": 18204,
+          "sha256": "98df089776d4c218f0d4df55532e0c4c9754e85c3e14e21f2a6e4b33e0f46f79"
+        },
+        {
+          "path": "FBX/Flag_Wall.fbx",
+          "bytes": 19164,
+          "sha256": "8f32ca06ae68dfebf9d07458c3a89b5fbdf9a17b6216e7df3dc1f1182021583d"
+        },
+        {
+          "path": "FBX/Flag_Wall2.fbx",
+          "bytes": 24300,
+          "sha256": "655cffbbcbd1ed8cf4b707a73cfc66eeb3cd7467e7d5116a9ce24209e004a3d6"
+        },
+        {
+          "path": "FBX/Floor_Diamond.fbx",
+          "bytes": 22892,
+          "sha256": "ff22d69fdd431c0e783afd6df7475a0932a0f6fee941884c8c04fe095a510f8a"
+        },
+        {
+          "path": "FBX/Floor_Hole_Corner.fbx",
+          "bytes": 22028,
+          "sha256": "47d542de5432b4b52946fe63ed70fe6876b9feff32bf3a11413a02573caa625c"
+        },
+        {
+          "path": "FBX/Floor_Hole_Straight.fbx",
+          "bytes": 19980,
+          "sha256": "da40d6bbe7a8db38958d99aebe7122379e618348ec6c9d6b1be2a8caf04fdb39"
+        },
+        {
+          "path": "FBX/Floor_SquareLarge.fbx",
+          "bytes": 16892,
+          "sha256": "8f4ae42df3f5990127b1c0b27886deebb411b747ee09c856e88cbcb86bd8cceb"
+        },
+        {
+          "path": "FBX/Floor_Squares.fbx",
+          "bytes": 23724,
+          "sha256": "6aa3d8ebae6dccf5ede7b213eebbfe629db089c336b7dafca2b2b9c9f42d1d62"
+        },
+        {
+          "path": "FBX/Floor_Standard_Half.fbx",
+          "bytes": 31164,
+          "sha256": "2ebd309c037122fdacbbc8925b56a699ed328afa3d1734e30ecdb160bf410e42"
+        },
+        {
+          "path": "FBX/Floor_Standard.fbx",
+          "bytes": 35756,
+          "sha256": "5114ce65e16d4f404cc31294dbae8c1874e7cfefab6bec46ca790f7eba767f36"
+        },
+        {
+          "path": "Textures/Bark_Texture.jpg",
+          "bytes": 240999,
+          "sha256": "d6fdb3cbf6df624bfe8e5d45fe7b5b1a05ec6d7b1fdb0fa4cc4774b4119bf017"
+        },
+        {
+          "path": "Textures/Leaf_Texture.png",
+          "bytes": 118749,
+          "sha256": "34649aec779adde617568fc89e6ed24277d2bc5b254f592cdf26627f29fe63e0"
+        },
+        {
+          "path": "How-To-Use.txt",
+          "bytes": 979,
+          "sha256": "6cf40f0e1ab1f6281eb64b16d9c0ffbbc3984cf381d1484a78b46311a72ef7a3"
+        },
+        {
+          "path": "License.txt",
+          "bytes": 364,
+          "sha256": "83d8959f9fc56353ed571fbe2dc52e4bcd64508e2399501cd45ac2ce3df0bf8c"
+        },
+        {
+          "path": "Preview.jpg",
+          "bytes": 401831,
+          "sha256": "6bdbbf4d15c6420c6c1ede44fa912d4ba6b01de38e35c33d0dfc37009e179419"
+        }
+      ],
+      "accepted_files": 55,
+      "skipped_existing": 0,
+      "failed_files": 0
+    },
+    {
+      "pack": "Ultimate Modular Men Pack",
+      "page_title": "Quaternius \u2022 Ultimate Modular Men Pack",
+      "source_url": "https://quaternius.com/packs/ultimatemodularcharacters.html",
+      "drive_folder": "1USAAquX2JJWuA2m6zol0KUkFe3UkZ8zX",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "date_checked": "2026-09-05",
+      "dest": "ArtSource/Models/Quaternius_UltimateModularMen",
+      "planned_files": 13,
+      "status": "LICENSE_VERIFIED",
+      "files": [
+        {
+          "path": "Individual Characters/glTF/Adventurer.gltf",
+          "bytes": 3671456,
+          "sha256": "21f7a61afb6bd6cef6961490c367594e3c2fc01ec1f041662131172ce763063e"
+        },
+        {
+          "path": "Individual Characters/glTF/Beach.gltf",
+          "bytes": 3166143,
+          "sha256": "76e001ea131fd76a1bd938a7862606cb8037f7049b632783580b9bf4da2371a8"
+        },
+        {
+          "path": "Individual Characters/glTF/Casual_2.gltf",
+          "bytes": 3058092,
+          "sha256": "55c654d09a2a5ff6e3bd6158d4a1b462f181cd6f1e12a0f5e9d959f9c3abc438"
+        },
+        {
+          "path": "Individual Characters/glTF/Casual_Hoodie.gltf",
+          "bytes": 3104001,
+          "sha256": "dd74886c26998a0fa888b4ce557a0932d7d97b0265dd4c763154d081b7a6cb98"
+        },
+        {
+          "path": "Individual Characters/glTF/Farmer.gltf",
+          "bytes": 2998119,
+          "sha256": "46d3e85fa8d848ee479ab8e4672c16724ee4ea51f3af5733705a153937f93555"
+        },
+        {
+          "path": "Individual Characters/glTF/King.gltf",
+          "bytes": 3790158,
+          "sha256": "659c7d84dcea8c6331698c3430484861944c83e629389425664b782d4aecd17c"
+        },
+        {
+          "path": "Individual Characters/glTF/Punk.gltf",
+          "bytes": 3003321,
+          "sha256": "f9224072f5e6cbb207eca250faa7f1868614a1a984074fe79c7b2862df4feb42"
+        },
+        {
+          "path": "Individual Characters/glTF/Spacesuit.gltf",
+          "bytes": 3715406,
+          "sha256": "33e0e0fbc6140ffc936a099fd84a274be406115c4b32aa0a697641710b67392a"
+        },
+        {
+          "path": "Individual Characters/glTF/Suit.gltf",
+          "bytes": 3315342,
+          "sha256": "6c89fbb31b96c1a63ad94e3dee0942bd7b34bc789a5d39fd6a6a1738a9214fb3"
+        },
+        {
+          "path": "Individual Characters/glTF/Swat.gltf",
+          "bytes": 3368868,
+          "sha256": "622b3f36fcac90539ef8f7121ec1f11b5e1ae603a085019b3fa96eba20dddfd3"
+        },
+        {
+          "path": "Individual Characters/glTF/Worker.gltf",
+          "bytes": 2967023,
+          "sha256": "e49f8ec0f8a7de72dd26b1c01e6413c9a87a9116eeee21f9364ccd36bc286335"
+        },
+        {
+          "path": "How To Use.txt",
+          "bytes": 1224,
+          "sha256": "9b684add13cc5aa20e7671bd1f47202d762bae1839c00a247fcdd57e29a37439"
+        },
+        {
+          "path": "License.txt",
+          "bytes": 372,
+          "sha256": "e8dbf915a2b82229913e301a0787696611241bdefec4832bc084f54161db1efe"
+        }
+      ],
+      "accepted_files": 13,
+      "skipped_existing": 0,
+      "failed_files": 0
+    }
+  ],
+  "stats": {
+    "files_downloaded": 233,
+    "bytes_downloaded": 76170213
+  }
+}

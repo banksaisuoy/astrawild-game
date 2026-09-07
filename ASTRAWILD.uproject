@@ -17,11 +17,7 @@
     },
     {
       "Name": "GameplayAbilities",
-      "Enabled": true
-    },
-    {
-      "Name": "StateTree",
-      "Enabled": true
+      "Enabled": false
     },
     {
       "Name": "ProceduralMeshComponent",

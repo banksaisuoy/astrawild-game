@@ -1,7 +1,10 @@
 #include "AstrawildEchoAIController.h"
 
+#include "AstrawildAbilityLibrary.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDifficultySubsystem.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEcosystemSubsystem.h"
 #include "AstrawildLog.h"
@@ -9,6 +12,7 @@
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildWorkSiteActor.h"
 #include "BehaviorTree/BlackboardData.h"
+#include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -38,6 +42,9 @@ AAstrawildEchoAIController::AAstrawildEchoAIController()
         Perception->ConfigureSense(*SightConfig);
         Perception->SetDominantSense(SightConfig->GetSenseImplementation());
         Perception->OnTargetPerceptionUpdated.AddDynamic(this, &AAstrawildEchoAIController::HandlePerception);
+        // Final-audit M-8: forgotten stimuli previously had NO handler — aggro
+        // latched through walls/line-of-sight loss until the 4km combat rescan.
+        Perception->OnTargetPerceptionForgotten.AddDynamic(this, &AAstrawildEchoAIController::HandlePerceptionForgotten);
     }
 }
 
@@ -66,6 +73,19 @@ void AAstrawildEchoAIController::OnPossess(APawn* InPawn)
         }
     }
 
+    // Final-audit M-8: the damage feed — wild echoes fight back / flee on hits.
+    Echo->OnDamaged.AddDynamic(this, &AAstrawildEchoAIController::HandleDamaged);
+
+    // GDP-2: flying species move in true 3D — flying movement mode ignores the
+    // navmesh plane and lets the steering helpers below drive it directly.
+    if (Echo->GetLocomotionClass() == EAstrawildLocomotionClass::Flying)
+    {
+        if (UCharacterMovementComponent* Movement = Echo->GetCharacterMovement())
+        {
+            Movement->SetMovementMode(MOVE_Flying);
+        }
+    }
+
     GetWorldTimerManager().SetTimer(ThinkTimerHandle, FTimerDelegate::CreateUObject(this, &AAstrawildEchoAIController::Think), ThinkIntervalSeconds, false);
 }
 
@@ -74,6 +94,11 @@ void AAstrawildEchoAIController::OnUnPossess()
     if (UWorld* World = GetWorld())
     {
         World->GetTimerManager().ClearAllTimersForObject(this);
+    }
+    // Final-audit M-8: unhook the damage feed with the perception feed.
+    if (AAstrawildEchoCharacter* Echo = EchoPawn.Get())
+    {
+        Echo->OnDamaged.RemoveAll(this);
     }
     EchoPawn = nullptr;
     Super::OnUnPossess();
@@ -127,6 +152,47 @@ void AAstrawildEchoAIController::HandlePerception(AActor* Actor, FAIStimulus Sti
         {
             TargetActor = Actor;
             TransitionTo(EAstrawildEchoAIState::Investigate);
+        }
+    }
+}
+
+void AAstrawildEchoAIController::HandlePerceptionForgotten(AActor* Actor)
+{
+    // Final-audit M-8: the stimulus expired (out of LoseSightRadius / LOS lost).
+    // Drop the threat latch and the target when it points at the forgotten actor —
+    // the next Think re-acquires only what is actually perceivable.
+    if (TargetActor.Get() == Actor)
+    {
+        TargetActor = nullptr;
+        bPerceivedThreat = false;
+    }
+}
+
+void AAstrawildEchoAIController::HandleDamaged(AAstrawildEchoCharacter* Echo, float NewHealth)
+{
+    // Final-audit M-8: OnDamaged → aggro. The EchoCharacter comment claimed this
+    // wiring existed; it never did (Aggressive/Brave "fight back" was dead).
+    // Attacker = the damage instigator when the player path sets one; otherwise
+    // the nearest player within combat range (the de-facto attacker, single-player-first).
+    if (!Echo || Echo->bCaptured || Echo->IsDefeated())
+    {
+        return; // Party echoes do not aggro their owner's attacks.
+    }
+    AActor* Attacker = Echo->GetInstigator();
+    if (!Attacker || !Attacker->IsA<AAstrawildPlayerCharacter>())
+    {
+        Attacker = FindNearestPlayer(3000.0f);
+    }
+    if (Attacker)
+    {
+        bPerceivedThreat = true;
+        TargetActor = Attacker;
+        // Aggressive/Brave personalities turn immediately; others let the
+        // next Think decide (flee for skittish species).
+        if (Echo->Personality == EAstrawildPersonality::Aggressive ||
+            Echo->Personality == EAstrawildPersonality::Brave)
+        {
+            TransitionTo(EAstrawildEchoAIState::Combat);
         }
     }
 }
@@ -340,7 +406,7 @@ void AAstrawildEchoAIController::ExecuteExplore()
         FMath::FRandRange(-ExploreRadius, ExploreRadius),
         FMath::FRandRange(-ExploreRadius, ExploreRadius),
         0.0f);
-    MoveToLocation(WanderPoint, 100.0f, true, true, true);
+    MoveTowardPoint(WanderPoint, 100.0f);
 }
 
 void AAstrawildEchoAIController::ExecuteFlee()
@@ -355,13 +421,13 @@ void AAstrawildEchoAIController::ExecuteFlee()
     if (!Threat)
     {
         // No threat nearby — recover toward home.
-        MoveToLocation(HomeLocation, 120.0f);
+        MoveTowardPoint(HomeLocation, 120.0f);
         return;
     }
 
     const FVector AwayDirection = (Echo->GetActorLocation() - Threat->GetActorLocation()).GetSafeNormal2D();
     const FVector FleePoint = Echo->GetActorLocation() + AwayDirection * 1200.0f;
-    MoveToLocation(FleePoint, 100.0f, true, true, true);
+    MoveTowardPoint(FleePoint, 100.0f);
 }
 
 void AAstrawildEchoAIController::ExecuteCombat(const float DeltaThinkSeconds)
@@ -390,15 +456,68 @@ void AAstrawildEchoAIController::ExecuteCombat(const float DeltaThinkSeconds)
     }
 
     const float Distance = FVector::Dist(Echo->GetActorLocation(), Target->GetActorLocation());
+
+    // GDP-1: every creature fights like itself — abilities resolve before melee,
+    // gated by level/cooldown/range inside the ability engine. Bosses keep their
+    // own phase patterns (their controller logic stays untouched).
+    if (TryCastCombatAbility(Echo, Target))
+    {
+        return; // The cast consumed this beat; melee resumes next think.
+    }
+
     if (Distance > AttackRange)
     {
-        MoveToActor(Target, AttackRange * 0.8f, true, true, true);
+        MoveTowardTarget(Target, AttackRange * 0.8f);
     }
     else
     {
         StopMovement();
         TryAttackTarget(Target, DeltaThinkSeconds);
     }
+}
+
+bool AAstrawildEchoAIController::TryCastCombatAbility(AAstrawildEchoCharacter* Echo, AActor* Target)
+{
+    if (!Echo || !IsValid(Echo) || !Echo->EchoDefinition.IsValid())
+    {
+        return false;
+    }
+
+    // Bosses run their own choreography — no ability spam on top of phases.
+    if (Echo->IsA<AAstrawildEchoBossCharacter>())
+    {
+        return false;
+    }
+
+    UWorld* World = GetWorld();
+    const float Distance = Target ? FVector::Dist(Echo->GetActorLocation(), Target->GetActorLocation()) : 0.0f;
+
+    // Tactical intent: heal when the pack is hurting, shield when about to die.
+    const float HealthFraction = Echo->GetHealthFraction();
+    bool bWantsHeal = HealthFraction < 0.35f;
+    if (!bWantsHeal && Echo->bCaptured && Echo->OwnerPlayerId != NAME_None && World)
+    {
+        // A captured medic heals when its owner's other echoes are low.
+        for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+        {
+            const AAstrawildEchoCharacter* Party = *It;
+            if (Party && Party != Echo && Party->bCaptured && !Party->IsDefeated() &&
+                Party->OwnerPlayerId == Echo->OwnerPlayerId && Party->GetHealthFraction() < 0.4f)
+            {
+                bWantsHeal = true;
+                break;
+            }
+        }
+    }
+    const bool bWantsShield = HealthFraction < 0.3f;
+
+    const FName AbilityId = Echo->PickCombatAbility(Distance, bWantsHeal, bWantsShield);
+    if (AbilityId == NAME_None)
+    {
+        return false;
+    }
+
+    return Echo->ExecuteAbility(AbilityId, Target);
 }
 
 void AAstrawildEchoAIController::ExecuteFollow()
@@ -414,6 +533,27 @@ void AAstrawildEchoAIController::ExecuteFollow()
     if (Echo->bCaptured)
     {
         Subject = FindNearestPlayer(100000.0f);
+        // Final-audit M-7: stranded party recovery. Beyond the 1km scan the echo
+        // used to StopMovement() FOREVER (fast skiff travel / failed pathing / flee
+        // chains left it permanently behind). No subject + captured + far from any
+        // player → teleport home beside the owner (the same ring the roster spawn
+        // uses). A recall, not a crawl.
+        if (!Subject)
+        {
+            AActor* AnyPlayer = FindNearestPlayer(10000000.0f);
+            if (AnyPlayer)
+            {
+                const FVector Ring = AnyPlayer->GetActorLocation() + AnyPlayer->GetActorForwardVector() * 320.0f + FVector(0.0f, 0.0f, 120.0f);
+                Echo->SetActorLocation(Ring, false, nullptr, ETeleportType::TeleportPhysics);
+                Subject = AnyPlayer;
+                UE_LOG(LogAstrawildAI, Log, TEXT("Party echo %s recalled to its owner (was stranded)."), *Echo->GetName());
+            }
+            else
+            {
+                StopMovement();
+                return;
+            }
+        }
     }
     else if (TargetActor.IsValid())
     {
@@ -435,7 +575,7 @@ void AAstrawildEchoAIController::ExecuteFollow()
     const float Distance = FVector::Dist(Echo->GetActorLocation(), Subject->GetActorLocation());
     if (Distance > FollowDistance * 1.5f)
     {
-        MoveToActor(Subject, FollowDistance, true, true, true);
+        MoveTowardTarget(Subject, FollowDistance);
     }
     else if (Distance < FollowDistance * 0.5f && GetMoveStatus() != EPathFollowingStatus::Idle)
     {
@@ -458,25 +598,53 @@ void AAstrawildEchoAIController::ExecuteProtect()
         return;
     }
 
+    // Final-audit F-12: the hostile scan used GetAllActorsOfClass every think
+    // (0.25s per defending echo — 3 echoes = 12 full-world scans/second). The list
+    // is now cached for one second around the protected player.
+    const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    const bool bCacheValid = (Now - HostilesCacheTime) < 1.0
+        && HostilesCacheAnchor.Get() == NearestPlayer
+        && CachedNearbyHostiles.Num() >= 0;
+    if (!bCacheValid)
+    {
+        CachedNearbyHostiles.Reset();
+        const double CacheTimeBefore = Now;
+        if (UWorld* World = GetWorld())
+        {
+            TArray<AActor*> Echoes;
+            UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+            for (AActor* Actor : Echoes)
+            {
+                AAstrawildEchoCharacter* Other = Cast<AAstrawildEchoCharacter>(Actor);
+                if (!Other || Other == Echo || !IsValid(Other->EchoDefinition) || !Other->EchoDefinition->bHostileToPlayers)
+                {
+                    continue;
+                }
+                const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
+                if (Distance < 800.0f)
+                {
+                    CachedNearbyHostiles.Add(Other);
+                }
+            }
+        }
+        HostilesCacheTime = CacheTimeBefore;
+        HostilesCacheAnchor = NearestPlayer;
+    }
+
     AAstrawildEchoCharacter* NearestHostile = nullptr;
     float BestDistance = 800.0f;
-    if (UWorld* World = GetWorld())
+    for (const TWeakObjectPtr<AAstrawildEchoCharacter>& Weak : CachedNearbyHostiles)
     {
-        TArray<AActor*> Echoes;
-        UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
-        for (AActor* Actor : Echoes)
+        AAstrawildEchoCharacter* Other = Weak.Get();
+        if (!Other)
         {
-            AAstrawildEchoCharacter* Other = Cast<AAstrawildEchoCharacter>(Actor);
-            if (!Other || Other == Echo || !IsValid(Other->EchoDefinition) || !Other->EchoDefinition->bHostileToPlayers)
-            {
-                continue;
-            }
-            const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
-            if (Distance < BestDistance)
-            {
-                BestDistance = Distance;
-                NearestHostile = Other;
-            }
+            continue;
+        }
+        const float Distance = FVector::Dist(NearestPlayer->GetActorLocation(), Other->GetActorLocation());
+        if (Distance < BestDistance)
+        {
+            BestDistance = Distance;
+            NearestHostile = Other;
         }
     }
 
@@ -485,7 +653,7 @@ void AAstrawildEchoAIController::ExecuteProtect()
         const float Distance = FVector::Dist(Echo->GetActorLocation(), NearestHostile->GetActorLocation());
         if (Distance > AttackRange)
         {
-            MoveToActor(NearestHostile, AttackRange * 0.8f, true, true, true);
+            MoveTowardTarget(NearestHostile, AttackRange * 0.8f);
         }
         else
         {
@@ -498,7 +666,7 @@ void AAstrawildEchoAIController::ExecuteProtect()
         const float Distance = FVector::Dist(Echo->GetActorLocation(), NearestPlayer->GetActorLocation());
         if (Distance > FollowDistance)
         {
-            MoveToActor(NearestPlayer, FollowDistance * 0.8f, true, true, true);
+            MoveTowardTarget(NearestPlayer, FollowDistance * 0.8f);
         }
     }
 }
@@ -520,7 +688,7 @@ void AAstrawildEchoAIController::ExecuteWork()
     const float Distance = FVector::Dist(Echo->GetActorLocation(), Site->GetActorLocation());
     if (Distance > Site->WorkRange)
     {
-        MoveToActor(Site, Site->WorkRange * 0.8f, true, true, true);
+        MoveTowardTarget(Site, Site->WorkRange * 0.8f);
     }
     else
     {
@@ -572,7 +740,7 @@ void AAstrawildEchoAIController::ExecuteSocialize()
         const float Distance = FVector::Dist(Echo->GetActorLocation(), Anchor->GetActorLocation());
         if (Distance > 350.0f)
         {
-            MoveToActor(Anchor, 300.0f, true, true, true);
+            MoveTowardTarget(Anchor, 300.0f);
         }
         else
         {
@@ -602,7 +770,17 @@ bool AAstrawildEchoAIController::TryAttackTarget(AActor* Target, const float Del
 
     // Element from species definition.
     const EAstrawildElementType Element = IsValid(Echo->EchoDefinition) ? Echo->EchoDefinition->Element : EAstrawildElementType::None;
-    const float Damage = Echo->GetAttackPower() * AttackDamageMultiplier;
+    float Damage = Echo->GetAttackPower() * AttackDamageMultiplier;
+
+    // SCP Phase 3: DDA scales hostile pressure (x0.85 struggling, x1.15
+    // thriving) — one multiplication on the single outgoing damage path.
+    if (const UWorld* DDAWorld = Echo->GetWorld())
+    {
+        if (const UAstrawildDifficultySubsystem* DDA = DDAWorld->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            Damage *= DDA->GetHostileStrengthScale();
+        }
+    }
 
     if (AAstrawildEchoCharacter* TargetEcho = Cast<AAstrawildEchoCharacter>(Target))
     {
@@ -675,4 +853,72 @@ AActor* AAstrawildEchoAIController::FindNearestPlayer(const float MaxDistance, c
         }
     }
     return Best;
+}
+
+// ===========================================================================
+// GDP-2 — locomotion-aware movement helpers
+// ===========================================================================
+
+bool AAstrawildEchoAIController::IsFlyingMover() const
+{
+    const AAstrawildEchoCharacter* Echo = EchoPawn.Get();
+    return Echo && Echo->GetLocomotionClass() == EAstrawildLocomotionClass::Flying;
+}
+
+void AAstrawildEchoAIController::SteerFlyingToward(const FVector& Point, const float HoverHeight)
+{
+    AAstrawildEchoCharacter* Echo = EchoPawn.Get();
+    if (!Echo)
+    {
+        return;
+    }
+
+    // Desired 3D direction: horizontal toward the point, vertical eased toward
+    // the point's altitude + hover offset (a gentle bob keeps flight readable).
+    const UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    const double Now = FMath::Fmod(World->GetTimeSeconds(), 10.0);
+    const float Bob = FMath::Sin(Now * 1.7f) * 35.0f;
+    FVector Direction = Point - Echo->GetActorLocation();
+    Direction.Z = (Point.Z + HoverHeight + Bob) - Echo->GetActorLocation().Z;
+    Direction = Direction.GetSafeNormal();
+
+    Echo->AddMovementInput(Direction, 1.0f);
+
+    // Face the travel direction so silhouettes read naturally.
+    if (FVector2D XY(Direction.X, Direction.Y).SizeSquared() > 0.01f)
+    {
+        Echo->SetActorRotation(FRotator(0.0f, Direction.Rotation().Yaw, 0.0f));
+    }
+}
+
+void AAstrawildEchoAIController::MoveTowardPoint(const FVector& Point, const float AcceptanceRadius)
+{
+    if (IsFlyingMover())
+    {
+        SteerFlyingToward(Point);
+    }
+    else
+    {
+        MoveToLocation(Point, AcceptanceRadius, true, true, true);
+    }
+}
+
+void AAstrawildEchoAIController::MoveTowardTarget(AActor* Target, const float AcceptanceRadius)
+{
+    if (!IsValid(Target))
+    {
+        return;
+    }
+    if (IsFlyingMover())
+    {
+        SteerFlyingToward(Target->GetActorLocation());
+    }
+    else
+    {
+        MoveToActor(Target, AcceptanceRadius, true, true, true);
+    }
 }

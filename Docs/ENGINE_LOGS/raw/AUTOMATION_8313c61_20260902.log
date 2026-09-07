@@ -1,0 +1,387 @@
+﻿=== ASTRAWILD AUTOMATION TEST RUN ===
+Command: E:\Epic Games\UnrealEngine\Engine\Binaries\Win64\UnrealEditor-Cmd.exe E:\AstrawildGame\ASTRAWILD.uproject -ExecCmds="Automation RunTests Astrawild; Quit" -nullrhi -unattended -nopause -testexit="Automation Test Queue Empty" -stdout -NoUBA
+Start Time: 2026-09-02 09:01:17.650
+=====================================
+LogInit: Display: Running engine for game: ASTRAWILD
+LogCore: Display: Requested channels: 'cpu,gpu,frame,log,bookmark,screenshot,region'
+LogTrace: Display: Control listening on port 1985
+LogCsvProfiler: Display: Metadata set : platform="Windows"
+LogCsvProfiler: Display: Metadata set : config="Development"
+LogCsvProfiler: Display: Metadata set : buildversion="UE5-CL-0"
+LogCsvProfiler: Display: Metadata set : engineversion="5.8.2-0+UE5"
+LogCsvProfiler: Display: Metadata set : enginereleaseversion="5.8.2"
+LogCsvProfiler: Display: Metadata set : os="Windows 11 (25H2) [10.0.26200.9168] "
+LogCsvProfiler: Display: Metadata set : cpu="GenuineIntel|Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz"
+LogCsvProfiler: Display: Metadata set : pgoenabled="0"
+LogCsvProfiler: Display: Metadata set : pgoprofilingenabled="0"
+LogCsvProfiler: Display: Metadata set : ltoenabled="0"
+LogCsvProfiler: Display: Metadata set : asan="0"
+LogCsvProfiler: Display: Metadata set : mergedmodules="0"
+LogCsvProfiler: Display: Metadata set : compacttset="0"
+LogCsvProfiler: Display: Metadata set : commandline="" E:\AstrawildGame\ASTRAWILD.uproject -ExecCmds="Automation RunTests Astrawild; Quit" -nullrhi -unattended -nopause -testexit="Automation Test Queue Empty" -stdout -NoUBA""
+LogCsvProfiler: Display: Metadata set : loginid="c241a9441d8545dc8318a5595ebf4ead"
+LogCsvProfiler: Display: Metadata set : llm="0"
+LogCsvProfiler: Display: Metadata set : zenstreaming="0"
+LogCsvProfiler: Display: Metadata set : systemresolution.resx="1280"
+LogCsvProfiler: Display: Metadata set : systemresolution.resy="720"
+LogConfig: Display: Loading VulkanPC ini files took 0.10 seconds
+LogAudio: Display: Pre-Initializing Audio Device Manager...
+LogConfig: Display: Loading Unix ini files took 0.18 seconds
+LogConfig: Display: Loading Linux ini files took 0.20 seconds
+LogConfig: Display: Loading Mac ini files took 0.22 seconds
+LogConfig: Display: Loading LinuxArm64 ini files took 0.22 seconds
+LogConfig: Display: Loading Android ini files took 0.23 seconds
+LogConfig: Display: Loading IOS ini files took 0.23 seconds
+LogConfig: Display: Loading TVOS ini files took 0.23 seconds
+LogAudio: Display: AudioInfo: 'OPUS' Registered
+Using bundled DotNet SDK version: 10.0 win-x64
+LogConfig: Display: Loading Windows ini files took 0.14 seconds
+LogConfig: Display: Loading VisionOS ini files took 0.13 seconds
+LogAudioDebug: Display: Lib vorbis DLL was dynamically loaded.
+LogAudio: Display: AudioInfo: 'OGG' Registered
+LogAudio: Display: AudioInfo: 'ADPCM' Registered
+LogAudio: Display: AudioInfo: 'PCM' Registered
+LogAudio: Display: AudioInfo: 'BINKA' Registered
+LogAudio: Display: AudioInfo: 'RADA' Registered
+LogAudio: Display: Audio Device Manager Pre-Initialized
+LogAssetRegistry: Display: PlatformFileJournal is not available on volume 'E:' of project directory 'E:/AstrawildGame/', so AssetDiscovery cache will not be read or written. Unavailability reason:
+	NTFS Journal is not active for volume 'E:'. Launch cmd.exe as admin and run command `fsutil usn createJournal E: m=<SizeInBytes>`. Recommended <SizeInBytes> is 0x40000000 (1GB).
+LogAssetRegistry: Display: FindShardedCacheFiles: 1 via .ref, 0 via migration fallback, 1 total
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PreLoad): 1 .ref files found, 1 referenced binaries
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 1 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 0 orphans deleted, 0 orphans locked (kept)
+LogAssetRegistry: Display: LoadCacheFiles: loading 1 cache files, memory-mapping=enabled
+LogAssetRegistry: Display: Asset registry cache read as 123.8 MiB from ../../../../../AstrawildGame/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_B3EFBFE54DB5C8105D56979A5AA1948D.bin (memory-mapped=yes)
+RenderDocPlugin: Display: RenderDoc plugin will not be loaded. Use '-AttachRenderDoc' on the cmd line or enable 'renderdoc.AutoAttach' in the plugin settings.
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Log is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.CSV is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Horde is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Log is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.CSV is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Horde is disabled for this application
+LogAsyncCompilation: Display: MemorySharingInfo: UsedMemory=329MiB, MaxMemoryAvailable=61260MiB
+LogStreaming: Display: AsyncLoading2 - Created: Async Loading Thread: false, Async Post Load: false, Multithreaded: false
+[2026.09.02-02.01.37:255][  0]LogCsvProfiler: Display: Metadata set : systemresolution.resx="1536"
+[2026.09.02-02.01.37:255][  0]LogCsvProfiler: Display: Metadata set : systemresolution.resy="864"
+[2026.09.02-02.01.37:259][  0]LogHAL: Display: Platform has ~ 32 GB [34171174912 / 34359738368 / 32], which maps to Largest [LargestMinGB=32, LargerMinGB=12, DefaultMinGB=8, SmallerMinGB=6, SmallestMinGB=0)
+[2026.09.02-02.01.37:314][  0]LogCsvProfiler: Display: Metadata set : extradevelopmentmemorymb="0"
+[2026.09.02-02.01.37:315][  0]LogObj: Display: Attempting to load config data for Default__DownlinkBandwidthManagerConfig before the Class has been constructed/registered/linked (likely during module loading or early startup). This will result in the load silently failing and should be fixed.
+[2026.09.02-02.01.38:671][  0]LogWindowsTouchpad: Display: CacheForceMaxTouchpadSensitivityMode SetMaxTouchpadSensitivity
+[2026.09.02-02.01.38:676][  0]LogObj: Display: Attempting to load config data for Default__SlateThemeManager before the Class has been constructed/registered/linked (likely during module loading or early startup). This will result in the load silently failing and should be fixed.
+UnrealBuildTool is up-to-date
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" -Mode=ValidatePlatforms -OutputSDKs  -AllPlatforms  -project="E:/AstrawildGame/ASTRAWILD.uproject" -log="E:/AstrawildGame/Saved/Logs/AutoSDKInfo.txt" -verbose -timestamps
+Log file: E:\AstrawildGame\Saved\Logs\AutoSDKInfo.txt
+##PlatformValidate: Win64 VALID 10.0.22621.0
+##PlatformValidate: Mac VALID 26.1.1
+##PlatformValidate: IOS VALID 26.1.1
+##PlatformValidate: Android INVALID r27c
+##PlatformValidate: Linux INVALID v26_clang-20.1.8-rockylinux8
+##PlatformValidate: LinuxArm64 INVALID v26_clang-20.1.8-rockylinux8
+##PlatformValidate: TVOS VALID 26.1.1
+##PlatformValidate: VisionOS INVALID <UNKNOWN>
+Unable to find required SDK version 'MainVersion' for platform VisionOS. Check your SDK.json files
+Trace written to file C:\Users\saisu\AppData\Local\UnrealBuildTool\Trace.uba with size 319b
+[2026.09.02-02.01.45:525][  0]LogCsvProfiler: Display: Metadata set : verbatimrhiname="Null"
+[2026.09.02-02.01.45:525][  0]LogCsvProfiler: Display: Metadata set : rhiname="Null"
+[2026.09.02-02.01.45:525][  0]LogCsvProfiler: Display: Metadata set : rhifeaturelevel="SM6"
+[2026.09.02-02.01.45:525][  0]LogCsvProfiler: Display: Metadata set : shaderplatform="PCD3D_SM6"
+[2026.09.02-02.01.45:525][  0]LogCsvProfiler: Display: Metadata set : gpu=""
+[2026.09.02-02.01.45:525][  0]LogCsvProfiler: Display: Metadata set : gpudriver=""
+[2026.09.02-02.01.45:798][  0]LogTextureFormatASTC: Display: ASTCEnc version 5.0.1 library loaded
+[2026.09.02-02.01.45:798][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatASTC
+[2026.09.02-02.01.45:798][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatETC2
+[2026.09.02-02.01.45:798][  0]LogTextureFormatOodle: Display: Oodle Texture TFO init; latest sdk version = 2.9.16
+[2026.09.02-02.01.45:798][  0]LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.16.dll
+[2026.09.02-02.01.45:825][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatOodle
+[2026.09.02-02.01.45:825][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatUncompressed
+[2026.09.02-02.01.45:961][  0]LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Android'
+[2026.09.02-02.01.46:091][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'IOS'
+[2026.09.02-02.01.46:091][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'IOSClient'
+[2026.09.02-02.01.46:181][  0]LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Linux'
+[2026.09.02-02.01.46:278][  0]LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'LinuxArm64'
+[2026.09.02-02.01.46:434][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'Mac'
+[2026.09.02-02.01.46:434][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'MacEditor'
+[2026.09.02-02.01.46:434][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'MacServer'
+[2026.09.02-02.01.46:434][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'MacClient'
+[2026.09.02-02.01.46:568][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'TVOS'
+[2026.09.02-02.01.46:568][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'TVOSClient'
+[2026.09.02-02.01.46:714][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'Windows'
+[2026.09.02-02.01.46:714][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsEditor'
+[2026.09.02-02.01.46:714][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsServer'
+[2026.09.02-02.01.46:714][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsClient'
+[2026.09.02-02.01.46:714][  0]LogTargetPlatformManager: Display: Building Assets For WindowsEditor
+[2026.09.02-02.01.47:401][  0]LogZenServiceInstance: Display: Launching zen utility 'E:/Epic Games/UnrealEngine/Engine/Binaries/Win64/zen.exe service status'.
+[2026.09.02-02.01.48:367][  0]LogZenServiceInstance: Display: Writing plugin version info to 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugin_versions.json'
+[2026.09.02-02.01.48:377][  0]LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/saisu/AppData/Local/UnrealEngine/5.8/Saved/Zen/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+[2026.09.02-02.01.48:379][  0]LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+[2026.09.02-02.01.48:379][  0]LogZenServiceInstance: Display: Installed service at 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe' is up to date
+[2026.09.02-02.01.48:390][  0]LogZenServiceInstance: Display: Launching executable 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe', working dir 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install', data dir 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Data', args '--port 8558 --data-dir C:\Users\saisu\AppData\Local\UnrealEngine\Common\Zen\Data --http asio --gc-cache-duration-seconds 1209600 --gc-interval-seconds 21600 --gc-low-diskspace-threshold 2147483648 --cache-bucket-limit-overwrites --quiet --restrict-content-types --allow-external-oidctoken-exe=false --plugins-config "C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugins_v1.json" --security-config-path "C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/security-config.json" --owner-pid 50520  --child-id Zen_50520_Startup'
+[2026.09.02-02.01.55:996][  0]LogZenServiceInstance: Display: Unreal Zen Storage Server HTTP service at http://[::1]:8558 status: OK!.
+[2026.09.02-02.01.56:000][  0]LogDerivedDataCache: Display: ZenLocal: Using ZenServer HTTP service at [::1] with namespace ue.ddc. Status: OK!.
+[2026.09.02-02.01.56:135][  0]LogDerivedDataCache: Display: C:/Users/saisu/AppData/Local/UnrealEngine/Common/DerivedDataCache: Performance: Latency=0.09ms. RandomReadSpeed=8.02MBs, RandomWriteSpeed=64.35MBs. Assigned SpeedClass 'Local'
+[2026.09.02-02.01.56:161][  0]LogUbaHorde: Display: UBA/Horde Configuration [Uba.Provider.Horde]: Not Enabled
+[2026.09.02-02.01.56:162][  0]LogShaderCompilers: Display: No distributed shader compiler controller found
+[2026.09.02-02.01.56:162][  0]LogShaderCompilers: Display: Using 9 local workers for shader compilation
+[2026.09.02-02.01.56:164][  0]LogShaderCompilers: Display: Compiling shader autogen file: ../../../../../AstrawildGame/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush
+[2026.09.02-02.01.56:179][  0]LogShaderCompilers: Display: Autogen file is unchanged, skipping write.
+[2026.09.02-02.02.16:088][  0]LogEditorDomain: Display: EditorDomain is Disabled
+[2026.09.02-02.02.16:158][  0]LogAssetRegistry: Display: AssetDataGatherer spent 0.009s loading caches from ../../../../../AstrawildGame/Intermediate/CachedAssetRegistry.
+[2026.09.02-02.02.16:851][  0]LogDeviceProfileManager: Display: Deviceprofile LinuxArm64Editor not found.
+[2026.09.02-02.02.16:851][  0]LogDeviceProfileManager: Display: Deviceprofile LinuxArm64 not found.
+[2026.09.02-02.02.17:038][  0]LogCsvProfiler: Display: Metadata set : deviceprofile="WindowsEditor"
+[2026.09.02-02.02.17:046][  0]LogStreaming: Display: FlushAsyncLoading(1): 1 QueuedPackages, 0 AsyncPackages
+[2026.09.02-02.02.17:342][  0]LogTextureEncodingSettings: Display: Texture Encode Speed: FinalIfAvailable (editor).
+[2026.09.02-02.02.17:342][  0]LogTextureEncodingSettings: Display: Oodle Texture Encode Speed settings: Fast: RDO Off Lambda=0, Effort=Normal Final: RDO Off Lambda=0, Effort=Normal
+[2026.09.02-02.02.17:342][  0]LogTextureEncodingSettings: Display: Shared linear texture encoding: Disabled
+[2026.09.02-02.02.17:811][  0]LogMeshReduction: Display: Using QuadricMeshReduction for automatic static mesh reduction
+[2026.09.02-02.02.17:811][  0]LogMeshReduction: Display: Using SkeletalMeshReduction for automatic skeletal mesh reduction
+[2026.09.02-02.02.17:811][  0]LogMeshReduction: Display: Using ProxyLODMeshReduction for automatic mesh merging
+[2026.09.02-02.02.17:811][  0]LogMeshReduction: Display: No distributed automatic mesh merging module available
+[2026.09.02-02.02.20:497][  0]LogShaderCompilers: Display: Compiling shader autogen file: ../../../../../AstrawildGame/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush
+[2026.09.02-02.02.20:517][  0]LogShaderCompilers: Display: Autogen file is unchanged, skipping write.
+[2026.09.02-02.02.20:518][  0]LogVirtualization: Display: VirtualizationSystem name found in ini file: None
+[2026.09.02-02.02.20:518][  0]LogVirtualization: Display: FNullVirtualizationSystem mounted, virtualization will be disabled
+[2026.09.02-02.02.21:889][  0]LogWorldPartition: Display: FWorldPartitionClassDescRegistry::Initialize started...
+[2026.09.02-02.02.21:894][  0]LogWorldPartition: Display: FWorldPartitionClassDescRegistry::Initialize took 4.798 ms
+[2026.09.02-02.02.28:244][  0]LogUdpMessaging: Display: Unicast socket bound to '0.0.0.0:62528'.
+[2026.09.02-02.02.28:251][  0]LogUdpMessaging: Display: Added local interface '192.168.8.186' to multicast group '230.0.0.1:6666'
+[2026.09.02-02.02.28:251][  0]LogUdpMessaging: Display: Added local interface '127.0.0.1' to multicast group '230.0.0.1:6666'
+[2026.09.02-02.02.28:255][  0]LogUdpMessaging: Display: Using asynchronous task graph for message deserialization.
+[2026.09.02-02.02.29:344][  0]LogMetaSound: Display: MetaSound Page Target Initialized to 'Default'
+[2026.09.02-02.02.29:350][  0]LogAudio: Display: Registering Engine Module Parameter Interfaces...
+[2026.09.02-02.02.38:218][  0]LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.
+[2026.09.02-02.02.38:218][  0]LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.
+[2026.09.02-02.02.43:820][  0]LogAnalytics: Display: [UEEditor.UnrealEngine.Release] AnalyticsET::StartSession ( APIServer = https://datarouter.ol.epicgames.com/datarouter/api/v1/public/data. AppVersion = 5.8.2-0+UE5 )
+[2026.09.02-02.02.43:845][  0]LogAudio: Display: Initializing Audio Device Manager...
+[2026.09.02-02.02.43:959][  0]LogAudio: Display: Loading Default Audio Settings Objects...
+[2026.09.02-02.02.43:978][  0]LogAudio: Display: No default SoundConcurrencyObject specified (or failed to load).
+[2026.09.02-02.02.43:981][  0]LogAudio: Display: Audio Device Manager Initialized
+[2026.09.02-02.02.43:981][  0]LogAudio: Display: Creating Audio Device:                 Id: 1, Scope: Shared, Realtime: True
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: bUseRenderScheduler set to true.
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: Audio Mixer Platform Settings:
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: 	Sample Rate:						  48000
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: 	Callback Buffer Frame Size Requested: 1024
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: 	Callback Buffer Frame Size To Use:	  1024
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: 	Number of buffers to queue:			  1
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: 	Max Channels (voices):				  32
+[2026.09.02-02.02.43:981][  0]LogAudioMixer: Display: 	Number of Async Source Workers:		  4
+[2026.09.02-02.02.43:981][  0]LogAudio: Display: AudioDevice MaxSources: 32
+[2026.09.02-02.02.43:981][  0]LogAudio: Display: Audio Spatialization Plugin: None (built-in).
+[2026.09.02-02.02.43:981][  0]LogAudio: Display: Audio Reverb Plugin: None (built-in).
+[2026.09.02-02.02.43:982][  0]LogAudio: Display: Audio Occlusion Plugin: None (built-in).
+[2026.09.02-02.02.44:006][  0]LogAudioEnumeration: Display: Refreshing FWindowsMMDeviceCache
+[2026.09.02-02.02.44:034][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Console', Device='Speakers (Realtek(R) Audio)'
+[2026.09.02-02.02.44:038][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Console', Device='Microphone (Realtek(R) Audio)'
+[2026.09.02-02.02.44:043][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Multimedia', Device='Speakers (Realtek(R) Audio)'
+[2026.09.02-02.02.44:046][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Multimedia', Device='Microphone (Realtek(R) Audio)'
+[2026.09.02-02.02.44:052][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Communications', Device='Speakers (Realtek(R) Audio)'
+[2026.09.02-02.02.44:055][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Communications', Device='Microphone (Realtek(R) Audio)'
+[2026.09.02-02.02.44:065][  0]LogAudioMixerWasapi: Display: FWasapiServiceWatcher started.
+[2026.09.02-02.02.44:066][  0]LogAudioMixer: Display: Initializing audio mixer using platform API: 'WASAPIMixer'
+[2026.09.02-02.02.44:066][  0]LogAudioMixerWasapi: Display: FWasapiServiceWatcher initial state: Audiosrv=RUNNING, AudioEndpointBuilder=RUNNING
+[2026.09.02-02.02.44:245][  0]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware audio mixer requested num channels: 2, Wasapi render stream hardware supports num channels: 2
+[2026.09.02-02.02.44:245][  0]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware succeeded with sample rate: 48000, buffer period: 1024
+[2026.09.02-02.02.44:245][  0]LogAudioMixer: Display: FAudioMixerWasapi initialized: SampleRate=48000 NumChannels=2 NumDirectOutChannels=0 bIsAggregateDevice=0 StreamParams.Num()=1
+[2026.09.02-02.02.44:245][  0]LogAudioMixer: Display: Using Audio Hardware Device Speakers (Realtek(R) Audio)
+[2026.09.02-02.02.44:246][  0]LogAudioMixer: Display: Initializing Sound Submixes...
+[2026.09.02-02.02.44:306][  0]LogAudioMixer: Display: Creating Master Submix 'MasterSubmixDefault'
+[2026.09.02-02.02.44:306][  0]LogAudioMixer: Display: Creating Master Submix 'MasterReverbSubmixDefault'
+[2026.09.02-02.02.44:310][  0]LogAudioMixer: Display: Output buffers initialized: Frames=1024, Channels=2, Samples=2048, InstanceID=1
+[2026.09.02-02.02.44:316][  0]LogAudioMixer: Display: Starting AudioMixerPlatformInterface::RunInternal(), InstanceID=1
+[2026.09.02-02.02.44:325][  0]LogAudio: Display: Audio Device (ID: 1) registered with world 'Untitled'.
+[2026.09.02-02.02.44:385][  0]LogCsvProfiler: Display: Metadata set : largeworldcoordinates="1"
+[2026.09.02-02.02.44:514][  0]LogSourceControl: Display: Uncontrolled Changelist persistency file loaded ../../../../../AstrawildGame/Saved/SourceControl/UncontrolledChangelists.json
+[2026.09.02-02.02.47:311][  0]LogPython: Display: No pip-enabled plugins with python dependencies found, skipping
+[2026.09.02-02.02.48:390][  0]LogCsvProfiler: Display: Metadata set : raytracing="0"
+[2026.09.02-02.02.50:557][  0]LogCore: Display: InsightsEditor module auto-connecting to local trace server...
+[2026.09.02-02.02.50:851][  0]LogInit: Display: Engine is initialized. Leaving FEngineLoop::Init()
+[2026.09.02-02.02.50:953][  0]LogAudio: Display: Audio Device unregistered from world 'Untitled'.
+[2026.09.02-02.02.51:122][  0]LogAudio: Display: Audio Device (ID: 1) registered with world 'Lvl_ThirdPerson'.
+[2026.09.02-02.02.51:463][  0]LogPlacementMode: Display: The Asset Registry is not yet fully loaded so some placeable classes might be missing.
+[2026.09.02-02.02.52:387][  0]LogSlate: Display: Synchronously lazy loading font file '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' with subface index 0 in Game thread.
+[2026.09.02-02.02.52:387][  0]LogSlate: Display: Took 0.014038 seconds to synchronously load lazily loaded font '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' (155K) on Game thread.
+[2026.09.02-02.02.52:387][  0]LogSlate: Display: Freetype font face in memory successfully created with synchronously loaded raw font file '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' subface 0 in Game thread.
+[2026.09.02-02.02.52:387][  0]LogSlate: Display: Font face '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' subface index 0 successfully added to font face map in Game thread.
+[2026.09.02-02.02.54:827][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/IKRig/Content/Python/init_unreal.py... started...
+[2026.09.02-02.02.54:961][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/IKRig/Content/Python/init_unreal.py... took 134.482 ms
+[2026.09.02-02.02.54:980][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/ControlRig/Content/Python/init_unreal.py... started...
+[2026.09.02-02.02.55:245][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/ControlRig/Content/Python/init_unreal.py... took 265.501 ms (total: 399.984 ms)
+[2026.09.02-02.02.56:007][  1]LogAssetRegistry: Display: Starting OnFilesLoaded.Broadcast
+[2026.09.02-02.02.56:044][  1]LogPlacementMode: Display: The Asset Registry is done with its initial scan, the list of placeable classes has been updated.
+[2026.09.02-02.02.56:086][  1]LogAssetRegistry: Display: Completed OnFilesLoaded.Broadcast: 0.080s
+[2026.09.02-02.02.56:185][  2]LogAutomationCommandLine: Display: Ready to start automation
+[2026.09.02-02.02.57:965][ 98]LogAssetRegistry: Display: Asset registry cache written as 123.8 MiB to ../../../../../AstrawildGame/Intermediate/CachedAssetRegistry/CachedAssetRegistry_*.ref
+[2026.09.02-02.02.57:988][ 99]LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PostWrite): 1 .ref files found, 1 referenced binaries
+[2026.09.02-02.02.57:990][ 99]LogAssetRegistry: Display:   CachedAssetRegistry_0_B3EFBFE54DB5C8105D56979A5AA1948D.bin: deleted (orphaned, unreferenced by any .ref)
+[2026.09.02-02.02.57:990][100]LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 2 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 1 orphans deleted, 0 orphans locked (kept)
+[2026.09.02-02.03.01:386][293]LogAutomationCommandLine: Display: Found 54 automation tests based on 'Astrawild'
+[2026.09.02-02.03.01:386][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Armor.SplitInsulation
+[2026.09.02-02.03.01:386][293]LogAutomationCommandLine: Display: 	ASTRAWILD.ArtPack.BindingContract
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Atmosphere.DayRamp
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Bestiary.TableIntegrity
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.BiomeDressing.DeterministicScatter
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.BiomeDressing.PointRejection
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.BiomeDressing.ZoneProfiles
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Capture.DesignRuleBounds
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Combat.MitigationMath
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Combat.StatusEffectFactory
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Craft.OutputGuard
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dialogue.ChoiceConditions
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dialogue.Consequences
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dialogue.TreeContract
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dungeon.BossAttackDamage
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dungeon.BossElementalMultiplier
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dungeon.BossPhaseThresholds
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Dungeon.BossSpecialsMath
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Echo.EvolutionGates
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Echo.PersonalityModifiers
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Echo.ProductionRosterContract
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Economy.VendorSellValue
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Equipment.ArmorMath
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Equipment.ProgressionMath
+[2026.09.02-02.03.01:387][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Equipment.SlotRouting
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Inventory.AddRemove
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.POI.DiscoveryRadiusMath
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Power.BrownoutMath
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Quest.DiscoverPOIType
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Quest.ObjectiveProgress
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Quest.ObjectiveTypes
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.ResourceNode.DefinitionContract
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Robot.SpecialistRates
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Save.ChecksumDeterminism
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Save.SchemaV3
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Save.SchemaV4
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Skiff.FlightMath
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Survival.DamageAndDeath
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Survival.InsulationBand
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Terrain.HeightDeterministic
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Terrain.SeamContinuity
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Vfx.ArcJitter
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Vfx.BeamMath
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Vfx.Palette
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Vfx.RingGeometry
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Weapon.AssetBindingContract
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Weapon.ProfileMath
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.WorkSite.ProductionChain
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.WorldEvent.EligibilityGates
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.WorldEvent.WeightedPickDeterminism
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Zones.BlendPartitionOfUnity
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Zones.LookupCorrectness
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Zones.SeaClassification
+[2026.09.02-02.03.01:388][293]LogAutomationCommandLine: Display: 	ASTRAWILD.Zones.TableIntegrity
+[2026.09.02-02.03.01:396][293]LogAutomationController: Display: Clearing ../../../../../AstrawildGame/Saved/Automation/Logs/ and ../../../../../AstrawildGame/Saved/Automation/Tmp/
+[2026.09.02-02.03.01:398][294]LogAutomationController: Display: Test Started. Name={SplitInsulation} Path={ASTRAWILD.Armor.SplitInsulation}
+[2026.09.02-02.03.01:432][296]LogAutomationController: Display: Test Completed. Result={Success} Name={SplitInsulation} Path={ASTRAWILD.Armor.SplitInsulation}
+[2026.09.02-02.03.01:433][296]LogAutomationController: Display: Test Started. Name={BindingContract} Path={ASTRAWILD.ArtPack.BindingContract}
+[2026.09.02-02.03.01:482][299]LogAutomationController: Display: Test Completed. Result={Success} Name={BindingContract} Path={ASTRAWILD.ArtPack.BindingContract}
+[2026.09.02-02.03.01:483][299]LogAutomationController: Display: Test Started. Name={DayRamp} Path={ASTRAWILD.Atmosphere.DayRamp}
+[2026.09.02-02.03.01:517][301]LogAutomationController: Display: Test Completed. Result={Success} Name={DayRamp} Path={ASTRAWILD.Atmosphere.DayRamp}
+[2026.09.02-02.03.01:517][302]LogAutomationController: Display: Test Started. Name={TableIntegrity} Path={ASTRAWILD.Bestiary.TableIntegrity}
+[2026.09.02-02.03.01:566][304]LogAutomationController: Display: Test Completed. Result={Success} Name={TableIntegrity} Path={ASTRAWILD.Bestiary.TableIntegrity}
+[2026.09.02-02.03.01:567][304]LogAutomationController: Display: Test Started. Name={DeterministicScatter} Path={ASTRAWILD.BiomeDressing.DeterministicScatter}
+[2026.09.02-02.03.01:615][307]LogAutomationController: Display: Test Completed. Result={Success} Name={DeterministicScatter} Path={ASTRAWILD.BiomeDressing.DeterministicScatter}
+[2026.09.02-02.03.01:615][308]LogAutomationController: Display: Test Started. Name={PointRejection} Path={ASTRAWILD.BiomeDressing.PointRejection}
+[2026.09.02-02.03.01:666][310]LogAutomationController: Display: Test Completed. Result={Success} Name={PointRejection} Path={ASTRAWILD.BiomeDressing.PointRejection}
+[2026.09.02-02.03.01:666][310]LogAutomationController: Display: Test Started. Name={ZoneProfiles} Path={ASTRAWILD.BiomeDressing.ZoneProfiles}
+[2026.09.02-02.03.01:729][312]LogAutomationController: Display: Test Completed. Result={Success} Name={ZoneProfiles} Path={ASTRAWILD.BiomeDressing.ZoneProfiles}
+[2026.09.02-02.03.01:730][312]LogAutomationController: Display: Test Started. Name={DesignRuleBounds} Path={ASTRAWILD.Capture.DesignRuleBounds}
+[2026.09.02-02.03.01:761][314]LogAutomationController: Display: Test Completed. Result={Success} Name={DesignRuleBounds} Path={ASTRAWILD.Capture.DesignRuleBounds}
+[2026.09.02-02.03.01:761][315]LogAutomationController: Display: Test Started. Name={MitigationMath} Path={ASTRAWILD.Combat.MitigationMath}
+[2026.09.02-02.03.01:794][316]LogAutomationController: Display: Test Completed. Result={Success} Name={MitigationMath} Path={ASTRAWILD.Combat.MitigationMath}
+[2026.09.02-02.03.01:794][316]LogAutomationController: Display: Test Started. Name={StatusEffectFactory} Path={ASTRAWILD.Combat.StatusEffectFactory}
+[2026.09.02-02.03.01:845][319]LogAutomationController: Display: Test Completed. Result={Success} Name={StatusEffectFactory} Path={ASTRAWILD.Combat.StatusEffectFactory}
+[2026.09.02-02.03.01:845][320]LogAutomationController: Display: Test Started. Name={OutputGuard} Path={ASTRAWILD.Craft.OutputGuard}
+[2026.09.02-02.03.01:906][322]LogAutomationController: Display: Test Completed. Result={Success} Name={OutputGuard} Path={ASTRAWILD.Craft.OutputGuard}
+[2026.09.02-02.03.01:906][322]LogAutomationController: Display: Test Started. Name={ChoiceConditions} Path={ASTRAWILD.Dialogue.ChoiceConditions}
+[2026.09.02-02.03.01:928][324]LogAutomationController: Display: Test Completed. Result={Success} Name={ChoiceConditions} Path={ASTRAWILD.Dialogue.ChoiceConditions}
+[2026.09.02-02.03.01:928][325]LogAutomationController: Display: Test Started. Name={Consequences} Path={ASTRAWILD.Dialogue.Consequences}
+[2026.09.02-02.03.01:944][325]LogAstrawild: Warning: Dialogue consequence: quest Quest_DoesNotExist is not registered.
+[2026.09.02-02.03.01:977][327]LogAutomationController: Display: Test Completed. Result={Success} Name={Consequences} Path={ASTRAWILD.Dialogue.Consequences}
+[2026.09.02-02.03.01:977][327]LogAutomationController: Warning: LogAstrawild: Dialogue consequence: quest Quest_DoesNotExist is not registered. [log] 
+[2026.09.02-02.03.01:977][327]LogAutomationController: Display: Test Started. Name={TreeContract} Path={ASTRAWILD.Dialogue.TreeContract}
+[2026.09.02-02.03.02:010][329]LogAutomationController: Display: Test Completed. Result={Success} Name={TreeContract} Path={ASTRAWILD.Dialogue.TreeContract}
+[2026.09.02-02.03.02:011][329]LogAutomationController: Display: Test Started. Name={BossAttackDamage} Path={ASTRAWILD.Dungeon.BossAttackDamage}
+[2026.09.02-02.03.02:060][332]LogAutomationController: Display: Test Completed. Result={Success} Name={BossAttackDamage} Path={ASTRAWILD.Dungeon.BossAttackDamage}
+[2026.09.02-02.03.02:061][332]LogAutomationController: Display: Test Started. Name={BossElementalMultiplier} Path={ASTRAWILD.Dungeon.BossElementalMultiplier}
+[2026.09.02-02.03.02:094][334]LogAutomationController: Display: Test Completed. Result={Success} Name={BossElementalMultiplier} Path={ASTRAWILD.Dungeon.BossElementalMultiplier}
+[2026.09.02-02.03.02:094][334]LogAutomationController: Display: Test Started. Name={BossPhaseThresholds} Path={ASTRAWILD.Dungeon.BossPhaseThresholds}
+[2026.09.02-02.03.02:127][336]LogAutomationController: Display: Test Completed. Result={Success} Name={BossPhaseThresholds} Path={ASTRAWILD.Dungeon.BossPhaseThresholds}
+[2026.09.02-02.03.02:127][337]LogAutomationController: Display: Test Started. Name={BossSpecialsMath} Path={ASTRAWILD.Dungeon.BossSpecialsMath}
+[2026.09.02-02.03.02:176][339]LogAutomationController: Display: Test Completed. Result={Success} Name={BossSpecialsMath} Path={ASTRAWILD.Dungeon.BossSpecialsMath}
+[2026.09.02-02.03.02:177][339]LogAutomationController: Display: Test Started. Name={EvolutionGates} Path={ASTRAWILD.Echo.EvolutionGates}
+[2026.09.02-02.03.02:226][342]LogAutomationController: Display: Test Completed. Result={Success} Name={EvolutionGates} Path={ASTRAWILD.Echo.EvolutionGates}
+[2026.09.02-02.03.02:227][342]LogAutomationController: Display: Test Started. Name={PersonalityModifiers} Path={ASTRAWILD.Echo.PersonalityModifiers}
+[2026.09.02-02.03.02:277][345]LogAutomationController: Display: Test Completed. Result={Success} Name={PersonalityModifiers} Path={ASTRAWILD.Echo.PersonalityModifiers}
+[2026.09.02-02.03.02:277][345]LogAutomationController: Display: Test Started. Name={ProductionRosterContract} Path={ASTRAWILD.Echo.ProductionRosterContract}
+[2026.09.02-02.03.02:326][348]LogAutomationController: Display: Test Completed. Result={Success} Name={ProductionRosterContract} Path={ASTRAWILD.Echo.ProductionRosterContract}
+[2026.09.02-02.03.02:327][348]LogAutomationController: Display: Test Started. Name={VendorSellValue} Path={ASTRAWILD.Economy.VendorSellValue}
+[2026.09.02-02.03.02:377][351]LogAutomationController: Display: Test Completed. Result={Success} Name={VendorSellValue} Path={ASTRAWILD.Economy.VendorSellValue}
+[2026.09.02-02.03.02:377][351]LogAutomationController: Display: Test Started. Name={ArmorMath} Path={ASTRAWILD.Equipment.ArmorMath}
+[2026.09.02-02.03.02:411][353]LogAutomationController: Display: Test Completed. Result={Success} Name={ArmorMath} Path={ASTRAWILD.Equipment.ArmorMath}
+[2026.09.02-02.03.02:411][353]LogAutomationController: Display: Test Started. Name={ProgressionMath} Path={ASTRAWILD.Equipment.ProgressionMath}
+[2026.09.02-02.03.02:459][356]LogAutomationController: Display: Test Completed. Result={Success} Name={ProgressionMath} Path={ASTRAWILD.Equipment.ProgressionMath}
+[2026.09.02-02.03.02:460][356]LogAutomationController: Display: Test Started. Name={SlotRouting} Path={ASTRAWILD.Equipment.SlotRouting}
+[2026.09.02-02.03.02:510][359]LogAutomationController: Display: Test Completed. Result={Success} Name={SlotRouting} Path={ASTRAWILD.Equipment.SlotRouting}
+[2026.09.02-02.03.02:510][359]LogAutomationController: Display: Test Started. Name={AddRemove} Path={ASTRAWILD.Inventory.AddRemove}
+[2026.09.02-02.03.02:544][361]LogAutomationController: Display: Test Completed. Result={Success} Name={AddRemove} Path={ASTRAWILD.Inventory.AddRemove}
+[2026.09.02-02.03.02:544][361]LogAutomationController: Display: Test Started. Name={DiscoveryRadiusMath} Path={ASTRAWILD.POI.DiscoveryRadiusMath}
+[2026.09.02-02.03.02:593][364]LogAutomationController: Display: Test Completed. Result={Success} Name={DiscoveryRadiusMath} Path={ASTRAWILD.POI.DiscoveryRadiusMath}
+[2026.09.02-02.03.02:594][364]LogAutomationController: Display: Test Started. Name={BrownoutMath} Path={ASTRAWILD.Power.BrownoutMath}
+[2026.09.02-02.03.02:643][367]LogAutomationController: Display: Test Completed. Result={Success} Name={BrownoutMath} Path={ASTRAWILD.Power.BrownoutMath}
+[2026.09.02-02.03.02:644][367]LogAutomationController: Display: Test Started. Name={DiscoverPOIType} Path={ASTRAWILD.Quest.DiscoverPOIType}
+[2026.09.02-02.03.02:693][370]LogAutomationController: Display: Test Completed. Result={Success} Name={DiscoverPOIType} Path={ASTRAWILD.Quest.DiscoverPOIType}
+[2026.09.02-02.03.02:694][370]LogAutomationController: Display: Test Started. Name={ObjectiveProgress} Path={ASTRAWILD.Quest.ObjectiveProgress}
+[2026.09.02-02.03.02:742][373]LogAutomationController: Display: Test Completed. Result={Success} Name={ObjectiveProgress} Path={ASTRAWILD.Quest.ObjectiveProgress}
+[2026.09.02-02.03.02:742][373]LogAutomationController: Display: Test Started. Name={ObjectiveTypes} Path={ASTRAWILD.Quest.ObjectiveTypes}
+[2026.09.02-02.03.02:794][376]LogAutomationController: Display: Test Completed. Result={Success} Name={ObjectiveTypes} Path={ASTRAWILD.Quest.ObjectiveTypes}
+[2026.09.02-02.03.02:794][376]LogAutomationController: Display: Test Started. Name={DefinitionContract} Path={ASTRAWILD.ResourceNode.DefinitionContract}
+[2026.09.02-02.03.02:844][379]LogAutomationController: Display: Test Completed. Result={Success} Name={DefinitionContract} Path={ASTRAWILD.ResourceNode.DefinitionContract}
+[2026.09.02-02.03.02:844][380]LogAutomationController: Display: Test Started. Name={SpecialistRates} Path={ASTRAWILD.Robot.SpecialistRates}
+[2026.09.02-02.03.02:894][382]LogAutomationController: Display: Test Completed. Result={Success} Name={SpecialistRates} Path={ASTRAWILD.Robot.SpecialistRates}
+[2026.09.02-02.03.02:894][382]LogAutomationController: Display: Test Started. Name={ChecksumDeterminism} Path={ASTRAWILD.Save.ChecksumDeterminism}
+[2026.09.02-02.03.02:942][385]LogAutomationController: Display: Test Completed. Result={Success} Name={ChecksumDeterminism} Path={ASTRAWILD.Save.ChecksumDeterminism}
+[2026.09.02-02.03.02:942][385]LogAutomationController: Display: Test Started. Name={SchemaV3} Path={ASTRAWILD.Save.SchemaV3}
+[2026.09.02-02.03.02:994][388]LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaV3} Path={ASTRAWILD.Save.SchemaV3}
+[2026.09.02-02.03.02:994][389]LogAutomationController: Display: Test Started. Name={SchemaV4} Path={ASTRAWILD.Save.SchemaV4}
+[2026.09.02-02.03.03:027][390]LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaV4} Path={ASTRAWILD.Save.SchemaV4}
+[2026.09.02-02.03.03:027][390]LogAutomationController: Display: Test Started. Name={FlightMath} Path={ASTRAWILD.Skiff.FlightMath}
+[2026.09.02-02.03.03:076][393]LogAutomationController: Display: Test Completed. Result={Success} Name={FlightMath} Path={ASTRAWILD.Skiff.FlightMath}
+[2026.09.02-02.03.03:077][393]LogAutomationController: Display: Test Started. Name={DamageAndDeath} Path={ASTRAWILD.Survival.DamageAndDeath}
+[2026.09.02-02.03.03:110][395]LogAutomationController: Display: Test Completed. Result={Success} Name={DamageAndDeath} Path={ASTRAWILD.Survival.DamageAndDeath}
+[2026.09.02-02.03.03:110][396]LogAutomationController: Display: Test Started. Name={InsulationBand} Path={ASTRAWILD.Survival.InsulationBand}
+[2026.09.02-02.03.03:159][398]LogAutomationController: Display: Test Completed. Result={Success} Name={InsulationBand} Path={ASTRAWILD.Survival.InsulationBand}
+[2026.09.02-02.03.03:161][398]LogAutomationController: Display: Test Started. Name={HeightDeterministic} Path={ASTRAWILD.Terrain.HeightDeterministic}
+[2026.09.02-02.03.03:210][401]LogAutomationController: Display: Test Completed. Result={Success} Name={HeightDeterministic} Path={ASTRAWILD.Terrain.HeightDeterministic}
+[2026.09.02-02.03.03:210][401]LogAutomationController: Display: Test Started. Name={SeamContinuity} Path={ASTRAWILD.Terrain.SeamContinuity}
+[2026.09.02-02.03.03:260][404]LogAutomationController: Display: Test Completed. Result={Success} Name={SeamContinuity} Path={ASTRAWILD.Terrain.SeamContinuity}
+[2026.09.02-02.03.03:261][404]LogAutomationController: Display: Test Started. Name={ArcJitter} Path={ASTRAWILD.Vfx.ArcJitter}
+[2026.09.02-02.03.03:295][406]LogAutomationController: Display: Test Completed. Result={Success} Name={ArcJitter} Path={ASTRAWILD.Vfx.ArcJitter}
+[2026.09.02-02.03.03:295][407]LogAutomationController: Display: Test Started. Name={BeamMath} Path={ASTRAWILD.Vfx.BeamMath}
+[2026.09.02-02.03.03:327][408]LogAutomationController: Display: Test Completed. Result={Success} Name={BeamMath} Path={ASTRAWILD.Vfx.BeamMath}
+[2026.09.02-02.03.03:328][409]LogAutomationController: Display: Test Started. Name={Palette} Path={ASTRAWILD.Vfx.Palette}
+[2026.09.02-02.03.03:376][411]LogAutomationController: Display: Test Completed. Result={Success} Name={Palette} Path={ASTRAWILD.Vfx.Palette}
+[2026.09.02-02.03.03:377][411]LogAutomationController: Display: Test Started. Name={RingGeometry} Path={ASTRAWILD.Vfx.RingGeometry}
+[2026.09.02-02.03.03:411][413]LogAutomationController: Display: Test Completed. Result={Success} Name={RingGeometry} Path={ASTRAWILD.Vfx.RingGeometry}
+[2026.09.02-02.03.03:411][414]LogAutomationController: Display: Test Started. Name={AssetBindingContract} Path={ASTRAWILD.Weapon.AssetBindingContract}
+[2026.09.02-02.03.03:444][415]LogAutomationController: Display: Test Completed. Result={Success} Name={AssetBindingContract} Path={ASTRAWILD.Weapon.AssetBindingContract}
+[2026.09.02-02.03.03:444][416]LogAutomationController: Display: Test Started. Name={ProfileMath} Path={ASTRAWILD.Weapon.ProfileMath}
+[2026.09.02-02.03.03:477][417]LogAutomationController: Display: Test Completed. Result={Success} Name={ProfileMath} Path={ASTRAWILD.Weapon.ProfileMath}
+[2026.09.02-02.03.03:478][417]LogAutomationController: Display: Test Started. Name={ProductionChain} Path={ASTRAWILD.WorkSite.ProductionChain}
+[2026.09.02-02.03.03:528][420]LogAutomationController: Display: Test Completed. Result={Success} Name={ProductionChain} Path={ASTRAWILD.WorkSite.ProductionChain}
+[2026.09.02-02.03.03:528][421]LogAutomationController: Display: Test Started. Name={EligibilityGates} Path={ASTRAWILD.WorldEvent.EligibilityGates}
+[2026.09.02-02.03.03:577][423]LogAutomationController: Display: Test Completed. Result={Success} Name={EligibilityGates} Path={ASTRAWILD.WorldEvent.EligibilityGates}
+[2026.09.02-02.03.03:578][423]LogAutomationController: Display: Test Started. Name={WeightedPickDeterminism} Path={ASTRAWILD.WorldEvent.WeightedPickDeterminism}
+[2026.09.02-02.03.03:627][426]LogAutomationController: Display: Test Completed. Result={Success} Name={WeightedPickDeterminism} Path={ASTRAWILD.WorldEvent.WeightedPickDeterminism}
+[2026.09.02-02.03.03:628][427]LogAutomationController: Display: Test Started. Name={BlendPartitionOfUnity} Path={ASTRAWILD.Zones.BlendPartitionOfUnity}
+[2026.09.02-02.03.03:660][428]LogAutomationController: Display: Test Completed. Result={Success} Name={BlendPartitionOfUnity} Path={ASTRAWILD.Zones.BlendPartitionOfUnity}
+[2026.09.02-02.03.03:661][428]LogAutomationController: Display: Test Started. Name={LookupCorrectness} Path={ASTRAWILD.Zones.LookupCorrectness}
+[2026.09.02-02.03.03:710][431]LogAutomationController: Display: Test Completed. Result={Success} Name={LookupCorrectness} Path={ASTRAWILD.Zones.LookupCorrectness}
+[2026.09.02-02.03.03:711][431]LogAutomationController: Display: Test Started. Name={SeaClassification} Path={ASTRAWILD.Zones.SeaClassification}
+[2026.09.02-02.03.03:760][434]LogAutomationController: Display: Test Completed. Result={Success} Name={SeaClassification} Path={ASTRAWILD.Zones.SeaClassification}
+[2026.09.02-02.03.03:760][435]LogAutomationController: Display: Test Started. Name={TableIntegrity} Path={ASTRAWILD.Zones.TableIntegrity}
+[2026.09.02-02.03.03:793][436]LogAutomationController: Display: Test Completed. Result={Success} Name={TableIntegrity} Path={ASTRAWILD.Zones.TableIntegrity}
+[2026.09.02-02.03.03:810][437]LogAutomationCommandLine: Display: **** TEST COMPLETE. EXIT CODE: 0 ****
+=====================================
+End Time: 2026-09-02 09:03:04.275
+Duration Seconds: 106.6094429
+Exit Code: 0
+=====================================

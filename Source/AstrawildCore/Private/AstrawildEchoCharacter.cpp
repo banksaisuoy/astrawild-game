@@ -1,8 +1,14 @@
 #include "AstrawildEchoCharacter.h"
 
+#include "AstrawildAbilityLibrary.h"
+#include "AstrawildArtPack.h"
 #include "AstrawildCore.h"
 #include "AstrawildCombatComponent.h"
+#include "AstrawildCreatureSanityComponent.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoMutator.h"
+#include "AstrawildGeneticsLibrary.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEcosystemSubsystem.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -10,10 +16,13 @@
 #include "AstrawildGameState.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
+#include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -24,11 +33,32 @@
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "NavigationInvokerComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ProceduralMeshComponent.h"
 #include "Materials/Material.h"
+#include "Sound/SoundBase.h"
 #include "UObject/ConstructorHelpers.h"
+
+namespace
+{
+    // DP-5: wild-game weak-point cadence (deliberately rarer than the boss's
+    // 12s/5s choreography — hunting big game is about patience, not dance
+    // steps). Direct hits during the window land x1.5 BEFORE the defense
+    // subtraction; DoT ticks never route through that path.
+    constexpr float EchoWeakPointPeriodSeconds = 20.0f;
+    constexpr float EchoWeakPointWindowSeconds = 4.0f;
+    constexpr float EchoWeakPointDamageMultiplier = 1.5f;
+
+    // The pulse the existing element light plays while the window is open
+    // (~2.4x the steady glow — readable at combat range without a new component).
+    constexpr float EchoWeakPointGlowIntensity = 4.6f;
+
+    // Weakness-toast routing radius: only a player this close to the victim
+    // gets the HUD line (the attacker, by definition, is inside it).
+    constexpr float EchoWeaknessNotifyRadius = 3000.0f;
+}
 
 // ---------------------------------------------------------------------------
 // Batch 8 — procedural body construction (The Grand Menagerie).
@@ -204,6 +234,58 @@ namespace
         default:                          return 1.0f;
         }
     }
+
+    /**
+     * Sci-Fantasy directive Phase 2 — mutation attachment geometry (PMC path).
+     *
+     * Appends the spec's attachment set onto the baked body as extra parts:
+     * dorsal spikes, extra wings, a third eye, extra arms, a horn crown,
+     * glow nodes and a tail fin. Generic silhouette-relative positions — the
+     * parts read at gameplay distance on every body plan without per-plan
+     * hand placement (deterministic, no RNG).
+     */
+    void AppendMutationParts(FAstrawildBodyPart& Part, const float S, const FEchoMutationSpec& Spec,
+        const FColor& PatternColor, const FColor& StructuralColor)
+    {
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::DorsalSpikes))
+        {
+            for (const float X : { -22.0f, -2.0f, 18.0f })
+            {
+                AddConePart(Part, FVector(X * S, 0.0f, 72.0f * S), FVector(X * S, 0.0f, 100.0f * S), 7.0f * S, StructuralColor, 5);
+            }
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::Wings))
+        {
+            AddBoxPart(Part, FVector(-10.0f * S, 42.0f * S, 82.0f * S), FVector(24.0f * S, 5.0f * S, 16.0f * S), StructuralColor);
+            AddBoxPart(Part, FVector(-10.0f * S, -42.0f * S, 82.0f * S), FVector(24.0f * S, 5.0f * S, 16.0f * S), StructuralColor);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::ThirdEye))
+        {
+            AddSpherePart(Part, FVector(44.0f * S, 0.0f, 98.0f * S), 6.0f * S, PatternColor, 8);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::ExtraArms))
+        {
+            AddCylinderPart(Part, FVector(20.0f * S, 18.0f * S, 66.0f * S), FVector(46.0f * S, 40.0f * S, 88.0f * S), 4.0f * S, StructuralColor, 5);
+            AddCylinderPart(Part, FVector(-20.0f * S, 18.0f * S, 66.0f * S), FVector(-46.0f * S, 40.0f * S, 88.0f * S), 4.0f * S, StructuralColor, 5);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::HornCrown))
+        {
+            AddConePart(Part, FVector(34.0f * S, 12.0f * S, 92.0f * S), FVector(44.0f * S, 18.0f * S, 112.0f * S), 3.0f * S, StructuralColor, 5);
+            AddConePart(Part, FVector(34.0f * S, -12.0f * S, 92.0f * S), FVector(44.0f * S, -18.0f * S, 112.0f * S), 3.0f * S, StructuralColor, 5);
+            AddConePart(Part, FVector(38.0f * S, 0.0f, 96.0f * S), FVector(52.0f * S, 0.0f, 120.0f * S), 4.0f * S, StructuralColor, 5);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::GlowNodes))
+        {
+            AddSpherePart(Part, FVector(10.0f * S, 20.0f * S, 78.0f * S), 5.0f * S, PatternColor, 6);
+            AddSpherePart(Part, FVector(-14.0f * S, -18.0f * S, 70.0f * S), 5.0f * S, PatternColor, 6);
+            AddSpherePart(Part, FVector(-6.0f * S, 24.0f * S, 60.0f * S), 4.0f * S, PatternColor, 6);
+            AddSpherePart(Part, FVector(18.0f * S, -22.0f * S, 88.0f * S), 4.0f * S, PatternColor, 6);
+        }
+        if (FAstrawildEchoMutator::HasAttachment(Spec, EAstrawildEchoAttachment::TailFin))
+        {
+            AddBoxPart(Part, FVector(-62.0f * S, 0.0f, 70.0f * S), FVector(12.0f * S, 22.0f * S, 4.0f * S), StructuralColor);
+        }
+    }
 }
 
 void AAstrawildEchoCharacter::BuildProceduralBody()
@@ -233,6 +315,41 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         255);
     const float S = BodyScaleForSize(EchoDefinition->SizeClass);
 
+    // VIS-001 — charm-spectrum proportions. The cute band gets the classic
+    // "baby schema" read: an enlarged head and a dark forward eye pair on
+    // the headed plans (the single strongest cute signal at gameplay camera
+    // distance). Strange/cool plans keep their authored alien/predator
+    // silhouettes untouched.
+    const bool bCuteBand = ComputeVisualBand(
+        EchoDefinition->Family, EchoDefinition->BodyPlan, EchoDefinition->SizeClass)
+        == EAstrawildVisualBand::Cute;
+    const float HeadBoost = bCuteBand ? 1.18f : 1.0f;
+    const FColor EyeColor(30, 28, 40, 255);
+
+    // Sci-Fantasy directive Phase 2: mutate the silhouette. Table row for
+    // bestiary species, deterministic derived spec otherwise — every Echo
+    // mutates (per-part scale multipliers + theme material language +
+    // independent pattern tint + attachment set).
+    const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId);
+    FEchoMutationSpec DeterministicSpec;
+    if (!MutationSpec)
+    {
+        DeterministicSpec = FAstrawildEchoMutator::BuildDeterministicSpec(EchoDefinition);
+        MutationSpec = &DeterministicSpec;
+    }
+    float HeadScale = 1.0f, TorsoScale = 1.0f, LimbScale = 1.0f, TailScale = 1.0f;
+    const int32 InstanceSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
+    FAstrawildEchoMutator::ComputePartScales(*MutationSpec, InstanceSeed, HeadScale, TorsoScale, LimbScale, TailScale);
+    // VIS-001 — fold the cute-band baby-schema boost into the mutation head
+    // scale so EVERY plan's head parts (head sphere, snout, antennae, crest)
+    // inherit the proportion change uniformly. Cool/strange silhouettes are
+    // untouched (HeadBoost = 1.0).
+    HeadScale *= HeadBoost;
+    FColor MutPrimary = Primary;
+    FColor MutSecondary = Secondary;
+    FAstrawildEchoMutator::ApplyThemeToBodyColors(Primary, Secondary, *MutationSpec, MutPrimary, MutSecondary);
+    const FColor PatternAccent = MutationSpec->PatternTint.ToFColor(true);
+
     FAstrawildBodyPart Body;
 
     switch (EchoDefinition->BodyPlan)
@@ -240,27 +357,27 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
     case EAstrawildBodyPlan::Quadruped:
     {
         // Torso + head + four legs + tail cone.
-        AddSpherePart(Body, FVector(0, 0, 55 * S), 42 * S, Primary, 8);
-        AddSpherePart(Body, FVector(52 * S, 0, 78 * S), 24 * S, Secondary, 8);
-        AddConePart(Body, FVector(52 * S, 0, 78 * S), FVector(80 * S, 0, 92 * S), 9 * S, Accent, 6); // snout/horn
+        AddSpherePart(Body, FVector(0, 0, 55 * S), 42 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(52 * S, 0, 78 * S), 24 * S * HeadScale, MutSecondary, 8);
+        AddConePart(Body, FVector(52 * S, 0, 78 * S), FVector(80 * S * HeadScale, 0, 92 * S), 9 * S * HeadScale, Accent, 6); // snout/horn
         const float LegX = 30 * S;
         const float LegY = 26 * S;
         for (const FVector2D Corner : { FVector2D(LegX, LegY), FVector2D(LegX, -LegY), FVector2D(-LegX, LegY), FVector2D(-LegX, -LegY) })
         {
-            AddCylinderPart(Body, FVector(Corner.X, Corner.Y, 40 * S), FVector(Corner.X, Corner.Y, 2 * S), 9 * S, Secondary, 6);
+            AddCylinderPart(Body, FVector(Corner.X, Corner.Y, 40 * S * LimbScale), FVector(Corner.X, Corner.Y, 2 * S), 9 * S * LimbScale, MutSecondary, 6);
         }
-        AddConePart(Body, FVector(-44 * S, 0, 62 * S), FVector(-92 * S, 0, 74 * S), 10 * S, Secondary, 6);
+        AddConePart(Body, FVector(-44 * S, 0, 62 * S), FVector(-92 * S * TailScale, 0, 74 * S), 10 * S * TailScale, MutSecondary, 6);
         break;
     }
     case EAstrawildBodyPlan::Biped:
     {
-        AddSpherePart(Body, FVector(0, 0, 72 * S), 38 * S, Primary, 8);
-        AddSpherePart(Body, FVector(0, 0, 122 * S), 22 * S, Secondary, 8);
-        AddConePart(Body, FVector(0, 0, 138 * S), FVector(0, 0, 172 * S), 10 * S, Accent, 6); // crest
-        AddCylinderPart(Body, FVector(16 * S, 0, 58 * S), FVector(30 * S, 0, 96 * S), 8 * S, Secondary, 6); // arms
-        AddCylinderPart(Body, FVector(-16 * S, 0, 58 * S), FVector(-30 * S, 0, 96 * S), 8 * S, Secondary, 6);
-        AddCylinderPart(Body, FVector(14 * S, 0, 36 * S), FVector(14 * S, 0, 2 * S), 10 * S, Secondary, 6); // legs
-        AddCylinderPart(Body, FVector(-14 * S, 0, 36 * S), FVector(-14 * S, 0, 2 * S), 10 * S, Secondary, 6);
+        AddSpherePart(Body, FVector(0, 0, 72 * S), 38 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(0, 0, 122 * S), 22 * S * HeadScale, MutSecondary, 8);
+        AddConePart(Body, FVector(0, 0, 138 * S), FVector(0, 0, 172 * S * HeadScale), 10 * S * HeadScale, Accent, 6); // crest
+        AddCylinderPart(Body, FVector(16 * S, 0, 58 * S), FVector(30 * S, 0, 96 * S * LimbScale), 8 * S * LimbScale, MutSecondary, 6); // arms
+        AddCylinderPart(Body, FVector(-16 * S, 0, 58 * S), FVector(-30 * S, 0, 96 * S * LimbScale), 8 * S * LimbScale, MutSecondary, 6);
+        AddCylinderPart(Body, FVector(14 * S, 0, 36 * S * LimbScale), FVector(14 * S, 0, 2 * S), 10 * S * LimbScale, MutSecondary, 6); // legs
+        AddCylinderPart(Body, FVector(-14 * S, 0, 36 * S * LimbScale), FVector(-14 * S, 0, 2 * S), 10 * S * LimbScale, MutSecondary, 6);
         break;
     }
     case EAstrawildBodyPlan::Serpent:
@@ -271,72 +388,111 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         const float SegR[6] = { 9, 15, 21, 25, 22, 17 };
         for (int32 i = 0; i < 6; ++i)
         {
-            AddSpherePart(Body, FVector(SegX[i] * S, 0, SegZ[i] * S), SegR[i] * S, i % 2 == 0 ? Primary : Secondary, 8);
+            AddSpherePart(Body, FVector(SegX[i] * S, 0, SegZ[i] * S), SegR[i] * S * TorsoScale, i % 2 == 0 ? MutPrimary : MutSecondary, 8);
         }
-        AddConePart(Body, FVector(66 * S, 0, 96 * S), FVector(112 * S, 0, 108 * S), 14 * S, Accent, 6); // head wedge
+        AddConePart(Body, FVector(66 * S, 0, 96 * S), FVector(112 * S * HeadScale, 0, 108 * S), 14 * S * HeadScale, Accent, 6); // head wedge
         break;
     }
     case EAstrawildBodyPlan::Floating:
     {
-        AddSpherePart(Body, FVector(0, 0, 95 * S), 34 * S, Primary, 10);
-        AddSpherePart(Body, FVector(30 * S, 22 * S, 108 * S), 12 * S, Secondary, 6);
-        AddSpherePart(Body, FVector(-28 * S, 24 * S, 88 * S), 10 * S, Secondary, 6);
-        AddSpherePart(Body, FVector(-24 * S, -26 * S, 112 * S), 11 * S, Secondary, 6);
-        AddConePart(Body, FVector(0, 0, 62 * S), FVector(0, 0, 18 * S), 20 * S, Accent, 6); // energy tail
+        AddSpherePart(Body, FVector(0, 0, 95 * S), 34 * S * TorsoScale, MutPrimary, 10);
+        AddSpherePart(Body, FVector(30 * S, 22 * S, 108 * S), 12 * S * HeadScale, MutSecondary, 6);
+        AddSpherePart(Body, FVector(-28 * S, 24 * S, 88 * S), 10 * S * HeadScale, MutSecondary, 6);
+        AddSpherePart(Body, FVector(-24 * S, -26 * S, 112 * S), 11 * S * HeadScale, MutSecondary, 6);
+        AddConePart(Body, FVector(0, 0, 62 * S), FVector(0, 0, 18 * S * TailScale), 20 * S * TailScale, Accent, 6); // energy tail
         break;
     }
     case EAstrawildBodyPlan::Insectoid:
     {
-        AddSpherePart(Body, FVector(34 * S, 0, 55 * S), 17 * S, Secondary, 8); // head
-        AddSpherePart(Body, FVector(6 * S, 0, 52 * S), 24 * S, Primary, 8); // thorax
-        AddSpherePart(Body, FVector(-34 * S, 0, 48 * S), 28 * S, Primary, 8); // abdomen
-        AddCylinderPart(Body, FVector(34 * S, 10 * S, 66 * S), FVector(50 * S, 16 * S, 92 * S), 3 * S, Secondary, 5); // antennae
-        AddCylinderPart(Body, FVector(34 * S, -10 * S, 66 * S), FVector(50 * S, -16 * S, 92 * S), 3 * S, Secondary, 5);
+        AddSpherePart(Body, FVector(34 * S, 0, 55 * S), 17 * S * HeadScale, MutSecondary, 8); // head
+        AddSpherePart(Body, FVector(6 * S, 0, 52 * S), 24 * S * TorsoScale, MutPrimary, 8); // thorax
+        AddSpherePart(Body, FVector(-34 * S, 0, 48 * S), 28 * S * TorsoScale, MutPrimary, 8); // abdomen
+        AddCylinderPart(Body, FVector(34 * S, 10 * S, 66 * S), FVector(50 * S, 16 * S, 92 * S * HeadScale), 3 * S * HeadScale, MutSecondary, 5); // antennae
+        AddCylinderPart(Body, FVector(34 * S, -10 * S, 66 * S), FVector(50 * S, -16 * S, 92 * S * HeadScale), 3 * S * HeadScale, MutSecondary, 5);
         const float LegX[4] = { 24, 8, -16, -34 };
         for (int32 i = 0; i < 4; ++i)
         {
-            AddCylinderPart(Body, FVector(LegX[i] * S, 14 * S, 44 * S), FVector(LegX[i] * S, 30 * S, 4 * S), 4 * S, Secondary, 5);
-            AddCylinderPart(Body, FVector(LegX[i] * S, -14 * S, 44 * S), FVector(LegX[i] * S, -30 * S, 4 * S), 4 * S, Secondary, 5);
+            AddCylinderPart(Body, FVector(LegX[i] * S, 14 * S, 44 * S * LimbScale), FVector(LegX[i] * S, 30 * S, 4 * S), 4 * S * LimbScale, MutSecondary, 5);
+            AddCylinderPart(Body, FVector(LegX[i] * S, -14 * S, 44 * S * LimbScale), FVector(LegX[i] * S, -30 * S, 4 * S), 4 * S * LimbScale, MutSecondary, 5);
         }
         break;
     }
     case EAstrawildBodyPlan::Avian:
     {
-        AddSpherePart(Body, FVector(0, 0, 62 * S), 30 * S, Primary, 8); // keeled body
-        AddSpherePart(Body, FVector(30 * S, 0, 86 * S), 16 * S, Primary, 8); // head
-        AddConePart(Body, FVector(42 * S, 0, 84 * S), FVector(64 * S, 0, 88 * S), 6 * S, Accent, 5); // beak
+        AddSpherePart(Body, FVector(0, 0, 62 * S), 30 * S * TorsoScale, MutPrimary, 8); // keeled body
+        AddSpherePart(Body, FVector(30 * S, 0, 86 * S), 16 * S * HeadScale, MutPrimary, 8); // head
+        AddConePart(Body, FVector(42 * S, 0, 84 * S), FVector(64 * S, 0, 88 * S), 6 * S * HeadScale, Accent, 5); // beak
         // Folded wings (flattened boxes).
-        AddBoxPart(Body, FVector(-6 * S, 34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S), Secondary);
-        AddBoxPart(Body, FVector(-6 * S, -34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S), Secondary);
-        AddBoxPart(Body, FVector(-34 * S, 0, 58 * S), FVector(14 * S, 16 * S, 4 * S), Secondary); // tail fan
-        AddCylinderPart(Body, FVector(6 * S, 8 * S, 34 * S), FVector(8 * S, 8 * S, 6 * S), 4 * S, Secondary, 5); // legs
-        AddCylinderPart(Body, FVector(6 * S, -8 * S, 34 * S), FVector(8 * S, -8 * S, 6 * S), 4 * S, Secondary, 5);
+        AddBoxPart(Body, FVector(-6 * S, 34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S * LimbScale), MutSecondary);
+        AddBoxPart(Body, FVector(-6 * S, -34 * S, 70 * S), FVector(26 * S, 6 * S, 20 * S * LimbScale), MutSecondary);
+        AddBoxPart(Body, FVector(-34 * S, 0, 58 * S), FVector(14 * S, 16 * S, 4 * S * TailScale), MutSecondary); // tail fan
+        AddCylinderPart(Body, FVector(6 * S, 8 * S, 34 * S * LimbScale), FVector(8 * S, 8 * S, 6 * S), 4 * S * LimbScale, MutSecondary, 5); // legs
+        AddCylinderPart(Body, FVector(6 * S, -8 * S, 34 * S * LimbScale), FVector(8 * S, -8 * S, 6 * S), 4 * S * LimbScale, MutSecondary, 5);
         break;
     }
     case EAstrawildBodyPlan::Crystalline:
     {
         // Faceted shard crown: big center + orbiting shards.
-        AddConePart(Body, FVector(0, 0, 4 * S), FVector(0, 0, 120 * S), 34 * S, Primary, 4);
-        AddConePart(Body, FVector(28 * S, 0, 4 * S), FVector(34 * S, 0, 78 * S), 14 * S, Secondary, 4);
-        AddConePart(Body, FVector(-26 * S, 10 * S, 4 * S), FVector(-32 * S, 14 * S, 64 * S), 12 * S, Secondary, 4);
-        AddConePart(Body, FVector(-20 * S, -18 * S, 4 * S), FVector(-24 * S, -24 * S, 52 * S), 10 * S, Secondary, 4);
+        AddConePart(Body, FVector(0, 0, 4 * S), FVector(0, 0, 120 * S * TorsoScale), 34 * S * TorsoScale, MutPrimary, 4);
+        AddConePart(Body, FVector(28 * S, 0, 4 * S), FVector(34 * S, 0, 78 * S), 14 * S * HeadScale, MutSecondary, 4);
+        AddConePart(Body, FVector(-26 * S, 10 * S, 4 * S), FVector(-32 * S, 14 * S, 64 * S), 12 * S * HeadScale, MutSecondary, 4);
+        AddConePart(Body, FVector(-20 * S, -18 * S, 4 * S), FVector(-24 * S, -24 * S, 52 * S), 10 * S * HeadScale, MutSecondary, 4);
         break;
     }
     case EAstrawildBodyPlan::Amorphous:
     {
-        AddSpherePart(Body, FVector(0, 0, 48 * S), 34 * S, Primary, 8);
-        AddSpherePart(Body, FVector(24 * S, 14 * S, 62 * S), 22 * S, Primary, 8);
-        AddSpherePart(Body, FVector(-22 * S, 18 * S, 54 * S), 18 * S, Primary, 8);
-        AddSpherePart(Body, FVector(-14 * S, -22 * S, 66 * S), 20 * S, Primary, 8);
-        AddSpherePart(Body, FVector(18 * S, -20 * S, 44 * S), 16 * S, Primary, 8);
-        AddSpherePart(Body, FVector(0, 0, 58 * S), 12 * S, Accent, 8); // inner glow core
+        AddSpherePart(Body, FVector(0, 0, 48 * S), 34 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(24 * S, 14 * S, 62 * S), 22 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(-22 * S, 18 * S, 54 * S), 18 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(-14 * S, -22 * S, 66 * S), 20 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(18 * S, -20 * S, 44 * S), 16 * S * TorsoScale, MutPrimary, 8);
+        AddSpherePart(Body, FVector(0, 0, 58 * S), 12 * S * HeadScale, Accent, 8); // inner glow core
         break;
     }
     default:
     {
-        AddSpherePart(Body, FVector(0, 0, 55 * S), 36 * S, Primary, 8);
+        AddSpherePart(Body, FVector(0, 0, 55 * S), 36 * S * TorsoScale, MutPrimary, 8);
         break;
     }
+    }
+
+    // Sci-Fantasy directive Phase 2: append the mutation attachment set
+    // (spikes / wings / third eye / extra arms / horn crown / glow nodes /
+    // tail fin) onto the baked silhouette.
+    AppendMutationParts(Body, S, *MutationSpec, PatternAccent, MutSecondary);
+
+    // VIS-001 — cute-band eye pair: two small dark eyes ON the head surface of
+    // the headed plans. Review finding (real bug): the first draft placed the
+    // eye centers inside the head spheres (geometric no-op). The fix derives
+    // the eye centers from the ACTUAL mutated head radius (r = authored ×
+    // HeadScale, the same multiplier the plan blocks bake with) and projects
+    // them onto the surface — the eyes bulge ~70% of their radius outward, so
+    // they stay visible across the whole mutation-jitter range, and they track
+    // the head if HeadScale grows. Composes with the mutation attachments
+    // (a ThirdEye sits higher, glow nodes read as pattern accents).
+    if (bCuteBand)
+    {
+        FVector HeadCenter = FVector::ZeroVector;
+        float HeadRadius = 0.0f; // unscaled base radius (pre-S), plan-authored
+        switch (EchoDefinition->BodyPlan)
+        {
+        case EAstrawildBodyPlan::Quadruped: HeadCenter = FVector(52, 0, 78); HeadRadius = 24.0f; break;
+        case EAstrawildBodyPlan::Biped:     HeadCenter = FVector(0, 0, 122); HeadRadius = 22.0f; break;
+        case EAstrawildBodyPlan::Insectoid: HeadCenter = FVector(34, 0, 55); HeadRadius = 17.0f; break;
+        case EAstrawildBodyPlan::Avian:     HeadCenter = FVector(30, 0, 86); HeadRadius = 16.0f; break;
+        default: break; // strange/cool plans keep their authored silhouettes
+        }
+        if (HeadRadius > 0.0f)
+        {
+            const float MutatedR = HeadRadius * HeadScale;      // matches the baked head sphere
+            const float EyeRadius = MutatedR * 0.16f;           // reads at gameplay camera distance
+            const float SurfaceOffset = MutatedR - 0.30f * EyeRadius; // eyes bulge outward
+            const FVector ForwardOutUp(0.62f, 0.55f, 0.30f);    // forward (+X), outward, slightly up
+            const FVector Fwd = ForwardOutUp.GetUnsafeNormal();
+            const FVector Mir(Fwd.X, -Fwd.Y, Fwd.Z);
+            AddSpherePart(Body, (HeadCenter + Fwd * SurfaceOffset) * S, EyeRadius * S, EyeColor, 6);
+            AddSpherePart(Body, (HeadCenter + Mir * SurfaceOffset) * S, EyeRadius * S, EyeColor, 6);
+        }
     }
 
     if (Body.Vertices.Num() > 0)
@@ -448,14 +604,35 @@ void AAstrawildEchoCharacter::UpdateElementGlow()
     // Runs everywhere (local cosmetic): captured Echoes always glow; wild
     // elementals glow only near a player pawn — the active light count stays
     // bounded no matter how many of the 200+ species roam the world.
-    if (!ElementGlowLight || !EchoDefinition || EchoDefinition->Element == EAstrawildElementType::None || IsDefeated())
+    if (!ElementGlowLight)
     {
-        if (ElementGlowLight)
-        {
-            ElementGlowLight->SetIntensity(0.0f);
-        }
         return;
     }
+
+    // DP-5: an open weak-point window OVERRIDES every glow gate below — the
+    // existing element light pulses bright (species tint, or the weakness tint
+    // when the species carries no element of its own) so the 4s window reads
+    // clearly at combat range. No new component type: same light, new state.
+    if (bWeakPointExposed && !IsDefeated())
+    {
+        const bool bHasOwnElement = IsValid(EchoDefinition) && EchoDefinition->Element != EAstrawildElementType::None;
+        const EAstrawildElementType TintElement = bHasOwnElement
+            ? EchoDefinition->Element
+            : (IsValid(EchoDefinition) ? EchoDefinition->WeaknessElement : EAstrawildElementType::None);
+        ElementGlowLight->SetLightColor(FAstrawildVfxPalette::GetElementTint(TintElement));
+        ElementGlowLight->SetIntensity(EchoWeakPointGlowIntensity);
+        return;
+    }
+
+    if (!EchoDefinition || EchoDefinition->Element == EAstrawildElementType::None || IsDefeated())
+    {
+        ElementGlowLight->SetIntensity(0.0f);
+        return;
+    }
+
+    // Window just closed: restore the steady species tint (the pulse may have
+    // swapped it) before the normal gates decide the intensity below.
+    ElementGlowLight->SetLightColor(FAstrawildVfxPalette::GetElementTint(EchoDefinition->Element));
 
     if (bCaptured)
     {
@@ -520,6 +697,12 @@ AAstrawildEchoCharacter::AAstrawildEchoCharacter()
     // Production V2 Batch 2: element identity light — dark until the glow update
     // enables it for party members / nearby wild elementals (light budget stays tiny).
     ElementGlowLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("ElementGlowLight"));
+
+    // SCP Phase 9: sanity/illness simulation (server ticks, replicated state).
+    SanityComponent = CreateDefaultSubobject<UAstrawildCreatureSanityComponent>(TEXT("Sanity"));
+
+    // SCP Phase 5: riding contract (rider attach + input-driven movement).
+    MountComponent = CreateDefaultSubobject<UAstrawildMountComponent>(TEXT("Mount"));
     ElementGlowLight->SetupAttachment(GetCapsuleComponent());
     ElementGlowLight->SetCastShadows(false);
     ElementGlowLight->SetIntensity(0.0f);
@@ -537,6 +720,8 @@ void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(AAstrawildEchoCharacter, ActiveCommand);
     DOREPLIFETIME(AAstrawildEchoCharacter, OwnerPlayerId);
     DOREPLIFETIME(AAstrawildEchoCharacter, StatusEffects);
+    DOREPLIFETIME(AAstrawildEchoCharacter, AbilityCooldowns);
+    DOREPLIFETIME(AAstrawildEchoCharacter, bWeakPointExposed);
 }
 
 void AAstrawildEchoCharacter::BeginPlay()
@@ -557,6 +742,15 @@ void AAstrawildEchoCharacter::BeginPlay()
 
 void AAstrawildEchoCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    // FCR-1-c fix (H-c3): an echo destroyed while ridden (QuickLoad during a ride,
+    // roster despawn, save-load teardown) used to leave the rider soft-locked —
+    // movement disabled, capsule collision off, no E-dismount target. Force the
+    // mount cleanup BEFORE teardown; the component tolerates an invalid rider.
+    if (MountComponent && MountComponent->IsMounted())
+    {
+        MountComponent->DismountRider();
+    }
+
     UnregisterFromEcosystem();
     Super::EndPlay(EndPlayReason);
 }
@@ -579,6 +773,10 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
     // Needs + bond simulate server-side only (directive §28), throttled by LOD tier.
     if (GetLocalRole() == ROLE_Authority && !IsDefeated())
     {
+        // DP-5: wild-game weak-point window — the server owns the cadence. Only
+        // Large/Huge species ever tick this (fail-closed for everything else).
+        TickWeakPointWindow(DeltaTime);
+
         HandleNeedsDecay(DeltaTime);
 
         // Production V2 (Master Plan §6): party passive auras — captured Echoes
@@ -595,8 +793,35 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
         }
 
         // Batch 3 — Item A: status ticks (DoT + expiry + speed multiplier).
-        const float PreviousSpeedMultiplier = GetStatusSpeedMultiplier();
+        // FCR-1-a fix: capture the PREVIOUS COMBINED multiplier (status x locomotion)
+        // BEFORE the ticks — the old status-only capture compared against a product
+        // that already included the CURRENT locomotion value on both sides, making
+        // zone-crossing speed changes (GDP-2 water species) mathematically invisible.
+        const float PreviousCombinedMultiplier = GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier();
         ApplyStatusTicks(DeltaTime);
+
+        // GDP-1: ability cooldown countdown (0.25s cadence, replicated for HUD readiness).
+        if (!AbilityCooldowns.IsEmpty())
+        {
+            AbilityCooldownAccumulator += DeltaTime;
+            if (AbilityCooldownAccumulator >= 0.25f)
+            {
+                const float Step = AbilityCooldownAccumulator;
+                AbilityCooldownAccumulator = 0.0f;
+                for (TPair<FName, float>& Pair : AbilityCooldowns)
+                {
+                    Pair.Value = FMath::Max(0.0f, Pair.Value - Step);
+                }
+                // Prune finished entries so the map (and its replication) stays tiny.
+                for (auto It = AbilityCooldowns.CreateIterator(); It; ++It)
+                {
+                    if (It->Value <= 0.0f)
+                    {
+                        It.RemoveCurrent();
+                    }
+                }
+            }
+        }
 
         // Batch 3 — Item B: stagger countdown → restore speed + AI state on expiry.
         if (StaggerRemainingSeconds > 0.0f)
@@ -613,14 +838,20 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
                 // not affect it. Without this, a staggered creature stayed at 0 speed.
                 if (UCharacterMovementComponent* Movement = GetCharacterMovement())
                 {
-                    Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetStatusSpeedMultiplier());
+                    Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier());
                 }
             }
         }
 
-        // Recompute walk speed when the combined status multiplier changed (Chill/Shock).
-        const float NewSpeedMultiplier = GetStatusSpeedMultiplier();
-        if (!FMath::IsNearlyEqual(PreviousSpeedMultiplier, NewSpeedMultiplier))
+        // Recompute walk speed when the combined status/locomotion multiplier changed
+        // (Chill/Shock, GDP-2 water species crossing zone borders, and Surge buffs).
+        // FCR-1-c fix: never stomp the MOUNT speed while ridden — the mount component
+        // owns MaxWalk/MaxFly speed for the whole ride (1.25x) and re-applies it on
+        // dismount; the unguarded recompute used to silently revert the ride to base
+        // species speed mid-ride whenever any status/zone multiplier changed.
+        const bool bMounted = MountComponent && MountComponent->IsMounted();
+        const float NewSpeedMultiplier = GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier();
+        if (!bMounted && !FMath::IsNearlyEqual(PreviousCombinedMultiplier, NewSpeedMultiplier))
         {
             if (UCharacterMovementComponent* Movement = GetCharacterMovement())
             {
@@ -669,16 +900,58 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
 
     EchoDefinition = InDefinition;
     CachedStats = InDefinition->BaseStats;
+
+    // DCP-2 (NG+): hostile world scaling. Wild hostiles only — captured party
+    // members and boss actors are untouched (boss choreography stays
+    // canon-tuned; allies scale with the player, not against them).
+    if (InDefinition->bHostileToPlayers && !bCaptured)
+    {
+        if (const AAstrawildGameState* GS = GetWorld() ? GetWorld()->GetGameState<AAstrawildGameState>() : nullptr)
+        {
+            const float NGPlusScale = AAstrawildGameState::ComputeNGPlusHostileScale(GS->NGPlusCycle);
+            if (NGPlusScale > 1.0f)
+            {
+                CachedStats.MaxHealth = FMath::Max(1.0f, CachedStats.MaxHealth * NGPlusScale);
+                CachedStats.AttackPower = CachedStats.AttackPower * NGPlusScale;
+            }
+        }
+    }
+
     CurrentHealth = FMath::Max(1.0f, CachedStats.MaxHealth);
     Trust = FMath::Max(0.0f, Trust);
     InstanceId = OptionalInstanceId.IsValid() ? OptionalInstanceId : FGuid::NewGuid();
+
+    // DP-5: weak-point eligibility is a pure size-class fact — only Large/Huge
+    // wild game exposes (Tiny/Small/Medium never do; bosses use their own
+    // boss-class weak point and never route here).
+    bWeakPointEligible = InDefinition->SizeClass == EAstrawildSizeClass::Large
+        || InDefinition->SizeClass == EAstrawildSizeClass::Huge;
+    bWeakPointExposed = false;
+    WeakPointElapsed = 0.0f;
 
     if (Personality == EAstrawildPersonality::Curious && !bCaptured)
     {
         RollPersonalityFromDefinition();
     }
 
-    GetCharacterMovement()->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed);
+    // FCR-1-a fix (H-a3): every spawn path creates the pawn BEFORE calling this
+    // method, while AutoPossessAI completes inside SpawnActor — the AIController's
+    // OnPossess therefore saw a NULL EchoDefinition (locomotion defaulted Land)
+    // and MOVE_Flying was never applied: all flying species walked. Applying the
+    // movement mode HERE — after the definition exists — is race-free; the
+    // controller-side application remains as a redundant safety net.
+    if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+    {
+        // Include the locomotion multiplier from the start (FCR-1-a H-a2 companion:
+        // a Water species spawning on dry land starts at x0.85, not x1.0).
+        Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed * GetLocomotionSpeedMultiplier());
+        if (GetLocomotionClass() == EAstrawildLocomotionClass::Flying)
+        {
+            Movement->SetMovementMode(MOVE_Flying);
+            // Species speed, not the engine default 600 (audit follow-up).
+            Movement->MaxFlySpeed = FMath::Max(0.0f, CachedStats.MoveSpeed);
+        }
+    }
 
     // Audit C-9 (final run): re-register now that the species is set — BeginPlay
     // registered this Echo before the definition existed, so the population count
@@ -693,6 +966,23 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
     if (!bSkeletalBodyActive)
     {
         BuildProceduralBody();
+    }
+
+    // Sci-Fantasy directive Phase 2: persistent element VFX (BOTH render
+    // paths — opt-in: binds only after the NS_AW_Elem_* systems import; the
+    // element glow light stays the visual floor until then, fail-closed).
+    {
+        const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId);
+        FEchoMutationSpec DeterministicSpec;
+        if (!MutationSpec)
+        {
+            DeterministicSpec = FAstrawildEchoMutator::BuildDeterministicSpec(EchoDefinition);
+            MutationSpec = &DeterministicSpec;
+        }
+        if (MutationSpec)
+        {
+            FAstrawildEchoMutator::ApplyElementVfx(this, *MutationSpec);
+        }
     }
     return true;
 }
@@ -719,12 +1009,37 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
     EchoBodyMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     EchoBodyMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
     // Size-class scale mirrors BodyScaleForSize so Huge/Large/Small species read.
-    const float S = BodyScaleForSize(EchoDefinition->SizeClass);
+    // SCI-Fantasy directive Phase 2: skinned-path mutation — deterministic
+    // whole-body jitter on top of the size-class scale (per-bone skeletal
+    // scaling is deliberately NOT attempted here; documented as an
+    // engine-verification item, never a silent fake).
+    float S = BodyScaleForSize(EchoDefinition->SizeClass);
+    const int32 InstanceSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
+    S *= FAstrawildEchoMutator::ComputeRootScaleJitter(EchoDefinition->DefinitionId, InstanceSeed);
     const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : (60.0f * S);
     EchoBodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
     EchoBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     EchoBodyMesh->SetRelativeScale3D(FVector(S));
     EchoBodyMesh->RegisterComponent();
+
+    // Sci-Fantasy directive Phase 2 amendment: material/theme switching on
+    // the skinned path — dynamic instance of the M_SciFi_* theme master
+    // (parameterized per species) over every material slot. Opt-in /
+    // fail-closed: before import_echo_bases.py lands the masters, the GLB's
+    // own materials stay (ApplyThemeMaterial no-ops honestly).
+    {
+        const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId);
+        FEchoMutationSpec DeterministicSpec;
+        if (!MutationSpec)
+        {
+            DeterministicSpec = FAstrawildEchoMutator::BuildDeterministicSpec(EchoDefinition);
+            MutationSpec = &DeterministicSpec;
+        }
+        if (MutationSpec)
+        {
+            FAstrawildEchoMutator::ApplyThemeMaterial(EchoBodyMesh, EchoDefinition, *MutationSpec);
+        }
+    }
 
     // Warm the locomotion clips + start the idle loop.
     EchoDefinition->IdleAnimation.LoadSynchronous();
@@ -754,6 +1069,11 @@ void AAstrawildEchoCharacter::UpdateSkeletalAnimation()
         EchoBodyMesh->PlayAnimation(Target, true);
         CurrentLoopAnimation = Target;
     }
+    // VIS-001 — personality in the body language: the loop plays livelier for
+    // Energetic/Curious creatures and slower for Lazy ones (presentation only;
+    // no gameplay effect). Applied on the existing cadence tick so a mid-life
+    // personality change (none exists today) would still take effect.
+    EchoBodyMesh->SetPlayRate(GetIdlePlaybackRateForPersonality(Personality));
 }
 
 bool AAstrawildEchoCharacter::InitializeFromDefinitionWithPersonality(UAstrawildEchoDefinition* InDefinition, const EAstrawildPersonality InPersonality, const FGuid& OptionalInstanceId)
@@ -821,16 +1141,26 @@ bool AAstrawildEchoCharacter::HasStatusEffect(const FName StatusId) const
 
 float AAstrawildEchoCharacter::GetStatusSpeedMultiplier() const
 {
-    // Combined multiplicative slow from active statuses (Chill 0.5, Shock 0.3).
+    // Combined multiplicative status effect on speed. Slow effects (Chill 0.5,
+    // Shock 0.3, SprainedAnkle 0.75, hitstop 0.15) multiply below 1.0; GDP-1
+    // Mobility/Surge buffs multiply ABOVE 1.0 (clamped 1.0-2.5 at grant).
+    // FCR-1-a fix: the old filter (only < 1.0) silently no-oped every speed BUFF —
+    // now all non-unit multipliers apply and the product is clamped to a sane
+    // band so a Surge can never stack into an exploit.
     float Multiplier = 1.0f;
     for (const FAstrawildStatusEffect& Effect : StatusEffects)
     {
-        if (Effect.SpeedMultiplier > 0.0f && Effect.SpeedMultiplier < 1.0f)
+        if (Effect.SpeedMultiplier > 0.0f && !FMath::IsNearlyEqual(Effect.SpeedMultiplier, 1.0f))
         {
             Multiplier *= Effect.SpeedMultiplier;
         }
     }
-    return Multiplier;
+    // SCP Phase 9: illness slows stack with combat statuses (SprainedAnkle 0.75).
+    if (SanityComponent)
+    {
+        Multiplier *= SanityComponent->GetSpeedMultiplier();
+    }
+    return FMath::Clamp(Multiplier, 0.05f, 2.5f);
 }
 
 void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
@@ -841,6 +1171,7 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
     }
 
     bool bAnyExpired = false;
+    bool bHealthDecreasedThisTick = false;
     for (int32 i = StatusEffects.Num() - 1; i >= 0; --i)
     {
         FAstrawildStatusEffect& Effect = StatusEffects[i];
@@ -848,6 +1179,13 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
         if (Effect.DamagePerSecond > 0.0f)
         {
             CurrentHealth = FMath::Max(0.0f, CurrentHealth - Effect.DamagePerSecond * DeltaTime);
+            bHealthDecreasedThisTick = true;
+        }
+        // GDP-1: negative DPS = heal over time (Blessing-style restore statuses),
+        // clamped to max health so ward healing can never inflate a creature.
+        else if (Effect.DamagePerSecond < 0.0f && !IsDefeated())
+        {
+            CurrentHealth = FMath::Min(GetMaxHealth(), CurrentHealth - Effect.DamagePerSecond * DeltaTime);
         }
         if (Effect.RemainingSeconds <= 0.0f)
         {
@@ -858,7 +1196,14 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
 
     if (bAnyExpired)
     {
-        OnDamaged.Broadcast(this, CurrentHealth);
+        // FCR-1-a fix (L-a13): a self-healing creature used to BROADCAST OnDamaged
+        // merely because a status expired — the AI's HandleDamaged read that as an
+        // attack and wild self-healers aggroed the nearest player for healing.
+        // Broadcast only when this tick actually REDUCED health (a DoT tick).
+        if (bHealthDecreasedThisTick)
+        {
+            OnDamaged.Broadcast(this, CurrentHealth);
+        }
         if (IsDefeated())
         {
             // DoT can finish a creature — route through the standard defeat pipeline
@@ -875,8 +1220,13 @@ void AAstrawildEchoCharacter::ApplyStatusTicks(const float DeltaTime)
                     if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
                     {
                         const bool bWasHostile = EchoDefinition->bHostileToPlayers;
+                        // FCR-1-d fix (M-d8): a CAPTURED echo dying is player pressure
+                        // (distinct event) — not a skill signal. Wild passives keep the
+                        // EchoDefeated tag; DDA leans IN to help after party losses.
+                        const FNativeGameplayTag DefeatTag = bWasHostile ? TAG_Astrawild_Event_HostileDefeated
+                            : (bCaptured ? TAG_Astrawild_Event_PartyEchoDefeated : TAG_Astrawild_Event_EchoDefeated);
                         EventBus->PublishEvent(
-                            bWasHostile ? TAG_Astrawild_Event_HostileDefeated : TAG_Astrawild_Event_EchoDefeated,
+                            DefeatTag,
                             GetInstigator(),
                             EchoDefinition->DefinitionId,
                             1,
@@ -913,6 +1263,113 @@ bool AAstrawildEchoCharacter::ApplyDamage(const float DamageAmount)
     return ApplyElementalDamage(DamageAmount, EAstrawildElementType::None) > 0.0f;
 }
 
+// --- DP-5: wild-game weak-point windows + weakness-hit readability ---
+
+void AAstrawildEchoCharacter::TickWeakPointWindow(const float DeltaTime)
+{
+    if (!bWeakPointEligible)
+    {
+        return;
+    }
+
+    WeakPointElapsed += DeltaTime;
+    if (bWeakPointExposed)
+    {
+        if (WeakPointElapsed >= EchoWeakPointWindowSeconds)
+        {
+            bWeakPointExposed = false;
+            WeakPointElapsed = 0.0f;
+        }
+    }
+    else if (WeakPointElapsed >= EchoWeakPointPeriodSeconds)
+    {
+        bWeakPointExposed = true;
+        WeakPointElapsed = 0.0f;
+        // The glow pulse itself is local-cosmetic (UpdateElementGlow on every
+        // machine, refreshed by OnRep the moment this replicates).
+        UE_LOG(LogAstrawildAI, Verbose, TEXT("%s exposes a weak point for %.1fs."),
+            *GetName(), EchoWeakPointWindowSeconds);
+    }
+}
+
+void AAstrawildEchoCharacter::OnRep_bWeakPointExposed()
+{
+    // Clients mirror the window the instant it replicates instead of waiting
+    // for the next 1s glow cadence pass.
+    UpdateElementGlow();
+}
+
+void AAstrawildEchoCharacter::NotifyWeaknessHit(const float AppliedDamage)
+{
+    // 1) The Blueprint-consumable multicast (HUD/UMG/audio mods can bind this).
+    OnWeaknessHit.Broadcast(this, AppliedDamage);
+
+    const FText ElementName = IsValid(EchoDefinition)
+        ? UEnum::GetDisplayValueAsText(EchoDefinition->WeaknessElement)
+        : FText::FromString(TEXT("Weakness"));
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Weakness hit on %s: %.1f applied (%s strike, x1.5)."),
+        *GetName(), AppliedDamage, *ElementName.ToString());
+
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // 2) Audio cue: the Sci-Fantasy sound-set vocalization first (opt-in —
+    // the SFXSet_* cues resolve only after the Phase 4 import lands them),
+    // then the ArtPack-bound energy impact sound — the SAME binding the
+    // weapons use (no new /Game/ reference; LoadSynchronous short-circuits
+    // once the asset is resident, matching the weapon impact path).
+    USoundBase* ChosenCue = nullptr;
+    if (IsValid(EchoDefinition))
+    {
+        if (const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId))
+        {
+            const TSoftObjectPtr<USoundBase> Vocal(FSoftObjectPath(
+                FAstrawildEchoMutator::BuildSoundSetCuePath(MutationSpec->SoundSetId, 0)));
+            ChosenCue = Vocal.LoadSynchronous();
+        }
+    }
+    if (!ChosenCue)
+    {
+        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+        ChosenCue = Cue.LoadSynchronous();
+    }
+    if (ChosenCue)
+    {
+        UGameplayStatics::PlaySoundAtLocation(World, ChosenCue, GetActorLocation());
+    }
+
+    // 3) Attacker-facing HUD toast, routed through the established
+    // Notify -> PushNotification path (the same route the DP-4 loadout
+    // toasts ride). The nearest player inside notify range is, by definition,
+    // the attacker in single-player/listen-server play; remote clients can
+    // bind OnWeaknessHit above instead.
+    AAstrawildPlayerController* NearestPC = nullptr;
+    float BestDistanceSq = EchoWeaknessNotifyRadius * EchoWeaknessNotifyRadius;
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get());
+        const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+        if (!PC || !Pawn)
+        {
+            continue;
+        }
+        const float DistanceSq = FVector::DistSquared(GetActorLocation(), Pawn->GetActorLocation());
+        if (DistanceSq < BestDistanceSq)
+        {
+            BestDistanceSq = DistanceSq;
+            NearestPC = PC;
+        }
+    }
+    if (NearestPC)
+    {
+        NearestPC->Notify(FText::FromString(FString::Printf(
+            TEXT("WEAKNESS HIT — %s strikes true (x1.5 damage)."), *ElementName.ToString())));
+    }
+}
+
 float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, const EAstrawildElementType InElement)
 {
     if (GetLocalRole() != ROLE_Authority || DamageAmount <= 0.0f || IsDefeated())
@@ -922,12 +1379,33 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
 
     float Damage = DamageAmount;
 
+    // GDP-1: defensive abilities (Photon Veil / Stone Skin / Glacial Wall / Shell
+    // statuses) halve incoming damage while active — a real, readable shield.
+    if (HasStatusEffect(TEXT("Shell")))
+    {
+        Damage *= 0.5f;
+    }
+
+    // DP-3: party element resonance (Aurora Veil / Steam Veil rows) — a captured
+    // party echo standing in a two-element party shrugs a fraction of every hit.
+    if (bCaptured)
+    {
+        const FAstrawildPartyResonance Resonance = GetOwnerPartyResonance();
+        if (Resonance.IsValid())
+        {
+            Damage *= (1.0f - FMath::Clamp(Resonance.DamageMitigation, 0.0f, 0.5f));
+        }
+    }
+
     // Elemental interactions (directive §9): weakness x1.5, matching element resisted.
+    // DP-5: the weakness branch is now READABLE — see NotifyWeaknessHit below.
+    bool bWeaknessHit = false;
     if (IsValid(EchoDefinition))
     {
         if (InElement != EAstrawildElementType::None && InElement == EchoDefinition->WeaknessElement)
         {
             Damage *= 1.5f;
+            bWeaknessHit = true;
         }
         else if (InElement != EAstrawildElementType::None && InElement == EchoDefinition->Element)
         {
@@ -935,7 +1413,15 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
         }
     }
 
-    const float MitigatedDamage = FMath::Max(0.0f, Damage - CachedStats.Defense);
+    // DP-5: wild-game weak-point window — direct hits (this path only; DoT
+    // ticks route through ApplyStatusTicks and never see this) land x1.5
+    // BEFORE the defense subtraction, stacking with the weakness multiplier.
+    if (bWeakPointExposed)
+    {
+        Damage *= EchoWeakPointDamageMultiplier;
+    }
+
+    const float MitigatedDamage = FMath::Max(0.0f, Damage - GetDefense());
     if (MitigatedDamage <= 0.0f)
     {
         return 0.0f;
@@ -943,6 +1429,13 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
 
     CurrentHealth = FMath::Max(0.0f, CurrentHealth - MitigatedDamage);
     OnDamaged.Broadcast(this, CurrentHealth);
+
+    // DP-5: weakness-hit readability — multicast + toast + impact cue + log,
+    // fired only when the x1.5 branch actually landed damage.
+    if (bWeaknessHit)
+    {
+        NotifyWeaknessHit(MitigatedDamage);
+    }
 
     // Batch 3 — Item A: apply the element's status effect (Burn/Chill/Poison/Shock)
     // through the shared factory. One vocabulary for player weapons and Echo attacks.
@@ -970,6 +1463,90 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
         // Loot + events (server-side).
         if (IsValid(EchoDefinition))
         {
+            // Final-audit (AUD-3 loot note): species DefeatLoot was authored across
+            // the whole roster (ContentLibrary + bestiary + production) but had NO
+            // runtime consumer — killing creatures yielded nothing. The nearest
+            // living player (the killer, single-player-first) now collects it; the
+            // grant goes through AddItem so genuine ItemCollected quests advance.
+            // FCR-1-a fix (H-a7): the same killer lookup feeds PARTY XP — every
+            // healthy party echo of the killer in a generous combat radius shares
+            // kill XP scaled to the defeated creature's max health (growth loop:
+            // fight -> XP -> level -> abilities unlock).
+            if (!bCaptured)
+            {
+                AAstrawildPlayerCharacter* Killer = nullptr;
+                if (UWorld* World = GetWorld())
+                {
+                    float BestDistSq = FMath::Square(2500.0f);
+                    for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
+                    {
+                        AAstrawildPlayerCharacter* Player = *It;
+                        if (!Player || !Player->IsAlive())
+                        {
+                            continue;
+                        }
+                        const float DistSq = FVector::DistSquared(GetActorLocation(), Player->GetActorLocation());
+                        if (DistSq < BestDistSq)
+                        {
+                            BestDistSq = DistSq;
+                            Killer = Player;
+                        }
+                    }
+
+                    if (Killer)
+                    {
+                        const FName KillerId = Killer->GetFName();
+                        const float KillXP = FMath::Max(5.0f, GetMaxHealth() * 0.15f);
+                        for (TActorIterator<AAstrawildEchoCharacter> XpIt(World); XpIt; ++XpIt)
+                        {
+                            AAstrawildEchoCharacter* PartyEcho = *XpIt;
+                            if (PartyEcho && PartyEcho != this && PartyEcho->bCaptured &&
+                                !PartyEcho->IsDefeated() && PartyEcho->OwnerPlayerId == KillerId &&
+                                FVector::DistSquared(GetActorLocation(), PartyEcho->GetActorLocation()) < FMath::Square(4000.0f))
+                            {
+                                PartyEcho->AddExperience(KillXP);
+                            }
+                        }
+                    }
+                }
+
+                if (Killer && Killer->InventoryComponent && EchoDefinition->DefeatLoot.Num() > 0)
+                {
+                    // FPP-1: kills announce their loot — drops used to land silently
+                    // (rare-kill rewards were indistinguishable from nothing).
+                    FString LootLine;
+                    if (UWorld* LootWorld = GetWorld())
+                    {
+                        if (UAstrawildItemRegistrySubsystem* Registry =
+                                LootWorld->GetSubsystem<UAstrawildItemRegistrySubsystem>())
+                        {
+                            for (const FAstrawildItemStack& Drop : EchoDefinition->DefeatLoot)
+                            {
+                                if (Drop.IsValid())
+                                {
+                                    Killer->InventoryComponent->AddItem(Drop.ItemId, Drop.Quantity);
+                                    const UAstrawildItemDefinition* ItemDef = Registry->FindItem(Drop.ItemId);
+                                    if (!LootLine.IsEmpty())
+                                    {
+                                        LootLine += TEXT(", ");
+                                    }
+                                    LootLine += FString::Printf(TEXT("%dx %s"), Drop.Quantity,
+                                        ItemDef ? *ItemDef->DisplayName.ToString() : *Drop.ItemId.ToString());
+                                }
+                            }
+                        }
+                    }
+                    if (!LootLine.IsEmpty())
+                    {
+                        if (AAstrawildPlayerController* KillerPC = Cast<AAstrawildPlayerController>(Killer->GetController()))
+                        {
+                            KillerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                                TEXT("Loot: %s"), *LootLine)));
+                        }
+                    }
+                }
+            }
+
             if (UAstrawildEcosystemSubsystem* Ecosystem = GetEcosystem())
             {
                 Ecosystem->OnEchoDefeated(this);
@@ -980,8 +1557,11 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
                 if (UAstrawildEventBusSubsystem* EventBus = World->GetSubsystem<UAstrawildEventBusSubsystem>())
                 {
                     const bool bWasHostile = IsValid(EchoDefinition) && EchoDefinition->bHostileToPlayers;
+                    // FCR-1-d fix (M-d8): same party-pressure routing as the DoT path.
+                    const FNativeGameplayTag DefeatTag = bWasHostile ? TAG_Astrawild_Event_HostileDefeated
+                        : (bCaptured ? TAG_Astrawild_Event_PartyEchoDefeated : TAG_Astrawild_Event_EchoDefeated);
                     EventBus->PublishEvent(
-                        bWasHostile ? TAG_Astrawild_Event_HostileDefeated : TAG_Astrawild_Event_EchoDefeated,
+                        DefeatTag,
                         GetInstigator() ? GetInstigator() : nullptr,
                         EchoDefinition->DefinitionId,
                         1,
@@ -1002,13 +1582,26 @@ float AAstrawildEchoCharacter::GetHealthFraction() const
 
 float AAstrawildEchoCharacter::GetMaxHealth() const
 {
-    // +10% per level above 1 (growth, directive §4).
-    return FMath::Max(1.0f, CachedStats.MaxHealth * (1.0f + 0.1f * (Level - 1)));
+    // +10% per level above 1 (growth, directive §4); Sturdy traits stack on top.
+    // FCR-1-d (H-d5): health IV (+1% per point, 0-31) — rolled at breeding.
+    const float TraitHealth = UAstrawildGeneticsLibrary::ComputeTraitHealthMultiplier(InstanceTraits);
+    const float IvHealth = UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.X);
+    return FMath::Max(1.0f, CachedStats.MaxHealth * (1.0f + 0.1f * (Level - 1)) * TraitHealth * IvHealth);
 }
 
 float AAstrawildEchoCharacter::GetAttackPower() const
 {
-    return CachedStats.AttackPower * (1.0f + 0.08f * (Level - 1));
+    const float TraitAttack = UAstrawildGeneticsLibrary::ComputeTraitAttackMultiplier(InstanceTraits);
+    const float IvAttack = UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.Y);
+    return CachedStats.AttackPower * (1.0f + 0.08f * (Level - 1)) * TraitAttack * IvAttack;
+}
+
+float AAstrawildEchoCharacter::GetDefense() const
+{
+    // FCR-1-d (H-d5): defense IV — consumed at the elemental mitigation site
+    // (the old pipeline read CachedStats.Defense raw, so defense IVs did nothing).
+    const float IvDefense = UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.Z);
+    return CachedStats.Defense * IvDefense;
 }
 
 float AAstrawildEchoCharacter::ComputeCaptureChance() const
@@ -1044,7 +1637,16 @@ float AAstrawildEchoCharacter::ComputeCaptureChance() const
         SituationalBonus += 0.05f;
     }
 
-    return FMath::Clamp(Base + WeakenBonus + TrustBonus + SituationalBonus, 0.02f, 0.95f);
+    // FCR-1-d fix (H-d6): Trait_Lucky is live — its authored +10% capture bonus
+    // was never folded into the roll (GetTraitCaptureBonus had zero combat
+    // callers), making the trait pure flavor.
+    float LuckyBonus = 0.0f;
+    for (const FName& TraitId : InstanceTraits)
+    {
+        LuckyBonus += UAstrawildGeneticsLibrary::GetTraitCaptureBonus(TraitId);
+    }
+
+    return FMath::Clamp(Base + WeakenBonus + TrustBonus + SituationalBonus + LuckyBonus, 0.02f, 0.95f);
 }
 
 bool AAstrawildEchoCharacter::IsCurrentlyActiveTime() const
@@ -1100,12 +1702,37 @@ float AAstrawildEchoCharacter::GetAggroRadiusMultiplier() const
 
 float AAstrawildEchoCharacter::GetWorkSpeedMultiplier() const
 {
+    float PersonalityMultiplier = 1.0f;
     switch (Personality)
     {
-    case EAstrawildPersonality::Lazy:      return 0.6f;
-    case EAstrawildPersonality::Energetic: return 1.4f;
-    case EAstrawildPersonality::Loyal:     return 1.15f;
-    default: return 1.0f;
+    case EAstrawildPersonality::Lazy:      PersonalityMultiplier = 0.6f; break;
+    case EAstrawildPersonality::Energetic: PersonalityMultiplier = 1.4f; break;
+    case EAstrawildPersonality::Loyal:     PersonalityMultiplier = 1.15f; break;
+    default: break;
+    }
+
+    // SCP Phase 10: Artisan traits multiply work output on top of personality.
+    return PersonalityMultiplier * UAstrawildGeneticsLibrary::ComputeTraitWorkMultiplier(InstanceTraits);
+}
+
+void AAstrawildEchoCharacter::SetInstanceTraits(const TArray<FName>& InTraits)
+{
+    // Only the four slots are meaningful; duplicates inherit by design.
+    InstanceTraits = InTraits;
+    if (InstanceTraits.Num() > 4)
+    {
+        InstanceTraits.SetNum(4);
+    }
+
+    // Swift traits speed the base movement budget (speed recompute reads
+    // CachedStats on the next multiplier change or restore — force it now).
+    // FCR-1-d (H-d5): the speed IV rides along (+1% per point).
+    if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+    {
+        Movement->MaxWalkSpeed = FMath::Max(0.0f, CachedStats.MoveSpeed *
+            UAstrawildGeneticsLibrary::ComputeTraitSpeedMultiplier(InstanceTraits) *
+            UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.W) *
+            GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier());
     }
 }
 
@@ -1175,10 +1802,20 @@ float AAstrawildEchoCharacter::Feed(const FName FoodItemId, const float FeedValu
     const float Multiplier = bPreferred ? 2.0f : 1.0f;
     const float TrustGain = FMath::Max(0.0f, FeedValue) * Multiplier;
 
+    const float OldBond = Bond;
     Trust += TrustGain;
     Bond = FMath::Clamp(Bond + TrustGain * 0.25f, 0.0f, 100.0f);
     Needs.Hunger = FMath::Clamp(Needs.Hunger + 30.0f * Multiplier, 0.0f, 100.0f);
     Needs.Mood = FMath::Clamp(Needs.Mood + 10.0f * Multiplier, 0.0f, 100.0f);
+
+    // FPP-1: bond gate crossings (25 ride / 40 evolve) announce themselves —
+    // the gates were silent walls the roster only revealed on open.
+    NotifyBondMilestoneIfCrossed(OldBond);
+
+    // FCR-1-a fix (H-a7): feeding now also grows the echo — AddExperience previously
+    // had ZERO callers, so every echo was frozen at level 1 and 38 of the 44 ability
+    // templates (UnlockLevel >= 2) were permanently unreachable. Care feeds growth.
+    AddExperience(10.0f * Multiplier);
 
     if (UWorld* World = GetWorld())
     {
@@ -1276,7 +1913,10 @@ void AAstrawildEchoCharacter::HandleNeedsDecay(const float DeltaSeconds)
     // Bond grows slowly while traveling with the player (directive §4 Relationship).
     if (bCaptured)
     {
+        const float OldTravelBond = Bond;
         Bond = FMath::Clamp(Bond + 0.2f * InWorldHoursThisTick, 0.0f, 100.0f);
+        // FPP-1: same milestone announcement for the slow travel growth.
+        NotifyBondMilestoneIfCrossed(OldTravelBond);
     }
 
     // Critical needs injure the creature (soft pressure, directive §11 philosophy).
@@ -1312,6 +1952,19 @@ FAstrawildEchoInstanceV2 AAstrawildEchoCharacter::ToSaveDataV2() const
     Data.Needs = Needs;
     Data.LastKnownTransform = GetActorTransform();
     Data.bInParty = bCaptured; // Roster membership == captured in v2 schema.
+    // Final-audit M-2: health at save time — a load must not free-heal the party
+    // (defeated echoes used to revive on reload).
+    Data.CurrentHealth = FMath::Max(0.0f, CurrentHealth);
+    // SCP Phase 9: sanity + illness persist with the party.
+    if (SanityComponent)
+    {
+        SanityComponent->ExportForSave(Data.Sanity, Data.IllnessId);
+    }
+    // SCP Phase 10: breeding traits persist with the instance.
+    Data.Traits = InstanceTraits;
+    // FCR-1-d (H-d5): IVs ride the instance payload (additive; pre-SCP-10 saves
+    // default to zero = neutral multipliers).
+    Data.IVs = InstanceIVs;
     return Data;
 }
 
@@ -1328,15 +1981,76 @@ bool AAstrawildEchoCharacter::FromSaveDataV2(const FAstrawildEchoInstanceV2& Dat
     Experience = FMath::Max(0.0f, Data.Experience);
     Trust = FMath::Max(0.0f, Data.Trust);
     Bond = FMath::Clamp(Data.Bond, 0.0f, 100.0f);
-    Needs = Data.Needs;
+
+    // Final-audit M-4: NaN-safe needs (FMath::Clamp passes NaN through verbatim —
+    // a crafted save must not poison the needs-decay tick) + transform guard (the
+    // player path has guarded this exact crash class since FR-2; the echo path
+    // applied a crafted transform unchecked).
+    const auto SafeNeed = [](const float Value)
+    {
+        return FMath::IsFinite(Value) ? FMath::Clamp(Value, 0.0f, 100.0f) : 100.0f;
+    };
+    Needs.Hunger = SafeNeed(Data.Needs.Hunger);
+    Needs.Energy = SafeNeed(Data.Needs.Energy);
+    Needs.Mood = SafeNeed(Data.Needs.Mood);
+
     bCaptured = Data.bInParty;
-    SetActorTransform(Data.LastKnownTransform);
+    if (Data.LastKnownTransform.ContainsNaN() || Data.LastKnownTransform.Equals(FTransform::Identity))
+    {
+        // Keep the spawn-ring placement — a crafted/garbage transform is refused.
+        UE_LOG(LogAstrawildAI, Warning, TEXT("Echo restore: rejected non-finite/identity transform (kept ring spawn)."));
+    }
+    else
+    {
+        SetActorTransform(Data.LastKnownTransform);
+    }
 
     if (IsValid(EchoDefinition))
     {
         CachedStats = EchoDefinition->BaseStats;
-        CurrentHealth = FMath::Min(FMath::Max(1.0f, CurrentHealth > 0.0f ? CurrentHealth : GetMaxHealth()), GetMaxHealth());
+        // Final-audit M-2: restore saved health when the field carries one
+        // (legacy 0 = the pre-audit full-heal behavior, kept for old saves);
+        // clamp to [1, MaxHealth] — no free revive, no overheal.
+        if (FMath::IsFinite(Data.CurrentHealth) && Data.CurrentHealth > 0.0f)
+        {
+            CurrentHealth = FMath::Clamp(Data.CurrentHealth, 1.0f, GetMaxHealth());
+        }
+        else
+        {
+            CurrentHealth = FMath::Min(FMath::Max(1.0f, CurrentHealth > 0.0f ? CurrentHealth : GetMaxHealth()), GetMaxHealth());
+        }
         GetCharacterMovement()->MaxWalkSpeed = CachedStats.MoveSpeed;
+    }
+    // SCP Phase 9: sanity + illness restore (sanitized import; legacy saves
+    // without the fields keep the healthy 100 / no-illness defaults).
+    // FCR-1-c fix: the legacy sentinel is 0.0f (finite!) — the old IsFinite gate
+    // mapped every pre-SCP save to Sanity 0 (Depressed + immediate illness risk).
+    // A positive value restores; anything else (0 / NaN / negative) is legacy → 100.
+    if (SanityComponent)
+    {
+        SanityComponent->ImportFromSave(Data.Sanity > 0.0f ? Data.Sanity : 100.0f, Data.IllnessId);
+    }
+    // SCP Phase 10: restore breeding traits + reapply their stat effects
+    // (only known trait ids survive — edited saves cannot inject effects).
+    // FCR-1-d (H-d5): IVs round-trip too, sanitized component-wise to [0, 31]
+    // (NaN/negative components read as 0 — a corrupt save cannot mint stats).
+    {
+        const FVector4 SafeIVs(
+            FMath::Clamp(FMath::IsFinite(Data.IVs.X) ? Data.IVs.X : 0.0f, 0.0f, 31.0f),
+            FMath::Clamp(FMath::IsFinite(Data.IVs.Y) ? Data.IVs.Y : 0.0f, 0.0f, 31.0f),
+            FMath::Clamp(FMath::IsFinite(Data.IVs.Z) ? Data.IVs.Z : 0.0f, 0.0f, 31.0f),
+            FMath::Clamp(FMath::IsFinite(Data.IVs.W) ? Data.IVs.W : 0.0f, 0.0f, 31.0f));
+        InstanceIVs = SafeIVs;
+        TArray<FName> SafeTraits;
+        const TArray<FName>& Pool = UAstrawildGeneticsLibrary::GetTraitPool();
+        for (const FName& Candidate : Data.Traits)
+        {
+            if (Pool.Contains(Candidate))
+            {
+                SafeTraits.Add(Candidate);
+            }
+        }
+        SetInstanceTraits(SafeTraits);
     }
     return true;
 }
@@ -1446,4 +2160,607 @@ bool AAstrawildEchoCharacter::HasPlayerPartyPassive(const UWorld* World, const A
         }
     }
     return false;
+}
+
+// ===========================================================================
+// DP-3 — party element resonance (15-pair static table)
+// ===========================================================================
+
+namespace
+{
+    /** One authored resonance row; A < B in canon element order (table order IS the dominance order). */
+    struct FResonanceRow
+    {
+        EAstrawildElementType A;
+        EAstrawildElementType B;
+        const TCHAR* Id;
+        const TCHAR* Name;
+        float DamageMitigation;
+        float AbilityPowerBonus;
+        float StatusPotencyBonus;
+    };
+
+    // DP-3 — the element-pair resonance canon: 6 elements -> 15 unordered pairs,
+    // one modest named bonus each (5 mitigation / 5 ability power / 5 status
+    // potency — the same 8-12% band as the four species passives). The table is
+    // ordered by canon element order (Light, Ash, Flora, Frost, Pulse, Ember);
+    // with three distinct elements standing together the FIRST pair present
+    // wins, so a party always resolves exactly one deterministic resonance.
+    const FResonanceRow GPartyResonanceTable[] = {
+        { EAstrawildElementType::Light, EAstrawildElementType::Ash,   TEXT("Resonance_Prismfall"),       TEXT("Prismfall"),       0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Flora, TEXT("Resonance_Sunbloom"),        TEXT("Sunbloom"),        0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Frost, TEXT("Resonance_AuroraVeil"),      TEXT("Aurora Veil"),     0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Pulse, TEXT("Resonance_Overcharge"),      TEXT("Overcharge"),      0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Light, EAstrawildElementType::Ember, TEXT("Resonance_Dawnfire"),        TEXT("Dawnfire"),        0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Flora, TEXT("Resonance_VerdantLoam"),     TEXT("Verdant Loam"),    0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Frost, TEXT("Resonance_Rimefield"),       TEXT("Rimefield"),       0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Pulse, TEXT("Resonance_MagnetiteShell"),  TEXT("Magnetite Shell"), 0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Ash,   EAstrawildElementType::Ember, TEXT("Resonance_BankedCoals"),     TEXT("Banked Coals"),    0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Flora, EAstrawildElementType::Frost, TEXT("Resonance_HoarfrostBloom"),  TEXT("Hoarfrost Bloom"), 0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Flora, EAstrawildElementType::Pulse, TEXT("Resonance_GalvanicBloom"),   TEXT("Galvanic Bloom"),  0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Flora, EAstrawildElementType::Ember, TEXT("Resonance_Wildfire"),        TEXT("Wildfire"),        0.00f, 0.00f, 0.10f },
+        { EAstrawildElementType::Frost, EAstrawildElementType::Pulse, TEXT("Resonance_Superconductor"),  TEXT("Superconductor"),  0.00f, 0.10f, 0.00f },
+        { EAstrawildElementType::Frost, EAstrawildElementType::Ember, TEXT("Resonance_SteamVeil"),       TEXT("Steam Veil"),      0.08f, 0.00f, 0.00f },
+        { EAstrawildElementType::Pulse, EAstrawildElementType::Ember, TEXT("Resonance_PlasmaArc"),       TEXT("Plasma Arc"),      0.00f, 0.10f, 0.00f },
+    };
+
+    FAstrawildPartyResonance MakeResonance(const FResonanceRow& Row)
+    {
+        FAstrawildPartyResonance Resonance;
+        Resonance.ResonanceId = Row.Id;
+        Resonance.DisplayName = FText::FromString(Row.Name);
+        Resonance.DamageMitigation = Row.DamageMitigation;
+        Resonance.AbilityPowerBonus = Row.AbilityPowerBonus;
+        Resonance.StatusPotencyBonus = Row.StatusPotencyBonus;
+        return Resonance;
+    }
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::ResolvePartyResonance(const EAstrawildElementType ElementA,
+    const EAstrawildElementType ElementB)
+{
+    // Symmetric pure lookup — the pair order never matters, None never resonates.
+    if (ElementA == EAstrawildElementType::None || ElementB == EAstrawildElementType::None ||
+        ElementA == ElementB)
+    {
+        return FAstrawildPartyResonance();
+    }
+    for (const FResonanceRow& Row : GPartyResonanceTable)
+    {
+        if ((Row.A == ElementA && Row.B == ElementB) || (Row.A == ElementB && Row.B == ElementA))
+        {
+            return MakeResonance(Row);
+        }
+    }
+    return FAstrawildPartyResonance();
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::ResolvePartyResonanceForElements(
+    const TArray<EAstrawildElementType>& PartyElements)
+{
+    // Distinct elements only (duplicates never form a pair); the FIRST row in
+    // canon table order with both elements present is the dominant resonance —
+    // the outcome is deterministic regardless of input order.
+    TArray<EAstrawildElementType> Distinct;
+    for (const EAstrawildElementType Element : PartyElements)
+    {
+        if (Element != EAstrawildElementType::None && !Distinct.Contains(Element))
+        {
+            Distinct.Add(Element);
+        }
+    }
+    if (Distinct.Num() < 2)
+    {
+        return FAstrawildPartyResonance();
+    }
+    for (const FResonanceRow& Row : GPartyResonanceTable)
+    {
+        if (Distinct.Contains(Row.A) && Distinct.Contains(Row.B))
+        {
+            return MakeResonance(Row);
+        }
+    }
+    return FAstrawildPartyResonance();
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::GetActivePartyResonance(const UWorld* World,
+    const AActor* Player, const float Radius)
+{
+    // Static party query, mirroring HasPlayerPartyPassive exactly: captured,
+    // healthy Echoes of this player within Radius contribute their element.
+    // Null-world fail-closed (invalid row) so tests and menu contexts are safe.
+    if (!World || !Player)
+    {
+        return FAstrawildPartyResonance();
+    }
+    const FName PlayerId = Player->GetFName();
+    if (PlayerId.IsNone())
+    {
+        return FAstrawildPartyResonance();
+    }
+    TArray<EAstrawildElementType> PartyElements;
+    for (TActorIterator<AAstrawildEchoCharacter> It(const_cast<UWorld*>(World)); It; ++It)
+    {
+        const AAstrawildEchoCharacter* Echo = *It;
+        if (!Echo || !Echo->bCaptured || Echo->IsDefeated() || !IsValid(Echo->EchoDefinition))
+        {
+            continue;
+        }
+        if (Echo->OwnerPlayerId != PlayerId)
+        {
+            continue;
+        }
+        if (FVector::Dist(Echo->GetActorLocation(), Player->GetActorLocation()) > Radius)
+        {
+            continue;
+        }
+        if (Echo->EchoDefinition->Element != EAstrawildElementType::None &&
+            !PartyElements.Contains(Echo->EchoDefinition->Element))
+        {
+            PartyElements.Add(Echo->EchoDefinition->Element);
+        }
+    }
+    return ResolvePartyResonanceForElements(PartyElements);
+}
+
+FAstrawildPartyResonance AAstrawildEchoCharacter::GetOwnerPartyResonance() const
+{
+    // Per-echo convenience for the damage/ability hooks: an unowned or wild
+    // Echo never carries a resonance (fail-closed, no world scan needed then).
+    if (!bCaptured || OwnerPlayerId == NAME_None)
+    {
+        return FAstrawildPartyResonance();
+    }
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return FAstrawildPartyResonance();
+    }
+    for (TActorIterator<AAstrawildPlayerCharacter> It(World); It; ++It)
+    {
+        const AAstrawildPlayerCharacter* Player = *It;
+        if (Player && Player->GetFName() == OwnerPlayerId)
+        {
+            return GetActivePartyResonance(World, Player);
+        }
+    }
+    return FAstrawildPartyResonance();
+}
+
+// ===========================================================================
+// GDP-1 — Echo ability engine
+// ===========================================================================
+
+TArray<FName> AAstrawildEchoCharacter::GetAllAbilityIds() const
+{
+    return UAstrawildAbilityLibrary::GetAbilityIdsForSpecies(EchoDefinition);
+}
+
+TArray<FName> AAstrawildEchoCharacter::GetKnownAbilityIds() const
+{
+    TArray<FName> Known;
+    if (!IsValid(EchoDefinition))
+    {
+        return Known;
+    }
+    for (const FName& Id : GetAllAbilityIds())
+    {
+        const FAstrawildAbilityData* Data = UAstrawildAbilityLibrary::FindAbility(Id);
+        if (Data && Data->UnlockLevel <= Level)
+        {
+            Known.Add(Id);
+        }
+    }
+    return Known;
+}
+
+bool AAstrawildEchoCharacter::IsAbilityReady(FName AbilityId) const
+{
+    return GetAbilityCooldownRemaining(AbilityId) <= 0.0f && GetKnownAbilityIds().Contains(AbilityId);
+}
+
+float AAstrawildEchoCharacter::GetAbilityCooldownRemaining(FName AbilityId) const
+{
+    const float* Remaining = AbilityCooldowns.Find(AbilityId);
+    return Remaining ? FMath::Max(0.0f, *Remaining) : 0.0f;
+}
+
+FName AAstrawildEchoCharacter::PickCombatAbility(const float DistanceToTarget, const bool bWantsHeal,
+    const bool bWantsShield) const
+{
+    if (!IsValid(EchoDefinition))
+    {
+        return NAME_None;
+    }
+    return UAstrawildAbilityLibrary::ChooseAbilityForCombat(
+        GetKnownAbilityIds(), AbilityCooldowns, Level, DistanceToTarget, bWantsHeal, bWantsShield);
+}
+
+bool AAstrawildEchoCharacter::ExecuteAbility(const FName AbilityId, AActor* TargetActor)
+{
+    // Fail-closed deny path — every denial is logged Verbose, never crashes,
+    // never mutes the caller (AI just resumes melee next think).
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (no authority): %s"), *AbilityId.ToString());
+        return false;
+    }
+
+    const FAstrawildAbilityData* Data = UAstrawildAbilityLibrary::FindAbility(AbilityId);
+    if (!Data)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (unknown id): %s"), *AbilityId.ToString());
+        return false;
+    }
+    if (Data->UnlockLevel > Level)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (level %d < %d): %s"),
+            Level, Data->UnlockLevel, *AbilityId.ToString());
+        return false;
+    }
+    if (GetAbilityCooldownRemaining(AbilityId) > 0.0f)
+    {
+        UE_LOG(LogAstrawild, Verbose, TEXT("ExecuteAbility denied (cooling down): %s"), *AbilityId.ToString());
+        return false;
+    }
+
+    // DP-3: the owner's party resonance rides every cast of a captured party
+    // echo (ability power on offensive/restore, potency on debuffs); wild
+    // echoes and solo companions resolve no row and cast unmodified.
+    const FAstrawildPartyResonance Resonance = bCaptured ? GetOwnerPartyResonance() : FAstrawildPartyResonance();
+
+    UWorld* World = GetWorld();
+    if (!World || IsDefeated())
+    {
+        return false;
+    }
+
+    bool bResolved = false;
+
+    switch (Data->Category)
+    {
+    case EAstrawildAbilityCategory::Offensive:
+    {
+        // Level-scaled bolt down the projectile pipeline (homing when we have a target).
+        const float ScaledPower = Data->Power * (1.0f + 0.05f * FMath::Max(0, Level - 1))
+            * (1.0f + FMath::Clamp(Resonance.AbilityPowerBonus, 0.0f, 0.5f));
+        FVector Direction = GetActorForwardVector();
+        if (TargetActor)
+        {
+            Direction = (TargetActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+        }
+        FActorSpawnParameters Params;
+        Params.Owner = this;
+        Params.Instigator = this;
+        AAstrawildProjectileActor* Bolt = World->SpawnActor<AAstrawildProjectileActor>(
+            AAstrawildProjectileActor::StaticClass(),
+            GetActorLocation() + Direction * 90.0f + FVector(0, 0, 40.0f),
+            Direction.Rotation(), Params);
+        if (Bolt)
+        {
+            // FCR-1-a fixes (M-a9 + L-a15): the AUTHORED status payload rides the
+            // bolt, and the bolt's LETIME derives from the ability's range (the
+            // old fixed 3.0s x 3200uu flew 9600uu — far past any authored range).
+            const float FlightSpeed = 3200.0f;
+            const float Lifetime = FMath::Clamp(Data->Range / FlightSpeed, 0.35f, 3.0f);
+            Bolt->SetStatusPayload(Data->StatusId, Data->StatusSeconds, Data->StatusSpeedMultiplier,
+                FMath::Max(0.0f, Data->Power * 0.25f));
+            Bolt->LaunchFromWeapon(Direction, ScaledPower, Data->Element, this, FlightSpeed,
+                0.45f, Lifetime, TargetActor, 2400.0f);
+            bResolved = true;
+        }
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Debuff:
+    {
+        // FCR-1-a fix (H-a5): the debuff now also lands on PLAYER targets. The old
+        // echo-only cast made every AI debuff pick silently fail against the player
+        // (the wild AI's PRIMARY target), with a 4Hz retry loop and no cooldown.
+        AAstrawildEchoCharacter* TargetEcho = Cast<AAstrawildEchoCharacter>(TargetActor);
+        AAstrawildPlayerCharacter* TargetPlayer = Cast<AAstrawildPlayerCharacter>(TargetActor);
+        const bool bInRange = IsValid(TargetActor) &&
+            FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation()) <= Data->Range;
+        if (bInRange)
+        {
+            FAstrawildStatusEffect Effect;
+            Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Chill");
+            Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
+            Effect.DamagePerSecond = FMath::Max(0.0f, Data->Power);
+            Effect.SpeedMultiplier = FMath::Clamp(Data->StatusSpeedMultiplier, 0.2f, 1.0f);
+            if (Resonance.IsValid() && Resonance.StatusPotencyBonus > 0.0f)
+            {
+                Effect.DamagePerSecond *= (1.0f + FMath::Clamp(Resonance.StatusPotencyBonus, 0.0f, 0.5f));
+                Effect.RemainingSeconds *= (1.0f + FMath::Clamp(Resonance.StatusPotencyBonus, 0.0f, 0.5f));
+            }
+            if (TargetEcho && !TargetEcho->IsDefeated())
+            {
+                TargetEcho->AddStatusEffect(Effect);
+                bResolved = true;
+            }
+            else if (TargetPlayer && TargetPlayer->IsAlive())
+            {
+                if (UAstrawildSurvivalComponent* Survival = TargetPlayer->FindComponentByClass<UAstrawildSurvivalComponent>())
+                {
+                    Survival->AddStatusEffect(Effect);
+                    bResolved = true;
+                }
+            }
+        }
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Defensive:
+    {
+        FAstrawildStatusEffect Effect;
+        Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Shell");
+        Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
+        Effect.DamagePerSecond = 0.0f;
+        Effect.SpeedMultiplier = 1.0f;
+        AddStatusEffect(Effect);
+        bResolved = true;
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Restore:
+    {
+        // Heal-over-time ward when the ability carries a status payload, direct
+        // burst otherwise. Either way: self + nearby party members.
+        FAstrawildStatusEffect Ward;
+        if (Data->StatusId != NAME_None && Data->StatusSeconds > 0.0f)
+        {
+            Ward.StatusId = Data->StatusId;
+            Ward.RemainingSeconds = Data->StatusSeconds;
+            Ward.DamagePerSecond = -(Data->Power / Data->StatusSeconds);
+            Ward.SpeedMultiplier = 1.0f;
+        }
+        else
+        {
+            Ward.StatusId = TEXT("Mend");
+            Ward.RemainingSeconds = 1.0f;
+            Ward.DamagePerSecond = -Data->Power;
+            Ward.SpeedMultiplier = 1.0f;
+        }
+
+        if (Resonance.IsValid() && Resonance.AbilityPowerBonus > 0.0f)
+        {
+            // Negative DoT = heal; a resonant caster's ward heals deeper (party-wide
+            // copies carry the same amplified magnitude).
+            Ward.DamagePerSecond *= (1.0f + FMath::Clamp(Resonance.AbilityPowerBonus, 0.0f, 0.5f));
+        }
+
+        AddStatusEffect(Ward);
+        bResolved = true;
+
+        // Party-wide: every healthy captured echo of the same owner in range.
+        if (bCaptured && OwnerPlayerId != NAME_None)
+        {
+            for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+            {
+                AAstrawildEchoCharacter* Other = *It;
+                if (Other && Other != this && Other->bCaptured && !Other->IsDefeated() &&
+                    Other->OwnerPlayerId == OwnerPlayerId &&
+                    FVector::Dist(GetActorLocation(), Other->GetActorLocation()) <= Data->Range)
+                {
+                    Other->AddStatusEffect(Ward);
+                }
+            }
+        }
+        break;
+    }
+
+    case EAstrawildAbilityCategory::Mobility:
+    {
+        FAstrawildStatusEffect Effect;
+        Effect.StatusId = Data->StatusId != NAME_None ? Data->StatusId : TEXT("Surge");
+        Effect.RemainingSeconds = FMath::Max(1.0f, Data->StatusSeconds);
+        Effect.DamagePerSecond = 0.0f;
+        Effect.SpeedMultiplier = FMath::Clamp(Data->StatusSpeedMultiplier, 1.0f, 2.5f);
+        AddStatusEffect(Effect);
+        bResolved = true;
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    if (bResolved)
+    {
+        AbilityCooldowns.Add(AbilityId, Data->CooldownSeconds);
+        OnAbilityExecuted.Broadcast(this, AbilityId, true);
+        // FCR-1-a fix (M-a10): the delegate had zero subscribers — feed the
+        // player-facing toast directly for OWNED echoes (mirrors the capture
+        // toast pattern; the delegate stays for future subsystem consumers).
+        if (bCaptured && GetWorld())
+        {
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetWorld()->GetFirstPlayerController()))
+            {
+                if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
+                {
+                    if (Player->GetFName() == OwnerPlayerId)
+                    {
+                        PC->Notify(FText::FromString(FString::Printf(TEXT("%s: %s"),
+                            *EchoDefinition->DisplayName.ToString(), *Data->DisplayName.ToString())));
+                    }
+                }
+            }
+        }
+        UE_LOG(LogAstrawild, Log, TEXT("%s (Lv %d) cast %s."), *GetName(), Level, *AbilityId.ToString());
+    }
+    else
+    {
+        OnAbilityExecuted.Broadcast(this, AbilityId, false);
+    }
+    return bResolved;
+}
+
+// ===========================================================================
+// GDP-2 — locomotion classes
+// ===========================================================================
+
+EAstrawildLocomotionClass AAstrawildEchoCharacter::DeriveLocomotionClass(const EAstrawildEchoFamily Family,
+    const EAstrawildBodyPlan BodyPlan, const EAstrawildZone HomeZone)
+{
+    // 1) Explicit winged bodies and the Avian family fly.
+    if (BodyPlan == EAstrawildBodyPlan::Avian || Family == EAstrawildEchoFamily::Avian)
+    {
+        return EAstrawildLocomotionClass::Flying;
+    }
+    // 2) The Aquatic family and the three sea zones make water movers.
+    if (Family == EAstrawildEchoFamily::Aquatic)
+    {
+        return EAstrawildLocomotionClass::Water;
+    }
+    if (HomeZone == EAstrawildZone::AzureShallows || HomeZone == EAstrawildZone::TidebreakerIsles ||
+        HomeZone == EAstrawildZone::PearlseaReef)
+    {
+        // Sea-zone species that are not winged: amphibious water movers.
+        return EAstrawildLocomotionClass::Water;
+    }
+    // 3) Floating spirit/elemental bodies hover — treated as flying movers.
+    if (BodyPlan == EAstrawildBodyPlan::Floating)
+    {
+        return EAstrawildLocomotionClass::Flying;
+    }
+    return EAstrawildLocomotionClass::Land;
+}
+
+EAstrawildLocomotionClass AAstrawildEchoCharacter::GetLocomotionClass() const
+{
+    if (!IsValid(EchoDefinition))
+    {
+        return EAstrawildLocomotionClass::Land;
+    }
+    if (EchoDefinition->Locomotion != EAstrawildLocomotionClass::Auto)
+    {
+        return EchoDefinition->Locomotion;
+    }
+    return DeriveLocomotionClass(EchoDefinition->Family, EchoDefinition->BodyPlan, EchoDefinition->HomeZone);
+}
+
+EAstrawildVisualBand AAstrawildEchoCharacter::ComputeVisualBand(const EAstrawildEchoFamily Family,
+    const EAstrawildBodyPlan BodyPlan, const EAstrawildSizeClass SizeClass)
+{
+    // VIS-001 — deterministic charm-spectrum rule. Single source of truth:
+    // the journal/roster presentation and the PMC body proportions all call
+    // THIS rule (no Python/bake mirror exists — the procedural bake path was
+    // superseded by the v9.3 real-mesh architecture; see strategy §13/§17).
+    //
+    // STRANGE: alien/energy/construct silhouettes — floating cores, crystal
+    // clusters, amorphous blobs, plus the spirit/elemental/construct/ancient
+    // families on any plan. These are the "what IS that?" encounters.
+    if (BodyPlan == EAstrawildBodyPlan::Floating || BodyPlan == EAstrawildBodyPlan::Crystalline ||
+        BodyPlan == EAstrawildBodyPlan::Amorphous)
+    {
+        return EAstrawildVisualBand::Strange;
+    }
+    if (Family == EAstrawildEchoFamily::Spirit || Family == EAstrawildEchoFamily::Elemental ||
+        Family == EAstrawildEchoFamily::Construct || Family == EAstrawildEchoFamily::Ancient)
+    {
+        return EAstrawildVisualBand::Strange;
+    }
+    // COOL: predators and heavyweights — dragons, serpents, Large/Huge scale.
+    if (Family == EAstrawildEchoFamily::Dragon || BodyPlan == EAstrawildBodyPlan::Serpent)
+    {
+        return EAstrawildVisualBand::Cool;
+    }
+    if (SizeClass == EAstrawildSizeClass::Large || SizeClass == EAstrawildSizeClass::Huge)
+    {
+        return EAstrawildVisualBand::Cool;
+    }
+    // CUTE: the default band — small round beasts, flora kindred, avians,
+    // insectoids and aquatic companions read approachable and expressive.
+    return EAstrawildVisualBand::Cute;
+}
+
+float AAstrawildEchoCharacter::GetIdlePlaybackRateForPersonality(const EAstrawildPersonality InPersonality)
+{
+    // VIS-001 — personality in the body language (presentation only). The
+    // rates stay inside the authored clip's readable range.
+    switch (InPersonality)
+    {
+    case EAstrawildPersonality::Energetic: return 1.15f;
+    case EAstrawildPersonality::Curious:   return 1.10f;
+    case EAstrawildPersonality::Lazy:      return 0.85f;
+    case EAstrawildPersonality::Brave:     return 0.95f;
+    default:                               return 1.0f;
+    }
+}
+
+float AAstrawildEchoCharacter::GetLocomotionSpeedMultiplier() const
+{
+    const EAstrawildLocomotionClass Loco = GetLocomotionClass();
+    if (Loco != EAstrawildLocomotionClass::Water)
+    {
+        // Land and Flying movers are unaffected (flying runs MOVE_Flying speed).
+        return 1.0f;
+    }
+
+    // Water species: +40% in the three sea zones, -15% drag on dry land.
+    const EAstrawildZone CurrentZone = UAstrawildZoneSubsystem::GetZoneAt(GetActorLocation());
+    const bool bInSeaZone = CurrentZone == EAstrawildZone::AzureShallows ||
+        CurrentZone == EAstrawildZone::TidebreakerIsles ||
+        CurrentZone == EAstrawildZone::PearlseaReef;
+    return bInSeaZone ? 1.4f : 0.85f;
+}
+
+// ---------------------------------------------------------------------------
+// FPP-1 (presentation pass): bond milestone + loot feedback
+// ---------------------------------------------------------------------------
+
+void AAstrawildEchoCharacter::NotifyBondMilestoneIfCrossed(const float OldBond)
+{
+    if (GetLocalRole() != ROLE_Authority || !bCaptured || !IsValid(EchoDefinition))
+    {
+        return;
+    }
+
+    // The two gates that unlock gameplay: riding (MountBondGate) and evolution
+    // (the species' EvolveRequiredBond). Crossing either silently left the
+    // player discovering it by accident (or never).
+    const float MountGate = UAstrawildMountComponent::MountBondGate;
+    const float EvolveGate = EchoDefinition->EvolveRequiredBond;
+
+    AAstrawildPlayerController* OwnerPC = nullptr;
+    auto ResolveOwnerPC = [&OwnerPC, this]()
+    {
+        UWorld* World = GetWorld();
+        if (!World)
+        {
+            return;
+        }
+        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+        {
+            AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get());
+            const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+            // H-1 convention: the live-actor OwnerPlayerId is the owner pawn's name.
+            if (Pawn && Pawn->GetFName() == OwnerPlayerId)
+            {
+                OwnerPC = PC;
+                break;
+            }
+        }
+    };
+
+    if (OldBond < MountGate && Bond >= MountGate)
+    {
+        ResolveOwnerPC();
+        if (OwnerPC)
+        {
+            OwnerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                TEXT("Bond %.0f — %s will now accept a rider ([E] to mount)."),
+                Bond, *EchoDefinition->DisplayName.ToString())));
+        }
+    }
+    else if (OldBond < EvolveGate && Bond >= EvolveGate)
+    {
+        ResolveOwnerPC();
+        if (OwnerPC)
+        {
+            OwnerPC->NotifyPlayer(FText::FromString(FString::Printf(
+                TEXT("Bond %.0f — %s can EVOLVE once its level rises ([E] on it)."),
+                Bond, *EchoDefinition->DisplayName.ToString())));
+        }
+    }
 }
