@@ -1,6 +1,12 @@
-﻿# ASTRAWILD — CREATURE VISUAL STRATEGY (Tier A / B / C)
+﻿# ASTRAWILD — CREATURE VISUAL STRATEGY (Tier A / B / C + charm spectrum)
 
-**Document Version**: 1.2
+**Document Version**: 2.0 (VIS-001 — CUTE SCI-FI CREATURE EXPERIENCE PASS: §13-§16 added — the
+cute/cool/strange charm spectrum with the deterministic `ComputeVisualBand` rule, per-instance
+personality presentation, the 12-zone fauna composition contract, and the creature-collector
+research reference (Aniimo experience qualities, reference-only — never cloned). The tier ladder
+below is updated to the v9.3+ REAL-MESH architecture: Tier-B is now real unique CC0 models
+(fetched 1:1, palette-swap-guarded), the procedural archetype bake path is superseded, and the
+PMC path renders the real 16-base geometry + per-species mutation spec. v1.2 baseline:)
 **Custodian**: GLM 5.3 — Lead Programmer / Game Architect (source-side)
 **Status**: SOURCE-VERIFIED strategy — all deliverables below are `IMPORT_READY` at most; **nothing here is `UE5_VERIFIED`**. Engine import, binding and PIE verification belong to the Antigravity run per `ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b.
 **Origin**: Wayfinder ticket 07 (user directive 2026-09-05 — "create a REAL CREATURE VISUAL STRATEGY as the next post-Batch-2 task"). v1.1 (V25-C1): §10 P0 boss-mesh row executed — 4 bespoke boss meshes delivered (A7-A10). v1.2 (V25-C2): §10 P0 story-species row executed — 4 bespoke story meshes delivered (A11-A14); Tier-A bespoke set now complete at 14 meshes.
@@ -153,3 +159,122 @@ Everything above is source-side ArtSourceGen/manifest work except where marked e
 | Archetype rig library (8 plans) | MISSING → P1 |
 | Tier-C identity strengthening | PARTIAL (tints/ring/point-light live; pattern pass pending) |
 | Engine import/binding of any creature mesh | ENGINE-UNVERIFIED (Antigravity §20b) |
+
+---
+
+## 13. VIS-001 — The charm spectrum: CUTE / COOL / STRANGE (v2.0)
+
+The user's FINAL PRODUCT VISION directive: a player entering the world must immediately feel a
+**modern, hi-tech, colorful sci-fi creature game with cute creatures**. The 229-Echo roster answers
+that with a three-band charm spectrum — never a uniform mascot farm, never a grim monster manual.
+
+### 13.1 The rule (deterministic, code-greppable)
+
+`AAstrawildEchoCharacter::ComputeVisualBand(Family, BodyPlan, SizeClass)` — a pure static, mirrored
+by nothing (the ArtSourceGen bakes are superseded by real meshes; the journal/roster/PMC paths all
+call the C++ rule directly):
+
+| Priority | Condition | Band | Read |
+|---|---|---|---|
+| 1 | BodyPlan ∈ {Floating, Crystalline, Amorphous} | **STRANGE** | "what IS that?" — floating cores, crystal clusters, blobs |
+| 1 | Family ∈ {Spirit, Elemental, Construct, Ancient} | **STRANGE** | energy/void/relic organisms |
+| 2 | Family = Dragon OR BodyPlan = Serpent | **COOL** | predators — the impressive silhouettes |
+| 2 | SizeClass ∈ {Large, Huge} | **COOL** | heavyweights |
+| 3 | everything else | **CUTE** | small round beasts, flora kindred, avians, insectoids, aquatic companions |
+
+Test 134 (`ASTRAWILD.VIS1.CreatureIdentityContract`) pins the rule: spot-checks, totality over all
+family×plan×size triples, census-wide band resolution for all 229 species, and three-band
+reachability.
+
+### 13.2 Distribution (computed from the live 204-row bestiary + authored set)
+
+- 204 bestiary rows: **Cute 71 · Cool 41 · Strange 92** (authored heroes add more Cute — Lumewisp
+  and Sprigling are the flagship cute companions; bosses are Cool/Strange by design).
+- Every one of the 12 zones contains all three bands (see §15) — no monochrome zone.
+- The gradient is intentional: starter/friendly zones skew Cute (Dawn Fields 8/16, Sunscar 9/17,
+  Verdant Reach 9/17); endgame zones skew Strange (Hollow Approach 10/17, Pearlsea Reef 11/18) —
+  the world gets weirder as the player pushes toward the Maelstrom, while friendly charm stays
+  findable everywhere.
+
+### 13.3 Where the band is VISIBLE (all source-side, ENGINE-UNVERIFIED until the run)
+
+| Surface | Delivered at |
+|---|---|
+| Field Journal row: `Element · Role · Rarity · CUTE` + detail identity line | VIS-1 |
+| Echo Roster row: per-INSTANCE personality + band ("my Curious Cute Lumewisp") | VIS-1 |
+| PMC bodies (178 fallback-species + every unimported-mesh species): cute band = baby-schema head fold (×1.18 folded into the mutation HeadScale) + dark forward eye pair on Quadruped/Biped/Insectoid/Avian | VIS-1 |
+| Real-mesh bodies (51 direct binds + 36 Tier-B + 16 bases): the CC0 models carry their own charm (Quaternius animal/monster styling); personality shows via the idle/move playback rate (Energetic 1.15, Curious 1.10, Lazy 0.85, Brave 0.95) on BOTH render paths | VIS-1 |
+
+Non-goals (scope discipline): no per-bone skeletal squash on the real-mesh path (axis-risk without
+engine feedback — documented, not attempted); no band-driven gameplay changes (presentation only).
+
+## 14. VIS-001 — Personality: from data to body language (v2.0)
+
+The 9-archetype `EAstrawildPersonality` (Brave/Timid/Aggressive/Curious/Loyal/Lazy/Energetic/
+Protective/Independent) already drives real AI thresholds since V2. VIS-001 makes it **visible**:
+
+- **Roster row** renders the creature's OWN rolled personality (species template =
+  DominantPersonality; instances roll 70/30 species-dominant/random at spawn).
+- **Field Journal detail** renders the species' dominant personality in the Habits line (since DCP-5).
+- **Body language**: `GetIdlePlaybackRateForPersonality` modulates the idle/move loop rate — the
+  liveliness read, applied on the existing 0.15s animation cadence tick, both render paths.
+- Aniimo-class reference quality (see §16): personality is the first thing a collector bonds with —
+  "the shy crab", "the stubborn one". ASTRAWILD's answer: personality + band + bond progression on
+  one roster row.
+
+## 15. VIS-001 — Zone fauna composition (the 12-zone identity contract, v2.0)
+
+Fauna must appear where its habitat makes sense — and every zone's visible wildlife must read as
+that zone's personality. Composition contract (computed from the live bestiary HomeZone table +
+the WorldBootstrapper zone-wildlife spawn rows):
+
+| Zone (spawn signatures) | Fauna mix (204-row bestiary) | Visible signatures (spawn table) | Charm read |
+|---|---|---|---|
+| Dawn Fields (home) | 16 sp. — 8 cute / 3 cool / 5 strange | Terraquill (hero), Mosspaw, Dawnhorn, Galewing | friendly openers, first captures |
+| Glimmerwood | 17 sp. — 6 cute / 3 cool / 8 strange | Voltpylon (hero), Sprigling, Voltmaw | bioluminescent + crystal fauna |
+| Verdant Reach | 17 sp. — 9 cute / 2 cool / 6 strange | Bastionbeetle (hero), Verdantbloom, Fernthorn, Ghostshade, Sunpaw | lush jungle critters |
+| Dusk Marsh | 17 sp. — 8 cute / 3 cool / 6 strange | Mistmender (hero), Duskmoth, Sprigling | reeds, glows, amphibious |
+| Ember Ridge | 17 sp. — 6 cute / 4 cool / 7 strange (5 hostile) | Cindermule (hero), Emberfang, Stonehide, Tidewyrm | warm predators among cute foragers |
+| Frostveil Expanse | 17 sp. — 6 cute / 4 cool / 7 strange (3 hostile) | Rimefang, Stonehide | crystalline cold, bright palettes |
+| Azure Shallows | 17 sp. — 3 cute / 6 cool / 8 strange | Brinefin, Saltcrest, Undertowray | clear-water aquatic utility |
+| Sunscar Desert | 17 sp. — 9 cute / 1 cool / 7 strange (2 hostile) | Sunhide, Glimmerhornet, Pyreblaze, Pistongolem | sun-bleached cute + constructs |
+| Stormcrest Highlands | 17 sp. — 6 cute / 3 cool / 8 strange (5 hostile) | Deepdelver (hero), Sunhorn, Magmawing, Geargolem, Frostblaze | thunder herds, storm electricity |
+| Tidebreaker Isles | 17 sp. — 3 cute / 5 cool / 9 strange (4 hostile) | Wavecrest, Mistwing, Voidwing, Lagoonfin, Saltray (dungeon pool) | drowned-mountain rares |
+| Pearlsea Reef | 18 sp. — 2 cute / 5 cool / 11 strange (4 hostile) | Coralray, Pearlcrest, Abyssjelly, Embershade | coral cathedrals, deep rarities |
+| Hollow Approach | 17 sp. — 5 cute / 2 cool / 10 strange (6 hostile) | Gloomfang, monolith/colossus line | the alien edge before the Underlight |
+
+Rules the table proves: (a) every zone spans all three bands; (b) hostile density tracks the
+threat tier (0 in the three starter zones, 6 in Hollow Approach); (c) aquatic families concentrate
+in the three sea zones; (d) the monolith/colossus line lives in the endgame zones. The World Map
+screen [M] and the Field Journal [P] are the player-facing surfaces for this identity.
+
+## 16. VIS-001 — Research reference: modern cute creature-collector experience quality (v2.0)
+
+User directive: "ทำคล้ายเกมน่ารักๆ คล้ายเกม Aniimo — ทันสมัย ไฮเท็ค น่ารัก". Research pass
+(web-search, 2026-09-06 session) on the reference class — **qualities referenced, nothing cloned**:
+
+| Aniimo-class quality (researched) | ASTRAWILD's own answer (existing or VIS-001) |
+|---|---|
+| Creature personality as the bond hook (e.g. shy crab companion archetypes) | 9-archetype per-instance personality — AI-driven since V2, VISIBLE since VIS-1 (roster row + body-language playback rate) |
+| Habitat identity + regional varieties | 12-zone fauna composition contract (§15) + HomeZone/HabitatBiomeIds on every species + journal habitat knowledge |
+| Creature utility in exploration/traversal (bond to move) | Resonance pairs + mount system (Bond 25 gate) + locomotion classes + skiff — all pre-existing, no clone of their merge mechanic |
+| Home system the creatures belong to | Base/home coherence: workshop, power, research, farm, automation, storage, breeding pen + incubator (26 building pieces) — creatures work sites and party ring follow the player home |
+| Profile-first presentation (creatures readable at a glance) | Journal row: element/role/rarity/BAND + abilities + rideable; Roster row: personality + band + bond; detail view: full species card (DCP-5) |
+| Adorable creature-first visual charm | The charm spectrum (§13): cute-band PMC proportions + eye pairs; real CC0 models with animal/monster charm; colorful zone palettes (§15) |
+
+**Identity guard**: ASTRAWILD stays a SCI-FI SURVIVAL FRONTIER game (survival vitals, research
+tree, automation, dungeons, Ending A/B). The reference informs EXPERIENCE QUALITY, not mechanics
+or art direction copying. No Aniimo names, designs, mechanics, or assets are used.
+
+## 17. Status ledger (v2.0)
+
+| Item | Status |
+|---|---|
+| This document | SOURCE-VERIFIED (v2.0 — VIS-001) |
+| Charm spectrum (Cute/Cool/Strange) + derivation rule | **IMPLEMENTED + STATIC_VERIFIED (VIS-1)** — enum + pure rule + test 134; ENGINE-UNVERIFIED visuals |
+| Personality presentation (roster row + body language) | **IMPLEMENTED + STATIC_VERIFIED (VIS-1)** — test 134 pins the rate table |
+| PMC cute pass (baby-schema head fold + eye pair) | **IMPLEMENTED + STATIC_VERIFIED (VIS-1)** — composes with the mutation system (HeadScale fold) |
+| Zone fauna composition contract | **DOCUMENTED + COMPUTED (VIS-3)** — from live tables, not authored by hand |
+| Tier-B meshes | REAL unique CC0 models (v9.3 AO — 36 species + 3 bosses), palette-swap-guarded; the procedural archetype bake path (aw_archetypes/gen_tier_b) is **SUPERSEDED** (kept as history, never re-run over real meshes) |
+| Tier-A bespoke meshes | superseded by the v9.3 real-mesh catalog for most species; the 51 direct binds + 16 bases + 36 Tier-B = the real-mesh roster |
+| Engine import/binding/PIE of any creature visual | ENGINE-UNVERIFIED (Antigravity §20b — one-time import of the 109 real meshes; the FMP playbook is the fresh-machine spine) |
