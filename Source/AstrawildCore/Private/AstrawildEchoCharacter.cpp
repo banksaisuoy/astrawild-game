@@ -461,26 +461,37 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
     // tail fin) onto the baked silhouette.
     AppendMutationParts(Body, S, *MutationSpec, PatternAccent, MutSecondary);
 
-    // VIS-001 — cute-band eye pair: two small dark forward eyes on the headed
-    // plans. The single strongest "companion creature" read at gameplay
-    // camera distance, and it composes with the mutation parts (a ThirdEye
-    // attachment sits higher, glow nodes read as pattern accents).
+    // VIS-001 — cute-band eye pair: two small dark eyes ON the head surface of
+    // the headed plans. Review finding (real bug): the first draft placed the
+    // eye centers inside the head spheres (geometric no-op). The fix derives
+    // the eye centers from the ACTUAL mutated head radius (r = authored ×
+    // HeadScale, the same multiplier the plan blocks bake with) and projects
+    // them onto the surface — the eyes bulge ~70% of their radius outward, so
+    // they stay visible across the whole mutation-jitter range, and they track
+    // the head if HeadScale grows. Composes with the mutation attachments
+    // (a ThirdEye sits higher, glow nodes read as pattern accents).
     if (bCuteBand)
     {
-        FVector EyeCenterL = FVector::ZeroVector, EyeCenterR = FVector::ZeroVector;
-        float EyeRadius = 3.5f;
+        FVector HeadCenter = FVector::ZeroVector;
+        float HeadRadius = 0.0f; // unscaled base radius (pre-S), plan-authored
         switch (EchoDefinition->BodyPlan)
         {
-        case EAstrawildBodyPlan::Quadruped: EyeCenterL = FVector(62, 10, 84); EyeCenterR = FVector(62, -10, 84); EyeRadius = 4.0f; break;
-        case EAstrawildBodyPlan::Biped:     EyeCenterL = FVector(8, 9, 126);   EyeCenterR = FVector(8, -9, 126);   EyeRadius = 3.5f; break;
-        case EAstrawildBodyPlan::Insectoid: EyeCenterL = FVector(44, 7, 58);   EyeCenterR = FVector(44, -7, 58);   EyeRadius = 3.0f; break;
-        case EAstrawildBodyPlan::Avian:     EyeCenterL = FVector(38, 7, 88);   EyeCenterR = FVector(38, -7, 88);   EyeRadius = 3.0f; break;
+        case EAstrawildBodyPlan::Quadruped: HeadCenter = FVector(52, 0, 78); HeadRadius = 24.0f; break;
+        case EAstrawildBodyPlan::Biped:     HeadCenter = FVector(0, 0, 122); HeadRadius = 22.0f; break;
+        case EAstrawildBodyPlan::Insectoid: HeadCenter = FVector(34, 0, 55); HeadRadius = 17.0f; break;
+        case EAstrawildBodyPlan::Avian:     HeadCenter = FVector(30, 0, 86); HeadRadius = 16.0f; break;
         default: break; // strange/cool plans keep their authored silhouettes
         }
-        if (!EyeCenterL.IsZero())
+        if (HeadRadius > 0.0f)
         {
-            AddSpherePart(Body, EyeCenterL * S, EyeRadius * S, EyeColor, 6);
-            AddSpherePart(Body, EyeCenterR * S, EyeRadius * S, EyeColor, 6);
+            const float MutatedR = HeadRadius * HeadScale;      // matches the baked head sphere
+            const float EyeRadius = MutatedR * 0.16f;           // reads at gameplay camera distance
+            const float SurfaceOffset = MutatedR - 0.30f * EyeRadius; // eyes bulge outward
+            const FVector ForwardOutUp(0.62f, 0.55f, 0.30f);    // forward (+X), outward, slightly up
+            const FVector Fwd = ForwardOutUp.GetUnsafeNormal();
+            const FVector Mir(Fwd.X, -Fwd.Y, Fwd.Z);
+            AddSpherePart(Body, (HeadCenter + Fwd * SurfaceOffset) * S, EyeRadius * S, EyeColor, 6);
+            AddSpherePart(Body, (HeadCenter + Mir * SurfaceOffset) * S, EyeRadius * S, EyeColor, 6);
         }
     }
 
@@ -2631,9 +2642,10 @@ EAstrawildLocomotionClass AAstrawildEchoCharacter::GetLocomotionClass() const
 EAstrawildVisualBand AAstrawildEchoCharacter::ComputeVisualBand(const EAstrawildEchoFamily Family,
     const EAstrawildBodyPlan BodyPlan, const EAstrawildSizeClass SizeClass)
 {
-    // VIS-001 — deterministic charm-spectrum rule (mirrored by
-    // Tools/ArtSourceGen/gen_tier_b.py::derive_band for the Tier-B bakes, so
-    // the baked meshes and the codex text always agree).
+    // VIS-001 — deterministic charm-spectrum rule. Single source of truth:
+    // the journal/roster presentation and the PMC body proportions all call
+    // THIS rule (no Python/bake mirror exists — the procedural bake path was
+    // superseded by the v9.3 real-mesh architecture; see strategy §13/§17).
     //
     // STRANGE: alien/energy/construct silhouettes — floating cores, crystal
     // clusters, amorphous blobs, plus the spirit/elemental/construct/ancient

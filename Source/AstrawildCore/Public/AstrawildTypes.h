@@ -163,8 +163,9 @@ enum class EAstrawildActivityPattern : uint8
  * Derived deterministically from the species template
  * (AAstrawildEchoCharacter::ComputeVisualBand) — never authored per-row, so
  * the 229-species census and every save stay untouched. The band drives
- * presentation only (codex text, roster line, PMC body proportions, Tier-B
- * bake modulators in ArtSourceGen); gameplay is unchanged.
+ * presentation only (codex text, roster line, PMC body proportions); the C++
+ * rule is the single source of truth (the ArtSourceGen bake path was
+ * superseded by the v9.3 real-mesh architecture). Gameplay is unchanged.
  */
 UENUM(BlueprintType)
 enum class EAstrawildVisualBand : uint8

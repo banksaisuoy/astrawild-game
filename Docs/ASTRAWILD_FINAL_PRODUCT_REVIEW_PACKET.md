@@ -28,8 +28,8 @@ never cloned. The pass delivered the **charm-spectrum identity layer** over the 
    additive enum in Types.h) + pure static `AAstrawildEchoCharacter::ComputeVisualBand(Family,
    BodyPlan, SizeClass)` (deterministic rule: strange plans/families → cool predators/heavyweights
    → cute default) + `GetIdlePlaybackRateForPersonality` (Energetic 1.15 / Curious 1.10 / Brave
-   0.95 / Lazy 0.85 / others 1.00) wired into the existing 0.15s animation cadence (BOTH render
-   paths) + Journal row band line (`Element · Role · Rarity · Cute`) + Journal detail identity band
+   0.95 / Lazy 0.85 / others 1.00) wired into the existing 0.15s animation cadence (skinned path —
+   PMC bodies play no clips; corrected per the review) + Journal row band line (`Element · Role · Rarity · Cute`) + Journal detail identity band
    + Roster per-INSTANCE personality + band line (the "my Curious Cute Lumewisp" read) + PMC
    cuteness pass (cute band folds a ×1.18 baby-schema boost into the mutation `HeadScale` — every
    plan's head/snout/antennae inherit it uniformly — plus a dark forward eye pair on
@@ -109,8 +109,9 @@ delivery records, and fresh inspection at `96179ea`.
    has not run — brace/paren balanced, validator-checked, but MSVC is the authority).
 2. `SetPlayRate` interplay with `PlayAnimation` clip switches is cadence-corrected by design (the
    0.15s tick re-applies the rate), but the runtime read is engine-side.
-3. The PMC eye pair uses fixed silhouette-relative coordinates — correct for the authored plan
-   proportions, untestable at camera distance without PIE.
+3. The PMC eye pair is derived from the actual mutated head radius (r = authored × HeadScale) and
+   projected onto the head surface — geometrically visible across the mutation-jitter range (the
+   review's occlusion finding, fixed in VIS-4b); the at-camera-distance read stays engine-pending.
 4. Per-bone skeletal cute-squash deliberately not attempted (documented non-goal — axis risk).
 5. LFS fsck convention mismatch (~3,954 raw pack-source files) — pre-existing, documented in
    LIVE_STATE §8; untouched by this pass (no LFS files changed).
@@ -134,3 +135,22 @@ visuals, showcase PIE, §22 LAN acceptance — see LIVE_STATE §8 and the ENGINE
 
 VIS-001 = **READY_FOR_REVIEW**. Reviewer: answer ONLY the five questions. Genuine findings → fix
 batch; otherwise → freeze (SOURCE_PRODUCT_FROZEN re-declared, ENGINE-RUN-1 → NEXT unblocked).
+
+## 9. Independent review record (VIS-4b — findings applied)
+
+The 5-question independent review (read-only agent, evidence-based) returned **4 genuine findings;
+freeze initially withheld**:
+
+| # | Class | Finding | Fix (VIS-4b) |
+|---|---|---|---|
+| 1 | **REAL BUG** | PMC eye pair was a geometric no-op — eye centers sat 4-9 units INSIDE the head spheres (68/71 cute headed-plan species fully occluded; the ×1.18 cute boost buried them deeper) | Eyes now derive from the actual mutated head radius (authored × HeadScale) and project onto the surface, bulging ~70% of their radius outward — visible across the whole mutation-jitter range and tracking head growth (AstrawildEchoCharacter.cpp, cute-band block) |
+| 2 | STALE DOCUMENT | Packet/strategy claimed the personality playback rate applies on "BOTH render paths" — false: PMC bodies have no clips and no cadence timer | Packet §1.2 + strategy §13.3/§14 corrected to "skinned path only" with the reason |
+| 3 | STALE DOCUMENT | cpp/Types.h comments claimed a Python mirror (`gen_tier_b.py::derive_band` / "Tier-B bake modulators in ArtSourceGen") that never existed | Both comments corrected to "single source of truth, no mirror (bake path superseded by v9.3 real meshes)" + strategy §13.1 wording |
+| 4 | UNPROVEN CLAIM | Strategy §15 "visible signatures" listed 4 species that have no zone-wildlife spawn row (Mosspaw/Dawnhorn/Galewing in Dawn Fields; Tidewyrm in Ember Ridge) | Both cells corrected: spawn-table signatures vs bestiary residents now labeled distinctly |
+
+Verified clean by the same review: census 229/134-test/15 gates, changed-file list exact,
+manifest 189/189 present (new assets NONE is true), band rule ↔ doc match, distribution 71/41/92
+re-derived, zone mixes + hostile counts verified, journal+roster render paths confirmed calling
+ComputeVisualBand.
+
+**Post-fix verdict**: findings closed; validators re-run ALL PASS; freeze re-armed (§10).

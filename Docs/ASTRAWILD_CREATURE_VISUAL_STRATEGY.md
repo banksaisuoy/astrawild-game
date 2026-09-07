@@ -170,9 +170,9 @@ that with a three-band charm spectrum — never a uniform mascot farm, never a g
 
 ### 13.1 The rule (deterministic, code-greppable)
 
-`AAstrawildEchoCharacter::ComputeVisualBand(Family, BodyPlan, SizeClass)` — a pure static, mirrored
-by nothing (the ArtSourceGen bakes are superseded by real meshes; the journal/roster/PMC paths all
-call the C++ rule directly):
+`AAstrawildEchoCharacter::ComputeVisualBand(Family, BodyPlan, SizeClass)` — a pure static and the
+SINGLE source of truth (no Python/bake mirror exists — the ArtSourceGen bakes were superseded by
+the v9.3 real meshes; the journal/roster/PMC paths all call this C++ rule directly):
 
 | Priority | Condition | Band | Read |
 |---|---|---|---|
@@ -203,7 +203,7 @@ reachability.
 | Field Journal row: `Element · Role · Rarity · CUTE` + detail identity line | VIS-1 |
 | Echo Roster row: per-INSTANCE personality + band ("my Curious Cute Lumewisp") | VIS-1 |
 | PMC bodies (178 fallback-species + every unimported-mesh species): cute band = baby-schema head fold (×1.18 folded into the mutation HeadScale) + dark forward eye pair on Quadruped/Biped/Insectoid/Avian | VIS-1 |
-| Real-mesh bodies (51 direct binds + 36 Tier-B + 16 bases): the CC0 models carry their own charm (Quaternius animal/monster styling); personality shows via the idle/move playback rate (Energetic 1.15, Curious 1.10, Lazy 0.85, Brave 0.95) on BOTH render paths | VIS-1 |
+| Real-mesh bodies (51 direct binds + 36 Tier-B + 16 bases): the CC0 models carry their own charm (Quaternius animal/monster styling); personality shows via the idle/move playback rate (Energetic 1.15, Curious 1.10, Lazy 0.85, Brave 0.95) — **skinned path only** (PMC bodies play no animation clips, so there is no rate to modulate; the animation cadence timer itself is armed only on the skinned path) | VIS-1 |
 
 Non-goals (scope discipline): no per-bone skeletal squash on the real-mesh path (axis-risk without
 engine feedback — documented, not attempted); no band-driven gameplay changes (presentation only).
@@ -217,7 +217,10 @@ Protective/Independent) already drives real AI thresholds since V2. VIS-001 make
   DominantPersonality; instances roll 70/30 species-dominant/random at spawn).
 - **Field Journal detail** renders the species' dominant personality in the Habits line (since DCP-5).
 - **Body language**: `GetIdlePlaybackRateForPersonality` modulates the idle/move loop rate — the
-  liveliness read, applied on the existing 0.15s animation cadence tick, both render paths.
+  liveliness read, applied on the existing 0.15s animation cadence tick. Skinned (real-mesh) bodies
+  only: PMC bodies have no animation clips (the cadence timer is armed in
+  `TryActivateSkeletalBody`), so their personality read comes from the roster/journal text and AI
+  behavior, not playback rate.
 - Aniimo-class reference quality (see §16): personality is the first thing a collector bonds with —
   "the shy crab", "the stubborn one". ASTRAWILD's answer: personality + band + bond progression on
   one roster row.
@@ -230,11 +233,11 @@ the WorldBootstrapper zone-wildlife spawn rows):
 
 | Zone (spawn signatures) | Fauna mix (204-row bestiary) | Visible signatures (spawn table) | Charm read |
 |---|---|---|---|
-| Dawn Fields (home) | 16 sp. — 8 cute / 3 cool / 5 strange | Terraquill (hero), Mosspaw, Dawnhorn, Galewing | friendly openers, first captures |
+| Dawn Fields (home) | 16 sp. — 8 cute / 3 cool / 5 strange | Terraquill (hero) — the zone's spawn signature; Mosspaw/Dawnhorn/Galewing are bestiary residents (capturable via the wider spawn surfaces, not the zone-wildlife table) | friendly openers, first captures |
 | Glimmerwood | 17 sp. — 6 cute / 3 cool / 8 strange | Voltpylon (hero), Sprigling, Voltmaw | bioluminescent + crystal fauna |
 | Verdant Reach | 17 sp. — 9 cute / 2 cool / 6 strange | Bastionbeetle (hero), Verdantbloom, Fernthorn, Ghostshade, Sunpaw | lush jungle critters |
 | Dusk Marsh | 17 sp. — 8 cute / 3 cool / 6 strange | Mistmender (hero), Duskmoth, Sprigling | reeds, glows, amphibious |
-| Ember Ridge | 17 sp. — 6 cute / 4 cool / 7 strange (5 hostile) | Cindermule (hero), Emberfang, Stonehide, Tidewyrm | warm predators among cute foragers |
+| Ember Ridge | 17 sp. — 6 cute / 4 cool / 7 strange (5 hostile) | Cindermule (hero), Emberfang, Stonehide; Tidewyrm is the Huge bestiary resident (Tier-B mesh, not a zone-wildlife spawn row) | warm predators among cute foragers |
 | Frostveil Expanse | 17 sp. — 6 cute / 4 cool / 7 strange (3 hostile) | Rimefang, Stonehide | crystalline cold, bright palettes |
 | Azure Shallows | 17 sp. — 3 cute / 6 cool / 8 strange | Brinefin, Saltcrest, Undertowray | clear-water aquatic utility |
 | Sunscar Desert | 17 sp. — 9 cute / 1 cool / 7 strange (2 hostile) | Sunhide, Glimmerhornet, Pyreblaze, Pistongolem | sun-bleached cute + constructs |
