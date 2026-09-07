@@ -6517,4 +6517,153 @@ bool FAstrawildMeshCoverageExpansionTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// VIS-1 — creature identity contract: the charm band (Cute/Cool/Strange) is
+// deterministic, total (every family/plan/size triple resolves), and the
+// personality body-language mapping stays inside the authored clip range.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVIS1CreatureIdentityContractTest,
+    "ASTRAWILD.VIS1.CreatureIdentityContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVIS1CreatureIdentityContractTest::RunTest(const FString& Parameters)
+{
+    using Band = EAstrawildVisualBand;
+
+    // 1) Spot-check the derivation rule (family/plan/size axes exactly as
+    //    documented in CREATURE_VISUAL_STRATEGY v2.0 §Spectrum).
+    TestEqual(TEXT("Small beast quadruped is Cute"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Small),
+        Band::Cute);
+    TestEqual(TEXT("Large dragon quadruped is Cool (family first)"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Dragon, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Large),
+        Band::Cool);
+    TestEqual(TEXT("Huge beast is Cool (size heavyweight)"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Quadruped, EAstrawildSizeClass::Huge),
+        Band::Cool);
+    TestEqual(TEXT("Serpent is Cool (predator plan)"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Beast, EAstrawildBodyPlan::Serpent, EAstrawildSizeClass::Medium),
+        Band::Cool);
+    TestEqual(TEXT("Floating spirit is Strange (plan first)"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Spirit, EAstrawildBodyPlan::Floating, EAstrawildSizeClass::Tiny),
+        Band::Strange);
+    TestEqual(TEXT("Amorphous elemental is Strange"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Elemental, EAstrawildBodyPlan::Amorphous, EAstrawildSizeClass::Medium),
+        Band::Strange);
+    TestEqual(TEXT("Crystalline construct is Strange"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Construct, EAstrawildBodyPlan::Crystalline, EAstrawildSizeClass::Large),
+        Band::Strange);
+    TestEqual(TEXT("Ancient biped is Strange (family)"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Ancient, EAstrawildBodyPlan::Biped, EAstrawildSizeClass::Medium),
+        Band::Strange);
+    TestEqual(TEXT("Tiny avian is Cute"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Avian, EAstrawildBodyPlan::Avian, EAstrawildSizeClass::Tiny),
+        Band::Cute);
+    TestEqual(TEXT("Small insectoid is Cute"),
+        AAstrawildEchoCharacter::ComputeVisualBand(
+            EAstrawildEchoFamily::Insectoid, EAstrawildBodyPlan::Insectoid, EAstrawildSizeClass::Small),
+        Band::Cute);
+
+    // 2) Totality: every family × plan × size triple resolves to a valid enum
+    //    value and ALL THREE bands are reachable (the spectrum contract).
+    const EAstrawildEchoFamily Families[] = {
+        EAstrawildEchoFamily::Beast, EAstrawildEchoFamily::Dragon, EAstrawildEchoFamily::Construct,
+        EAstrawildEchoFamily::Spirit, EAstrawildEchoFamily::Elemental, EAstrawildEchoFamily::Aquatic,
+        EAstrawildEchoFamily::Insectoid, EAstrawildEchoFamily::Flora, EAstrawildEchoFamily::Avian,
+        EAstrawildEchoFamily::Ancient,
+    };
+    const EAstrawildBodyPlan Plans[] = {
+        EAstrawildBodyPlan::Quadruped, EAstrawildBodyPlan::Biped, EAstrawildBodyPlan::Serpent,
+        EAstrawildBodyPlan::Floating, EAstrawildBodyPlan::Insectoid, EAstrawildBodyPlan::Avian,
+        EAstrawildBodyPlan::Crystalline, EAstrawildBodyPlan::Amorphous,
+    };
+    const EAstrawildSizeClass Sizes[] = {
+        EAstrawildSizeClass::Tiny, EAstrawildSizeClass::Small, EAstrawildSizeClass::Medium,
+        EAstrawildSizeClass::Large, EAstrawildSizeClass::Huge,
+    };
+    int32 CuteCount = 0, CoolCount = 0, StrangeCount = 0;
+    for (const EAstrawildEchoFamily Family : Families)
+    {
+        for (const EAstrawildBodyPlan Plan : Plans)
+        {
+            for (const EAstrawildSizeClass Size : Sizes)
+            {
+                const Band B = AAstrawildEchoCharacter::ComputeVisualBand(Family, Plan, Size);
+                const bool bValid = B == Band::Cute || B == Band::Cool || B == Band::Strange;
+                if (!TestTrue(FString::Printf(TEXT("Band resolves for %s/%s/%s"),
+                        *UEnum::GetValueAsString(Family), *UEnum::GetValueAsString(Plan),
+                        *UEnum::GetValueAsString(Size)), bValid))
+                {
+                    continue;
+                }
+                CuteCount += B == Band::Cute;
+                CoolCount += B == Band::Cool;
+                StrangeCount += B == Band::Strange;
+            }
+        }
+    }
+    TestTrue(TEXT("Spectrum reachable: Cute band non-empty"), CuteCount > 0);
+    TestTrue(TEXT("Spectrum reachable: Cool band non-empty"), CoolCount > 0);
+    TestTrue(TEXT("Spectrum reachable: Strange band non-empty"), StrangeCount > 0);
+
+    // 3) Real-roster spectrum: the registered 229-species census must contain
+    //    all three bands (journal rows and Tier-B bakes derive from this).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    AstrawildBestiary::RegisterAll(Registry);
+    int32 SpeciesCute = 0, SpeciesCool = 0, SpeciesStrange = 0, Resolved = 0;
+    for (const UAstrawildEchoDefinition* Def : Registry->GetAllEchoDefinitions())
+    {
+        if (!Def)
+        {
+            continue;
+        }
+        const Band B = AAstrawildEchoCharacter::ComputeVisualBand(Def->Family, Def->BodyPlan, Def->SizeClass);
+        ++Resolved;
+        SpeciesCute += B == Band::Cute;
+        SpeciesCool += B == Band::Cool;
+        SpeciesStrange += B == Band::Strange;
+    }
+    TestEqual(TEXT("Every registered species resolves a band (229)"), Resolved, 229);
+    TestTrue(FString::Printf(TEXT("Census spectrum: Cute %d / Cool %d / Strange %d — all non-empty"),
+        SpeciesCute, SpeciesCool, SpeciesStrange),
+        SpeciesCute > 0 && SpeciesCool > 0 && SpeciesStrange > 0);
+
+    // 4) Personality body-language rates stay in the authored readable range
+    //    (Lazy < neutral < Energetic; the neutral personalities are exactly 1.0).
+    for (int32 P = 0; P <= 9; ++P)
+    {
+        const EAstrawildPersonality Personality = static_cast<EAstrawildPersonality>(P);
+        const float Rate = AAstrawildEchoCharacter::GetIdlePlaybackRateForPersonality(Personality);
+        TestTrue(FString::Printf(TEXT("Personality %s rate in [0.8, 1.2]"),
+            *UEnum::GetValueAsString(Personality)),
+            Rate >= 0.8f && Rate <= 1.2f);
+    }
+    TestEqual(TEXT("Lazy idles slower than neutral"),
+        AAstrawildEchoCharacter::GetIdlePlaybackRateForPersonality(EAstrawildPersonality::Lazy) < 1.0f, true);
+    TestEqual(TEXT("Energetic idles livelier than neutral"),
+        AAstrawildEchoCharacter::GetIdlePlaybackRateForPersonality(EAstrawildPersonality::Energetic) > 1.0f, true);
+    TestEqual(TEXT("Loyal (neutral class) plays at authored rate"),
+        AAstrawildEchoCharacter::GetIdlePlaybackRateForPersonality(EAstrawildPersonality::Loyal), 1.0f);
+
+    // 5) Display-name surface: every band renders a non-empty UEnum display
+    //    value (the journal/roster render path uses it verbatim).
+    TestFalse(TEXT("Cute display name non-empty"),
+        UEnum::GetDisplayValueAsText(Band::Cute).ToString().IsEmpty());
+    TestFalse(TEXT("Cool display name non-empty"),
+        UEnum::GetDisplayValueAsText(Band::Cool).ToString().IsEmpty());
+    TestFalse(TEXT("Strange display name non-empty"),
+        UEnum::GetDisplayValueAsText(Band::Strange).ToString().IsEmpty());
+
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

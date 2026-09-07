@@ -315,6 +315,17 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         255);
     const float S = BodyScaleForSize(EchoDefinition->SizeClass);
 
+    // VIS-001 — charm-spectrum proportions. The cute band gets the classic
+    // "baby schema" read: an enlarged head and a dark forward eye pair on
+    // the headed plans (the single strongest cute signal at gameplay camera
+    // distance). Strange/cool plans keep their authored alien/predator
+    // silhouettes untouched.
+    const bool bCuteBand = ComputeVisualBand(
+        EchoDefinition->Family, EchoDefinition->BodyPlan, EchoDefinition->SizeClass)
+        == EAstrawildVisualBand::Cute;
+    const float HeadBoost = bCuteBand ? 1.18f : 1.0f;
+    const FColor EyeColor(30, 28, 40, 255);
+
     // Sci-Fantasy directive Phase 2: mutate the silhouette. Table row for
     // bestiary species, deterministic derived spec otherwise — every Echo
     // mutates (per-part scale multipliers + theme material language +
@@ -329,6 +340,11 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
     float HeadScale = 1.0f, TorsoScale = 1.0f, LimbScale = 1.0f, TailScale = 1.0f;
     const int32 InstanceSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
     FAstrawildEchoMutator::ComputePartScales(*MutationSpec, InstanceSeed, HeadScale, TorsoScale, LimbScale, TailScale);
+    // VIS-001 — fold the cute-band baby-schema boost into the mutation head
+    // scale so EVERY plan's head parts (head sphere, snout, antennae, crest)
+    // inherit the proportion change uniformly. Cool/strange silhouettes are
+    // untouched (HeadBoost = 1.0).
+    HeadScale *= HeadBoost;
     FColor MutPrimary = Primary;
     FColor MutSecondary = Secondary;
     FAstrawildEchoMutator::ApplyThemeToBodyColors(Primary, Secondary, *MutationSpec, MutPrimary, MutSecondary);
@@ -444,6 +460,29 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
     // (spikes / wings / third eye / extra arms / horn crown / glow nodes /
     // tail fin) onto the baked silhouette.
     AppendMutationParts(Body, S, *MutationSpec, PatternAccent, MutSecondary);
+
+    // VIS-001 — cute-band eye pair: two small dark forward eyes on the headed
+    // plans. The single strongest "companion creature" read at gameplay
+    // camera distance, and it composes with the mutation parts (a ThirdEye
+    // attachment sits higher, glow nodes read as pattern accents).
+    if (bCuteBand)
+    {
+        FVector EyeCenterL = FVector::ZeroVector, EyeCenterR = FVector::ZeroVector;
+        float EyeRadius = 3.5f;
+        switch (EchoDefinition->BodyPlan)
+        {
+        case EAstrawildBodyPlan::Quadruped: EyeCenterL = FVector(62, 10, 84); EyeCenterR = FVector(62, -10, 84); EyeRadius = 4.0f; break;
+        case EAstrawildBodyPlan::Biped:     EyeCenterL = FVector(8, 9, 126);   EyeCenterR = FVector(8, -9, 126);   EyeRadius = 3.5f; break;
+        case EAstrawildBodyPlan::Insectoid: EyeCenterL = FVector(44, 7, 58);   EyeCenterR = FVector(44, -7, 58);   EyeRadius = 3.0f; break;
+        case EAstrawildBodyPlan::Avian:     EyeCenterL = FVector(38, 7, 88);   EyeCenterR = FVector(38, -7, 88);   EyeRadius = 3.0f; break;
+        default: break; // strange/cool plans keep their authored silhouettes
+        }
+        if (!EyeCenterL.IsZero())
+        {
+            AddSpherePart(Body, EyeCenterL * S, EyeRadius * S, EyeColor, 6);
+            AddSpherePart(Body, EyeCenterR * S, EyeRadius * S, EyeColor, 6);
+        }
+    }
 
     if (Body.Vertices.Num() > 0)
     {
@@ -1019,6 +1058,11 @@ void AAstrawildEchoCharacter::UpdateSkeletalAnimation()
         EchoBodyMesh->PlayAnimation(Target, true);
         CurrentLoopAnimation = Target;
     }
+    // VIS-001 — personality in the body language: the loop plays livelier for
+    // Energetic/Curious creatures and slower for Lazy ones (presentation only;
+    // no gameplay effect). Applied on the existing cadence tick so a mid-life
+    // personality change (none exists today) would still take effect.
+    EchoBodyMesh->SetPlayRate(GetIdlePlaybackRateForPersonality(Personality));
 }
 
 bool AAstrawildEchoCharacter::InitializeFromDefinitionWithPersonality(UAstrawildEchoDefinition* InDefinition, const EAstrawildPersonality InPersonality, const FGuid& OptionalInstanceId)
@@ -2582,6 +2626,54 @@ EAstrawildLocomotionClass AAstrawildEchoCharacter::GetLocomotionClass() const
         return EchoDefinition->Locomotion;
     }
     return DeriveLocomotionClass(EchoDefinition->Family, EchoDefinition->BodyPlan, EchoDefinition->HomeZone);
+}
+
+EAstrawildVisualBand AAstrawildEchoCharacter::ComputeVisualBand(const EAstrawildEchoFamily Family,
+    const EAstrawildBodyPlan BodyPlan, const EAstrawildSizeClass SizeClass)
+{
+    // VIS-001 — deterministic charm-spectrum rule (mirrored by
+    // Tools/ArtSourceGen/gen_tier_b.py::derive_band for the Tier-B bakes, so
+    // the baked meshes and the codex text always agree).
+    //
+    // STRANGE: alien/energy/construct silhouettes — floating cores, crystal
+    // clusters, amorphous blobs, plus the spirit/elemental/construct/ancient
+    // families on any plan. These are the "what IS that?" encounters.
+    if (BodyPlan == EAstrawildBodyPlan::Floating || BodyPlan == EAstrawildBodyPlan::Crystalline ||
+        BodyPlan == EAstrawildBodyPlan::Amorphous)
+    {
+        return EAstrawildVisualBand::Strange;
+    }
+    if (Family == EAstrawildEchoFamily::Spirit || Family == EAstrawildEchoFamily::Elemental ||
+        Family == EAstrawildEchoFamily::Construct || Family == EAstrawildEchoFamily::Ancient)
+    {
+        return EAstrawildVisualBand::Strange;
+    }
+    // COOL: predators and heavyweights — dragons, serpents, Large/Huge scale.
+    if (Family == EAstrawildEchoFamily::Dragon || BodyPlan == EAstrawildBodyPlan::Serpent)
+    {
+        return EAstrawildVisualBand::Cool;
+    }
+    if (SizeClass == EAstrawildSizeClass::Large || SizeClass == EAstrawildSizeClass::Huge)
+    {
+        return EAstrawildVisualBand::Cool;
+    }
+    // CUTE: the default band — small round beasts, flora kindred, avians,
+    // insectoids and aquatic companions read approachable and expressive.
+    return EAstrawildVisualBand::Cute;
+}
+
+float AAstrawildEchoCharacter::GetIdlePlaybackRateForPersonality(const EAstrawildPersonality InPersonality)
+{
+    // VIS-001 — personality in the body language (presentation only). The
+    // rates stay inside the authored clip's readable range.
+    switch (InPersonality)
+    {
+    case EAstrawildPersonality::Energetic: return 1.15f;
+    case EAstrawildPersonality::Curious:   return 1.10f;
+    case EAstrawildPersonality::Lazy:      return 0.85f;
+    case EAstrawildPersonality::Brave:     return 0.95f;
+    default:                               return 1.0f;
+    }
 }
 
 float AAstrawildEchoCharacter::GetLocomotionSpeedMultiplier() const

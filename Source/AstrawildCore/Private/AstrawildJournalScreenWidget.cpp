@@ -3,6 +3,7 @@
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoMutator.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
@@ -280,11 +281,13 @@ void UAstrawildJournalScreenWidget::RefreshJournal()
                     FMath::RoundToInt(UAstrawildMountComponent::MountBondGate));
             }
 
-            RowText = FString::Printf(TEXT("%s\n%s · %s · %s%s\n%s  %d%% observed · %d encounter%s%s"),
+            RowText = FString::Printf(TEXT("%s\n%s · %s · %s · %s%s\n%s  %d%% observed · %d encounter%s%s"),
                 *Def->DisplayName.ToString(),
                 *UEnum::GetDisplayValueAsText(Def->Element).ToString(),
                 *UEnum::GetDisplayValueAsText(Def->Role).ToString(),
                 *UEnum::GetDisplayValueAsText(Def->Rarity).ToString(),
+                *UEnum::GetDisplayValueAsText(AAstrawildEchoCharacter::ComputeVisualBand(
+                    Def->Family, Def->BodyPlan, Def->SizeClass)).ToString(),
                 *AbilityLine,
                 *FlagLine,
                 FMath::RoundToInt(Entry.ObservationProgress),
@@ -392,11 +395,13 @@ FString UAstrawildJournalScreenWidget::BuildSpeciesDetailText(const UAstrawildEc
     }
 
     // Identity block.
-    FString Detail = FString::Printf(TEXT("%s\n%s · %s · %s\nFamily %s · %s · %s\n\n"),
+    FString Detail = FString::Printf(TEXT("%s\n%s · %s · %s · %s\nFamily %s · %s · %s\n\n"),
         *Def->DisplayName.ToString(),
         *UEnum::GetDisplayValueAsText(Def->Element).ToString(),
         *UEnum::GetDisplayValueAsText(Def->Role).ToString(),
         *UEnum::GetDisplayValueAsText(Def->Rarity).ToString(),
+        *UEnum::GetDisplayValueAsText(AAstrawildEchoCharacter::ComputeVisualBand(
+            Def->Family, Def->BodyPlan, Def->SizeClass)).ToString(),
         *UEnum::GetDisplayValueAsText(Def->Family).ToString(),
         *UEnum::GetDisplayValueAsText(Def->BodyPlan).ToString(),
         *UEnum::GetDisplayValueAsText(Def->SizeClass).ToString());

@@ -3,6 +3,7 @@
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildMountComponent.h"
@@ -53,6 +54,7 @@ void UAstrawildRosterRowWidget::InitializeRow(UAstrawildRosterScreenWidget* Pare
     RowLevel = InRow.Level;
     RowBond = InRow.Bond;
     RowTrust = InRow.Trust;
+    RowPersonality = InRow.Personality;
     RingUsed = InRingUsed;
     RingMax = InRingMax;
 
@@ -83,11 +85,16 @@ void UAstrawildRosterRowWidget::BuildRowTree()
         return;
     }
 
-    // Identity + progression line.
-    FString Line = FString::Printf(TEXT("%s\n%s · %s · Lv %d · Bond %d · Trust %d"),
+    // Identity + progression line. VIS-001: the row now carries the creature's
+    // OWN personality (per-instance) and the species' charm band — the
+    // "my Lumewisp is Curious and Cute" read, not just element/role numbers.
+    FString Line = FString::Printf(TEXT("%s\n%s · %s · %s · %s · Lv %d · Bond %d · Trust %d"),
         *Def->DisplayName.ToString(),
         *UEnum::GetDisplayValueAsText(Def->Element).ToString(),
         *UEnum::GetDisplayValueAsText(Def->Role).ToString(),
+        *UEnum::GetDisplayValueAsText(RowPersonality).ToString(),
+        *UEnum::GetDisplayValueAsText(AAstrawildEchoCharacter::ComputeVisualBand(
+            Def->Family, Def->BodyPlan, Def->SizeClass)).ToString(),
         RowLevel, FMath::RoundToInt(RowBond), FMath::RoundToInt(RowTrust));
 
     // Top work affinity — the "why would I keep this one" answer.

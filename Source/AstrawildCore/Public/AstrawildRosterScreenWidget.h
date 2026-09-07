@@ -51,6 +51,8 @@ private:
     int32 RowLevel = 1;
     float RowBond = 0.0f;
     float RowTrust = 0.0f;
+    /** VIS-001 — the per-INSTANCE personality rolls onto the row (species template is DominantPersonality). */
+    EAstrawildPersonality RowPersonality = EAstrawildPersonality::Curious;
     int32 RingUsed = 0;
     int32 RingMax = 3;
 

@@ -265,6 +265,23 @@ public:
     static EAstrawildLocomotionClass DeriveLocomotionClass(EAstrawildEchoFamily Family,
         EAstrawildBodyPlan BodyPlan, EAstrawildZone HomeZone);
 
+    /**
+     * VIS-001 — visual charm band (Cute / Cool / Strange), derived
+     * deterministically from the species template. Drives presentation only
+     * (codex text, roster line, PMC body proportions, Tier-B bake modulators);
+     * gameplay unchanged. Public static pure for tests + UI.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Visual")
+    static EAstrawildVisualBand ComputeVisualBand(EAstrawildEchoFamily Family,
+        EAstrawildBodyPlan BodyPlan, EAstrawildSizeClass SizeClass);
+
+    /**
+     * VIS-001 — personality shows in the body language: the idle/move clip
+     * playback rate (Energetic livelier, Lazy slower). Presentation only.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Visual")
+    static float GetIdlePlaybackRateForPersonality(EAstrawildPersonality InPersonality);
+
     /** GDP-2: zone-based speed multiplier (water species surge in sea zones, drag on land). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Locomotion")
     float GetLocomotionSpeedMultiplier() const;

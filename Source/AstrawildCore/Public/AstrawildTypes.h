@@ -156,6 +156,24 @@ enum class EAstrawildActivityPattern : uint8
     Crepuscular UMETA(DisplayName="Crepuscular", ToolTip="Active at dawn and dusk")
 };
 
+/**
+ * VIS-001 — visual charm spectrum. Every Echo species reads to the player as
+ * CUTE (small/round/expressive — approachable), COOL (predator/scaled/armored —
+ * impressive) or STRANGE (floating/crystal/amorphous/void — alien curiosity).
+ * Derived deterministically from the species template
+ * (AAstrawildEchoCharacter::ComputeVisualBand) — never authored per-row, so
+ * the 229-species census and every save stay untouched. The band drives
+ * presentation only (codex text, roster line, PMC body proportions, Tier-B
+ * bake modulators in ArtSourceGen); gameplay is unchanged.
+ */
+UENUM(BlueprintType)
+enum class EAstrawildVisualBand : uint8
+{
+    Cute UMETA(DisplayName="Cute", ToolTip="Small, round, expressive — the approachable companions"),
+    Cool UMETA(DisplayName="Cool", ToolTip="Predators, dragons, armored heavyweights — impressive presence"),
+    Strange UMETA(DisplayName="Strange", ToolTip="Floating cores, crystal clusters, amorphous voids — alien curiosity")
+};
+
 /** Dynamic weather states (directive §12). */
 UENUM(BlueprintType)
 enum class EAstrawildWeatherState : uint8
