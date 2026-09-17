@@ -4,6 +4,9 @@
 
 #include "Net/UnrealNetwork.h"
 #include "AstrawildCore.h"
+// ENGINE-RUN-1 audit (P1): new World->GetNetMode()/GetGameInstance() member
+// access has no guaranteed transitive provider in this TU — make it explicit.
+#include "Engine/World.h"
 
 AAstrawildGameState::AAstrawildGameState()
 {

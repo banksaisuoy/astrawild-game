@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "AstrawildTypes.h"
 #include "AstrawildPlayerController.generated.h"
 
 class AAstrawildNPCCharacter;
@@ -20,7 +21,6 @@ class UAstrawildRosterScreenWidget;
 class UAstrawildMapScreenWidget;
 class UAstrawildHuntScreenWidget;
 
-#include "AstrawildTypes.h"
 
 /**
  * ASTRAWILD player controller: hosts the quest component (survives respawn) and
