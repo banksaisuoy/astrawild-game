@@ -3,12 +3,12 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 942,
+   "line": 943,
    "id": "Quest_FirstLight",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 945,
+     "line": 946,
      "type": "CollectItem",
      "target": "Item_Wood",
      "count": 10,
@@ -16,7 +16,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 951,
+     "line": 952,
      "type": "CollectItem",
      "target": "Item_Stone",
      "count": 5,
@@ -27,7 +27,7 @@
     {
      "item": "Item_Resonator",
      "qty": 2,
-     "line": 957
+     "line": 958
     }
    ],
    "attributes": [],
@@ -38,12 +38,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 963,
+   "line": 964,
    "id": "Quest_FirstEcho",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 966,
+     "line": 967,
      "type": "ObserveEcho",
      "target": "Echo_Lumewisp",
      "count": 1,
@@ -51,7 +51,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 972,
+     "line": 973,
      "type": "CaptureEcho",
      "target": "Echo_Lumewisp",
      "count": 1,
@@ -62,7 +62,7 @@
     {
      "item": "Item_Berry",
      "qty": 10,
-     "line": 978
+     "line": 979
     }
    ],
    "attributes": [],
@@ -73,12 +73,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 984,
+   "line": 985,
    "id": "Quest_Homeground",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 987,
+     "line": 988,
      "type": "PlaceBuilding",
      "target": "Building_Foundation",
      "count": 1,
@@ -86,7 +86,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 993,
+     "line": 994,
      "type": "PlaceBuilding",
      "target": "Building_Workbench",
      "count": 1,
@@ -102,12 +102,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1004,
+   "line": 1005,
    "id": "Quest_Spark",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1007,
+     "line": 1008,
      "type": "UnlockTechnology",
      "target": "Tech_Electrical",
      "count": 1,
@@ -115,7 +115,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1013,
+     "line": 1014,
      "type": "PlaceBuilding",
      "target": "Building_Generator",
      "count": 1,
@@ -131,12 +131,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1024,
+   "line": 1025,
    "id": "Quest_DawnGuard",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1027,
+     "line": 1028,
      "type": "DefeatCreature",
      "target": "Echo_Gloomfang",
      "count": 3,
@@ -147,7 +147,7 @@
     {
      "item": "Item_AncientCore",
      "qty": 1,
-     "line": 1033
+     "line": 1034
     }
    ],
    "attributes": [],
@@ -158,12 +158,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1042,
+   "line": 1043,
    "id": "Quest_ShepherdsDawn",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1045,
+     "line": 1046,
      "type": "UnlockTechnology",
      "target": "Tech_Husbandry",
      "count": 1,
@@ -171,7 +171,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1051,
+     "line": 1052,
      "type": "CaptureEcho",
      "target": "Echo_Sprigling",
      "count": 1,
@@ -179,7 +179,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1057,
+     "line": 1058,
      "type": "PlaceBuilding",
      "target": "Building_FeedTrough",
      "count": 1,
@@ -187,7 +187,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1063,
+     "line": 1064,
      "type": "CollectItem",
      "target": "Item_FeedMix",
      "count": 3,
@@ -198,12 +198,12 @@
     {
      "item": "Item_FeedMix",
      "qty": 5,
-     "line": 1069
+     "line": 1070
     },
     {
      "item": "Item_HerbalSalve",
      "qty": 2,
-     "line": 1070
+     "line": 1071
     }
    ],
    "attributes": [],
@@ -213,12 +213,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1081,
+   "line": 1082,
    "id": "Quest_HollowUnderlight",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1084,
+     "line": 1085,
      "type": "ReachLocation",
      "target": "Location_HollowUnderlight",
      "count": 1,
@@ -226,7 +226,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1090,
+     "line": 1091,
      "type": "DefeatCreature",
      "target": "Creature_UnderlightWarden",
      "count": 1,
@@ -237,12 +237,12 @@
     {
      "item": "Item_HerbalSalve",
      "qty": 2,
-     "line": 1096
+     "line": 1097
     },
     {
      "item": "Item_DawnShard",
      "qty": 5,
-     "line": 1097
+     "line": 1098
     }
    ],
    "attributes": [],
@@ -253,12 +253,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1107,
+   "line": 1108,
    "id": "Quest_ValeBeyond",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1110,
+     "line": 1111,
      "type": "VisitZone",
      "target": "Zone_EmberRidge",
      "count": 1,
@@ -266,7 +266,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1116,
+     "line": 1117,
      "type": "SurviveTime",
      "target": null,
      "count": null,
@@ -274,7 +274,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1122,
+     "line": 1123,
      "type": "CraftRecipe",
      "target": "Recipe_PulseLance",
      "count": 1,
@@ -285,12 +285,12 @@
     {
      "item": "Item_EnergyCell",
      "qty": 8,
-     "line": 1128
+     "line": 1129
     },
     {
      "item": "Item_DawnShard",
      "qty": 8,
-     "line": 1129
+     "line": 1130
     }
    ],
    "attributes": [],
@@ -300,12 +300,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1139,
+   "line": 1140,
    "id": "Quest_WingsOverTheVale",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1142,
+     "line": 1143,
      "type": "VisitZone",
      "target": "Zone_TidebreakerIsles",
      "count": 1,
@@ -313,7 +313,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1148,
+     "line": 1149,
      "type": "ReachLocation",
      "target": "Location_DriftwoodLanding",
      "count": 1,
@@ -324,12 +324,12 @@
     {
      "item": "Item_DawnShard",
      "qty": 6,
-     "line": 1154
+     "line": 1155
     },
     {
      "item": "Item_SeaPearl",
      "qty": 2,
-     "line": 1155
+     "line": 1156
     }
    ],
    "attributes": [],
@@ -340,12 +340,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1164,
+   "line": 1165,
    "id": "Quest_SunkenVault",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1167,
+     "line": 1168,
      "type": "ReachLocation",
      "target": "Location_SunkenVault",
      "count": 1,
@@ -353,7 +353,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1173,
+     "line": 1174,
      "type": "DefeatCreature",
      "target": "Creature_VaultColossus",
      "count": 1,
@@ -364,17 +364,17 @@
     {
      "item": "Item_SeaPearl",
      "qty": 3,
-     "line": 1179
+     "line": 1180
     },
     {
      "item": "Item_CoralShard",
      "qty": 4,
-     "line": 1180
+     "line": 1181
     },
     {
      "item": "Item_DawnShard",
      "qty": 8,
-     "line": 1181
+     "line": 1182
     }
    ],
    "attributes": [],

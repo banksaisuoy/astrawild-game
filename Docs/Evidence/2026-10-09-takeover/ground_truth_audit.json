@@ -1,0 +1,588 @@
+{
+ "head": "d326eee81e95447432436a4333a79800be673af0",
+ "systems": {
+  "startup/boot": [
+   {
+    "label": "GameMode class",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+AAstrawildGameMode\\b",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildGameMode.h:13:class ASTRAWILDCORE_API AAstrawildGameMode : public AGameModeBase"
+    ]
+   },
+   {
+    "label": "module boot",
+    "pattern": "UGameInstanceBase|FModuleManager::Get\\(\\)\\.LoadModule|IMPLEMENT_PRIMARY_GAME_MODULE",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildCore.cpp:17:IMPLEMENT_PRIMARY_GAME_MODULE(FAstrawildCoreModule, AstrawildCore, \"AstrawildCore\");"
+    ]
+   },
+   {
+    "label": "note",
+    "hits": 1,
+    "evidence": [
+     "Config/DefaultEngine.ini GameDefaultMap + .uproject EngineAssociation"
+    ]
+   }
+  ],
+  "GameMode/flow": [
+   {
+    "label": "ctor",
+    "pattern": "AAstrawildGameMode::AAstrawildGameMode",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildGameMode.cpp:21:AAstrawildGameMode::AAstrawildGameMode()"
+    ]
+   },
+   {
+    "label": "default classes",
+    "pattern": "DefaultPawnClass|PlayerControllerClass\\s*=",
+    "hits": 2,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildGameMode.cpp:26:    DefaultPawnClass = AAstrawildPlayerCharacter::StaticClass();",
+     "Source/AstrawildCore/Private/AstrawildGameMode.cpp:28:    PlayerControllerClass = AAstrawildPlayerController::StaticClass();"
+    ]
+   },
+   {
+    "label": "ending flow",
+    "pattern": "SetEndingState|EAstrawildEndingState",
+    "hits": 51,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildGameState.cpp:103:void AAstrawildGameState::SetEndingState(const EAstrawildEndingState InState)",
+     "Source/AstrawildCore/Private/AstrawildGameState.cpp:112:    if (EndingState != EAstrawildEndingState::None || InState == EAstrawildEndingState::None ||",
+     "Source/AstrawildCore/Private/AstrawildGameState.cpp:113:        InState >= EAstrawildEndingState::Count || InState == EndingState)"
+    ]
+   }
+  ],
+  "pawn/movement": [
+   {
+    "label": "pawn class",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+AAstrawildPlayerCharacter\\s*:\\s*public",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h:40:class ASTRAWILDCORE_API AAstrawildPlayerCharacter : public ACharacter"
+    ]
+   },
+   {
+    "label": "input binding",
+    "pattern": "void\\s+AAstrawildPlayerCharacter::SetupPlayerInputComponent",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:973:void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)"
+    ]
+   },
+   {
+    "label": "movement config use",
+    "pattern": "GetCharacterMovement\\(\\)->",
+    "hits": 9,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildNPCAIController.cpp:245:        Npc->GetCharacterMovement()->MaxWalkSpeed = NewSpeed;",
+     "Source/AstrawildCore/Private/AstrawildEchoCharacter.cpp:2023:        GetCharacterMovement()->MaxWalkSpeed = CachedStats.MoveSpeed;",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:92:    GetCharacterMovement()->bOrientRotationToMovement = true;"
+    ]
+   }
+  ],
+  "input": [
+   {
+    "label": "EnhancedInput usage",
+    "pattern": "UEnhancedInputComponent",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:977:    UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);"
+    ]
+   },
+   {
+    "label": "IA/IMC members",
+    "pattern": "UInputAction\\*|UInputMappingContext\\*",
+    "hits": 5,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:773:UInputAction* AAstrawildPlayerCharacter::MakeRuntimeAction(const FString& Name, const uint8 ValueType, const bool bNegateY)",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:775:    UInputAction* Action = NewObject<UInputAction>(this, *Name);",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:818:    UInputMappingContext* Context = RuntimeMappingContext;"
+    ]
+   },
+   {
+    "label": "action value handling",
+    "pattern": "FInputActionValue",
+    "hits": 77,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:395:void AAstrawildPlayerCharacter::CastPartyAbility(const FInputActionValue& Value)",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:466:void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:1158:void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)"
+    ]
+   },
+   {
+    "label": "file:Tools/Python/setup_input_assets.py",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   },
+   {
+    "label": "file:Config/DefaultInput.ini",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   }
+  ],
+  "camera": [
+   {
+    "label": "camera rig",
+    "pattern": "CreateDefaultSubobject<UCameraComponent>|USpringArmComponent",
+    "hits": 5,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:98:    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT(\"CameraBoom\"));",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:106:    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT(\"FollowCamera\"));",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:107:    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);"
+    ]
+   },
+   {
+    "label": "control rotation",
+    "pattern": "bUsePawnControlRotation",
+    "hits": 2,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:102:    CameraBoom->bUsePawnControlRotation = true;",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:108:    FollowCamera->bUsePawnControlRotation = false;"
+    ]
+   }
+  ],
+  "interaction": [
+   {
+    "label": "interactable iface",
+    "pattern": "IAstrawildInteractable|UInteractableComponent|OnInteract",
+    "hits": 17,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildHudWidget.cpp:369:            PromptText->SetText(IAstrawildInteractable::Execute_GetInteractionPrompt(Target));",
+     "Source/AstrawildCore/Private/AstrawildUtilityDroneActor.cpp:245:        IAstrawildInteractable::Execute_Interact(Best, TargetPlayer);",
+     "Source/AstrawildCore/Private/AstrawildPlayerCharacter.cpp:1523:        IAstrawildInteractable::Execute_Interact(InteractableActor, this);"
+    ]
+   },
+   {
+    "label": "interact RPC",
+    "pattern": "Server_Interact|Multicast_Interact|Interact_Implementation",
+    "hits": 23,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildNPCCharacter.cpp:292:void AAstrawildNPCCharacter::Interact_Implementation(AActor* InteractingActor)",
+     "Source/AstrawildCore/Private/AstrawildResonancePillarActor.cpp:61:void AAstrawildResonancePillarActor::Interact_Implementation(AActor* InteractingActor)",
+     "Source/AstrawildCore/Private/AstrawildBuildingActor.cpp:346:void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)"
+    ]
+   }
+  ],
+  "inventory": [
+   {
+    "label": "component",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildInventoryComponent",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildInventoryComponent.h:24:class ASTRAWILDCORE_API UAstrawildInventoryComponent : public UActorComponent"
+    ]
+   },
+   {
+    "label": "core ops",
+    "pattern": "RemoveItem|AddItem|SetItemStacks|ConsumeItems",
+    "hits": 121,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildInventoryComponent.cpp:74:bool UAstrawildInventoryComponent::CanAddItem(const FName ItemId, const int32 Quantity) const",
+     "Source/AstrawildCore/Private/AstrawildInventoryComponent.cpp:99:bool UAstrawildInventoryComponent::CanAddItemStacks(const TArray<FAstrawildItemStack>& Stacks) const",
+     "Source/AstrawildCore/Private/AstrawildInventoryComponent.cpp:149:bool UAstrawildInventoryComponent::AddItem(const FName ItemId, const int32 Quantity)"
+    ]
+   },
+   {
+    "label": "tests",
+    "pattern": "ASTRAWILD\\.Inventory\\.TransactionSafety",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2223:    \"ASTRAWILD.Inventory.TransactionSafety\","
+    ]
+   }
+  ],
+  "crafting": [
+   {
+    "label": "component",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildCraftingComponent",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildCraftingComponent.h:20:class ASTRAWILDCORE_API UAstrawildCraftingComponent : public UActorComponent"
+    ]
+   },
+   {
+    "label": "ops",
+    "pattern": "CanCraft|TryCraft|CraftRecipe",
+    "hits": 26,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp:1123:    ObjLance.Type = EAstrawildQuestObjectiveType::CraftRecipe;",
+     "Source/AstrawildCore/Private/AstrawildQuestComponent.cpp:273:        case EAstrawildQuestObjectiveType::CraftRecipe:",
+     "Source/AstrawildCore/Private/AstrawildCraftingComponent.cpp:73:bool UAstrawildCraftingComponent::CanCraftIgnoringStation(const UAstrawildRecipeDefinition* Recipe) const"
+    ]
+   },
+   {
+    "label": "tests",
+    "pattern": "ASTRAWILD\\.Craft\\.",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:899:    \"ASTRAWILD.Craft.OutputGuard\","
+    ]
+   }
+  ],
+  "creature spawning": [
+   {
+    "label": "ecosystem",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildEcosystemSubsystem",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildEcosystemSubsystem.h:52:class ASTRAWILDCORE_API UAstrawildEcosystemSubsystem : public UTickableWorldSubsystem"
+    ]
+   },
+   {
+    "label": "spawn ops",
+    "pattern": "SpawnEcho|SpawnCreature|TargetPopulation",
+    "hits": 4,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildCheatManager.cpp:29:void UAstrawildCheatManager::SpawnEcho(const FName EchoDefinitionId)",
+     "Source/AstrawildCore/Private/AstrawildCheatManager.cpp:43:        UE_LOG(LogAstrawild, Warning, TEXT(\"AW.SpawnEcho: unknown Echo id %s.\"), *EchoDefinitionId.ToString());",
+     "Source/AstrawildCore/Public/AstrawildCheatManager.h:10: * Console examples: `AW.SpawnEcho Echo_Lumewisp`, `AW.GiveItem Item_Wood 50`, `AW.SetTime 22 0`."
+    ]
+   },
+   {
+    "label": "hostile spawner",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildHostileSpawnerSubsystem",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildHostileSpawnerSubsystem.h:23:class ASTRAWILDCORE_API UAstrawildHostileSpawnerSubsystem : public UTickableWorldSubsystem"
+    ]
+   }
+  ],
+  "capture/roster": [
+   {
+    "label": "capture",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildCaptureComponent",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildCaptureComponent.h:19:class ASTRAWILDCORE_API UAstrawildCaptureComponent : public UActorComponent"
+    ]
+   },
+   {
+    "label": "roster",
+    "pattern": "ASTRAWILD\\.Echo\\.RosterImportSafety|UAstrawildEchoRosterSubsystem",
+    "hits": 59,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp:231:        if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())",
+     "Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp:493:        if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())",
+     "Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp:571:                if (UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())"
+    ]
+   }
+  ],
+  "quests": [
+   {
+    "label": "quest comp",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildQuestComponent",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildQuestComponent.h:20:class ASTRAWILDCORE_API UAstrawildQuestComponent : public UActorComponent"
+    ]
+   },
+   {
+    "label": "contracts",
+    "pattern": "ASTRAWILD\\.Quest\\.FinalRunChain|OneActiveQuest|OneShotBackFill",
+    "hits": 4,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2411:    \"ASTRAWILD.Quest.FinalRunChain\",",
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2722:IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildQuestOneShotBackFillTest,",
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2723:    \"ASTRAWILD.Quest.OneShotBackFill\","
+    ]
+   }
+  ],
+  "building": [
+   {
+    "label": "building actor",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+AAstrawildBuildingActor",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildBuildingActor.h:23:class ASTRAWILDCORE_API AAstrawildBuildingActor : public AActor, public IAstrawildInteractable"
+    ]
+   },
+   {
+    "label": "crate transfer",
+    "pattern": "AAstrawildBuildingActor::TransferStorageStack",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildBuildingActor.cpp:713:FText AAstrawildBuildingActor::TransferStorageStack(AAstrawildPlayerCharacter* Player)"
+    ]
+   },
+   {
+    "label": "ops",
+    "pattern": "PlaceBuilding|ToggleDoor",
+    "hits": 12,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp:988:    ObjFoundation.Type = EAstrawildQuestObjectiveType::PlaceBuilding;",
+     "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp:994:    ObjWorkbench.Type = EAstrawildQuestObjectiveType::PlaceBuilding;",
+     "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp:1014:    ObjGenerator.Type = EAstrawildQuestObjectiveType::PlaceBuilding;"
+    ]
+   }
+  ],
+  "save/load": [
+   {
+    "label": "subsystem",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildSaveSubsystem",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildSaveSubsystem.h:183:class ASTRAWILDCORE_API UAstrawildSaveSubsystem : public UGameInstanceSubsystem"
+    ]
+   },
+   {
+    "label": "engine save API",
+    "pattern": "SaveGameToSlot|LoadGameFromSlot",
+    "hits": 7,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp:319:    const bool bSaved = UGameplayStatics::SaveGameToSlot(SaveGame, SlotName, UserIndex);",
+     "Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp:411:    UAstrawildSaveGame* SaveGame = Cast<UAstrawildSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, UserIndex));",
+     "Source/AstrawildCore/Private/AstrawildSaveSubsystem.cpp:989:    if (const UAstrawildSaveGame* MainSave = Cast<UAstrawildSaveGame>(UGameplayStatics::LoadGameFromSlot(MainSlot, UserIndex)))"
+    ]
+   },
+   {
+    "label": "contracts",
+    "pattern": "ASTRAWILD\\.Save\\.ConsistencyContracts|SchemaV5Ending",
+    "hits": 4,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2285:    \"ASTRAWILD.Save.ConsistencyContracts\",",
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2538:IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildSaveSchemaV5EndingTest,",
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:2539:    \"ASTRAWILD.Save.SchemaV5Ending\","
+    ]
+   }
+  ],
+  "UI": [
+   {
+    "label": "HUD",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildHudWidget",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildHudWidget.h:19:class ASTRAWILDCORE_API UAstrawildHudWidget : public UUserWidget"
+    ]
+   },
+   {
+    "label": "viewport ops",
+    "pattern": "AddToViewport|SetVisibility\\(ESlateVisibility",
+    "hits": 29,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerController.cpp:69:        HudWidget->AddToViewport();",
+     "Source/AstrawildCore/Private/AstrawildPlayerController.cpp:125:    ShopWidget->AddToViewport(10); // Above the HUD (default Z-order).",
+     "Source/AstrawildCore/Private/AstrawildPlayerController.cpp:199:    DialogueWidget->AddToViewport(10); // Above the HUD, same layer as the other screens."
+    ]
+   },
+   {
+    "label": "widget creation",
+    "pattern": "WBP_|CreateWidget<",
+    "hits": 11,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildPlayerController.cpp:66:    HudWidget = CreateWidget<UAstrawildHudWidget>(this, WidgetClass);",
+     "Source/AstrawildCore/Private/AstrawildPlayerController.cpp:117:        ShopWidget = CreateWidget<UAstrawildShopWidget>(this, WidgetClass);",
+     "Source/AstrawildCore/Private/AstrawildPlayerController.cpp:183:        DialogueWidget = CreateWidget<UAstrawildDialogueWidget>(this, WidgetClass);"
+    ]
+   }
+  ],
+  "audio": [
+   {
+    "label": "engine audio API",
+    "pattern": "PlaySoundAtLocation|USoundBase\\*",
+    "hits": 13,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildEchoCharacter.cpp:1325:    USoundBase* ChosenCue = nullptr;",
+     "Source/AstrawildCore/Private/AstrawildEchoCharacter.cpp:1342:        UGameplayStatics::PlaySoundAtLocation(World, ChosenCue, GetActorLocation());",
+     "Source/AstrawildCore/Private/AstrawildCombatComponent.cpp:48:            if (USoundBase* FireSfx = WeaponDef->FireSound.LoadSynchronous())"
+    ]
+   },
+   {
+    "label": "asset refs",
+    "pattern": "A_Echo_Capture_Success|A_UI_Confirm",
+    "hits": 6,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:6312:    // the cue loads through the literal-path idiom (A_UI_Confirm exists in",
+     "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp:6315:    const TCHAR* ToastCuePath = TEXT(\"/Game/Audio/A_UI_Confirm\");",
+     "Source/AstrawildCore/Private/AstrawildHudWidget.cpp:221:    // First PlaySound2D in the module \u2014 the A_UI_Confirm package exists in"
+    ]
+   },
+   {
+    "label": "file:ArtSource/Audio",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   }
+  ],
+  "world generation": [
+   {
+    "label": "bootstrapper",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+AAstrawildWorldBootstrapper",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h:58:class ASTRAWILDCORE_API AAstrawildWorldBootstrapper : public AActor"
+    ]
+   },
+   {
+    "label": "zones",
+    "pattern": "class\\s+ASTRAWILDCORE_API\\s+UAstrawildZoneSubsystem",
+    "hits": 1,
+    "evidence": [
+     "Source/AstrawildCore/Public/AstrawildZoneSubsystem.h:105:class ASTRAWILDCORE_API UAstrawildZoneSubsystem : public UTickableWorldSubsystem"
+    ]
+   },
+   {
+    "label": "dungeon/zone gen",
+    "pattern": "AAstrawildDungeonGeneratorActor|MakeZone",
+    "hits": 35,
+    "evidence": [
+     "Source/AstrawildCore/Private/AstrawildZoneSubsystem.cpp:23:    FAstrawildZoneDescriptor MakeZone(const EAstrawildZone Zone, const TCHAR* Id, const TCHAR* Name,",
+     "Source/AstrawildCore/Private/AstrawildZoneSubsystem.cpp:64:        Zones.Add(MakeZone(EAstrawildZone::FrostveilExpanse, TEXT(\"Zone_Frostveil\"), TEXT(\"Frostveil Expanse\"),",
+     "Source/AstrawildCore/Private/AstrawildZoneSubsystem.cpp:71:        Zones.Add(MakeZone(EAstrawildZone::Glimmerwood, TEXT(\"Zone_Glimmerwood\"), TEXT(\"Glimmerwood\"),"
+    ]
+   }
+  ],
+  "packaging": [
+   {
+    "label": "file:Tools/package_windows.bat",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   },
+   {
+    "label": "file:.github/workflows/release.yml",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   },
+   {
+    "label": "file:Source/ASTRAWILD.Target.cs",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   },
+   {
+    "label": "file:Source/ASTRAWILDEditor.Target.cs",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   },
+   {
+    "label": "file:Setup_And_Play.bat",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   },
+   {
+    "label": "file:Tools/preflight_check.bat",
+    "hits": 1,
+    "evidence": [
+     "exists=True"
+    ]
+   }
+  ]
+ },
+ "test_census": {
+  "unique_test_names": 134,
+  "test_macro_defines": 134,
+  "families": [
+   "Ability",
+   "Armor",
+   "ArtPack",
+   "Asset",
+   "Atmosphere",
+   "Attributes",
+   "Bestiary",
+   "BiomeDressing",
+   "Capture",
+   "Combat",
+   "Craft",
+   "DCP1",
+   "DCP2",
+   "DCP3",
+   "DCP4",
+   "DCP5",
+   "DCP6",
+   "DCP7",
+   "DP3",
+   "DP4",
+   "DP5",
+   "DP6",
+   "DP7",
+   "DP8",
+   "DP9",
+   "Dialogue",
+   "Dungeon",
+   "Echo",
+   "Economy",
+   "Equipment",
+   "FCR",
+   "FPP1",
+   "Input",
+   "Inventory",
+   "LCP2",
+   "LCP3",
+   "LCP4",
+   "LCP5",
+   "LCP6",
+   "Locomotion",
+   "NPC",
+   "PCR1",
+   "PCR2",
+   "PCR3",
+   "PCR4",
+   "PCR5",
+   "POI",
+   "Power",
+   "Quest",
+   "Research",
+   "ResourceNode",
+   "Robot",
+   "SCI_FANTASY",
+   "SCP",
+   "Save",
+   "Skiff",
+   "Survival",
+   "Tech",
+   "Terrain",
+   "VIS1",
+   "Vfx",
+   "Weapon",
+   "WorkSite",
+   "WorldEvent",
+   "Zones"
+  ]
+ },
+ "config": {
+  "GameDefaultMap": [
+   "/Game/ASTRAWILD/Maps/MainMap"
+  ],
+  "EditorStartupMap": [
+   "/Game/ASTRAWILD/Maps/MainMap"
+  ],
+  "GlobalDefaultGameMode": [
+   "/Script/AstrawildCore.AstrawildGameMode"
+  ],
+  "GameInstanceClass": [],
+  "EngineAssociation": "5.8",
+  "Modules": [
+   "AstrawildCore"
+  ],
+  "Plugins": [
+   "EnhancedInput",
+   "ProceduralMeshComponent",
+   "PythonScriptPlugin"
+  ],
+  "DefaultGame_ini_gamemode_refs": 0
+ },
+ "umap": {
+  "magic_valid_uasset": 414,
+  "magic_valid_umap": 2,
+  "umap_paths": [
+   "Content/ASTRAWILD/Maps/MainMap.umap",
+   "Content/ThirdPerson/Lvl_ThirdPerson.umap"
+  ]
+ }
+}

@@ -1,0 +1,706 @@
+{
+ "head": "d326eee",
+ "rows": [
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_Scrapshot",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_ScrapRifle",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 55268,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_PulseLance",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_PlasmaCarbine",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 46508,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_PlasmaCharger",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_PlasmaCarbine",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 46508,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_LumenBeam",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_PlasmaCarbine",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 46508,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_ArcCaster",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_ArcCannon",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 85716,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_MagrailDriver",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_Railgun",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 66520,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_SkysingerLauncher",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_SingularityCannon",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 90736,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "weapon",
+   "game_id": "Weapon_StarlancePrototype",
+   "ue_path": "/Game/Weapons/Meshes/SM_Weapon_SingularityCannon",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 90736,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Terraquill",
+   "ue_path": "/Game/Characters/Echoes/SK_Echo_Terraquill",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 2044468,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Cindermule",
+   "ue_path": "/Game/Characters/Echoes/SK_Echo_Cindermule",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 2181252,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Voltpylon",
+   "ue_path": "/Game/Characters/Echoes/SK_Echo_Voltpylon",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 624692,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Bastionbeetle",
+   "ue_path": "/Game/Characters/Echoes/SK_Echo_Bastionbeetle",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 610080,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Mistmender",
+   "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistmender",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 98756,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Deepdelver",
+   "ue_path": "/Game/Characters/Echoes/SK_Echo_Deepdelver",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 760096,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Lumewisp",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_SkyTyrant",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 555944,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Gloomfang",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_WarlordOrc",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 671652,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Sprigling",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MushroomKing",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 620884,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Voltmaw",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MechRavager",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 465736,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Auroraling",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AncientWarden",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 318484,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Wavecrest",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AbyssDemon",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 604724,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Undertowray",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_VoidPrime",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 244324,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Voidwing",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_ShadowNinja",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 632052,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "echo",
+   "game_id": "Echo_Verdantbloom",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_FungalSovereign",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 160760,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_Dawnwood",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Rock_Granite_S",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 13172,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_Fieldstone",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Rock_Granite_M",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 12984,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_Sunfiber",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_SporeBush",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 6436,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_DawnCrystal",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Astraite",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 25156,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_EmberAsh",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Pyronite",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 26160,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_SeaPearl",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Astraite",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 25156,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_CoralShard",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Astraite",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 25156,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_DuneGlass",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Voidstone",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 25924,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_StormSilver",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Voidstone",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 25924,
+   "classification": "SHARED_MODEL_VARIANT"
+  },
+  {
+   "domain": "node",
+   "game_id": "Node_AncientVein",
+   "ue_path": "/Game/Environment/ResourceNodes/SM_Node_AncientVein",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 25756,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Tree_Broadleaf",
+   "ue_path": "/Game/Environment/SM_Tree_Broadleaf",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 14644,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Tree_Conifer",
+   "ue_path": "/Game/Environment/SM_Tree_Conifer",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 10924,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Tree_SporeCanopy",
+   "ue_path": "/Game/Environment/SM_Tree_SporeCanopy",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 5576,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Rock_Granite_L",
+   "ue_path": "/Game/Environment/SM_Rock_Granite_L",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 13224,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Rock_Granite_M",
+   "ue_path": "/Game/Environment/SM_Rock_Granite_M",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 12984,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Rock_Granite_S",
+   "ue_path": "/Game/Environment/SM_Rock_Granite_S",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 13172,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Rock_Boulder_Moss",
+   "ue_path": "/Game/Environment/SM_Rock_Boulder_Moss",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 6044,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Cliff_Shard",
+   "ue_path": "/Game/Environment/SM_Cliff_Shard",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 2564,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Grass_Tuft",
+   "ue_path": "/Game/Environment/SM_Grass_Tuft",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 18504,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_Fern",
+   "ue_path": "/Game/Environment/SM_Fern",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 10172,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_SporeBush",
+   "ue_path": "/Game/Environment/SM_SporeBush",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 6436,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "environment",
+   "game_id": "SM_GlowReed",
+   "ue_path": "/Game/Environment/SM_GlowReed",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 3480,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "player",
+   "game_id": "Survivor_Exosuit",
+   "ue_path": "/Game/Characters/Survivor/SK_Survivor_Exosuit",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 1844596,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "vehicle",
+   "game_id": "DawnSkiff",
+   "ue_path": "/Game/Vehicles/SM_Vehicle_DawnSkiff",
+   "content_uasset": true,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "IMPORTED_UASSET_ON_DISK",
+   "artsource_bytes": 106184,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_SkyTyrant",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_SkyTyrant",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 555944,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_WarlordOrc",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_WarlordOrc",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 671652,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_MushroomKing",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MushroomKing",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 620884,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_MechRavager",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MechRavager",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 465736,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_AncientWarden",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AncientWarden",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 318484,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_AbyssDemon",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AbyssDemon",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 604724,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_VoidPrime",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_VoidPrime",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 244324,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_ShadowNinja",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_ShadowNinja",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 632052,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_FungalSovereign",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_FungalSovereign",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 160760,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_Alpaca",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_Alpaca",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 175988,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_BoneShaman",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_BoneShaman",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 676468,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_MechTitan",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MechTitan",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 542460,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_SentinelPrime",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_SentinelPrime",
+   "content_uasset": false,
+   "artsource_staged": true,
+   "license": "CC0 1.0 Universal",
+   "status": "ENGINE_IMPORT_PENDING",
+   "artsource_bytes": 611672,
+   "classification": "UNIQUE_MODEL"
+  },
+  {
+   "domain": "boss_spare",
+   "game_id": "SK_Boss_Alpaca2",
+   "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_Alpaca2",
+   "content_uasset": false,
+   "artsource_staged": false,
+   "license": "n/a",
+   "status": "NO_SOURCE_STAGED",
+   "artsource_bytes": null,
+   "classification": "MISSING"
+  }
+ ],
+ "species_total": 0,
+ "species_explicit_art": 15,
+ "species_procedural_pmc": -15,
+ "status_summary": {
+  "weapon": {
+   "IMPORTED_UASSET_ON_DISK": 8
+  },
+  "echo": {
+   "IMPORTED_UASSET_ON_DISK": 6,
+   "ENGINE_IMPORT_PENDING": 9
+  },
+  "node": {
+   "ENGINE_IMPORT_PENDING": 3,
+   "IMPORTED_UASSET_ON_DISK": 7
+  },
+  "environment": {
+   "IMPORTED_UASSET_ON_DISK": 12
+  },
+  "player": {
+   "IMPORTED_UASSET_ON_DISK": 1
+  },
+  "vehicle": {
+   "IMPORTED_UASSET_ON_DISK": 1
+  },
+  "boss_spare": {
+   "ENGINE_IMPORT_PENDING": 13,
+   "NO_SOURCE_STAGED": 1
+  }
+ },
+ "engine_import_note": "Import happens at ENGINE-RUN-1 (AwPipeline import_all.py) \u2014 NOT_RUN in this sandbox."
+}

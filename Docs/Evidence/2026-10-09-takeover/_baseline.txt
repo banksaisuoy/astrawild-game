@@ -1,0 +1,6 @@
+repo HEAD: d326eee81e95447432436a4333a79800be673af0
+branch:    agent/evidence-first-takeover-v1
+upstream:  origin/final-completion
+date:      2026-10-09T01:25:33Z
+lfs:       git-lfs/3.5.1 (GitHub; linux amd64; go 1.21.7; git e237bb3a)
+lfs files: 586
