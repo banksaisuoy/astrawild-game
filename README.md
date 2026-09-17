@@ -29,6 +29,28 @@
 
 ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal Engine. The first milestone is a playable Vertical Slice: one small region, three prototype Echo creatures, exploration, combat, capture, crafting, a small base, and reliable save/load.
 
+## Download & Play
+
+**Option 1 — packaged build (no Unreal Engine required on the playing PC)**
+
+1. Open the **Releases** page of this repository.
+2. Download `ASTRAWILD-Win64-Shipping.zip` from the latest release.
+3. Unzip it anywhere and run `ASTRAWILD\Binaries\Win64\ASTRAWILD.exe`.
+
+Requirements: Windows 10/11 64-bit, a DirectX 12 capable GPU, 8 GB RAM.
+The zip is self-contained — no Unreal Engine install, no prerequisites.
+
+**Option 2 — package it yourself (one click, on the dev machine)**
+
+```bat
+Tools\package_windows.bat
+```
+
+- Runs RunUAT `BuildCookRun` for **Win64 Shipping** (`-cook -allmaps -stage -pak -package -archive`) and writes the build to `Build\Windows\ASTRAWILD\` — the game executable lands at `Build\Windows\ASTRAWILD\Binaries\Win64\ASTRAWILD.exe`.
+- Requires Unreal Engine 5.8 at `E:\Epic Games\UnrealEngine` (or set the `UE_ROOT` environment variable to your engine root) and a clone made with **Git LFS**.
+
+**How releases are produced** — `.github/workflows/release.yml` builds, zips and attaches the Shipping build to a GitHub Release whenever a `v*` tag is pushed. It targets a **self-hosted Windows runner** (the dev PC) on purpose: GitHub-hosted runners have no UE 5.8 install, and the engine is far too large to provision per run. The workflow header documents the one-time runner setup (Settings → Actions → Runners → New self-hosted runner → install as a service).
+
 ## Current repository status
 
 > [!TIP]

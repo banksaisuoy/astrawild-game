@@ -1,0 +1,76 @@
+# =============================================================================
+# ASTRAWILD — Release workflow (ENGINE-RUN-1 / TASK 4)
+# =============================================================================
+# Packages the Win64 SHIPPING build, zips it and attaches it to a GitHub
+# Release.
+#
+# WHY THIS NEEDS A SELF-HOSTED RUNNER (and not a GitHub-hosted one):
+#   1. GitHub-hosted runners do NOT have Unreal Engine 5.8 installed. The
+#      engine (with the registered "5.8" EngineAssociation) is a large
+#      local install (~tens of GB + shader/DDC caches); provisioning it
+#      per-run is impractical (hours of setup, disk limits, and Epic's
+#      source-build EULA is tied to the account that accepted it).
+#   2. Compiling + cooking this project takes a long stretch even on the
+#      development machine; hosted runners would multiply that every run.
+#   3. A self-hosted runner reuses the exact engine + MSVC toolchain that
+#      already built this project (evidence: Docs/ENGINE_LOGS), keeping
+#      release binaries reproducible with the developer machine.
+#
+# ONE-TIME SELF-HOSTED RUNNER SETUP (on the Windows dev PC):
+#   1. Repo on GitHub -> Settings -> Actions -> Runners -> New self-hosted
+#      runner -> Windows -> follow the download/configure commands
+#      (Default labels: self-hosted, Windows, X64 — keep them).
+#   2. Install the runner as a Windows service so it is always available:
+#      .\svc install  +  .\svc start   (from the runner folder).
+#   3. Ensure git + git-lfs are on PATH for the runner service account.
+#   4. Optional: set a repository variable UE_ROOT (Settings -> Secrets and
+#      variables -> Actions -> Variables) if the engine is NOT at
+#      E:\Epic Games\UnrealEngine — Tools\package_windows.bat reads it.
+#
+# Trigger: push a tag named v* (e.g. git tag v0.1.0 && git push origin v0.1.0)
+#          or run manually from the Actions tab (workflow_dispatch).
+# =============================================================================
+
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package-and-release:
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+      - name: Checkout (with Git LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Package Win64 Shipping
+        shell: cmd
+        run: Tools\package_windows.bat
+        env:
+          UE_ROOT: ${{ vars.UE_ROOT }}
+
+      - name: Zip the packaged build
+        shell: pwsh
+        run: |
+          # bsdtar (built into Windows 10+) creates a .zip via the extension
+          # and has no 2 GB limit (unlike PS 5.1 Compress-Archive).
+          New-Item -ItemType Directory -Force -Path Build | Out-Null
+          tar -a -c -f Build\ASTRAWILD-Win64-Shipping.zip -C Build\Windows ASTRAWILD
+          if ($LASTEXITCODE -ne 0) { throw "tar zip failed ($LASTEXITCODE)" }
+          Get-Item Build\ASTRAWILD-Win64-Shipping.zip | Select-Object FullName, Length
+
+      - name: Create GitHub Release and attach the zip
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Build/ASTRAWILD-Win64-Shipping.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
