@@ -211,6 +211,62 @@ def build_obstacles():
     log("Obstacles: {} cubes placed.".format(len(OBSTACLES)))
 
 
+def find_world_settings():
+    """Locates the current level's WorldSettings across engine versions."""
+    world = _level_api().get_editor_world()
+
+    # Strategy 1: direct accessor (when exposed).
+    try:
+        settings = world.get_world_settings()
+        if settings:
+            return settings
+    except Exception:
+        pass
+
+    # Strategy 2: actor-of-class lookup.
+    try:
+        settings = unreal.GameplayStatics.get_actor_of_class(
+            world, unreal.WorldSettings)
+        if settings:
+            return settings
+    except Exception:
+        pass
+
+    # Strategy 3: scan the level actor list.
+    for actor in _actor_api().get_all_level_actors():
+        if isinstance(actor, unreal.WorldSettings):
+            return actor
+    return None
+
+
+def set_game_mode_override():
+    """TASK 3.4 — pins the level's GameMode Override.
+
+    Prefers BP_AstrawildGameMode (pawn = BP_AstrawildPlayer wired to the
+    generated input assets) when setup_input_assets.py has run; otherwise
+    falls back to the native AAstrawildGameMode. If WorldSettings is not
+    reachable, the project's GlobalDefaultGameMode in DefaultEngine.ini
+    (AstrawildCore.AstrawildGameMode) still applies to this map.
+    """
+    settings = find_world_settings()
+    if not settings:
+        log("WARNING: WorldSettings not reachable — the project-level "
+            "GlobalDefaultGameMode (DefaultEngine.ini) still applies.")
+        return
+
+    game_mode_class = None
+    if unreal.EditorAssetLibrary.does_asset_exist(
+            "/Game/ASTRAWILD/Blueprints/BP_AstrawildGameMode"):
+        game_mode_class = unreal.load_object(
+            None, "/Game/ASTRAWILD/Blueprints/BP_AstrawildGameMode"
+                  ".BP_AstrawildGameMode_C")
+    if game_mode_class is None:
+        game_mode_class = unreal.AstrawildGameMode
+
+    if safe_set_property(settings, "default_game_mode", game_mode_class):
+        log("GameMode Override set to {}.".format(game_mode_class.get_name()))
+
+
 # ---------------------------------------------------------------------------
 # Level lifecycle
 # ---------------------------------------------------------------------------
@@ -258,6 +314,7 @@ def main():
     build_lighting()
     build_player_start()
     build_obstacles()
+    set_game_mode_override()
 
     save_level()
     log("DONE — open L_Proto_01 and press Play.")
