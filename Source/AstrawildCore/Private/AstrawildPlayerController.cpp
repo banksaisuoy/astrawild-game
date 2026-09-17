@@ -5,16 +5,24 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
 #include "AstrawildDialogueWidget.h"
+#include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildHudWidget.h"
 #include "AstrawildInventoryScreenWidget.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildJournalSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildNPCCharacter.h"
 #include "AstrawildPauseMenuWidget.h"
 #include "AstrawildQuestComponent.h"
 #include "AstrawildResearchScreenWidget.h"
+#include "AstrawildSaveSubsystem.h"
 #include "AstrawildShopWidget.h"
+#include "AstrawildDeathOverlayWidget.h"
+#include "AstrawildTimeSubsystem.h"
+#include "AstrawildTitleMenuWidget.h"
+#include "AstrawildVictoryScreenWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Engine/World.h"
 
 AAstrawildPlayerController::AAstrawildPlayerController()
 {
@@ -46,6 +54,21 @@ void AAstrawildPlayerController::BeginPlay()
     {
         HudWidget->AddToViewport();
         UE_LOG(LogAstrawild, Log, TEXT("HUD widget created."));
+    }
+
+    // Completion stage (VICTORY): the closing quest raises the victory screen.
+    if (QuestComponent)
+    {
+        QuestComponent->OnQuestStateChanged.AddDynamic(this, &AAstrawildPlayerController::HandleQuestStateChanged);
+    }
+
+    // Completion stage (TITLE): standalone/packaged boots show the title menu.
+    // PIE keeps iterating without it; dedicated servers never get local screens.
+    const UWorld* World = GetWorld();
+    const bool bStandaloneGame = World && !World->IsPlayInEditor() && World->GetNetMode() != NM_DedicatedServer;
+    if (bShowTitleScreenAtBoot && bStandaloneGame)
+    {
+        ShowTitleScreen();
     }
 }
 
@@ -349,5 +372,179 @@ bool AAstrawildPlayerController::IsPauseMenuOpen() const
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsPauseMenuOpen()
+        || IsTitleScreenOpen() || IsVictoryScreenOpen();
+}
+
+// --- Completion stage: title screen ---
+
+void AAstrawildPlayerController::ShowTitleScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    if (!TitleMenuWidget)
+    {
+        const TSubclassOf<UAstrawildTitleMenuWidget> WidgetClass = TitleMenuClass
+            ? TitleMenuClass
+            : TSubclassOf<UAstrawildTitleMenuWidget>(UAstrawildTitleMenuWidget::StaticClass());
+        TitleMenuWidget = CreateWidget<UAstrawildTitleMenuWidget>(this, WidgetClass);
+    }
+    if (!TitleMenuWidget)
+    {
+        return;
+    }
+
+    TitleMenuWidget->AddToViewport(50); // Above every other screen.
+    SetPause(true);
+    FInputModeUIOnly InputMode;
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    SetInputMode(InputMode);
+    bShowMouseCursor = true;
+    UE_LOG(LogAstrawild, Log, TEXT("Title screen shown."));
+}
+
+void AAstrawildPlayerController::DismissTitleScreen(const bool bContinueGame)
+{
+    if (TitleMenuWidget)
+    {
+        TitleMenuWidget->RemoveFromParent();
+    }
+
+    // "Continue" restores the newest session (autosave wins when newer).
+    if (bContinueGame)
+    {
+        UWorld* World = GetWorld();
+        if (World && World->GetGameInstance())
+        {
+            if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+            {
+                SaveSubsystem->LoadLatest(World);
+            }
+        }
+    }
+
+    SetPause(false);
+    SetInputMode(FInputModeGameOnly());
+    bShowMouseCursor = false;
+    UE_LOG(LogAstrawild, Log, TEXT("Title screen dismissed (continue=%d)."), bContinueGame ? 1 : 0);
+}
+
+bool AAstrawildPlayerController::IsTitleScreenOpen() const
+{
+    return TitleMenuWidget && TitleMenuWidget->IsInViewport();
+}
+
+// --- Completion stage: victory screen ---
+
+void AAstrawildPlayerController::ShowVictoryScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    if (!VictoryScreenWidget)
+    {
+        const TSubclassOf<UAstrawildVictoryScreenWidget> WidgetClass = VictoryScreenClass
+            ? VictoryScreenClass
+            : TSubclassOf<UAstrawildVictoryScreenWidget>(UAstrawildVictoryScreenWidget::StaticClass());
+        VictoryScreenWidget = CreateWidget<UAstrawildVictoryScreenWidget>(this, WidgetClass);
+    }
+    if (!VictoryScreenWidget)
+    {
+        return;
+    }
+
+    // Session stats: days survived, bonded echoes, observed species.
+    int32 DaysSurvived = 0;
+    int32 EchoesBonded = 0;
+    int32 JournalEntries = 0;
+    if (UWorld* World = GetWorld())
+    {
+        if (UAstrawildTimeSubsystem* Time = World->GetSubsystem<UAstrawildTimeSubsystem>())
+        {
+            DaysSurvived = Time->GetCurrentDay();
+        }
+        if (UAstrawildJournalSubsystem* Journal = World->GetSubsystem<UAstrawildJournalSubsystem>())
+        {
+            JournalEntries = Journal->GetAllEntries().Num();
+        }
+        if (World->GetGameInstance())
+        {
+            if (const UAstrawildEchoRosterSubsystem* Roster = World->GetGameInstance()->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+            {
+                EchoesBonded = Roster->GetRosterSize();
+            }
+        }
+    }
+
+    VictoryScreenWidget->InitializeVictory(DaysSurvived, EchoesBonded, JournalEntries);
+    VictoryScreenWidget->AddToViewport(40);
+    FInputModeUIOnly InputMode;
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    SetInputMode(InputMode);
+    bShowMouseCursor = true;
+
+    OnVictoryAchieved.Broadcast(VictoryQuestId);
+    UE_LOG(LogAstrawild, Log, TEXT("Victory screen raised (quest %s)."), *VictoryQuestId.ToString());
+}
+
+void AAstrawildPlayerController::HideVictoryScreen()
+{
+    if (VictoryScreenWidget)
+    {
+        VictoryScreenWidget->RemoveFromParent();
+    }
+    SetInputMode(FInputModeGameOnly());
+    bShowMouseCursor = false;
+}
+
+bool AAstrawildPlayerController::IsVictoryScreenOpen() const
+{
+    return VictoryScreenWidget && VictoryScreenWidget->IsInViewport();
+}
+
+void AAstrawildPlayerController::HandleQuestStateChanged(FName QuestId, const bool bCompleted)
+{
+    if (bCompleted && QuestId == VictoryQuestId)
+    {
+        ShowVictoryScreen();
+    }
+}
+
+// --- Completion stage: death overlay ---
+
+void AAstrawildPlayerController::ShowDeathOverlay(const float RespawnSeconds)
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    if (!DeathOverlayWidget)
+    {
+        const TSubclassOf<UAstrawildDeathOverlayWidget> WidgetClass = DeathOverlayClass
+            ? DeathOverlayClass
+            : TSubclassOf<UAstrawildDeathOverlayWidget>(UAstrawildDeathOverlayWidget::StaticClass());
+        DeathOverlayWidget = CreateWidget<UAstrawildDeathOverlayWidget>(this, WidgetClass);
+    }
+    if (!DeathOverlayWidget)
+    {
+        return;
+    }
+
+    DeathOverlayWidget->StartCountdown(RespawnSeconds);
+    DeathOverlayWidget->AddToViewport(30); // Over the HUD, under the title/pause screens.
+    UE_LOG(LogAstrawildCombat, Log, TEXT("Death overlay shown (respawn in %.1fs)."), RespawnSeconds);
+}
+
+void AAstrawildPlayerController::HideDeathOverlay()
+{
+    if (DeathOverlayWidget)
+    {
+        DeathOverlayWidget->RemoveFromParent();
+    }
 }

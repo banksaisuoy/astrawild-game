@@ -9,6 +9,8 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildProductionContent.h"
 // Complete soft-pointer pointee types: TSoftObjectPtr<>::IsValid() in test code
 // needs them (mirrors the 91f0f44 fix that added NiagaraSystem.h).
 #include "Engine/StaticMesh.h"
@@ -2081,6 +2083,49 @@ bool FAstrawildArtPackBindingTest::RunTest(const FString& Parameters)
             TestTrue(TEXT("mesh path round-trips"),
                 Profile->Mesh.ToSoftObjectPath().ToString() == Art->MeshPath);
         }
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Completion stage (VICTORY): the main quest chain must terminate at a real
+// chain-closer — the quest the PlayerController raises the victory screen for
+// (VictoryQuestId, default Quest_VanguardProtocol). Guards against content
+// edits silently orphaning the victory wiring.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildVictoryChainTest,
+    "ASTRAWILD.Quest.VictoryChainTermination",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildVictoryChainTest::RunTest(const FString& Parameters)
+{
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    TestNotNull(TEXT("transient registry created"), Registry);
+    if (!Registry)
+    {
+        return false;
+    }
+
+    UAstrawildProductionContent::BuildProductionQuests(Registry);
+
+    // The chain head in ProductionContent is SignalsInTheStatic.
+    const UAstrawildQuestDefinition* Signals = Registry->FindQuest(TEXT("Quest_SignalsInTheStatic"));
+    TestNotNull(TEXT("Quest_SignalsInTheStatic registered"), Signals);
+    if (Signals)
+    {
+        TestEqual(TEXT("Signals points at the Vanguard closer"),
+            Signals->NextQuestId, FName(TEXT("Quest_VanguardProtocol")));
+    }
+
+    // The closer must exist and actually close the chain (no dangling next).
+    const UAstrawildQuestDefinition* Vanguard = Registry->FindQuest(TEXT("Quest_VanguardProtocol"));
+    TestNotNull(TEXT("Quest_VanguardProtocol registered (victory quest)"), Vanguard);
+    if (Vanguard)
+    {
+        TestEqual(TEXT("Vanguard closes the chain"),
+            Vanguard->NextQuestId, FName(NAME_None));
+        TestTrue(TEXT("closer has at least one objective"),
+            Vanguard->Objectives.Num() > 0);
     }
     return true;
 }

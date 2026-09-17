@@ -13,6 +13,11 @@ class UAstrawildResearchScreenWidget;
 class UAstrawildShopWidget;
 class UAstrawildDialogueWidget;
 class UAstrawildDialogueComponent;
+class UAstrawildTitleMenuWidget;
+class UAstrawildVictoryScreenWidget;
+class UAstrawildDeathOverlayWidget;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildVictoryAchieved, FName, VictoryQuestId);
 
 /**
  * ASTRAWILD player controller: hosts the quest component (survives respawn) and
@@ -113,6 +118,76 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsPauseMenuOpen() const;
 
+    // --- Completion stage: title screen / victory / death beat ---
+
+    /** Title screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildTitleMenuWidget> TitleMenuClass;
+
+    /** Victory screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildVictoryScreenWidget> VictoryScreenClass;
+
+    /** Death overlay class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildDeathOverlayWidget> DeathOverlayClass;
+
+    /**
+     * Completion stage (TITLE): show the title menu when a standalone/packaged
+     * session boots. PIE keeps iterating without it for dev speed. The menu is
+     * also skipped on dedicated servers and remote clients (local screens only).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    bool bShowTitleScreenAtBoot = true;
+
+    /**
+     * Completion stage (VICTORY): the quest whose completion raises the victory
+     * screen. Defaults to the chain-closer authored in ProductionContent
+     * (Signals → Vanguard closes the arc; free hunt begins afterwards).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Quest")
+    FName VictoryQuestId = TEXT("Quest_VanguardProtocol");
+
+    /** Broadcast (local) when the victory screen appears. */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Quest")
+    FAstrawildVictoryAchieved OnVictoryAchieved;
+
+    /** Show the title screen now (local controller only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ShowTitleScreen();
+
+    /**
+     * Close the title screen. With bContinueGame the newest save is loaded
+     * (the "Continue" path — autosave wins when newer); otherwise the fresh
+     * bootstrap session simply resumes.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void DismissTitleScreen(bool bContinueGame);
+
+    /** True while the title screen owns the viewport. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsTitleScreenOpen() const;
+
+    /** Raise the victory screen with the current session stats (local controller only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ShowVictoryScreen();
+
+    /** Dismiss the victory screen and return to the free hunt. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void HideVictoryScreen();
+
+    /** True while the victory screen is on the viewport. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsVictoryScreenOpen() const;
+
+    /** Show the death overlay with a respawn countdown (local controller only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ShowDeathOverlay(float RespawnSeconds);
+
+    /** Hide the death overlay (called on respawn). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void HideDeathOverlay();
+
     /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsAnyScreenOpen() const;
@@ -138,4 +213,16 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildPauseMenuWidget> PauseMenuWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildTitleMenuWidget> TitleMenuWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildVictoryScreenWidget> VictoryScreenWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildDeathOverlayWidget> DeathOverlayWidget;
+
+    UFUNCTION()
+    void HandleQuestStateChanged(FName QuestId, bool bCompleted);
 };
