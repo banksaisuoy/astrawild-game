@@ -1,4 +1,4 @@
-# Design/ — Traced Design Data (Master Directive v1, P0-T0.1)
+# Design/ — Traced Design Data (Master Directive v1, P0-T0.1 + L2)
 
 ## What lives here
 
@@ -27,28 +27,63 @@ If a design conversation needs a number, it must quote the trace. If the
 number you want is not in this file, it does not exist yet — change the C++
 source and re-run the extractor (never edit the JSON).
 
-## Schema `astrawild-design-data/1`
+## Final honest counts (schema `astrawild-design-data/2`, L2-complete)
+
+The extraction now covers **every content domain** and reconciles 15/15
+against the repo's authoritative census (`Scripts/validate_final_run.py`
+`EXPECTED_CENSUS` — see `Docs/ASTRAWILD_COVERAGE_REPORT.md` for the L1
+truth audit that forced this completeness):
+
+| Domain | Count | Source file(s) |
+|---|---|---|
+| tunables (UPROPERTY defaults) | 574 | 99 Public headers |
+| bestiary species | 204 | AstrawildBestiaryData.cpp |
+| authored species | 25 | ContentLibrary.cpp (10) + ProductionContent.cpp (9 MakeProductionEcho + 6 evolution targets) |
+| **species total** | **229** | = 204 + 25 |
+| items | 78 | ContentLibrary.cpp (49) + ProductionContent.cpp (29) |
+| recipes | 58 | ContentLibrary.cpp (32) + ProductionContent.cpp (26) |
+| buildings | 26 | ContentLibrary.cpp |
+| weapons | 8 | ProductionContent.cpp |
+| technologies | 17 | ContentLibrary.cpp (10) + ProductionContent.cpp (7) |
+| quests | 22 | ContentLibrary.cpp (10) + ProductionContent.cpp (12) |
+| NPCs | 13 | ContentLibrary.cpp |
+| dialogue trees | 13 | ProductionContent.cpp |
+| loot tables | 11 | ContentLibrary.cpp (5) + ProductionContent.cpp (6) |
+| world events | 16 | ProductionContent.cpp |
+| POIs | 17 | ProductionContent.cpp |
+| resource nodes | 10 | ProductionContent.cpp |
+| work sites | 8 | ProductionContent.cpp |
+| robots | 3 | ProductionContent.cpp |
+| zones | 12 | AstrawildZoneSubsystem.cpp |
+| weather profiles | 8 | AstrawildWeatherSubsystem.cpp |
+| hunt contracts | 8 | AstrawildHuntSubsystem.cpp |
+| abilities | 53 | AstrawildAbilityLibrary.cpp |
+| mutation specs | 204 | AstrawildEchoMutationData.cpp |
+| dungeons | 3 | AstrawildWorldBootstrapper.cpp |
+| bosses | 4 | AstrawildWorldBootstrapper.cpp (3 dungeon + 1 world) |
+| save schema | 29 fields + 22 record structs | AstrawildSaveSubsystem.h + AstrawildTypes.h |
+| automation tests | 134 | AstrawildAutomationTests.cpp |
+
+Every entry — including each item/species/quest attribute setter line —
+carries `{file, line}`. Evolution-target stats are runtime-derived by
+formulas (traced to the loop, never invented): their spec rows carry the
+literal level/bond gates only.
+
+## Schema `astrawild-design-data/2`
 
 ```
 {
   schema, generated, generator, repo_head, rule,
   domains: {
-    tunables:  all UPROPERTY(...) default-valued members in Public/*.h
-               (574 at generation time) — per-entry: class, name, type,
-               value, category, clamp, comment, file, line.
-    bestiary:  the 204-row FBestiaryRow species table in
-               AstrawildBestiaryData.cpp — identity, family/body/size,
-               element/weakness, home zone, personality/activity, stats
-               (HP/ATK/DEF/Speed/CaptureDifficulty), tint colors, food,
-               loot, work types, sight radius + aggregates.
-    items:     all 49 RegisterItem(...) definitions in
-               AstrawildContentLibrary.cpp — id, name, category, weight,
-               max stack, plus every authored attribute setter line
-               (FoodValue, AttackPower, PerishableSeconds, ...).
-    recipes:   all 32 RegisterRecipe(...) definitions — inputs, outputs,
-               duration, tech gate, station.
-    counts:    headline repo facts (134 automation tests, source file and
-               LOC totals) with their traces.
+    tunables, bestiary, species, items, recipes, buildings, weapons,
+    technologies, quests, npcs, loot_tables, world_events, pois,
+    resource_nodes, work_sites, robots, dialogue_trees, zones, weather,
+    hunt_contracts, abilities, mutations, dungeons, bosses, save_schema,
+    counts: {
+      automation_tests, source_files, source_loc,
+      census_vs_validate_final_run: {<metric>: {expected, extracted, match}},
+      census_all_match, non_census_domains
+    }
   }
 }
 ```
@@ -60,9 +95,13 @@ python Scripts/extract_design_data.py
 python Scripts/validate_design_data.py
 ```
 
-The validator re-opens every traced file at its traced line and re-reads
-the value from source — a round-trip proof that the JSON never drifted
-from the code that actually compiles.
+The validator (78 checks) re-opens every traced file at its traced line and
+re-reads the value from source (round-trip proof), resolves every
+inter-domain reference (recipe→item, loot→item, weapon→ammo, poi→loot,
+event→loot, hunt→species, quest→* , tech→tech/recipe, npc→quest/dialogue,
+dungeon/boss→species, zone bijection), and independently re-counts the
+headline numbers with fixed-string greps. `ALL CHECKS PASSED` == the JSON
+never drifted from the code that actually compiles.
 
 ## Machine-run relationship
 
