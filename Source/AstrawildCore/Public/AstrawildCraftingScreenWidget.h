@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "AstrawildTypes.h"
 #include "AstrawildCraftingScreenWidget.generated.h"
 
 class UAstrawildCraftingComponent;

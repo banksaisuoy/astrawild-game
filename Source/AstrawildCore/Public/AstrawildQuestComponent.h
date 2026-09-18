@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AstrawildTypes.h"
+#include "AstrawildEventBusSubsystem.h"
 #include "AstrawildQuestComponent.generated.h"
 
 class UAstrawildQuestDefinition;

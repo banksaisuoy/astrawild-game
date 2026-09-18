@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "AstrawildTypes.h"
+#include "AstrawildEventBusSubsystem.h"
 #include "AstrawildHuntSubsystem.generated.h"
 
 class APawn;
