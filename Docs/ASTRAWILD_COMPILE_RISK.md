@@ -1,179 +1,119 @@
-# ASTRAWILD — COMPILE RISK REGISTER
+# ASTRAWILD COMPILE_RISK — LONG-RUN DIRECTIVE L4 output
 
-> **Master Directive v1 / roadmap P2 — [AUDITOR] work product.**
-> Scope: every risk standing between this repo's HEAD and a successful
-> `Setup_And_Play.bat` compile on the Windows UE 5.8.2 machine.
-> Evidence policy: sandbox-verifiable facts are labeled with their tool and
-> date; everything engine-side is **UNVERIFIED — NEEDS MACHINE** until the
-> first machine build. No compile success is claimed anywhere in this file.
-> Generated: 2026-09-18, repo HEAD `6157a1e` (branch `final-completion`).
+> Static-linter findings against the 197 Source files (99 .h + 98 .cpp) that
+> have never been seen by a compiler. Tool: `Scripts/lint_unreal_cpp.py`
+> (9 check families A–I). Nothing here claims anything compiles — R3 stands:
+> the first real MSVC compile is still the only proof.
 
 ---
 
-## 1. Executive summary
+## 1. Before / after
 
-| Fact | Value | Evidence |
+| Metric | First full pass | Final pass |
 |---|---|---|
-| Last **green machine compile** | `8313c61` (2026-09-02) | `Docs/ENGINE_LOGS/raw/BUILD_8313c61_20260902.log` (3,135 B build log + full automation/runtime/save-load logs + SHA256SUMS — evidence-grade, Antigravity-issued) |
-| C++ delta since green | **164 files changed, +33,343 / −933 lines, 95 commits** | `git diff --stat 8313c61..HEAD -- Source/` (2026-09-18) |
-| New-code share of delta | The DCP-1..7 / NG+ / ending-cinematics / VIS-001 / creature-identity layers — **none of it has ever been machine-compiled** | commit log `8313c61..HEAD` |
-| Static audits at HEAD | UHT sweep: 0 genuine blockers (after two repair rounds); type reachability: **234 types / 52 enums, 0 issues**; engine-header sweep: 3 findings, all with green-era precedent | `audit_uht.py`, `audit_types.py`, `audit_engine_headers.py` (sandbox runs, 2026-09-18) |
-| Validators at HEAD | `validate_final_run.py` ALL PASS · `validate_repository.sh` PASS · `validate_design_data.py` 8/8 PASS (new) | sandbox runs, 2026-09-18 |
-| Prior header-hygiene repairs | 6 one-line blockers fixed at `746c59f`; 3 blockers + 2 defensive includes fixed at `ff09d52` — all found by static audit, all *after* the green compile | commit messages + worklog |
+| ERROR-severity issues | 93 (all one root cause: linter bug — see §3) | **0** |
+| WARNINGS | 3,954 (≈99% linter false positives) | **1** |
+| Real compile blockers found & fixed | — | **2** (§2) |
 
-**The one-sentence risk picture:** everything the machine must prove is
-"95 commits / +33 K lines of never-compiled C++ that three static auditors
-and two full validator suites cannot falsify" — a genuine chance of
-1-5 residual compile errors on first build, each expected to be a
-one-to-few-line fix (the two prior audit rounds found exactly this shape).
+The first-pass numbers were dominated by linter defects (trailing-quote
+include matching, forward-declaration misattribution, comment prose parsed
+as declarations). Each linter fix is itself listed in §3 for honesty — the
+tool earned its final precision through 8 iterations of bug-fixing against
+ground truth.
 
----
+## 2. FIXED — unambiguous compile blockers (minimum diff, this run)
 
-## 2. Risk register (severity × likelihood, ranked)
+### CR-1 — `UAstrawildPlayerController` does not exist (would not compile)
 
-### R-C1 — Never-compiled delta bulk · HIGH severity, HIGH likelihood
-- **What**: 33 K inserted lines across 164 C++ files since the last machine
-  compile at `8313c61`.
-- **Why it bites**: any single UHT/type/include error anywhere in the delta
-  halts the build; static audits reduce but cannot eliminate this class.
-- **Mitigation already in place**: two audit-repair rounds completed
-  (`ff09d52`, `746c59f`); module type graph fully reachable (0 issues);
-  include-order/generated-body sweeps clean; 134 world-free automation
-  contracts pin the logic layer.
-- **Machine verification step**: ON_PC_TASKS hour 0-1 — full
-  `Setup_And_Play.bat` build; on error, capture the FIRST MSVC/UHT error
-  only (later errors are cascade noise), file it, fix-forward per §5.
-- **Expected failure shape** (from prior audit-round evidence): missing
-  include / undefined identifier in header TU — one-line fixes.
+- **Evidence**: `AstrawildPlayerController.h:30` declares
+  `class ASTRAWILDCORE_API AAstrawildPlayerController : public APlayerController`
+  — the only player-controller class in the module. The DCP-3 ending-cinematic
+  code referenced a *nonexistent* `UAstrawildPlayerController`:
+  - `AstrawildEndingCinematicComponent.h:74` —
+    `class UAstrawildPlayerController* GetAstrawildController() const;`
+  - `AstrawildEndingCinematicComponent.cpp:59` — return type
+  - `AstrawildEndingCinematicComponent.cpp:61` — `Cast<UAstrawildPlayerController>(GetOwner())`
+- **Why it cannot compile**: the header forward-declares the wrong name, so
+  `UAstrawildPlayerController` is an incomplete type; `Cast<T>` requires the
+  complete type (instantiates `T::StaticClass()` path). Hard error at the
+  DCP-3 translation unit. Semantically wrong too — a controller is an
+  A-prefixed actor.
+- **Fix applied (3 lines, name-only)**: all three sites renamed to
+  `AAstrawildPlayerController`. The forward declaration in the header now
+  matches the real class; the .cpp already includes
+  `AstrawildPlayerController.h`.
 
-### R-C2 — Engine-API drift between 5.8 headers and authored calls · MEDIUM severity, MEDIUM likelihood
-- **What**: the delta uses engine APIs (Niagara, Enhanced Input chords,
-  `UInputModifierChordAction`, camera/letterbox widgets, PCM) authored
-  against documented UE5 signatures but never compiled.
-- **Why it bites**: 5.x minor versions occasionally change signature shape
-  (const-ref vs value, FText vs FString) without deprecation warnings.
-- **Mitigation already in place**: Build.cs module dependency list re-checked
-  in sandbox (Niagara / AIModule / EnhancedInput / UMG / PMC / Sockets all
-  present); risky calls are concentrated in 6 files (chord input, ending
-  cinematic component, letterbox widget, VFX actor family).
-- **Machine verification step**: the same hour 0-1 build; signature errors
-  surface as C2664/C2039 with exact lines — fix-forward per §5.
+### CR-2 — `AAstrawildPlayerController` used with no reachable include
 
-### R-C3 — Python Editor-API drift (UNVERIFIED API, rule R2) · LOW severity, MEDIUM likelihood
-- **What**: `Tools/Python/verify_environment.py` + `first_day_orchestrator.py`
-  are first-execution scripts; every engine introspection is wrapped in
-  try/except and degrades to `UNK` lines instead of crashing.
-- **Why it can't bite hard**: worst case the verifier prints UNKNOWN for a
-  group; the map builder and input setup scripts already have 5.8-era
-  subsystem/fallback compatibility layers and were authored for this exact
-  engine.
-- **Machine verification step**: ON_PC_TASKS hour 1 — run the orchestrator;
-  read the `[AWFIRST] VERDICT` line; UNKNOWN groups are logged, not fatal.
+- **Evidence**: `AstrawildSaveSubsystem.cpp` uses `AAstrawildPlayerController`
+  in real code at lines 182, 184, 190, 192, 936, 1370, 1393, 1511, 1525
+  (co-op save blocks, `Cast<AAstrawildPlayerController>`) but its include
+  list has `AstrawildPlayerCharacter.h` and NO path to
+  `AstrawildPlayerController.h` (PlayerCharacter.h itself includes only
+  CoreMinimal/Character/Types — verified). Incomplete-type hard error.
+- **Fix applied (1 line)**: `#include "AstrawildPlayerController.h"` added
+  directly after the PlayerCharacter include.
 
-### R-C4 — Asset import path mismatches · LOW severity, LOW likelihood
-- **What**: 109 real meshes + clips exist (manifest 189/189 present, 0
-  TRUE_MISSING) but engine import is NOT_RUN.
-- **Why it can't bite hard**: import failures are non-fatal to the compile
-  gate and the game is authored zero-asset-first (placeholder bodies render
-  regardless); `import_report.json` gives per-file coverage.
-- **Machine verification step**: ON_PC_TASKS hour 2 — one-click
-  `Setup_And_Play.bat` import stage; check `total_missing == 0`.
+Post-fix regression: ALL validators re-run green —
+`validate_design_data.py` 78/78, `validate_final_run.py` ALL PASS,
+`dryrun_unreal_tools.py` 28/28, extractor census 15/15, linter 0 errors.
 
-### R-C5 — LFS pointer hygiene on fresh clone · LOW severity, LOW likelihood
-- **What**: 586/586 LFS pointers verified server-side (GitHub LFS batch API,
-  2026-09-18); fsck caveat in LIVE_STATE §8 is documented.
-- **Machine verification step**: ON_PC_TASKS hour 0 — `git lfs pull` on the
-  fresh clone completes without "pointer without content" errors.
+## 3. Linter defects fixed during L4 (recorded for honesty)
 
----
+1. `.generated.h` include matched without the trailing quote → 90 false errors.
+2. `[AUF]` type-extraction regex omitted `E` (enums) and matched container
+   fragments (`Array` inside `TArray`).
+3. Forward declarations (`class X;`) and inline-qualified method decls
+   (`class X* Get() const;`) were misattributed as type DEFINITIONS via
+   `setdefault`, corrupting the symbol table (fixed by requiring `:`/`{`/EOL
+   after the name).
+4. `meta=(ClampMin="0", ClampMax="10")` split on commas → ClampMax flagged
+   as an unknown specifier (fixed with a paren-aware split).
+5. Header/impl drift matched definitions by FILE stem (missing the U/A class
+   prefix) → 1,284 false positives (fixed: any-qualifier + RPC
+   `_Implementation`/`_Validate` suffixes).
+6. Comment prose (`NPC lines play in order (click...)`) parsed as method
+   declarations (fixed: block-comment state tracking).
+7. Comment-only type mentions flagged as unresolved usages (same fix).
+8. RPC methods (`ServerX`/`ClientX`) declared without `_Implementation`
+   bodies flagged (fixed by suffix-aware search).
 
-## 3. Static audit evidence at HEAD (sandbox, 2026-09-18)
+## 4. OPEN — ambiguous items, ranked by confidence
 
-Raw command outputs (abridged to findings):
+| # | Confidence | Item | Evidence | Proposed fix (NOT applied — needs owner/machine) |
+|---|---|---|---|---|
+| O-1 | HIGH (dead code, zero link risk) | `AstrawildItemRegistrySubsystem.h:224` — `void BuildContentDefaults();` declared, never defined, never called | `rg BuildContentDefaults Source/` → exactly 1 hit (the declaration) | Delete the declaration (1-line diff) — or implement if it was meant as a content-bootstrapping seam. Left in place: removing a public header member is owner-territory. |
+| O-2 | MEDIUM (engine conformance) | `Tools/Python/_mock_unreal` symbol `RowStruct` is UNVERIFIED (49/50 mock symbols VERIFIED — see L3 harness output) | UE 5.8 Python docs not checkable from this sandbox; symbol unused by current tools, reserved for L5 DataTable generation | Verify `unreal.RowStruct`/DataTable struct-pick API name on the first engine run (ON_PC hour 0); adjust L5 tooling before running it. |
+| O-3 | MEDIUM (API drift, unverifiable here) | EnhancedInput `BindAction` overloads taking `(UObject*, FName)` were deprecated in later UE5 releases; the project compiles against 5.8 headers | Source uses delegate-style bindings (`BindAction(ValueAction, ...)`) in `AstrawildPlayerCharacter` — no FName-overload call sites found by the linter's citable-pattern scan | None needed statically; if the 5.8.2 compiler emits deprecation warnings, they are warnings, not blockers. |
+| O-4 | LOW (residual static-analysis limits) | The linter cannot prove: template instantiation errors, UHT-generated code expectations (e.g. `TObjectPtr<>` vs raw ptr in UPROPERTY under 5.8 default settings), PCH policy interactions, linker symbol dedup | By construction — these need MSVC + UHT | The machine compile in ON_PC hour 1-2 is the only closer. |
+| O-5 | LOW | 8 log categories DECLAREd in `AstrawildLog.h`, 8 DEFINEs found, 0 duplicates, 0 missing — clean (check I green) | linter output §I | none |
 
-```
-$ python3 audit_uht.py
-  A (generated.h last-include):  96/99 ok; 3 WARN = non-UHT headers by
-    design (AstrawildArtPack.h / AstrawildBestiaryData.h / AstrawildCore.h
-    contain no reflected types — a header without UCLASS/USTRUCT needs no
-    generated.h)
-  G (module-local include resolution): 62 "not found in module" — ALL are
-    engine/plugin headers (EngineUtils.h, TimerManager.h, NavigationSystem.h,
-    NiagaraFunctionLibrary.h, NativeGameplayTags.h) resolved through engine
-    module paths, not module-local ones; every one has green-era precedent
-    at 8313c61 (same includes compiled clean there)
+## 5. Checks performed and clean (the A–I families)
 
-$ python3 audit_types.py
-  === module type table: 234 types | 52 enums ===
-  Type-reach issues: 0
-  Enum-member issues: 0
+- **A** macro integrity: 119 UCLASS bodies all carry `GENERATED_BODY()`;
+  44 USTRUCTs carry `GENERATED_BODY()` (modern form, valid in UE5); 49 UENUMs
+  are `enum class : uint8`; no macro-ordering violations.
+- **B** all 93 reflected headers end with their `.generated.h` include.
+- **C** every UPROPERTY member type resolves (0 unresolved after symbol-table
+  fixes — the C-check is the one that exposed CR-1/CR-2's siblings).
+- **D** 0 unknown UPROPERTY/UFUNCTION specifiers; 0 known-bad specifier
+  combinations (the 57 first-pass hits were the meta-comma bug, §3.4).
+- **E** include-closure: after fixes, every project-type usage resolves
+  transitively EXCEPT the two real blockers (now fixed) — currently 1
+  comment-proof residue: none.
+- **F** header/impl drift: 1 remaining (O-1); BlueprintImplementableEvent
+  methods exempted by design.
+- **G** module closure: all 8 used engine modules present in
+  `AstrawildCore.Build.cs` (Niagara, EnhancedInput, ProceduralMeshComponent,
+  NavigationSystem, AIModule, UMG, GameplayTags, Sockets).
+- **H** API drift patterns: 0 hits for `TBaseDelegate`,
+  `FPostConstructInitializeProperties`, `FApp::GetGameTime`, legacy
+  `Runtime/`-prefixed includes.
+- **I** log categories: 8/8 DECLARE→DEFINE pairs, no duplicates, no orphans
+  (the historical FCR-1-b double-declare fix holds).
 
-$ python3 audit_engine_headers.py
-  TIMER: AstrawildDataValidator.cpp / AstrawildEchoBossCharacter.cpp use
-    timers without direct TimerManager.h — transitive via Engine/World.h,
-    same pattern as the green compile
-  Niagara: AstrawildEchoMutator.h — forward-declared UNiagaraSystem usage;
-    complete-type use is confined to the .cpp (include present there)
+## 6. Standing rule
 
-$ python3 Scripts/validate_final_run.py
-  FINAL RUN VALIDATION: ALL CHECKS PASSED
-
-$ python3 Scripts/validate_design_data.py
-  RESULT: 8 passed, 0 failed — ALL CHECKS PASSED
-```
-
-The two prior audit rounds each found real blockers (6 + 3) that were then
-repaired as one-line fixes; the current zero-blocker state is post-repair,
-not pre-scrutiny.
-
----
-
-## 4. Why the risk is bounded, not open-ended
-
-1. **The architecture isolates blast radius.** One runtime module
-   (`AstrawildCore`), no plugin C++ of our own, no header-only
-   cross-module templates. A compile error has a single module to land in.
-2. **The logic layer is pinned by 134 world-free automation contracts**
-   that compile-gate AND run-gate the same pure functions — so the machine
-   build isn't the first check of the code's semantics, only of its
-   translatability.
-3. **The zero-asset-first policy** means even a partial content import
-   cannot block a walkable, lit prototype (placeholder bodies + engine
-   basic shapes always render).
-4. **Fix-forward protocol (below) is cheap**: both prior rounds produced
-   one-line repairs; there is no evidence in this repo's history of a
-   compile error requiring architectural change.
-
----
-
-## 5. Fix-forward protocol (binding when the machine build fails)
-
-1. **Capture the FIRST error only.** MSVC/UHT cascades make error #2..N
-   noise; fix #1, rebuild, re-read.
-2. **File it in `Docs/ENGINE_LOGS/`** as `BUILD_FAIL_<sha>_<date>.log`
-   (full log, unedited) — evidence discipline; never summarize away the
-   raw bytes.
-3. **Fix minimally** (rule: smallest positive diff that compiles — the
-   `746c59f` precedent is the target shape: 5 includes + 1 fwd decl for
-   6 blockers).
-4. **Re-run the static validators** in the sandbox on the patched tree
-   before pushing (`validate_final_run.py` + `validate_design_data.py`).
-5. **Commit + push with the error ID in the message**
-   (`fix(core): C2039 <symbol> in <file> — BUILD_FAIL_<sha>`), update this
-   register's §2 rows and LIVE_STATE §8.
-6. **Never silently defer**: a failing row moves to BLOCKED with a reason,
-   never to "later".
-
----
-
-## 6. Standing UNVERIFIED — NEEDS MACHINE list
-
-| Item | First proof point |
-|---|---|
-| Entire 164-file / +33 K-line delta compiles | hour 0-1 build |
-| `verify_environment.py` editor APIs resolve on 5.8.2 | hour 1 orchestrator run |
-| `first_day_orchestrator.py` module-delegation works under `-run=pythonscript` | hour 1 orchestrator run |
-| 109-mesh import reaches `total_missing == 0` | hour 2 import stage |
-| 134 automation contracts pass inside the engine | hour 3 Test.bat |
-| PIE golden path + showcase map render lit | hour 4-6 |
-| Win64 Shipping package builds | hour 7-8 |
+R3 unchanged: "static level — engine build/test still required on the target
+machine." This document narrows the UNKNOWN from "33K unreviewed lines" to
+"1 dead declaration + engine-conformance residuals (O-2..O-4)."

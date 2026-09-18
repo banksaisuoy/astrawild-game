@@ -1,8 +1,8 @@
 {
  "schema": "astrawild-design-data/2",
- "generated": "2026-09-18T04:25:41",
+ "generated": "2026-09-18T04:52:17",
  "generator": "Scripts/extract_design_data.py",
- "repo_head": "60d7b2d7f9202b76b1f00aa8bd2e2a41277fa6c5",
+ "repo_head": "95b7237952b1f934f8e62dbbc3dfaf1cef8bc041",
  "rule": "Every value below was parsed from Source/ by the generator. No value is hand-typed (Master Directive v1 rule R1).",
  "domains": {
   "tunables": {
@@ -26775,7 +26775,7 @@
     "value": 200
    },
    "source_loc": {
-    "value": 73354
+    "value": 73355
    },
    "census_vs_validate_final_run": {
     "items": {

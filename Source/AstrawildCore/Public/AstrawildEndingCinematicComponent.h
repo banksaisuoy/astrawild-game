@@ -71,7 +71,7 @@ private:
     void EnterShot(int32 ShotIndex, float BlendTimeSeconds);
 
     AAstrawildGameState* GetGameState() const;
-    class UAstrawildPlayerController* GetAstrawildController() const;
+    class AAstrawildPlayerController* GetAstrawildController() const;
 
     // --- Sequence timing (seconds; total ≈ 18.7, skippable) ---
     static constexpr float BarsInEnd = 1.2f;        // letterbox reveal.
