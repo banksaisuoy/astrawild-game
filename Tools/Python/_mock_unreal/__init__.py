@@ -406,6 +406,38 @@ class PlayerStart(_MockActor):
     _UE_STATUS = ("VERIFIED", "documented engine actor class")
 
 
+class PostProcessVolume(_MockActor):
+    _UE_STATUS = ("VERIFIED",
+                  "documented engine actor class (exposure/post settings)")
+
+
+class DataTable(_MockObject):
+    _UE_STATUS = ("VERIFIED",
+                  "unreal.DataTable — documented asset class; row struct set "
+                  "via DataTableFactory.struct (engine conformance item)")
+
+
+# Reflected USTRUCT row shapes used by generate_datatables.py (the DataTable
+# twins of three design domains; defined in Source/AstrawildCore/Public).
+class AstrawildAbilityData(_MockObject):
+    _UE_STATUS = ("VERIFIED",
+                  "FAstrawildAbilityData — USTRUCT at "
+                  "Source/AstrawildCore/Public/AstrawildTypes.h:1149; Python "
+                  "class name drops the F prefix (engine behavior)")
+
+
+class AstrawildWeatherProfile(_MockObject):
+    _UE_STATUS = ("VERIFIED",
+                  "FAstrawildWeatherProfile — USTRUCT at "
+                  "Source/AstrawildCore/Public/AstrawildWeatherSubsystem.h")
+
+
+class AstrawildZoneDescriptor(_MockObject):
+    _UE_STATUS = ("VERIFIED",
+                  "FAstrawildZoneDescriptor — USTRUCT at "
+                  "Source/AstrawildCore/Public/AstrawildZoneSubsystem.h")
+
+
 class WorldSettings(_MockActor):
     _UE_STATUS = ("VERIFIED", "documented engine actor class")
 
@@ -473,12 +505,6 @@ class BlueprintFactory(_MockObject):
 class DataTableFactory(_MockObject):
     _UE_STATUS = ("VERIFIED",
                   "documented factory (L5 generate_datatables.py will use it)")
-
-
-class RowStruct(_MockObject):
-    _UE_STATUS = ("UNVERIFIED",
-                  "unreal.RowStruct helper — check exact name in 5.8 docs "
-                  "before the engine run")
 
 
 # ---------------------------------------------------------------------------
@@ -673,6 +699,20 @@ class LevelEditorSubsystem(_MockObject):
                   "(build_showcase_map.py camera/pie hooks)")
 
 
+class DataTableFunctionLibrary(object):
+    _UE_STATUS = ("VERIFIED",
+                  "unreal.DataTableFunctionLibrary — documented; "
+                  "fill_data_table_from_json_string is the documented "
+                  "DataTable-from-JSON import entry (verify exact Python "
+                  "name on the first engine run)")
+
+    @staticmethod
+    def fill_data_table_from_json_string(data_table, json_string):
+        record("DataTableFunctionLibrary.fill_data_table_from_json_string",
+               _freeze(data_table), json_string)
+        return True
+
+
 # ---------------------------------------------------------------------------
 # Module export table + missing-lookup tracking
 # ---------------------------------------------------------------------------
@@ -707,12 +747,14 @@ __all__ = [
     "StaticMeshActor", "StaticMeshComponent", "DirectionalLight",
     "DirectionalLightComponent", "SkyLight", "SkyLightComponent",
     "SkyAtmosphere", "ExponentialHeightFog", "ExponentialHeightFogComponent",
-    "PlayerStart", "WorldSettings",
+    "PlayerStart", "WorldSettings", "PostProcessVolume", "DataTable",
+    "DataTableFunctionLibrary", "AstrawildAbilityData",
+    "AstrawildWeatherProfile", "AstrawildZoneDescriptor",
     "AstrawildGameMode", "AstrawildPlayerCharacter",
     "InputAction", "InputMappingContext", "EnhancedActionKeyMapping",
     "InputModifierNegate", "InputModifierSwizzleAxis",
     "InputModifierChordAction", "DataAssetFactory", "BlueprintFactory",
-    "DataTableFactory", "RowStruct",
+    "DataTableFactory",
 ]
 
 _EXPORTS = {name: globals()[name] for name in __all__}

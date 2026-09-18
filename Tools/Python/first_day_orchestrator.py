@@ -5,9 +5,12 @@ The ONE Unreal Editor Python script the user runs on the Windows machine to
 execute the whole source-side first-day flow in order, stopping at the first
 hard failure:
 
-    1. environment pre-flight  (delegates to verify_environment logic)
-    2. prototype map build     (delegates to build_prototype_map.py logic)
-    3. input asset setup       (delegates to setup_input_assets.py logic)
+    1. environment pre-flight  (verify_environment)
+    2. prototype map build     (build_prototype_map -> L_Proto_01)
+    3. input asset setup       (setup_input_assets -> IA/IMC/BP layer)
+    4. DataTable generation    (generate_datatables -> 3 traced tables)
+    5. showcase map build      (build_showcase_map -> L_Showcase cinematic)
+    6. GameMode wiring         (wire_gamemode -> both levels)
 
 Steps 2 and 3 intentionally reuse the EXISTING proven scripts by file path
 (so this orchestrator owns no asset logic of its own — rule of least code).
@@ -45,12 +48,27 @@ import unreal
 PREFIX = "[AWFIRST]"
 
 # Sibling scripts this orchestrator delegates to ( Tools/Python/ ).
+# LONG-RUN DIRECTIVE L5.4: the full first-day chain in execution order —
+# each step lists its expected result; every step is idempotent.
 HERE = os.path.dirname(os.path.abspath(__file__))
 STEP_SCRIPTS = [
     ("environment check", "verify_environment"),
     ("prototype map", "build_prototype_map"),
     ("input assets", "setup_input_assets"),
+    ("DataTable generation", "generate_datatables"),
+    ("showcase map", "build_showcase_map"),
+    ("GameMode wiring", "wire_gamemode"),
 ]
+
+# One-line expected results, printed before each step runs.
+EXPECTED = {
+    "verify_environment": "VERDICT line with engine 5.8+, 4 class groups ok",
+    "build_prototype_map": "L_Proto_01 saved; 8 LPROTO_* actors; DONE line",
+    "setup_input_assets": "32 IA_* + IMC_Player(35) + IMC_Gamepad(19) + 2 BPs",
+    "generate_datatables": "3 DataTables (Abilities 53 / Weather 8 / Zones 12)",
+    "build_showcase_map": "L_Showcase_ArtOverhaul saved; cinematic rig + vista",
+    "wire_gamemode": "both levels: GameMode override asserted, surfaces ok",
+}
 
 
 def log(message):
@@ -116,6 +134,23 @@ def run_input_assets():
         return False
 
 
+def run_module_step(name):
+    """Generic step runner for the L5 tools (main()-guarded modules)."""
+    def _run():
+        mod = import_step_module(name)
+        if mod is None:
+            return False
+        try:
+            if hasattr(mod, "main"):
+                mod.main()
+                return True
+            return True
+        except Exception as exc:  # noqa: BLE001
+            log_warn("{} step failed: {}".format(name, exc))
+            return False
+    return _run
+
+
 def preflight_files():
     missing = []
     for _label, module_name in STEP_SCRIPTS:
@@ -141,13 +176,19 @@ def main():
         return
 
     steps = [
-        ("1/3 environment check", run_environment_check),
-        ("2/3 prototype map", run_prototype_map),
-        ("3/3 input assets", run_input_assets),
+        ("1/6 environment check", run_environment_check),
+        ("2/6 prototype map", run_prototype_map),
+        ("3/6 input assets", run_input_assets),
+        ("4/6 DataTable generation", run_module_step("generate_datatables")),
+        ("5/6 showcase map", run_module_step("build_showcase_map")),
+        ("6/6 GameMode wiring", run_module_step("wire_gamemode")),
     ]
     failed_at = None
     for label, runner in steps:
+        module_name = label.split(" ", 1)[1]
         log("--- {} ---".format(label))
+        if module_name in EXPECTED:
+            log("expect: {}".format(EXPECTED[module_name]))
         if not runner():
             failed_at = label
             break

@@ -41,6 +41,9 @@ TOOL_MODULES = [
     ("verify_environment", True),
     ("build_prototype_map", False),
     ("setup_input_assets", False),
+    ("generate_datatables", False),
+    ("build_showcase_map", False),
+    ("wire_gamemode", False),
     ("first_day_orchestrator", True),
 ]
 
