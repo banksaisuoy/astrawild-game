@@ -1,0 +1,297 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 887,
+   "id": "Tech_BasicCrafting",
+   "name": "Basic Crafting",
+   "era": "Primitive",
+   "cost": 0,
+   "prereqs": [],
+   "recipes": [],
+   "buildings": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 890,
+   "id": "Tech_Cooking",
+   "name": "Cooking",
+   "era": "Primitive",
+   "cost": 5,
+   "prereqs": [
+    "Tech_BasicCrafting"
+   ],
+   "recipes": [
+    "Recipe_CookedMeat"
+   ],
+   "buildings": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 893,
+   "id": "Tech_Electrical",
+   "name": "Electrical Foundations",
+   "era": "Electrical",
+   "cost": 15,
+   "prereqs": [
+    "Tech_BasicCrafting"
+   ],
+   "recipes": [],
+   "buildings": [
+    "Building_Generator",
+    "Building_Battery",
+    "Building_LampPost"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 896,
+   "id": "Tech_AdvancedEnergy",
+   "name": "Advanced Energy",
+   "era": "AdvancedEnergy",
+   "cost": 30,
+   "prereqs": [
+    "Tech_Electrical"
+   ],
+   "recipes": [
+    "Recipe_EnergyCell",
+    "Recipe_FieldScanner",
+    "Recipe_ResonanceHelm",
+    "Recipe_DawnstriderExosuit",
+    "Recipe_PulseLance",
+    "Recipe_UtilityDrone",
+    "Recipe_UtilityRobot"
+   ],
+   "buildings": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 902,
+   "id": "Tech_Husbandry",
+   "name": "Echo Husbandry",
+   "era": "Primitive",
+   "cost": 10,
+   "prereqs": [
+    "Tech_Cooking"
+   ],
+   "recipes": [
+    "Recipe_FeedMix",
+    "Recipe_HerbalSalve"
+   ],
+   "buildings": [
+    "Building_FeedTrough"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 907,
+   "id": "Tech_Armory",
+   "name": "Armory",
+   "era": "Primitive",
+   "cost": 8,
+   "prereqs": [
+    "Tech_BasicCrafting"
+   ],
+   "recipes": [
+    "Recipe_StonehideShield",
+    "Recipe_CrystalBlade",
+    "Recipe_FiberWeaveVest",
+    "Recipe_EmberhideJacket",
+    "Recipe_CrystalplateCuirass"
+   ],
+   "buildings": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 916,
+   "id": "Tech_Mechanics",
+   "name": "Mechanical Workshop",
+   "era": "Mechanical",
+   "cost": 12,
+   "prereqs": [
+    "Tech_BasicCrafting"
+   ],
+   "recipes": [
+    "Recipe_PlankBatch",
+    "Recipe_ResonatorBatch"
+   ],
+   "buildings": [
+    "Building_Sawmill"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 919,
+   "id": "Tech_Thermal",
+   "name": "Thermal Engineering",
+   "era": "Electrical",
+   "cost": 18,
+   "prereqs": [
+    "Tech_Electrical"
+   ],
+   "recipes": [
+    "Recipe_WarmBroth"
+   ],
+   "buildings": [
+    "Building_Heater"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 922,
+   "id": "Tech_Agriculture",
+   "name": "Agriculture",
+   "era": "Eco",
+   "cost": 20,
+   "prereqs": [
+    "Tech_Husbandry"
+   ],
+   "recipes": [
+    "Recipe_Fertilizer"
+   ],
+   "buildings": [
+    "Building_Composter"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 930,
+   "id": "Tech_AncientResonance",
+   "name": "Ancient Resonance",
+   "era": "Ancient",
+   "cost": 25,
+   "prereqs": [
+    "Tech_AdvancedEnergy"
+   ],
+   "recipes": [
+    "Recipe_AncientResonator"
+   ],
+   "buildings": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1505,
+   "id": "Tech_WeaponSystems",
+   "name": "Weapon Systems",
+   "era": "Electrical",
+   "branch": "Weapons",
+   "cost": 20,
+   "prereqs": [
+    "Tech_Armory",
+    "Tech_Electrical"
+   ],
+   "recipes": [
+    "Recipe_PlasmaCharger",
+    "Recipe_LumenBeam",
+    "Recipe_ArcCaster"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1511,
+   "id": "Tech_AdvancedBallistics",
+   "name": "Advanced Ballistics",
+   "era": "AdvancedEnergy",
+   "branch": "Weapons",
+   "cost": 30,
+   "prereqs": [
+    "Tech_WeaponSystems"
+   ],
+   "recipes": [
+    "Recipe_MagrailDriver",
+    "Recipe_SkysingerLauncher",
+    "Recipe_RailSlugBatch",
+    "Recipe_SeekerMissileBatch"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1517,
+   "id": "Tech_ExperimentalArsenal",
+   "name": "Experimental Arsenal",
+   "era": "Ancient",
+   "branch": "Weapons",
+   "cost": 40,
+   "prereqs": [
+    "Tech_AdvancedBallistics",
+    "Tech_AncientResonance"
+   ],
+   "recipes": [
+    "Recipe_StarlancePrototype",
+    "Recipe_NovaCell"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1523,
+   "id": "Tech_ExosuitEngineering",
+   "name": "Exosuit Engineering",
+   "era": "AdvancedEnergy",
+   "branch": "Armor",
+   "cost": 25,
+   "prereqs": [
+    "Tech_AdvancedEnergy"
+   ],
+   "recipes": [
+    "Recipe_VanguardHelm",
+    "Recipe_VanguardVest",
+    "Recipe_BastionHelm",
+    "Recipe_BastionPlate",
+    "Recipe_AstralforgedExosuit"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1529,
+   "id": "Tech_ScannerArray",
+   "name": "Scanner Array",
+   "era": "AdvancedEnergy",
+   "branch": "Scanner",
+   "cost": 18,
+   "prereqs": [
+    "Tech_AdvancedEnergy"
+   ],
+   "recipes": [
+    "Recipe_ArrayScanner",
+    "Recipe_OracleScanner"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1535,
+   "id": "Tech_AutomationII",
+   "name": "Automation II",
+   "era": "AdvancedEnergy",
+   "branch": "Automation",
+   "cost": 22,
+   "prereqs": [
+    "Tech_Mechanics",
+    "Tech_AdvancedEnergy"
+   ],
+   "recipes": [
+    "Recipe_DroneCellExtender",
+    "Recipe_DroneFocusedArray",
+    "Recipe_DroneSalvageClaw",
+    "Recipe_RobotBorebot",
+    "Recipe_RobotCultivator",
+    "Recipe_RobotSentinel"
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2991,
+   "id": "Tech_SkiffEngineering",
+   "name": "Skiff Engineering",
+   "era": "AdvancedEnergy",
+   "branch": "Exploration",
+   "cost": 25,
+   "prereqs": [
+    "Tech_AdvancedEnergy"
+   ],
+   "recipes": [
+    "Recipe_SkiffStratosCoil"
+   ]
+  }
+ ]
+}

@@ -72,3 +72,31 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Next session pointer: the machine day itself (ON_PC_TASKS) — everything
   source-side that the directive's DoD requires is now in place; the only
   open items are machine-execution rows in COMPILE_RISK §6.
+
+## 2026-09-18 — LONG-RUN DIRECTIVE L1..L10 (autonomous day run, 11 commits 4520db6..0c69866)
+
+- L1 TRUTH: Docs/ASTRAWILD_COVERAGE_REPORT.md — docs census re-proved 15/15
+  (0 overclaim); MY prior extractor was the incomplete side (missed
+  ProductionContent.cpp). L2 fixed it: 26 traced domains, census 15/15,
+  validate_design_data.py 78/78 ALL PASS.
+- L3+L5 TOOLING: Tools/Python/_mock_unreal/ recording mock +
+  Scripts/dryrun_unreal_tools.py — 7 tools, 49/49 proofs (idempotence,
+  convergence, no-missing-symbols); symbol table 55 VERIFIED / 0 UNVERIFIED.
+  New tools: generate_datatables (3 real DataTables + 20 staged owner-
+  decision JSON in Design/DataTable/), wire_gamemode, build_showcase_map
+  (cinematic rig), orchestrator now 6 steps.
+- L4 LINT: Scripts/lint_unreal_cpp.py (9 families, 0 errors/1 warning) —
+  found & FIXED 2 real compile blockers: phantom UAstrawildPlayerController
+  (EndingCinematic) + SaveSubsystem missing PlayerController include
+  (commit f9a6dcc; 4 changed lines). COMPILE_RISK.md rewritten with
+  before/after + open O-1..O-4.
+- L6-L9 DOCS: SOURCE_INVENTORY (183/17/0, 20 REPLACE ledger) · ART_ASSET_PLAN
+  (12 targets → staged CC0) · PACKAGING_PLAN (workflow audit clean) ·
+  ON_PC_TASKS v2 + Tools/preflight_check.bat (GO/NO-GO gate).
+- L10 REPORT: Docs/EVENING_REPORT.md (self-critical, 78% honest readiness).
+- Validators at this tip: validate_final_run ALL PASS ·
+  validate_design_data 78/78 · dryrun 49/49 · lint 0 errors.
+- DECISION_LOG.md (10 autonomous decisions) + BLOCKER.md (0 entries).
+- Next session pointer: THE MACHINE DAY (preflight → Build → 6-step
+  orchestrator → Setup_And_Play → Test → feel grading → package). The
+  first MSVC compile is the only closer for everything still UNVERIFIED.
