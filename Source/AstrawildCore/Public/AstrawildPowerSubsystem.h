@@ -31,7 +31,13 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Power")
     FAstrawildPowerStateChanged OnPowerStateChanged;
 
-    /** Buildings within this distance connect to the same grid (cm). */
+    /**
+     * Buildings within this distance connect to the same grid (cm).
+     * Final-audit M-1 (AUD-4): the v1 grid resolves as ONE shared network — this
+     * radius is honored by the site-proximity query (IsLocationPowered, generator
+     * within ~12m) and reserved for a future per-island grid split; it does NOT
+     * partition the building grid today. Documented, not decorative.
+     */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Power", meta=(ClampMin="100.0"))
     float ConnectivityRadius = 1200.0f;
 

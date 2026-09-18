@@ -27,23 +27,23 @@ public:
     AAstrawildVillageActor();
 
     /** Stable settlement id (Village_Dawnstead / Village_DriftwoodLanding). */
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village")
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", Replicated)
     FName VillageId = NAME_None;
 
     /** Display name used in HUD toasts. */
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village")
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", Replicated)
     FText VillageName;
 
     /** Huts in the ring (visual density). */
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", meta=(ClampMin="1", ClampMax="12"))
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", meta=(ClampMin="1", ClampMax="12"), Replicated)
     int32 HutCount = 6;
 
     /** Ring radius (cm). */
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", meta=(ClampMin="1000.0"))
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", meta=(ClampMin="1000.0"), Replicated)
     float VillageRadius = 1600.0f;
 
     /** True → dock planks instead of a palisade (fishing hamlet flavour). */
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village")
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ASTRAWILD|Village", Replicated)
     bool bCoastal = false;
 
     /** Night gather point (the campfire). */
@@ -55,6 +55,7 @@ public:
     FVector GetWaypoint(const int32 Index) const;
 
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 
 protected:
     /** Server: builds the hut ring, campfire, lamp posts and waypoints. */

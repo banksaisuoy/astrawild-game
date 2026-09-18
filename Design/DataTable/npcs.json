@@ -1,0 +1,282 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1243,
+   "id": "NPC_WardenMaren",
+   "name": "Warden Maren",
+   "offered_quest": "Quest_FirstLight",
+   "role": "QuestGiver",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.4,
+    0.85,
+    0.65
+   ],
+   "greeting": "The fields are calm — for now.",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1254,
+   "id": "NPC_VendorTam",
+   "name": "Trader Tam",
+   "role": "Vendor",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.9,
+    0.75,
+    0.35
+   ],
+   "greeting": "Shards, friend. Shards for everything.",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1256,
+     "prop": "ShopLootTableId",
+     "value": "Loot_VendorStarter"
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1266,
+   "id": "NPC_HerbalistWren",
+   "name": "Herbalist Wren",
+   "role": "Vendor",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.45,
+    0.8,
+    0.45
+   ],
+   "greeting": "Bark, root, bloom — the marsh provides.",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1268,
+     "prop": "ShopLootTableId",
+     "value": "Loot_VendorHerbalist"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1269,
+     "prop": "CurrencyItemId",
+     "value": "Item_DawnShard"
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1278,
+   "id": "NPC_BlacksmithBorin",
+   "name": "Blacksmith Borin",
+   "role": "Vendor",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.55,
+    0.4,
+    0.3
+   ],
+   "greeting": "Steel today, story tomorrow.",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1280,
+     "prop": "ShopLootTableId",
+     "value": "Loot_VendorArmory"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1281,
+     "prop": "CurrencyItemId",
+     "value": "Item_DawnShard"
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1290,
+   "id": "NPC_ElderRowan",
+   "name": "Elder Rowan",
+   "offered_quest": "Quest_WingsOverTheVale",
+   "dialogue_tree": "Dialogue_ElderRowan",
+   "role": "Elder",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.7,
+    0.55,
+    0.9
+   ],
+   "greeting": "Sit. The Vale has grown wider while you slept.",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1301,
+   "id": "NPC_GuardSela",
+   "name": "Guard Captain Sela",
+   "role": "Guard",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.45,
+    0.65,
+    0.95
+   ],
+   "greeting": "Keep the fire behind you and the dark ahead.",
+   "dialogue_tree": "Dialogue_GuardSela",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1311,
+   "id": "NPC_GuardBram",
+   "name": "Guard Bram",
+   "role": "Guard",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.5,
+    0.6,
+    0.9
+   ],
+   "greeting": "Gloomfangs again. Always Gloomfangs.",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1321,
+   "id": "NPC_FarmerJori",
+   "name": "Farmer Jori",
+   "role": "Villager",
+   "village": "Village_Dawnstead",
+   "tint": [
+    0.8,
+    0.7,
+    0.4
+   ],
+   "greeting": "Spriglings turn the soil better than any hoe.",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1333,
+   "id": "NPC_SkiffWardenKael",
+   "name": "Skiff Warden Kael",
+   "offered_quest": "Quest_SunkenVault",
+   "dialogue_tree": "Dialogue_SkiffWardenKael",
+   "role": "QuestGiver",
+   "village": "Village_DriftwoodLanding",
+   "tint": [
+    0.35,
+    0.85,
+    0.85
+   ],
+   "greeting": "Skiff's fueled. The isles are yours now.",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1344,
+   "id": "NPC_FisherNima",
+   "name": "Fisher Nima",
+   "role": "Vendor",
+   "village": "Village_DriftwoodLanding",
+   "tint": [
+    0.4,
+    0.75,
+    0.9
+   ],
+   "greeting": "Fresh catch, sea pearls, and gossip — cheap.",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1346,
+     "prop": "ShopLootTableId",
+     "value": "Loot_VendorDriftwood"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1347,
+     "prop": "CurrencyItemId",
+     "value": "Item_DawnShard"
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1356,
+   "id": "NPC_OldSaltPerry",
+   "name": "Old Salt Perry",
+   "role": "Villager",
+   "village": "Village_DriftwoodLanding",
+   "tint": [
+    0.55,
+    0.55,
+    0.6
+   ],
+   "greeting": "The tide took the old world. It can wait for you too.",
+   "dialogue_tree": "Dialogue_OldSaltPerry",
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1373,
+   "id": "NPC_Vess",
+   "name": "Vess, the Storm-Scholar",
+   "village": "Village_Dawnstead",
+   "greeting": "The anchors are singing again. I charted this moment for twenty years.",
+   "dialogue_tree": "Dialogue_Vess",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1380,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1381,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1382,
+     "prop": "VisualMeshScale",
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1386,
+   "id": "NPC_Ione",
+   "name": "Ione, the Relic Trader",
+   "role": "Vendor",
+   "village": "Village_Dawnstead",
+   "greeting": "Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest.",
+   "dialogue_tree": "Dialogue_Ione",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1393,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1394,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1395,
+     "prop": "VisualMeshScale",
+     "value": 1.0
+    }
+   ]
+  }
+ ]
+}

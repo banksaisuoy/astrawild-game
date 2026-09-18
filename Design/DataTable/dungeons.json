@@ -1,0 +1,97 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 838,
+   "id": "Dungeon_HollowUnderlight",
+   "properties": [
+    {
+     "prop": "RoomCount",
+     "value": 5,
+     "line": 839
+    },
+    {
+     "prop": "BossDefinitionId",
+     "value": "Echo_Gloomfang",
+     "line": 840
+    },
+    {
+     "prop": "BossDefeatEventId",
+     "value": "Creature_UnderlightWarden",
+     "line": 841
+    }
+   ],
+   "room_count": 5,
+   "boss": "Echo_Gloomfang"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 873,
+   "id": "Dungeon_SunkenVault",
+   "properties": [
+    {
+     "prop": "RoomCount",
+     "value": 4,
+     "line": 874
+    },
+    {
+     "prop": "BossDefinitionId",
+     "value": "Echo_Dawnfang",
+     "line": 875
+    },
+    {
+     "prop": "BossDefeatEventId",
+     "value": "Creature_VaultColossus",
+     "line": 876
+    },
+    {
+     "prop": "RewardTechnologyId",
+     "value": null,
+     "line": 878
+    },
+    {
+     "prop": "DungeonCompletionResearchPoints",
+     "value": 20,
+     "line": 879
+    }
+   ],
+   "room_count": 4,
+   "boss": "Echo_Dawnfang"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 953,
+   "id": "Dungeon_EyeOfTheMaelstrom",
+   "properties": [
+    {
+     "prop": "RoomCount",
+     "value": 5,
+     "line": 954
+    },
+    {
+     "prop": "BossDefinitionId",
+     "value": "Echo_DrownedSovereign",
+     "line": 955
+    },
+    {
+     "prop": "BossDefeatEventId",
+     "value": "Creature_DrownedSovereign",
+     "line": 956
+    },
+    {
+     "prop": "RewardTechnologyId",
+     "value": null,
+     "line": 958
+    },
+    {
+     "prop": "DungeonCompletionResearchPoints",
+     "value": 30,
+     "line": 959
+    }
+   ],
+   "room_count": 5,
+   "boss": "Echo_DrownedSovereign"
+  }
+ ]
+}

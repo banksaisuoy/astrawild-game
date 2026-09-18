@@ -36,8 +36,20 @@ public:
     /** Queue a respawn for a controller (server). */
     void RequestPlayerRespawn(AController* Controller, float DelaySeconds);
 
+    virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override; // LCP-6
     virtual void BeginPlay() override;
     virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+    /**
+     * LCP-4 (LAN co-op): a joining player restores their per-player block
+     * (session cache first, then the latest save) — late join after world
+     * progression and mid-session reconnects both land here. Host-authoritative:
+     * only the server-side GameMode runs this.
+     */
+    virtual void PostLogin(AController* NewPlayer) override;
+
+    /** LCP-4: snapshot the leaving player's block into the session cache (reconnect source). */
+    virtual void Logout(AController* Exiting) override;
 
 protected:
     void HandleAutosave();

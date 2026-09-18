@@ -69,6 +69,14 @@ protected:
     UFUNCTION()
     void HandlePerception(AActor* Actor, struct FAIStimulus Stimulus);
 
+    /** Final-audit M-8: threat forgotten (lost line of sight past LoseSightRadius) — drop the latch so aggro does not persist through walls. */
+    UFUNCTION()
+    void HandlePerceptionForgotten(AActor* Actor);
+
+    /** Final-audit M-8: OnDamaged → aggro — the EchoCharacter comment claimed the controller listens; now it actually does (Aggressive/Brave fight back). */
+    UFUNCTION()
+    void HandleDamaged(AAstrawildEchoCharacter* Echo, float NewHealth);
+
 private:
     TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
@@ -80,9 +88,24 @@ private:
     double NextWanderTime = 0.0;
     bool bPerceivedThreat = false;
 
+    /** Final-audit F-12: ExecuteProtect used GetAllActorsOfClass every think (4Hz per defender). Hostile list is cached per second. */
+    TArray<TWeakObjectPtr<AAstrawildEchoCharacter>> CachedNearbyHostiles;
+    double HostilesCacheTime = -BIG_NUMBER;
+    TWeakObjectPtr<AActor> HostilesCacheAnchor;
+
     void TransitionTo(EAstrawildEchoAIState NewState);
     EAstrawildEchoAIState DecideState();
     void ExecuteState(float DeltaThinkSeconds);
+
+    // GDP-2: locomotion-aware movement. Flying species steer directly (no navmesh
+    // path); everything else keeps the pathfollowing contract.
+    bool IsFlyingMover() const;
+    void SteerFlyingToward(const FVector& Point, float HoverHeight = 260.0f);
+    void MoveTowardPoint(const FVector& Point, float AcceptanceRadius);
+    void MoveTowardTarget(AActor* Target, float AcceptanceRadius);
+
+    // GDP-1: ability combat beat — true when an ability fired this think.
+    bool TryCastCombatAbility(class AAstrawildEchoCharacter* Echo, AActor* Target);
 
     // State executors.
     void ExecuteExplore();

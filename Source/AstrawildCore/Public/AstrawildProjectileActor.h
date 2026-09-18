@@ -100,6 +100,14 @@ public:
         AActor* InOwner, float Speed, float InVisualScale, float InLifetimeSeconds,
         AActor* HomingTarget, float HomingAcceleration);
 
+    /**
+     * FCR-1-a fix (M-a9): authored ability status payload — offensive abilities
+     * previously discarded their StatusId/StatusSeconds/StatusSpeedMultiplier
+     * (only the generic element status applied). Called AFTER spawn, before
+     * launch; applied on hit to echo targets on top of the element status.
+     */
+    void SetStatusPayload(FName InStatusId, float InStatusSeconds, float InStatusSpeedMultiplier, float InStatusDamagePerSecond);
+
 protected:
     /** Component-hit callback: resolve damage against the hit actor, then die. */
     UFUNCTION()
@@ -111,6 +119,12 @@ private:
 
     /** Homing target (missiles) — steering handled by ProjectileMovement homing fields. */
     TWeakObjectPtr<AActor> HomingTargetActor;
+
+    /** FCR-1-a (M-a9): authored status payload from the ability data. */
+    FName StatusPayloadId = NAME_None;
+    float StatusPayloadSeconds = 0.0f;
+    float StatusPayloadSpeedMultiplier = 1.0f;
+    float StatusPayloadDamagePerSecond = 0.0f;
 
     float ElapsedSeconds = 0.0f;
 

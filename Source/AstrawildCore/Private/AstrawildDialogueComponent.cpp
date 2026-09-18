@@ -1,7 +1,9 @@
 #include "AstrawildDialogueComponent.h"
 
+#include "AstrawildGameState.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
+#include "AstrawildNPCCharacter.h"
 #include "AstrawildPlayerCharacter.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildQuestComponent.h"
@@ -66,7 +68,46 @@ bool UAstrawildDialogueComponent::EvaluateChoiceConditions(const FAstrawildDialo
         return false;
     }
 
+    // DP-8 (NPC depth): affinity gate — the TALKING NPC's live relationship
+    // decides whether the reply exists, so conversations evolve as the player
+    // earns trust (talk +2 / trade +1 per day). A threshold of 0 never gates
+    // (every pre-DP-8 tree stays byte-identical); a positive threshold fails
+    // closed exactly like the quest conditions above when the NPC cannot be
+    // resolved — a gate is a condition, not optional flavor.
+    if (Choice.RequiredMinAffinity > 0)
+    {
+        const AAstrawildNPCCharacter* Npc = TalkingNpc.Get();
+        if (!Npc || !MeetsAffinityGate(Choice.RequiredMinAffinity, Npc->Affinity))
+        {
+            return false;
+        }
+    }
+
     return true;
+}
+
+bool UAstrawildDialogueComponent::MeetsAffinityGate(const int32 RequiredMinAffinity, const float NpcAffinity)
+{
+    // Pure contract (automation-tested): 0 = ungated (default), otherwise the
+    // live affinity must REACH the threshold (>=). Authoring convention maps
+    // tiers to thresholds: 25 Acquaintance / 50 Friend / 75 Confidant.
+    if (RequiredMinAffinity <= 0)
+    {
+        return true;
+    }
+    return NpcAffinity >= static_cast<float>(RequiredMinAffinity);
+}
+
+void UAstrawildDialogueComponent::SetTalkingNpc(AAstrawildNPCCharacter* Npc)
+{
+    // Called by the player controller's OpenDialogue/CloseDialogue. Weak
+    // reference: a mid-conversation NPC death simply fails the gate closed.
+    TalkingNpc = Npc;
+}
+
+AAstrawildNPCCharacter* UAstrawildDialogueComponent::GetTalkingNpc() const
+{
+    return TalkingNpc.Get();
 }
 
 bool UAstrawildDialogueComponent::ApplyChoiceConsequences(const FAstrawildDialogueChoice& Choice)
@@ -132,7 +173,50 @@ bool UAstrawildDialogueComponent::ApplyChoiceConsequences(const FAstrawildDialog
         }
     }
 
+    // 5) Final Run (FR-6): ending route — the one-way world verdict flows through
+    // the game state exactly like every other authority pipeline. Ids are a
+    // closed vocabulary: Ending_BreakCage (The Dawn That Stays) and
+    // Ending_StormSleeps (The Storm That Sleeps). Unknown ids fail closed.
+    if (!Choice.TriggerEndingId.IsNone())
+    {
+        if (UWorld* World = GetWorld())
+        {
+            if (AAstrawildGameState* GameState = World->GetGameState<AAstrawildGameState>())
+            {
+                const EAstrawildEndingState Ending = ResolveEndingForTriggerId(Choice.TriggerEndingId);
+                if (Ending != EAstrawildEndingState::None)
+                {
+                    GameState->SetEndingState(Ending);
+                }
+                else
+                {
+                    bAllApplied = false;
+                    UE_LOG(LogAstrawild, Warning, TEXT("Dialogue consequence: unknown ending id %s."), *Choice.TriggerEndingId.ToString());
+                }
+            }
+            else
+            {
+                bAllApplied = false;
+                UE_LOG(LogAstrawild, Warning, TEXT("Dialogue consequence: no game state for ending %s."), *Choice.TriggerEndingId.ToString());
+            }
+        }
+    }
+
     return bAllApplied;
+}
+
+EAstrawildEndingState UAstrawildDialogueComponent::ResolveEndingForTriggerId(const FName TriggerEndingId)
+{
+    // Closed vocabulary (FR-6): the two Act 3 endings, nothing else.
+    if (TriggerEndingId == TEXT("Ending_BreakCage"))
+    {
+        return EAstrawildEndingState::TheDawnThatStays;
+    }
+    if (TriggerEndingId == TEXT("Ending_StormSleeps"))
+    {
+        return EAstrawildEndingState::TheStormThatSleeps;
+    }
+    return EAstrawildEndingState::None;
 }
 
 void UAstrawildDialogueComponent::ExportForSave(TArray<FName>& OutFlags) const
@@ -161,4 +245,19 @@ AAstrawildPlayerCharacter* UAstrawildDialogueComponent::GetPlayerCharacter() con
 {
     const APlayerController* PC = Cast<APlayerController>(GetOwner());
     return PC ? Cast<AAstrawildPlayerCharacter>(PC->GetPawn()) : nullptr;
+}
+
+const FAstrawildDialogueChoice* UAstrawildDialogueComponent::ResolveValidatedChoice(
+    const UAstrawildDialogueTreeDefinition* Tree, const FName NodeId, const int32 ChoiceIndex)
+{
+    if (!Tree || NodeId.IsNone())
+    {
+        return nullptr;
+    }
+    const FAstrawildDialogueNode* Node = Tree->FindNode(NodeId);
+    if (!Node || ChoiceIndex < 0 || ChoiceIndex >= Node->Choices.Num())
+    {
+        return nullptr;
+    }
+    return &Node->Choices[ChoiceIndex];
 }

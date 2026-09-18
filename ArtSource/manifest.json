@@ -5,8 +5,12 @@
       "category": "ambience",
       "channels": 1,
       "frames": 1323000,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Amb_Forest_Dawn.wav",
       "samplerate": 44100,
       "seconds": 30.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Amb_Forest_Dawn"
     },
     "A_Amb_Marsh_Dusk": {
@@ -14,8 +18,12 @@
       "category": "ambience",
       "channels": 1,
       "frames": 1323000,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Amb_Marsh_Dusk.wav",
       "samplerate": 44100,
       "seconds": 30.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Amb_Marsh_Dusk"
     },
     "A_Amb_Night_Crystal": {
@@ -23,8 +31,12 @@
       "category": "ambience",
       "channels": 1,
       "frames": 1323000,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Amb_Night_Crystal.wav",
       "samplerate": 44100,
       "seconds": 30.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Amb_Night_Crystal"
     },
     "A_Amb_Water_Lake": {
@@ -32,8 +44,12 @@
       "category": "ambience",
       "channels": 1,
       "frames": 1323000,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Amb_Water_Lake.wav",
       "samplerate": 44100,
       "seconds": 30.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Amb_Water_Lake"
     },
     "A_Amb_Wind_Gentle": {
@@ -41,8 +57,12 @@
       "category": "ambience",
       "channels": 1,
       "frames": 1323000,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Amb_Wind_Gentle.wav",
       "samplerate": 44100,
       "seconds": 30.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Amb_Wind_Gentle"
     },
     "A_Echo_Bastionbeetle_Skitter": {
@@ -50,8 +70,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 25128,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Bastionbeetle_Skitter.wav",
       "samplerate": 44100,
       "seconds": 0.57,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Bastionbeetle_Skitter"
     },
     "A_Echo_Capture_Success": {
@@ -59,8 +83,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 52920,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Capture_Success.wav",
       "samplerate": 44100,
       "seconds": 1.2,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Capture_Success"
     },
     "A_Echo_Cindermule_Grunt": {
@@ -68,8 +96,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 22050,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Cindermule_Grunt.wav",
       "samplerate": 44100,
       "seconds": 0.5,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Cindermule_Grunt"
     },
     "A_Echo_Deepdelver_Rumble": {
@@ -77,8 +109,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 61853,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Deepdelver_Rumble.wav",
       "samplerate": 44100,
       "seconds": 1.403,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Deepdelver_Rumble"
     },
     "A_Echo_Mistmender_Chime": {
@@ -86,8 +122,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 47231,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Mistmender_Chime.wav",
       "samplerate": 44100,
       "seconds": 1.071,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Mistmender_Chime"
     },
     "A_Echo_Terraquill_Call": {
@@ -95,8 +135,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 34473,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Terraquill_Call.wav",
       "samplerate": 44100,
       "seconds": 0.782,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Terraquill_Call"
     },
     "A_Echo_Voltpylon_Hum": {
@@ -104,8 +148,12 @@
       "category": "creature",
       "channels": 1,
       "frames": 88199,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Echo_Voltpylon_Hum.wav",
       "samplerate": 44100,
       "seconds": 2.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Echo_Voltpylon_Hum"
     },
     "A_Footstep_Grass": {
@@ -113,8 +161,12 @@
       "category": "footstep",
       "channels": 1,
       "frames": 6615,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Footstep_Grass.wav",
       "samplerate": 44100,
       "seconds": 0.15,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Footstep_Grass"
     },
     "A_Footstep_Metal": {
@@ -122,8 +174,12 @@
       "category": "footstep",
       "channels": 1,
       "frames": 6615,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Footstep_Metal.wav",
       "samplerate": 44100,
       "seconds": 0.15,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Footstep_Metal"
     },
     "A_Footstep_Sand": {
@@ -131,8 +187,12 @@
       "category": "footstep",
       "channels": 1,
       "frames": 7497,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Footstep_Sand.wav",
       "samplerate": 44100,
       "seconds": 0.17,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Footstep_Sand"
     },
     "A_Footstep_Stone": {
@@ -140,8 +200,12 @@
       "category": "footstep",
       "channels": 1,
       "frames": 5733,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Footstep_Stone.wav",
       "samplerate": 44100,
       "seconds": 0.13,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Footstep_Stone"
     },
     "A_Footstep_Water": {
@@ -149,8 +213,12 @@
       "category": "footstep",
       "channels": 1,
       "frames": 7938,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Footstep_Water.wav",
       "samplerate": 44100,
       "seconds": 0.18,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Footstep_Water"
     },
     "A_Player_Heartbeat_Low": {
@@ -158,8 +226,12 @@
       "category": "player",
       "channels": 1,
       "frames": 88200,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Player_Heartbeat_Low.wav",
       "samplerate": 44100,
       "seconds": 2.0,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Player_Heartbeat_Low"
     },
     "A_Player_Jump": {
@@ -167,8 +239,12 @@
       "category": "player",
       "channels": 1,
       "frames": 13230,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Player_Jump.wav",
       "samplerate": 44100,
       "seconds": 0.3,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Player_Jump"
     },
     "A_Player_Land": {
@@ -176,8 +252,12 @@
       "category": "player",
       "channels": 1,
       "frames": 17640,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Player_Land.wav",
       "samplerate": 44100,
       "seconds": 0.4,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Player_Land"
     },
     "A_Player_Scan_Ping": {
@@ -185,8 +265,12 @@
       "category": "player",
       "channels": 1,
       "frames": 52920,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Player_Scan_Ping.wav",
       "samplerate": 44100,
       "seconds": 1.2,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Player_Scan_Ping"
     },
     "A_UI_Cancel": {
@@ -194,8 +278,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 8820,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Cancel.wav",
       "samplerate": 44100,
       "seconds": 0.2,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Cancel"
     },
     "A_UI_Click": {
@@ -203,8 +291,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 1323,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Click.wav",
       "samplerate": 44100,
       "seconds": 0.03,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Click"
     },
     "A_UI_Confirm": {
@@ -212,8 +304,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 8820,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Confirm.wav",
       "samplerate": 44100,
       "seconds": 0.2,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Confirm"
     },
     "A_UI_Craft_Done": {
@@ -221,8 +317,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 14112,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Craft_Done.wav",
       "samplerate": 44100,
       "seconds": 0.32,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Craft_Done"
     },
     "A_UI_Hover": {
@@ -230,8 +330,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 2646,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Hover.wav",
       "samplerate": 44100,
       "seconds": 0.06,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Hover"
     },
     "A_UI_Research_Done": {
@@ -239,8 +343,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 15434,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Research_Done.wav",
       "samplerate": 44100,
       "seconds": 0.35,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Research_Done"
     },
     "A_UI_Warning": {
@@ -248,8 +356,12 @@
       "category": "ui",
       "channels": 1,
       "frames": 10664,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_UI_Warning.wav",
       "samplerate": 44100,
       "seconds": 0.242,
+      "status": "present",
       "ue_path": "/Game/Audio/A_UI_Warning"
     },
     "A_Weapon_Arc_Fire": {
@@ -257,8 +369,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 22050,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Arc_Fire.wav",
       "samplerate": 44100,
       "seconds": 0.5,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Arc_Fire"
     },
     "A_Weapon_Charge_Loop": {
@@ -266,8 +382,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 70560,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Charge_Loop.wav",
       "samplerate": 44100,
       "seconds": 1.6,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Charge_Loop"
     },
     "A_Weapon_Impact_Energy": {
@@ -275,8 +395,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 15513,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Impact_Energy.wav",
       "samplerate": 44100,
       "seconds": 0.352,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Impact_Energy"
     },
     "A_Weapon_Impact_Kinetic": {
@@ -284,8 +408,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 13230,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Impact_Kinetic.wav",
       "samplerate": 44100,
       "seconds": 0.3,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Impact_Kinetic"
     },
     "A_Weapon_Plasma_Fire": {
@@ -293,8 +421,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 17640,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Plasma_Fire.wav",
       "samplerate": 44100,
       "seconds": 0.4,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Plasma_Fire"
     },
     "A_Weapon_Rail_Fire": {
@@ -302,8 +434,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 30869,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Rail_Fire.wav",
       "samplerate": 44100,
       "seconds": 0.7,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Rail_Fire"
     },
     "A_Weapon_Scrap_Fire": {
@@ -311,8 +447,12 @@
       "category": "weapon",
       "channels": 1,
       "frames": 15434,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Scrap_Fire.wav",
       "samplerate": 44100,
       "seconds": 0.35,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Scrap_Fire"
     },
     "A_Weapon_Singularity_Fire": {
@@ -320,171 +460,3306 @@
       "category": "weapon",
       "channels": 1,
       "frames": 39690,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Audio/A_Weapon_Singularity_Fire.wav",
       "samplerate": 44100,
       "seconds": 0.9,
+      "status": "present",
       "ue_path": "/Game/Audio/A_Weapon_Singularity_Fire"
+    },
+    "SK_Base_ArmoredBeetle": {
+      "animations": [
+        "AM_SK_Base_ArmoredBeetle_Idle",
+        "AM_SK_Base_ArmoredBeetle_Move",
+        "AM_SK_Base_ArmoredBeetle_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 170668,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_ArmoredBeetle_Hit": "HitReact",
+        "AM_SK_Base_ArmoredBeetle_Idle": "Flying_Idle",
+        "AM_SK_Base_ArmoredBeetle_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredBeetle.glb",
+      "sha256": "ff05f253ec4059be6da20b208854e1073a33537b575204ee239aa18038ed7f68",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Armabee.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ArmoredBeetle",
+      "verts": 1260
+    },
+    "SK_Base_ArmoredCrab": {
+      "animations": [
+        "AM_SK_Base_ArmoredCrab_Idle",
+        "AM_SK_Base_ArmoredCrab_Move",
+        "AM_SK_Base_ArmoredCrab_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 215892,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_ArmoredCrab_Hit": "HitReact",
+        "AM_SK_Base_ArmoredCrab_Idle": "Flying_Idle",
+        "AM_SK_Base_ArmoredCrab_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredCrab.glb",
+      "sha256": "5a333277d2498e83150ae86f0cf21dffde6921ad1dc092423a060c1daef5fea4",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Armabee_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ArmoredCrab",
+      "verts": 2022
+    },
+    "SK_Base_CyborgBeast": {
+      "animations": [
+        "AM_SK_Base_CyborgBeast_Idle",
+        "AM_SK_Base_CyborgBeast_Move",
+        "AM_SK_Base_CyborgBeast_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 660036,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_CyborgBeast_Hit": "HitReact",
+        "AM_SK_Base_CyborgBeast_Idle": "Idle",
+        "AM_SK_Base_CyborgBeast_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgBeast.glb",
+      "sha256": "4c33cdf67540cabe01817a9020c4f6b5df07af05a3a676c37e44944071038c53",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Demon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_CyborgBeast",
+      "verts": 4261
+    },
+    "SK_Base_CyborgSerpent": {
+      "animations": [
+        "AM_SK_Base_CyborgSerpent_Idle",
+        "AM_SK_Base_CyborgSerpent_Move",
+        "AM_SK_Base_CyborgSerpent_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 38,
+      "bytes": 324376,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_CyborgSerpent_Hit": "HitReact",
+        "AM_SK_Base_CyborgSerpent_Idle": "Flying_Idle",
+        "AM_SK_Base_CyborgSerpent_Move": "Fast_Flying"
+      },
+      "joints": 38,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgSerpent.glb",
+      "sha256": "c50128a1aa401798199f0472552d34af1f5c88014b1c367f764c7b987e6380b7",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Hywirl.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_CyborgSerpent",
+      "verts": 1759
+    },
+    "SK_Base_ElemDrake": {
+      "animations": [
+        "AM_SK_Base_ElemDrake_Idle",
+        "AM_SK_Base_ElemDrake_Move",
+        "AM_SK_Base_ElemDrake_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 268032,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_ElemDrake_Hit": "HitReact",
+        "AM_SK_Base_ElemDrake_Idle": "Flying_Idle",
+        "AM_SK_Base_ElemDrake_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Material"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemDrake.glb",
+      "sha256": "2acdb52f1c13fec9511c827801f25b45242ca0a7d4be6dba8a0fa74746ba161b",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Dragon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ElemDrake",
+      "verts": 2870
+    },
+    "SK_Base_ElemWisp": {
+      "animations": [
+        "AM_SK_Base_ElemWisp_Idle",
+        "AM_SK_Base_ElemWisp_Move",
+        "AM_SK_Base_ElemWisp_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 179164,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_ElemWisp_Hit": "HitReact",
+        "AM_SK_Base_ElemWisp_Idle": "Flying_Idle",
+        "AM_SK_Base_ElemWisp_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemWisp.glb",
+      "sha256": "067ecff647aca332983211e67a8c597910a97503f81872354d72f4c1156151d0",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Glub.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ElemWisp",
+      "verts": 1394
+    },
+    "SK_Base_GolemQuadruped": {
+      "animations": [
+        "AM_SK_Base_GolemQuadruped_Idle",
+        "AM_SK_Base_GolemQuadruped_Move",
+        "AM_SK_Base_GolemQuadruped_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 236516,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_GolemQuadruped_Hit": "HitReact",
+        "AM_SK_Base_GolemQuadruped_Idle": "Flying_Idle",
+        "AM_SK_Base_GolemQuadruped_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_GolemQuadruped.glb",
+      "sha256": "78c8603e951ba02ae817476c10f2e7787f60be6293a08026cbf3455d64d95402",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Goleling.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_GolemQuadruped",
+      "verts": 2362
+    },
+    "SK_Base_MonolithColossus": {
+      "animations": [
+        "AM_SK_Base_MonolithColossus_Idle",
+        "AM_SK_Base_MonolithColossus_Move",
+        "AM_SK_Base_MonolithColossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 622288,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_MonolithColossus_Hit": "HitReact",
+        "AM_SK_Base_MonolithColossus_Idle": "Idle",
+        "AM_SK_Base_MonolithColossus_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MonolithColossus.glb",
+      "sha256": "45344017507b7b9e49662114f46a2f0f00431e7abf18c168455356bdcf541df8",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Yeti.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MonolithColossus",
+      "verts": 3415
+    },
+    "SK_Base_Mushroomling": {
+      "animations": [
+        "AM_SK_Base_Mushroomling_Idle",
+        "AM_SK_Base_Mushroomling_Move",
+        "AM_SK_Base_Mushroomling_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 77020,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_Mushroomling_Hit": "HitRecieve",
+        "AM_SK_Base_Mushroomling_Idle": "Idle",
+        "AM_SK_Base_Mushroomling_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_Mushroomling.glb",
+      "sha256": "ad95ad12ed67831bf1dacb35e5431248bff75adbe52a0668dd0fb71c1d2498f9",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Mushnub.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_Mushroomling",
+      "verts": 721
+    },
+    "SK_Base_MutantAvian": {
+      "animations": [
+        "AM_SK_Base_MutantAvian_Idle",
+        "AM_SK_Base_MutantAvian_Move",
+        "AM_SK_Base_MutantAvian_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 618788,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_MutantAvian_Hit": "HitReact",
+        "AM_SK_Base_MutantAvian_Idle": "Idle",
+        "AM_SK_Base_MutantAvian_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantAvian.glb",
+      "sha256": "81c283c10d71b3252c31e378b8bca3450bcfb7980fac9fe599827edceb14412d",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Birb.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MutantAvian",
+      "verts": 3396
+    },
+    "SK_Base_MutantBeast": {
+      "animations": [
+        "AM_SK_Base_MutantBeast_Idle",
+        "AM_SK_Base_MutantBeast_Move",
+        "AM_SK_Base_MutantBeast_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 51,
+      "bytes": 1920324,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_MutantBeast_Hit": "Death",
+        "AM_SK_Base_MutantBeast_Idle": "Idle",
+        "AM_SK_Base_MutantBeast_Move": "Walk"
+      },
+      "joints": 51,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Nose",
+        "Main_Light",
+        "Eyes_Black"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantBeast.glb",
+      "sha256": "142291b6f9114c2fc9ac8e51ffda8d9f959c5726036c3ea9946be173b608a5aa",
+      "source_anims": [
+        "Attack",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_2_HeadLow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_ToIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Wolf.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MutantBeast",
+      "verts": 3994
+    },
+    "SK_Base_PlantMaw": {
+      "animations": [
+        "AM_SK_Base_PlantMaw_Idle",
+        "AM_SK_Base_PlantMaw_Move",
+        "AM_SK_Base_PlantMaw_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 647540,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_PlantMaw_Hit": "HitReact",
+        "AM_SK_Base_PlantMaw_Idle": "Idle",
+        "AM_SK_Base_PlantMaw_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_PlantMaw.glb",
+      "sha256": "da219eb9b692a55d098cfb8af69cd6a2bab1b36acf7a0ce0a0383d6e0ee2922d",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Cactoro.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_PlantMaw",
+      "verts": 3866
+    },
+    "SK_Base_SpiritOrb": {
+      "animations": [
+        "AM_SK_Base_SpiritOrb_Idle",
+        "AM_SK_Base_SpiritOrb_Move",
+        "AM_SK_Base_SpiritOrb_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 38,
+      "bytes": 357208,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_SpiritOrb_Hit": "HitReact",
+        "AM_SK_Base_SpiritOrb_Idle": "Flying_Idle",
+        "AM_SK_Base_SpiritOrb_Move": "Fast_Flying"
+      },
+      "joints": 38,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritOrb.glb",
+      "sha256": "cd658e6eff200e1fac5647544fa240a4eb4f482d94386b8497ab0340a0734a08",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Ghost_Skull.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_SpiritOrb",
+      "verts": 2408
+    },
+    "SK_Base_SpiritWisp": {
+      "animations": [
+        "AM_SK_Base_SpiritWisp_Idle",
+        "AM_SK_Base_SpiritWisp_Move",
+        "AM_SK_Base_SpiritWisp_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 38,
+      "bytes": 327808,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_SpiritWisp_Hit": "HitReact",
+        "AM_SK_Base_SpiritWisp_Idle": "Flying_Idle",
+        "AM_SK_Base_SpiritWisp_Move": "Fast_Flying"
+      },
+      "joints": 38,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritWisp.glb",
+      "sha256": "99ef4aabda0c9eab8739f4c78de4caf938c5c2aa45a52c156df5217809e22a2c",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Ghost.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_SpiritWisp",
+      "verts": 1837
+    },
+    "SK_Base_VoidBlob": {
+      "animations": [
+        "AM_SK_Base_VoidBlob_Idle",
+        "AM_SK_Base_VoidBlob_Move",
+        "AM_SK_Base_VoidBlob_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 87896,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_VoidBlob_Hit": "HitRecieve",
+        "AM_SK_Base_VoidBlob_Idle": "Idle",
+        "AM_SK_Base_VoidBlob_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidBlob.glb",
+      "sha256": "7411ce7ca14556e8941bf49c5329678b9dbc47f5020113ae2d5f3f7b12e72d44",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/GreenBlob.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_VoidBlob",
+      "verts": 878
+    },
+    "SK_Base_VoidTentacle": {
+      "animations": [
+        "AM_SK_Base_VoidTentacle_Idle",
+        "AM_SK_Base_VoidTentacle_Move",
+        "AM_SK_Base_VoidTentacle_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 429248,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Base_VoidTentacle_Hit": "HitReact",
+        "AM_SK_Base_VoidTentacle_Idle": "Flying_Idle",
+        "AM_SK_Base_VoidTentacle_Move": "Fast_Flying"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidTentacle.glb",
+      "sha256": "d1105b5b07695d08fa9fa3879c5c9a6a95236b60fcf161bb8a504d067f8db8bc",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Squidle.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_VoidTentacle",
+      "verts": 2943
+    },
+    "SK_Boss_AbyssDemon": {
+      "animations": [
+        "AM_SK_Boss_AbyssDemon_Idle",
+        "AM_SK_Boss_AbyssDemon_Move",
+        "AM_SK_Boss_AbyssDemon_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 604724,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_AbyssDemon_Hit": "HitReact",
+        "AM_SK_Boss_AbyssDemon_Idle": "Idle",
+        "AM_SK_Boss_AbyssDemon_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AbyssDemon.glb",
+      "sha256": "9e1fc084e5b1c5c99e38a877391b43fbed8fe6e134846e44cd4ce8e993175870",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/BlueDemon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AbyssDemon",
+      "verts": 3324
+    },
+    "SK_Boss_AlpacaColossus": {
+      "animations": [
+        "AM_SK_Boss_AlpacaColossus_Idle",
+        "AM_SK_Boss_AlpacaColossus_Move",
+        "AM_SK_Boss_AlpacaColossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 175988,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_AlpacaColossus_Hit": "HitReact",
+        "AM_SK_Boss_AlpacaColossus_Idle": "Flying_Idle",
+        "AM_SK_Boss_AlpacaColossus_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AlpacaColossus.glb",
+      "sha256": "c35f2bf3e4b47270e336025cd914adf50acf6323ac04fc23e205ebf4dfc9922f",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Alpaking.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AlpacaColossus",
+      "verts": 1339
+    },
+    "SK_Boss_AlpacaWarlord": {
+      "animations": [
+        "AM_SK_Boss_AlpacaWarlord_Idle",
+        "AM_SK_Boss_AlpacaWarlord_Move",
+        "AM_SK_Boss_AlpacaWarlord_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 282084,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_AlpacaWarlord_Hit": "HitReact",
+        "AM_SK_Boss_AlpacaWarlord_Idle": "Flying_Idle",
+        "AM_SK_Boss_AlpacaWarlord_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AlpacaWarlord.glb",
+      "sha256": "bc2f11c92589fd1669e5fefd783d66c489689409ff769244fee341e000379b4c",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Alpaking_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AlpacaWarlord",
+      "verts": 3128
+    },
+    "SK_Boss_AncientWarden": {
+      "animations": [
+        "AM_SK_Boss_AncientWarden_Idle",
+        "AM_SK_Boss_AncientWarden_Move",
+        "AM_SK_Boss_AncientWarden_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 318484,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_AncientWarden_Hit": "HitReact",
+        "AM_SK_Boss_AncientWarden_Idle": "Flying_Idle",
+        "AM_SK_Boss_AncientWarden_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AncientWarden.glb",
+      "sha256": "53de4c6df83b71b5433ee16148fe62cea336b99e92dd9b18238e5e920f1dcf7b",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Goleling_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_AncientWarden",
+      "verts": 3688
+    },
+    "SK_Boss_BoneShaman": {
+      "animations": [
+        "AM_SK_Boss_BoneShaman_Idle",
+        "AM_SK_Boss_BoneShaman_Move",
+        "AM_SK_Boss_BoneShaman_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 676468,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_BoneShaman_Hit": "HitReact",
+        "AM_SK_Boss_BoneShaman_Idle": "Idle",
+        "AM_SK_Boss_BoneShaman_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_BoneShaman.glb",
+      "sha256": "70231316711db3d6aef7e62468571290f5942cb94346e3fe8e2f56f7e2ea5575",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Orc_Skull.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_BoneShaman",
+      "verts": 4504
+    },
+    "SK_Boss_FungalSovereign": {
+      "animations": [
+        "AM_SK_Boss_FungalSovereign_Idle",
+        "AM_SK_Boss_FungalSovereign_Move",
+        "AM_SK_Boss_FungalSovereign_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 160760,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_FungalSovereign_Hit": "HitRecieve",
+        "AM_SK_Boss_FungalSovereign_Idle": "Idle",
+        "AM_SK_Boss_FungalSovereign_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 3,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_FungalSovereign.glb",
+      "sha256": "d2a5e5112932bf1cabf51ece63268c1fc91499850fa6cc495386f100cc7ff309",
+      "showcase_boss": true,
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Mushnub_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_FungalSovereign",
+      "verts": 2079
+    },
+    "SK_Boss_MechRavager": {
+      "animations": [
+        "AM_SK_Boss_MechRavager_Idle",
+        "AM_SK_Boss_MechRavager_Move",
+        "AM_SK_Boss_MechRavager_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 465736,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_MechRavager_Hit": "HitRecieve_2",
+        "AM_SK_Boss_MechRavager_Idle": "Idle",
+        "AM_SK_Boss_MechRavager_Move": "Run"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_MechRavager.glb",
+      "sha256": "8f5cc2ee5856a3553af2bac948a29ce3094fe230cac88d00dedb892746342a9d",
+      "showcase_boss": true,
+      "source_anims": [
+        "Dance",
+        "Death",
+        "Hello",
+        "HitRecieve_1",
+        "HitRecieve_2",
+        "Idle",
+        "Jump",
+        "Jump_Landing",
+        "Jump_NoHeight",
+        "Kick",
+        "No",
+        "Pickup",
+        "Run",
+        "Shoot_Big",
+        "Shoot_Small",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Mech_RaeTheRedPanda.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MechRavager",
+      "verts": 4684
+    },
+    "SK_Boss_MechTitan": {
+      "animations": [
+        "AM_SK_Boss_MechTitan_Idle",
+        "AM_SK_Boss_MechTitan_Move",
+        "AM_SK_Boss_MechTitan_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 542460,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_MechTitan_Hit": "HitRecieve_2",
+        "AM_SK_Boss_MechTitan_Idle": "Idle",
+        "AM_SK_Boss_MechTitan_Move": "Run"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_MechTitan.glb",
+      "sha256": "ec1ecf744ad88fc56e49c952e64ef40229a33e9cd045fb179608a3b9c139222f",
+      "showcase_boss": true,
+      "source_anims": [
+        "Dance",
+        "Death",
+        "Hello",
+        "HitRecieve_1",
+        "HitRecieve_2",
+        "Idle",
+        "Jump",
+        "Jump_Landing",
+        "Jump_NoHeight",
+        "Kick",
+        "No",
+        "Pickup",
+        "Run",
+        "Shoot_Big",
+        "Shoot_Small",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Mech_BarbaraTheBee.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MechTitan",
+      "verts": 5841
+    },
+    "SK_Boss_MushroomKing": {
+      "animations": [
+        "AM_SK_Boss_MushroomKing_Idle",
+        "AM_SK_Boss_MushroomKing_Move",
+        "AM_SK_Boss_MushroomKing_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 620884,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_MushroomKing_Hit": "HitReact",
+        "AM_SK_Boss_MushroomKing_Idle": "Idle",
+        "AM_SK_Boss_MushroomKing_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_MushroomKing.glb",
+      "sha256": "30a51536912594da535c831262f03293d6af6d0df41c78fd97a4e2c0235f5ac1",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/MushroomKing.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_MushroomKing",
+      "verts": 3499
+    },
+    "SK_Boss_SentinelPrime": {
+      "animations": [
+        "AM_SK_Boss_SentinelPrime_Idle",
+        "AM_SK_Boss_SentinelPrime_Move",
+        "AM_SK_Boss_SentinelPrime_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 611672,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_SentinelPrime_Hit": "HitReact",
+        "AM_SK_Boss_SentinelPrime_Idle": "Idle",
+        "AM_SK_Boss_SentinelPrime_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_SentinelPrime.glb",
+      "sha256": "a2cd307a90daff05cae7d171e84837e8d62df12ef8a5acf60a62d1a18adae2f6",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Enemy_Large.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_SentinelPrime",
+      "verts": 3485
+    },
+    "SK_Boss_ShadowNinja": {
+      "animations": [
+        "AM_SK_Boss_ShadowNinja_Idle",
+        "AM_SK_Boss_ShadowNinja_Move",
+        "AM_SK_Boss_ShadowNinja_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 632052,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_ShadowNinja_Hit": "HitReact",
+        "AM_SK_Boss_ShadowNinja_Idle": "Idle",
+        "AM_SK_Boss_ShadowNinja_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_ShadowNinja.glb",
+      "sha256": "e3a742a1133f618827cb28c27b40f88444ec89fe97040a98f1e5d47b320473ee",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Ninja.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_ShadowNinja",
+      "verts": 3832
+    },
+    "SK_Boss_SkyTyrant": {
+      "animations": [
+        "AM_SK_Boss_SkyTyrant_Idle",
+        "AM_SK_Boss_SkyTyrant_Move",
+        "AM_SK_Boss_SkyTyrant_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 46,
+      "bytes": 555944,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_SkyTyrant_Hit": "HitReact",
+        "AM_SK_Boss_SkyTyrant_Idle": "Flying_Idle",
+        "AM_SK_Boss_SkyTyrant_Move": "Fast_Flying"
+      },
+      "joints": 46,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_SkyTyrant.glb",
+      "sha256": "bb936113f2e359c13487e1e40fc83349505b801bb958ad17935c1d5abe83f188",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Dragon_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_SkyTyrant",
+      "verts": 4437
+    },
+    "SK_Boss_VoidPrime": {
+      "animations": [
+        "AM_SK_Boss_VoidPrime_Idle",
+        "AM_SK_Boss_VoidPrime_Move",
+        "AM_SK_Boss_VoidPrime_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 244324,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_VoidPrime_Hit": "HitReact",
+        "AM_SK_Boss_VoidPrime_Idle": "Flying_Idle",
+        "AM_SK_Boss_VoidPrime_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_VoidPrime.glb",
+      "sha256": "0680fb3346ff33704de240104e1a58bf8241e541888de161ea50e82003e8faa3",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Glub_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_VoidPrime",
+      "verts": 2426
+    },
+    "SK_Boss_WarlordOrc": {
+      "animations": [
+        "AM_SK_Boss_WarlordOrc_Idle",
+        "AM_SK_Boss_WarlordOrc_Move",
+        "AM_SK_Boss_WarlordOrc_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 671652,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Boss_WarlordOrc_Hit": "HitReact",
+        "AM_SK_Boss_WarlordOrc_Idle": "Idle",
+        "AM_SK_Boss_WarlordOrc_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_WarlordOrc.glb",
+      "sha256": "e4c3058ecbbcf7388edc709e107c501800c7837efc50a4c52ae48be33b2e5442",
+      "showcase_boss": true,
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Orc.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/Bosses/SK_Boss_WarlordOrc",
+      "verts": 4412
+    },
+    "SK_Echo_Abyssjelly": {
+      "animations": [
+        "AM_SK_Echo_Abyssjelly_Idle",
+        "AM_SK_Echo_Abyssjelly_Move",
+        "AM_SK_Echo_Abyssjelly_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 69812,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Abyssjelly_Hit": "HitRecieve",
+        "AM_SK_Echo_Abyssjelly_Idle": "Idle",
+        "AM_SK_Echo_Abyssjelly_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Abyssjelly.glb",
+      "sha256": "e3a20f45610f3bfa6a0cc3c2f99a1c999008e6c95cc1fac0f13976c64a4bb551",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/PinkBlob.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Abyssjelly",
+      "verts": 587
+    },
+    "SK_Echo_Astralmonolith": {
+      "animations": [
+        "AM_SK_Echo_Astralmonolith_Idle",
+        "AM_SK_Echo_Astralmonolith_Move",
+        "AM_SK_Echo_Astralmonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 673476,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Astralmonolith_Hit": "HitReact",
+        "AM_SK_Echo_Astralmonolith_Idle": "Idle",
+        "AM_SK_Echo_Astralmonolith_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Astralmonolith.glb",
+      "sha256": "372ef3195b0cf39973be249140e22ca8fcf3d9e226e06d5d896740b3191b4840",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Alien.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Astralmonolith",
+      "verts": 4227
     },
     "SK_Echo_Bastionbeetle": {
       "animations": [
-        "AM_Bastionbeetle_Idle",
-        "AM_Bastionbeetle_Move",
-        "AM_Bastionbeetle_Hit"
+        "AM_SK_Echo_Bastionbeetle_Idle",
+        "AM_SK_Echo_Bastionbeetle_Move",
+        "AM_SK_Echo_Bastionbeetle_Hit"
       ],
       "asset_type": "skeletal_mesh",
-      "bones": 19,
-      "bytes": 131684,
+      "bones": 43,
+      "bytes": 610080,
       "category": "mesh",
-      "element": "Ash",
-      "joints": 19,
+      "clip_map": {
+        "AM_SK_Echo_Bastionbeetle_Hit": "HitReact",
+        "AM_SK_Echo_Bastionbeetle_Idle": "Idle",
+        "AM_SK_Echo_Bastionbeetle_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Echo_Body",
-        "Echo_Armor",
-        "Echo_Emissive",
-        "Echo_Eye"
+        "Atlas"
       ],
       "meshes": 1,
-      "nodes": 20,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Bastionbeetle.glb",
-      "skins": 1,
-      "species": "Bastionbeetle",
-      "triangles": 1459,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Bastionbeetle.glb",
+      "sha256": "af39167b46476ae5b708914dccbe44dbd662430dcf323329c807d3c447e723b5",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Dino.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Bastionbeetle",
-      "validate": "PASS"
+      "verts": 3266
+    },
+    "SK_Echo_Brinefin": {
+      "animations": [
+        "AM_SK_Echo_Brinefin_Idle",
+        "AM_SK_Echo_Brinefin_Move",
+        "AM_SK_Echo_Brinefin_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 211160,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Brinefin_Hit": "HitRecieve",
+        "AM_SK_Echo_Brinefin_Idle": "Idle",
+        "AM_SK_Echo_Brinefin_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Brinefin.glb",
+      "sha256": "69f96a588d3a4139cc55382fbaebebe2bf23008f49c288b6487b06a4a2316faa",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/GreenSpikyBlob.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Brinefin",
+      "verts": 2858
     },
     "SK_Echo_Cindermule": {
       "animations": [
-        "AM_Cindermule_Idle",
-        "AM_Cindermule_Move",
-        "AM_Cindermule_Hit"
+        "AM_SK_Echo_Cindermule_Idle",
+        "AM_SK_Echo_Cindermule_Move",
+        "AM_SK_Echo_Cindermule_Hit"
       ],
       "asset_type": "skeletal_mesh",
-      "bones": 23,
-      "bytes": 183996,
+      "bones": 50,
+      "bytes": 2181252,
       "category": "mesh",
-      "element": "Ember",
-      "joints": 23,
+      "clip_map": {
+        "AM_SK_Echo_Cindermule_Hit": "Death",
+        "AM_SK_Echo_Cindermule_Idle": "Idle",
+        "AM_SK_Echo_Cindermule_Move": "Walk"
+      },
+      "joints": 50,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Echo_Body",
-        "Echo_Armor",
-        "Echo_Emissive",
-        "Echo_Eye"
+        "Main",
+        "Main_Light",
+        "Main_Dark",
+        "Hooves",
+        "Hair",
+        "Muzzle",
+        "Eye_Dark",
+        "Eye_White"
       ],
       "meshes": 1,
-      "nodes": 24,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Cindermule.glb",
-      "skins": 1,
-      "species": "Cindermule",
-      "triangles": 2264,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Cindermule.glb",
+      "sha256": "2e71a683e1e00c76d5c36e6429adc238620a43bea50b146958cac66c7a43670b",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Donkey.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Cindermule",
-      "validate": "PASS"
+      "verts": 4044
+    },
+    "SK_Echo_Coralray": {
+      "animations": [
+        "AM_SK_Echo_Coralray_Idle",
+        "AM_SK_Echo_Coralray_Move",
+        "AM_SK_Echo_Coralray_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 134140,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Coralray_Hit": "HitRecieve",
+        "AM_SK_Echo_Coralray_Idle": "Idle",
+        "AM_SK_Echo_Coralray_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Coralray.glb",
+      "sha256": "cbf707a3462e642d455a90f0ab42286973e8935ef1379778772939e7d0a586c9",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Cactoro.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Coralray",
+      "verts": 1666
     },
     "SK_Echo_Deepdelver": {
       "animations": [
-        "AM_Deepdelver_Idle",
-        "AM_Deepdelver_Move",
-        "AM_Deepdelver_Hit"
+        "AM_SK_Echo_Deepdelver_Idle",
+        "AM_SK_Echo_Deepdelver_Move",
+        "AM_SK_Echo_Deepdelver_Hit"
       ],
       "asset_type": "skeletal_mesh",
-      "bones": 11,
-      "bytes": 80376,
+      "bones": 49,
+      "bytes": 760096,
       "category": "mesh",
-      "element": "Frost",
-      "joints": 11,
+      "clip_map": {
+        "AM_SK_Echo_Deepdelver_Hit": "HitReact",
+        "AM_SK_Echo_Deepdelver_Idle": "Idle",
+        "AM_SK_Echo_Deepdelver_Move": "Run"
+      },
+      "joints": 49,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Echo_Body",
-        "Echo_Armor",
-        "Echo_Emissive",
-        "Echo_Eye"
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Deepdelver.glb",
+      "sha256": "3108b1b080894ced53dd269b4970faafa34821b70646c9033ba1b79d0778d746",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Bunny.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Deepdelver",
+      "verts": 4754
+    },
+    "SK_Echo_DrownedSovereign": {
+      "animations": [
+        "AM_SK_Echo_DrownedSovereign_Idle",
+        "AM_SK_Echo_DrownedSovereign_Move",
+        "AM_SK_Echo_DrownedSovereign_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 121524,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_DrownedSovereign_Hit": "HitRecieve",
+        "AM_SK_Echo_DrownedSovereign_Idle": "Idle",
+        "AM_SK_Echo_DrownedSovereign_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
       ],
       "meshes": 1,
-      "nodes": 12,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Deepdelver.glb",
-      "skins": 1,
-      "species": "Deepdelver",
-      "triangles": 720,
-      "ue_path": "/Game/Characters/Echoes/SK_Echo_Deepdelver",
-      "validate": "PASS"
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_DrownedSovereign.glb",
+      "production_boss": true,
+      "sha256": "a815589e7c47032cbb9d59d48fe515ce1d4fcdc0b938636cb9b0edaa6090a800",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Yeti.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_DrownedSovereign",
+      "verts": 1473
+    },
+    "SK_Echo_Duskmoth": {
+      "animations": [
+        "AM_SK_Echo_Duskmoth_Idle",
+        "AM_SK_Echo_Duskmoth_Move",
+        "AM_SK_Echo_Duskmoth_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 696900,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Duskmoth_Hit": "HitReact",
+        "AM_SK_Echo_Duskmoth_Idle": "Idle",
+        "AM_SK_Echo_Duskmoth_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Duskmoth.glb",
+      "sha256": "1f96073b8049a32be6c785f8aac103440be35a21904d3685b586d9ddd294a30e",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Tribal.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Duskmoth",
+      "verts": 4792
+    },
+    "SK_Echo_Eldermonolith": {
+      "animations": [
+        "AM_SK_Echo_Eldermonolith_Idle",
+        "AM_SK_Echo_Eldermonolith_Move",
+        "AM_SK_Echo_Eldermonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 138064,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Eldermonolith_Hit": "HitRecieve",
+        "AM_SK_Echo_Eldermonolith_Idle": "Idle",
+        "AM_SK_Echo_Eldermonolith_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Eldermonolith.glb",
+      "sha256": "d935cc1f67215f27c809e303fccc83c154fa67c79031c6695dc99df24fadcc37",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Orc.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Eldermonolith",
+      "verts": 1771
+    },
+    "SK_Echo_Emberfang": {
+      "animations": [
+        "AM_SK_Echo_Emberfang_Idle",
+        "AM_SK_Echo_Emberfang_Move",
+        "AM_SK_Echo_Emberfang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 38,
+      "bytes": 428312,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Emberfang_Hit": "HitReact",
+        "AM_SK_Echo_Emberfang_Idle": "Flying_Idle",
+        "AM_SK_Echo_Emberfang_Move": "Fast_Flying"
+      },
+      "joints": 38,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Emberfang.glb",
+      "sha256": "59a251630ffe2b2f5c2c010c5f512dbdfa0d142019a3fae9fa3d3a863e64ac65",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Tribal.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Emberfang",
+      "verts": 3531
+    },
+    "SK_Echo_Embershade": {
+      "animations": [
+        "AM_SK_Echo_Embershade_Idle",
+        "AM_SK_Echo_Embershade_Move",
+        "AM_SK_Echo_Embershade_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 156012,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Embershade_Hit": "HitRecieve",
+        "AM_SK_Echo_Embershade_Idle": "Idle",
+        "AM_SK_Echo_Embershade_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 3,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Embershade.glb",
+      "sha256": "54f0c1425f9f4b43a0c009a852fb4dd5ea8b9002f6733ebde1cac282e3bb03c4",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Fish.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Embershade",
+      "verts": 1956
+    },
+    "SK_Echo_EyeSentinel": {
+      "animations": [
+        "AM_SK_Echo_EyeSentinel_Idle",
+        "AM_SK_Echo_EyeSentinel_Move",
+        "AM_SK_Echo_EyeSentinel_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 900812,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_EyeSentinel_Hit": "HitReact",
+        "AM_SK_Echo_EyeSentinel_Idle": "Idle",
+        "AM_SK_Echo_EyeSentinel_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_EyeSentinel.glb",
+      "production_boss": true,
+      "sha256": "9993a8157046e3ef589efb8f550a82a1608ea96c18ffd71a8e2e96f05789e4bc",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Idle_Gun",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Run_Gun",
+        "Run_Gun_Shoot",
+        "Walk",
+        "Walk_Gun",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Astronaut_FernandoTheFlamingo.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_EyeSentinel",
+      "verts": 7543
+    },
+    "SK_Echo_Fernthorn": {
+      "animations": [
+        "AM_SK_Echo_Fernthorn_Idle",
+        "AM_SK_Echo_Fernthorn_Move",
+        "AM_SK_Echo_Fernthorn_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 165372,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Fernthorn_Hit": "HitRecieve",
+        "AM_SK_Echo_Fernthorn_Idle": "Idle",
+        "AM_SK_Echo_Fernthorn_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Fernthorn.glb",
+      "sha256": "06f180ba142e566694b0bbe4d0c1a3a0e03006450213acf9ec185a832999363c",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Birb.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Fernthorn",
+      "verts": 2196
+    },
+    "SK_Echo_Forgottencolossus": {
+      "animations": [
+        "AM_SK_Echo_Forgottencolossus_Idle",
+        "AM_SK_Echo_Forgottencolossus_Move",
+        "AM_SK_Echo_Forgottencolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 114328,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Forgottencolossus_Hit": "HitRecieve",
+        "AM_SK_Echo_Forgottencolossus_Idle": "Idle",
+        "AM_SK_Echo_Forgottencolossus_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Forgottencolossus.glb",
+      "sha256": "3caa6cefe14e6d3d8ebf10293b4ebd8e3dca16c06b052922878eacf87c7c672c",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Ninja.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Forgottencolossus",
+      "verts": 1332
+    },
+    "SK_Echo_Frostblaze": {
+      "animations": [
+        "AM_SK_Echo_Frostblaze_Idle",
+        "AM_SK_Echo_Frostblaze_Move",
+        "AM_SK_Echo_Frostblaze_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 51,
+      "bytes": 1909976,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Frostblaze_Hit": "Death",
+        "AM_SK_Echo_Frostblaze_Idle": "Idle",
+        "AM_SK_Echo_Frostblaze_Move": "Walk"
+      },
+      "joints": 51,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Black",
+        "Eyes",
+        "Main_Light",
+        "Grey"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Frostblaze.glb",
+      "sha256": "46c849f445d9ae25b11568b72c09a75ed3e17c79b36c5e8bc58ffadb41812ecf",
+      "source_anims": [
+        "Attack",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_2_HeadLow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_ToIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Fox.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Frostblaze",
+      "verts": 3752
+    },
+    "SK_Echo_Geargolem": {
+      "animations": [
+        "AM_SK_Echo_Geargolem_Idle",
+        "AM_SK_Echo_Geargolem_Move",
+        "AM_SK_Echo_Geargolem_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 197912,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Geargolem_Hit": "HitReact",
+        "AM_SK_Echo_Geargolem_Idle": "Flying_Idle",
+        "AM_SK_Echo_Geargolem_Move": "Fast_Flying"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Glub_Main"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Geargolem.glb",
+      "sha256": "07c1a3cfea4aa3be48a193cc4831843b0bddd7a7ae48f393d9fcd7682ce6f5f7",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Enemy_Flying.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Geargolem",
+      "verts": 2847
+    },
+    "SK_Echo_Ghostshade": {
+      "animations": [
+        "AM_SK_Echo_Ghostshade_Idle",
+        "AM_SK_Echo_Ghostshade_Move",
+        "AM_SK_Echo_Ghostshade_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 111616,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Ghostshade_Hit": "HitRecieve",
+        "AM_SK_Echo_Ghostshade_Idle": "Idle",
+        "AM_SK_Echo_Ghostshade_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Ghostshade.glb",
+      "sha256": "57c068007de4a8e5190350482a760af99f9c2f42c987ee71be1b1a660afbf158",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Pigeon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Ghostshade",
+      "verts": 1277
+    },
+    "SK_Echo_GlassTyrant": {
+      "animations": [
+        "AM_SK_Echo_GlassTyrant_Idle",
+        "AM_SK_Echo_GlassTyrant_Move",
+        "AM_SK_Echo_GlassTyrant_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 581820,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_GlassTyrant_Hit": "HitReact",
+        "AM_SK_Echo_GlassTyrant_Idle": "Idle",
+        "AM_SK_Echo_GlassTyrant_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_GlassTyrant.glb",
+      "production_boss": true,
+      "sha256": "4b8848449ce565207380c1a99e11949b9c649ce3fa67f4b9d4ba282fdce08301",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Frog.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_GlassTyrant",
+      "verts": 2763
+    },
+    "SK_Echo_Glimmerhornet": {
+      "animations": [
+        "AM_SK_Echo_Glimmerhornet_Idle",
+        "AM_SK_Echo_Glimmerhornet_Move",
+        "AM_SK_Echo_Glimmerhornet_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 109452,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Glimmerhornet_Hit": "HitRecieve",
+        "AM_SK_Echo_Glimmerhornet_Idle": "Idle",
+        "AM_SK_Echo_Glimmerhornet_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Glimmerhornet.glb",
+      "sha256": "118e47bf26be0fb31a2e441176394f49b04dccb5f60638e64849a0df02bad2e2",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Cat.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Glimmerhornet",
+      "verts": 1283
+    },
+    "SK_Echo_Hallowedcolossus": {
+      "animations": [
+        "AM_SK_Echo_Hallowedcolossus_Idle",
+        "AM_SK_Echo_Hallowedcolossus_Move",
+        "AM_SK_Echo_Hallowedcolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 126060,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Hallowedcolossus_Hit": "HitRecieve",
+        "AM_SK_Echo_Hallowedcolossus_Idle": "Idle",
+        "AM_SK_Echo_Hallowedcolossus_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Hallowedcolossus.glb",
+      "sha256": "07cedaefa47164176ec2f75f958a25fe5b88c5c79629aee4f9b5d5ee62722407",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Alien.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Hallowedcolossus",
+      "verts": 1485
+    },
+    "SK_Echo_Lagoonfin": {
+      "animations": [
+        "AM_SK_Echo_Lagoonfin_Idle",
+        "AM_SK_Echo_Lagoonfin_Move",
+        "AM_SK_Echo_Lagoonfin_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 46,
+      "bytes": 783988,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Lagoonfin_Hit": "Death",
+        "AM_SK_Echo_Lagoonfin_Idle": "Idle",
+        "AM_SK_Echo_Lagoonfin_Move": "Walk"
+      },
+      "joints": 46,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Main_Light",
+        "Hooves",
+        "Main_Dark",
+        "Muzzle",
+        "Eyes_Black",
+        "Eyes_White"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Lagoonfin.glb",
+      "sha256": "52b84a93cafb5c51baea724524f3e124f1e2609ae46f6cfcb11419706b0e0871",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Alpaca.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Lagoonfin",
+      "verts": 4156
+    },
+    "SK_Echo_Magmawing": {
+      "animations": [
+        "AM_SK_Echo_Magmawing_Idle",
+        "AM_SK_Echo_Magmawing_Move",
+        "AM_SK_Echo_Magmawing_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 49,
+      "bytes": 1849832,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Magmawing_Hit": "Death",
+        "AM_SK_Echo_Magmawing_Idle": "Idle",
+        "AM_SK_Echo_Magmawing_Move": "Walk"
+      },
+      "joints": 49,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Material",
+        "Material.006",
+        "Material.001",
+        "Material.002",
+        "Material.003"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Magmawing.glb",
+      "sha256": "d5e33b7f9ffc92e5278df5035f86e8749f14c5ff8d9c79a922b2e8c1c906fcec",
+      "source_anims": [
+        "Attack",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_2_HeadLow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_ToIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Husky.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Magmawing",
+      "verts": 3900
     },
     "SK_Echo_Mistmender": {
       "animations": [
-        "AM_Mistmender_Idle",
-        "AM_Mistmender_Move",
-        "AM_Mistmender_Hit"
+        "AM_SK_Echo_Mistmender_Idle",
+        "AM_SK_Echo_Mistmender_Move",
+        "AM_SK_Echo_Mistmender_Hit"
       ],
       "asset_type": "skeletal_mesh",
-      "bones": 9,
-      "bytes": 61960,
+      "bones": 4,
+      "bytes": 98756,
       "category": "mesh",
-      "element": "Light",
-      "joints": 9,
+      "clip_map": {
+        "AM_SK_Echo_Mistmender_Hit": "HitRecieve",
+        "AM_SK_Echo_Mistmender_Idle": "Idle",
+        "AM_SK_Echo_Mistmender_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Echo_Body",
-        "Echo_Armor",
-        "Echo_Emissive",
-        "Echo_Eye"
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Mistmender.glb",
+      "sha256": "4900f707e593ebf1846ae97e7338bd2fb846ea2f74a20e9d5c83ab51932b8df4",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Wizard.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistmender",
+      "verts": 1069
+    },
+    "SK_Echo_Mistwing": {
+      "animations": [
+        "AM_SK_Echo_Mistwing_Idle",
+        "AM_SK_Echo_Mistwing_Move",
+        "AM_SK_Echo_Mistwing_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 84280,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Mistwing_Hit": "HitRecieve",
+        "AM_SK_Echo_Mistwing_Idle": "Idle",
+        "AM_SK_Echo_Mistwing_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
       ],
       "meshes": 1,
-      "nodes": 10,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Mistmender.glb",
-      "skins": 1,
-      "species": "Mistmender",
-      "triangles": 580,
-      "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistmender",
-      "validate": "PASS"
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Mistwing.glb",
+      "sha256": "4b0c38e2471470e8dcdb05356e0850325e5814a61b0bb75c68dfacef3e68bd61",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Dog.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Mistwing",
+      "verts": 843
+    },
+    "SK_Echo_Monolithcolossus": {
+      "animations": [
+        "AM_SK_Echo_Monolithcolossus_Idle",
+        "AM_SK_Echo_Monolithcolossus_Move",
+        "AM_SK_Echo_Monolithcolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 225188,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Monolithcolossus_Hit": "Flying_Idle",
+        "AM_SK_Echo_Monolithcolossus_Idle": "Flying_Idle",
+        "AM_SK_Echo_Monolithcolossus_Move": "Flying_Idle"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 3,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Monolithcolossus.glb",
+      "sha256": "d8800604c34794885f6d8a2bf449d3ed33529f911f15f63952d065a617952439",
+      "source_anims": [
+        "Flying_Idle"
+      ],
+      "source_model": "Flying/glTF/Demon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Monolithcolossus",
+      "verts": 2886
+    },
+    "SK_Echo_Monolithprimarch": {
+      "animations": [
+        "AM_SK_Echo_Monolithprimarch_Idle",
+        "AM_SK_Echo_Monolithprimarch_Move",
+        "AM_SK_Echo_Monolithprimarch_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 5,
+      "bytes": 120976,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Monolithprimarch_Hit": "HitReact",
+        "AM_SK_Echo_Monolithprimarch_Idle": "Flying_Idle",
+        "AM_SK_Echo_Monolithprimarch_Move": "Fast_Flying"
+      },
+      "joints": 5,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Monolithprimarch.glb",
+      "sha256": "3be3357e50070d74c5ab12e46749e559adc210ef017a67d9891897387eeac0e9",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Enemy_Small.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Monolithprimarch",
+      "verts": 1435
+    },
+    "SK_Echo_Pearlcrest": {
+      "animations": [
+        "AM_SK_Echo_Pearlcrest_Idle",
+        "AM_SK_Echo_Pearlcrest_Move",
+        "AM_SK_Echo_Pearlcrest_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 951508,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Pearlcrest_Hit": "HitReact",
+        "AM_SK_Echo_Pearlcrest_Idle": "Idle",
+        "AM_SK_Echo_Pearlcrest_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Pearlcrest.glb",
+      "sha256": "bae261fcb12ce279bb4d9ca2a79765ebe335dc274f55eb4dbea191dffad118c2",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Idle_Gun",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Run_Gun",
+        "Run_Gun_Shoot",
+        "Walk",
+        "Walk_Gun",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Astronaut_BarbaraTheBee.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Pearlcrest",
+      "verts": 8446
+    },
+    "SK_Echo_Pistongolem": {
+      "animations": [
+        "AM_SK_Echo_Pistongolem_Idle",
+        "AM_SK_Echo_Pistongolem_Move",
+        "AM_SK_Echo_Pistongolem_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 5,
+      "bytes": 103300,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Pistongolem_Hit": "HitReact",
+        "AM_SK_Echo_Pistongolem_Idle": "Flying_Idle",
+        "AM_SK_Echo_Pistongolem_Move": "Fast_Flying"
+      },
+      "joints": 5,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Pistongolem.glb",
+      "sha256": "76feaf5e48a11828c096575810a66e2d4b45bbe67342e92e189903b6e9614f75",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Enemy_ExtraSmall.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Pistongolem",
+      "verts": 1128
+    },
+    "SK_Echo_Primemonolith": {
+      "animations": [
+        "AM_SK_Echo_Primemonolith_Idle",
+        "AM_SK_Echo_Primemonolith_Move",
+        "AM_SK_Echo_Primemonolith_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 223832,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Primemonolith_Hit": "HitReact",
+        "AM_SK_Echo_Primemonolith_Idle": "Flying_Idle",
+        "AM_SK_Echo_Primemonolith_Move": "Fast_Flying"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Primemonolith.glb",
+      "sha256": "fd9ba4011647da3d123c472931ae002d0160da8a1d1ff7b64becbf6ed8991a01",
+      "source_anims": [
+        "Death",
+        "Fast_Flying",
+        "Flying_Idle",
+        "Headbutt",
+        "HitReact",
+        "No",
+        "Punch",
+        "Yes"
+      ],
+      "source_model": "Flying/glTF/Pigeon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Primemonolith",
+      "verts": 2139
+    },
+    "SK_Echo_Pyreblaze": {
+      "animations": [
+        "AM_SK_Echo_Pyreblaze_Idle",
+        "AM_SK_Echo_Pyreblaze_Move",
+        "AM_SK_Echo_Pyreblaze_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 46,
+      "bytes": 2013688,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Pyreblaze_Hit": "Death",
+        "AM_SK_Echo_Pyreblaze_Idle": "Idle",
+        "AM_SK_Echo_Pyreblaze_Move": "Walk"
+      },
+      "joints": 46,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Hooves",
+        "Main_Light",
+        "Main_Dark",
+        "Eye_Lighter",
+        "Eye_Black",
+        "Eye_White"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Pyreblaze.glb",
+      "sha256": "19a3ee311cbec9f0dfb5fc5038c1c49455c7d76a14e7678c61978672e3bddf25",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Deer.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Pyreblaze",
+      "verts": 4278
+    },
+    "SK_Echo_Reliccolossus": {
+      "animations": [
+        "AM_SK_Echo_Reliccolossus_Idle",
+        "AM_SK_Echo_Reliccolossus_Move",
+        "AM_SK_Echo_Reliccolossus_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 662464,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Reliccolossus_Hit": "HitRecieve_2",
+        "AM_SK_Echo_Reliccolossus_Idle": "Idle",
+        "AM_SK_Echo_Reliccolossus_Move": "Run"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Reliccolossus.glb",
+      "sha256": "27d0e7c52298509e3bba0787f8b6aa222caa2f1cecbe7d9310a356d03ffe5599",
+      "source_anims": [
+        "Dance",
+        "Death",
+        "Hello",
+        "HitRecieve_1",
+        "HitRecieve_2",
+        "Idle",
+        "Jump",
+        "Jump_Landing",
+        "Jump_NoHeight",
+        "Kick",
+        "No",
+        "Pickup",
+        "Run",
+        "Shoot_Big",
+        "Shoot_Small",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Mech_FinnTheFrog.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Reliccolossus",
+      "verts": 6267
+    },
+    "SK_Echo_Rimefang": {
+      "animations": [
+        "AM_SK_Echo_Rimefang_Idle",
+        "AM_SK_Echo_Rimefang_Move",
+        "AM_SK_Echo_Rimefang_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 13,
+      "bytes": 472812,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Rimefang_Hit": "HitRecieve_2",
+        "AM_SK_Echo_Rimefang_Idle": "Idle",
+        "AM_SK_Echo_Rimefang_Move": "Run"
+      },
+      "joints": 13,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Rimefang.glb",
+      "sha256": "d90fdbe88479dfcadecdc8dbc03684c3095a2e109abb878a24d25ef896eb36e0",
+      "source_anims": [
+        "Dance",
+        "Death",
+        "Hello",
+        "HitRecieve_1",
+        "HitRecieve_2",
+        "Idle",
+        "Jump",
+        "Jump_Landing",
+        "Jump_NoHeight",
+        "Kick",
+        "No",
+        "Pickup",
+        "Run",
+        "Shoot_Big",
+        "Shoot_Small",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Mech_FernandoTheFlamingo.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Rimefang",
+      "verts": 4811
+    },
+    "SK_Echo_Saltcrest": {
+      "animations": [
+        "AM_SK_Echo_Saltcrest_Idle",
+        "AM_SK_Echo_Saltcrest_Move",
+        "AM_SK_Echo_Saltcrest_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 50,
+      "bytes": 2215824,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Saltcrest_Hit": "Death",
+        "AM_SK_Echo_Saltcrest_Idle": "Idle",
+        "AM_SK_Echo_Saltcrest_Move": "Walk"
+      },
+      "joints": 50,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Main_Dark",
+        "Main_Light",
+        "Hooves",
+        "Hair",
+        "Muzzle",
+        "Eye_White",
+        "Eye_Black"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Saltcrest.glb",
+      "sha256": "0588334842feae74a257dea69983db37088da2e97d76beb4a2ecbe6afdb81e26",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Horse.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Saltcrest",
+      "verts": 4400
+    },
+    "SK_Echo_Saltray": {
+      "animations": [
+        "AM_SK_Echo_Saltray_Idle",
+        "AM_SK_Echo_Saltray_Move",
+        "AM_SK_Echo_Saltray_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 42,
+      "bytes": 1918548,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Saltray_Hit": "Death",
+        "AM_SK_Echo_Saltray_Idle": "Idle",
+        "AM_SK_Echo_Saltray_Move": "Walk"
+      },
+      "joints": 42,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Main_Light",
+        "Hooves",
+        "Muzzle",
+        "Eye_Black",
+        "Eye_White",
+        "Horns"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Saltray.glb",
+      "sha256": "fb9681e83ad95c88842e7f4efa17066b9dd94de68b89fcefb0e037ef7a95b2c0",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Bull.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Saltray",
+      "verts": 4906
+    },
+    "SK_Echo_Stonehide": {
+      "animations": [
+        "AM_SK_Echo_Stonehide_Idle",
+        "AM_SK_Echo_Stonehide_Move",
+        "AM_SK_Echo_Stonehide_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 42,
+      "bytes": 1921572,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Stonehide_Hit": "Death",
+        "AM_SK_Echo_Stonehide_Idle": "Idle",
+        "AM_SK_Echo_Stonehide_Move": "Walk"
+      },
+      "joints": 42,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Main_Light",
+        "Hooves",
+        "Muzzle",
+        "Eye_Black",
+        "Eye_White",
+        "Horns"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Stonehide.glb",
+      "sha256": "8e345f177881c1d5e234dd1a503472208d67bba515d0314c5abf606a888e39d0",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Cow.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Stonehide",
+      "verts": 4970
+    },
+    "SK_Echo_Sunhide": {
+      "animations": [
+        "AM_SK_Echo_Sunhide_Idle",
+        "AM_SK_Echo_Sunhide_Move",
+        "AM_SK_Echo_Sunhide_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 46,
+      "bytes": 1752268,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Sunhide_Hit": "Death",
+        "AM_SK_Echo_Sunhide_Idle": "Idle",
+        "AM_SK_Echo_Sunhide_Move": "Walk"
+      },
+      "joints": 46,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Main",
+        "Black",
+        "Main_Light",
+        "Eyes_Black",
+        "Eyes_White",
+        "Eyes_Pupil"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Sunhide.glb",
+      "sha256": "8302af941f144185c1afbde4ad8cc79358b575311deea23be4fbcd3d367f50a8",
+      "source_anims": [
+        "Attack",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_2_HeadLow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_ToIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/ShibaInu.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sunhide",
+      "verts": 3966
+    },
+    "SK_Echo_Sunhorn": {
+      "animations": [
+        "AM_SK_Echo_Sunhorn_Idle",
+        "AM_SK_Echo_Sunhorn_Move",
+        "AM_SK_Echo_Sunhorn_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 4,
+      "bytes": 137604,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Sunhorn_Hit": "HitRecieve",
+        "AM_SK_Echo_Sunhorn_Idle": "Idle",
+        "AM_SK_Echo_Sunhorn_Move": "Walk"
+      },
+      "joints": 4,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Sunhorn.glb",
+      "sha256": "50391a8ccba5d988a8b5ec84f8216db9fa239f5d944a159789619e6dce3911b5",
+      "source_anims": [
+        "Bite_Front",
+        "Dance",
+        "Death",
+        "HitRecieve",
+        "Idle",
+        "Jump",
+        "No",
+        "Walk",
+        "Yes"
+      ],
+      "source_model": "Blob/glTF/Chicken.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sunhorn",
+      "verts": 1692
+    },
+    "SK_Echo_Sunpaw": {
+      "animations": [
+        "AM_SK_Echo_Sunpaw_Idle",
+        "AM_SK_Echo_Sunpaw_Move",
+        "AM_SK_Echo_Sunpaw_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 954272,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Sunpaw_Hit": "HitReact",
+        "AM_SK_Echo_Sunpaw_Idle": "Idle",
+        "AM_SK_Echo_Sunpaw_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Sunpaw.glb",
+      "sha256": "bbc41bf50cd5ed20257b90cb993ffd8231da62af744e72182cc94b0469a15a34",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Idle_Gun",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Run_Gun",
+        "Run_Gun_Shoot",
+        "Walk",
+        "Walk_Gun",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Astronaut_RaeTheRedPanda.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Sunpaw",
+      "verts": 7730
     },
     "SK_Echo_Terraquill": {
       "animations": [
-        "AM_Terraquill_Idle",
-        "AM_Terraquill_Move",
-        "AM_Terraquill_Hit"
+        "AM_SK_Echo_Terraquill_Idle",
+        "AM_SK_Echo_Terraquill_Move",
+        "AM_SK_Echo_Terraquill_Hit"
       ],
       "asset_type": "skeletal_mesh",
-      "bones": 23,
-      "bytes": 148976,
+      "bones": 38,
+      "bytes": 2044468,
       "category": "mesh",
-      "element": "Flora",
-      "joints": 23,
+      "clip_map": {
+        "AM_SK_Echo_Terraquill_Hit": "Death",
+        "AM_SK_Echo_Terraquill_Idle": "Idle",
+        "AM_SK_Echo_Terraquill_Move": "Walk"
+      },
+      "joints": 38,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Echo_Body",
-        "Echo_Armor",
-        "Echo_Emissive",
-        "Echo_Eye"
+        "Material",
+        "Material.001",
+        "Material.003",
+        "Material.010",
+        "Material.011"
       ],
-      "meshes": 1,
-      "nodes": 24,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Terraquill.glb",
-      "skins": 1,
-      "species": "Terraquill",
-      "triangles": 1978,
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Terraquill.glb",
+      "sha256": "be287c4e8bd0e20d84d50b73e8eda7a9cfa94b599b66a705b9eed968ffbb9c58",
+      "source_anims": [
+        "Attack_Headbutt",
+        "Attack_Kick",
+        "Death",
+        "Eating",
+        "Gallop",
+        "Gallop_Jump",
+        "Idle",
+        "Idle_2",
+        "Idle_Headlow",
+        "Idle_HitReact1",
+        "Idle_HitReact2",
+        "Jump_toIdle",
+        "Walk"
+      ],
+      "source_model": "glTF/Stag.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html",
+      "status": "present",
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Terraquill",
-      "validate": "PASS"
+      "verts": 7438
+    },
+    "SK_Echo_Tidewyrm": {
+      "animations": [
+        "AM_SK_Echo_Tidewyrm_Idle",
+        "AM_SK_Echo_Tidewyrm_Move",
+        "AM_SK_Echo_Tidewyrm_Hit"
+      ],
+      "asset_type": "skeletal_mesh",
+      "bones": 43,
+      "bytes": 930916,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Echo_Tidewyrm_Hit": "HitReact",
+        "AM_SK_Echo_Tidewyrm_Idle": "Idle",
+        "AM_SK_Echo_Tidewyrm_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Tidewyrm.glb",
+      "sha256": "3fcf7e409f4d48d40345aa7682ccc44eca3ec845a63746eb1675a8018b4c9d88",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Idle_Gun",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Run_Gun",
+        "Run_Gun_Shoot",
+        "Walk",
+        "Walk_Gun",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Characters/GLTF/Astronaut_FinnTheFrog.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "tier_b": true,
+      "ue_path": "/Game/Characters/Echoes/SK_Echo_Tidewyrm",
+      "verts": 8045
     },
     "SK_Echo_Voltpylon": {
       "animations": [
-        "AM_Voltpylon_Idle",
-        "AM_Voltpylon_Move",
-        "AM_Voltpylon_Hit"
+        "AM_SK_Echo_Voltpylon_Idle",
+        "AM_SK_Echo_Voltpylon_Move",
+        "AM_SK_Echo_Voltpylon_Hit"
       ],
       "asset_type": "skeletal_mesh",
-      "bones": 20,
-      "bytes": 127556,
+      "bones": 43,
+      "bytes": 624692,
       "category": "mesh",
-      "element": "Pulse",
-      "joints": 20,
+      "clip_map": {
+        "AM_SK_Echo_Voltpylon_Hit": "HitReact",
+        "AM_SK_Echo_Voltpylon_Idle": "Idle",
+        "AM_SK_Echo_Voltpylon_Move": "Run"
+      },
+      "joints": 43,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Echo_Body",
-        "Echo_Armor",
-        "Echo_Emissive",
-        "Echo_Eye"
+        "Material"
       ],
       "meshes": 1,
-      "nodes": 21,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Echoes/SK_Echo_Voltpylon.glb",
-      "skins": 1,
-      "species": "Voltpylon",
-      "triangles": 1550,
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Voltpylon.glb",
+      "sha256": "3ffa9140ec0d2d7be5ed86f4e87ce498415b2061b0720ca1a4762c15bcb573b4",
+      "source_anims": [
+        "Death",
+        "Duck",
+        "HitReact",
+        "Idle",
+        "Jump",
+        "Jump_Idle",
+        "Jump_Land",
+        "No",
+        "Punch",
+        "Run",
+        "Walk",
+        "Wave",
+        "Weapon",
+        "Yes"
+      ],
+      "source_model": "Big/glTF/Monkroose.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "present",
       "ue_path": "/Game/Characters/Echoes/SK_Echo_Voltpylon",
-      "validate": "PASS"
+      "verts": 3495
     },
     "SK_Survivor_Exosuit": {
       "animations": [
@@ -496,1153 +3771,1563 @@
         "AM_Survivor_Fire",
         "AM_Survivor_Gather"
       ],
+      "armor_tier": 3,
+      "armor_tier_name": "Singularity Exosuit",
       "asset_type": "skeletal_mesh",
-      "bones": 22,
-      "bytes": 195712,
+      "bones": 62,
+      "bytes": 1844596,
       "category": "mesh",
-      "joints": 22,
+      "clip_map": {
+        "AM_Survivor_Aim": "Idle_Gun_Pointing",
+        "AM_Survivor_Fire": "Gun_Shoot",
+        "AM_Survivor_Gather": "Interact",
+        "AM_Survivor_Idle": "Idle",
+        "AM_Survivor_Jump": "Roll",
+        "AM_Survivor_Run": "Run",
+        "AM_Survivor_Walk": "Walk"
+      },
+      "joints": 62,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Survivor_Suit",
-        "Survivor_Armor",
-        "Survivor_Accent",
-        "Survivor_Visor",
-        "Survivor_Scanner",
-        "Survivor_Thruster"
+        "DarkBrown",
+        "Grey",
+        "Black",
+        "Skin",
+        "Swat",
+        "Swat_Black",
+        "Visor"
       ],
-      "meshes": 1,
-      "nodes": 23,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Characters/Survivor/SK_Survivor_Exosuit.glb",
-      "skins": 1,
-      "sockets": [
-        {
-          "bone": "Hand_R",
-          "name": "Weapon_R",
-          "rotation_deg": [
-            -90,
-            0,
-            0
-          ],
-          "world_pos": [
-            0.26,
-            0.85,
-            0.06
-          ]
-        },
-        {
-          "bone": "Forearm_L",
-          "name": "Scanner_L",
-          "rotation_deg": [
-            0,
-            90,
-            0
-          ],
-          "world_pos": [
-            -0.3,
-            0.99,
-            0.05
-          ]
-        },
-        {
-          "bone": "Backpack",
-          "name": "Backpack_Spine",
-          "rotation_deg": [
-            180,
-            0,
-            0
-          ],
-          "world_pos": [
-            0.0,
-            1.32,
-            -0.3
-          ]
-        }
+      "meshes": 5,
+      "path": "ArtSource/Meshes/Characters/Survivor/SK_Survivor_Exosuit.glb",
+      "sha256": "3a83a6808ad5de59861ef3e05cc82a3cc87654df460d2ee5a27d9252e460bd14",
+      "source_anims": [
+        "Death",
+        "Gun_Shoot",
+        "HitRecieve",
+        "HitRecieve_2",
+        "Idle",
+        "Idle_Gun",
+        "Idle_Gun_Pointing",
+        "Idle_Gun_Shoot",
+        "Idle_Neutral",
+        "Idle_Sword",
+        "Interact",
+        "Kick_Left",
+        "Kick_Right",
+        "Punch_Left",
+        "Punch_Right",
+        "Roll",
+        "Run",
+        "Run_Back",
+        "Run_Left",
+        "Run_Right",
+        "Run_Shoot",
+        "Sword_Slash",
+        "Walk",
+        "Wave"
       ],
-      "triangles": 2356,
+      "source_model": "Individual Characters/glTF/Swat.gltf",
+      "source_pack": "Quaternius_UltimateModularMen",
+      "source_page": "https://quaternius.com/packs/ultimatemodularmen.html",
+      "status": "present",
       "ue_path": "/Game/Characters/Survivor/SK_Survivor_Exosuit",
-      "validate": "PASS"
+      "verts": 16270
+    },
+    "SK_Survivor_T1_Scavenger": {
+      "animations": [
+        "AM_SK_Survivor_T1_Scavenger_Idle",
+        "AM_SK_Survivor_T1_Scavenger_Move",
+        "AM_SK_Survivor_T1_Scavenger_Hit"
+      ],
+      "armor_tier": 1,
+      "armor_tier_name": "Scavenger",
+      "asset_type": "skeletal_mesh",
+      "bones": 62,
+      "bytes": 2069236,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Survivor_T1_Scavenger_Hit": "HitRecieve",
+        "AM_SK_Survivor_T1_Scavenger_Idle": "Idle",
+        "AM_SK_Survivor_T1_Scavenger_Move": "Run"
+      },
+      "joints": 62,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Skin",
+        "Green",
+        "LightGreen",
+        "Grey",
+        "Black",
+        "Eyebrows",
+        "Hair",
+        "Eye",
+        "Brown",
+        "Brown2",
+        "Gold"
+      ],
+      "meshes": 5,
+      "path": "ArtSource/Meshes/Characters/Survivor/SK_Survivor_T1_Scavenger.glb",
+      "sha256": "175498543cd5800c15906fb510869a8cd6d6c09addc1c1206125f9ae2e17349b",
+      "source_anims": [
+        "Death",
+        "Gun_Shoot",
+        "HitRecieve",
+        "HitRecieve_2",
+        "Idle",
+        "Idle_Gun",
+        "Idle_Gun_Pointing",
+        "Idle_Gun_Shoot",
+        "Idle_Neutral",
+        "Idle_Sword",
+        "Interact",
+        "Kick_Left",
+        "Kick_Right",
+        "Punch_Left",
+        "Punch_Right",
+        "Roll",
+        "Run",
+        "Run_Back",
+        "Run_Left",
+        "Run_Right",
+        "Run_Shoot",
+        "Sword_Slash",
+        "Walk",
+        "Wave"
+      ],
+      "source_model": "Individual Characters/glTF/Adventurer.gltf",
+      "source_pack": "Quaternius_UltimateModularMen",
+      "source_page": "https://quaternius.com/packs/ultimatemodularmen.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger",
+      "verts": 20571
+    },
+    "SK_Survivor_T2_Astraite": {
+      "animations": [
+        "AM_SK_Survivor_T2_Astraite_Idle",
+        "AM_SK_Survivor_T2_Astraite_Move",
+        "AM_SK_Survivor_T2_Astraite_Hit"
+      ],
+      "armor_tier": 2,
+      "armor_tier_name": "Astraite Suit",
+      "asset_type": "skeletal_mesh",
+      "bones": 62,
+      "bytes": 2104116,
+      "category": "mesh",
+      "clip_map": {
+        "AM_SK_Survivor_T2_Astraite_Hit": "HitRecieve",
+        "AM_SK_Survivor_T2_Astraite_Idle": "Idle",
+        "AM_SK_Survivor_T2_Astraite_Move": "Run"
+      },
+      "joints": 62,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "SciFi_Light",
+        "SciFi_Light_Accent",
+        "SciFi_Main",
+        "SciFi_MainDark",
+        "Grey"
+      ],
+      "meshes": 4,
+      "path": "ArtSource/Meshes/Characters/Survivor/SK_Survivor_T2_Astraite.glb",
+      "sha256": "2f47f949c6f3630d08edde30dd4cb1723a9938d588796a9114697c62385393cf",
+      "source_anims": [
+        "Death",
+        "Gun_Shoot",
+        "HitRecieve",
+        "HitRecieve_2",
+        "Idle",
+        "Idle_Gun",
+        "Idle_Gun_Pointing",
+        "Idle_Gun_Shoot",
+        "Idle_Neutral",
+        "Idle_Sword",
+        "Interact",
+        "Kick_Left",
+        "Kick_Right",
+        "Punch_Left",
+        "Punch_Right",
+        "Roll",
+        "Run",
+        "Run_Back",
+        "Run_Left",
+        "Run_Right",
+        "Run_Shoot",
+        "Sword_Slash",
+        "Walk",
+        "Wave"
+      ],
+      "source_model": "Individual Characters/glTF/Spacesuit.gltf",
+      "source_pack": "Quaternius_UltimateModularMen",
+      "source_page": "https://quaternius.com/packs/ultimatemodularmen.html",
+      "status": "present",
+      "ue_path": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite",
+      "verts": 20710
     },
     "SM_Cliff_Shard": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        4.105,
-        3.761,
-        2.443
-      ],
-      "bytes": 4912,
+      "bones": 0,
+      "bytes": 2564,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Rock_Granite"
+        "grass",
+        "dirt"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Cliff_Shard.glb",
-      "skins": 0,
-      "triangles": 120,
+      "path": "ArtSource/Meshes/Environment/SM_Cliff_Shard.glb",
+      "sha256": "32b61e963ba99695624f213e4d893c5d2ac028dd831ba65bcd220ee5a6006114",
+      "source_model": "GLB/cliff_blockDiagonal_rock.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Cliff_Shard",
-      "validate": "PASS"
+      "verts": 36
     },
     "SM_Fern": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        0.855,
-        0.636,
-        0.932
-      ],
-      "bytes": 14524,
+      "bones": 0,
+      "bytes": 10172,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Canopy"
+        "grass"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Fern.glb",
-      "skins": 0,
-      "triangles": 180,
+      "path": "ArtSource/Meshes/Environment/SM_Fern.glb",
+      "sha256": "2e0487020d68ccf664435db9d829c78ae00e6d2785ee3ec10b9f89cc70a10406",
+      "source_model": "GLB/plant_bushDetailed.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Fern",
-      "validate": "PASS"
+      "verts": 232
+    },
+    "SM_Flower_Purple": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 7112,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "grass",
+        "colorPurple"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Environment/SM_Flower_Purple.glb",
+      "sha256": "f6fc34c96a03420a74fe36d4c2d0ec88f15204fcad99cd1416c3c4ecb22e48c4",
+      "source_model": "GLB/flower_purpleA.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Flower_Purple",
+      "verts": 268
+    },
+    "SM_Flower_Red": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 7104,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "grass",
+        "colorRed"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Environment/SM_Flower_Red.glb",
+      "sha256": "171930b7789ddbf735af3745576b5393750beb9133b9ff4a444bb6bb2986c020",
+      "source_model": "GLB/flower_redA.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Flower_Red",
+      "verts": 268
     },
     "SM_GlowReed": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        0.439,
-        1.36,
-        0.42
-      ],
-      "bytes": 22412,
+      "bones": 0,
+      "bytes": 3480,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Canopy",
-        "Foliage_Glow"
+        "leafsGreen"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_GlowReed.glb",
-      "skins": 0,
-      "triangles": 412,
+      "path": "ArtSource/Meshes/Environment/SM_GlowReed.glb",
+      "sha256": "b192523736f32754788de4dc7a5dcf30a58322b260ec8969120c91432a10b633",
+      "source_model": "GLB/plant_flatTall.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_GlowReed",
-      "validate": "PASS"
+      "verts": 50
     },
     "SM_Grass_Tuft": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        0.288,
-        0.343,
-        0.371
-      ],
-      "bytes": 11784,
+      "bones": 0,
+      "bytes": 18504,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Canopy"
+        "grass"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Grass_Tuft.glb",
-      "skins": 0,
-      "triangles": 108,
+      "path": "ArtSource/Meshes/Environment/SM_Grass_Tuft.glb",
+      "sha256": "af49a595624abca7249824eeefb944d4baf974abeeb5b16110d175da3563d6cd",
+      "source_model": "GLB/grass_large.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Grass_Tuft",
-      "validate": "PASS"
+      "verts": 448
+    },
+    "SM_Log_Fallen": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 14288,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "woodBark",
+        "woodInner"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Environment/SM_Log_Fallen.glb",
+      "sha256": "8c8fe8f6adfc03a3c0cd6cb24961ff74be96c2da284d70322f05797d049972d6",
+      "source_model": "GLB/log.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Log_Fallen",
+      "verts": 624
+    },
+    "SM_Mushroom_Group": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 14960,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "_defaultMat",
+        "colorRed"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Environment/SM_Mushroom_Group.glb",
+      "sha256": "29f02df0589dd2b09e8d2aff6a4662394dac5cfcf1fec701640dcbd6127e0802",
+      "source_model": "GLB/mushroom_redGroup.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Mushroom_Group",
+      "verts": 708
+    },
+    "SM_Mushroom_Red": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 6364,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "_defaultMat",
+        "colorRed"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Environment/SM_Mushroom_Red.glb",
+      "sha256": "843e2de43dce78920a5675a67bac4b72f500e6220315e713fe08381642cfc571",
+      "source_model": "GLB/mushroom_red.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Mushroom_Red",
+      "verts": 244
     },
     "SM_Node_AncientVein": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 20916,
+      "bones": 0,
+      "bytes": 25756,
       "category": "mesh",
       "joints": 0,
-      "materials": [
-        "Node_Rock",
-        "Node_Crystal"
-      ],
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_AncientVein.glb",
-      "skins": 0,
-      "triangles": 504,
+      "node_type": "Ancient Vein (ancient monolith marker)",
+      "path": "ArtSource/Meshes/Environment/SM_Node_AncientVein.fbx",
+      "sha256": "f9c66da3c80b2576163afc2beee1e6dcbfbb3d65dc9307fb1a134163b9421ad0",
+      "source_model": "FBX/Column_Round_Short.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html",
+      "status": "present",
       "ue_path": "/Game/Environment/ResourceNodes/SM_Node_AncientVein",
-      "validate": "PASS"
+      "verts": 0
     },
     "SM_Node_Astraite": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 21228,
+      "bones": 0,
+      "bytes": 25156,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Node_Rock",
-        "Node_Crystal"
+        "rockTrack",
+        "rock",
+        "crystal"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_Astraite.glb",
-      "skins": 0,
-      "triangles": 610,
+      "node_type": "Astraite (energy crystal cluster)",
+      "path": "ArtSource/Meshes/Environment/SM_Node_Astraite.glb",
+      "sha256": "fbe5ce9cf6a036594b0eb4fc475633753bcd05780bf60bd82aa9c63fcbfd4e76",
+      "source_model": "GLB/rock_crystals.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Astraite",
-      "validate": "PASS"
+      "verts": 1728
     },
     "SM_Node_Pyronite": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 19360,
+      "bones": 0,
+      "bytes": 26160,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Node_Rock",
-        "Node_Crystal"
+        "rockTrack",
+        "rock",
+        "crystal"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_Pyronite.glb",
-      "skins": 0,
-      "triangles": 522,
+      "node_type": "Pyronite (large fire-crystal formation)",
+      "path": "ArtSource/Meshes/Environment/SM_Node_Pyronite.glb",
+      "sha256": "cfe8f339f6be4a321e5f3822237002b6a70f9c5d03596a7c347adabd5247fbd9",
+      "source_model": "GLB/rock_crystalsLargeA.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Pyronite",
-      "validate": "PASS"
+      "verts": 1800
     },
     "SM_Node_Voidstone": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 17296,
+      "bones": 0,
+      "bytes": 25924,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Node_Rock",
-        "Node_Crystal"
+        "rockTrack",
+        "rock",
+        "crystal"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Node_Voidstone.glb",
-      "skins": 0,
-      "triangles": 508,
+      "node_type": "Voidstone (dark crystal formation)",
+      "path": "ArtSource/Meshes/Environment/SM_Node_Voidstone.glb",
+      "sha256": "3fe54711b8d0fbeaebcc055409f256bf414ad7493e7f97adba4b213e44f11117",
+      "source_model": "GLB/rock_crystalsLargeB.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/ResourceNodes/SM_Node_Voidstone",
-      "validate": "PASS"
+      "verts": 1782
     },
     "SM_Rock_Boulder_Moss": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        1.437,
-        1.172,
-        1.4
-      ],
-      "bytes": 12332,
+      "bones": 0,
+      "bytes": 6044,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Rock_Granite",
-        "Rock_Moss"
+        "rock"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Boulder_Moss.glb",
-      "skins": 0,
-      "triangles": 448,
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Boulder_Moss.glb",
+      "sha256": "4c56d53f1da96654ed02041c0cb493c30de266f0d273d528e5ac92b92e6edb8b",
+      "source_model": "GLB/rocks_smallA.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Rock_Boulder_Moss",
-      "validate": "PASS"
+      "verts": 120
     },
     "SM_Rock_Granite_L": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        2.547,
-        1.371,
-        2.031
-      ],
-      "bytes": 11532,
+      "bones": 0,
+      "bytes": 13224,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Rock_Granite"
+        "rockTrack",
+        "rock"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Granite_L.glb",
-      "skins": 0,
-      "triangles": 468,
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Granite_L.glb",
+      "sha256": "13b2bf393fcd7ca8c73d8a2a731da0be6c2c2b4e67ef0ae826e816c0d8733f2f",
+      "source_model": "GLB/rock_largeA.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Rock_Granite_L",
-      "validate": "PASS"
+      "verts": 576
     },
     "SM_Rock_Granite_M": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        1.274,
-        0.899,
-        1.092
-      ],
-      "bytes": 8980,
+      "bones": 0,
+      "bytes": 12984,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Rock_Granite"
+        "rockTrack",
+        "rock"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Granite_M.glb",
-      "skins": 0,
-      "triangles": 352,
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Granite_M.glb",
+      "sha256": "9ad6aafcbdf3a813d3ab5ca59d6d6eb41d8cb38d07897b2c4d24c3206f33c759",
+      "source_model": "GLB/rock_largeB.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Rock_Granite_M",
-      "validate": "PASS"
+      "verts": 564
     },
     "SM_Rock_Granite_S": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        0.587,
-        0.459,
-        0.544
-      ],
-      "bytes": 5456,
+      "bones": 0,
+      "bytes": 13172,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Rock_Granite"
+        "rockTrack",
+        "rock"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Rock_Granite_S.glb",
-      "skins": 0,
-      "triangles": 192,
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Granite_S.glb",
+      "sha256": "dbc02af619e176d10676ceb0e788d0bf8838731bef0d50972f11c7bf5d1f4922",
+      "source_model": "GLB/rock.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Rock_Granite_S",
-      "validate": "PASS"
+      "verts": 576
     },
     "SM_Ruin_Arch": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 25936,
+      "bones": 0,
+      "bytes": 74380,
       "category": "mesh",
       "joints": 0,
-      "materials": [
-        "Ruin_Stone",
-        "Ruin_Glow"
-      ],
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Ruin_Arch.glb",
-      "skins": 0,
-      "triangles": 288,
-      "ue_path": "/Game/Environment/Ruins/SM_Ruin_Arch",
-      "validate": "PASS"
+      "path": "ArtSource/Meshes/Environment/SM_Ruin_Arch.fbx",
+      "sha256": "af85f55a727388fbad67a62ffc7e30365b4a99241ff3b93e41711c15a5d5299f",
+      "source_model": "FBX/Arch_Gothic.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Ruin_Arch",
+      "verts": 0
     },
     "SM_Ruin_Block": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 18712,
+      "bones": 0,
+      "bytes": 16940,
       "category": "mesh",
       "joints": 0,
-      "materials": [
-        "Ruin_Stone",
-        "Ruin_Glow"
-      ],
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Ruin_Block.glb",
-      "skins": 0,
-      "triangles": 144,
-      "ue_path": "/Game/Environment/Ruins/SM_Ruin_Block",
-      "validate": "PASS"
+      "path": "ArtSource/Meshes/Environment/SM_Ruin_Block.fbx",
+      "sha256": "645a4a1aea7a9da72609cdff285f701629ee4cb6429c64ef1d1a96853772e4b8",
+      "source_model": "FBX/Brick.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Ruin_Block",
+      "verts": 0
     },
     "SM_Ruin_Pillar": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 17948,
+      "bones": 0,
+      "bytes": 35020,
       "category": "mesh",
       "joints": 0,
-      "materials": [
-        "Ruin_Stone",
-        "Ruin_Glow"
-      ],
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Ruin_Pillar.glb",
-      "skins": 0,
-      "triangles": 192,
-      "ue_path": "/Game/Environment/Ruins/SM_Ruin_Pillar",
-      "validate": "PASS"
+      "path": "ArtSource/Meshes/Environment/SM_Ruin_Pillar.fbx",
+      "sha256": "c9b3f643c5eca4b39e3490023555a053d0b490ae81a1838ed10940d1c3244d3e",
+      "source_model": "FBX/Column_Round.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Ruin_Pillar",
+      "verts": 0
     },
     "SM_SporeBush": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        1.223,
-        0.805,
-        1.088
-      ],
-      "bytes": 23008,
+      "bones": 0,
+      "bytes": 6436,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Canopy",
-        "Foliage_Glow"
+        "grass"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_SporeBush.glb",
-      "skins": 0,
-      "triangles": 680,
+      "path": "ArtSource/Meshes/Environment/SM_SporeBush.glb",
+      "sha256": "10e1d9fbf29d96d1d1a56fb2ce25ae66537505101759229afe01ae22c6c45e02",
+      "source_model": "GLB/plant_bushLarge.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_SporeBush",
-      "validate": "PASS"
+      "verts": 132
+    },
+    "SM_Stump_Round": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 5644,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "woodBark",
+        "woodInner"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Environment/SM_Stump_Round.glb",
+      "sha256": "e9b0f385f0ef98493ef716a055aa51e0b99efb8445279be7bb8bd83329a4c4af",
+      "source_model": "GLB/stump_round.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
+      "ue_path": "/Game/Environment/SM_Stump_Round",
+      "verts": 192
     },
     "SM_Tree_Broadleaf": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        4.392,
-        7.098,
-        4.969
-      ],
-      "bytes": 62332,
+      "bones": 0,
+      "bytes": 14644,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Bark",
-        "Foliage_Canopy",
-        "Foliage_Glow"
+        "leafsGreen",
+        "woodBark"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Tree_Broadleaf.glb",
-      "skins": 0,
-      "triangles": 2010,
+      "path": "ArtSource/Meshes/Environment/SM_Tree_Broadleaf.glb",
+      "sha256": "d7fd8773674928c50c11b66d12c636d49bdcc15a8b1c7fbb98e6f63a3439a3f3",
+      "source_model": "GLB/tree_oak.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Tree_Broadleaf",
-      "validate": "PASS"
+      "verts": 648
     },
     "SM_Tree_Conifer": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        3.196,
-        8.02,
-        3.141
-      ],
-      "bytes": 23300,
+      "bones": 0,
+      "bytes": 10924,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Bark",
-        "Foliage_Canopy"
+        "woodBark",
+        "leafsGreen"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Tree_Conifer.glb",
-      "skins": 0,
-      "triangles": 644,
+      "path": "ArtSource/Meshes/Environment/SM_Tree_Conifer.glb",
+      "sha256": "90be4d214ee2cbf79d317677cb87fc11dac9873b73e446b75e8c12825a374272",
+      "source_model": "GLB/tree_cone.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Tree_Conifer",
-      "validate": "PASS"
+      "verts": 464
     },
     "SM_Tree_SporeCanopy": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bounds_m": [
-        4.881,
-        5.609,
-        4.309
-      ],
-      "bytes": 56336,
+      "bones": 0,
+      "bytes": 5576,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Foliage_Bark",
-        "Foliage_Canopy",
-        "Foliage_Glow"
+        "leafsGreen",
+        "woodBark"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Environment/SM_Tree_SporeCanopy.glb",
-      "skins": 0,
-      "triangles": 1332,
+      "path": "ArtSource/Meshes/Environment/SM_Tree_SporeCanopy.glb",
+      "sha256": "84b262c5dda3a91ac6c95f9d8b23a0ebbb1951d678c0e1375d3e32623cc43ee2",
+      "source_model": "GLB/tree_fat.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit",
+      "status": "present",
       "ue_path": "/Game/Environment/SM_Tree_SporeCanopy",
-      "validate": "PASS"
+      "verts": 192
     },
     "SM_Vehicle_DawnSkiff": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 137504,
+      "bones": 0,
+      "bytes": 106184,
       "category": "mesh",
-      "deck_top_y": 0.12,
-      "hover_height_m": 1.1,
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Vehicle_Hull",
-        "Vehicle_Metal",
-        "Vehicle_Accent",
-        "Vehicle_Glow"
+        "Atlas"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Vehicles/SM_Vehicle_DawnSkiff.glb",
-      "skins": 0,
-      "triangles": 1844,
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_DawnSkiff.glb",
+      "sha256": "5309e2d8da2881552fe81c2dd779a5f4fc888c0f00bb049429c4c6d298c9b599",
+      "source_model": "Vehicles/GLTF/Spaceship_RaeTheRedPanda.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
       "ue_path": "/Game/Vehicles/SM_Vehicle_DawnSkiff",
-      "validate": "PASS"
+      "vehicle_class": "Dawn Skiff \u2014 anti-grav hovercraft",
+      "verts": 2360
+    },
+    "SM_Vehicle_GroundRover": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 327672,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 5,
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_GroundRover.glb",
+      "sha256": "ac6298f25f8ba9071193a5d2390e3cdb57659c5d2a7cc87a2b017bc867132a38",
+      "source_model": "Vehicles/GLTF/Rover_1.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Vehicles/SM_Vehicle_GroundRover",
+      "vehicle_class": "All-terrain ground rover",
+      "verts": 8612
+    },
+    "SM_Vehicle_RoverHeavy": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 356160,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas.001"
+      ],
+      "meshes": 7,
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_RoverHeavy.glb",
+      "sha256": "cc41673546b715a3825aee517d101365456a2fadd435055701a627b03bca3578",
+      "source_model": "Vehicles/GLTF/Rover_2.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Vehicles/SM_Vehicle_RoverHeavy",
+      "vehicle_class": "Heavy rover \u2014 6-wheel hauler (showcase)",
+      "verts": 9322
+    },
+    "SM_Vehicle_SupportSkiff": {
+      "asset_type": "static_mesh",
+      "bones": 0,
+      "bytes": 182996,
+      "category": "mesh",
+      "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "materials": [
+        "Atlas"
+      ],
+      "meshes": 1,
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_SupportSkiff.glb",
+      "sha256": "4558e7a0d3a92a2bcc3feae8355dc4a128f07ce627229b167cc5dc9fad5bbbeb",
+      "source_model": "Vehicles/GLTF/Spaceship_FinnTheFrog.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html",
+      "status": "present",
+      "ue_path": "/Game/Vehicles/SM_Vehicle_SupportSkiff",
+      "vehicle_class": "Support Skiff \u2014 cargo hovercraft (showcase)",
+      "verts": 4016
     },
     "SM_Weapon_ArcCannon": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 61012,
+      "bones": 0,
+      "bytes": 85716,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Weapon_Body",
-        "Weapon_Metal",
-        "Weapon_Grip",
-        "Weapon_Glow",
-        "Weapon_Coil"
+        "colormap"
       ],
-      "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_ArcCannon.glb",
-      "skins": 0,
-      "sockets": [
-        {
-          "name": "Muzzle",
-          "pos": [
-            0.0,
-            0.115,
-            0.56
-          ],
-          "rot": [
-            0,
-            0,
-            0
-          ]
-        }
-      ],
-      "triangles": 1028,
+      "meshes": 3,
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_ArcCannon.glb",
+      "sha256": "23246f564b30bcf39769f9b4f6a3a9c8a60487567b886911f8866c2910dc1acb",
+      "source_model": "GLB/blaster-e.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit",
+      "status": "present",
       "ue_path": "/Game/Weapons/Meshes/SM_Weapon_ArcCannon",
-      "validate": "PASS"
+      "verts": 1386,
+      "weapon_class": "Arc Cannon (multi-coil heavy cannon)"
     },
     "SM_Weapon_PlasmaCarbine": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 50496,
+      "bones": 0,
+      "bytes": 46508,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Weapon_Body",
-        "Weapon_Metal",
-        "Weapon_Grip",
-        "Weapon_Glow"
+        "colormap"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_PlasmaCarbine.glb",
-      "skins": 0,
-      "sockets": [
-        {
-          "name": "Muzzle",
-          "pos": [
-            0.0,
-            0.105,
-            0.56
-          ],
-          "rot": [
-            0,
-            0,
-            0
-          ]
-        }
-      ],
-      "triangles": 564,
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_PlasmaCarbine.glb",
+      "sha256": "e03cbe3ffc0732e5da14db8e53171b0c55abac98eace14ad3e7370b02d9d9ce0",
+      "source_model": "GLB/blaster-c.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit",
+      "status": "present",
       "ue_path": "/Game/Weapons/Meshes/SM_Weapon_PlasmaCarbine",
-      "validate": "PASS"
+      "verts": 668,
+      "weapon_class": "Plasma Carbine (compact energy carbine)"
     },
     "SM_Weapon_Railgun": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 66384,
+      "bones": 0,
+      "bytes": 66520,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Weapon_Body",
-        "Weapon_Metal",
-        "Weapon_Grip",
-        "Weapon_Glow"
+        "colormap"
       ],
       "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_Railgun.glb",
-      "skins": 0,
-      "sockets": [
-        {
-          "name": "Muzzle",
-          "pos": [
-            0.0,
-            0.125,
-            0.56
-          ],
-          "rot": [
-            0,
-            0,
-            0
-          ]
-        }
-      ],
-      "triangles": 676,
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_Railgun.glb",
+      "sha256": "22e461002b8ecaf6f1267b79654d561244bab6bfc8a58c4ed0a2df977de12277",
+      "source_model": "GLB/blaster-g.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit",
+      "status": "present",
       "ue_path": "/Game/Weapons/Meshes/SM_Weapon_Railgun",
-      "validate": "PASS"
+      "verts": 1056,
+      "weapon_class": "Railgun (long-body magnetic accelerator)"
     },
     "SM_Weapon_ScrapRifle": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 51688,
+      "bones": 0,
+      "bytes": 55268,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Weapon_Body",
-        "Weapon_Metal",
-        "Weapon_Grip",
-        "Weapon_Glow"
+        "colormap"
       ],
-      "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_ScrapRifle.glb",
-      "skins": 0,
-      "sockets": [
-        {
-          "name": "Muzzle",
-          "pos": [
-            0.0,
-            0.105,
-            0.56
-          ],
-          "rot": [
-            0,
-            0,
-            0
-          ]
-        }
-      ],
-      "triangles": 612,
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_ScrapRifle.glb",
+      "sha256": "18ea1ef2e53e59b2c67d4786397127750c69e5597cabb7f11a1aedc061ce8e61",
+      "source_model": "GLB/blaster-a.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit",
+      "status": "present",
       "ue_path": "/Game/Weapons/Meshes/SM_Weapon_ScrapRifle",
-      "validate": "PASS"
+      "verts": 820,
+      "weapon_class": "Scrap Rifle (kinetic junk-frame rifle)"
     },
     "SM_Weapon_SingularityCannon": {
-      "animations": [],
       "asset_type": "static_mesh",
-      "bytes": 57760,
+      "bones": 0,
+      "bytes": 90736,
       "category": "mesh",
       "joints": 0,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "materials": [
-        "Weapon_Body",
-        "Weapon_Metal",
-        "Weapon_Grip",
-        "Weapon_Glow"
+        "colormap"
       ],
-      "meshes": 1,
-      "nodes": 1,
-      "path": "/home/z/astrawild-game/ArtSource/Meshes/Weapons/SM_Weapon_SingularityCannon.glb",
-      "skins": 0,
-      "sockets": [
-        {
-          "name": "Muzzle",
-          "pos": [
-            0.0,
-            0.11,
-            0.55
-          ],
-          "rot": [
-            0,
-            0,
-            0
-          ]
-        }
-      ],
-      "triangles": 996,
+      "meshes": 2,
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_SingularityCannon.glb",
+      "sha256": "ba0c9bf09b96d4570431f04ccfb5800dd0ef171c0d7c803e4a404016f00a474a",
+      "source_model": "GLB/blaster-p.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit",
+      "status": "present",
       "ue_path": "/Game/Weapons/Meshes/SM_Weapon_SingularityCannon",
-      "validate": "PASS"
+      "verts": 1506,
+      "weapon_class": "Singularity Cannon (exotic heavy platform)"
     },
     "T_Bark_D": {
       "bytes": 308724,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Bark_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Bark_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Bark_D"
     },
     "T_Bark_N": {
       "bytes": 903063,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Bark_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Bark_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Bark_N"
     },
     "T_Crystal_D": {
       "bytes": 294385,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Crystal_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Crystal_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Crystal_D"
     },
     "T_Crystal_E": {
       "bytes": 613223,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Crystal_E.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Crystal_E.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Crystal_E"
     },
     "T_Crystal_N": {
       "bytes": 897231,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Crystal_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Crystal_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Crystal_N"
     },
     "T_DefaultORM": {
       "bytes": 76,
       "category": "utility",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_DefaultORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_DefaultORM.png",
       "size": [
         4,
         4
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_DefaultORM"
     },
     "T_Echo_Body_D": {
       "bytes": 589999,
       "category": "echo",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Body_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Echo_Body_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Echo_Body_D"
     },
     "T_Echo_Body_N": {
       "bytes": 2428532,
       "category": "echo",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Body_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Echo_Body_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Echo_Body_N"
     },
     "T_Echo_Body_ORM": {
       "bytes": 1062055,
       "category": "echo",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Body_ORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Echo_Body_ORM.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Echo_Body_ORM"
     },
     "T_Echo_Emissive_M": {
       "bytes": 150822,
       "category": "echo",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Echo_Emissive_M.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Echo_Emissive_M.png",
       "size": [
         512,
         512
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Echo_Emissive_M"
     },
     "T_FX_Flare_E": {
       "bytes": 15759,
       "category": "fx",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_FX_Flare_E.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_FX_Flare_E.png",
       "size": [
         512,
         512
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_FX_Flare_E"
     },
     "T_FX_Smoke_FB": {
       "bytes": 215233,
       "category": "fx",
       "flipbook": "8x8",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_FX_Smoke_FB.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_FX_Smoke_FB.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_FX_Smoke_FB"
     },
     "T_FX_Sparks_FB": {
       "bytes": 145965,
       "category": "fx",
       "flipbook": "8x8",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_FX_Sparks_FB.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_FX_Sparks_FB.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_FX_Sparks_FB"
     },
     "T_Foliage_Canopy_D": {
       "bytes": 778919,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Foliage_Canopy_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Foliage_Canopy_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Foliage_Canopy_D"
     },
     "T_Foliage_Canopy_N": {
       "bytes": 1365627,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Foliage_Canopy_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Foliage_Canopy_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Foliage_Canopy_N"
     },
     "T_Foliage_Spore_E": {
       "bytes": 46981,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Foliage_Spore_E.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Foliage_Spore_E.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Foliage_Spore_E"
     },
     "T_Landscape_Granite_D": {
       "bytes": 523803,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Granite_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Granite_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Granite_D"
     },
     "T_Landscape_Granite_N": {
       "bytes": 1868424,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Granite_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Granite_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Granite_N"
     },
     "T_Landscape_Grass_D": {
       "bytes": 1214810,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Grass_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Grass_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Grass_D"
     },
     "T_Landscape_Grass_N": {
       "bytes": 2588191,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Grass_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Grass_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Grass_N"
     },
     "T_Landscape_ORM": {
       "bytes": 675926,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_ORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_ORM.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_ORM"
     },
     "T_Landscape_Sand_D": {
       "bytes": 286919,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Sand_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Sand_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Sand_D"
     },
     "T_Landscape_Sand_N": {
       "bytes": 1275311,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Sand_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Sand_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Sand_N"
     },
     "T_Landscape_Soil_D": {
       "bytes": 164661,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Soil_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Soil_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Soil_D"
     },
     "T_Landscape_Soil_N": {
       "bytes": 961553,
       "category": "landscape",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Landscape_Soil_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Landscape_Soil_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Landscape_Soil_N"
     },
     "T_Rock_D": {
       "bytes": 598906,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Rock_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Rock_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Rock_D"
     },
     "T_Rock_N": {
       "bytes": 2281421,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Rock_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Rock_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Rock_N"
     },
     "T_Ruin_D": {
       "bytes": 354284,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Ruin_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Ruin_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Ruin_D"
     },
     "T_Ruin_N": {
       "bytes": 1856238,
       "category": "environment",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Ruin_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Ruin_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Ruin_N"
     },
     "T_Survivor_Exosuit_D": {
       "bytes": 2341193,
       "category": "survivor",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_Exosuit_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Survivor_Exosuit_D.png",
       "size": [
         2048,
         2048
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Survivor_Exosuit_D"
     },
     "T_Survivor_Exosuit_N": {
       "bytes": 2693760,
       "category": "survivor",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_Exosuit_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Survivor_Exosuit_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Survivor_Exosuit_N"
     },
     "T_Survivor_ORM": {
       "bytes": 1096658,
       "category": "survivor",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_ORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Survivor_ORM.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Survivor_ORM"
     },
     "T_Survivor_Visor_E": {
       "bytes": 7100,
       "category": "survivor",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Survivor_Visor_E.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Survivor_Visor_E.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Survivor_Visor_E"
     },
     "T_Vehicle_Glow_E": {
       "bytes": 2197,
       "category": "vehicle",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Glow_E.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Vehicle_Glow_E.png",
       "size": [
         512,
         512
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Vehicle_Glow_E"
     },
     "T_Vehicle_Hull_D": {
       "bytes": 548679,
       "category": "vehicle",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Hull_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Vehicle_Hull_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Vehicle_Hull_D"
     },
     "T_Vehicle_Hull_N": {
       "bytes": 1767696,
       "category": "vehicle",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Hull_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Vehicle_Hull_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Vehicle_Hull_N"
     },
     "T_Vehicle_Hull_ORM": {
       "bytes": 445596,
       "category": "vehicle",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Vehicle_Hull_ORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Vehicle_Hull_ORM.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Vehicle_Hull_ORM"
     },
     "T_Weapon_Glow_E": {
       "bytes": 1591,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Glow_E.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Glow_E.png",
       "size": [
         512,
         512
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Glow_E"
     },
     "T_Weapon_Scraps_D": {
       "bytes": 791461,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Scraps_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Scraps_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Scraps_D"
     },
     "T_Weapon_Scraps_N": {
       "bytes": 1881741,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Scraps_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Scraps_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Scraps_N"
     },
     "T_Weapon_Scraps_ORM": {
       "bytes": 883603,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Scraps_ORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Scraps_ORM.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Scraps_ORM"
     },
     "T_Weapon_Tech_D": {
       "bytes": 317052,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Tech_D.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Tech_D.png",
       "size": [
         1024,
         1024
       ],
       "srgb": true,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Tech_D"
     },
     "T_Weapon_Tech_N": {
       "bytes": 1327307,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Tech_N.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Tech_N.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Tech_N"
     },
     "T_Weapon_Tech_ORM": {
       "bytes": 413715,
       "category": "weapons",
-      "path": "/home/z/astrawild-game/ArtSource/Textures/T_Weapon_Tech_ORM.png",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Textures/T_Weapon_Tech_ORM.png",
       "size": [
         1024,
         1024
       ],
       "srgb": false,
+      "status": "present",
       "ue_path": "/Game/Textures/T_Weapon_Tech_ORM"
     }
   },
-  "generator": "ASTRAWILD ArtSourceGen 1.0"
+  "convention": {
+    "licenses": "CC0 1.0 Universal for all externally-sourced models (Quaternius / Kenney); project-authored for generated PBR textures/audio",
+    "path": "repo-relative source file (verified on disk at generation time)",
+    "status": "present = source file exists; every entry is real-file-backed; pending = 0 by construction",
+    "ue_path": "engine import target (landed by Content/Python/AwPipeline/import_all.py via Setup_And_Play.bat)"
+  },
+  "generator": "ASTRAWILD fetch_free_assets.py 2.0 (real unique-mesh overhaul)"
 }

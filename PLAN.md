@@ -1,5 +1,11 @@
 # ASTRAWILD Production Plan
 
+> **[HISTORICAL — early-stage plan, frozen to its date]** This is the original
+> Vertical-Slice-era plan. The "Current truth" section below reflects the
+> pre-Final-Run state and is superseded: the live branch is `final-completion`
+> (source-complete, 126 contracts, 229 species, LFS 459/459, ENGINE-UNVERIFIED
+> at tip). Canonical control: `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1).
+
 ## Goal
 
 สร้าง Vertical Slice เกม third-person cooperative survival adventure ที่เล่นกับเพื่อนได้ในอนาคต โดยมี exploration, resource harvesting, combat, Echo capture, crafting, rest point และ save/load ผ่านแผนที่ทดลองขนาดเล็กก่อนขยายโลก

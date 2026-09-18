@@ -1,8 +1,24 @@
 ﻿# ASTRAWILD — MASTER AI AGENT HANDOFF & SYNCHRONIZATION GUIDE
 
+> **[SUPERSEDED STATUS BLOCK — read before trusting anything below]**
+> The "Verified Baseline" and "Current Status: 100% GREEN & FULLY PLAYABLE" claims in
+> §1 below are the **2026-09-01 engine-run record at SHA 8313c61 on branch
+> `agent/antigravity-ue5-v2`** — real evidence of THAT session, frozen to that date.
+> They are NOT the current branch state. **The live branch is `final-completion`**
+> (source-complete: 126 automation contracts, 229 Echo species incl. the Sci-Fantasy
+> mutation system with runtime theme-material swap, save V5, LFS 459/459) and its
+> engine-side status at the current tip is **ENGINE-UNVERIFIED** — build/tests/PIE/
+> package must re-run at the final SHA per the one-time queue
+> (`Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md`, V2-29..V2-35 + §20d).
+> **The canonical single source of truth is `Docs/ASTRAWILD_MASTER_CONTROL.md`
+> (v9.1)** — when any other document (including this one) conflicts with it,
+> MASTER_CONTROL wins. The handoff runbook for the engine machine is
+> `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`.
+
 > **ATTENTION ALL AI AGENTS (GLM 5.3, Qwen, Antigravity, Claude, Codex, etc.)**:  
-> Read this document FIRST before writing or modifying any code in this repository.  
-> This file contains the complete, up-to-date state of the project, verified baseline, architecture, and exact task assignments.
+> Read `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1) FIRST, then this file's workspace
+> layout sections. This file contains the engine-machine workspace conventions and
+> the dated Antigravity session record.
 
 ---
 

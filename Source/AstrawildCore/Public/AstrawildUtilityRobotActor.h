@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "AstrawildTypes.h"
 #include "AstrawildUtilityRobotActor.generated.h"
 
 class AAstrawildWorkSiteActor;

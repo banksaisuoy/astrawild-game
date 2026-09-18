@@ -31,8 +31,12 @@ public:
     TObjectPtr<UPointLightComponent> BeaconLight;
 
     /** POI definition id this marker represents. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|POI")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|POI", ReplicatedUsing=OnRep_PoiId)
     FName PoiId = NAME_None;
+
+    /** LCP-2: client-side beacon visual rebuild after the id replicates. */
+    UFUNCTION()
+    void OnRep_PoiId();
 
     /** Server: resolve visuals + light from the definition. */
     void InitializeFromDefinition(UAstrawildPOIDefinition* Definition);
@@ -46,4 +50,5 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 };

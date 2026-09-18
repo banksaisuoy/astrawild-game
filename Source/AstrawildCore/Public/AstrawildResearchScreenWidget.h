@@ -23,8 +23,13 @@ class ASTRAWILDCORE_API UAstrawildResearchRowWidget : public UUserWidget
 public:
     void InitializeRow(UAstrawildResearchScreenWidget* ParentScreen, FName TechId);
 
+public:
+    /** Final-audit F-05: focusable so the advertised keyboard close actually fires in UIOnly input mode. */
+    UAstrawildResearchScreenWidget();
+
 protected:
     virtual void NativeConstruct() override;
+    virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 private:
     UFUNCTION()

@@ -211,8 +211,12 @@ void AAstrawildUtilityDroneActor::RunHarvestPulse()
     }
 
     // Nearest harvestable node in range (module-extended radius).
+    // Final-audit C-1: this used the undeclared `Owner` identifier, which resolves
+    // to AActor::Owner (private, never SetOwner'd on the drone) — a compile error
+    // or a guaranteed null-deref ~6s after every deploy. The resolved
+    // TargetPlayer is the correct module source and interact instigator.
     float ScanRadiusBonus = 0.0f, HarvestRadiusBonus = 0.0f, ScanRateBonus = 0.0f, BatteryBonus = 0.0f;
-    if (const UAstrawildInventoryComponent* Inventory = Owner->FindComponentByClass<UAstrawildInventoryComponent>())
+    if (const UAstrawildInventoryComponent* Inventory = TargetPlayer->FindComponentByClass<UAstrawildInventoryComponent>())
     {
         ResolveModules(Inventory, ScanRadiusBonus, HarvestRadiusBonus, ScanRateBonus, BatteryBonus);
     }
@@ -238,7 +242,7 @@ void AAstrawildUtilityDroneActor::RunHarvestPulse()
     {
         // Route through the standard interaction so loot lands in the owner's
         // inventory, weight gates apply and ItemCollected quests progress.
-        IAstrawildInteractable::Execute_Interact(Best, Owner);
+        IAstrawildInteractable::Execute_Interact(Best, TargetPlayer);
         UE_LOG(LogAstrawildEconomy, Verbose, TEXT("Drone harvested a node for %s."), *OwnerPlayerId.ToString());
     }
 }

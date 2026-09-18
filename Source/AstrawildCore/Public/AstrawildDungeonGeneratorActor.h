@@ -72,6 +72,20 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
     FName RewardTechnologyId = TEXT("Tech_AncientResonance");
 
+    // --- Final Run (FR-7): per-dungeon boss overrides (Eye of the Maelstrom) ---
+
+    /**
+     * FR-7: when set, the boss room's clear loot table is this id instead of
+     * the generic Loot_DungeonBoss (the Sovereign drops Loot_EyeCore — the
+     * Sovereign Core + Maelstrom Glass).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName BossLootTableId = NAME_None;
+
+    /** FR-7: when set, the boss summons THIS species in phase 2 (Eye Sentinels). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Dungeon")
+    FName BossSummonSpeciesId = NAME_None;
+
     virtual void BeginPlay() override;
 
     /** Build the room chain (server). Deterministic given the world seed. */

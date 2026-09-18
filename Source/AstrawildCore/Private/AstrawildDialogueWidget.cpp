@@ -30,10 +30,11 @@ namespace
 // ---------------------------------------------------------------------------
 // Choice row
 // ---------------------------------------------------------------------------
-void UAstrawildDialogueChoiceRowWidget::InitializeRow(UAstrawildDialogueWidget* InParent, const FAstrawildDialogueChoice& InChoice)
+void UAstrawildDialogueChoiceRowWidget::InitializeRow(UAstrawildDialogueWidget* InParent, const FAstrawildDialogueChoice& InChoice, const int32 InChoiceIndex)
 {
     ParentDialogue = InParent;
     Choice = InChoice;
+    RowChoiceIndex = InChoiceIndex; // LCP-3
 
     if (WidgetTree && WidgetTree->RootWidget && !ChoiceButton)
     {
@@ -76,7 +77,7 @@ void UAstrawildDialogueChoiceRowWidget::HandleClicked()
 {
     if (ParentDialogue)
     {
-        ParentDialogue->SelectChoice(Choice);
+        ParentDialogue->SelectChoiceByIndex(RowChoiceIndex, Choice); // LCP-3
     }
 }
 
@@ -236,7 +237,27 @@ void UAstrawildDialogueWidget::AdvanceLine()
 
 void UAstrawildDialogueWidget::SelectChoice(const FAstrawildDialogueChoice& Choice)
 {
-    if (UAstrawildDialogueComponent* Dialogue = GetDialogueComponent())
+    SelectChoiceByIndex(INDEX_NONE, Choice);
+}
+
+void UAstrawildDialogueWidget::SelectChoiceByIndex(const int32 ChoiceIndex, const FAstrawildDialogueChoice& Choice)
+{
+    // LCP-3: remote clients submit the choice intent to the server (structural
+    // + conditional re-validation happens there, fail-closed); host/standalone
+    // apply directly. The widget's own tree advancement below is display-only
+    // (registry-static content) and identical on every machine.
+    if (AAstrawildPlayerController* PC = GetPlayerController())
+    {
+        if (PC->GetNetMode() == NM_Client && ChoiceIndex != INDEX_NONE)
+        {
+            PC->ServerSubmitDialogueChoice(DialogueNpc.Get(), CurrentNodeId, ChoiceIndex);
+        }
+        else if (UAstrawildDialogueComponent* Dialogue = GetDialogueComponent())
+        {
+            Dialogue->ApplyChoiceConsequences(Choice);
+        }
+    }
+    else if (UAstrawildDialogueComponent* Dialogue = GetDialogueComponent())
     {
         Dialogue->ApplyChoiceConsequences(Choice);
     }
@@ -355,15 +376,17 @@ void UAstrawildDialogueWidget::RefreshBody()
             {
                 if (const FAstrawildDialogueNode* Node = Tree->FindNode(CurrentNodeId))
                 {
+                    int32 ChoiceIndex = 0;
                     for (const FAstrawildDialogueChoice& Choice : Node->Choices)
                     {
                         if (Dialogue->EvaluateChoiceConditions(Choice))
                         {
                             UAstrawildDialogueChoiceRowWidget* Row =
                                 WidgetTree->ConstructWidget<UAstrawildDialogueChoiceRowWidget>(UAstrawildDialogueChoiceRowWidget::StaticClass());
-                            Row->InitializeRow(this, Choice);
+                            Row->InitializeRow(this, Choice, ChoiceIndex);
                             ChoiceList->AddChild(Row);
                         }
+                        ++ChoiceIndex;
                     }
                 }
             }

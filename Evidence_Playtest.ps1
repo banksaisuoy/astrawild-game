@@ -29,11 +29,19 @@ public class Win32 {
 }
 "@
 
-$ProjectPath = "E:\AstrawildGame\ASTRAWILD.uproject"
-$PackagedExe = "E:\Astrawild_Packaged\Windows\ASTRAWILD\Binaries\Win64\ASTRAWILD.exe"
-$LogPath = "E:\AstrawildGame\Saved\Logs\Evidence_Playtest.log"
-$ScreenshotDir = "E:\Astrawild_Packaged\Windows\ASTRAWILD\Saved\Screenshots\Windows"
-$SaveDir = "E:\Astrawild_Packaged\Windows\ASTRAWILD\Saved\SaveGames"
+# v9.6 env-adaptive paths (FMP-1): ASTRAWILD_PACKAGED_EXE / ASTRAWILD_REPO /
+# ASTRAWILD_UPROJECT override the legacy layout for non-default installs
+# (fresh machines); with no env vars set the legacy E:\ values are preserved
+# exactly (the packaged root is derived from the exe path).
+$PackagedExe = if ($env:ASTRAWILD_PACKAGED_EXE) { $env:ASTRAWILD_PACKAGED_EXE } else { "E:\Astrawild_Packaged\Windows\ASTRAWILD\Binaries\Win64\ASTRAWILD.exe" }
+$RepoRoot = if ($env:ASTRAWILD_REPO) { $env:ASTRAWILD_REPO } else { "E:\AstrawildGame" }
+$ProjectPath = if ($env:ASTRAWILD_UPROJECT) { $env:ASTRAWILD_UPROJECT } else { Join-Path $RepoRoot "ASTRAWILD.uproject" }
+$PackagedRoot = Split-Path (Split-Path (Split-Path $PackagedExe -Parent) -Parent) -Parent
+$LogPath = Join-Path $RepoRoot "Saved\Logs\Evidence_Playtest.log"
+$ScreenshotDir = Join-Path $PackagedRoot "Saved\Screenshots\Windows"
+$SaveDir = Join-Path $PackagedRoot "Saved\SaveGames"
+Write-Host " Packaged exe : $PackagedExe"
+Write-Host " Repo root    : $RepoRoot"
 
 if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
 if (-not (Test-Path $ScreenshotDir)) { New-Item -ItemType Directory -Path $ScreenshotDir -Force | Out-Null }

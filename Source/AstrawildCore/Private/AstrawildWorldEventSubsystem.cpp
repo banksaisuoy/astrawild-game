@@ -416,6 +416,15 @@ void UAstrawildWorldEventSubsystem::ResolveEventEffects(const UAstrawildWorldEve
                         Player->InventoryComponent->AddItemSilent(Bonus.ItemId, Bonus.Quantity);
                     }
                 }
+
+                // FPP-1: the supply drop's own comment promised "a toast telling
+                // the story" — it never existed. The drop now says what landed.
+                if (AAstrawildPlayerController* DropPC = Cast<AAstrawildPlayerController>(Player->GetController()))
+                {
+                    DropPC->NotifyPlayer(FText::FromString(FString::Printf(
+                        TEXT("SUPPLY DROP — care package delivered to your pack (%s event)."),
+                        *Definition->DisplayName.ToString())));
+                }
                 break; // First player only (single-player-first design).
             }
         }

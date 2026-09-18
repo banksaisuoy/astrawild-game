@@ -60,6 +60,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Skiff|Flight", meta=(ClampMin="1000.0"))
     float MaxAltitudeAboveGround = 12000.0f;
 
+    /**
+     * Final Run (FR-8): ceiling with the Stratos Coil installed (cm) — the
+     * Eye of the Maelstrom gate sits at ~150m, above the stock 120m ceiling.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Skiff|Flight", meta=(ClampMin="1000.0"))
+    float CoiledMaxAltitudeAboveGround = 16000.0f;
+
+    /** Final Run (FR-8): inventory item that raises the ceiling (stack size 1 key item). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Skiff|Flight")
+    FName StratosCoilItemId = TEXT("Item_SkiffStratosCoil");
+
     /** Minimum hover height above terrain (cm). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Skiff|Flight", meta=(ClampMin="50.0"))
     float MinHoverHeight = 220.0f;
@@ -96,6 +107,20 @@ public:
      */
     static FVector ComputeSkiffVelocity(const FVector& Forward, float ForwardAxis, float VerticalAxis,
         bool bBoosting, float CruiseSpeed, float BoostSpeed, float VerticalSpeed);
+
+    /** Final Run (FR-8): does the pilot carry the Stratos Coil? */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff|Flight")
+    bool HasStratosCoil() const;
+
+    /** Final Run (FR-8): current effective ceiling (base or coiled). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff|Flight")
+    float GetCurrentCeiling() const;
+
+    /**
+     * Final Run (FR-8): pure ceiling resolver (unit-tested) — the gate the
+     * Stratos Coil opens, isolated from world state for the automation suite.
+     */
+    static float ComputeFlightCeiling(float BaseCeiling, float CoiledCeiling, bool bHasCoil);
 
 protected:
     virtual void BeginPlay() override;

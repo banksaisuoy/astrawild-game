@@ -1,5 +1,11 @@
 # ASTRAWILD — The Shattered Vale (World & Zones, Batch 7)
 
+> **HISTORICAL (Batch-7 era, superseded)**: the world is now **12 zones** (canon:
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` §3). The current-facing zone visual identity + per-zone fauna
+> composition contract (cute/cool/strange spectrum) lives in
+> `Docs/ASTRAWILD_CREATURE_VISUAL_STRATEGY.md` §15 (v2.0, VIS-001). This document is retained as
+> implementation evidence. Status below is era-accurate:
+>
 > Status: **CODE COMPLETE — compile NOT_RUN** (sandbox has no UE engine; verify on UE 5.8 +
 > Antigravity target machine). This doc describes the six-zone surface world added in Batch 7,
 > closing the long-standing "one flat arena" biome gap (ULTIMATE GAP `Biome/zoning`,

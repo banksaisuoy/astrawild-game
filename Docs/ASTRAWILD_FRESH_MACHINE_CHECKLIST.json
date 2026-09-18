@@ -1,0 +1,544 @@
+{
+  "meta": {
+    "name": "ASTRAWILD FRESH MACHINE CHECKLIST",
+    "purpose": "Machine-readable tick-off list for the AI agent executing the fresh-machine run (blank Windows PC -> fully playable game with evidence). Companion to Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md (the human/agent-readable spine) and Scripts/fresh_machine_preflight.ps1 (the automated readiness gate).",
+    "task_lineage": "FMP-1 (v9.6 Fresh-Machine Playbook pack, 2026-09-06)",
+    "authoring_head": "1699d588e995cff876d309b2a36fe79388ff6a99 (plus the v9.6 FMP docs commit)",
+    "branch": "final-completion",
+    "repo": "https://github.com/banksaisuoy/astrawild-game (PRIVATE - needs GitHub credentials + PAT with repo scope)",
+    "status_vocabulary": "NOT_RUN (default) | IN_PROGRESS | PASS | FAIL | BLOCKED | SKIPPED (with reason)",
+    "usage_rules": [
+      "The executing agent updates each step's status + evidence as it goes and commits the updated file together with the evidence artifacts (Docs/ENGINE_LOGS/raw/).",
+      "A FAIL is a valid outcome: record it honestly with the raw error output, then fix-forward per the on_fail field or the playbook troubleshooting matrix.",
+      "Never mark PASS without a captured artifact named in the evidence field.",
+      "Expected numbers are pinned by Scripts/validate_final_run.py - when in doubt the validator gate wins over this file."
+    ],
+    "expected_numbers_at_authoring": {
+      "automation_tests": 133,
+      "echo_species": 229,
+      "bestiary_rows": 204,
+      "zones": 12,
+      "quests": 22,
+      "npcs": 13,
+      "dialogue_trees": 13,
+      "techs": 17,
+      "recipes": 58,
+      "buildings": 26,
+      "items": 78,
+      "loot_tables": 11,
+      "weapon_profiles": 8,
+      "resource_nodes": 10,
+      "work_sites": 8,
+      "world_events": 16,
+      "pois": 17,
+      "robots": 3,
+      "artsource_manifest": "189 entries / 189 present / 0 pending",
+      "direct_mesh_species": 51,
+      "lfs_pointers": 586,
+      "content_packages": 416,
+      "engine": "Unreal Engine 5.8.2 (EngineAssociation 5.8)",
+      "build_target": "ASTRAWILDEditor Win64 Development"
+    }
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "title": "Machine pre-flight (hardware / OS / disk)",
+      "goal": "Prove the machine can carry UE + VS + repo + build outputs before installing anything.",
+      "playbook_ref": "P0 (section 2)",
+      "steps": [
+        {
+          "id": "P0-01",
+          "check": "Operating system is Windows 10 1909+ or Windows 11, 64-bit",
+          "command": "powershell -ExecutionPolicy Bypass -File Scripts\\fresh_machine_preflight.ps1",
+          "expect": "OS row PASS",
+          "on_fail": "Report and stop - not fixable in software.",
+          "evidence": "preflight output captured to Docs/ENGINE_LOGS/raw/PREFLIGHT_<sha>.txt",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P0-02",
+          "check": "RAM >= 16 GB (32 recommended)",
+          "command": "powershell -ExecutionPolicy Bypass -File Scripts\\fresh_machine_preflight.ps1",
+          "expect": "RAM row PASS or WARN(>=16)",
+          "on_fail": "Close background apps; below 16 GB report the limitation and continue cautiously.",
+          "evidence": "preflight output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P0-03",
+          "check": "DX12-capable GPU with 4+ GB VRAM present",
+          "command": "powershell -ExecutionPolicy Bypass -File Scripts\\fresh_machine_preflight.ps1",
+          "expect": "GPU row PASS",
+          "on_fail": "Update GPU drivers; note -d3d11 exists only as a diagnostic fallback.",
+          "evidence": "preflight output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P0-04",
+          "check": "At least 120 GB free on the install drive (250 GB recommended)",
+          "command": "powershell -ExecutionPolicy Bypass -File Scripts\\fresh_machine_preflight.ps1",
+          "expect": "At least one disk row PASS/WARN at >=120 GB and UE/VS/repo planned on that drive",
+          "on_fail": "Free space or choose another drive for UE/VS/repo/build outputs.",
+          "evidence": "preflight output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P0-05",
+          "check": "Administrator rights available for installs",
+          "command": "whoami /groups | findstr /i admin",
+          "expect": "elevation possible (or UAC prompts accepted during installs)",
+          "on_fail": "Open an elevated PowerShell for the install phases.",
+          "evidence": "none required",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P1",
+      "title": "Install base tools (Git + Git LFS + Python)",
+      "goal": "Get git, git-lfs and python 3.9+ onto PATH.",
+      "playbook_ref": "P1 (section 3)",
+      "steps": [
+        {
+          "id": "P1-01",
+          "check": "git installed (Git for Windows, includes Git Bash + LFS)",
+          "command": "winget install --id Git.Git -e --source winget",
+          "expect": "new shell: git --version prints git version 2.4x.windows.x",
+          "on_fail": "Manual installer from https://git-scm.com/download/win with default options.",
+          "evidence": "git --version output in the phase log",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P1-02",
+          "check": "git-lfs functional",
+          "command": "git lfs version",
+          "expect": "git-lfs/3.x.x",
+          "on_fail": "Reinstall Git with LFS checked, or winget install --id Git.Git.LFS -e, then git lfs install.",
+          "evidence": "git lfs version output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P1-03",
+          "check": "python 3.9+ on PATH",
+          "command": "winget install --id Python.Python.3.12 -e",
+          "expect": "new shell: python --version prints Python 3.12.x",
+          "on_fail": "python.org installer with 'Add python.exe to PATH' ticked; verify in a NEW shell.",
+          "evidence": "python --version output",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "title": "Install Visual Studio 2022 (C++ game development)",
+      "goal": "MSVC v143 toolchain + Windows SDK for UBT builds.",
+      "playbook_ref": "P2 (section 4)",
+      "steps": [
+        {
+          "id": "P2-01",
+          "check": "VS2022 Community installed with the NativeGame workload",
+          "command": "winget install --id Microsoft.VisualStudio.2022.Community -e --source winget --override \"--quiet --wait --add Microsoft.VisualStudio.Workload.NativeGame --includeRecommended\"",
+          "expect": "vswhere -products * -requires Microsoft.VisualStudio.Workload.NativeGame -property installationPath returns a path",
+          "on_fail": "Run the Visual Studio Installer app -> Modify -> tick 'Game development with C++' with recommended components.",
+          "evidence": "vswhere output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P2-02",
+          "check": "MSVC v143 x64/x86 build tools component present",
+          "command": "& \"${env:ProgramFiles(x86)}\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath",
+          "expect": "returns the VS installation path",
+          "on_fail": "VS Installer -> Modify -> individual components -> 'MSVC v143 - VS 2022 C++ x64/x86 build tools'.",
+          "evidence": "vswhere output",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "title": "Install Unreal Engine 5.8.2",
+      "goal": "UE 5.8.2 registered on the machine (project EngineAssociation 5.8).",
+      "playbook_ref": "P3 (section 5)",
+      "steps": [
+        {
+          "id": "P3-01",
+          "check": "Epic Games Launcher installed + signed in (free account)",
+          "command": "manual: https://store.epicgames.com/en-US/download -> sign in (hand the login step to the human if you are an agent)",
+          "expect": "launcher opens and shows the Library tab",
+          "on_fail": "Retry after reboot; verify Epic services are not blocked by the network.",
+          "evidence": "screenshot optional",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P3-02",
+          "check": "Unreal Engine 5.8.x installed (latest 5.8.2)",
+          "command": "launcher UI: Unreal Engine -> Library -> + arrow -> install 5.8.2 (default options, default location C:\\Program Files\\Epic Games\\UE_5.8)",
+          "expect": "Test-Path 'C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe' is True",
+          "on_fail": "Non-default install root: setx UE_ROOT \"<root>\" and re-run preflight to confirm detection.",
+          "evidence": "UnrealEditor.exe path printed by preflight",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P3-03",
+          "check": "UE_ROOT set when engine is not at the standard path",
+          "command": "setx UE_ROOT \"<engine root>\"",
+          "expect": "preflight P3 row PASS on UE 5.8",
+          "on_fail": "Confirm the root contains Engine\\Binaries\\Win64\\UnrealEditor.exe.",
+          "evidence": "preflight output",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "title": "Clone repository + static gates",
+      "goal": "A clean final-completion checkout with all 586 LFS objects and both validators green.",
+      "playbook_ref": "P4 (section 6)",
+      "steps": [
+        {
+          "id": "P4-01",
+          "check": "Repo cloned with credentials for the private repo",
+          "command": "git clone https://github.com/banksaisuoy/astrawild-game AstrawildGame (cd into a drive with headroom)",
+          "expect": "clone succeeds (Credential Manager stores username + PAT with repo scope on first prompt)",
+          "on_fail": "PAT missing/wrong scope: create a classic PAT with repo scope; LFS uses the same credential.",
+          "evidence": "git log -1 output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P4-02",
+          "check": "On branch final-completion, up to date, clean tree",
+          "command": "git lfs install; git checkout final-completion; git pull origin final-completion; git status --porcelain",
+          "expect": "branch final-completion; empty porcelain output",
+          "on_fail": "Stash/commit local changes; never force-push.",
+          "evidence": "git status output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P4-03",
+          "check": "All 586 LFS pointers resolve to on-disk objects",
+          "command": "git lfs pull; git lfs ls-files | Measure-Object -Line",
+          "expect": "Lines: 586; git show HEAD:Content/Vehicles/SM_Vehicle_DawnSkiff.uasset shows binary content, not a pointer",
+          "on_fail": "git lfs fetch --all; verify PAT scope; re-clone if the checkout is truncated. NOTE: git lfs fsck exiting 1 with ~3,954 raw-pack flags is a DOCUMENTED non-corruption convention mismatch - do not rewrite history.",
+          "evidence": "count + spot-check output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P4-04",
+          "check": "Static validator (python) ALL PASS",
+          "command": "python Scripts\\validate_final_run.py",
+          "expect": "final line: FINAL RUN VALIDATION: ALL CHECKS PASSED (133-test gate + census gates)",
+          "on_fail": "A fresh clean clone failing a gate means the clone or checkout is broken - capture full output and report; never edit source to force a pass.",
+          "evidence": "validator output -> Docs/ENGINE_LOGS/raw/VALIDATOR_<sha>.txt",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P4-05",
+          "check": "Repository structural validator (bash) PASS",
+          "command": "& \"C:\\Program Files\\Git\\bin\\bash.exe\" Scripts/validate_repository.sh",
+          "expect": "final line: ASTRAWILD repository validation passed (v2 ruleset). Unreal compile/playtest still required on the target machine.",
+          "on_fail": "Same rule as P4-04.",
+          "evidence": "validator output",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P4-06",
+          "check": "Full machine preflight: every REQUIRED row PASS",
+          "command": "powershell -ExecutionPolicy Bypass -File Scripts\\fresh_machine_preflight.ps1 -RepoRoot <repo>",
+          "expect": "RESULT: ALL REQUIRED CHECKS PASSED (exit 0)",
+          "on_fail": "Fix each FAIL row per the playbook section it references, then re-run. Do not start P5 with a FAIL row.",
+          "evidence": "preflight output",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P5",
+      "title": "Generate + build (compile gate)",
+      "goal": "ASTRAWILDEditor Win64 Development compiles with 0 errors.",
+      "playbook_ref": "P5 (section 7); queue rows V-1..V-3",
+      "steps": [
+        {
+          "id": "P5-01",
+          "check": "Project files generated (optional, idempotent)",
+          "command": "& (Join-Path $env:UE_ROOT 'Engine\\Build\\BatchFiles\\GenerateProjectFiles.bat') -project=\"<repo>\\ASTRAWILD.uproject\" -game -engine",
+          "expect": ".sln generated, no errors",
+          "on_fail": "UBT builds fine without the .sln - continue unless UBT itself reported a problem.",
+          "evidence": "none required",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P5-02",
+          "check": "Editor target builds clean",
+          "command": ".\\Build.ps1   (with $env:UE_ROOT set if engine is non-default; direct UBT form in the playbook)",
+          "expect": "exit 0, 0 errors, BUILD SUCCESSFUL banner",
+          "on_fail": "UBT ExitCode 6: capture Engine\\Intermediate\\Build\\BuildHistory + UBT log BEFORE one retry, then stop and report. UHT errors: minimal mechanical fix only. See playbook troubleshooting matrix.",
+          "evidence": "build output tail -> Docs/ENGINE_LOGS/raw/BUILD_<sha>.log",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P6",
+      "title": "Asset import + showcase map (V2-36 + V2-29 + V2-35)",
+      "goal": "All 109 real CC0 meshes + clips + theme masters imported with zero-missing reports; showcase map built; landscape material assigned.",
+      "playbook_ref": "P6 (section 8); queue V2-29/V2-36/V2-35; HANDOFF 20d/20e",
+      "steps": [
+        {
+          "id": "P6-01",
+          "check": "One-click import + showcase pipeline ran",
+          "command": ".\\Setup_And_Play.bat",
+          "expect": "editor opens on /Game/Maps/L_Showcase_ArtOverhaul after the pipeline completes",
+          "on_fail": "UnrealEditor.exe not found: setx UE_ROOT and re-run. Catalog warning: re-check P4-03 LFS pull.",
+          "evidence": "editor screenshot of the showcase map",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P6-02",
+          "check": "import_report.json total_missing == 0 (meshes AND clips)",
+          "command": "Get-Content Saved\\AwPipelineReport\\import_report.json",
+          "expect": "\"total_missing\": 0 and \"errors\": [] - clip_map AM_ paths included (direct-binding evidence)",
+          "on_fail": "total_missing > 0 usually = LFS sources incomplete (re-run P4-03); only then treat as an engine finding - record exact rows.",
+          "evidence": "copy of import_report.json -> Docs/ENGINE_LOGS/raw/",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P6-03",
+          "check": "Sci-Fantasy base import (V2-35) clean",
+          "command": "editor python console: py \"Content/Python/AwPipeline/import_echo_bases.py\"   (or -run=pythonscript command form)",
+          "expect": "Saved\\AwPipelineReport\\echo_base_report.json: \"total_missing\": 0 and \"errors\": [] (material coverage counts - failed M_SciFi_* master = ERROR)",
+          "on_fail": "Record the failed master/file + error; continue if the rest imported (fix-forward on a branch).",
+          "evidence": "copy of echo_base_report.json",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P6-04",
+          "check": "Landscape material assigned on MainMap (manual, V2-32 prerequisite)",
+          "command": "editor: open Content/ASTRAWILD/Maps/MainMap.umap -> select Landscape actor -> Landscape Material slot -> /Game/Materials/M_Landscape_SciFiFrontier",
+          "expect": "slot shows M_Landscape_SciFiFrontier",
+          "on_fail": "If the material does not exist, the import pass failed earlier - revisit P6-02.",
+          "evidence": "screenshot of the details panel",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P6-05",
+          "check": "Showcase PIE: player in real Tier-3 Exosuit, idle clips playing, ore nodes glowing",
+          "command": "press Play in the open showcase map",
+          "expect": "real mesh pawn; display rows animate; nodes glow (V2-36 acceptance)",
+          "on_fail": "See queue V2-36 note - mutated PMC fallback before import is BY DESIGN, not a failure.",
+          "evidence": "screenshot/clip",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P7",
+      "title": "PIE boot on MainMap (V-4)",
+      "goal": "World boots, census log line matches the expected numbers.",
+      "playbook_ref": "P7 (section 9); queue V-4",
+      "steps": [
+        {
+          "id": "P7-01",
+          "check": "MainMap PIE boots to the camp in < 30 s",
+          "command": "open Content/ASTRAWILD/Maps/MainMap.umap -> Play",
+          "expect": "terrain + camp + village visible; HUD Day 1 08:00, Clear, 0 RP, quest 'First Light'",
+          "on_fail": "Black screen: wait for shader compile, retry; -d3d11 only as diagnostic.",
+          "evidence": "screenshot + log tail",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P7-02",
+          "check": "Content census log line matches Appendix A",
+          "command": "read Output Log line 'Content library registered (live census)'",
+          "expect": "78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies, 22 quests, 11 loot tables, 13 NPCs, 8 weapon profiles, 10 resource nodes, 8 work sites, 16 world events, 17 POIs, 12 biomes, 13 dialogue trees, 3 robots",
+          "on_fail": "The log wins over all docs - record the delta as a P1 finding (fix-forward or report).",
+          "evidence": "log line capture",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P8",
+      "title": "Automation tests (V-5)",
+      "goal": "All 133 world-free contracts pass in the real engine.",
+      "playbook_ref": "P8 (section 10); queue V-5",
+      "steps": [
+        {
+          "id": "P8-01",
+          "check": "Test.ps1 run: 133/133 Result={Success}, 0 Result={Fail}",
+          "command": ".\\Test.ps1   (env-adaptive; output Automation_Output.txt)",
+          "expect": "ALL TESTS PASSED banner; count read from the output file, not memory",
+          "on_fail": "Record failing test names + log excerpts in BUILD_STATUS; world-free contract failures are source bugs - capture and route to GLM unless trivially mechanical.",
+          "evidence": "Automation_Output.txt -> Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P9",
+      "title": "Full gameplay verification (golden path + DCP features)",
+      "goal": "One continuous PIE session proves the whole game plays as designed, incl. every v9.5 DCP feature.",
+      "playbook_ref": "P9 (section 11); queue section 2 V-6..V-28 + section 3 rows + GDP/DP additions",
+      "steps": [
+        {
+          "id": "P9-01",
+          "check": "23-stage golden path walked in order",
+          "command": "manual PIE session (~30-45 min) - stages enumerated in Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md section 2 (NEW GAME -> ... -> SAVE -> LOAD -> VERIFY)",
+          "expect": "every stage's PASS criterion holds (damage numbers, capture chance, ghost previews, grid resolve, dungeon gates, boss phases, save/load fidelity)",
+          "on_fail": "Mark the failing stage + criterion; continue if non-blocking; fix-forward smallest change otherwise.",
+          "evidence": "per-stage screenshots/clips + notes",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P9-02",
+          "check": "Story tail shortcut + endings",
+          "command": "console: AW.FastForward Quest_TheDrownedSovereign -> walk MQ-17 homecoming marker -> talk to Maren -> choose ending",
+          "expect": "Ending A: cinematic plays then weather pins Clear + 'THE DAWN THAT STAYS' banner; Ending B on a second save: storm stays + 'THE STORM THAT SLEEPS'; both persist through save/load",
+          "on_fail": "Crown choices must appear only after MQ-17 - otherwise gate regression (report).",
+          "evidence": "clips of both endings",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P9-03",
+          "check": "DCP feature matrix verified",
+          "command": "manual PIE: ending cinematic letterbox/staged shots; 5 post-game quests + 5 one-time NPC offers; NG+ (pause entry post-game only, carryover + cycle scaling); Vess/Ione bodies + trees; toast A_UI_Confirm sound; journal clickable detail view (P key, knowledge-gated); gamepad LB+X smart-cast; Wavecrest/Voltmaw/Voidwing/Verdantbloom/Undertowray real meshes",
+          "expect": "each DCP feature visibly works as its queue/doc row describes",
+          "on_fail": "Record per-feature FAIL with reproduction steps.",
+          "evidence": "per-feature clip or screenshot",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P9-04",
+          "check": "PCR screens + GDP/DP additions + mutation visuals",
+          "command": "press P/L/M/U; follow the 'GDP Playtest Additions' + DP-4..DP-9 lists in the HANDOFF; spawn 2 bestiary species from different themes (V2-35)",
+          "expect": "Field Journal/Roster/World Map/Hunt Board all functional; abilities/weakness toasts/dungeon identity/affinity dialogue per spec; energy-body glow vs stone matte material swap visible",
+          "on_fail": "Per-row note + continue.",
+          "evidence": "screenshots/clips",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P10",
+      "title": "Save/load stress (3 round-trips)",
+      "goal": "Persistence proven across create -> save -> quit -> load -> verify x3, plus old-save migration refusal.",
+      "playbook_ref": "P10 (section 12); queue V-25..V-28 + V-29",
+      "steps": [
+        {
+          "id": "P10-01",
+          "check": "Test_RealSaveLoad.ps1 completes",
+          "command": ".\\Test_RealSaveLoad.ps1   (env-adaptive via ASTRAWILD_REPO / ASTRAWILD_PACKAGED_EXE)",
+          "expect": "script completes; log written",
+          "on_fail": "If it drives the packaged exe, run P11 first then re-run.",
+          "evidence": "log file",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P10-02",
+          "check": "Manual 3-cycle round-trip with automation state",
+          "command": "manual: build base + assign Echoes + deploy drone -> F5 -> quit -> relaunch -> F9 -> verify x3",
+          "expect": "buildings/party/equipment/research/quest/journal/zones + work assignments + site output + battery charge + rest state all restore; automation resumes without re-assign",
+          "on_fail": "Capture the save file + log; schema bugs route to GLM.",
+          "evidence": "screenshots before/after each cycle",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P11",
+      "title": "Package + standalone run (V-41/V-42)",
+      "goal": "Cooked Win64 package boots and plays outside the editor.",
+      "playbook_ref": "P11 (section 13)",
+      "steps": [
+        {
+          "id": "P11-01",
+          "check": "Build_Package.ps1 exit 0",
+          "command": ".\\Build_Package.ps1   (set ASTRAWILD_ARCHIVE for a non-default output dir)",
+          "expect": "RunUAT exit 0; archive contains Windows/ASTRAWILD.exe",
+          "on_fail": "Capture the FULL UAT log before any retry (never retry blind). Entry-map policy failure = V-41's documented open question - report it.",
+          "evidence": "UAT log -> Docs/ENGINE_LOGS/raw/UAT_<sha>.log",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P11-02",
+          "check": "Packaged exe boots to MainMap with input working",
+          "command": "& \"<archive>\\Windows\\ASTRAWILD.exe\" -log",
+          "expect": "loading screen -> MainMap -> census log line identical to P7 -> move/gather/craft/capture respond",
+          "on_fail": "Capture RUNTIME log; check packaged redist requirements.",
+          "evidence": "RUNTIME_<sha>.log + screenshot",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P12",
+      "title": "LAN 4-player acceptance (section 22 contract)",
+      "goal": "All 17 LAN rows pass with host + 3 clients.",
+      "playbook_ref": "P12 (section 14); HANDOFF section 22",
+      "steps": [
+        {
+          "id": "P12-01",
+          "check": "Session flow: host hosts, 3 clients find + join (or direct IP)",
+          "command": "HOST: ESC -> LAN CO-OP -> Host LAN Game; CLIENTS x3: ESC -> LAN CO-OP -> Find + Join LAN Game",
+          "expect": "beacon discovery ~1-2 s; HUD lines read LAN HOST (N/4) / LAN CLIENT",
+          "on_fail": "Firewall: allow the game binaries inbound on Private networks; verify same subnet.",
+          "evidence": "screenshot of 4 connected sessions",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P12-02",
+          "check": "17-row LAN table walked",
+          "command": "follow Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md section 22 rows 1-17 (world visibility, movement, interact routing, combat, gather/craft/build, capture, party, mounts, vendor, dialogue, quests, dungeons, host save, reconnect, late join, authority sanity, session honesty)",
+          "expect": "all 17 rows PASS with host authority throughout",
+          "on_fail": "Any failure files the failing row number with logs.",
+          "evidence": "raw logs host + one client (SHA-named)",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "P13",
+      "title": "Evidence, status, closing",
+      "goal": "Everything captured, every queue row updated, committed and pushed; game declared complete only if honestly green.",
+      "playbook_ref": "P13 (section 15); HANDOFF section 20 steps 9-10",
+      "steps": [
+        {
+          "id": "P13-01",
+          "check": "All evidence artifacts filed under Docs/ENGINE_LOGS/raw/ with SHA names",
+          "command": "copy captured logs/reports/screenshots as <NAME>_<short-sha>.<ext>",
+          "expect": "BUILD/AUTOMATION/UAT/RUNTIME logs + import_report.json + echo_base_report.json + screenshots present",
+          "on_fail": "n/a",
+          "evidence": "directory listing",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P13-02",
+          "check": "Status surfaces updated honestly (BUILD_STATUS playtest table, queue rows, LIVE_EXECUTION_STATE section 1/5)",
+          "command": "edit the three docs with per-row PASS/FAIL + evidence names",
+          "expect": "no row claims PASS without an artifact; ENGINE-RUN-1 state reflects reality",
+          "on_fail": "n/a",
+          "evidence": "git diff of the three docs",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P13-03",
+          "check": "Committed + pushed to final-completion (task ID + SHA + state + next task in the message)",
+          "command": "git add Docs/ENGINE_LOGS/raw Docs/BUILD_STATUS.md Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md; git commit; git push origin final-completion",
+          "expect": "remote HEAD == local HEAD; no force-push ever",
+          "on_fail": "Push failures: check PAT scope + LFS push (git lfs push origin final-completion).",
+          "evidence": "push output + git ls-remote",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P13-04",
+          "check": "Completion declaration (ONLY if P5-P12 all PASS)",
+          "command": "record final SHA + log manifest in Docs/ASTRAWILD_FINAL_READINESS_REPORT.md section J",
+          "expect": "ASTRAWILD declared GAME-COMPLETE (source-complete + engine-verified + packaged); the merge to main stays with GLM + user (POST-ACCEPT-1)",
+          "on_fail": "Any open FAIL: the honest terminal state is BLOCKED with the failing row - a documented FAIL beats an invented PASS.",
+          "evidence": "readiness section J",
+          "status": "NOT_RUN"
+        }
+      ]
+    }
+  ]
+}

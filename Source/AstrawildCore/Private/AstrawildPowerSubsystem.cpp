@@ -3,7 +3,10 @@
 #include "AstrawildBuildingActor.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildLog.h"
+#include "AstrawildPlayerController.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
 
 UAstrawildPowerSubsystem::UAstrawildPowerSubsystem()
 {
@@ -107,7 +110,12 @@ void UAstrawildPowerSubsystem::ResolveGrid()
         {
         case EAstrawildPowerRole::Generator:
             Generators.Add(Building);
-            TotalGeneration += Def->PowerGeneration;
+            // Final-audit L-2 (AUD-4): generators respect their switch — a switched-off
+            // dynamo contributes nothing (consumers were already gated; generators were not).
+            if (Building->IsSwitchedOn())
+            {
+                TotalGeneration += Def->PowerGeneration;
+            }
             break;
         case EAstrawildPowerRole::Battery:
             Batteries.Add(Building);
@@ -167,7 +175,11 @@ void UAstrawildPowerSubsystem::ResolveGrid()
 
         // Batch 2 — Item C: sync the actor's replicated bIsPowered field so the
         // saved state matches the grid and clients see correct lamp visuals.
+        // Final-audit M-2 (AUD-4): RepNotifies do not fire on the server/listen-host,
+        // so the host's lamp visual used to stay stale until some other path
+        // refreshed it — update the visual directly on the authority.
         Consumer->bIsPowered = bPowered;
+        Consumer->UpdateVisualPowerState();
 
         if (bPowered)
         {
@@ -185,6 +197,24 @@ void UAstrawildPowerSubsystem::ResolveGrid()
     {
         bGridPowered = bNewGridState;
         OnPowerStateChanged.Broadcast(bGridPowered);
+
+        // FPP-1: grid transitions announce themselves — a brownout silently
+        // dimming lamps (with the HUD line never saying why) read as a bug.
+        // The broadcast keeps its zero-subscriber API; players get the toast.
+        if (UWorld* World = GetWorld())
+        {
+            const FText Message = bGridPowered
+                ? FText::FromString(TEXT("BASE POWER RESTORED — every consumer is back online."))
+                : FText::FromString(TEXT("BASE POWER: BROWNOUT — add generators or batteries; some buildings went dark."));
+            for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            {
+                if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get()))
+                {
+                    PC->NotifyPlayer(Message); // LCP-3: routes to the owning screen.
+                }
+            }
+        }
+
         UE_LOG(LogAstrawildBuilding, Log, TEXT("Power grid state: %s (gen %.1f, draw %.1f, stored %.0f)."),
             bGridPowered ? TEXT("STABLE") : TEXT("BROWNOUT"), TotalGeneration, TotalDraw, StoredEnergy);
     }
@@ -194,18 +224,8 @@ void UAstrawildPowerSubsystem::ResolveGrid()
 
 bool UAstrawildPowerSubsystem::IsLocationPowered(const FVector& Location) const
 {
-    // A location is powered when it is near any active power node (generator/battery)
-    // and its local consumer (if registered) is powered.
-    for (const TPair<FObjectKey, bool>& Pair : BuildingPowerState)
-    {
-        if (!Pair.Value)
-        {
-            continue;
-        }
-        // Key-based lookup cannot give the actor back; power queries route through
-        // IsBuildingPowered for exact buildings. Locations fall back to generator proximity.
-        break;
-    }
+    // Final-audit L-1 (AUD-4): removed a dead key-map loop that iterated
+    // BuildingPowerState and broke out immediately without doing anything.
 
     // Proximity to any generator = powered location (simplified shared grid v1).
     for (const TWeakObjectPtr<AAstrawildBuildingActor>& Weak : Buildings)

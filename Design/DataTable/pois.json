@@ -1,0 +1,294 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1018,
+   "id": "POI_FirstLightRuin",
+   "name": "First Light Ruin",
+   "lore": "Where the first survey team camped — the walls remember.",
+   "type": "Ruin",
+   "zone": "DawnFields",
+   "offset": [
+    2000.0,
+    -1500.0
+   ],
+   "discovery_radius": 1400.0,
+   "loot_table": "Loot_POIRuin",
+   "research_reward": 2,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1023,
+   "id": "POI_DawnsteadWatchtower",
+   "name": "Dawnstead Watchtower",
+   "lore": "The wardens still climb it at dusk to read the horizon.",
+   "type": "Watchtower",
+   "zone": "DawnFields",
+   "offset": [
+    -3000.0,
+    2500.0
+   ],
+   "discovery_radius": 1400.0,
+   "loot_table": "Loot_POIWatchtower",
+   "research_reward": 2,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1028,
+   "id": "POI_SunkencollarCave",
+   "name": "Sunkencollar Cave",
+   "lore": "Something breathes cold out of this hillside.",
+   "type": "CaveEntrance",
+   "zone": "DuskMarsh",
+   "offset": [
+    2500.0,
+    1800.0
+   ],
+   "discovery_radius": 1200.0,
+   "loot_table": null,
+   "research_reward": 3,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1033,
+   "id": "POI_GlimmerwoodMonolith",
+   "name": "Glimmerwood Monolith",
+   "lore": "Older than the wood around it. The moss will not touch it.",
+   "type": "AncientTech",
+   "zone": "Glimmerwood",
+   "offset": [
+    -1200.0,
+    2200.0
+   ],
+   "discovery_radius": 1300.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 5,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1038,
+   "id": "POI_EmberFoundry",
+   "name": "Ember Foundry Husk",
+   "lore": "A pre-collapse forge, cracked open like an egg.",
+   "type": "Ruin",
+   "zone": "EmberRidge",
+   "offset": [
+    3200.0,
+    -2400.0
+   ],
+   "discovery_radius": 1400.0,
+   "loot_table": "Loot_POIRuin",
+   "research_reward": 4,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1043,
+   "id": "POI_FrostveilSignalSource",
+   "name": "Frostveil Signal Source",
+   "lore": "The oracle scanner pins it under the ice shelf — it is transmitting.",
+   "type": "SignalSource",
+   "zone": "FrostveilExpanse",
+   "offset": [
+    1500.0,
+    -1500.0
+   ],
+   "discovery_radius": 1000.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 6,
+   "requires_scanner": true
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1048,
+   "id": "POI_HollowApproachSpire",
+   "name": "Hollow Spire",
+   "lore": "It was a doorway once. It is waiting to be one again.",
+   "type": "AncientTech",
+   "zone": "HollowApproach",
+   "offset": [
+    -2000.0,
+    1000.0
+   ],
+   "discovery_radius": 1300.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 5,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1053,
+   "id": "POI_TidebreakerWreck",
+   "name": "Tidebreaker Wreck",
+   "lore": "The hull name is gone; the cargo holds are not.",
+   "type": "Ruin",
+   "zone": "TidebreakerIsles",
+   "offset": [
+    1800.0,
+    -2200.0
+   ],
+   "discovery_radius": 1300.0,
+   "loot_table": "Loot_POIRuin",
+   "research_reward": 4,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1058,
+   "id": "POI_SunscarMirageStone",
+   "name": "Mirage Stone",
+   "lore": "Walk to it and it is never quite where it was.",
+   "type": "Landmark",
+   "zone": "SunscarDesert",
+   "offset": [
+    -2500.0,
+    2000.0
+   ],
+   "discovery_radius": 1500.0,
+   "loot_table": null,
+   "research_reward": 3,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1063,
+   "id": "POI_StormcrestArray",
+   "name": "Stormcrest Antenna Array",
+   "lore": "Lightning chose it; the surveyors did not.",
+   "type": "AncientTech",
+   "zone": "StormcrestHighlands",
+   "offset": [
+    2200.0,
+    1400.0
+   ],
+   "discovery_radius": 1400.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 5,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1068,
+   "id": "POI_VerdantHeartTree",
+   "name": "The Heart Tree",
+   "lore": "Every seed in the Reach rolled downhill from here.",
+   "type": "Landmark",
+   "zone": "VerdantReach",
+   "offset": [
+    0.0,
+    2600.0
+   ],
+   "discovery_radius": 1600.0,
+   "loot_table": null,
+   "research_reward": 3,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1073,
+   "id": "POI_PearlseaResonanceWell",
+   "name": "Resonance Well",
+   "lore": "The reef grows in rings around whatever is at the bottom.",
+   "type": "SignalSource",
+   "zone": "PearlseaReef",
+   "offset": [
+    -1800.0,
+    -1800.0
+   ],
+   "discovery_radius": 1000.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 6,
+   "requires_scanner": true
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1080,
+   "id": "POI_ShallowsSextant",
+   "name": "The Shallows Sextant",
+   "lore": "A drowned surveyor's ring — it still tracks something deep under the race.",
+   "type": "Ruin",
+   "zone": "AzureShallows",
+   "offset": [
+    2400.0,
+    -1600.0
+   ],
+   "discovery_radius": 1200.0,
+   "loot_table": "Loot_VendorDriftwood",
+   "research_reward": 5,
+   "requires_scanner": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1090,
+   "id": "POI_HollowUndergateVault",
+   "name": "The Undergate Vault",
+   "lore": "The scanner pins a strongbox under the ashfall — pre-collapse, still charged, facing the gate.",
+   "type": "SignalSource",
+   "zone": "HollowApproach",
+   "offset": [
+    2800.0,
+    -1600.0
+   ],
+   "discovery_radius": 1000.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 6,
+   "requires_scanner": true
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1095,
+   "id": "POI_SunscarMachineCoffin",
+   "name": "The Machine Coffin",
+   "lore": "Beneath the singing dune glass, machine bones keep their charge in a box the sun never reaches.",
+   "type": "SignalSource",
+   "zone": "SunscarDesert",
+   "offset": [
+    3200.0,
+    -2400.0
+   ],
+   "discovery_radius": 1000.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 6,
+   "requires_scanner": true
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1100,
+   "id": "POI_TidebreakerHoldRoom",
+   "name": "The Hold Room",
+   "lore": "Every wreck kept one room dry. The scanner says this one kept it that way on purpose.",
+   "type": "SignalSource",
+   "zone": "TidebreakerIsles",
+   "offset": [
+    -2600.0,
+    1200.0
+   ],
+   "discovery_radius": 1000.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 6,
+   "requires_scanner": true
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1105,
+   "id": "POI_PearlseaTidecache",
+   "name": "The Tidecache",
+   "lore": "A coral-sealed cache the reef grew around — the tide hides it, the scanner hums to it.",
+   "type": "SignalSource",
+   "zone": "PearlseaReef",
+   "offset": [
+    2600.0,
+    1800.0
+   ],
+   "discovery_radius": 1000.0,
+   "loot_table": "Loot_POIAncient",
+   "research_reward": 6,
+   "requires_scanner": true
+  }
+ ]
+}

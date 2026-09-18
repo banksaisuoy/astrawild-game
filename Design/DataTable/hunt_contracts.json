@@ -1,0 +1,77 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 22,
+   "id": "Hunt_DuskmothCull",
+   "species": "Echo_Duskmoth",
+   "required_count": 5,
+   "reward_item": "Item_DawnShard",
+   "reward_qty": 3
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 23,
+   "id": "Hunt_StonehideCull",
+   "species": "Echo_Stonehide",
+   "required_count": 4,
+   "reward_item": "Item_Stone",
+   "reward_qty": 6
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 24,
+   "id": "Hunt_EmberfangCull",
+   "species": "Echo_Emberfang",
+   "required_count": 3,
+   "reward_item": "Item_EmberAsh",
+   "reward_qty": 5
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 25,
+   "id": "Hunt_RimefangCull",
+   "species": "Echo_Rimefang",
+   "required_count": 3,
+   "reward_item": "Item_DawnShard",
+   "reward_qty": 2
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 26,
+   "id": "Hunt_BrinefinCull",
+   "species": "Echo_Brinefin",
+   "required_count": 5,
+   "reward_item": "Item_RawMeat",
+   "reward_qty": 6
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 27,
+   "id": "Hunt_SunhideCull",
+   "species": "Echo_Sunhide",
+   "required_count": 5,
+   "reward_item": "Item_DuneGlass",
+   "reward_qty": 4
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 28,
+   "id": "Hunt_VerdantbloomCull",
+   "species": "Echo_Verdantbloom",
+   "required_count": 4,
+   "reward_item": "Item_Fiber",
+   "reward_qty": 8
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildHuntSubsystem.cpp",
+   "line": 29,
+   "id": "Hunt_MonolithCull",
+   "species": "Echo_Vespermonolith",
+   "required_count": 1,
+   "reward_item": "Item_StormSilver",
+   "reward_qty": 2
+  }
+ ]
+}

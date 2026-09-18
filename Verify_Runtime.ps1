@@ -1,7 +1,13 @@
-﻿$ErrorActionPreference = "Stop"
-$ProjectPath = "E:\AstrawildGame\ASTRAWILD.uproject"
-$EditorExe = "E:\Epic Games\UnrealEngine\Engine\Binaries\Win64\UnrealEditor.exe"
-$LogPath = "E:\AstrawildGame\Saved\Logs\Runtime_Verification.log"
+﻿# v9.6 env-adaptive paths (FMP-1): UE_ROOT / ASTRAWILD_UPROJECT override the
+# legacy layout for non-default installs (fresh machines); with no env vars
+# set the legacy E:\ values are preserved exactly.
+$ErrorActionPreference = "Stop"
+$EngineRoot = if ($env:UE_ROOT) { $env:UE_ROOT } else { "E:\Epic Games\UnrealEngine" }
+$ProjectPath = if ($env:ASTRAWILD_UPROJECT) { $env:ASTRAWILD_UPROJECT } else { "E:\AstrawildGame\ASTRAWILD.uproject" }
+$EditorExe = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor.exe"
+$LogPath = Join-Path (Split-Path $ProjectPath -Parent) "Saved\Logs\Runtime_Verification.log"
+Write-Host " Engine : $EngineRoot"
+Write-Host " Project: $ProjectPath"
 
 Write-Host "========================================"
 Write-Host " ASTRAWILD Runtime Verification & Benchmark"
