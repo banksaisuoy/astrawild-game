@@ -1,8 +1,8 @@
 {
  "schema": "astrawild-design-data/1",
- "generated": "2026-09-18T03:22:37",
+ "generated": "2026-09-18T03:56:14",
  "generator": "Scripts/extract_design_data.py",
- "repo_head": "be29cd39e8ee66ffc4a5b0d222d8dd7cf17b36dd",
+ "repo_head": "19da60ca8a1b933cc595ce4b1f514cf0cd20c200",
  "rule": "Every value below was parsed from Source/ by the generator. No value is hand-typed (Master Directive v1 rule R1).",
  "domains": {
   "tunables": {
