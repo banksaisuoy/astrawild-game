@@ -1,8 +1,8 @@
 ﻿# ASTRAWILD — Echoes of the First Dawn
 
 > [!NOTE]
-> **Current status (v9.6 FRESH-MACHINE PLAYBOOK PACK — 2026)**: the repository is source-complete on branch
-> `final-completion` — 133 world-free automation contracts, full 12-zone world, 229 Echo
+> **Current status (MASTER DIRECTIVE v1 MACHINE-READY PACK — 2026-09-18)**: the repository is source-complete on branch
+> `final-completion` — **134 world-free automation contracts**, full 12-zone world, 229 Echo
 > species, MQ-01..17 + 5 post-game side quests + two endings (each now with a pure-C++ staged cinematic) + NEW GAME PLUS,
 > save schema V5 (+ additive NGPlusCycle) — and the staged art is now **109 REAL
 > unique CC0 meshes** (no cylinders, no recolors): 3 survivor armor tiers (T1 Scavenger /
@@ -11,17 +11,23 @@
 > geometry-distinct weapons, 4 vehicles (Dawn Skiff hover + ground rover), 4 ore nodes,
 > 21 environment props — manifest **189/189 present / 0 pending**, 1:1 source uniqueness
 > enforced, per-asset CC0 provenance (`Docs/ASTRAWILD_REAL_ASSET_CREDITS.json`).
-> **New/blank Windows machine? Start with `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md`**
-> (from OS check to playing, with `Scripts/fresh_machine_preflight.ps1` as the automated
-> readiness gate and `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json` as the tick-off list;
-> the paste-ready agent prompt is `Docs/ASTRAWILD_FRESH_MACHINE_AI_DIRECTIVE.md`).
+> **FIRST DAY ON THE MACHINE: follow `Docs/ASTRAWILD_ON_PC_TASKS.md`** — the
+> hour-by-hour runbook (clone → build → orchestrated source-side flow → asset import →
+> 134-test gate → PIE feel grading → package), each step with exact commands, expected
+> results, and fail routes. **Came back to a broken/unknown state? `Docs/ASTRAWILD_REVIVAL_PLAN.md`** triages from ANY state.
+> The single-command source-side flow is `Tools\Python\first_day_orchestrator.py`
+> (verify → prototype map → input assets, idempotent).
 > **One-click on a prepared machine: run `Setup_And_Play.bat`** — it imports everything, builds the
 > showcase map (`/Game/Maps/L_Showcase_ArtOverhaul`) and opens the editor; press Play.
+> Design numbers are never hand-typed: every value lives traced in `Design/design_data.json`
+> (`Scripts/extract_design_data.py` + `Scripts/validate_design_data.py` round-trip).
 > **Everything engine-side is ENGINE-UNVERIFIED at this tip** — the one-time integration
-> run (build, 133 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
-> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.6 §8 and
-> `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The canonical control doc is
-> **`Docs/ASTRAWILD_MASTER_CONTROL.md`**. The narrative text below this note is the
+> run (build, 134 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
+> machine; risks are ranked with a binding fix-forward protocol in
+> `Docs/ASTRAWILD_COMPILE_RISK.md`. The canonical control doc is
+> **`Docs/ASTRAWILD_MASTER_CONTROL.md`**; live execution truth is
+> **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`**; the cinematic charter + traced
+> character-feel contract is **`Docs/ASTRAWILD_CINEMATIC_IDENTITY.md`**. The narrative text below this note is the
 > Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54 tests" snapshot
 > refers to the 2026-09-01 Antigravity V2 session).
 
