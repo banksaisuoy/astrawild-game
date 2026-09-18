@@ -421,3 +421,26 @@ discarded. Census UNCHANGED (15 gates incl. 229/204/22 quests/13 NPCs); no secon
 counts UNCHANGED; no new AI/bond/traversal/skill/boss/mutation architecture; no new asset
 acquisition (existing self-generated + CC0 libraries cover the pass — TRUE_MISSING stays 0);
 every batch commit+push with task ID; ENGINE-RUN-1 stays BLOCKED (external) until VIS-001 closes.
+
+## §R ENGINE-RUN PREPARATION & AUDIT (TASK 1-4 chain + ERPA-1 — 2026-09-17/18 sessions, directive: prepare the source so the one-time Windows engine run succeeds first-try)
+
+The 2026-09-17 session delivered a four-task engine-prep chain (commits
+`ff09d52` → `cfae063`) but did not register it here (the §4 sync-discipline
+gap, closed retroactively by the 2026-09-18 session). The 2026-09-18 session
+added the second static-audit round (ERPA-1, commit `746c59f`) and this
+registry section.
+
+| ID | Area | Deliverable | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| TASK 1 | Static audit round 1 (compile blockers) | 3 P0 compile-blocking defects repaired (UHT include-order violation in AstrawildPlayerController.h; LogAstrawild double declaration across AstrawildCore.h/AstrawildLog.h; undeclared LogAstrawildLog usage in AstrawildNPCCharacter.cpp) + 2 defensive includes (Engine/World.h in GameState.cpp; AIController.h in MountComponent.cpp); method = diff vs last green compile 8313c61 + mechanical sweeps | GLM | **COMPLETE (source)** | commit `ff09d52`; ENGINE-UNVERIFIED until ENGINE-RUN-1 |
+| TASK 2 | Headless prototype-map builder | `Tools/Python/build_prototype_map.py` — creates/saves `/Game/ASTRAWILD/Maps/Prototype/L_Proto_01` (100×100 m floor, DirectionalLight, SkyLight real-time capture, SkyAtmosphere, ExponentialHeightFog, PlayerStart, 5 obstacles); idempotent via LPROTO_ label purge; EditorActorSubsystem/UnrealEditorSubsystem with EditorLevelLibrary fallback; PythonScriptPlugin enabled in .uproject | GLM | **COMPLETE (source)** | commit `720f9db`; syntax-validated; engine-side run lands with ENGINE-RUN-1 |
+| TASK 3 | Editor input-asset layer + GameMode override | `Tools/Python/setup_input_assets.py` — 32 IA_* actions + IMC_Player (35 KB/M mappings, swizzle/negate modifiers) + IMC_Gamepad (19 mappings incl. LB+X chord) + BP_AstrawildPlayer + BP_AstrawildGameMode, 1:1 parity with the C++ runtime fallback IMC; `build_prototype_map.py` gained set_game_mode_override() (TASK 3.4) pinning L_Proto_01's WorldSettings | GLM | **COMPLETE (source)** | commit `f295923`; documented discrepancy handling (AAstraCharacter/AAstraGameMode naming vs canon names — no duplicate classes created per the minimum-change rule); engine-side run lands with ENGINE-RUN-1 |
+| TASK 4 | One-click packaging + release automation | `Tools/package_windows.bat` (RunUAT BuildCookRun Win64 Shipping → Build/Windows/ASTRAWILD/Binaries/Win64/ASTRAWILD.exe; UE_ROOT/ASTRAWILD_ARCHIVE overridable) + `.github/workflows/release.yml` (tag v*/manual dispatch, LFS checkout, bsdtar zip, self-hosted Windows runner documented) + README 'Download & Play' section | GLM | **COMPLETE (source)** | commit `cfae063`; YAML-validated; no release exists yet (0 published) — first release requires the Windows machine to run the workflow |
+| ERPA-1 | Static audit round 2 (header hygiene / type reachability) | comment-aware module type + enum reachability sweep (234 types, 52 enums; include-closure + forward-decl graph + elaborated-type-specifier awareness): **6 genuine compile blockers repaired** — (1) AstrawildBuildingActor.h `TransferStorageStack(AAstrawildPlayerCharacter*)` no declaration anywhere in its include chain → fwd decl added; (2) AstrawildCraftingScreenWidget.h `TArray<FAstrawildItemStack>` members need the complete struct → AstrawildTypes.h include; (3)+(4) AstrawildHuntSubsystem.h / AstrawildQuestComponent.h `const FAstrawildGameplayEvent&` UFUNCTION params with no declaration → AstrawildEventBusSubsystem.h include (module-leaf, zero cycle risk); (5) AstrawildUtilityRobotActor.h `GetWorkRateFor(EAstrawildWorkType)` UFUNCTION enum param → AstrawildTypes.h include; (6) AstrawildEchoCharacter.cpp `GetSubsystem<UAstrawildItemRegistrySubsystem>()` template instantiation → include added. Engine-header sweeps (DOREPLIFETIME/AutomationTest/EnhancedInput/TimerManager/Niagara): all hits disproven (green-era proven transitive paths or forward-declared pointer returns). All fixes purely additive one-liners; census/tests UNCHANGED | GLM | **COMPLETE (source)** | commit `746c59f`; audits post-fix 0 flags; validate_final_run.py + validate_repository.sh ALL PASS; LFS server-side re-verified 586/586 via batch API on 2026-09-18 |
+
+**§R ground rules** (binding): audit fixes stay minimal-mechanical (additive
+includes/forward declarations only — no signature or behavior changes);
+every claim cross-checked against the last green compile 8313c61 where
+possible (empirical transitive-include proof); engine rows V2-29..V2-36 stay
+NOT_RUN on this Linux sandbox — never faked; ENGINE-RUN-1 remains THE next
+task on the Windows UE 5.8.2 machine.
