@@ -83,7 +83,7 @@ A declared PASS without a raw log is a CLAIM, not evidence.
 | :--- | :--- | :--- |
 | **GLM** | Lead Programmer | C++, architecture, save/load, quests, AI, economy, tests; this document |
 | **Qwen** | Technical Art (optional) | Materials/meshes/animation polish — never blocks the project |
-| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 133-test automation run, playtest, package, push |
+| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 135-test automation run, playtest, package, push |
 | **Sonnet/Reviewers** | Auditors | Findings are inputs; only REAL BUG / STALE DOC / UNPROVEN CLAIM classes act on |
 
 ## 1b. Supported multiplayer target (v6.0 — user product decision, binding)

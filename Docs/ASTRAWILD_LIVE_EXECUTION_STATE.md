@@ -25,7 +25,7 @@
 | **CURRENT_TASK** | none in flight — MRP-1 closed (5 commits pushed: design layer, tool suite, risk register, identity charter, runbook + entry docs); validators ALL PASS at tip |
 | **NEXT_TASK** | ENGINE-RUN-1 / V2-36 engine run on the Windows UE 5.8.2 machine — **the day plan is `Docs/ASTRAWILD_ON_PC_TASKS.md`** (hour 0 → 8: clone+LFS → Build.bat compile gate → first_day_orchestrator → Setup_And_Play.bat import+showcase → Test.bat 134 contracts → PIE feel grading per CINEMATIC_IDENTITY §2 → package_windows.bat → end-of-day report); risks ranked + binding fix-forward protocol in `Docs/ASTRAWILD_COMPILE_RISK.md`; broke/unknown state → `Docs/ASTRAWILD_REVIVAL_PLAN.md` |
 | **BLOCKED_TASKS** | V2-29..V2-36 (external: no UE5/MSVC on the Linux source sandbox — the Windows UE 5.8.2 machine is the exclusive runtime authority) |
-| **CURRENT_TEST_COUNT** | 134 world-free automation contracts (133 + 1 VIS-1 creature identity; validator 134-test gate PASS at tip) |
+| **CURRENT_TEST_COUNT** | 135 world-free automation contracts (133 + 1 VIS-1 creature identity + 1 BKE-1 victory-chain gate; validator 135-test gate PASS at tip) |
 | **CURRENT_CONTENT_COUNT** | 416 genuine UE packages in `Content/` (magic 0x9E2A83C1 re-walked; 0 bad) |
 | **CURRENT_LFS_COUNT** | 586/586 pointers resolve (server-side batch-API verified 2026-09-18: every pointer OID offers a download action); `git lfs push --dry-run` = 0 pending upload; see the fsck caveat in §8 |
 | **CURRENT_ASSET_IMPORT_PENDING** | Manifest (file-truth basis): **189/189 `present` / 0 pending**; engine import of the 109 real meshes + clips = **NOT_RUN** (V2-36 one-click `Setup_And_Play.bat`); TRUE_MISSING = 0 |

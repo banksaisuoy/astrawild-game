@@ -1,13 +1,13 @@
 {
  "schema": "astrawild-design-data/2",
- "generated": "2026-09-18T05:13:50",
+ "generated": "2026-10-09T08:07:36",
  "generator": "Scripts/extract_design_data.py",
- "repo_head": "2e592a873ca89bee2051318e41052d091a054176",
+ "repo_head": "d326eee81e95447432436a4333a79800be673af0",
  "rule": "Every value below was parsed from Source/ by the generator. No value is hand-typed (Master Directive v1 rule R1).",
  "domains": {
   "tunables": {
-   "files_scanned": 99,
-   "count": 574,
+   "files_scanned": 102,
+   "count": 576,
    "entries": [
     {
      "file": "Source/AstrawildCore/Public/AstrawildBossHazardActor.h",
@@ -4505,6 +4505,30 @@
      "clamp": null,
      "comment": null,
      "uproperty_line": 335
+    },
+    {
+     "file": "Source/AstrawildCore/Public/AstrawildPlayerController.h",
+     "line": 294,
+     "class": "AAstrawildPlayerController",
+     "name": "bShowTitleScreenAtBoot",
+     "type": "bool",
+     "value": true,
+     "category": "ASTRAWILD|UI",
+     "clamp": null,
+     "comment": null,
+     "uproperty_line": 293
+    },
+    {
+     "file": "Source/AstrawildCore/Public/AstrawildPlayerController.h",
+     "line": 302,
+     "class": "AAstrawildPlayerController",
+     "name": "VictoryQuestId",
+     "type": "FName",
+     "value": "TEXT(\"Quest_VanguardProtocol\")",
+     "category": "ASTRAWILD|Quest",
+     "clamp": null,
+     "comment": null,
+     "uproperty_line": 301
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPowerSubsystem.h",
@@ -26769,13 +26793,13 @@
   },
   "counts": {
    "automation_tests": {
-    "value": 134
+    "value": 135
    },
    "source_files": {
-    "value": 200
+    "value": 206
    },
    "source_loc": {
-    "value": 73355
+    "value": 74499
    },
    "census_vs_validate_final_run": {
     "items": {

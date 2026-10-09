@@ -187,7 +187,7 @@ the UBT log tail BEFORE retrying; that is the artifact GLM needs to diagnose.
 .\Test.ps1
 # outputs Automation_Output.txt (or $env:ASTRAWILD_AUTOMATION_OUTPUT)
 ```
-**PASS = 133/133 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value; 109 through DP-9 + the LCP/PCR/FPP/SCI/DCP chain to 133 at DCP). Contracts to watch:
+**PASS = 135/135 `Result={Success}`, 0 `Result={Fail}`** (count read from the repo — the validator gate pins the exact value; 109 through DP-9 + the LCP/PCR/FPP/SCI/DCP chain to 133 at DCP). Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety` · `ASTRAWILD.Save.SchemaV5Ending` ·
 `ASTRAWILD.Quest.FinalRunChain` · `ASTRAWILD.Echo.FinalRunBosses` ·
 `ASTRAWILD.Tech.SkiffEngineering` · `ASTRAWILD.Dialogue.EndingChoice` ·
@@ -338,7 +338,7 @@ no duplicated assets, no double imports, no corrupted Content.
 ```text
 1  pull final-completion (§4) + git lfs pull + both static validators PASS (validate_repository + validate_final_run ALL)
 2  Build.ps1 exit 0 (§8)                         → raw log Docs/ENGINE_LOGS/raw/BUILD_<sha>.log
-3  Test.ps1 133/133 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
+3  Test.ps1 135/135 (§9)                           → raw log Docs/ENGINE_LOGS/raw/AUTOMATION_<sha>.log
 4  PIE boot (§12): confirm 3 content-registration log lines + no Error spam
 5  PIE golden path (§14): MQ-01 quick-run (gather/craft at the station screen/capture/build)
    + AW.FastForward Quest_TheDrownedSovereign to jump the chain: MQ-17 homecoming marker →
@@ -476,7 +476,7 @@ During the PIE golden path, additionally verify:
 3. Capture a flying species (Avian family) — it should path through the air after capture (follow command), not walk.
 4. Talk to a vendor twice on two different in-world days — affinity tiers should climb and the purchase price should drop at tier 1+ (up to -15%).
 5. Save + load — attribute levels and NPC affinity must survive the round-trip (tests 81/83 pin the logic; PIE confirms serialization).
-6. Automation now expects **133/133** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4 → 124 at PCR-5 → 125 at FPP-1 → 126 at SCI → 127..133 at DCP; the validator gate enforces the exact value — always read the count from the repo, never from memory).
+6. Automation now expects **135/135** (was 72 → 84 at GDP → 99 at SCP → 102 at FCR → 103 at DP-3 → 104 at DP-4 → 135 at BKE-1 bookends rescue → 105 at DP-5 → 106 at DP-6 → 107 at DP-7 → 108 at DP-8 → 109 at DP-9 → 119 at LCP-8 → 120 at PCR-1 → 121 at PCR-2 → 122 at PCR-3 → 123 at PCR-4 → 124 at PCR-5 → 125 at FPP-1 → 126 at SCI → 127..133 at DCP; the validator gate enforces the exact value — always read the count from the repo, never from memory).
 7. PCR screens (the four new player surfaces): press **P** (Field Journal — species rows show knowledge flags + observation %; undiscovered read "???"), **L** (Echo Roster — rows show identity/level/bond/top-work; Bench one Echo → its actor despawns, Deploy → respawns; save/load preserves bench state), **M** (World Map — 12 zone cells render with threat/hazard, discovered POI dots appear, player ● marker sits in the current zone), **U** (Hunt Board — 8 contracts list with progress; cull 1 Duskmoth → progress ticks; claim at 5 rewards Dawn Shard x3 and resets).
 8. Tier-B creature bodies: after the §20b baseline import (the 39 new Tier-B GLBs import exactly like the 6 heroes — flat folder /Game/Characters/Echoes/), spawn/observe one zone signature species per zone (e.g. Duskmoth in Dusk Marsh, Rimefang in Frostveil) — each must render its unique skinned body (NOT the PMC box) with idle/move clips. Until the import lands, the PMC body is the documented opt-in contract, not a defect.
 9. DP-4 skill loadout (ESC pause menu — SKILL LOADOUT section): cycle a slot onto an unlocked
