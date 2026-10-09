@@ -112,3 +112,40 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Next session pointer: THE MACHINE DAY (preflight → Build → 6-step
   orchestrator → Setup_And_Play → Test → feel grading → package). The
   first MSVC compile is the only closer for everything still UNVERIFIED.
+
+---
+
+## Session 2026-10-09 — GAME-SHAPE PASS (GLM, evidence-first takeover, branch agent/game-shape-v1)
+
+> [LIVE] Baseline d326eee (verified tip of origin/final-completion, 0/0 divergence;
+> working tree's 1152 "modified" files proven byte-identical LFS filter artifacts).
+
+- GS-1 ART-PATH HARDENING: `AstrawildArtPack::CanonicalAssetPath()` — package-style
+  soft paths ("Path/SM_A") canonicalized to object-path form ("Path/SM_A.SM_A") at
+  every apply site (ProductionContent 21, PlayerCharacter 8, ContentLibrary NPC 4,
+  dungeon tiles + 5 sound-cue sites). Rationale: FSoftObjectPath's suffix-less form
+  is engine-version-dependent; worst case = silent never-resolving bindings and
+  permanent primitive fallbacks. Canonical form works in EVERY version. Pinned by 4
+  unit assertions + round-trip contract in ASTRAWILD.ArtPack.BindingContract.
+  COMPILE_RISK O-6 (evidence F→B). Commit d410ac7.
+- P-5/P-6 LANDMARK BINDINGS: `GetLandmarkArt()` ruin pillar bound to
+  ResonancePillar (240cm) + POIMarker (260cm) via runtime bounds-fit (any pivot
+  convention, fail-closed to engine primitives), warmed in WarmArtPackBindings.
+  Stale REPLACE_BEFORE_RELEASE comments corrected where bindings are LIVE
+  (ResourceNode Batch-4, Projectile Niagara CP-05).
+- GS-2 STRANDED-COMMIT RESCUE: local af11ab4 ("game-loop bookends" — TITLE /
+  VICTORY / DEATH screens + `_FindEngine.bat` registry-based engine detection +
+  relative-path launchers + Setup_FirstRun) was NEVER in final-completion's
+  history (authored 2026-09-17 in the repo-astrawild working copy, unpushed).
+  Cherry-picked with conflict resolution onto the evolved controller (union:
+  PCR screens + completion bookends). Commit 833bcf4. Tests 134→135
+  (VictoryChainTermination); validator gates + live docs updated together.
+- Dead decl BuildContentDefaults() removed (lint 0 errors / 0 warnings, 203 files).
+- Validators at tip: final_run ALL PASS · design 78/78 · lint 0/0 · dryrun 49/49
+  (55 VERIFIED / 0 UNVERIFIED) · census 15/15 · 135 automation contracts.
+- The game now has its full loop shape statically: Title (New Journey / Continue)
+  → 12-zone bootstrapped world (real meshes where imported; fail-closed stand-ins
+  elsewhere) → survive/craft/capture/quest → DEATH overlay + respawn → VICTORY
+  screen + free hunt → save/continue. Remaining UNKNOWN = the one Windows
+  engine day (compile + PIE + package) — unchanged, honestly parked at
+  ENGINE-RUN-1 in Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md.
