@@ -112,3 +112,34 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Next session pointer: THE MACHINE DAY (preflight → Build → 6-step
   orchestrator → Setup_And_Play → Test → feel grading → package). The
   first MSVC compile is the only closer for everything still UNVERIFIED.
+
+
+## Session 2026-10-09 — BKE-1 bookends rescue + new project home (GLM, Unreal Division)
+
+> [LIVE] This section supersedes everything above it for current-session
+> context. Canonical live state remains `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`.
+
+- User directive (Thai): token check + "สร้างเป็นโปรเจ็คใหม่ อย่าทับของเดิม" +
+  "เกมเล่นได้ยัง" — new project repo, old repo untouched, honest playability answer.
+- Verified new PAT (account banksaisuoy); created `astrawild-game-v2` (public);
+  mirrored ALL 8 remote branches + LFS (602 + 2033 objects, ~609 MB uploaded);
+  preserved the never-pushed local `af11ab4` as `legacy/local-main-af11ab4`.
+- Diagnosed the paused sandbox working tree: 440 "modified" files proved to be
+  pure CRLF/exec-bit noise (git diff --ignore-cr-at-eol: 0 insertions 0
+  deletions) — the only real un-pushed work was the committed af11ab4
+  (12 files unique: Title/Death/Victory widgets + Windows first-run bats).
+- `develop` = 3-way merge of final-completion `d326eee` + `af11ab4`
+  (base `94a398c`): 12 clean adds, 7 auto-merges, 4 positional conflicts
+  resolved keeping BOTH feature sets (PCR screens + LCP-3 co-op RPCs +
+  bookends; IsAnyScreenOpen checks all 12 screens). Merge commit `395cddd`.
+- Automation suite 134 -> 135 (BKE-1 FAstrawildVictoryChainTest guards the
+  Quest_SignalsInTheStatic -> Quest_VanguardProtocol chain-closer wiring).
+- Validators at merge: lint 0 errors / 1 pre-existing advisory; extractor
+  census 15/15 MATCH; design_data.json regenerated at 135; 31 doc references
+  repointed to the single count 135 across 10 active docs.
+- Playability answer (honest): repo has NO packaged exe and NO GitHub release;
+  historical engine evidence (54/54 + packaged exe) is from older SHAs on the
+  user's Windows machine; tip remains ENGINE-UNVERIFIED — ENGINE-RUN-1 on
+  Windows UE 5.8.2 is still the only remaining product-critical work.
+- Security: PAT was shared in chat (round 3) — user should rotate/revoke
+  after use.
