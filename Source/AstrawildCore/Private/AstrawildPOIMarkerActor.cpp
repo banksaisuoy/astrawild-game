@@ -2,6 +2,7 @@
 
 #include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
 
+#include "AstrawildArtPack.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
@@ -33,6 +34,45 @@ namespace
                 default:
                         return FLinearColor(0.95f, 0.9f, 0.6f); // dawn gold
                 }
+        }
+
+        /** Authored beacon-pillar height (matches the engine-cylinder stand-in: 100cm * 2.6). */
+        constexpr float LandmarkPillarHeightCm = 260.0f;
+}
+
+namespace
+{
+        /**
+         * P-6 landmark art swap (fail-closed): replace the engine-cylinder
+         * stand-in with the staged CC0 ruin pillar when it resolves. Bounds-fit
+         * keeps the authored gameplay height and seats the base on the floor
+         * regardless of the mesh's pivot convention — no hardcoded scale guess.
+         * The beacon light + discovery-dim behavior stay untouched.
+         */
+        void ApplyLandmarkPillarArt(UStaticMeshComponent* VisualMesh)
+        {
+                if (!VisualMesh)
+                {
+                        return;
+                }
+                const FSoftObjectPath PillarPath(AstrawildArtPack::GetLandmarkArt().PillarMeshPath);
+                UStaticMesh* Pillar = Cast<UStaticMesh>(PillarPath.TryLoad());
+                if (!Pillar)
+                {
+                        return; // import pass has not landed the asset — cylinder stays (CP-00 rule 2)
+                }
+                const FBoxSphereBounds Bounds = Pillar->GetBounds();
+                const float MeshHeightCm = 2.0f * Bounds.BoxExtent.Z;
+                if (MeshHeightCm < 5.0f)
+                {
+                        return; // degenerate bounds — keep the primitive rather than scale-divide by ~0
+                }
+                VisualMesh->SetStaticMesh(Pillar);
+                const float Fit = LandmarkPillarHeightCm / MeshHeightCm;
+                VisualMesh->SetWorldScale3D(FVector(Fit, Fit, Fit));
+                // Seat the box minimum Z at the actor origin: works for base-pivot
+                // AND center-pivot meshes alike.
+                VisualMesh->SetRelativeLocation(FVector(0.0f, 0.0f, Bounds.BoxExtent.Z - Bounds.Origin.Z));
         }
 }
 
@@ -67,6 +107,11 @@ AAstrawildPOIMarkerActor::AAstrawildPOIMarkerActor()
 void AAstrawildPOIMarkerActor::BeginPlay()
 {
     Super::BeginPlay();
+
+    // P-6: swap the cylinder stand-in for the real ruin pillar (bounds-fit,
+    // fail-closed). Runs on server AND clients — the asset is identical local
+    // content on every machine.
+    ApplyLandmarkPillarArt(VisualMesh);
 
     // LCP-2: clients resolve the beacon visual from the replicated id
     // (InitializeFromDefinition's definition pointer never crosses the wire).

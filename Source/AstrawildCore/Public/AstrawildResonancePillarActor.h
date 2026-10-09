@@ -28,7 +28,7 @@ class ASTRAWILDCORE_API AAstrawildResonancePillarActor : public AActor, public I
 public:
     AAstrawildResonancePillarActor();
 
-    /** Tall resonance stone (engine basic shape — REPLACE_BEFORE_RELEASE with the authored arch meshes). */
+    /** Tall resonance stone: engine cylinder stand-in (constructor) swapped for the staged CC0 ruin pillar in BeginPlay (P-5, bounds-fit, fail-closed). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dungeon")
     TObjectPtr<UStaticMeshComponent> PillarMesh;
 
@@ -48,10 +48,11 @@ public:
 
     virtual void Interact_Implementation(AActor* InteractingActor) override;
     virtual FText GetInteractionPrompt_Implementation() const override;
+    virtual void BeginPlay() override; // P-5: landmark art swap
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-    /** Placeholder tint through a dynamic material instance (ResourceNode idiom). */
+    /** Tint through a dynamic material instance (ResourceNode idiom) — applies to whichever mesh is live. */
     void ApplyActivationVisual();
 
     UFUNCTION()

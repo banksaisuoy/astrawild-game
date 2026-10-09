@@ -59,6 +59,17 @@ namespace AstrawildArtPack
                 FString MeshPath;
         };
 
+        /**
+         * Landmark art binding (P-5/P-6 of the art plan): the CC0 ruin pillar
+         * shared by resonance pillars (dungeons) and POI beacon markers (world).
+         * Consumers bounds-fit the mesh at runtime and keep the engine-primitive
+         * constructor stand-in as the fail-closed fallback (CP-00 rule 2).
+         */
+        struct FLandmarkArt
+        {
+                FString PillarMeshPath;
+        };
+
         /** Survivor art binding (CP-01/CP-08): player skeletal mesh + 7 clips. */
         struct FSurvivorArt
         {
@@ -102,6 +113,21 @@ namespace AstrawildArtPack
 
         /** All 10 resource node bindings. */
         ASTRAWILDCORE_API const TArray<FNodeArt>& GetNodeArt();
+
+        /** The shared landmark binding (ruin pillar for POI markers + resonance pillars). */
+        ASTRAWILDCORE_API const FLandmarkArt& GetLandmarkArt();
+
+        /**
+         * GS-1 (asset-path hardening): canonicalize a package-style asset path
+         * ("/Game/X/SM_A") into the full object-path form ("/Game/X/SM_A.SM_A").
+         * FSoftObjectPath's canonical form requires the object-name suffix;
+         * depending on engine version a package-style-only path parses to an
+         * INVALID asset path and then silently fails to resolve (the art binding
+         * falls back to primitives forever with no error). Paths that already
+         * carry a suffix (or are empty) pass through untouched. Pure string data —
+         * the automation suite pins the behavior without a world.
+         */
+        ASTRAWILDCORE_API FString CanonicalAssetPath(const FString& PackageStylePath);
 
         /** The survivor (player) binding. */
         ASTRAWILDCORE_API const FSurvivorArt& GetSurvivorArt();

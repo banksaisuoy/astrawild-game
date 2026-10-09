@@ -442,7 +442,7 @@ void AAstrawildDungeonRoomActor::BuildRoomDressing(const FAstrawildDungeonThemeP
         }
         for (int32 PathIdx = 0; PathIdx < MeshPaths.Num(); ++PathIdx)
         {
-            UStaticMesh* Mesh = Cast<UStaticMesh>(FSoftObjectPath(MeshPaths[PathIdx]).TryLoad());
+            UStaticMesh* Mesh = Cast<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(MeshPaths[PathIdx])).TryLoad());
             if (!Mesh)
             {
                 continue; // ArtPack soft-ref contract — fallback is simply fewer props

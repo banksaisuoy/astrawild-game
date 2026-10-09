@@ -82,11 +82,12 @@ Post-fix regression: ALL validators re-run green —
 
 | # | Confidence | Item | Evidence | Proposed fix (NOT applied — needs owner/machine) |
 |---|---|---|---|---|
-| O-1 | HIGH (dead code, zero link risk) | `AstrawildItemRegistrySubsystem.h:224` — `void BuildContentDefaults();` declared, never defined, never called | `rg BuildContentDefaults Source/` → exactly 1 hit (the declaration) | Delete the declaration (1-line diff) — or implement if it was meant as a content-bootstrapping seam. Left in place: removing a public header member is owner-territory. |
+| O-1 | CLOSED (this pass) | `AstrawildItemRegistrySubsystem.h:224` — `void BuildContentDefaults();` declared, never defined, never called | `rg BuildContentDefaults Source/` → exactly 1 hit (the declaration) | RESOLVED (GS-1 commit): declaration deleted; lint now 0 errors / 0 warnings. |
 | O-2 | MEDIUM (engine conformance) | `Tools/Python/_mock_unreal` symbol `RowStruct` is UNVERIFIED (49/50 mock symbols VERIFIED — see L3 harness output) | UE 5.8 Python docs not checkable from this sandbox; symbol unused by current tools, reserved for L5 DataTable generation | Verify `unreal.RowStruct`/DataTable struct-pick API name on the first engine run (ON_PC hour 0); adjust L5 tooling before running it. |
 | O-3 | MEDIUM (API drift, unverifiable here) | EnhancedInput `BindAction` overloads taking `(UObject*, FName)` were deprecated in later UE5 releases; the project compiles against 5.8 headers | Source uses delegate-style bindings (`BindAction(ValueAction, ...)`) in `AstrawildPlayerCharacter` — no FName-overload call sites found by the linter's citable-pattern scan | None needed statically; if the 5.8.2 compiler emits deprecation warnings, they are warnings, not blockers. |
 | O-4 | LOW (residual static-analysis limits) | The linter cannot prove: template instantiation errors, UHT-generated code expectations (e.g. `TObjectPtr<>` vs raw ptr in UPROPERTY under 5.8 default settings), PCH policy interactions, linker symbol dedup | By construction — these need MSVC + UHT | The machine compile in ON_PC hour 1-2 is the only closer. |
-| O-5 | LOW | 8 log categories DECLAREd in `AstrawildLog.h`, 8 DEFINEs found, 0 duplicates, 0 missing — clean (check I green) | linter output §I | none |
+| O-5 | LOW (informational, clean) | 8 log categories DECLAREd in `AstrawildLog.h`, 8 DEFINEs found, 0 duplicates, 0 missing — clean (check I green) | linter output §I | none |
+| O-6 | CLOSED-BY-HARDENING (GS-1, evidence F→B) | ArtPack tables stored package-style soft paths (`Path/SM_A`, no object suffix). `FSoftObjectPath`'s documented canonical form is `Path/SM_A.SM_A`; whether the engine parses the suffix-less form varies by version — worst case the binding silently fails to resolve and every art fallback stays live forever with no error. | 21 apply sites in ProductionContent + 8 in PlayerCharacter + 4 NPC sites in ContentLibrary + dungeon/sound sites now route through `AstrawildArtPack::CanonicalAssetPath()` (pure string transform; pinned by 4 new unit assertions in `ASTRAWILD.ArtPack.BindingContract`). Canonical form parses as a valid soft reference in EVERY engine version — strict improvement under both semantics. | None remaining statically; the automation test verifies the canonical round-trip on the machine day. |
 
 ## 5. Checks performed and clean (the A–I families)
 
@@ -101,7 +102,7 @@ Post-fix regression: ALL validators re-run green —
 - **E** include-closure: after fixes, every project-type usage resolves
   transitively EXCEPT the two real blockers (now fixed) — currently 1
   comment-proof residue: none.
-- **F** header/impl drift: 1 remaining (O-1); BlueprintImplementableEvent
+- **F** header/impl drift: 0 remaining (O-1 closed this pass); BlueprintImplementableEvent
   methods exempted by design.
 - **G** module closure: all 8 used engine modules present in
   `AstrawildCore.Build.cs` (Niagara, EnhancedInput, ProceduralMeshComponent,
@@ -116,4 +117,5 @@ Post-fix regression: ALL validators re-run green —
 
 R3 unchanged: "static level — engine build/test still required on the target
 machine." This document narrows the UNKNOWN from "33K unreviewed lines" to
-"1 dead declaration + engine-conformance residuals (O-2..O-4)."
+"0 dead declarations + engine-conformance residuals (O-2..O-4) + the GS-1
+canonical-path hardening (O-6, closed-by-hardening)."

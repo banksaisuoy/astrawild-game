@@ -29,8 +29,10 @@ AAstrawildResourceNode::AAstrawildResourceNode()
     RootComponent = VisualMesh;
     VisualMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 
-    // Shape-by-rarity kits (placeholder visuals — REPLACE_BEFORE_RELEASE with
-    // per-node-type meshes bound through UAstrawildResourceNodeDefinition::MeshOverride).
+    // Shape-by-rarity kits: FAIL-CLOSED stand-ins. The real per-node-type
+    // meshes are already bound through UAstrawildResourceNodeDefinition::MeshOverride
+    // (Art pack Batch 4, CP-04): ApplyNodeDefinition swaps them in whenever the
+    // soft ref resolves; these shapes only render when an import is missing.
     static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder"));
@@ -186,7 +188,8 @@ void AAstrawildResourceNode::ApplyRarityShape(const UAstrawildResourceNodeDefini
 void AAstrawildResourceNode::ApplyVisualTint(const FLinearColor& Tint)
 {
     // Placeholder tint through a dynamic material instance — every node TYPE is
-    // visually distinct with zero assets (REPLACE_BEFORE_RELEASE: real meshes).
+    // visually distinct with zero assets. The rarity-shape stand-ins carry this
+    // tint; the Batch-4 real meshes (MeshOverride) skip it (their own materials).
     // The engine basic-shape mesh already carries a material at slot 0; if a
     // level-placed node has none we simply skip tinting (never load synchronously
     // outside the constructor).

@@ -220,6 +220,4 @@ private:
 
     UPROPERTY()
     TMap<FName, TObjectPtr<UAstrawildDialogueTreeDefinition>> DialogueTrees;
-
-    void BuildContentDefaults();
 };

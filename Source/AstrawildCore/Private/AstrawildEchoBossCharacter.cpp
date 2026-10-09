@@ -808,7 +808,7 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
             TEXT("%s DEFEATED — the way opens."), *GetBossDisplayName().ToString())), 12000.0f);
         if (UWorld* DefeatWorld = GetWorld())
         {
-            const TSoftObjectPtr<USoundBase> DefeatCue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+            const TSoftObjectPtr<USoundBase> DefeatCue(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::Sfx::WeaknessHitImpact)));
             if (USoundBase* DefeatSound = DefeatCue.LoadSynchronous())
             {
                 UGameplayStatics::PlaySoundAtLocation(DefeatWorld, DefeatSound, GetActorLocation(), 1.6f);
@@ -1165,7 +1165,7 @@ void AAstrawildEchoBossCharacter::NotifyBossHitFeedback(const bool bWeaknessHit,
     // already ships: toast + the ArtPack-bound energy impact cue.
     if (UWorld* World = GetWorld())
     {
-        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::Sfx::WeaknessHitImpact)));
         if (USoundBase* ImpactSound = Cue.LoadSynchronous())
         {
             UGameplayStatics::PlaySoundAtLocation(World, ImpactSound, GetActorLocation());

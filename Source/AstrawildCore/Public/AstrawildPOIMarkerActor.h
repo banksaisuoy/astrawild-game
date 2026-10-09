@@ -12,9 +12,9 @@ class UAstrawildPOIDefinition;
 /**
  * Production V2 (Master Plan §5/§31): world marker for a data-driven point of
  * interest. The bootstrapper spawns one per registered POI definition; the POI
- * subsystem tracks discovery (radius check + rewards). Placeholder visuals are
- * a tinted pillar + light (REPLACE_BEFORE_RELEASE — Antigravity binds the
- * DressingSetId prop set per definition).
+ * subsystem tracks discovery (radius check + rewards). Visuals: the staged CC0
+ * ruin pillar (P-6, bounds-fit in BeginPlay, fail-closed to the engine cylinder)
+ * + a POI-type beacon light that dims after discovery.
  */
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildPOIMarkerActor : public AActor, public IAstrawildInteractable
