@@ -16,6 +16,7 @@
 ## Status
 
 - Overall: `PASS (through 03c2fe6) + COMPLETION STAGE PENDING FIRST COMPILE` — see the 2026-09-18 entry below.
+  > **2026-10-12 merge note:** the completion stage described below was authored on the `main` line (base `94a398c`, "54→55" in that line's view) and is now merged into `final-completion` at `1b03a39`, where the full suite is **135 contracts**. Its first engine compile is still pending — folded into ENGINE-RUN-1 as the #1 machine-day action.
   **Completion-stage session (2026-09-18, GLM/Super Z audit):**
   - Full repository audit performed; 46 LFS objects verified present on GitHub LFS storage and restorable (`git lfs pull`) — fresh clones without git-lfs previously received 130-byte pointer files and could not boot (fixed by `Setup_FirstRun.bat` with pointer-file detection).
   - **Game bookends added (source-complete, NOT yet engine-compiled):** title screen (`UAstrawildTitleMenuWidget` — New Journey / Continue / Controls / Quit), victory screen (`UAstrawildVictoryScreenWidget` on `Quest_VanguardProtocol` completion with session stats), death overlay with respawn countdown (`UAstrawildDeathOverlayWidget`), all pure-C++ UMG with zero new assets. Automation tests 54 → **55** (`ASTRAWILD.Quest.VictoryChainTermination`).

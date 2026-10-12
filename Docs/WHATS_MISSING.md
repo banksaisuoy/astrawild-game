@@ -5,6 +5,14 @@
 **Base commit inspected:** `94a398c` (main)
 **Resulting commit:** this one — see `git log -1`
 
+> **POST-MERGE ADDENDUM (2026-10-12):** this audit was written on the `main` line
+> where the suite count was 54 → 55. As of merge `1b03a39` the completion stage
+> lives on `final-completion`, where the world-free suite is **135 contracts**
+> (134 + the `ASTRAWILD.Quest.VictoryChainTermination` test shipped by this very
+> commit). The missing list in §3 is unchanged and still accurate; item 2 (first
+> compile of the completion stage) is now folded into ENGINE-RUN-1 as the #1
+> machine-day action.
+
 ---
 
 ## 1. Executive Summary

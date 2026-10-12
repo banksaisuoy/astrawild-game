@@ -112,3 +112,29 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Next session pointer: THE MACHINE DAY (preflight → Build → 6-step
   orchestrator → Setup_And_Play → Test → feel grading → package). The
   first MSVC compile is the only closer for everything still UNVERIFIED.
+
+
+## Session 2026-10-12 — MRC-1 completion-stage merge (SUPER Z / GLM)
+
+- User: "ทำต่อให้เสร็จแล้วเอาขึ้น git ด้วย" — continue to done + push.
+- Found: local-main `af11ab4` (title/victory/death bookends + .bat tooling
+  + WHATS_MISSING audit, 2026-09-17) was NEVER pushed and diverged from
+  final-completion at `94a398c` (120 commits apart). Remote WF commits
+  019a6eb/19da60c were NOT lost — they are ancestors of remote tip d326eee.
+- Diagnosed the 440-file "modified" worktree as pure noise (file-mode bits
+  + LFS pointer smudge; every oid identical) — safe force-checkout.
+- Merged af11ab4 into final-completion -> merge commit `1b03a39`.
+  4 conflict files resolved: PlayerController.h/.cpp (union: PCR 4 screens
+  + completion 3 screens; IsAnyScreenOpen covers 12), AutomationTests.cpp
+  (deterministic stitch: full 134 + VictoryChain -> 135 tests), README
+  (both sections kept).
+- Test-count gates synced 134->135 (validate_final_run, design_data
+  recount + JSON envelope, orchestrator log, ON_PC_TASKS, LIVE_STATE
+  current fields, REVIVAL_PLAN, README). Historical rows untouched.
+- Validators at 1b03a39: lint 0 errors · final_run ALL PASS · design 78/78
+  · repository PASS · dryrun 49/49.
+- Remaining: ENGINE-RUN-1 machine day (now includes FIRST compile of the
+  completion stage — #1 action per WHATS_MISSING §4) + push to origin.
+- Side-track answered earlier this session: UE5 cannot run/compile on
+  Google Colab via colab-mcp (Linux VM, no UE Linux binary, RAM/disk
+  limits, headless) — machine day stays on Windows UE 5.8.2.
