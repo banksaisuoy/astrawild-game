@@ -136,3 +136,21 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
   pipeline -> the crash is world-side, prime suspect: 8 Ori.alias sound/
   effect calls while the asset library is down. Variant A (those 8 calls
   bypassed with restore notes) is queued for staging/playtest.
+
+## Session 2026-10-12 (afternoon) — re-verification + deliverable hardening
+
+- Remote audit: origin/final-completion @ d326eee INCLUDES the 6-blocker
+  fixes (746c59f + be29cd3) — nothing lost upstream.
+- playable-delivery (956246d) restored from the bundle and RE-VERIFIED in
+  this session: validate_final_run ALL PASS · design 78/78 · lint 0 errors ·
+  validate_repository.sh PASSED.
+- Deliverable hardening: the 3-commit .patch was found BROKEN (format-patch
+  drops the merge commit; regenerated squash patch also fails on LFS clean
+  filter "does not match index"). Removed. The git bundle is the single,
+  verified transfer artifact (tested by restoring the branch from it).
+- Oriverse lane (project B, separate from UE5): platform recovered enough to
+  stage Variant A in a fresh guest (workspace 164MoSxV, quota 120) but the
+  worker pool stayed congested for 2h+ (stage job + 13-line control test in
+  the run_orders lane both queued, zero movement) — platform-side, proven by
+  the control-world diagnostic. Guest state saved for cross-session resume:
+  scripts/oriverse_guest_state_20261012.json + PORTING_NOTES.md §8.
