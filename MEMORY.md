@@ -112,3 +112,27 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Next session pointer: THE MACHINE DAY (preflight → Build → 6-step
   orchestrator → Setup_And_Play → Test → feel grading → package). The
   first MSVC compile is the only closer for everything still UNVERIFIED.
+
+## Verified facts (2026-10-12 playable-delivery merge)
+
+- `playable-delivery` branch (2b701d3 + 661ece1) merges the two previously
+  divergent lines: `final-completion` @ d326eee (verified line) + `main` @
+  af11ab4 (completion-stage game-loop bookends). Union strategy; no feature
+  dropped from either side.
+- Completion stage is now IN the verified line: UAstrawildTitleMenuWidget /
+  VictoryScreenWidget / DeathOverlayWidget + PlayerController screen
+  lifecycle + `ASTRAWILD.Quest.VictoryChainTermination`.
+- Automation tests: 135 (134 + victory chain). Gates updated together:
+  validate_final_run.py census, validate_design_data.py recount,
+  LIVE_EXECUTION_STATE CURRENT_TEST_COUNT; design_data.json regenerated.
+- Post-merge validators (real runs): validate_final_run ALL PASS ·
+  validate_design_data 78/78 · lint 0 errors / 1 advisory.
+- Push was NOT possible from the sandbox (no valid PAT on disk; the shared
+  chat token is treated as compromised and was never persisted). Transfer
+  artifact: git bundle + format-patch, prerequisites d326eee.
+- Oriverse lane: full world staged + validated clean (rev 1, 1144ms, 19
+  meshes) in fresh workspace; native playtest of the full world failed
+  (native_process_failed) while a 14-line control world PASSED the same
+  pipeline -> the crash is world-side, prime suspect: 8 Ori.alias sound/
+  effect calls while the asset library is down. Variant A (those 8 calls
+  bypassed with restore notes) is queued for staging/playtest.
