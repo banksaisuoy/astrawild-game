@@ -15,7 +15,15 @@
 
 ## Status
 
-- Overall: `PASS` — **PRODUCTION V2 CERTIFIED (54/54 automation tests PASS, 0 compile errors, 115/115 ArtPack assets, packaged Win64 build PASS)**
+- Overall: `PASS (through 03c2fe6) + COMPLETION STAGE PENDING FIRST COMPILE` — see the 2026-09-18 entry below.
+  **Completion-stage session (2026-09-18, GLM/Super Z audit):**
+  - Full repository audit performed; 46 LFS objects verified present on GitHub LFS storage and restorable (`git lfs pull`) — fresh clones without git-lfs previously received 130-byte pointer files and could not boot (fixed by `Setup_FirstRun.bat` with pointer-file detection).
+  - **Game bookends added (source-complete, NOT yet engine-compiled):** title screen (`UAstrawildTitleMenuWidget` — New Journey / Continue / Controls / Quit), victory screen (`UAstrawildVictoryScreenWidget` on `Quest_VanguardProtocol` completion with session stats), death overlay with respawn countdown (`UAstrawildDeathOverlayWidget`), all pure-C++ UMG with zero new assets. Automation tests 54 → **55** (`ASTRAWILD.Quest.VictoryChainTermination`).
+  - **Launch tooling rewritten:** `_FindEngine.bat` (registry + common-path engine locator), `Setup_FirstRun.bat` (LFS bootstrap + content validation), `Launch_ASTRAWILD.bat` / `Launch_ASTRAWILD_Editor.bat` (relative paths), `Import_Art.bat`, `Package_Game.bat`, `Build_Project.bat`. The old hardcoded `E:\AstrawildGame` / `E:\Epic Games\UnrealEngine` scripts are retired.
+  - Static review of all post-`03c2fe6` drift (5 files, +291/−126) found no compile blockers. **First engine compile of this commit is the #1 pending action on the UE 5.8 machine.**
+  - Full findings + honest missing list: `Docs/WHATS_MISSING.md`.
+
+- Previous certification (baseline): **PRODUCTION V2 CERTIFIED at `03c2fe6` (54/54 automation tests PASS, 0 compile errors, 115/115 ArtPack assets, packaged Win64 build PASS)**
   Verified on host machine (`Docs/ENGINE_LOGS/ANTIGRAVITY_LATEST_VERIFICATION.md`):
   - **C++ Compile**: `ASTRAWILDEditor Win64 Development` — 0 errors (76.62s)
   - **Automation Tests**: 54 / 54 tests PASSED (100% Green, 100.40s)
