@@ -86,6 +86,10 @@ private:
     float ActiveScanMultiplier = 1.0f;
 
     void ObservePlayer(AAstrawildPlayerCharacter* Player, float DeltaTime);
+
+    /** FPP-1: shared cone/progress observation for one candidate (Echo or boss). */
+    void ObserveCandidate(AAstrawildPlayerCharacter* Player, const FName DefinitionId,
+        const FVector& TargetLocation, float DeltaTime);
     void GrantKnowledgeMilestones(FAstrawildJournalEntry& Entry, const FName DefinitionId);
     class UAstrawildResearchSubsystem* GetResearch() const;
 

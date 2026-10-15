@@ -49,6 +49,17 @@ public:
     bool TryUnlockTech(FName TechId);
 
     /**
+     * LCP-5 (LAN co-op): push the authoritative pool (RP + unlocks) into the
+     * GameState's replicated mirror so remote clients' local subsystems stay
+     * in sync (host-authoritative pool; GameInstance subsystems never
+     * replicate). Server-side; safe no-op without a world/GameState.
+     */
+    void SyncMirrorToGameState();
+
+    /** LCP-5: toast every connected player when a technology unlocks (PART 18 feedback). */
+    void NotifyPlayersResearchUnlocked(FName TechId);
+
+    /**
      * Batch 6: unlock without cost or prerequisites — the dungeon's unique
      * technology reward path (roadmap V3 §21). Broadcasts the same events as
      * TryUnlockTech so quests/journal/UI react normally. No-op when already

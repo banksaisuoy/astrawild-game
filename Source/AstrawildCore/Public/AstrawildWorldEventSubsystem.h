@@ -57,6 +57,14 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|WorldEvent")
     TArray<FName> GetActiveEventIds() const;
 
+    /**
+     * PCR-3: the full runtime state of the running events (id, zone, world
+     * location, end minute) — the world map pins event markers from this.
+     * Read-only snapshot; the event roll/mutation path is untouched.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|WorldEvent")
+    TArray<FAstrawildWorldEventSaveData> GetActiveRuntimeEvents() const { return ActiveEvents; }
+
     /** Display names of the running events (HUD banner). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|WorldEvent")
     FText GetActiveEventSummaryText() const;

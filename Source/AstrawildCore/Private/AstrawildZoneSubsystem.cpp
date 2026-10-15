@@ -23,7 +23,8 @@ namespace
     FAstrawildZoneDescriptor MakeZone(const EAstrawildZone Zone, const TCHAR* Id, const TCHAR* Name,
         const TCHAR* Subtitle, const float CenterX, const float CenterY, const FLinearColor& Tint,
         const FLinearColor& LightColor, const float Base, const float Amplitude, const float Ridge,
-        const int32 Threat)
+        const int32 Threat, const EAstrawildZoneHazard Hazard = EAstrawildZoneHazard::None,
+        const float HazardPressure = 0.0f)
     {
         FAstrawildZoneDescriptor Desc;
         Desc.Zone = Zone;
@@ -39,6 +40,8 @@ namespace
         Desc.HeightAmplitude = Amplitude;
         Desc.RidgeBlend = Ridge;
         Desc.ThreatLevel = Threat;
+        Desc.HazardType = Hazard;
+        Desc.HazardPressure = HazardPressure;
         return Desc;
     }
 }
@@ -55,12 +58,16 @@ const TArray<FAstrawildZoneDescriptor>& UAstrawildZoneSubsystem::GetAllZones()
         // Sea zones (floor below SeaLevelZ): Azure Shallows, Tidebreaker Isles,
         // Pearlsea Reef — the runtime water planes cover those rects.
 
-        // North row.
+        // North row. Frostveil is the cold identity (−12°C on top of weather);
+        // Ember Ridge simmers over its caldera (+10°C); the Sunscar's white
+        // heat is the hottest surface pressure (+12°C).
         Zones.Add(MakeZone(EAstrawildZone::FrostveilExpanse, TEXT("Zone_Frostveil"), TEXT("Frostveil Expanse"),
             TEXT("Wind-scoured snowfields above the treeline."),
             ColumnX[0], RowY[0], FLinearColor(0.68f, 0.78f, 0.92f), FLinearColor(0.55f, 0.75f, 1.0f),
-            900.0f, 2200.0f, 0.8f, 3));
+            900.0f, 2200.0f, 0.8f, 3, EAstrawildZoneHazard::ColdPressure, 12.0f));
 
+        // Temperate crystal woods — no ambient hazard (small/zero values are a
+        // valid identity; the Glimmerwood's danger is its wildlife, not its air).
         Zones.Add(MakeZone(EAstrawildZone::Glimmerwood, TEXT("Zone_Glimmerwood"), TEXT("Glimmerwood"),
             TEXT("Crystal spires hum where the First Dawn fell."),
             ColumnX[1], RowY[0], FLinearColor(0.71f, 0.55f, 1.0f), FLinearColor(0.70f, 0.50f, 1.0f),
@@ -69,18 +76,21 @@ const TArray<FAstrawildZoneDescriptor>& UAstrawildZoneSubsystem::GetAllZones()
         Zones.Add(MakeZone(EAstrawildZone::EmberRidge, TEXT("Zone_EmberRidge"), TEXT("Ember Ridge"),
             TEXT("Obsidian spires over a sleeping caldera."),
             ColumnX[2], RowY[0], FLinearColor(0.82f, 0.45f, 0.30f), FLinearColor(1.0f, 0.50f, 0.20f),
-            500.0f, 2600.0f, 0.9f, 3));
+            500.0f, 2600.0f, 0.9f, 3, EAstrawildZoneHazard::HeatPressure, 10.0f));
 
         Zones.Add(MakeZone(EAstrawildZone::SunscarDesert, TEXT("Zone_Sunscar"), TEXT("Sunscar Desert"),
             TEXT("Dune seas where the sun was buried."),
             ColumnX[3], RowY[0], FLinearColor(0.87f, 0.78f, 0.55f), FLinearColor(1.0f, 0.85f, 0.50f),
-            150.0f, 900.0f, 0.25f, 3));
+            150.0f, 900.0f, 0.25f, 3, EAstrawildZoneHazard::HeatPressure, 12.0f));
 
-        // Middle row.
+        // Middle row. Dusk Marsh's muck and fog chill (−4°C); Dawn Fields stays
+        // hazard 0 BY DESIGN (the starter zone stays gentle); the Hollow
+        // Approach's ash-choked air tires the lungs (−6 stamina regen/s);
+        // the Azure Shallows read a mild tropical sun (+3°C).
         Zones.Add(MakeZone(EAstrawildZone::DuskMarsh, TEXT("Zone_DuskMarsh"), TEXT("Dusk Marsh"),
             TEXT("Muck pools and reeds that remember the flood."),
             ColumnX[0], RowY[1], FLinearColor(0.37f, 0.55f, 0.43f), FLinearColor(0.30f, 0.90f, 0.70f),
-            -60.0f, 260.0f, 0.0f, 2));
+            -60.0f, 260.0f, 0.0f, 2, EAstrawildZoneHazard::ColdPressure, 4.0f));
 
         Zones.Add(MakeZone(EAstrawildZone::DawnFields, TEXT("Zone_DawnFields"), TEXT("Dawn Fields"),
             TEXT("Home. Soft hills, first light, Dawnstead village."),
@@ -90,33 +100,35 @@ const TArray<FAstrawildZoneDescriptor>& UAstrawildZoneSubsystem::GetAllZones()
         Zones.Add(MakeZone(EAstrawildZone::HollowApproach, TEXT("Zone_HollowApproach"), TEXT("Hollow Approach"),
             TEXT("Ash-choked wilds before the Underlight gate."),
             ColumnX[2], RowY[1], FLinearColor(0.54f, 0.50f, 0.57f), FLinearColor(0.90f, 0.40f, 0.35f),
-            260.0f, 1300.0f, 0.5f, 4));
+            260.0f, 1300.0f, 0.5f, 4, EAstrawildZoneHazard::AshLung, 6.0f));
 
         Zones.Add(MakeZone(EAstrawildZone::AzureShallows, TEXT("Zone_AzureShallows"), TEXT("Azure Shallows"),
             TEXT("A patient sea hiding its drowned bells."),
             ColumnX[3], RowY[1], FLinearColor(0.35f, 0.62f, 0.72f), FLinearColor(0.30f, 0.80f, 1.0f),
-            -1400.0f, 700.0f, 0.05f, 2));
+            -1400.0f, 700.0f, 0.05f, 2, EAstrawildZoneHazard::HeatPressure, 3.0f));
 
-        // South row.
+        // South row. Sea wind on the isles (−6°C); the cloudline wind chill
+        // of Stormcrest (−9°C); the Verdant Reach's humid heat (+4°C); the
+        // Pearlsea's exposed reef sun (+5°C).
         Zones.Add(MakeZone(EAstrawildZone::TidebreakerIsles, TEXT("Zone_TidebreakerIsles"), TEXT("Tidebreaker Isles"),
             TEXT("Broken crowns of a drowned mountain range."),
             ColumnX[0], RowY[2], FLinearColor(0.62f, 0.70f, 0.66f), FLinearColor(0.40f, 0.95f, 0.85f),
-            -1600.0f, 3400.0f, 0.55f, 3));
+            -1600.0f, 3400.0f, 0.55f, 3, EAstrawildZoneHazard::ColdPressure, 6.0f));
 
         Zones.Add(MakeZone(EAstrawildZone::StormcrestHighlands, TEXT("Zone_Stormcrest"), TEXT("Stormcrest Highlands"),
             TEXT("Thunder herds graze above the cloudline."),
             ColumnX[1], RowY[2], FLinearColor(0.55f, 0.52f, 0.48f), FLinearColor(0.85f, 0.90f, 1.0f),
-            600.0f, 3200.0f, 0.85f, 3));
+            600.0f, 3200.0f, 0.85f, 3, EAstrawildZoneHazard::ColdPressure, 9.0f));
 
         Zones.Add(MakeZone(EAstrawildZone::VerdantReach, TEXT("Zone_VerdantReach"), TEXT("Verdant Reach"),
             TEXT("A jungle that grows toward yesterday."),
             ColumnX[2], RowY[2], FLinearColor(0.34f, 0.66f, 0.36f), FLinearColor(0.55f, 1.0f, 0.45f),
-            350.0f, 1100.0f, 0.1f, 2));
+            350.0f, 1100.0f, 0.1f, 2, EAstrawildZoneHazard::HeatPressure, 4.0f));
 
         Zones.Add(MakeZone(EAstrawildZone::PearlseaReef, TEXT("Zone_PearlseaReef"), TEXT("Pearlsea Reef"),
             TEXT("Coral cathedrals the tide never forgets."),
             ColumnX[3], RowY[2], FLinearColor(0.42f, 0.72f, 0.80f), FLinearColor(0.55f, 0.95f, 1.0f),
-            -1500.0f, 2400.0f, 0.35f, 4));
+            -1500.0f, 2400.0f, 0.35f, 4, EAstrawildZoneHazard::HeatPressure, 5.0f));
     }
     return Zones;
 }
@@ -218,6 +230,35 @@ bool UAstrawildZoneSubsystem::IsSeaZone(const EAstrawildZone Zone)
 {
     const FAstrawildZoneDescriptor* Desc = FindZone(Zone);
     return Desc && (Zone == EAstrawildZone::AzureShallows || Zone == EAstrawildZone::TidebreakerIsles || Zone == EAstrawildZone::PearlseaReef);
+}
+
+float FAstrawildZoneDescriptor::GetHazardTemperatureOffsetCelsius() const
+{
+    // DP-7: thermal hazards layer ON TOP of the global weather offset — the
+    // survival tick adds this to (base climate + weather). Pressure clamps at
+    // zero so a mis-authored row can never invert the hazard's direction.
+    const float SafePressure = FMath::Max(0.0f, HazardPressure);
+    switch (HazardType)
+    {
+    case EAstrawildZoneHazard::ColdPressure:
+        return -SafePressure;
+    case EAstrawildZoneHazard::HeatPressure:
+        return SafePressure;
+    default:
+        return 0.0f;
+    }
+}
+
+float FAstrawildZoneDescriptor::GetHazardStaminaRegenPenalty() const
+{
+    // DP-7: ash lung is respiratory, not thermal — it suppresses passive
+    // stamina regen instead of moving the temperature. The survival tick
+    // clamps the net regen at zero (a hazard never becomes a drain).
+    if (HazardType == EAstrawildZoneHazard::AshLung)
+    {
+        return FMath::Max(0.0f, HazardPressure);
+    }
+    return 0.0f;
 }
 
 bool UAstrawildZoneSubsystem::HasDiscoveredZone(const EAstrawildZone Zone) const

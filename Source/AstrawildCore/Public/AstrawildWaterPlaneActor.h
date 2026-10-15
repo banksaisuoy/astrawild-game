@@ -27,6 +27,15 @@ public:
     /** Builds the plane covering the given rect (world XY, cm) at SeaLevelZ. */
     void BuildPlane(const FBox2D& WorldRect);
 
+    /**
+     * DP-9 (dungeon depth — additive): same plane at an explicit box-center Z
+     * and optional thickness (default = the sea contract's 120cm slab). Room-
+     * local placement for the Sunken Vault's flooded-floor accent uses a thin
+     * film (the walkable top stays a small step above the room floor — never a
+     * progression blocker); the sea-level path above stays byte-identical.
+     */
+    void BuildPlaneAtZ(const FBox2D& WorldRect, float SurfaceZ, float BoxThicknessCm = 120.0f);
+
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Water", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UProceduralMeshComponent> SurfaceMesh;

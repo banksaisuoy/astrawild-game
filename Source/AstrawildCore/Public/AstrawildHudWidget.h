@@ -54,6 +54,10 @@ protected:
     UPROPERTY()
     TObjectPtr<UTextBlock> ResearchText;
 
+    /** LCP-6: persistent session-mode line — SINGLE PLAYER / LAN HOST / LAN CLIENT (PART 6). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> SessionModeText;
+
     /** Audit C-6: build-mode readout (center, above the prompt). */
     UPROPERTY()
     TObjectPtr<UTextBlock> BuildText;
@@ -69,6 +73,10 @@ protected:
 
     UPROPERTY()
     TObjectPtr<UTextBlock> CommandText;
+
+    /** GDP: party ability [T] + player smart-cast [Y] readiness readout. */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> AbilityText;
 
     /** Wave 3: equipped weapon + shield readout (right-bottom). */
     UPROPERTY()
@@ -92,6 +100,10 @@ protected:
 
     UPROPERTY()
     TObjectPtr<UTextBlock> BossText;
+
+    /** Final Run (FR-6): persistent ending verdict banner (post-game overlay). */
+    UPROPERTY()
+    TObjectPtr<UTextBlock> EndingBannerText;
 
     /** Scanner + drone companion status line (under the capture chance). */
     UPROPERTY()

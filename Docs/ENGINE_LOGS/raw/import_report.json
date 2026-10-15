@@ -1,0 +1,64 @@
+{
+  "stages": {
+    "textures": {
+      "imported": 44,
+      "failed": 0
+    },
+    "audio": {
+      "imported": 72,
+      "failed": 0
+    },
+    "meshes": {
+      "imported": 32,
+      "failed": 0,
+      "anims": {
+        "AM_Bastionbeetle_Idle": "/Game/Characters/Echoes/AM_Bastionbeetle_Idle",
+        "AM_Bastionbeetle_Move": "/Game/Characters/Echoes/AM_Bastionbeetle_Move",
+        "AM_Bastionbeetle_Hit": "/Game/Characters/Echoes/AM_Bastionbeetle_Hit",
+        "AM_Cindermule_Idle": "/Game/Characters/Echoes/AM_Cindermule_Idle",
+        "AM_Cindermule_Move": "/Game/Characters/Echoes/AM_Cindermule_Move",
+        "AM_Cindermule_Hit": "/Game/Characters/Echoes/AM_Cindermule_Hit",
+        "AM_Deepdelver_Idle": "/Game/Characters/Echoes/AM_Deepdelver_Idle",
+        "AM_Deepdelver_Move": "/Game/Characters/Echoes/AM_Deepdelver_Move",
+        "AM_Deepdelver_Hit": "/Game/Characters/Echoes/AM_Deepdelver_Hit",
+        "AM_Mistmender_Idle": "/Game/Characters/Echoes/AM_Mistmender_Idle",
+        "AM_Mistmender_Move": "/Game/Characters/Echoes/AM_Mistmender_Move",
+        "AM_Mistmender_Hit": "/Game/Characters/Echoes/AM_Mistmender_Hit",
+        "AM_Terraquill_Idle": "/Game/Characters/Echoes/AM_Terraquill_Idle",
+        "AM_Terraquill_Move": "/Game/Characters/Echoes/AM_Terraquill_Move",
+        "AM_Terraquill_Hit": "/Game/Characters/Echoes/AM_Terraquill_Hit",
+        "AM_Voltpylon_Idle": "/Game/Characters/Echoes/AM_Voltpylon_Idle",
+        "AM_Voltpylon_Move": "/Game/Characters/Echoes/AM_Voltpylon_Move",
+        "AM_Voltpylon_Hit": "/Game/Characters/Echoes/AM_Voltpylon_Hit",
+        "AM_Survivor_Idle": "/Game/Characters/Survivor/AM_Survivor_Idle",
+        "AM_Survivor_Walk": "/Game/Characters/Survivor/AM_Survivor_Walk",
+        "AM_Survivor_Run": "/Game/Characters/Survivor/AM_Survivor_Run",
+        "AM_Survivor_Jump": "/Game/Characters/Survivor/AM_Survivor_Jump",
+        "AM_Survivor_Aim": "/Game/Characters/Survivor/AM_Survivor_Aim",
+        "AM_Survivor_Fire": "/Game/Characters/Survivor/AM_Survivor_Fire",
+        "AM_Survivor_Gather": "/Game/Characters/Survivor/AM_Survivor_Gather"
+      }
+    },
+    "niagara": {
+      "created": 3
+    },
+    "sockets": {
+      "added": 0
+    }
+  },
+  "missing": [],
+  "warnings": [
+    "sockets on /Game/Characters/Survivor/SK_Survivor_Exosuit: SkeletalMesh: Property 'Sockets' for attribute 'sockets' on 'SkeletalMesh' is protected and cannot be read",
+    "sockets on /Game/Weapons/Meshes/SM_Weapon_ArcCannon: StaticMesh: Property 'Sockets' for attribute 'sockets' on 'StaticMesh' is protected and cannot be read",
+    "sockets on /Game/Weapons/Meshes/SM_Weapon_PlasmaCarbine: StaticMesh: Property 'Sockets' for attribute 'sockets' on 'StaticMesh' is protected and cannot be read",
+    "sockets on /Game/Weapons/Meshes/SM_Weapon_Railgun: StaticMesh: Property 'Sockets' for attribute 'sockets' on 'StaticMesh' is protected and cannot be read",
+    "sockets on /Game/Weapons/Meshes/SM_Weapon_ScrapRifle: StaticMesh: Property 'Sockets' for attribute 'sockets' on 'StaticMesh' is protected and cannot be read",
+    "sockets on /Game/Weapons/Meshes/SM_Weapon_SingularityCannon: StaticMesh: Property 'Sockets' for attribute 'sockets' on 'StaticMesh' is protected and cannot be read"
+  ],
+  "errors": [],
+  "coverage": {
+    "resolved": 115,
+    "missing": []
+  },
+  "total_missing": 0
+}

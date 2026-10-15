@@ -1,5 +1,7 @@
 #include "AstrawildVillageActor.h"
 
+#include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
+
 #include "AstrawildCore.h"
 #include "AstrawildLog.h"
 #include "Components/LightComponent.h"
@@ -21,6 +23,12 @@ AAstrawildVillageActor::AAstrawildVillageActor()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+    // LCP-2: villages replicate (identity properties) so LAN clients build the
+    // identical hamlet locally — the hut ring is deterministic from
+    // VillageId/HutCount/Radius, so the shell itself never replicates.
+    bReplicates = true;
+    NetUpdateFrequency = 1.0f;
+
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
@@ -38,10 +46,20 @@ void AAstrawildVillageActor::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (GetLocalRole() == ROLE_Authority)
-    {
-        BuildVillage();
-    }
+    // LCP-2: build the hamlet on EVERY machine — the shell is deterministic
+    // from the replicated identity properties (huts never replicate). The
+    // authority path is unchanged for standalone/listen-host.
+    BuildVillage();
+}
+
+void AAstrawildVillageActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildVillageActor, VillageId);
+    DOREPLIFETIME(AAstrawildVillageActor, VillageName);
+    DOREPLIFETIME(AAstrawildVillageActor, HutCount);
+    DOREPLIFETIME(AAstrawildVillageActor, VillageRadius);
+    DOREPLIFETIME(AAstrawildVillageActor, bCoastal);
 }
 
 AStaticMeshActor* AAstrawildVillageActor::SpawnShape(const TCHAR* MeshPath, const FVector& Location, const FVector& Scale, const FRotator& Rotation)

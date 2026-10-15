@@ -25,10 +25,10 @@ public:
     UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|RestPoint")
     FAstrawildRestPointActivated OnActivated;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|RestPoint")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|RestPoint", Replicated)
     FGuid WorldObjectId;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|RestPoint")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|RestPoint", Replicated)
     bool bActive = false;
 
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|RestPoint")
@@ -42,4 +42,5 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-2
 };

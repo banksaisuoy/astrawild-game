@@ -1,0 +1,337 @@
+{
+  "base_meshes": {
+    "SK_Base_ArmoredBeetle": {
+      "bytes": 65124,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredBeetle.glb",
+      "sha256": "c3aaea7f7753a18ebde16e8592574f3646cf96bb9b5f4addd9bc3357b6354f87",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ArmoredBeetle"
+    },
+    "SK_Base_ArmoredCrab": {
+      "bytes": 95004,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredCrab.glb",
+      "sha256": "24cca53c4d632d024c8daf91eae0c0dba899e1fdd8d5c3da6ef9dc0a660bc689",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ArmoredCrab"
+    },
+    "SK_Base_CyborgBeast": {
+      "bytes": 96384,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgBeast.glb",
+      "sha256": "9f770074e3ce5bfe8e426ee69a69bff0d992cca7063d0b1959153cf723a61208",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_CyborgBeast"
+    },
+    "SK_Base_CyborgSerpent": {
+      "bytes": 58144,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgSerpent.glb",
+      "sha256": "6969925acfa0ca4892b562e5ba2cdcd4c2cd1ec032f8ea7aa3218a5a508e1a8d",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_CyborgSerpent"
+    },
+    "SK_Base_ElemDrake": {
+      "bytes": 104088,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemDrake.glb",
+      "sha256": "d6f8594fe9ef4f8054b394559af0cc98968f7fdf2c66a4cb99542ae293af45da",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ElemDrake"
+    },
+    "SK_Base_ElemWisp": {
+      "bytes": 53032,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemWisp.glb",
+      "sha256": "dfcea861d5efeffbf5757d412f3bcf8a7c864aef1229d609ac590f6a809b28ba",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_ElemWisp"
+    },
+    "SK_Base_GolemQuadruped": {
+      "bytes": 93768,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_GolemQuadruped.glb",
+      "sha256": "35247c670525e756de6671249cd47aecc856314b0c2f323bbc858ff8d5f682e2",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_GolemQuadruped"
+    },
+    "SK_Base_MonolithColossus": {
+      "bytes": 71724,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MonolithColossus.glb",
+      "sha256": "68b6dae3852d5a08c9f24f27a6cdd4234d755c18bb484a1f0b838a521edcdfe0",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MonolithColossus"
+    },
+    "SK_Base_Mushroomling": {
+      "bytes": 48736,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_Mushroomling.glb",
+      "sha256": "5534af97153bf4c861791487ef62b75b777bf7019b682f727bf2e0f87b89940b",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_Mushroomling"
+    },
+    "SK_Base_MutantAvian": {
+      "bytes": 52592,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantAvian.glb",
+      "sha256": "8626b1ba12a20abdb4e28ae17c56cb1ac7e3ab95b22e3252b83b9d455087b67c",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MutantAvian"
+    },
+    "SK_Base_MutantBeast": {
+      "bytes": 96912,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantBeast.glb",
+      "sha256": "07060b80d6ccb5935b9d0ae3de05f9a4106463e0acc6abbafd21f71eb7dfad86",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_MutantBeast"
+    },
+    "SK_Base_PlantMaw": {
+      "bytes": 76396,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_PlantMaw.glb",
+      "sha256": "afdec498a57119a59998bf193a050cca977c1b47bddd6a90f77f39abb63cc876",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_PlantMaw"
+    },
+    "SK_Base_SpiritOrb": {
+      "bytes": 56120,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritOrb.glb",
+      "sha256": "48318a3fb0b76bc1d243df0575b01528b0fd777bf5a878b890023fa90dadef1b",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_SpiritOrb"
+    },
+    "SK_Base_SpiritWisp": {
+      "bytes": 43568,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritWisp.glb",
+      "sha256": "3706e8fb8148df6d003876e910277852210cf982689e7ea00710ab867214ce7c",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_SpiritWisp"
+    },
+    "SK_Base_VoidBlob": {
+      "bytes": 56660,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidBlob.glb",
+      "sha256": "1da9b4fbc94ed5042732cc840dfcaaf69ae4411378134b4b44d2e59259d645ef",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_VoidBlob"
+    },
+    "SK_Base_VoidTentacle": {
+      "bytes": 57864,
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidTentacle.glb",
+      "sha256": "8819b7b1dec7063d1d34bd5e52dd8f9be37043253b1d2a1f75cdf83c0672e0b3",
+      "status": "BAKED / IMPORT_PENDING",
+      "ue_path": "/Game/Characters/Echoes/BaseMeshes/SK_Base_VoidTentacle"
+    }
+  },
+  "lfs_note": "Staged .wav files are covered by the existing *.wav LFS pattern \u2014 commit with git add (LFS hooks handle them). Baked GLBs ride *.glb.",
+  "packs": [
+    {
+      "bytes": 32147040,
+      "files": 55,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://quaternius.com/license.html",
+      "pack": "Quaternius Ultimate Monsters",
+      "source_url": "https://quaternius.com/packs/ultimatemonsters.html",
+      "status": "LICENSE_VERIFIED / LOCAL_PRESENT",
+      "usage": "Sci-Fantasy monster reference/archetype library (61 files: Big/Blob/Flying glTF + atlas)"
+    },
+    {
+      "bytes": 25589320,
+      "files": 148,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "pack": "Kenney Sci-fi Sounds",
+      "source_url": "https://kenney.nl/assets/sci-fi-sounds",
+      "status": "LICENSE_VERIFIED / LOCAL_PRESENT",
+      "usage": "Sci-Fantasy Echo vocalization/mechanical sound pool"
+    },
+    {
+      "bytes": 4178379,
+      "files": 201,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "pack": "Kenney Interface Sounds",
+      "source_url": "https://kenney.nl/assets/interface-sounds",
+      "status": "LICENSE_VERIFIED / LOCAL_PRESENT",
+      "usage": "Sci-Fantasy spirit/plant/void cue pool"
+    },
+    {
+      "bytes": 10186836,
+      "files": 257,
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "pack": "Kenney Impact Sounds",
+      "source_url": "https://kenney.nl/assets/impact-sounds",
+      "status": "LICENSE_VERIFIED / LOCAL_PRESENT",
+      "usage": "Armored-organic impact layer (hit feedback)"
+    },
+    {
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://polyhaven.com/license",
+      "pack": "Poly Haven (creatures/rocks)",
+      "source_url": "https://polyhaven.com/",
+      "status": "REJECTED",
+      "usage": "REJECTED \u2014 photography/HDR/texture library without creature/monster 3D models; the baked archetype bases cover the need"
+    },
+    {
+      "license": "CC0 1.0 (per-asset filter required)",
+      "license_url": "https://sketchfab.com/licenses",
+      "pack": "Sketchfab CC0 monster search",
+      "source_url": "https://sketchfab.com/search?features=downloadable&licenses=cc0&q=monster+robot+dragon+golem",
+      "status": "APPROVED-NOT-REQUIRED",
+      "usage": "APPROVED-NOT-REQUIRED \u2014 reserve source; every Sketchfab CC0 asset needs individual license verification before any download"
+    }
+  ],
+  "sound_sets": {
+    "SFXSet_AncientConstruct": [
+      {
+        "bytes": 441078,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_AncientConstruct_0.wav",
+        "sha256": "d5ca23230a5b2cd0f956c6bc9417926d36441cbc422120b6b8285160da8d78fc",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/computerNoise_002.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_AncientConstruct_0",
+        "usage": "servo rumble"
+      },
+      {
+        "bytes": 46966,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_AncientConstruct_1.wav",
+        "sha256": "1d00c653f8312e350141314ea08fac3bece83cb330bd24634d635d1b3096d4f7",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/doorClose_000.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_AncientConstruct_1",
+        "usage": "stone plate slam"
+      }
+    ],
+    "SFXSet_ArmoredOrganic": [
+      {
+        "bytes": 56076,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_ArmoredOrganic_0.wav",
+        "sha256": "9ec5d3766917954ba0012568020e2c598ccddf4df7640c7b3c1f3af89470757b",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/impactMetal_000.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_ArmoredOrganic_0",
+        "usage": "chitin clank"
+      },
+      {
+        "bytes": 47052,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_ArmoredOrganic_1.wav",
+        "sha256": "a269077562868f3250a1087053bf4cc35c3c7477c3a5b68ecb0cbd98f01775f0",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/doorClose_002.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_ArmoredOrganic_1",
+        "usage": "carapace slam"
+      }
+    ],
+    "SFXSet_ElementalBeast": [
+      {
+        "bytes": 60806,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_ElementalBeast_0.wav",
+        "sha256": "137458f0fc36d5cb0a99b530a8b326a4a295c4a160da93bc6d2180327dd90c97",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/laserSmall_002.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_ElementalBeast_0",
+        "usage": "energy crackle"
+      },
+      {
+        "bytes": 119746,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_ElementalBeast_1.wav",
+        "sha256": "5337e3d4732be263702969f482340eee5663083d0315922050e4e9877a9280c0",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/explosionCrunch_001.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_ElementalBeast_1",
+        "usage": "elemental blast"
+      }
+    ],
+    "SFXSet_EtherealSpirit": [
+      {
+        "bytes": 17634,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_EtherealSpirit_0.wav",
+        "sha256": "3dd4f9cb0905e7662356d41c28a8f85a2e5845790c57b36825599e9836b7d192",
+        "source": "ArtSource/Audio/Kenney_InterfaceSounds/Wav/pluck_001.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_EtherealSpirit_0",
+        "usage": "spirit chime"
+      },
+      {
+        "bytes": 29406,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_EtherealSpirit_1.wav",
+        "sha256": "ac249812fb97f5a1141a35da03bbb80dc1c633f7c203362893676189ec562abb",
+        "source": "ArtSource/Audio/Kenney_InterfaceSounds/Wav/question_002.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_EtherealSpirit_1",
+        "usage": "wisp call"
+      }
+    ],
+    "SFXSet_MechanicalHybrid": [
+      {
+        "bytes": 441078,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_MechanicalHybrid_0.wav",
+        "sha256": "5057ee5160942ed732036be2bb2bc7b2f664266380667da9ed2be88dd73dcaf5",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/computerNoise_000.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_MechanicalHybrid_0",
+        "usage": "servo whirr"
+      },
+      {
+        "bytes": 441078,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_MechanicalHybrid_1.wav",
+        "sha256": "15a5ac31fc22475751a5090ebb22d5dc2c73a5a8068baf1ab777c83bcf219c28",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/engineCircular_001.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_MechanicalHybrid_1",
+        "usage": "motor pulse"
+      }
+    ],
+    "SFXSet_MutatedFauna": [
+      {
+        "bytes": 415486,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_MutatedFauna_0.wav",
+        "sha256": "bf6dcd11eeec39db0d7977faed61ed4c480b2edc2001d1f0c0a8fb79fbe73618",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/slime_001.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_MutatedFauna_0",
+        "usage": "organic vocal"
+      },
+      {
+        "bytes": 12366,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_MutatedFauna_1.wav",
+        "sha256": "972db78df27a1094bdc67a52bc8c56acb74cfdd4111e5ff6f8f2b1c24804389b",
+        "source": "ArtSource/Audio/Kenney_InterfaceSounds/Wav/scratch_002.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_MutatedFauna_1",
+        "usage": "mutant scratch"
+      }
+    ],
+    "SFXSet_PlantMonster": [
+      {
+        "bytes": 28594,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_PlantMonster_0.wav",
+        "sha256": "2b3bcc4fdc3f9fcbd21b28748fe9285fd696af166a10e1f27b233ded211ac7b0",
+        "source": "ArtSource/Audio/Kenney_InterfaceSounds/Wav/pluck_002.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_PlantMonster_0",
+        "usage": "leaf pop"
+      },
+      {
+        "bytes": 44178,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_PlantMonster_1.wav",
+        "sha256": "f0bde6431f05e9f25bc8d2b67a7f7fca4b4cdef0d6dfad249b81d44f411b128d",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/slime_000.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_PlantMonster_1",
+        "usage": "sap squelch"
+      }
+    ],
+    "SFXSet_VoidAbomination": [
+      {
+        "bytes": 352886,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_VoidAbomination_0.wav",
+        "sha256": "2b987bc67117ff92945821abeb5c591557bca32224ff929cb4e833e44d2a09db",
+        "source": "ArtSource/Audio/Kenney_SciFiSounds/Wav/lowFrequency_explosion_000.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_VoidAbomination_0",
+        "usage": "void rumble"
+      },
+      {
+        "bytes": 3098,
+        "cue": "ArtSource/Audio/Echoes/SFXSet_VoidAbomination_1.wav",
+        "sha256": "56204a316764256fced6e3d53c41e68d50bc224ec0505cca744e88398448b0c5",
+        "source": "ArtSource/Audio/Kenney_InterfaceSounds/Wav/glitch_001.wav",
+        "status": "LICENSE_VERIFIED / STAGED",
+        "ue_path": "/Game/Audio/Echoes/SFXSet_VoidAbomination_1",
+        "usage": "reality tear"
+      }
+    ]
+  }
+}

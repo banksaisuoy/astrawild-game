@@ -1,6 +1,12 @@
-﻿$PackagedExe = "E:\Astrawild_Packaged\Windows\ASTRAWILD\Binaries\Win64\ASTRAWILD.exe"
-$ServerLog = "E:\AstrawildGame\Saved\Logs\Server_Replication.log"
-$ClientLog = "E:\AstrawildGame\Saved\Logs\Client_Replication.log"
+﻿# v9.6 env-adaptive paths (FMP-1): ASTRAWILD_PACKAGED_EXE / ASTRAWILD_REPO
+# override the legacy layout for non-default installs (fresh machines); with
+# no env vars set the legacy E:\ values are preserved exactly.
+$PackagedExe = if ($env:ASTRAWILD_PACKAGED_EXE) { $env:ASTRAWILD_PACKAGED_EXE } else { "E:\Astrawild_Packaged\Windows\ASTRAWILD\Binaries\Win64\ASTRAWILD.exe" }
+$RepoRoot = if ($env:ASTRAWILD_REPO) { $env:ASTRAWILD_REPO } else { "E:\AstrawildGame" }
+$ServerLog = Join-Path $RepoRoot "Saved\Logs\Server_Replication.log"
+$ClientLog = Join-Path $RepoRoot "Saved\Logs\Client_Replication.log"
+Write-Host " Packaged exe : $PackagedExe"
+Write-Host " Repo root    : $RepoRoot"
 
 if (Test-Path $ServerLog) { Remove-Item $ServerLog -Force }
 if (Test-Path $ClientLog) { Remove-Item $ClientLog -Force }

@@ -12,7 +12,9 @@ class AActor;
 /**
  * Static description of one surface zone of the Shattered Vale (Batch 7).
  * Bounds are world-space centimeters on the XY plane and tile the world exactly:
- * X [-120000, 120000] x Y [-80000, 80000] (2.4km x 1.6km).
+ * X [-120000, 120000] x Y [-80000, 80000] are the ZONE-CENTER ranges; the full
+ * world grid (final-audit L-5, AUD-4 — was misdocumented) is
+ * X [-160000, 160000] x Y [-120000, 120000] = 3.2km x 2.4km (4x3 zones of 800m).
  */
 USTRUCT(BlueprintType)
 struct ASTRAWILDCORE_API FAstrawildZoneDescriptor
@@ -59,6 +61,28 @@ struct ASTRAWILDCORE_API FAstrawildZoneDescriptor
     /** 1 (safe) .. 4 (endgame wilds). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Zone")
     int32 ThreatLevel = 1;
+
+    /**
+     * DP-7 (world depth): the zone's ambient hazard identity. Additive field —
+     * additive descriptor fields are save-safe per the Types.h conventions
+     * (the descriptor is static table data, never serialized into a save).
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Zone")
+    EAstrawildZoneHazard HazardType = EAstrawildZoneHazard::None;
+
+    /**
+     * DP-7: hazard magnitude — °C of thermal pressure for Cold/Heat zones
+     * (layered on top of the global weather offset), or points/second of
+     * passive stamina-regen suppression for ash-lung zones. 0 = gentle.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Zone", meta=(ClampMin="0.0"))
+    float HazardPressure = 0.0f;
+
+    /** DP-7: thermal offset this zone's hazard adds on top of the global weather offset (°C). Pure, deterministic. */
+    float GetHazardTemperatureOffsetCelsius() const;
+
+    /** DP-7: passive stamina-regen penalty from this zone's hazard (points/second; ash lung). Pure, deterministic. */
+    float GetHazardStaminaRegenPenalty() const;
 
     FVector2D GetCenter() const { return Bounds.GetCenter(); }
 

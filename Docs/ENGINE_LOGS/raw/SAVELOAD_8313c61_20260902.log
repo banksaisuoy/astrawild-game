@@ -1,0 +1,232 @@
+﻿=== ASTRAWILD 3-CYCLE SAVE/LOAD PERSISTENCE TEST ===
+Command: E:\Epic Games\UnrealEngine\Engine\Binaries\Win64\UnrealEditor-Cmd.exe E:\AstrawildGame\ASTRAWILD.uproject -ExecCmds="Automation RunTests Astrawild.Save; Quit" -nullrhi -unattended -nopause -testexit="Automation Test Queue Empty" -stdout -NoUBA
+Start Time: 2026-09-02 09:05:51.825
+===================================================
+LogInit: Display: Running engine for game: ASTRAWILD
+LogCore: Display: Requested channels: 'cpu,gpu,frame,log,bookmark,screenshot,region'
+LogTrace: Display: Control listening on port 1985
+LogCsvProfiler: Display: Metadata set : platform="Windows"
+LogCsvProfiler: Display: Metadata set : config="Development"
+LogCsvProfiler: Display: Metadata set : buildversion="UE5-CL-0"
+LogCsvProfiler: Display: Metadata set : engineversion="5.8.2-0+UE5"
+LogCsvProfiler: Display: Metadata set : enginereleaseversion="5.8.2"
+LogCsvProfiler: Display: Metadata set : os="Windows 11 (25H2) [10.0.26200.9168] "
+LogCsvProfiler: Display: Metadata set : cpu="GenuineIntel|Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz"
+LogCsvProfiler: Display: Metadata set : pgoenabled="0"
+LogCsvProfiler: Display: Metadata set : pgoprofilingenabled="0"
+LogCsvProfiler: Display: Metadata set : ltoenabled="0"
+LogCsvProfiler: Display: Metadata set : asan="0"
+LogCsvProfiler: Display: Metadata set : mergedmodules="0"
+LogCsvProfiler: Display: Metadata set : compacttset="0"
+LogCsvProfiler: Display: Metadata set : commandline="" E:\AstrawildGame\ASTRAWILD.uproject -ExecCmds="Automation RunTests Astrawild.Save; Quit" -nullrhi -unattended -nopause -testexit="Automation Test Queue Empty" -stdout -NoUBA""
+LogCsvProfiler: Display: Metadata set : loginid="c241a9441d8545dc8318a5595ebf4ead"
+LogCsvProfiler: Display: Metadata set : llm="0"
+LogCsvProfiler: Display: Metadata set : zenstreaming="0"
+LogCsvProfiler: Display: Metadata set : systemresolution.resx="1280"
+LogCsvProfiler: Display: Metadata set : systemresolution.resy="720"
+LogAudio: Display: Pre-Initializing Audio Device Manager...
+LogAudio: Display: AudioInfo: 'OPUS' Registered
+LogAudioDebug: Display: Lib vorbis DLL was dynamically loaded.
+LogAudio: Display: AudioInfo: 'OGG' Registered
+LogAudio: Display: AudioInfo: 'ADPCM' Registered
+LogAudio: Display: AudioInfo: 'PCM' Registered
+LogAudio: Display: AudioInfo: 'BINKA' Registered
+LogAudio: Display: AudioInfo: 'RADA' Registered
+LogAudio: Display: Audio Device Manager Pre-Initialized
+LogAssetRegistry: Display: FindShardedCacheFiles: 1 via .ref, 0 via migration fallback, 1 total
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PreLoad): 1 .ref files found, 1 referenced binaries
+LogAssetRegistry: Display: PlatformFileJournal is not available on volume 'E:' of project directory 'E:/AstrawildGame/', so AssetDiscovery cache will not be read or written. Unavailability reason:
+	NTFS Journal is not active for volume 'E:'. Launch cmd.exe as admin and run command `fsutil usn createJournal E: m=<SizeInBytes>`. Recommended <SizeInBytes> is 0x40000000 (1GB).
+LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 1 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 0 orphans deleted, 0 orphans locked (kept)
+LogAssetRegistry: Display: LoadCacheFiles: loading 1 cache files, memory-mapping=enabled
+LogConfig: Display: Loading Android ini files took 0.13 seconds
+LogConfig: Display: Loading Mac ini files took 0.13 seconds
+LogConfig: Display: Loading IOS ini files took 0.15 seconds
+LogConfig: Display: Loading VulkanPC ini files took 0.15 seconds
+LogConfig: Display: Loading TVOS ini files took 0.17 seconds
+LogConfig: Display: Loading Unix ini files took 0.18 seconds
+LogConfig: Display: Loading LinuxArm64 ini files took 0.20 seconds
+Using bundled DotNet SDK version: 10.0 win-x64
+LogConfig: Display: Loading Linux ini files took 0.21 seconds
+LogConfig: Display: Loading Windows ini files took 0.09 seconds
+LogConfig: Display: Loading VisionOS ini files took 0.09 seconds
+LogAssetRegistry: Display: Asset registry cache read as 123.8 MiB from ../../../../../AstrawildGame/Intermediate/CachedAssetRegistry/CachedAssetRegistry_0_D810B9D448E577B250496C94ABDEF895.bin (memory-mapped=yes)
+RenderDocPlugin: Display: RenderDoc plugin will not be loaded. Use '-AttachRenderDoc' on the cmd line or enable 'renderdoc.AutoAttach' in the plugin settings.
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Log is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.CSV is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Horde is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Log is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.CSV is disabled for this application
+LogAnalytics: Display: Provider StudioTelemetry.Provider.Horde is disabled for this application
+LogAsyncCompilation: Display: MemorySharingInfo: UsedMemory=321MiB, MaxMemoryAvailable=61260MiB
+LogStreaming: Display: AsyncLoading2 - Created: Async Loading Thread: false, Async Post Load: false, Multithreaded: false
+[2026.09.02-02.05.53:773][  0]LogCsvProfiler: Display: Metadata set : systemresolution.resx="1536"
+[2026.09.02-02.05.53:773][  0]LogCsvProfiler: Display: Metadata set : systemresolution.resy="864"
+[2026.09.02-02.05.53:778][  0]LogHAL: Display: Platform has ~ 32 GB [34171174912 / 34359738368 / 32], which maps to Largest [LargestMinGB=32, LargerMinGB=12, DefaultMinGB=8, SmallerMinGB=6, SmallestMinGB=0)
+[2026.09.02-02.05.53:859][  0]LogCsvProfiler: Display: Metadata set : extradevelopmentmemorymb="0"
+[2026.09.02-02.05.53:864][  0]LogObj: Display: Attempting to load config data for Default__DownlinkBandwidthManagerConfig before the Class has been constructed/registered/linked (likely during module loading or early startup). This will result in the load silently failing and should be fixed.
+[2026.09.02-02.05.55:583][  0]LogWindowsTouchpad: Display: CacheForceMaxTouchpadSensitivityMode SetMaxTouchpadSensitivity
+[2026.09.02-02.05.55:592][  0]LogObj: Display: Attempting to load config data for Default__SlateThemeManager before the Class has been constructed/registered/linked (likely during module loading or early startup). This will result in the load silently failing and should be fixed.
+[2026.09.02-02.05.56:224][  0]LogCsvProfiler: Display: Metadata set : verbatimrhiname="Null"
+[2026.09.02-02.05.56:224][  0]LogCsvProfiler: Display: Metadata set : rhiname="Null"
+[2026.09.02-02.05.56:224][  0]LogCsvProfiler: Display: Metadata set : rhifeaturelevel="SM6"
+[2026.09.02-02.05.56:224][  0]LogCsvProfiler: Display: Metadata set : shaderplatform="PCD3D_SM6"
+[2026.09.02-02.05.56:224][  0]LogCsvProfiler: Display: Metadata set : gpu=""
+[2026.09.02-02.05.56:224][  0]LogCsvProfiler: Display: Metadata set : gpudriver=""
+UnrealBuildTool is up-to-date
+Running UnrealBuildTool: dotnet "..\..\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" -Mode=ValidatePlatforms -OutputSDKs  -AllPlatforms  -project="E:/AstrawildGame/ASTRAWILD.uproject" -log="E:/AstrawildGame/Saved/Logs/AutoSDKInfo.txt" -verbose -timestamps
+Log file: E:\AstrawildGame\Saved\Logs\AutoSDKInfo.txt
+##PlatformValidate: Win64 VALID 10.0.22621.0
+##PlatformValidate: Mac VALID 26.1.1
+##PlatformValidate: IOS VALID 26.1.1
+##PlatformValidate: Android INVALID r27c
+##PlatformValidate: Linux INVALID v26_clang-20.1.8-rockylinux8
+##PlatformValidate: LinuxArm64 INVALID v26_clang-20.1.8-rockylinux8
+##PlatformValidate: TVOS VALID 26.1.1
+##PlatformValidate: VisionOS INVALID <UNKNOWN>
+Unable to find required SDK version 'MainVersion' for platform VisionOS. Check your SDK.json files
+Trace written to file C:\Users\saisu\AppData\Local\UnrealBuildTool\Trace.uba with size 345b
+[2026.09.02-02.06.14:684][  0]LogTextureFormatASTC: Display: ASTCEnc version 5.0.1 library loaded
+[2026.09.02-02.06.14:684][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatASTC
+[2026.09.02-02.06.14:684][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatETC2
+[2026.09.02-02.06.14:684][  0]LogTextureFormatOodle: Display: Oodle Texture TFO init; latest sdk version = 2.9.16
+[2026.09.02-02.06.14:684][  0]LogTextureFormatOodle: Display: Oodle Texture loading DLL: oo2tex_win64_2.9.16.dll
+[2026.09.02-02.06.14:686][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatOodle
+[2026.09.02-02.06.14:686][  0]LogTextureFormatManager: Display: Loaded Base TextureFormat: TextureFormatUncompressed
+[2026.09.02-02.06.14:811][  0]LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Android'
+[2026.09.02-02.06.14:855][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'IOS'
+[2026.09.02-02.06.14:855][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'IOSClient'
+[2026.09.02-02.06.14:906][  0]LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'Linux'
+[2026.09.02-02.06.14:963][  0]LogTargetPlatformManager: Display: Failed to SetupSDK for platform 'LinuxArm64'
+[2026.09.02-02.06.15:015][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'Mac'
+[2026.09.02-02.06.15:015][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'MacEditor'
+[2026.09.02-02.06.15:015][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'MacServer'
+[2026.09.02-02.06.15:015][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'MacClient'
+[2026.09.02-02.06.15:064][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'TVOS'
+[2026.09.02-02.06.15:064][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'TVOSClient'
+[2026.09.02-02.06.15:115][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'Windows'
+[2026.09.02-02.06.15:115][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsEditor'
+[2026.09.02-02.06.15:115][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsServer'
+[2026.09.02-02.06.15:115][  0]LogTargetPlatformManager: Display: Loaded TargetPlatform 'WindowsClient'
+[2026.09.02-02.06.15:115][  0]LogTargetPlatformManager: Display: Building Assets For WindowsEditor
+[2026.09.02-02.06.15:229][  0]LogZenServiceInstance: Display: Launching zen utility 'E:/Epic Games/UnrealEngine/Engine/Binaries/Win64/zen.exe service status'.
+[2026.09.02-02.06.15:743][  0]LogZenServiceInstance: Display: Writing plugin version info to 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugin_versions.json'
+[2026.09.02-02.06.15:745][  0]LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/saisu/AppData/Local/UnrealEngine/5.8/Saved/Zen/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+[2026.09.02-02.06.15:745][  0]LogZenServiceInstance: Display: Read zen version cache file from 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zen.version', version: '5.8.13-202605190912-windows-x64-release-094f62c2'
+[2026.09.02-02.06.15:745][  0]LogZenServiceInstance: Display: Installed service at 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe' is up to date
+[2026.09.02-02.06.15:747][  0]LogZenServiceInstance: Display: Launching executable 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zenserver.exe', working dir 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install', data dir 'C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Data', args '--port 8558 --data-dir C:\Users\saisu\AppData\Local\UnrealEngine\Common\Zen\Data --http asio --gc-cache-duration-seconds 1209600 --gc-interval-seconds 21600 --gc-low-diskspace-threshold 2147483648 --cache-bucket-limit-overwrites --quiet --restrict-content-types --allow-external-oidctoken-exe=false --plugins-config "C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/zen_plugins_v1.json" --security-config-path "C:/Users/saisu/AppData/Local/UnrealEngine/Common/Zen/Install/security-config.json" --owner-pid 57276  --child-id Zen_57276_Startup'
+[2026.09.02-02.06.18:602][  0]LogZenServiceInstance: Display: Unreal Zen Storage Server HTTP service at http://[::1]:8558 status: OK!.
+[2026.09.02-02.06.18:605][  0]LogDerivedDataCache: Display: ZenLocal: Using ZenServer HTTP service at [::1] with namespace ue.ddc. Status: OK!.
+[2026.09.02-02.06.18:633][  0]LogDerivedDataCache: Display: C:/Users/saisu/AppData/Local/UnrealEngine/Common/DerivedDataCache: Performance: Latency=0.14ms. RandomReadSpeed=428.66MBs, RandomWriteSpeed=53.62MBs. Assigned SpeedClass 'Local'
+[2026.09.02-02.06.18:643][  0]LogUbaHorde: Display: UBA/Horde Configuration [Uba.Provider.Horde]: Not Enabled
+[2026.09.02-02.06.18:643][  0]LogShaderCompilers: Display: No distributed shader compiler controller found
+[2026.09.02-02.06.18:643][  0]LogShaderCompilers: Display: Using 9 local workers for shader compilation
+[2026.09.02-02.06.18:646][  0]LogShaderCompilers: Display: Compiling shader autogen file: ../../../../../AstrawildGame/Intermediate/ShaderAutogen/PCD3D_SM6/AutogenShaderHeaders.ush
+[2026.09.02-02.06.18:646][  0]LogShaderCompilers: Display: Autogen file is unchanged, skipping write.
+[2026.09.02-02.06.20:710][  0]LogEditorDomain: Display: EditorDomain is Disabled
+[2026.09.02-02.06.20:765][  0]LogAssetRegistry: Display: AssetDataGatherer spent 0.001s loading caches from ../../../../../AstrawildGame/Intermediate/CachedAssetRegistry.
+[2026.09.02-02.06.21:509][  0]LogDeviceProfileManager: Display: Deviceprofile LinuxArm64Editor not found.
+[2026.09.02-02.06.21:509][  0]LogDeviceProfileManager: Display: Deviceprofile LinuxArm64 not found.
+[2026.09.02-02.06.21:659][  0]LogCsvProfiler: Display: Metadata set : deviceprofile="WindowsEditor"
+[2026.09.02-02.06.21:668][  0]LogStreaming: Display: FlushAsyncLoading(1): 1 QueuedPackages, 0 AsyncPackages
+[2026.09.02-02.06.21:716][  0]LogTextureEncodingSettings: Display: Texture Encode Speed: FinalIfAvailable (editor).
+[2026.09.02-02.06.21:716][  0]LogTextureEncodingSettings: Display: Oodle Texture Encode Speed settings: Fast: RDO Off Lambda=0, Effort=Normal Final: RDO Off Lambda=0, Effort=Normal
+[2026.09.02-02.06.21:716][  0]LogTextureEncodingSettings: Display: Shared linear texture encoding: Disabled
+[2026.09.02-02.06.21:761][  0]LogMeshReduction: Display: Using QuadricMeshReduction for automatic static mesh reduction
+[2026.09.02-02.06.21:761][  0]LogMeshReduction: Display: Using SkeletalMeshReduction for automatic skeletal mesh reduction
+[2026.09.02-02.06.21:761][  0]LogMeshReduction: Display: Using ProxyLODMeshReduction for automatic mesh merging
+[2026.09.02-02.06.21:761][  0]LogMeshReduction: Display: No distributed automatic mesh merging module available
+[2026.09.02-02.06.22:330][  0]LogShaderCompilers: Display: Compiling shader autogen file: ../../../../../AstrawildGame/Intermediate/ShaderAutogen/PCD3D_SM5/AutogenShaderHeaders.ush
+[2026.09.02-02.06.22:331][  0]LogShaderCompilers: Display: Autogen file is unchanged, skipping write.
+[2026.09.02-02.06.22:331][  0]LogVirtualization: Display: VirtualizationSystem name found in ini file: None
+[2026.09.02-02.06.22:331][  0]LogVirtualization: Display: FNullVirtualizationSystem mounted, virtualization will be disabled
+[2026.09.02-02.06.22:453][  0]LogWorldPartition: Display: FWorldPartitionClassDescRegistry::Initialize started...
+[2026.09.02-02.06.22:461][  0]LogWorldPartition: Display: FWorldPartitionClassDescRegistry::Initialize took 7.501 ms
+[2026.09.02-02.06.23:244][  0]LogMetaSound: Display: MetaSound Page Target Initialized to 'Default'
+[2026.09.02-02.06.23:253][  0]LogAudio: Display: Registering Engine Module Parameter Interfaces...
+[2026.09.02-02.06.23:758][  0]LogUdpMessaging: Display: Unicast socket bound to '0.0.0.0:57273'.
+[2026.09.02-02.06.23:766][  0]LogUdpMessaging: Display: Added local interface '192.168.8.186' to multicast group '230.0.0.1:6666'
+[2026.09.02-02.06.23:767][  0]LogUdpMessaging: Display: Added local interface '127.0.0.1' to multicast group '230.0.0.1:6666'
+[2026.09.02-02.06.23:772][  0]LogUdpMessaging: Display: Using asynchronous task graph for message deserialization.
+[2026.09.02-02.06.24:585][  0]LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.
+[2026.09.02-02.06.24:585][  0]LogAudioCaptureCore: Display: No Audio Capture implementations found. Audio input will be silent.
+[2026.09.02-02.06.25:685][  0]LogAnalytics: Display: [UEEditor.UnrealEngine.Release] AnalyticsET::StartSession ( APIServer = https://datarouter.ol.epicgames.com/datarouter/api/v1/public/data. AppVersion = 5.8.2-0+UE5 )
+[2026.09.02-02.06.25:689][  0]LogAudio: Display: Initializing Audio Device Manager...
+[2026.09.02-02.06.25:697][  0]LogAudio: Display: Loading Default Audio Settings Objects...
+[2026.09.02-02.06.25:698][  0]LogAudio: Display: No default SoundConcurrencyObject specified (or failed to load).
+[2026.09.02-02.06.25:700][  0]LogAudio: Display: Audio Device Manager Initialized
+[2026.09.02-02.06.25:700][  0]LogAudio: Display: Creating Audio Device:                 Id: 1, Scope: Shared, Realtime: True
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: bUseRenderScheduler set to true.
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: Audio Mixer Platform Settings:
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: 	Sample Rate:						  48000
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: 	Callback Buffer Frame Size Requested: 1024
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: 	Callback Buffer Frame Size To Use:	  1024
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: 	Number of buffers to queue:			  1
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: 	Max Channels (voices):				  32
+[2026.09.02-02.06.25:700][  0]LogAudioMixer: Display: 	Number of Async Source Workers:		  4
+[2026.09.02-02.06.25:700][  0]LogAudio: Display: AudioDevice MaxSources: 32
+[2026.09.02-02.06.25:700][  0]LogAudio: Display: Audio Spatialization Plugin: None (built-in).
+[2026.09.02-02.06.25:700][  0]LogAudio: Display: Audio Reverb Plugin: None (built-in).
+[2026.09.02-02.06.25:700][  0]LogAudio: Display: Audio Occlusion Plugin: None (built-in).
+[2026.09.02-02.06.25:713][  0]LogAudioEnumeration: Display: Refreshing FWindowsMMDeviceCache
+[2026.09.02-02.06.25:726][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Console', Device='Speakers (Realtek(R) Audio)'
+[2026.09.02-02.06.25:728][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Console', Device='Microphone (Realtek(R) Audio)'
+[2026.09.02-02.06.25:731][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Multimedia', Device='Speakers (Realtek(R) Audio)'
+[2026.09.02-02.06.25:732][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Multimedia', Device='Microphone (Realtek(R) Audio)'
+[2026.09.02-02.06.25:734][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Render Role='Communications', Device='Speakers (Realtek(R) Audio)'
+[2026.09.02-02.06.25:736][  0]LogAudioEnumeration: Display: FWindowsMMDeviceCache: Default Capture Role='Communications', Device='Microphone (Realtek(R) Audio)'
+[2026.09.02-02.06.25:743][  0]LogAudioMixerWasapi: Display: FWasapiServiceWatcher started.
+[2026.09.02-02.06.25:743][  0]LogAudioMixer: Display: Initializing audio mixer using platform API: 'WASAPIMixer'
+[2026.09.02-02.06.25:743][  0]LogAudioMixerWasapi: Display: FWasapiServiceWatcher initial state: Audiosrv=RUNNING, AudioEndpointBuilder=RUNNING
+[2026.09.02-02.06.25:795][  0]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware audio mixer requested num channels: 2, Wasapi render stream hardware supports num channels: 2
+[2026.09.02-02.06.25:795][  0]LogAudioMixerWasapi: Display: FAudioMixerWasapiRenderStream::InitializeHardware succeeded with sample rate: 48000, buffer period: 1024
+[2026.09.02-02.06.25:795][  0]LogAudioMixer: Display: FAudioMixerWasapi initialized: SampleRate=48000 NumChannels=2 NumDirectOutChannels=0 bIsAggregateDevice=0 StreamParams.Num()=1
+[2026.09.02-02.06.25:795][  0]LogAudioMixer: Display: Using Audio Hardware Device Speakers (Realtek(R) Audio)
+[2026.09.02-02.06.25:796][  0]LogAudioMixer: Display: Initializing Sound Submixes...
+[2026.09.02-02.06.25:798][  0]LogAudioMixer: Display: Creating Master Submix 'MasterSubmixDefault'
+[2026.09.02-02.06.25:798][  0]LogAudioMixer: Display: Creating Master Submix 'MasterReverbSubmixDefault'
+[2026.09.02-02.06.25:801][  0]LogAudioMixer: Display: Output buffers initialized: Frames=1024, Channels=2, Samples=2048, InstanceID=1
+[2026.09.02-02.06.25:805][  0]LogAudioMixer: Display: Starting AudioMixerPlatformInterface::RunInternal(), InstanceID=1
+[2026.09.02-02.06.25:815][  0]LogAudio: Display: Audio Device (ID: 1) registered with world 'Untitled'.
+[2026.09.02-02.06.25:823][  0]LogCsvProfiler: Display: Metadata set : largeworldcoordinates="1"
+[2026.09.02-02.06.25:868][  0]LogSourceControl: Display: Uncontrolled Changelist persistency file loaded ../../../../../AstrawildGame/Saved/SourceControl/UncontrolledChangelists.json
+[2026.09.02-02.06.26:171][  0]LogPython: Display: No pip-enabled plugins with python dependencies found, skipping
+[2026.09.02-02.06.27:307][  0]LogCsvProfiler: Display: Metadata set : raytracing="0"
+[2026.09.02-02.06.27:814][  0]LogCore: Display: InsightsEditor module auto-connecting to local trace server...
+[2026.09.02-02.06.28:058][  0]LogInit: Display: Engine is initialized. Leaving FEngineLoop::Init()
+[2026.09.02-02.06.28:111][  0]LogAudio: Display: Audio Device unregistered from world 'Untitled'.
+[2026.09.02-02.06.28:141][  0]LogAudio: Display: Audio Device (ID: 1) registered with world 'Lvl_ThirdPerson'.
+[2026.09.02-02.06.28:340][  0]LogPlacementMode: Display: The Asset Registry is not yet fully loaded so some placeable classes might be missing.
+[2026.09.02-02.06.29:058][  0]LogSlate: Display: Synchronously lazy loading font file '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' with subface index 0 in Game thread.
+[2026.09.02-02.06.29:058][  0]LogSlate: Display: Took 0.000272 seconds to synchronously load lazily loaded font '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' (155K) on Game thread.
+[2026.09.02-02.06.29:058][  0]LogSlate: Display: Freetype font face in memory successfully created with synchronously loaded raw font file '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' subface 0 in Game thread.
+[2026.09.02-02.06.29:058][  0]LogSlate: Display: Font face '../../../Engine/Content/Slate/Fonts/Roboto-Regular.ttf' subface index 0 successfully added to font face map in Game thread.
+[2026.09.02-02.06.30:039][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/IKRig/Content/Python/init_unreal.py... started...
+[2026.09.02-02.06.30:063][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/IKRig/Content/Python/init_unreal.py... took 24.095 ms
+[2026.09.02-02.06.30:063][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/ControlRig/Content/Python/init_unreal.py... started...
+[2026.09.02-02.06.30:101][  0]LogPython: Display: Running start-up script E:/Epic Games/UnrealEngine/Engine/Plugins/Animation/ControlRig/Content/Python/init_unreal.py... took 38.024 ms (total: 62.119 ms)
+[2026.09.02-02.06.30:941][  1]LogAssetRegistry: Display: Starting OnFilesLoaded.Broadcast
+[2026.09.02-02.06.30:970][  1]LogPlacementMode: Display: The Asset Registry is done with its initial scan, the list of placeable classes has been updated.
+[2026.09.02-02.06.31:017][  1]LogAssetRegistry: Display: Completed OnFilesLoaded.Broadcast: 0.077s
+[2026.09.02-02.06.31:103][  2]LogAutomationCommandLine: Display: Ready to start automation
+[2026.09.02-02.06.32:716][ 86]LogAssetRegistry: Display: Asset registry cache written as 123.8 MiB to ../../../../../AstrawildGame/Intermediate/CachedAssetRegistry/CachedAssetRegistry_*.ref
+[2026.09.02-02.06.32:728][ 87]LogAssetRegistry: Display: CleanupOrphanedCacheFiles (PostWrite): 1 .ref files found, 1 referenced binaries
+[2026.09.02-02.06.32:729][ 87]LogAssetRegistry: Display:   CachedAssetRegistry_0_D810B9D448E577B250496C94ABDEF895.bin: deleted (orphaned, unreferenced by any .ref)
+[2026.09.02-02.06.32:729][ 87]LogAssetRegistry: Display: CleanupOrphanedCacheFiles: 2 total binaries, 1 referenced (kept), 0 old-style pre-migration (kept), 1 orphans deleted, 0 orphans locked (kept)
+[2026.09.02-02.06.36:289][291]LogAutomationCommandLine: Display: Found 3 automation tests based on 'Astrawild.Save'
+[2026.09.02-02.06.36:289][291]LogAutomationCommandLine: Display: 	ASTRAWILD.Save.ChecksumDeterminism
+[2026.09.02-02.06.36:289][291]LogAutomationCommandLine: Display: 	ASTRAWILD.Save.SchemaV3
+[2026.09.02-02.06.36:289][291]LogAutomationCommandLine: Display: 	ASTRAWILD.Save.SchemaV4
+[2026.09.02-02.06.36:296][291]LogAutomationController: Display: Clearing ../../../../../AstrawildGame/Saved/Automation/Logs/ and ../../../../../AstrawildGame/Saved/Automation/Tmp/
+[2026.09.02-02.06.36:298][292]LogAutomationController: Display: Test Started. Name={ChecksumDeterminism} Path={ASTRAWILD.Save.ChecksumDeterminism}
+[2026.09.02-02.06.36:334][294]LogAutomationController: Display: Test Completed. Result={Success} Name={ChecksumDeterminism} Path={ASTRAWILD.Save.ChecksumDeterminism}
+[2026.09.02-02.06.36:334][294]LogAutomationController: Display: Test Started. Name={SchemaV3} Path={ASTRAWILD.Save.SchemaV3}
+[2026.09.02-02.06.36:383][297]LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaV3} Path={ASTRAWILD.Save.SchemaV3}
+[2026.09.02-02.06.36:384][297]LogAutomationController: Display: Test Started. Name={SchemaV4} Path={ASTRAWILD.Save.SchemaV4}
+[2026.09.02-02.06.36:433][300]LogAutomationController: Display: Test Completed. Result={Success} Name={SchemaV4} Path={ASTRAWILD.Save.SchemaV4}
+[2026.09.02-02.06.36:450][301]LogAutomationCommandLine: Display: **** TEST COMPLETE. EXIT CODE: 0 ****
+===================================================
+End Time: 2026-09-02 09:06:36.870
+Duration Seconds: 45.026611
+Exit Code: 0
+===================================================

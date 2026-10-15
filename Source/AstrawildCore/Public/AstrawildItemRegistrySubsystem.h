@@ -147,6 +147,29 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     TArray<UAstrawildEchoDefinition*> GetAllEchoDefinitions() const;
 
+    /** SCP Phase 1 (DataValidator): full item enumeration for reference checks. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildItemDefinition*> GetAllItems() const;
+
+    /** SCP Phase 1 (DataValidator): full building enumeration for reference checks. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildBuildingDefinition*> GetAllBuildings() const;
+
+    /** Final Completion Run (registry reconciliation): authoritative registry sizes.
+     *  The content-completion log reads these live — content counts are NEVER hardcoded
+     *  in log strings or docs again (one authoritative value per metric, machine-derived). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    int32 GetNumQuests() const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    int32 GetNumLootTables() const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    int32 GetNumNPCs() const;
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    int32 GetNumRobots() const;
+
 private:
     UPROPERTY()
     TMap<FName, TObjectPtr<UAstrawildItemDefinition>> Items;

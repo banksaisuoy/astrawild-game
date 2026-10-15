@@ -98,6 +98,16 @@ private:
     float CraftTimeTotal = 0.0f;
     TArray<FAstrawildItemStack> PendingOutputs;
 
+    /** FPP-1: toast the owning player (craft refusal reasons + completions). */
+    void NotifyOwnerPlayer(const FText& Message) const;
+
+    /** FPP-1: player-readable recipe label (registry display name fallback id). */
+    FString GetRecipeDisplayName(FName RecipeId) const;
+
+    /** GDP-3: Masterwork roll won at consume time — refund lands on completion. */
+    bool bMasterworkPendingRefund = false;
+    TArray<FAstrawildItemStack> PendingRefundInputs;
+
     /**
      * H-11 guard (Production V2): true while completed outputs are held because
      * the pack is full — retries every second until space frees, blocks cancel

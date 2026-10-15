@@ -1,4 +1,8 @@
-﻿# ASTRAWILD — EVIDENCE-GRADE ENGINE & RUNTIME VERIFICATION REPORT
+# ASTRAWILD — EVIDENCE-GRADE ENGINE & RUNTIME VERIFICATION REPORT
+
+> [!IMPORTANT]
+> **STATUS**: **DECLARED — SUPERSEDED BY RE-CERTIFICATION**  
+> For the complete, externally reproducible raw log evidence catalog, refer to [`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`](file:///E:/AstrawildGame/Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md) and [`Docs/ENGINE_LOGS/ANTIGRAVITY_RECERTIFICATION_8313c61.md`](file:///E:/AstrawildGame/Docs/ENGINE_LOGS/ANTIGRAVITY_RECERTIFICATION_8313c61.md).
 
 **Verification Date**: September 1, 2026  
 **Tested Commit**: `03c2fe6` -> `77b27f0` on `agent/antigravity-ue5-v2`  

@@ -2,6 +2,7 @@
 
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
@@ -80,10 +81,6 @@ void UAstrawildJournalSubsystem::ObservePlayer(AAstrawildPlayerCharacter* Player
         return;
     }
 
-    // Cone check: any Echo within observation distance and roughly in view direction.
-    const FVector CameraLocation = Player->FollowCamera->GetComponentLocation();
-    const FVector ViewDirection = Player->FollowCamera->GetForwardVector();
-
     UWorld* World = GetWorld();
     if (!World)
     {
@@ -105,34 +102,60 @@ void UAstrawildJournalSubsystem::ObservePlayer(AAstrawildPlayerCharacter* Player
             continue;
         }
 
-        const FVector ToEcho = Echo->GetActorLocation() - CameraLocation;
-        const float Distance = ToEcho.Size();
-        // Production V2 (Master Plan §10): scanner tiers extend observation range —
-        // the equipped scanner's multiplier resolves per player (stock = base).
-        const float EffectiveObservationDistance = ObservationDistance * GetScannerRangeMultiplier(Player);
-        if (Distance > EffectiveObservationDistance)
-        {
-            continue;
-        }
+        ObserveCandidate(Player, Echo->EchoDefinition->DefinitionId, Echo->GetActorLocation(), DeltaTime);
+    }
 
-        const float Dot = FVector::DotProduct(ViewDirection, ToEcho.GetSafeNormal());
-        if (Dot < 0.75f) // ~41 degree half-angle view cone.
+    // FPP-1: bosses gain bestiary entries too — the journal previously iterated
+    // AAstrawildEchoCharacter only, so the four boss species (Glass Tyrant,
+    // Drowned Sovereign, Dawnfang, the Warden's kin) could never be observed,
+    // leaving their element/weakness identity undiscoverable in the codex.
+    for (TActorIterator<AAstrawildEchoBossCharacter> It(World); It; ++It)
+    {
+        AAstrawildEchoBossCharacter* Boss = *It;
+        if (Boss && !Boss->BossSpeciesId.IsNone() && !Boss->IsDefeated())
         {
-            continue;
+            ObserveCandidate(Player, Boss->BossSpeciesId, Boss->GetActorLocation(), DeltaTime);
         }
+    }
+}
 
-        const FName DefinitionId = Echo->EchoDefinition->DefinitionId;
-        FAstrawildJournalEntry& Entry = Entries.FindOrAdd(DefinitionId);
-        const bool bFirstEncounter = Entry.TimesEncountered == 0;
-        Entry.EchoDefinitionId = DefinitionId;
-        Entry.TimesEncountered += bFirstEncounter ? 1 : 0;
+void UAstrawildJournalSubsystem::ObserveCandidate(AAstrawildPlayerCharacter* Player,
+    const FName DefinitionId, const FVector& TargetLocation, const float DeltaTime)
+{
+    if (!Player || !Player->FollowCamera || DefinitionId.IsNone())
+    {
+        return;
+    }
 
-        if (Entry.ObservationProgress < 100.0f)
-        {
-            Entry.ObservationProgress = FMath::Min(100.0f, Entry.ObservationProgress + ObservationProgressPerSecond * DeltaTime);
-            GrantKnowledgeMilestones(Entry, DefinitionId);
-            OnJournalUpdated.Broadcast(DefinitionId, Entry);
-        }
+    // Cone check (shared by the Echo and boss observation paths): distance +
+    // view direction from the observing player's camera.
+    const FVector CameraLocation = Player->FollowCamera->GetComponentLocation();
+    const FVector ToTarget = TargetLocation - CameraLocation;
+    const float Distance = ToTarget.Size();
+    // Production V2 (Master Plan §10): scanner tiers extend observation range —
+    // the equipped scanner's multiplier resolves per player (stock = base).
+    const float EffectiveObservationDistance = ObservationDistance * GetScannerRangeMultiplier(Player);
+    if (Distance > EffectiveObservationDistance)
+    {
+        return;
+    }
+
+    const float Dot = FVector::DotProduct(Player->FollowCamera->GetForwardVector(), ToTarget.GetSafeNormal());
+    if (Dot < 0.75f) // ~41 degree half-angle view cone.
+    {
+        return;
+    }
+
+    FAstrawildJournalEntry& Entry = Entries.FindOrAdd(DefinitionId);
+    const bool bFirstEncounter = Entry.TimesEncountered == 0;
+    Entry.EchoDefinitionId = DefinitionId;
+    Entry.TimesEncountered += bFirstEncounter ? 1 : 0;
+
+    if (Entry.ObservationProgress < 100.0f)
+    {
+        Entry.ObservationProgress = FMath::Min(100.0f, Entry.ObservationProgress + ObservationProgressPerSecond * DeltaTime);
+        GrantKnowledgeMilestones(Entry, DefinitionId);
+        OnJournalUpdated.Broadcast(DefinitionId, Entry);
     }
 }
 
