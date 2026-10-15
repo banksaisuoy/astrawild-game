@@ -138,3 +138,28 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Side-track answered earlier this session: UE5 cannot run/compile on
   Google Colab via colab-mcp (Linux VM, no UE Linux binary, RAM/disk
   limits, headless) — machine day stays on Windows UE 5.8.2.
+
+
+## Session 2026-10-15 — TOK-2 blocked-push release (SUPER Z / GLM)
+
+- User supplied a fresh short-lived fine-grained PAT (~30-minute expiry)
+  after TOK-1 proved every earlier token dead (live HTTP 401).
+- Executed the prepared `scripts/push_all_branches.sh` (env-var only,
+  masked output): origin `final-completion` fast-forwarded
+  `d326eee -> 7394520` (MRC-1 merge + docs sync; LFS 2/2, 5.7 MB);
+  NEW remote branch `playable-delivery` @ `8c6515c` (LFS 602/602, 300 MB);
+  NEW remote branch `agent/game-shape-v1` @ `2d39f66` (LFS 604/604, 306 MB).
+- Post-push anonymous `git ls-remote` verified all three tips; push exit
+  codes 0/0/0. All surviving sandbox work is now ON GitHub — no
+  local-only lines remain (backup bundles in download/ kept as archives).
+- `main` left untouched on purpose (frozen baseline mirror per
+  LIVE_STATE §1; its ahead-commit af11ab4 is already inside
+  final-completion).
+- Honest remaining: (1) ENGINE-RUN-1 machine day — unchanged, Windows
+  UE 5.8.2 per ON_PC_TASKS hour 0->8; (2) canonical-branch decision:
+  final-completion vs playable-delivery carry equivalent-but-different
+  syncs of the same content — both are now on origin side-by-side for
+  comparison before any reconciliation merge.
+- Security: the PAT was passed via environment variable only, never
+  written to any file/log/commit; it self-expires ~30 min after creation
+  (no manual revoke needed, though revoking early never hurts).
