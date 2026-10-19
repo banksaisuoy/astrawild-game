@@ -5,7 +5,7 @@ ASTRAWILD Final Run — static content validator (no engine required).
 Cross-checks every ID referenced in the Final Run content pack against the
 registered content, verifies quest-chain closure, LFS pointer integrity, and
 asset path references. Complements Scripts/validate_repository.sh (structural)
-and the 119 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
+and the 140 in-engine automation tests (behavioral, ENGINE-UNVERIFIED until run).
 """
 import json
 import os
