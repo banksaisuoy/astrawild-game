@@ -421,3 +421,29 @@ discarded. Census UNCHANGED (15 gates incl. 229/204/22 quests/13 NPCs); no secon
 counts UNCHANGED; no new AI/bond/traversal/skill/boss/mutation architecture; no new asset
 acquisition (existing self-generated + CC0 libraries cover the pass — TRUE_MISSING stays 0);
 every batch commit+push with task ID; ENGINE-RUN-1 stays BLOCKED (external) until VIS-001 closes.
+
+## §R COMPLETENESS GAP CLOSURE PASS (CGC — 2026-09-07 session, user directive "ทำต่อเลยให้เกมมันสมบูรณ์...เติมสิ่งที่มันขาดไประหว่างทางด้วยว่ามันขาดอะไรอยู่")
+
+> Directive: continue to full completeness and proactively fill everything still missing.
+> Registered on the v9.8 base (9a17318); the v9.8 freeze is superseded BY THIS USER DIRECTIVE
+> only (the same pattern as v9.6→v9.7). Evidence base: 4 independent read-only audit agents
+> (2-a onboarding · 2-b audio · 2-c settings/QoL · 2-d world-aliveness), findings registered
+> in LIVE_STATE §5 (registration row).
+
+| Task | Scope | Owner | Status | Notes |
+|---|---|---|---|---|
+| CGC-0 | Registration | LIVE_STATE queue updated (CGC-001 IN_PROGRESS, ENGINE-RUN-1 stays BLOCKED-external and waits) + §R opened + MASTER_CONTROL v9.9 header + the 4-dimension audit findings recorded (A collection integrity: ~56/229 obtainable, 179 never-spawning rows, dead Hunt_MonolithCull · B near-silent world: 7 SFX sites, AmbientAudio bound+preloaded never played, 27/36 cues unused · C zero player-adjustable anything: no settings/controls-reference/quest-banners/death-copy/autosave-notify/inventory-scroll/discard · D dormant depth data: 77 nocturnal/crepuscular patterns dead, 3 broadcast signals with zero subscribers, genetics bred-only, no per-zone census) | GLM | COMPLETE | docs-only batch; validators re-run PASS at the commit; no source changes |
+| CGC-1 | Fauna director + collection integrity (audit 2-d fixes) | WildlifeDirectorSubsystem (mirror HostileSpawner tick pattern): bestiary-wide boot spawn pass (every species with HomeZone obtainable, count scaled by CaptureDifficulty, per-zone cap) + time-of-day turnover (nocturnal/crepuscular windows now gate visibility) + weather-gated rare appearances (element→weather map, OnWeatherChanged consumer) + day-cycle deficit refill (OnDayChanged/OnHourChanged consumers) — census 229 UNCHANGED (time/weather-gated visibility of EXISTING species only); auto-fixes Hunt_MonolithCull (Vespermonolith spawns); world-free test: every HomeZone/hunt/event-referenced species has a spawn path | GLM | PENDING | smallest-compatible; no new assets; deterministic seeds |
+| CGC-2 | First-hour & guidance (audit 2-a fixes) | Quest start/objective-progress toasts + HUD quest Title line + bearing/distance objective guidance line (pure text "→ Lumewisp ~86m SW") + ShowOnce first-time hint store (additive v5 save field) wired to death/first-capture/first-species-studied/first-low-vitals/first-night/first-boss + read-only Controls screen (32-action table) + pause button + MQ-1 integrity (starter grant AddItemSilent + CollectItem back-fill at quest start) + camp map pin | GLM | PENDING | text-only UI, existing widget patterns; no new assets |
+| CGC-3 | Audio activation (audit 2-b fixes) | Zone ambience player (consumer for the bound+preloaded AmbientAudio beds — the biggest silence kill) + weather audio layer (wind loop on storm/gale) + footsteps (5 imported cues, surface-by-zone) + jump/land + melee swing/hit + creature idle cries (existing SFXSet path, distance-gated) + toast cue differentiation (enum param; Research/Craft/Warning cues already imported; update the DCP-5 test pin) + low-HP heartbeat loop + boss windup/phase/enrage cues + skiff engine hum + SoundMix/SoundClass master-volume routing (forward-compatible for CGC-4) — ZERO new assets (27 imported cues + SFXSet pipeline + ambience beds already staged) | GLM | PENDING | fail-closed everywhere (null cue = silent skip, never a gameplay gate) |
+| CGC-4 | Settings & QoL (audit 2-c fixes) | Settings screen (master volume via the CGC-3 SoundMix, sensitivity, FOV, gamma — persisted to ASTRAWILD_Settings slot) + pause button + save UX trinity (autosave toast, load-failure notify, save-on-quit) + inventory QoL (ScrollBox wrap, item details pane from ItemDefinition fields, discard-with-confirm, sort) + hide-HUD toggle (F6, additive 33rd action) | GLM | PENDING | PCR screen pattern; engine primitives only |
+| CGC-5 | Collection long-tail (audit 2-d fixes) | Wild genetics (wild Echoes roll via RollOffspring empty-parent path at init) + visible Radiant tell (IV max ≥28 or ≥3 traits → glow ×2 + scale ×1.1 + roster/journal line — the genre shiny loop, zero new art) + per-zone completion census (journal summary + map zone cells) + observation milestone toasts + string titles (25/50/100/150/200/229) | GLM | PENDING | reuses GeneticsLibrary + glow path + instance seeds |
+| CGC-6 | Review + freeze | Docs sync (READINESS/README/HANDOFF/TEST_INVENTORY counts, PLAYER_RULES amendments) + review packet + independent 5-question review (pattern VIS-4) + findings applied + SOURCE_PRODUCT_FROZEN re-declared (MASTER_CONTROL v9.10) + LIVE_STATE closure | GLM | PENDING | validators ALL PASS at every commit |
+
+**§R ground rules** (binding): strictly additive over the v9.8 base — nothing discarded, no
+superseded work; census 229 species / 22 quests / 58 recipes / 26 buildings / 17 techs / 13
+NPCs / 12 zones UNCHANGED (CGC-1 makes EXISTING species obtainable — time/weather-gated
+visibility, never new rows); no new asset acquisition (all audio cues already imported or
+pipeline-staged; TRUE_MISSING stays 0); no new mechanic architecture beyond the additive
+subsystems named above; tests 134→~140 with the validator gate re-pinned per batch; every
+batch commit+push with task ID; ENGINE-RUN-1 stays BLOCKED (external) until CGC-001 closes.
