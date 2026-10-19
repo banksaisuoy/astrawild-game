@@ -21,6 +21,7 @@
 #include "AstrawildProjectileActor.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildTimeSubsystem.h"
+#include "AstrawildVisualOverhaul.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
 #include "AstrawildZoneSubsystem.h"
@@ -321,10 +322,19 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
     // the headed plans (the single strongest cute signal at gameplay camera
     // distance). Strange/cool plans keep their authored alien/predator
     // silhouettes untouched.
+    //
+    // VO-1R — the visual overhaul AMPLIFIES the cute band when enabled
+    // (Palworld/Animal Crossing direction): a further head boost, chunkier
+    // eyes and two blush dots. Cool/strange bands stay untouched so the
+    // charm spectrum keeps its authored contrast.
     const bool bCuteBand = ComputeVisualBand(
         EchoDefinition->Family, EchoDefinition->BodyPlan, EchoDefinition->SizeClass)
         == EAstrawildVisualBand::Cute;
-    const float HeadBoost = bCuteBand ? 1.18f : 1.0f;
+    const bool bKawaii = bCuteBand && AstrawildVisualOverhaul::IsVisualOverhaulEnabled();
+    const AstrawildVisualOverhaul::FKawaiiScales Kawaii = bKawaii
+        ? AstrawildVisualOverhaul::EvalKawaiiScales()
+        : AstrawildVisualOverhaul::FKawaiiScales();
+    const float HeadBoost = bCuteBand ? 1.18f * Kawaii.Head : 1.0f;
     const FColor EyeColor(30, 28, 40, 255);
 
     // Sci-Fantasy directive Phase 2: mutate the silhouette. Table row for
@@ -486,13 +496,27 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         if (HeadRadius > 0.0f)
         {
             const float MutatedR = HeadRadius * HeadScale;      // matches the baked head sphere
-            const float EyeRadius = MutatedR * 0.16f;           // reads at gameplay camera distance
+            const float EyeRadius = MutatedR * 0.16f * Kawaii.Eyes; // VO-1R: chunkier when kawaii is on
             const float SurfaceOffset = MutatedR - 0.30f * EyeRadius; // eyes bulge outward
             const FVector ForwardOutUp(0.62f, 0.55f, 0.30f);    // forward (+X), outward, slightly up
             const FVector Fwd = ForwardOutUp.GetUnsafeNormal();
             const FVector Mir(Fwd.X, -Fwd.Y, Fwd.Z);
             AddSpherePart(Body, (HeadCenter + Fwd * SurfaceOffset) * S, EyeRadius * S, EyeColor, 6);
             AddSpherePart(Body, (HeadCenter + Mir * SurfaceOffset) * S, EyeRadius * S, EyeColor, 6);
+
+            // VO-1R kawaii blush: two soft pink dots slightly below/outside
+            // the eye pair — the last cheap "friendly creature" signal.
+            if (bKawaii)
+            {
+                const float BlushRadius = MutatedR * Kawaii.Blush;
+                const FVector BlushDir(0.60f, 0.80f, -0.06f);
+                const FVector BlushFwd = BlushDir.GetUnsafeNormal();
+                const FVector BlushMir(BlushFwd.X, -BlushFwd.Y, BlushFwd.Z);
+                const float BlushOffset = MutatedR - 0.25f * BlushRadius;
+                const FColor BlushColor(255, 148, 164, 255);
+                AddSpherePart(Body, (HeadCenter + BlushFwd * BlushOffset) * S, BlushRadius * S, BlushColor, 5);
+                AddSpherePart(Body, (HeadCenter + BlushMir * BlushOffset) * S, BlushRadius * S, BlushColor, 5);
+            }
         }
     }
 
