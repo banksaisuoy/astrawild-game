@@ -28,6 +28,24 @@ public:
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|HUD")
     void PushNotification(const FText& Message);
 
+    // --- CGC-2 (B): pure guidance formatting (world-free, test-pinned) ---
+
+    /**
+     * 8-wind compass text (N/NE/E/SE/S/SW/W/NW) for a bearing in DEGREES
+     * CLOCKWISE FROM NORTH. Wrap math: fmod into [0,360) first (negative
+     * bearings — e.g. atan2 results — wrap through the +360 correction),
+     * then round(yaw/45) % 8 picks the wind so each sector center is exact
+     * and the sector edges (±22.5°) fall to the COUNTERclockwise neighbor.
+     */
+    static FString FormatBearingText(const float YawToTargetDeg);
+
+    /**
+     * Planar distance text in meters: "%dm" rounded, clamped >= 0, capped at
+     * the far display ceiling "999m+" (any farther target reads the same —
+     * the line guides, it never pretends to survey).
+     */
+    static FString FormatDistanceText(const float DistanceCm);
+
 protected:
     UPROPERTY()
     TObjectPtr<UCanvasPanel> RootCanvas;
@@ -138,6 +156,18 @@ private:
     void BuildWidgetTree();
     void RefreshState();
     void RefreshZoneBanner();
+
+    /**
+     * CGC-2 (B): one guidance line for the FIRST incomplete objective of the
+     * active quest ("\u2192 Lumewisp ~86m SW"), resolved from live world
+     * targets: POI -> zone center + offset (the map-screen idiom), species ->
+     * nearest live wild Echo (dormancy-aware fallback text), portal -> the
+     * matching dungeon portal, collect -> the nearest matching resource node.
+     * Fallbacks stay honest ("search the wilds"); non-spatial objective types
+     * return an empty line. Computed at RefreshState cadence only.
+     */
+    FString ResolveObjectiveGuidance(const TArray<FAstrawildQuestObjective>& Objectives,
+        const FVector& PlayerLocation) const;
 
     class AAstrawildPlayerCharacter* GetAstrawildPawn() const;
 };

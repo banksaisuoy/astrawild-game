@@ -165,6 +165,12 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         {
             const FText SpeciesName = Echo->EchoDefinition ? Echo->EchoDefinition->DisplayName : FText::FromString(TEXT("Echo"));
             PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *SpeciesName.ToString()))); // LCP-3 remote routing
+            // CGC-2: the genre-standard first-capture fanfare — the moment the
+            // core loop closes for the first time, teach the three keys that
+            // make the new companion useful (real bindings from
+            // ASTRAWILD_INPUT_REFERENCE: C command, R feed, L roster).
+            PC->ShowOnce(TEXT("Hint_FirstCapture"),
+                FText::FromString(TEXT("Your first Echo! Press [C] to command your party, [R] to feed it, and [L] to open its roster and grow your bond.")));
         }
         else
         {

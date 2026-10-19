@@ -69,6 +69,10 @@ private:
     UFUNCTION()
     void HandleHuntClicked();
 
+    /** CGC-2: open the read-only Controls screen (32-action reference; no new input action). */
+    UFUNCTION()
+    void HandleControlsClicked();
+
     /** DCP-2: begin a New Game Plus cycle (host only; guarded by StartNewGamePlus's own post-game gate). */
     UFUNCTION()
     void HandleNGPlusClicked();
@@ -147,6 +151,10 @@ private:
     /** PCR-5: Hunt Board entry point for gamepad players (keyboard: U). */
     UPROPERTY()
     TObjectPtr<UButton> HuntButton;
+
+    /** CGC-2: Controls reference entry — the pause menu is its only path (census 32 stays). */
+    UPROPERTY()
+    TObjectPtr<UButton> ControlsButton;
 
     /** DCP-2: New Game+ entry — only VISIBLE while post-game is active (an ending was chosen). One click = StartNewGamePlus. */
     UPROPERTY()

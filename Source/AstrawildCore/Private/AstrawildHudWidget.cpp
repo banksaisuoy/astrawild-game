@@ -7,7 +7,9 @@
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
+#include "AstrawildDungeonPortalActor.h" // CGC-2: ReachLocation guidance target.
 #include "AstrawildPowerSubsystem.h"
+#include "AstrawildResourceNode.h" // CGC-2: CollectItem guidance target.
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
@@ -30,6 +32,42 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h" // DCP-5: toast cue.
+
+// ---------------------------------------------------------------------------
+// CGC-2 (B): pure guidance formatting — world-free, pinned by the automation
+// contract (a compass without art: text only, no widgets, no world).
+// ---------------------------------------------------------------------------
+
+FString UAstrawildHudWidget::FormatBearingText(const float YawToTargetDeg)
+{
+    // Wrap math (documented per the contract): fmod first (preserves the
+    // fractional sector position), then the +360/+fmod pair folds NEGATIVE
+    // bearings — atan2 outputs span (-180,180] — back into [0,360). A single
+    // Fmod(Yaw+360,360) cannot fold values below -360, so the two-step fmod
+    // keeps every finite input honest. round(yaw/45) % 8 then lands each wind
+    // center exactly (0=N, 45=NE ... 315=NW) and wraps 350 to N.
+    float Wrapped = FMath::Fmod(YawToTargetDeg, 360.0f);
+    if (Wrapped < 0.0f)
+    {
+        Wrapped += 360.0f;
+    }
+    static const TCHAR* Winds[8] = { TEXT("N"), TEXT("NE"), TEXT("E"), TEXT("SE"),
+                                     TEXT("S"), TEXT("SW"), TEXT("W"), TEXT("NW") };
+    const int32 WindIndex = static_cast<int32>(FMath::RoundToInt(Wrapped / 45.0f)) % 8;
+    return Winds[WindIndex];
+}
+
+FString UAstrawildHudWidget::FormatDistanceText(const float DistanceCm)
+{
+    // Planar ground distance -> meters (UE units: 1cm), rounded, floored at 0
+    // (a negative/garbage input reads "0m", never a crash), capped at 999m+.
+    const int32 Meters = FMath::Max(0, FMath::RoundToInt(DistanceCm / 100.0f));
+    if (Meters > 999)
+    {
+        return TEXT("999m+");
+    }
+    return FString::Printf(TEXT("%dm"), Meters);
+}
 
 void UAstrawildHudWidget::NativeConstruct()
 {
@@ -538,11 +576,32 @@ void UAstrawildHudWidget::RefreshState()
         {
             if (const UAstrawildQuestComponent* Quests = PC->FindComponentByClass<UAstrawildQuestComponent>())
             {
-                for (const FAstrawildQuestObjective& Objective : Quests->GetActiveObjectives())
+                const TArray<FAstrawildQuestObjective> Objectives = Quests->GetActiveObjectives();
+
+                // CGC-2 (A): the active quest's TITLE leads the block — bare
+                // "[ ] Collect 10 Dawnwood" lines never said WHO asked or WHY.
+                const FName ActiveQuestId = Quests->GetActiveQuestId();
+                if (!ActiveQuestId.IsNone())
+                {
+                    const UAstrawildItemRegistrySubsystem* Registry = GetWorld()
+                        ? GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>()
+                        : nullptr;
+                    const UAstrawildQuestDefinition* QuestDef = Registry ? Registry->FindQuest(ActiveQuestId) : nullptr;
+                    if (QuestDef && !QuestDef->Title.IsEmpty())
+                    {
+                        Tracker += FString::Printf(TEXT("%s\n"), *QuestDef->Title.ToString());
+                    }
+                }
+
+                for (const FAstrawildQuestObjective& Objective : Objectives)
                 {
                     Tracker += FString::Printf(TEXT("[ ] %s (%d/%d)\n"),
                         *Objective.ObjectiveText.ToString(), Objective.ProgressCount, Objective.RequiredCount);
                 }
+
+                // CGC-2 (B): one bearing/distance guidance line under the
+                // objectives (RefreshState cadence — no new ticks).
+                Tracker += ResolveObjectiveGuidance(Objectives, Pawn->GetActorLocation());
             }
         }
         QuestText->SetText(FText::FromString(Tracker));
@@ -649,4 +708,225 @@ void UAstrawildHudWidget::RefreshState()
             CrosshairText->SetColorAndOpacity(FSlateColor(FLinearColor(0.29f, 0.86f, 0.78f, 0.85f)));
         }
     }
+}
+
+FString UAstrawildHudWidget::ResolveObjectiveGuidance(const TArray<FAstrawildQuestObjective>& Objectives,
+    const FVector& PlayerLocation) const
+{
+    // The FIRST incomplete objective owns the line (mirrors the map highlight's
+    // first-objective-wins policy).
+    const FAstrawildQuestObjective* Objective = nullptr;
+    for (const FAstrawildQuestObjective& Candidate : Objectives)
+    {
+        if (!Candidate.IsComplete())
+        {
+            Objective = &Candidate;
+            break;
+        }
+    }
+    if (!Objective || Objective->TargetId.IsNone())
+    {
+        return FString();
+    }
+
+    UWorld* World = GetWorld();
+    const UAstrawildItemRegistrySubsystem* Registry = World
+        ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>()
+        : nullptr;
+
+    FString TargetName;
+    FVector TargetLocation = FVector::ZeroVector;
+    bool bResolved = false;
+    bool bAllDormant = false;
+    EAstrawildActivityPattern ActivityPattern = EAstrawildActivityPattern::Diurnal;
+
+    switch (Objective->Type)
+    {
+    case EAstrawildQuestObjectiveType::DiscoverPOI:
+    {
+        // The MapScreenWidget idiom: POI world point = zone center + the
+        // definition's authored offset (the same projection the map pins use).
+        const UAstrawildPOIDefinition* POI = Registry ? Registry->FindPOI(Objective->TargetId) : nullptr;
+        const FAstrawildZoneDescriptor* Zone = POI ? UAstrawildZoneSubsystem::FindZone(POI->Zone) : nullptr;
+        if (POI && Zone)
+        {
+            const FVector2D WorldXY = FVector2D(Zone->Bounds.GetCenter()) + POI->OffsetFromZoneCenter;
+            TargetLocation = FVector(WorldXY.X, WorldXY.Y, PlayerLocation.Z);
+            TargetName = POI->DisplayName.IsEmpty() ? Objective->TargetId.ToString() : POI->DisplayName.ToString();
+            bResolved = true;
+        }
+        break;
+    }
+    case EAstrawildQuestObjectiveType::ObserveEcho:
+    case EAstrawildQuestObjectiveType::CaptureEcho:
+    case EAstrawildQuestObjectiveType::DefeatCreature:
+    {
+        const UAstrawildEchoDefinition* Def = Registry ? Registry->FindEcho(Objective->TargetId) : nullptr;
+        TargetName = Def && !Def->DisplayName.IsEmpty()
+            ? Def->DisplayName.ToString()
+            : Objective->TargetId.ToString();
+        if (Def)
+        {
+            ActivityPattern = Def->ActivityPattern;
+        }
+        if (World && Def)
+        {
+            // Nearest LIVE WILD instance (captured/defeated skip — the boss-bar
+            // TActorIterator idiom). Honest dormancy read: CGC-1's turnover
+            // writes bHidden through SetActorHiddenInGame; IsHidden() reads
+            // that exact flag. Every live instance hidden -> the fallback line
+            // reads the species' rhythm instead of pointing at an invisible dot.
+            AAstrawildEchoCharacter* Nearest = nullptr;
+            float BestDistanceSq = FLT_MAX;
+            bool bAnyLiveWild = false;
+            bool bAnyVisible = false;
+            for (TActorIterator<AAstrawildEchoCharacter> It(World); It; ++It)
+            {
+                AAstrawildEchoCharacter* Echo = *It;
+                if (!Echo || Echo->bCaptured || Echo->IsDefeated() || !Echo->EchoDefinition ||
+                    Echo->EchoDefinition->DefinitionId != Objective->TargetId)
+                {
+                    continue;
+                }
+                bAnyLiveWild = true;
+                if (Echo->IsHidden())
+                {
+                    continue;
+                }
+                bAnyVisible = true;
+                const float DistanceSq = FVector::DistSquared2D(Echo->GetActorLocation(), PlayerLocation);
+                if (DistanceSq < BestDistanceSq)
+                {
+                    BestDistanceSq = DistanceSq;
+                    Nearest = Echo;
+                }
+            }
+            if (Nearest)
+            {
+                TargetLocation = Nearest->GetActorLocation();
+                bResolved = true;
+            }
+            else if (bAnyLiveWild && !bAnyVisible)
+            {
+                bAllDormant = true;
+            }
+        }
+        break;
+    }
+    case EAstrawildQuestObjectiveType::ReachLocation:
+    {
+        if (World)
+        {
+            // The matching dungeon portal / survey beacon (PortalId == the
+            // objective's TargetId — the LocationReached publisher contract).
+            AAstrawildDungeonPortalActor* Nearest = nullptr;
+            float BestDistanceSq = FLT_MAX;
+            for (TActorIterator<AAstrawildDungeonPortalActor> It(World); It; ++It)
+            {
+                AAstrawildDungeonPortalActor* Portal = *It;
+                if (!Portal || Portal->PortalId != Objective->TargetId)
+                {
+                    continue;
+                }
+                const float DistanceSq = FVector::DistSquared2D(Portal->GetActorLocation(), PlayerLocation);
+                if (DistanceSq < BestDistanceSq)
+                {
+                    BestDistanceSq = DistanceSq;
+                    Nearest = Portal;
+                }
+            }
+            if (Nearest)
+            {
+                TargetLocation = Nearest->GetActorLocation();
+                // Friendly name: the survey id minus its Location_ prefix
+                // (e.g. Location_HollowUnderlight -> HollowUnderlight).
+                FString LocationName = Objective->TargetId.ToString();
+                if (LocationName.StartsWith(TEXT("Location_")))
+                {
+                    LocationName = LocationName.RightChop(static_cast<int32>(FCString::Strlen(TEXT("Location_"))));
+                }
+                TargetName = LocationName;
+                bResolved = true;
+            }
+            else
+            {
+                TargetName = Objective->TargetId.ToString();
+            }
+        }
+        break;
+    }
+    case EAstrawildQuestObjectiveType::CollectItem:
+    {
+        // Cheap mapping: the node actor carries its yield item id directly
+        // (ResourceItemId), so "nearest non-depleted node that yields the
+        // target" is one honest field comparison per actor.
+        const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(Objective->TargetId) : nullptr;
+        TargetName = ItemDef && !ItemDef->DisplayName.IsEmpty()
+            ? ItemDef->DisplayName.ToString()
+            : Objective->TargetId.ToString();
+        if (World)
+        {
+            AAstrawildResourceNode* Nearest = nullptr;
+            float BestDistanceSq = FLT_MAX;
+            for (TActorIterator<AAstrawildResourceNode> It(World); It; ++It)
+            {
+                AAstrawildResourceNode* Node = *It;
+                if (!Node || Node->ResourceItemId != Objective->TargetId ||
+                    AAstrawildResourceNode::IsNodeDepleted(Node->bInfiniteResource, Node->RemainingQuantity))
+                {
+                    continue;
+                }
+                const float DistanceSq = FVector::DistSquared2D(Node->GetActorLocation(), PlayerLocation);
+                if (DistanceSq < BestDistanceSq)
+                {
+                    BestDistanceSq = DistanceSq;
+                    Nearest = Node;
+                }
+            }
+            if (Nearest)
+            {
+                TargetLocation = Nearest->GetActorLocation();
+                bResolved = true;
+            }
+        }
+        break;
+    }
+    default:
+        // Non-spatial objective types (craft/build/tech/zone/survive) get no
+        // compass line — a bearing to "place a workbench" would be a lie.
+        return FString();
+    }
+
+    if (TargetName.IsEmpty())
+    {
+        return FString();
+    }
+
+    if (bAllDormant)
+    {
+        // Honest dormancy fallback: the species lives but sleeps under CGC-1's
+        // turnover — nocturnal patterns get the genre beat, everything else
+        // keeps the generic "search the wilds" nudge.
+        if (ActivityPattern == EAstrawildActivityPattern::Nocturnal)
+        {
+            return FString::Printf(TEXT("\u2192 %s stirs after dark"), *TargetName);
+        }
+        return FString::Printf(TEXT("\u2192 %s — search the wilds"), *TargetName);
+    }
+
+    if (!bResolved)
+    {
+        // Spatial target, no live world instance right now — honest nudge.
+        return FString::Printf(TEXT("\u2192 %s — search the wilds"), *TargetName);
+    }
+
+    // Planar (XY) ground distance + compass bearing. World convention: north is
+    // the map's up axis = NEGATIVE world Y (the zone table's north row is the
+    // lowest Y band), east is +X — so bearing = atan2(east, north) degrees
+    // clockwise from true north, exactly what FormatBearingText expects.
+    const FVector2D Delta(TargetLocation.X - PlayerLocation.X, TargetLocation.Y - PlayerLocation.Y);
+    const float DistanceCm = Delta.Size();
+    const float YawToTargetDeg = FMath::RadiansToDegrees(FMath::Atan2(Delta.X, -Delta.Y));
+    return FString::Printf(TEXT("\u2192 %s ~%s %s"),
+        *TargetName, *FormatDistanceText(DistanceCm), *FormatBearingText(YawToTargetDeg));
 }

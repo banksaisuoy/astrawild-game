@@ -42,6 +42,11 @@ void UAstrawildQuestComponent::BeginPlay()
         EventBus->OnGameplayEvent.AddDynamic(this, &UAstrawildQuestComponent::HandleGameplayEvent);
     }
 
+    // CGC-2 (A): objective-completion narration rides the component's own
+    // progress delegate (server-side broadcast; the toast routes through the
+    // owning controller's LAN-safe NotifyPlayer).
+    OnObjectiveProgress.AddDynamic(this, &UAstrawildQuestComponent::HandleObjectiveProgress);
+
     // Start the first quest when no quest state exists (new game).
     if (QuestStates.IsEmpty() && !StartingQuestId.IsNone())
     {
@@ -108,10 +113,65 @@ bool UAstrawildQuestComponent::StartQuest(const FName QuestId)
     // start) would otherwise dead-end the 17-quest chain with no recovery path.
     BackFillOneShotObjectivesFromWorld(State);
 
+    // CGC-2 (D): remember which collect objectives are open BEFORE the back-fill
+    // runs — the ones the back-fill completes get the celebration broadcast below.
+    TArray<int32> OpenCollectObjectiveIndices;
+    for (int32 i = 0; i < State.Objectives.Num(); ++i)
+    {
+        if (State.Objectives[i].Type == EAstrawildQuestObjectiveType::CollectItem &&
+            !State.Objectives[i].IsComplete())
+        {
+            OpenCollectObjectiveIndices.Add(i);
+        }
+    }
+
+    // CGC-2 (D): collect-item back-fill from the owning player's CURRENT pack —
+    // the collectible sibling of the one-shot doctrine above (items held before
+    // a later quest activates are celebrated, not silently vaporized). The intro
+    // quest stays PLAYED: it starts here in the controller's BeginPlay, before
+    // the pawn exists, so the pack read is empty on a fresh game.
+    if (AAstrawildPlayerCharacter* Player = GetPlayerCharacter())
+    {
+        if (Player->InventoryComponent)
+        {
+            BackFillCollectItemObjectives(State, Player->InventoryComponent->GetItemStacks());
+        }
+    }
+
     QuestStates.Add(State);
     ActiveQuestId = QuestId;
     OnQuestStateChanged.Broadcast(QuestId, false);
     UE_LOG(LogAstrawild, Log, TEXT("Quest started: %s."), *QuestId.ToString());
+
+    // CGC-2 (A): quest-start narration — the silent-chain kill. The same
+    // LCP-5 toast idiom the completion path uses, now on activation: the
+    // player hears WHAT began and WHY (the authored Summary finally reads).
+    // This fires BEFORE the celebration loop below so the single-slot HUD
+    // notification lands on the announcement first, then the completions.
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetOwner()))
+    {
+        const FString QuestLabel = !Definition->Title.IsEmpty()
+            ? Definition->Title.ToString()
+            : QuestId.ToString();
+        const FString SummaryLine = Definition->Summary.IsEmpty()
+            ? TEXT("")
+            : Definition->Summary.ToString();
+        PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("New quest: %s — %s"),
+            *QuestLabel, *SummaryLine)));
+    }
+
+    // CGC-2 (D): readable celebration for back-filled collect objectives — the
+    // same OnObjectiveProgress broadcast live collection uses, so the narration
+    // handler fires exactly once per newly-complete objective (the toast reads
+    // as a beat following the announcement above).
+    for (const int32 Index : OpenCollectObjectiveIndices)
+    {
+        if (State.Objectives.IsValidIndex(Index) && State.Objectives[Index].IsComplete())
+        {
+            OnObjectiveProgress.Broadcast(QuestId, Index,
+                State.Objectives[Index].ProgressCount, State.Objectives[Index].RequiredCount);
+        }
+    }
     return true;
 }
 
@@ -224,6 +284,31 @@ void UAstrawildQuestComponent::TickSurviveTimeObjectives(const float DeltaTime)
     if (bAllComplete)
     {
         CompleteQuest(State->QuestId);
+    }
+}
+
+void UAstrawildQuestComponent::HandleObjectiveProgress(const FName QuestId, const int32 ObjectiveIndex,
+    const int32 Progress, const int32 Required)
+{
+    // CGC-2 (A): the objective-completion toast — one short line at the moment
+    // an objective crosses its required count. Partial progress stays silent
+    // (the HUD tracker already shows the counters ticking).
+    if (Progress < Required)
+    {
+        return;
+    }
+
+    const TArray<FAstrawildQuestObjective> Objectives = GetActiveObjectives();
+    if (!Objectives.IsValidIndex(ObjectiveIndex) || Objectives[ObjectiveIndex].ObjectiveText.IsEmpty())
+    {
+        return;
+    }
+
+    // LCP-5 idiom: reach the owning player wherever their screen lives.
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetOwner()))
+    {
+        PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Objective complete: %s"),
+            *Objectives[ObjectiveIndex].ObjectiveText.ToString())));
     }
 }
 
@@ -498,6 +583,44 @@ int32 UAstrawildQuestComponent::BackFillOneShotObjectives(FAstrawildQuestSaveDat
         {
             Objective.ProgressCount = FMath::Min(Objective.RequiredCount,
                 FMath::Max(Objective.ProgressCount, Credited));
+            ++BackFilled;
+        }
+    }
+    return BackFilled;
+}
+
+int32 UAstrawildQuestComponent::BackFillCollectItemObjectives(FAstrawildQuestSaveData& State,
+    const TArray<FAstrawildItemStack>& CurrentInventory)
+{
+    // CGC-2 (D): pure pack-history application — ONLY incomplete CollectItem
+    // objectives, credited to min(required, held) so the counter can never
+    // overshoot. Everything else stays event-driven (live collection keeps
+    // publishing ItemCollected; one-shot types keep their own back-fill).
+    int32 BackFilled = 0;
+    for (FAstrawildQuestObjective& Objective : State.Objectives)
+    {
+        if (Objective.IsComplete() || Objective.Type != EAstrawildQuestObjectiveType::CollectItem ||
+            Objective.TargetId.IsNone())
+        {
+            continue;
+        }
+
+        int32 Held = 0;
+        for (const FAstrawildItemStack& Stack : CurrentInventory)
+        {
+            if (Stack.ItemId == Objective.TargetId)
+            {
+                Held += FMath::Max(0, Stack.Quantity);
+            }
+        }
+
+        const int32 Credited = FMath::Min(Objective.RequiredCount, Held);
+        if (Credited > Objective.ProgressCount)
+        {
+            // Increase-only credit: a repeat pass over the same pack is a
+            // no-op (idempotent), and the return count means "objectives
+            // whose progress actually advanced".
+            Objective.ProgressCount = Credited;
             ++BackFilled;
         }
     }

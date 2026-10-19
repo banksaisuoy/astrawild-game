@@ -7,8 +7,10 @@
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameplayTags.h"
 #include "AstrawildInventoryComponent.h"
+#include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildResearchSubsystem.h"
 #include "Camera/CameraComponent.h"
 #include "Engine/World.h"
@@ -153,9 +155,32 @@ void UAstrawildJournalSubsystem::ObserveCandidate(AAstrawildPlayerCharacter* Pla
 
     if (Entry.ObservationProgress < 100.0f)
     {
+        // CGC-2: capture the pre-milestone scan flag so the 25% crossing below
+        // can be narrated (GrantKnowledgeMilestones flips it internally).
+        const bool bWasScanned = Entry.bScanned;
         Entry.ObservationProgress = FMath::Min(100.0f, Entry.ObservationProgress + ObservationProgressPerSecond * DeltaTime);
         GrantKnowledgeMilestones(Entry, DefinitionId);
         OnJournalUpdated.Broadcast(DefinitionId, Entry);
+
+        // CGC-2: the first-study moment — observation milestones were silent
+        // (log + RP only). EVERY newly-studied species now announces itself;
+        // the FIRST one also teaches where the knowledge lives [P].
+        if (!bWasScanned && Entry.bScanned)
+        {
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
+            {
+                UWorld* World = GetWorld();
+                UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+                const UAstrawildEchoDefinition* Def = Registry ? Registry->FindEcho(DefinitionId) : nullptr;
+                const FString SpeciesName = Def && !Def->DisplayName.IsEmpty()
+                    ? Def->DisplayName.ToString()
+                    : DefinitionId.ToString();
+                PC->NotifyPlayer(FText::FromString(FString::Printf(
+                    TEXT("New species studied: %s — Field Journal updated"), *SpeciesName))); // LCP-3 remote routing
+                PC->ShowOnce(TEXT("Hint_FirstStudy"),
+                    FText::FromString(TEXT("The Field Journal [P] holds every species you observe.")));
+            }
+        }
     }
 }
 

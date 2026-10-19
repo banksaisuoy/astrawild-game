@@ -177,6 +177,19 @@ public:
     /** NG+ cycle count (0 = fresh run; written by StartNewGamePlus, restored on load). */
     UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
     int32 NGPlusCycle = 0;
+
+    /**
+     * CGC-2 (additive v5, no schema bump) — first-time hint flags: one FName per
+     * teaching moment the player has already seen (death, first capture, first
+     * species studied, low vitals, first night, first boss). The same additive
+     * pattern as DialogueFlags / NGPlusCycle: SaveWorld writes it, LoadWorld
+     * restores it, older v5 saves deserialize with an empty array (= every hint
+     * plays once, correct semantics for a legacy save). The in-memory mirror +
+     * accessors live on the subsystem (the DialogueComponent story-flag pattern,
+     * hoisted to the save-facing object so any server-side system can mark).
+     */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Save")
+    TArray<FName> SeenHints;
 };
 
 UCLASS()
@@ -243,6 +256,16 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Save")
     int32 GetCurrentSchemaVersion() const { return CurrentSchemaVersion; }
 
+    // --- CGC-2: first-time hint store (in-memory mirror of the save's SeenHints) ---
+
+    /** True when the teaching moment flagged by HintId has already played for this save. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Save")
+    bool HasSeenHint(FName HintId) const;
+
+    /** Mark a teaching moment as seen (one shot per save; idempotent). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Save")
+    void MarkHintSeen(FName HintId);
+
     // --- LCP-4: LAN co-op per-player persistence ---
 
     /**
@@ -296,4 +319,14 @@ private:
      * owns the authoritative world save; clients never write world state).
      */
     TMap<FName, FAstrawildCoopPlayerSaveBlock> SessionPlayerBlocks;
+
+    /**
+     * CGC-2: in-memory mirror of the loaded save's SeenHints — the authoritative
+     * world save is written from this copy (SaveWorld) and a load replaces it
+     * (LoadWorld), exactly like the dialogue component's story-flag store.
+     * LAN note: host-authoritative. The hint call sites are all server-side;
+     * a pure client's subsystem copy is a harmless local suppress and never
+     * reaches disk (clients never write world state, PART 7).
+     */
+    TArray<FName> SeenHints;
 };

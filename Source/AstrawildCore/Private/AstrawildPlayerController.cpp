@@ -2,6 +2,7 @@
 
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
+#include "AstrawildControlsScreenWidget.h" // CGC-2: read-only controls screen.
 #include "AstrawildCraftingScreenWidget.h"
 #include "AstrawildCraftingStationActor.h"
 #include "AstrawildDataAssets.h"
@@ -25,6 +26,7 @@
 #include "GameFramework/PlayerState.h" // LCP-4: player key
 #include "Net/UnrealNetwork.h" // PCR-2: DOREPLIFETIME
 #include "AstrawildResearchScreenWidget.h"
+#include "AstrawildSaveSubsystem.h" // CGC-2: ShowOnce hint store.
 #include "AstrawildShopWidget.h"
 #include "Blueprint/UserWidget.h"
 
@@ -68,6 +70,27 @@ void AAstrawildPlayerController::BeginPlay()
     {
         HudWidget->AddToViewport();
         UE_LOG(LogAstrawild, Log, TEXT("HUD widget created."));
+    }
+
+    // CGC-2: boot-time quest narration. The quest component is a SUBOBJECT —
+    // its BeginPlay (and therefore the auto-started intro quest's "New quest"
+    // toast) ran inside Super::BeginPlay, BEFORE the HUD existed, so the
+    // opening beat was born invisible. Announce whatever quest is already
+    // active once the screen can actually show it (every later quest start
+    // toasts from UAstrawildQuestComponent::StartQuest itself).
+    if (HudWidget && QuestComponent && !QuestComponent->GetActiveQuestId().IsNone())
+    {
+        const FName ActiveQuestId = QuestComponent->GetActiveQuestId();
+        UAstrawildItemRegistrySubsystem* Registry = GetWorld()
+            ? GetWorld()->GetSubsystem<UAstrawildItemRegistrySubsystem>()
+            : nullptr;
+        const UAstrawildQuestDefinition* QuestDef = Registry ? Registry->FindQuest(ActiveQuestId) : nullptr;
+        if (QuestDef && !QuestDef->Title.IsEmpty())
+        {
+            NotifyPlayer(FText::FromString(FString::Printf(TEXT("New quest: %s — %s"),
+                *QuestDef->Title.ToString(),
+                QuestDef->Summary.IsEmpty() ? TEXT("") : *QuestDef->Summary.ToString())));
+        }
     }
 }
 
@@ -270,6 +293,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleHuntScreen();
     }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
+    }
 
     if (bOpen)
     {
@@ -347,6 +374,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     if (IsHuntOpen())
     {
         ToggleHuntScreen();
+    }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
     }
 
     if (bOpen)
@@ -426,6 +457,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     {
         ToggleHuntScreen();
     }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
+    }
 
     if (bOpen)
     {
@@ -502,6 +537,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsHuntOpen())
     {
         ToggleHuntScreen();
+    }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
     }
 
     if (bOpen)
@@ -580,6 +619,10 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     if (IsHuntOpen())
     {
         ToggleHuntScreen();
+    }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -660,6 +703,10 @@ void AAstrawildPlayerController::ToggleRosterScreen()
     if (IsHuntOpen())
     {
         ToggleHuntScreen();
+    }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -790,6 +837,10 @@ void AAstrawildPlayerController::ToggleMapScreen()
     {
         ToggleHuntScreen();
     }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
+    }
 
     if (bOpen)
     {
@@ -878,6 +929,10 @@ void AAstrawildPlayerController::ToggleHuntScreen()
     {
         TogglePauseMenu();
     }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
+    }
 
     if (bOpen)
     {
@@ -916,6 +971,89 @@ bool AAstrawildPlayerController::IsHuntOpen() const
     return HuntScreen && HuntScreen->IsInViewport();
 }
 
+// --- CGC-2: the read-only Controls screen (32-action reference) ---
+
+void AAstrawildPlayerController::ToggleControlsScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsControlsOpen();
+
+    // Close siblings first — one full-screen UI at a time (the journal idiom).
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        if (!ControlsScreen)
+        {
+            const TSubclassOf<UAstrawildControlsScreenWidget> WidgetClass = ControlsScreenClass
+                ? ControlsScreenClass
+                : TSubclassOf<UAstrawildControlsScreenWidget>(UAstrawildControlsScreenWidget::StaticClass());
+            ControlsScreen = CreateWidget<UAstrawildControlsScreenWidget>(this, WidgetClass);
+        }
+        if (ControlsScreen)
+        {
+            ControlsScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so ESC closes without a mouse click.
+            ControlsScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (ControlsScreen)
+        {
+            ControlsScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsControlsOpen() const
+{
+    return ControlsScreen && ControlsScreen->IsInViewport();
+}
+
 bool AAstrawildPlayerController::RequestClaimHunt(const FName HuntId)
 {
     if (!IsLocalController())
@@ -951,7 +1089,7 @@ void AAstrawildPlayerController::ServerClaimHunt_Implementation(const FName Hunt
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen() || IsControlsOpen();
 }
 
 
@@ -976,6 +1114,40 @@ void AAstrawildPlayerController::NotifyPlayer(const FText& Message)
     else
     {
         ClientNotify(Message);
+    }
+}
+
+void AAstrawildPlayerController::ShowOnce(const FName HintFlag, const FText& Message)
+{
+    // CGC-2: first-time teaching hints — one shot per save. The store is the
+    // save subsystem's SeenHints mirror (additive v5, the DialogueFlags
+    // pattern); every call site is server-side, so the mark persists through
+    // the host's world save while the toast routes to whoever owns the screen.
+    // Fail-closed: no subsystem (world-free tests / very early boot) downgrades
+    // to a repeatable toast — a hint repeated beats a hint never shown.
+    if (Message.IsEmpty())
+    {
+        return;
+    }
+
+    UAstrawildSaveSubsystem* SaveSubsystem = nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        if (World->GetGameInstance())
+        {
+            SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>();
+        }
+    }
+    if (SaveSubsystem && SaveSubsystem->HasSeenHint(HintFlag))
+    {
+        return;
+    }
+
+    NotifyPlayer(Message);
+
+    if (SaveSubsystem)
+    {
+        SaveSubsystem->MarkHintSeen(HintFlag);
     }
 }
 

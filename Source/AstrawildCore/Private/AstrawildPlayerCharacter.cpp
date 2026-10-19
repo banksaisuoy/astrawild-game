@@ -21,6 +21,7 @@
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameMode.h"
 #include "AstrawildGameplayTags.h"
+#include "AstrawildGameState.h" // CGC-2: first-nightfall hint reads IsNight().
 #include "AstrawildInteractable.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
@@ -183,7 +184,14 @@ void AAstrawildPlayerCharacter::BeginPlay()
         {
             if (StarterItem.IsValid())
             {
-                InventoryComponent->AddItem(StarterItem.ItemId, StarterItem.Quantity);
+                // CGC-2 (D) MQ-1 integrity: the kit grants SILENTLY. AddItem would
+                // publish ItemCollected to the event bus, and the PlayerController's
+                // quest component is wired BEFORE the pawn spawns — so the 20 Wood +
+                // 20 Stone starter grant auto-completed "Collect 10 Dawnwood / 5
+                // Fieldstone" seconds after spawn and silently chain-skipped the
+                // whole tutorial. Silent grants keep the objectives PLAYED (the
+                // resource nodes around camp are the intended first beat).
+                InventoryComponent->AddItemSilent(StarterItem.ItemId, StarterItem.Quantity);
             }
         }
     }
@@ -230,6 +238,16 @@ void AAstrawildPlayerCharacter::BeginPlay()
         World->GetTimerManager().SetTimer(HeldWeaponTimerHandle, this,
             &AAstrawildPlayerCharacter::RefreshHeldWeaponVisual, 0.5f, true);
         RefreshHeldWeaponVisual();
+
+        // CGC-2: first-time teaching hints (first nightfall + first low vitals)
+        // checked on the same gentle-timer pattern. Authority-only: the marks
+        // belong on the host's persisted SeenHints store and the toasts route
+        // through NotifyPlayer, so a pure client never double-marks/double-shows.
+        if (HasAuthority())
+        {
+            World->GetTimerManager().SetTimer(FirstTimeHintTimerHandle, this,
+                &AAstrawildPlayerCharacter::RefreshFirstTimeHints, 2.0f, true);
+        }
     }
 }
 
@@ -1970,6 +1988,17 @@ void AAstrawildPlayerCharacter::OnPlayerDied()
 {
     UE_LOG(LogAstrawildCombat, Log, TEXT("Player died — awaiting respawn."));
 
+    // CGC-2: death UX — the screen used to go completely quiet (input disabled,
+    // no message, 5s of nothing), which reads exactly like a freeze. Every death
+    // now says what happened and where the player is going; the first death also
+    // teaches the genre-standard rule that death keeps your pack.
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->NotifyPlayer(FText::FromString(TEXT("You fell in the wilds\u2026 the watch-fire of the Dawn Camp calls you back.")));
+        PC->ShowOnce(TEXT("Hint_DeathKept"),
+            FText::FromString(TEXT("Everything you carry is kept — rest at the campfire to recover.")));
+    }
+
     // SCP Phase 3: deaths feed the DDA metric (band pull-down).
     if (UWorld* DDAWorld = GetWorld())
     {
@@ -2080,7 +2109,50 @@ void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)
     {
         EnableInput(PC);
     }
+
+    // CGC-2: the second half of the death UX — the return beat (the fall toast
+    // landed on death; this closes the loop the moment control is restored).
+    if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        AstrawildPC->NotifyPlayer(FText::FromString(TEXT("The watch-fire takes you back — you live again.")));
+    }
+
     RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::RefreshFirstTimeHints()
+{
+    // CGC-2: two first-time teaching moments, evaluated at the 2s cadence the
+    // timer sets (no new ticks, no delegates — both checks are cheap reads).
+    // ShowOnce does the rest: one toast each, then the store suppresses repeats.
+    AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController());
+    if (!PC || !IsAlive())
+    {
+        return;
+    }
+
+    UWorld* World = GetWorld();
+
+    // 1) First nightfall — the day/night rhythm is a core system (dormancy,
+    // nocturnal species), and the first sunset deserves a teaching beat.
+    const AAstrawildGameState* GameState = World ? World->GetGameState<AAstrawildGameState>() : nullptr;
+    if (GameState && GameState->IsNight())
+    {
+        PC->ShowOnce(TEXT("Hint_FirstNight"),
+            FText::FromString(TEXT("Night falls over the Vale — some Echoes only stir after dark.")));
+    }
+
+    // 2) First low vitals — hunger/thirst below a quarter tank teaches the
+    // smart-consume key [G] (the real binding from ASTRAWILD_INPUT_REFERENCE).
+    if (SurvivalComponent)
+    {
+        const FAstrawildSurvivalStats& Stats = SurvivalComponent->GetStats();
+        if (Stats.Hunger <= 25.0f || Stats.Thirst <= 25.0f)
+        {
+            PC->ShowOnce(TEXT("Hint_LowVitals"),
+                FText::FromString(TEXT("Hunger or thirst runs low — press [G] to eat or drink.")));
+        }
+    }
 }
 
 void AAstrawildPlayerCharacter::SetMovementSpeed(const float NewSpeed)

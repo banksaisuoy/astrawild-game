@@ -522,6 +522,12 @@ protected:
     /** FPP-1: unlocked-skill count at the last level-up (milestone detector). */
     int32 LastSeenSkillCount = -1;
 
+    /** CGC-2: first-time teaching hints evaluated at a gentle cadence (first
+     *  nightfall + first low vitals). Both are ShowOnce moments, so the check
+     *  goes quiet on its own once each hint has played. Authority-only timer
+     *  (the marks belong on the host's persisted hint store). */
+    void RefreshFirstTimeHints();
+
 private:
     void SetMovementSpeed(float NewSpeed);
     double LastAttackTimeSeconds = -BIG_NUMBER;
@@ -584,4 +590,7 @@ private:
     /** Production V2 Batch 2: held-weapon refresh cadence + dedupe cache. */
     FTimerHandle HeldWeaponTimerHandle;
     FName LastHeldWeaponId = NAME_None;
+
+    /** CGC-2: repeating first-time-hint check (2s cadence, authority only). */
+    FTimerHandle FirstTimeHintTimerHandle;
 };

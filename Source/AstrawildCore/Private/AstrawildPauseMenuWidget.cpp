@@ -25,7 +25,8 @@ namespace
     constexpr float PausePanelWidth = 340.0f;
     // DP-4: 3 menu buttons + the loadout caption + 3 slot buttons — the pause
     // panel grew with the skill loadout section.
-    constexpr float PauseMenuHeight = 520.0f; // LCP-6: + LAN CO-OP panel
+    // CGC-2: + the Controls entry (one more menu row).
+    constexpr float PauseMenuHeight = 570.0f; // LCP-6: + LAN CO-OP panel
     constexpr int32 SkillLoadoutSlots = 3;
 }
 
@@ -109,6 +110,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     // PCR-5: the Hunt Board entry (gamepad-reachable; U on keyboard).
     HuntButton = MakeMenuButton(TEXT("PauseHunt"), TEXT("Hunt Board [U]"), FLinearColor(0.5f, 0.35f, 0.2f, 1.0f));
     HuntButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleHuntClicked);
+
+    // CGC-2: the Controls entry — the 32-action reference's only path (the
+    // pause menu is the gamepad-reachable surface; NO new input action).
+    ControlsButton = MakeMenuButton(TEXT("PauseControls"), TEXT("Controls"), FLinearColor(0.33f, 0.38f, 0.5f, 1.0f));
+    ControlsButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleControlsClicked);
 
     // DCP-2: the New Game+ entry. Visible ONLY while post-game is active —
     // the widget is rebuilt on every open (the controller toggles create a
@@ -210,6 +216,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     {
         HuntSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         HuntSlot->SetPadding(FMargin(0.0f, 6.0f));
+    }
+    if (UVerticalBoxSlot* ControlsSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(ControlsButton)))
+    {
+        ControlsSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        ControlsSlot->SetPadding(FMargin(0.0f, 6.0f));
     }
     if (UVerticalBoxSlot* NGPlusSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(NGPlusButton)))
     {
@@ -349,6 +360,20 @@ void UAstrawildPauseMenuWidget::HandleHuntClicked()
             PC->TogglePauseMenu();
         }
         PC->ToggleHuntScreen();
+    }
+}
+
+void UAstrawildPauseMenuWidget::HandleControlsClicked()
+{
+    // CGC-2: same close-then-open sequence as the other screen buttons — the
+    // pause menu (SetPause + UIOnly input) steps aside for the controls screen.
+    if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+    {
+        if (PC->IsPauseMenuOpen())
+        {
+            PC->TogglePauseMenu();
+        }
+        PC->ToggleControlsScreen();
     }
 }
 

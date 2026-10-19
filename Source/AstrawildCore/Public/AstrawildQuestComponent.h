@@ -78,6 +78,19 @@ public:
         const TSet<FName>& DiscoveredPoiIds);
 
     /**
+     * CGC-2 (D) — the collect-item sibling of the same doctrine: credit
+     * CollectItem objectives from the player's CURRENT pack so items held
+     * BEFORE a later quest activates are celebrated instead of silently
+     * vaporized behind a fresh 0/N counter. Same pure-static shape
+     * (world-free testable): credited = min(required, held), never over.
+     * MQ-1 stays honest by ordering — the intro quest starts from the
+     * controller's BeginPlay, BEFORE the pawn (and its starter pack) exists.
+     * @return number of objectives that received back-filled progress.
+     */
+    static int32 BackFillCollectItemObjectives(FAstrawildQuestSaveData& State,
+        const TArray<FAstrawildItemStack>& CurrentInventory);
+
+    /**
      * Final-audit F-03 test hook: ApplyEventToQuest is the objective matcher
      * itself. Exposed so world-free automation tests can drive real events
      * (e.g. proving a dismantle's negative Amount never advances PlaceBuilding).
@@ -124,6 +137,14 @@ private:
 
     /** Gathers live world history (discovered POIs) + defeat counters and applies the static back-fill. */
     void BackFillOneShotObjectivesFromWorld(FAstrawildQuestSaveData& State);
+
+    /**
+     * CGC-2 (A): objective-completion narration — fires ONCE per objective, at
+     * the moment its progress crosses the required line (the broadcast carries
+     * partial progress too; only the crossing toasts).
+     */
+    UFUNCTION()
+    void HandleObjectiveProgress(FName QuestId, int32 ObjectiveIndex, int32 Progress, int32 Required);
 
     class UAstrawildItemRegistrySubsystem* GetRegistry() const;
     class UAstrawildEventBusSubsystem* GetEventBus() const;

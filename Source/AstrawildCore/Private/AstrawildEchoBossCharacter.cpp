@@ -806,6 +806,17 @@ float AAstrawildEchoBossCharacter::ApplyBossDamage(const float DamageAmount)
         // /Game/ reference). A boss dying silently read as the bar vanishing.
         NotifyNearbyPlayers(FText::FromString(FString::Printf(
             TEXT("%s DEFEATED — the way opens."), *GetBossDisplayName().ToString())), 12000.0f);
+
+        // CGC-2: the first-boss teach beat — the nearest survivor (the victor
+        // of the fight) learns that wardens are beatable and worth hunting.
+        if (AAstrawildPlayerCharacter* Victor = FindNearestPlayer())
+        {
+            if (AAstrawildPlayerController* VictorPC = Cast<AAstrawildPlayerController>(Victor->GetController()))
+            {
+                VictorPC->ShowOnce(TEXT("Hint_FirstBoss"),
+                    FText::FromString(TEXT("A warden of the Vale has fallen — its power is yours.")));
+            }
+        }
         if (UWorld* DefeatWorld = GetWorld())
         {
             const TSoftObjectPtr<USoundBase> DefeatCue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));

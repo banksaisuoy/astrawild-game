@@ -155,6 +155,11 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
     TArray<UAstrawildBuildingDefinition*> GetAllBuildings() const;
 
+    /** CGC-2: all registered quest definitions (the GetAllPOIs pattern — the
+     *  narration contract walks every quest's Title/Summary world-free). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Registry")
+    TArray<UAstrawildQuestDefinition*> GetAllQuests() const;
+
     /** Final Completion Run (registry reconciliation): authoritative registry sizes.
      *  The content-completion log reads these live — content counts are NEVER hardcoded
      *  in log strings or docs again (one authoritative value per metric, machine-derived). */

@@ -10,6 +10,7 @@
 #include "AstrawildQuestComponent.h"
 #include "AstrawildTypes.h"
 #include "AstrawildVillageActor.h"
+#include "AstrawildWorldBootstrapper.h" // CGC-2: camp center pin.
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildZoneSubsystem.h"
 #include "Blueprint/WidgetTree.h"
@@ -104,7 +105,7 @@ void UAstrawildMapScreenWidget::BuildWidgetTree()
     LegendText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("MapLegend"));
     LegendText->SetColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.74f, 0.78f, 1.0f)));
     LegendText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 11));
-    LegendText->SetText(FText::FromString(TEXT("\u25C6 discovered POI  \u25CF you  V village  D dungeon  ! world event  (reopen to refresh)")));
+    LegendText->SetText(FText::FromString(TEXT("\u25C6 discovered POI  \u25CF you  V village  D dungeon  ! world event  CAMP home  (reopen to refresh)")));
 
     CloseButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("MapClose"));
     CloseButton->SetBackgroundColor(FLinearColor(0.45f, 0.2f, 0.16f, 1.0f));
@@ -292,6 +293,12 @@ void UAstrawildMapScreenWidget::RefreshMap()
                 POIWorld, WorldBounds, MapSize, POI->DisplayName.ToString());
         }
     }
+
+    // --- Camp pin (CGC-2): the home marker ---
+    // Sixteen POIs and no camp: the one place every death returns you to was
+    // the only unlabeled point on the map. Static accessor — no actor hunt.
+    AddGlyphMarker(TEXT("CAMP"), FLinearColor(1.0f, 0.78f, 0.42f, 1.0f),
+        AAstrawildWorldBootstrapper::GetCampCenterXY(), WorldBounds, MapSize, TEXT("Dawn Camp"));
 
     // --- Villages (live actor positions) ---
     for (TActorIterator<AVillageActor> It(World); It; ++It)

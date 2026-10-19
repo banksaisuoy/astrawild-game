@@ -151,6 +151,10 @@ bool UAstrawildSaveSubsystem::SaveWorld(UWorld* World, const FString& SlotName, 
             Dialogue->ExportForSave(SaveGame->DialogueFlags);
         }
 
+        // CGC-2: first-time hint flags ride along (additive v5 — the exact
+        // DialogueFlags serialization pattern; legacy saves deserialize empty).
+        SaveGame->SeenHints = SeenHints;
+
         // GDP-3 + SCP Phase 12 (FCR-1 fix): AttributeComponent/DurabilityComponent are
         // PAWN members — re-derive the pawn here (the earlier cast scope closed above).
         if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(PC->GetPawn()))
@@ -602,6 +606,10 @@ bool UAstrawildSaveSubsystem::LoadWorld(UWorld* World, const FString& SlotName, 
         {
             Dialogue->ImportFromSave(SaveGame->DialogueFlags);
         }
+
+        // CGC-2: restore the first-time hint mirror (additive v5 — older saves
+        // deserialize an empty array = every teaching moment plays once).
+        SeenHints = SaveGame->SeenHints;
 
         // GDP-3 + SCP Phase 12 (FCR-1 fix): pawn members — re-derive the pawn (the
         // earlier cast scope closed above).
@@ -1084,6 +1092,28 @@ bool UAstrawildSaveSubsystem::DeleteSave(const FString& SlotName, const int32 Us
 }
 
 // ===========================================================================
+// CGC-2 — first-time hint store accessors (the DialogueComponent story-flag
+// pattern, hoisted to the save-facing subsystem). In-memory only: SaveWorld
+// writes the mirror, LoadWorld replaces it, StartNewGamePlus clears it.
+// ===========================================================================
+
+bool UAstrawildSaveSubsystem::HasSeenHint(const FName HintId) const
+{
+    return !HintId.IsNone() && SeenHints.Contains(HintId);
+}
+
+void UAstrawildSaveSubsystem::MarkHintSeen(const FName HintId)
+{
+    // Idempotent, one FName per teaching moment — mirrors SetStoryFlag's
+    // guard + log so a repeat trigger can never duplicate or spam.
+    if (!HintId.IsNone() && !SeenHints.Contains(HintId))
+    {
+        SeenHints.Add(HintId);
+        UE_LOG(LogAstrawildSave, Log, TEXT("First-time hint seen: %s."), *HintId.ToString());
+    }
+}
+
+// ===========================================================================
 // DCP-2 — New Game Plus (user directive 2026-09-06: "re-open every deferred
 // item, playable-first"). The ONE reset/carryover authority. Design contract
 // lives on the header doc-block; the sweep mirrors LoadWorld's proven order.
@@ -1290,6 +1320,10 @@ bool UAstrawildSaveSubsystem::StartNewGamePlus(UWorld* World, const int32 UserIn
         {
             Dialogue->ImportFromSave(TArray<FName>()); // one-time beats replay (incl. the crown choice).
         }
+
+        // CGC-2: first-time teaching hints replay too — the new dawn teaches
+        // like the first one did (the mirror clears; the reset save persists it).
+        SeenHints.Reset();
     }
     if (UAstrawildSpoilageSubsystem* Spoilage = World->GetSubsystem<UAstrawildSpoilageSubsystem>())
     {

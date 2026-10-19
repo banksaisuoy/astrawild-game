@@ -19,6 +19,7 @@ class UAstrawildJournalScreenWidget;
 class UAstrawildRosterScreenWidget;
 class UAstrawildMapScreenWidget;
 class UAstrawildHuntScreenWidget;
+class UAstrawildControlsScreenWidget;
 
 #include "AstrawildTypes.h"
 
@@ -76,6 +77,17 @@ public:
 
     /** LCP-3: delivery helper - whatever machine owns this controller's screen gets the message. */
     void NotifyPlayer(const FText& Message);
+
+    /**
+     * CGC-2: one-shot first-time teaching hint. Checks the save subsystem's
+     * SeenHints store (additive v5, the DialogueFlags pattern); when the flag
+     * is unseen it toasts via NotifyPlayer (LAN-safe: the call sites are
+     * server-side, so the mark lands on the host's persisted mirror and the
+     * message routes to the owning screen) and marks it seen. Fail-closed both
+     * ways: a missing save subsystem downgrades to a plain repeatable toast
+     * (better a repeated hint than a missing one), and an empty message no-ops.
+     */
+    void ShowOnce(FName HintFlag, const FText& Message);
 
     /**
      * LCP-4: STABLE per-player identity for roster partition + per-player save
@@ -257,6 +269,17 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsHuntOpen() const;
 
+    /** CGC-2: read-only Controls screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildControlsScreenWidget> ControlsScreenClass;
+
+    /** CGC-2: toggle the read-only Controls screen (32-action reference) — pause-menu button only, NO new input action. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleControlsScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsControlsOpen() const;
+
     /**
      * PCR-5: claim a completed hunt round. Local authority mutates directly;
      * a remote client routes through the validated server RPC.
@@ -310,4 +333,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildHuntScreenWidget> HuntScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildControlsScreenWidget> ControlsScreen;
 };

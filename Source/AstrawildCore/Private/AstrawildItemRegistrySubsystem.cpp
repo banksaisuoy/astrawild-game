@@ -227,6 +227,21 @@ TArray<UAstrawildBuildingDefinition*> UAstrawildItemRegistrySubsystem::GetAllBui
     return Out;
 }
 
+TArray<UAstrawildQuestDefinition*> UAstrawildItemRegistrySubsystem::GetAllQuests() const
+{
+    // CGC-2: the GetAllPOIs pattern — every registered quest definition.
+    TArray<UAstrawildQuestDefinition*> Out;
+    Out.Reserve(Quests.Num());
+    for (const auto& Pair : Quests)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
 // --- Production V2: data-driven content foundation registries ---
 
 void UAstrawildItemRegistrySubsystem::RegisterWeapon(UAstrawildWeaponDefinition* Definition)

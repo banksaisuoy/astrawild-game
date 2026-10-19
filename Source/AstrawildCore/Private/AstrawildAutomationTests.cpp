@@ -69,6 +69,8 @@
 #include "AstrawildHuntScreenWidget.h"
 #include "AstrawildHuntSubsystem.h"
 #include "AstrawildWildlifeDirectorSubsystem.h"
+#include "AstrawildHudWidget.h" // CGC-2: pure bearing/distance formatting contracts.
+#include "AstrawildControlsScreenWidget.h" // CGC-2: the 32-action controls census pin.
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -6882,6 +6884,169 @@ bool FAstrawildCGC1FaunaCompletenessContractTest::RunTest(const FString& Paramet
         UAstrawildWildlifeDirectorSubsystem::ResolveNearestZone(FVector2D(0.0f, 0.0f)) != EAstrawildZone::None);
     TestTrue(TEXT("Off-grid position falls back to the nearest zone"),
         UAstrawildWildlifeDirectorSubsystem::ResolveNearestZone(FVector2D(500000.0f, 500000.0f)) != EAstrawildZone::None);
+
+    return true;
+}
+
+// ===========================================================================
+// CGC-2 (first-hour & guidance): narration, guidance, hints, MQ-1 integrity
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCGC2FirstHourGuidanceContractTest,
+    "ASTRAWILD.CGC2.FirstHourGuidanceContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCGC2FirstHourGuidanceContractTest::RunTest(const FString& Parameters)
+{
+    // 1) Narration content contract — the silent-chain kill. The registry build
+    //    (test-135 idiom) must carry a non-empty Summary on EVERY quest: the
+    //    start toast + boot announcement read Title — Summary, so an empty
+    //    summary would silently regress the first-hour narration to raw ids.
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    AstrawildBestiary::RegisterAll(Registry);
+
+    const TArray<UAstrawildQuestDefinition*> AllQuests = Registry->GetAllQuests();
+    TestEqual(TEXT("Quest census is 22"), AllQuests.Num(), 22);
+    for (const UAstrawildQuestDefinition* Quest : AllQuests)
+    {
+        TestTrue(FString::Printf(TEXT("Quest %s has a Title"),
+                Quest ? *Quest->QuestId.ToString() : TEXT("(null)")),
+            Quest && !Quest->Title.IsEmpty());
+        TestTrue(FString::Printf(TEXT("Quest %s has a Summary (the narration reader)"),
+                Quest ? *Quest->QuestId.ToString() : TEXT("(null)")),
+            Quest && !Quest->Summary.IsEmpty());
+    }
+    const UAstrawildQuestDefinition* FirstLight = Registry->FindQuest(TEXT("Quest_FirstLight"));
+    TestTrue(TEXT("Quest_FirstLight is registered"), FirstLight != nullptr);
+    TestTrue(TEXT("Quest_FirstLight Summary is non-empty (MQ-1 narrates on boot)"),
+        FirstLight && !FirstLight->Summary.IsEmpty());
+
+    // 2) FormatBearingText: the 8-wind compass — center angles exact, wrap
+    //    negative/over-360 inputs to the honest sector.
+    TestEqual(TEXT("Bearing 0 is N"),
+        UAstrawildHudWidget::FormatBearingText(0.0f), FString(TEXT("N")));
+    TestEqual(TEXT("Bearing 45 is NE"),
+        UAstrawildHudWidget::FormatBearingText(45.0f), FString(TEXT("NE")));
+    TestEqual(TEXT("Bearing 90 is E"),
+        UAstrawildHudWidget::FormatBearingText(90.0f), FString(TEXT("E")));
+    TestEqual(TEXT("Bearing 135 is SE"),
+        UAstrawildHudWidget::FormatBearingText(135.0f), FString(TEXT("SE")));
+    TestEqual(TEXT("Bearing 180 is S"),
+        UAstrawildHudWidget::FormatBearingText(180.0f), FString(TEXT("S")));
+    TestEqual(TEXT("Bearing 225 is SW"),
+        UAstrawildHudWidget::FormatBearingText(225.0f), FString(TEXT("SW")));
+    TestEqual(TEXT("Bearing 270 is W"),
+        UAstrawildHudWidget::FormatBearingText(270.0f), FString(TEXT("W")));
+    TestEqual(TEXT("Bearing 315 is NW"),
+        UAstrawildHudWidget::FormatBearingText(315.0f), FString(TEXT("NW")));
+    TestEqual(TEXT("Bearing -10 wraps to N"),
+        UAstrawildHudWidget::FormatBearingText(-10.0f), FString(TEXT("N")));
+    TestEqual(TEXT("Bearing 350 wraps to N"),
+        UAstrawildHudWidget::FormatBearingText(350.0f), FString(TEXT("N")));
+    TestEqual(TEXT("Bearing 370 wraps to NE"),
+        UAstrawildHudWidget::FormatBearingText(370.0f), FString(TEXT("NE")));
+
+    // 3) FormatDistanceText: meters, rounded; the far display ceiling.
+    TestEqual(TEXT("8500cm reads 85m"),
+        UAstrawildHudWidget::FormatDistanceText(8500.0f), FString(TEXT("85m")));
+    TestEqual(TEXT("120cm rounds to 1m"),
+        UAstrawildHudWidget::FormatDistanceText(120.0f), FString(TEXT("1m")));
+    TestEqual(TEXT("Zero reads 0m"),
+        UAstrawildHudWidget::FormatDistanceText(0.0f), FString(TEXT("0m")));
+    TestEqual(TEXT("9999999cm caps at the 999m+ ceiling"),
+        UAstrawildHudWidget::FormatDistanceText(9999999.0f), FString(TEXT("999m+")));
+    TestEqual(TEXT("Negative input clamps to 0m (fail-closed)"),
+        UAstrawildHudWidget::FormatDistanceText(-500.0f), FString(TEXT("0m")));
+
+    // 4) BackFillCollectItemObjectives: the pack-credit doctrine, pinned on the
+    //    REAL MQ-1 definition. Held items credit up to the required count;
+    //    non-collect objectives are never touched (MQ-2 walk pins that side).
+    TestTrue(TEXT("Quest_FirstEcho is registered (the non-collect control case)"),
+        Registry->FindQuest(TEXT("Quest_FirstEcho")) != nullptr);
+
+    FAstrawildQuestSaveData FirstLightState;
+    FirstLightState.QuestId = FirstLight->QuestId;
+    FirstLightState.Objectives = FirstLight->Objectives;
+    for (FAstrawildQuestObjective& Objective : FirstLightState.Objectives)
+    {
+        Objective.ProgressCount = 0;
+    }
+
+    TArray<FAstrawildItemStack> Pack;
+    FAstrawildItemStack WoodStack;
+    WoodStack.ItemId = TEXT("Item_Wood");
+    WoodStack.Quantity = 12;
+    Pack.Add(WoodStack);
+    FAstrawildItemStack StoneStack;
+    StoneStack.ItemId = TEXT("Item_Stone");
+    StoneStack.Quantity = 3;
+    Pack.Add(StoneStack);
+
+    const int32 BackFilled = UAstrawildQuestComponent::BackFillCollectItemObjectives(FirstLightState, Pack);
+    TestEqual(TEXT("Both MQ-1 collect objectives credited"), BackFilled, 2);
+    TestEqual(TEXT("Wood credited to its 10 cap (held 12)"),
+        FirstLightState.Objectives[0].ProgressCount, 10);
+    TestTrue(TEXT("Wood objective complete"), FirstLightState.Objectives[0].IsComplete());
+    TestEqual(TEXT("Stone credited to held (3 of 5)"),
+        FirstLightState.Objectives[1].ProgressCount, 3);
+    TestFalse(TEXT("Stone objective stays open (honest partial)"),
+        FirstLightState.Objectives[1].IsComplete());
+
+    // Idempotence: a second pass over the same pack changes nothing.
+    TestEqual(TEXT("Second back-fill pass adds nothing"),
+        UAstrawildQuestComponent::BackFillCollectItemObjectives(FirstLightState, Pack), 0);
+
+    // Non-collect control: MQ-2 (Observe + Capture) must stay untouched by a
+    // pack full of unrelated items.
+    const UAstrawildQuestDefinition* FirstEcho = Registry->FindQuest(TEXT("Quest_FirstEcho"));
+    FAstrawildQuestSaveData FirstEchoState;
+    FirstEchoState.QuestId = FirstEcho->QuestId;
+    FirstEchoState.Objectives = FirstEcho->Objectives;
+    for (FAstrawildQuestObjective& Objective : FirstEchoState.Objectives)
+    {
+        Objective.ProgressCount = 0;
+    }
+    TestEqual(TEXT("Non-collect objectives receive no back-fill"),
+        UAstrawildQuestComponent::BackFillCollectItemObjectives(FirstEchoState, Pack), 0);
+    for (const FAstrawildQuestObjective& Objective : FirstEchoState.Objectives)
+    {
+        TestEqual(FString::Printf(TEXT("MQ-2 objective %s untouched"),
+                *Objective.TargetId.ToString()),
+            Objective.ProgressCount, 0);
+    }
+
+    // 5) Controls table: the 32-action census pin (one row per runtime action).
+    TestEqual(TEXT("Controls screen pins the 32-action census"),
+        UAstrawildControlsScreenWidget::GetControlRows().Num(), 32);
+    for (const FString& Row : UAstrawildControlsScreenWidget::GetControlRows())
+    {
+        TestTrue(FString::Printf(TEXT("Controls row non-empty: %s"), *Row.Left(24)),
+            !Row.IsEmpty());
+    }
+
+    // 6) SeenHints additive store: round-trip logic + the no-bump schema pin
+    //    (the SchemaV5 test's world-free instantiation idiom).
+    UAstrawildSaveSubsystem* SaveSubsystem = NewObject<UAstrawildSaveSubsystem>();
+    TestEqual(TEXT("Schema stays v5 (additive SeenHints, no bump)"),
+        SaveSubsystem->GetCurrentSchemaVersion(), 5);
+    TestFalse(TEXT("Fresh hint store reads unseen"),
+        SaveSubsystem->HasSeenHint(TEXT("Hint_FirstNight")));
+    SaveSubsystem->MarkHintSeen(TEXT("Hint_FirstNight"));
+    TestTrue(TEXT("Marked hint reads seen"),
+        SaveSubsystem->HasSeenHint(TEXT("Hint_FirstNight")));
+    TestFalse(TEXT("Other hints stay unseen (one flag per moment)"),
+        SaveSubsystem->HasSeenHint(TEXT("Hint_FirstCapture")));
+    SaveSubsystem->MarkHintSeen(TEXT("Hint_FirstNight")); // idempotence
+    TestTrue(TEXT("Repeat mark stays idempotent"),
+        SaveSubsystem->HasSeenHint(TEXT("Hint_FirstNight")));
+    TestFalse(TEXT("NAME_None never reads seen"),
+        SaveSubsystem->HasSeenHint(NAME_None));
+
+    UAstrawildSaveGame* SaveObject = NewObject<UAstrawildSaveGame>();
+    TestEqual(TEXT("Save object SeenHints defaults empty (legacy saves)"),
+        SaveObject->SeenHints.Num(), 0);
 
     return true;
 }
