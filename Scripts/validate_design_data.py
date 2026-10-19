@@ -425,7 +425,7 @@ def validate_recounts(domains: dict) -> None:
     n_tests = rg_count(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST",
                        "Source/AstrawildCore/Private/AstrawildAutomationTests.cpp")
     json_tests = domains["counts"]["automation_tests"]["value"]
-    check(n_tests == json_tests == 135, "recount/automation_tests",
+    check(n_tests == json_tests == 140, "recount/automation_tests",
           f"grep {n_tests} vs json {json_tests}")
 
     n_echo = rg_count('TEXT("Echo_', "Source/AstrawildCore/Private/AstrawildBestiaryData.cpp")
