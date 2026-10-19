@@ -5,6 +5,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildGeneticsLibrary.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildMountComponent.h"
 #include "AstrawildPlayerController.h"
@@ -41,6 +42,48 @@ bool UAstrawildRosterScreenWidget::CanDeployIntoRing(const int32 CurrentRingSize
     return CurrentRingSize < FMath::Max(1, RingMax);
 }
 
+FString UAstrawildRosterScreenWidget::FormatInstanceGeneticsLine(const bool bInRadiant,
+    const TArray<FName>& Traits, const TArray<int32>& IVs)
+{
+    // CGC-5 (audit 2-d): empty traits -> no line at all (legacy rows stay
+    // exactly as they were — the genetics layer is purely additive).
+    if (Traits.IsEmpty())
+    {
+        return FString();
+    }
+
+    TArray<FString> Parts;
+    Parts.Reserve(Traits.Num() + 1);
+    if (bInRadiant)
+    {
+        Parts.Add(TEXT("\u2726 Radiant"));
+    }
+    for (const FName& TraitId : Traits)
+    {
+        Parts.Add(UAstrawildGeneticsLibrary::GetTraitDisplayName(TraitId));
+    }
+    FString Line = FString::Join(Parts, TEXT(" · "));
+
+    // IVs render zero-padded H/A/D/S ("12/31/04/22"); clamped to the classic
+    // 0-31 band so a crafted row cannot print nonsense. Missing IVs omit the
+    // whole segment (fail-closed, never fabricated numbers).
+    constexpr int32 MaxRenderedIVs = 4;
+    if (IVs.Num() > 0)
+    {
+        Line += TEXT(" | IVs ");
+        const int32 RenderCount = FMath::Min(IVs.Num(), MaxRenderedIVs);
+        for (int32 Index = 0; Index < RenderCount; ++Index)
+        {
+            if (Index > 0)
+            {
+                Line += TEXT("/");
+            }
+            Line += FString::Printf(TEXT("%02d"), FMath::Clamp(IVs[Index], 0, 31));
+        }
+    }
+    return Line;
+}
+
 // ---------------------------------------------------------------------------
 // Row widget
 // ---------------------------------------------------------------------------
@@ -55,6 +98,8 @@ void UAstrawildRosterRowWidget::InitializeRow(UAstrawildRosterScreenWidget* Pare
     RowBond = InRow.Bond;
     RowTrust = InRow.Trust;
     RowPersonality = InRow.Personality;
+    RowTraits = InRow.Traits;
+    RowIVs = InRow.IVs;
     RingUsed = InRingUsed;
     RingMax = InRingMax;
 
@@ -96,6 +141,22 @@ void UAstrawildRosterRowWidget::BuildRowTree()
         *UEnum::GetDisplayValueAsText(AAstrawildEchoCharacter::ComputeVisualBand(
             Def->Family, Def->BodyPlan, Def->SizeClass)).ToString(),
         RowLevel, FMath::RoundToInt(RowBond), FMath::RoundToInt(RowTrust));
+
+    // CGC-5 (audit 2-d): the per-instance genetics line — traits/IVs/Radiant
+    // now have a player-facing surface. Empty traits format to an empty
+    // string, so legacy rows skip the line entirely (purely additive).
+    {
+        const TArray<int32> RowIVsInt = {
+            FMath::RoundToInt(static_cast<float>(RowIVs.X)), FMath::RoundToInt(static_cast<float>(RowIVs.Y)),
+            FMath::RoundToInt(static_cast<float>(RowIVs.Z)), FMath::RoundToInt(static_cast<float>(RowIVs.W))
+        };
+        const FString GeneticsLine = FormatInstanceGeneticsLine(
+            AAstrawildEchoCharacter::ComputeIsRadiant(RowIVsInt, RowTraits), RowTraits, RowIVsInt);
+        if (!GeneticsLine.IsEmpty())
+        {
+            Line += FString::Printf(TEXT("\n%s"), *GeneticsLine);
+        }
+    }
 
     // Top work affinity — the "why would I keep this one" answer.
     if (Def->WorkAffinities.Num() > 0)

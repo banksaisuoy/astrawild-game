@@ -164,7 +164,13 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         if (bSuccess)
         {
             const FText SpeciesName = Echo->EchoDefinition ? Echo->EchoDefinition->DisplayName : FText::FromString(TEXT("Echo"));
-            PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *SpeciesName.ToString()))); // LCP-3 remote routing
+            // CGC-5 (audit 2-d): a Radiant capture announces the mini-shiny in
+            // the toast itself — the genre's capture moment, prefixed onto the
+            // species display name (fail-closed: non-Radiant text is byte-identical).
+            const FString DisplayLine = Echo->IsRadiant()
+                ? FString::Printf(TEXT("\u2726 Radiant %s"), *SpeciesName.ToString())
+                : SpeciesName.ToString();
+            PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("Echo captured: %s"), *DisplayLine))); // LCP-3 remote routing
             // CGC-2: the genre-standard first-capture fanfare — the moment the
             // core loop closes for the first time, teach the three keys that
             // make the new companion useful (real bindings from

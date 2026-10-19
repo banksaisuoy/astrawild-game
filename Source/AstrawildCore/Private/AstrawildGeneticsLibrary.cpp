@@ -135,3 +135,17 @@ float UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(float IV)
     // +1% per IV point: 0 -> 1.0x, 31 -> 1.31x (hidden growth bias).
     return 1.0f + FMath::Clamp(IV, 0.0f, 31.0f) / 100.0f;
 }
+
+FString UAstrawildGeneticsLibrary::GetTraitDisplayName(const FName TraitId)
+{
+    // CGC-5: the trait pool carries ids only ("Trait_Swift") — the honest
+    // display rendering strips the prefix rather than inventing names.
+    // Unknown/foreign ids keep their full string (fail-closed).
+    const FString Id = TraitId.ToString();
+    const FString Prefix = TEXT("Trait_");
+    if (Id.StartsWith(Prefix, ESearchCase::CaseSensitive))
+    {
+        return Id.RightChop(Prefix.Len());
+    }
+    return Id;
+}

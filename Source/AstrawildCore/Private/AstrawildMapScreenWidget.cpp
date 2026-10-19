@@ -4,6 +4,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildDungeonGeneratorActor.h"
 #include "AstrawildItemRegistrySubsystem.h"
+#include "AstrawildJournalSubsystem.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildPOIMarkerActor.h"
 #include "AstrawildPOISubsystem.h"
@@ -105,7 +106,7 @@ void UAstrawildMapScreenWidget::BuildWidgetTree()
     LegendText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("MapLegend"));
     LegendText->SetColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.74f, 0.78f, 1.0f)));
     LegendText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 11));
-    LegendText->SetText(FText::FromString(TEXT("\u25C6 discovered POI  \u25CF you  V village  D dungeon  ! world event  CAMP home  (reopen to refresh)")));
+    LegendText->SetText(FText::FromString(TEXT("\u25C6 discovered POI  \u25CF you  V village  D dungeon  ! world event  CAMP home  N/M zone species observed  (reopen to refresh)")));
 
     CloseButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("MapClose"));
     CloseButton->SetBackgroundColor(FLinearColor(0.45f, 0.2f, 0.16f, 1.0f));
@@ -150,7 +151,8 @@ void UAstrawildMapScreenWidget::BuildWidgetTree()
     WidgetTree->RootWidget = Canvas;
 }
 
-void UAstrawildMapScreenWidget::AddZoneCell(const FAstrawildZoneDescriptor& Zone, const FBox2D& WorldBounds, const FVector2D& MapSize)
+void UAstrawildMapScreenWidget::AddZoneCell(const FAstrawildZoneDescriptor& Zone, const FBox2D& WorldBounds, const FVector2D& MapSize,
+    const TArray<FAstrawildZoneCensusRow>& ZoneCensus)
 {
     // Zone rect from its world bounds → map coordinates.
     const FVector2D Min = ProjectWorldToMap(Zone.Bounds.Min, WorldBounds, MapSize);
@@ -172,8 +174,27 @@ void UAstrawildMapScreenWidget::AddZoneCell(const FAstrawildZoneDescriptor& Zone
     CellText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12));
     CellText->SetJustification(ETextJustify::Center);
     CellText->SetAutoWrapText(true);
-    CellText->SetText(FText::FromString(FString::Printf(TEXT("%s\nThreat %d\n%s"),
+
+    // CGC-5 (audit 2-d): the per-zone completion census rides the cell —
+    // observed/total species of THIS zone (the completionist's regional
+    // progress at a glance). The census always carries a row per zone; a
+    // miss falls back to no fraction (fail-closed, never a fake count).
+    const FAstrawildZoneCensusRow* CensusRow = nullptr;
+    for (const FAstrawildZoneCensusRow& Candidate : ZoneCensus)
+    {
+        if (Candidate.Zone == Zone.Zone)
+        {
+            CensusRow = &Candidate;
+            break;
+        }
+    }
+    const FString CensusSuffix = CensusRow
+        ? FString::Printf(TEXT("\n%d/%d species"), CensusRow->Observed, CensusRow->Total)
+        : FString();
+
+    CellText->SetText(FText::FromString(FString::Printf(TEXT("%s\nThreat %d%s\n%s"),
         *Zone.DisplayName.ToString(), Zone.ThreatLevel,
+        *CensusSuffix,
         Zone.HazardType == EAstrawildZoneHazard::None ? TEXT("") : *UEnum::GetDisplayValueAsText(Zone.HazardType).ToString())));
     Cell->AddChild(CellText);
 
@@ -230,10 +251,19 @@ void UAstrawildMapScreenWidget::RefreshMap()
     }
     const FVector2D MapSize(MapPanelWidth, MapGridHeight);
 
+    // --- CGC-5: the per-zone species census (computed ONCE per refresh; the
+    // observed set reads the journal subsystem's Entries — on a pure LAN
+    // client that store is empty (pre-existing journal posture), so the cells
+    // degrade to 0/Total honestly, exactly like the journal list does) ---
+    UAstrawildItemRegistrySubsystem* CensusRegistry = World->GetSubsystem<UAstrawildItemRegistrySubsystem>();
+    const UAstrawildJournalSubsystem* CensusJournal = World->GetSubsystem<UAstrawildJournalSubsystem>();
+    const TArray<FAstrawildZoneCensusRow> ZoneCensus = UAstrawildJournalSubsystem::ComputeZoneCensus(
+        CensusRegistry, CensusJournal ? CensusJournal->GetObservedSpeciesIds() : TSet<FName>());
+
     // --- Zone cells ---
     for (const FAstrawildZoneDescriptor& Zone : Zones)
     {
-        AddZoneCell(Zone, WorldBounds, MapSize);
+        AddZoneCell(Zone, WorldBounds, MapSize, ZoneCensus);
     }
 
     // --- Player + current zone subtitle ---

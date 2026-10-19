@@ -9,6 +9,7 @@
 #include "AstrawildJournalSubsystem.h"
 #include "AstrawildMountComponent.h"
 #include "AstrawildPlayerController.h"
+#include "AstrawildZoneSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
@@ -44,8 +45,10 @@ bool UAstrawildJournalScreenWidget::IsEntryDiscovered(const FAstrawildJournalEnt
 {
     // Any real contact with the species reveals it in the journal: a completed
     // scan, any knowledge flag, partial observation progress, or an encounter.
-    return Entry.bScanned || Entry.bFoodDiscovered || Entry.bHabitatDiscovered
-        || Entry.bWeaknessDiscovered || Entry.ObservationProgress > 0.0f || Entry.TimesEncountered > 0;
+    // CGC-5: the rule is single-sourced in the journal subsystem (the census
+    // consumes the same test) — this public wrapper keeps the test contract's
+    // original entry point stable.
+    return UAstrawildJournalSubsystem::IsJournalEntryObserved(Entry);
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +100,11 @@ void UAstrawildJournalScreenWidget::BuildWidgetTree()
     SummaryText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("JournalSummary"));
     SummaryText->SetColorAndOpacity(FSlateColor(FLinearColor(0.98f, 0.85f, 0.5f, 1.0f)));
     SummaryText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 14));
+    // CGC-5: the summary grew to three logical lines (global counts, the
+    // current title, the 12-zone completion census) — auto-wrap keeps the
+    // census honest inside the panel width instead of clipping it.
+    SummaryText->SetAutoWrapText(true);
+    SummaryText->SetMinDesiredWidth(JournalPanelWidth - 20.0f);
 
     SpeciesList = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("JournalSpeciesList"));
 
@@ -140,13 +148,16 @@ void UAstrawildJournalScreenWidget::BuildWidgetTree()
     {
         SummarySlot->SetAnchors(FAnchors(0.5f, 0.5f));
         SummarySlot->SetPosition(FVector2D(-JournalPanelWidth * 0.5f, -JournalPanelHeight * 0.5f + 36.0f));
-        SummarySlot->SetSize(FVector2D(JournalPanelWidth, 24.0f));
+        // CGC-5: 24 -> 96 — the summary carries the global line, the current
+        // title, and the wrapped 12-zone census line (3-4 rendered lines).
+        SummarySlot->SetSize(FVector2D(JournalPanelWidth, 96.0f));
     }
     if (UCanvasPanelSlot* ListSlot = Canvas->AddChildToCanvas(SpeciesList))
     {
         ListSlot->SetAnchors(FAnchors(0.5f, 0.5f));
-        ListSlot->SetPosition(FVector2D(-JournalPanelWidth * 0.5f, -JournalPanelHeight * 0.5f + 68.0f));
-        ListSlot->SetSize(FVector2D(JournalPanelWidth, JournalPanelHeight - 120.0f));
+        // CGC-5: +68 -> +140 (the taller summary) and the matching height cut.
+        ListSlot->SetPosition(FVector2D(-JournalPanelWidth * 0.5f, -JournalPanelHeight * 0.5f + 140.0f));
+        ListSlot->SetSize(FVector2D(JournalPanelWidth, JournalPanelHeight - 192.0f));
     }
     if (UCanvasPanelSlot* DetailSlot = Canvas->AddChildToCanvas(DetailPanel))
     {
@@ -323,8 +334,43 @@ void UAstrawildJournalScreenWidget::RefreshJournal()
     }
 
     // Totals always derive from the registry — never a hardcoded census value.
-    SummaryText->SetText(FText::FromString(FString::Printf(TEXT("%d of %d species observed · %d fully studied"),
-        KnownCount, Definitions.Num(), StudiedCount)));
+    FString SummaryLine = FString::Printf(TEXT("%d of %d species observed · %d fully studied"),
+        KnownCount, Definitions.Num(), StudiedCount);
+
+    // CGC-5 (audit 2-d): the CURRENT observation title — stateless, derived
+    // from the live scanned count every refresh (no save flags to drift).
+    const FString CurrentTitle = UAstrawildJournalSubsystem::GetCurrentTitleForCount(Journal->GetScannedSpeciesCount());
+    if (!CurrentTitle.IsEmpty())
+    {
+        SummaryLine += FString::Printf(TEXT("\nTitle: %s"), *CurrentTitle);
+    }
+
+    // CGC-5 (audit 2-d): the per-zone completion census — one compact
+    // "Zone observed/total" pair per real zone, zone names from the map's
+    // zone-name source (the zone table). Auto-wrap carries the overflow
+    // honestly instead of truncating a zone silently.
+    const TSet<FName> ObservedSet = Journal->GetObservedSpeciesIds();
+    const TArray<FAstrawildZoneCensusRow> ZoneCensus =
+        UAstrawildJournalSubsystem::ComputeZoneCensus(Registry, ObservedSet);
+    FString ZoneLine;
+    for (const FAstrawildZoneCensusRow& CensusRow : ZoneCensus)
+    {
+        const FAstrawildZoneDescriptor* ZoneDesc = UAstrawildZoneSubsystem::FindZone(CensusRow.Zone);
+        const FString ZoneName = ZoneDesc && !ZoneDesc->DisplayName.IsEmpty()
+            ? ZoneDesc->DisplayName.ToString()
+            : UEnum::GetDisplayValueAsText(CensusRow.Zone).ToString();
+        if (!ZoneLine.IsEmpty())
+        {
+            ZoneLine += TEXT(" · ");
+        }
+        ZoneLine += FString::Printf(TEXT("%s %d/%d"), *ZoneName, CensusRow.Observed, CensusRow.Total);
+    }
+    if (!ZoneLine.IsEmpty())
+    {
+        SummaryLine += FString::Printf(TEXT("\n%s"), *ZoneLine);
+    }
+
+    SummaryText->SetText(FText::FromString(SummaryLine));
 }
 
 void UAstrawildJournalScreenWidget::ShowSpeciesDetail(const FName SpeciesId)
@@ -389,6 +435,10 @@ void UAstrawildJournalScreenWidget::HandleBackToListClicked()
 
 FString UAstrawildJournalScreenWidget::BuildSpeciesDetailText(const UAstrawildEchoDefinition* Def, const FAstrawildJournalEntry& Entry)
 {
+    // CGC-5 (audit 2-d) — deliberate skip: the detail view stays SPECIES-level.
+    // Genetics (traits/IVs/Radiant) are PER-INSTANCE state; they surface on the
+    // roster row (the per-instance surface), never here — a species entry has
+    // no single genetics identity to describe.
     if (!Def)
     {
         return TEXT("signal unresolved — observe to reveal");

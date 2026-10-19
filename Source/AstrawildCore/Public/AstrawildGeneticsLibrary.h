@@ -60,4 +60,12 @@ public:
 
     /** IV stat contribution: +1% per IV point (0..31 -> 0..31%). */
     static float ComputeIVStatMultiplier(float IV);
+
+    /**
+     * CGC-5: display name for a trait id — the honest id-derived rendering
+     * ("Trait_Swift" -> "Swift"; the pool has no authored display names).
+     * Unknown ids fall back to the full id string (fail-closed, no invented
+     * lore). Pure, world-free.
+     */
+    static FString GetTraitDisplayName(FName TraitId);
 };

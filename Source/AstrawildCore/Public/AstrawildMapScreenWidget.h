@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "AstrawildJournalSubsystem.h" // CGC-5: FAstrawildZoneCensusRow (the zone cell census).
 #include "AstrawildMapScreenWidget.generated.h"
 
 class AAstrawildPlayerController;
@@ -54,8 +55,10 @@ private:
     UFUNCTION()
     void HandleCloseClicked();
 
-    /** Zone-colored, positioned rect with name + threat (12 total). */
-    void AddZoneCell(const struct FAstrawildZoneDescriptor& Zone, const FBox2D& WorldBounds, const FVector2D& MapSize);
+    /** Zone-colored, positioned rect with name + threat + the CGC-5 per-zone
+     *  species census fraction (12 total). */
+    void AddZoneCell(const struct FAstrawildZoneDescriptor& Zone, const FBox2D& WorldBounds,
+        const FVector2D& MapSize, const TArray<FAstrawildZoneCensusRow>& ZoneCensus);
 
     /** Small glyph marker at a world position (legend row explains them). */
     void AddGlyphMarker(const TCHAR* Glyph, const FLinearColor& Color, const FVector2D& WorldPoint,

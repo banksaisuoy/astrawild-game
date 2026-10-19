@@ -314,7 +314,10 @@ void AAstrawildEchoCharacter::BuildProceduralBody()
         FMath::Min(255, Primary.G + 60),
         FMath::Min(255, Primary.B + 60),
         255);
-    const float S = BodyScaleForSize(EchoDefinition->SizeClass);
+    // CGC-5: Radiant tell on the procedural path too — the root body scale
+    // carries the same x1.10 composition the skinned path applies (the PMC
+    // path has no root jitter to compose onto; S IS its root scale).
+    const float S = BodyScaleForSize(EchoDefinition->SizeClass) * (bRadiant ? 1.10f : 1.0f);
 
     // VIS-001 — charm-spectrum proportions. The cute band gets the classic
     // "baby schema" read: an enlarged head and a dark forward eye pair on
@@ -635,9 +638,16 @@ void AAstrawildEchoCharacter::UpdateElementGlow()
     // swapped it) before the normal gates decide the intensity below.
     ElementGlowLight->SetLightColor(FAstrawildVfxPalette::GetElementTint(EchoDefinition->Element));
 
+    // CGC-5: the Radiant mini-shiny tell — the steady glow states (captured
+    // identity / nearby wild elemental) double for Radiant instances. COMPOSES
+    // with the existing gates; the weak-point pulse above deliberately stays
+    // untouched (combat readability overrides the identity tell), and the
+    // fail-closed dark state (0 intensity) stays 0.
+    const float RadiantGlowMultiplier = bRadiant ? 2.0f : 1.0f;
+
     if (bCaptured)
     {
-        ElementGlowLight->SetIntensity(2.4f);
+        ElementGlowLight->SetIntensity(2.4f * RadiantGlowMultiplier);
         return;
     }
 
@@ -661,7 +671,7 @@ void AAstrawildEchoCharacter::UpdateElementGlow()
             }
         }
     }
-    ElementGlowLight->SetIntensity(bPlayerNear ? 1.9f : 0.0f);
+    ElementGlowLight->SetIntensity((bPlayerNear ? 1.9f : 0.0f) * RadiantGlowMultiplier);
 }
 
 AAstrawildEchoCharacter::AAstrawildEchoCharacter()
@@ -723,6 +733,7 @@ void AAstrawildEchoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(AAstrawildEchoCharacter, StatusEffects);
     DOREPLIFETIME(AAstrawildEchoCharacter, AbilityCooldowns);
     DOREPLIFETIME(AAstrawildEchoCharacter, bWeakPointExposed);
+    DOREPLIFETIME(AAstrawildEchoCharacter, bRadiant);
 }
 
 void AAstrawildEchoCharacter::BeginPlay()
@@ -996,6 +1007,28 @@ bool AAstrawildEchoCharacter::InitializeFromDefinition(UAstrawildEchoDefinition*
         }
     }
 
+    // CGC-5 (audit 2-d): WILD genetics — the shiny-hunting loop's engine. Every
+    // spawn path that reaches init without authored genetics (wild spawns; the
+    // BeginPlay re-init) rolls a deterministic profile from the EMPTY-parent
+    // path of RollOffspring (both parent pools empty -> pure wild-pool draw),
+    // seeded from the SAME instance-seed stream as the body jitter/cadence
+    // (InstanceId.A ^ InstanceId.B) so a given instance id always rolls the
+    // same identity. Placed AFTER the movement-mode block so SetInstanceTraits'
+    // trait/IV-aware speed write is the final one (Swift wild Echoes actually
+    // run faster). The two AUTHORED paths override this immediately AFTER init
+    // and are unaffected: the breeding hatch assigns InstanceIVs then
+    // SetInstanceTraits (AstrawildBuildingActor), and the roster restore
+    // applies FromSaveDataV2 (which sets IVs, then calls SetInstanceTraits)
+    // — both land on this class after InitializeFromDefinition returned.
+    if (GetLocalRole() == ROLE_Authority && InstanceTraits.Num() == 0)
+    {
+        const int32 WildSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
+        const FAstrawildGeneticsProfile WildProfile =
+            UAstrawildGeneticsLibrary::RollOffspring(TArray<FName>(), TArray<FName>(), WildSeed);
+        InstanceIVs = WildProfile.IVs;
+        SetInstanceTraits(WildProfile.Traits); // also recomputes bRadiant (final traits + IVs)
+    }
+
     // Audit C-9 (final run): re-register now that the species is set — BeginPlay
     // registered this Echo before the definition existed, so the population count
     // missed it (the subsystem counts idempotently by actor key).
@@ -1059,6 +1092,15 @@ bool AAstrawildEchoCharacter::TryActivateSkeletalBody()
     float S = BodyScaleForSize(EchoDefinition->SizeClass);
     const int32 InstanceSeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
     S *= FAstrawildEchoMutator::ComputeRootScaleJitter(EchoDefinition->DefinitionId, InstanceSeed);
+    // CGC-5: Radiant instances read visibly larger — x1.10 COMPOSES on top of
+    // the 0.94-1.06 mutation jitter (never replaces it), the visible half of
+    // the mini-shiny tell alongside the glow doubling. Composes at body-build
+    // time (init): the authored paths recompute the flag AFTER init, so a
+    // restore whose genetics are LESS radiant than the init-time wild roll
+    // (legacy pre-genetics saves, empty pool-filtered traits) keeps the
+    // init-time scale while the flag/glow/roster read the restored truth —
+    // cosmetic-only, within the natural jitter band, documented.
+    S *= bRadiant ? 1.10f : 1.0f;
     const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : (60.0f * S);
     EchoBodyMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
     EchoBodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
@@ -1798,6 +1840,40 @@ void AAstrawildEchoCharacter::SetInstanceTraits(const TArray<FName>& InTraits)
             UAstrawildGeneticsLibrary::ComputeIVStatMultiplier(InstanceIVs.W) *
             GetStatusSpeedMultiplier() * GetLocomotionSpeedMultiplier());
     }
+
+    // CGC-5: the Radiant flag derives from the FINAL genetics — callers that
+    // assign InstanceIVs directly (wild roll, breeding hatch, roster restore)
+    // do so BEFORE this call so the recompute sees both halves (see the
+    // BuildingActor hatch order note).
+    RefreshRadiantFlag();
+}
+
+void AAstrawildEchoCharacter::RefreshRadiantFlag()
+{
+    // FVector4 components are double in UE5 (LWC); IVs live in 0..31 where the
+    // float round-trip is exact — the static_cast keeps the call on the
+    // universally-available RoundToInt(float) overload (compile-conservative).
+    const TArray<int32> IVs = {
+        FMath::RoundToInt(static_cast<float>(InstanceIVs.X)), FMath::RoundToInt(static_cast<float>(InstanceIVs.Y)),
+        FMath::RoundToInt(static_cast<float>(InstanceIVs.Z)), FMath::RoundToInt(static_cast<float>(InstanceIVs.W))
+    };
+    bRadiant = ComputeIsRadiant(IVs, InstanceTraits);
+}
+
+bool AAstrawildEchoCharacter::ComputeIsRadiant(const TArray<int32>& IVs, const TArray<FName>& Traits)
+{
+    // CGC-5 (audit 2-d): the mini-shiny contract — any IV >= 28 OR >= 3 trait
+    // slots. Boundaries are pinned by the automation contract (27 vs 28, 2 vs
+    // 3 traits). See the header note for the honest frequency consequence of
+    // the trait half against the always-4-slot roll.
+    for (const int32 IV : IVs)
+    {
+        if (IV >= 28)
+        {
+            return true;
+        }
+    }
+    return Traits.Num() >= 3;
 }
 
 float AAstrawildEchoCharacter::GetCommandObedience() const

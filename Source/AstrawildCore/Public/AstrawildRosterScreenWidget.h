@@ -53,6 +53,9 @@ private:
     float RowTrust = 0.0f;
     /** VIS-001 — the per-INSTANCE personality rolls onto the row (species template is DominantPersonality). */
     EAstrawildPersonality RowPersonality = EAstrawildPersonality::Curious;
+    /** CGC-5 — per-instance genetics snapshot (Traits/IVs already ride the roster row). */
+    TArray<FName> RowTraits;
+    FVector4 RowIVs = FVector4::ZeroVector;
     int32 RingUsed = 0;
     int32 RingMax = 3;
 
@@ -88,6 +91,16 @@ public:
      * the ring has a free slot; benching is always allowed. World-free.
      */
     static bool CanDeployIntoRing(int32 CurrentRingSize, int32 RingMax, bool bRowCurrentlyBenched);
+
+    /**
+     * CGC-5 (audit 2-d): the per-instance genetics line for a roster row —
+     * "✦ Radiant · Swift · Lucky | IVs 12/31/04/22" (Radiant prefix only when
+     * the flag is set; trait names via GeneticsLibrary's id-derived display
+     * names; IVs zero-padded H/A/D/S). Empty traits -> EMPTY STRING (the row
+     * appends no line — legacy pre-genetics rows stay clean). Pure,
+     * world-free; the automation contract pins the exact format.
+     */
+    static FString FormatInstanceGeneticsLine(bool bInRadiant, const TArray<FName>& Traits, const TArray<int32>& IVs);
 
     /** Rebuild the row list (host: live subsystem slice; client: the replicated mirror). */
     void RefreshRoster();

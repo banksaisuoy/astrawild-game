@@ -213,9 +213,36 @@ public:
     UPROPERTY()
     FVector4 InstanceIVs = FVector4::ZeroVector;
 
-    /** Assign breeding traits + apply their stat effects (server). */
+    /**
+     * CGC-5 (audit 2-d): the visible rarity flag — the genre's mini-shiny.
+     * Derived wherever genetics are set (wild roll at init, bred hatch, roster
+     * restore all route through SetInstanceTraits which recomputes it from the
+     * FINAL traits + IVs). Replicated so the local-cosmetic glow path (which
+     * runs on every machine) and the capture feedback read the same truth.
+     */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Echo|Genetics", Replicated)
+    bool bRadiant = false;
+
+    /** Assign breeding traits + apply their stat effects (server). Also
+     *  recomputes the Radiant flag from the instance's final genetics (CGC-5). */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo|Genetics")
     void SetInstanceTraits(const TArray<FName>& InTraits);
+
+    /** CGC-5: the instance's visible rarity flag (glow x2 + scale x1.10 tell). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Genetics")
+    bool IsRadiant() const { return bRadiant; }
+
+    /**
+     * CGC-5: PURE Radiant rule (world-free, the test contract pins the
+     * boundaries) — true iff any IV >= 28 OR the trait array carries >= 3
+     * slots. Honest note: a full 4-slot genetics roll meets the trait
+     * threshold by construction, so freshly rolled instances read the trait
+     * path as their baseline sparkle; the IV >= 28 half is the discriminating
+     * rarity signal. Legacy/partial arrays (pre-SCP saves, pool-filtered
+     * restores) keep the rule meaningful at the 2-vs-3 boundary.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Genetics")
+    static bool ComputeIsRadiant(const TArray<int32>& IVs, const TArray<FName>& Traits);
 
     // ------------------------------------------------------------------
     // GDP-1 — Echo ability engine (server-authoritative, replicated cooldowns).
@@ -506,6 +533,10 @@ private:
     void RollPersonalityFromDefinition();
     void RegisterWithEcosystem();
     void UnregisterFromEcosystem();
+
+    /** CGC-5: recompute bRadiant from the instance's CURRENT traits + IVs. */
+    void RefreshRadiantFlag();
+
     class UAstrawildEcosystemSubsystem* GetEcosystem() const;
     /** Batch 3 — Item A: server tick of DoT/expiry/speed for StatusEffects. */
     void ApplyStatusTicks(float DeltaTime);

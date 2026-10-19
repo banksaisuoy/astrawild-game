@@ -512,10 +512,12 @@ void AAstrawildBuildingActor::Interact_Implementation(AActor* InteractingActor)
                     AAstrawildEchoCharacter::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnParams);
                 if (Offspring && Offspring->InitializeFromDefinition(Template->EchoDefinition))
                 {
-                    Offspring->SetInstanceTraits(Genetics.Traits);
                     // FCR-1-d fix (H-d5): the rolled IVs now PERSIST on the offspring
                     // (previously rolled then dropped — the IV layer was dead code).
+                    // CGC-5: IVs are assigned BEFORE the traits so SetInstanceTraits'
+                    // Radiant recompute sees the FINAL genetics (both halves).
                     Offspring->InstanceIVs = Genetics.IVs;
+                    Offspring->SetInstanceTraits(Genetics.Traits);
                     Offspring->Capture(10.0f);
                     Offspring->OwnerPlayerId = Player->GetFName();
                     if (bWarmHatch)

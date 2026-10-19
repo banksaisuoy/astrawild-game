@@ -7512,4 +7512,267 @@ bool FAstrawildCGC4SettingsAndQoLContractTest::RunTest(const FString& Parameters
     return true;
 }
 
+// ===========================================================================
+// CGC-5 — Collection long-tail (audit 2-d): wild genetics + the Radiant
+// mini-shiny tell + roster genetics surfacing + the per-zone completion
+// census + observation milestone titles. World-free pure contracts only; the
+// UI halves (roster line, journal summary census line, map cell fractions,
+// capture toast) and the visual composition (glow x2 / scale x1.10) are
+// ENGINE-UNVERIFIED until the engine run — their pure inputs are pinned here.
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCGC5CollectionLongTailContractTest,
+    "ASTRAWILD.CGC5.CollectionLongTailContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCGC5CollectionLongTailContractTest::RunTest(const FString& Parameters)
+{
+    // --- 1) ComputeIsRadiant: the mini-shiny rule + both boundaries pinned.
+    const TArray<FName> TwoTraits = { TEXT("Trait_Swift"), TEXT("Trait_Lucky") };
+    const TArray<FName> ThreeTraits = { TEXT("Trait_Swift"), TEXT("Trait_Lucky"), TEXT("Trait_Calm") };
+    const TArray<int32> AllIVs27 = { 27, 27, 27, 27 };
+    const TArray<int32> OneIV28 = { 27, 28, 27, 27 };
+    const TArray<int32> LowIVs = { 12, 4, 9, 2 };
+
+    TestFalse(TEXT("All IVs 27 with 2 traits is NOT Radiant (27 boundary + 2-trait boundary)"),
+        AAstrawildEchoCharacter::ComputeIsRadiant(AllIVs27, TwoTraits));
+    TestTrue(TEXT("One IV at 28 makes the instance Radiant (28 boundary)"),
+        AAstrawildEchoCharacter::ComputeIsRadiant(OneIV28, TwoTraits));
+    TestTrue(TEXT("Low IVs with 3 traits is Radiant (3-trait boundary)"),
+        AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, ThreeTraits));
+    TestFalse(TEXT("IVs at 27 with no traits never trip the IV path (27 < 28)"),
+        AAstrawildEchoCharacter::ComputeIsRadiant(AllIVs27, TArray<FName>()));
+    TestFalse(TEXT("No IVs and no traits is never Radiant (fail-closed default)"),
+        AAstrawildEchoCharacter::ComputeIsRadiant(TArray<int32>(), TArray<FName>()));
+    TestTrue(TEXT("2 traits stays under the trait boundary, 3 traits crosses it"),
+        !AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, TwoTraits)
+            && AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, ThreeTraits));
+
+    // --- 2) Wild-genetics determinism: the empty-parent RollOffspring path
+    //     the wild roll at init uses (both parent pools empty -> pure
+    //     wild-pool draw), seeded per instance. Same seed -> identical
+    //     profile; different seed -> different profile.
+    const FAstrawildGeneticsProfile WildA = UAstrawildGeneticsLibrary::RollOffspring(
+        TArray<FName>(), TArray<FName>(), 1234);
+    const FAstrawildGeneticsProfile WildB = UAstrawildGeneticsLibrary::RollOffspring(
+        TArray<FName>(), TArray<FName>(), 1234);
+    TestTrue(TEXT("Empty-parent roll produces a valid 4-slot profile"), WildA.IsValid());
+    TestTrue(TEXT("Same instance seed rolls identical traits (deterministic identity)"),
+        WildA.Traits == WildB.Traits);
+    TestTrue(TEXT("Same instance seed rolls identical IVs (bitwise stream replay)"),
+        WildA.IVs.X == WildB.IVs.X && WildA.IVs.Y == WildB.IVs.Y
+            && WildA.IVs.Z == WildB.IVs.Z && WildA.IVs.W == WildB.IVs.W);
+    bool bAllFromWildPool = true;
+    for (const FName& TraitId : WildA.Traits)
+    {
+        bAllFromWildPool &= UAstrawildGeneticsLibrary::GetTraitPool().Contains(TraitId);
+    }
+    TestTrue(TEXT("Every empty-parent trait draws from the known wild pool"), bAllFromWildPool);
+    TestTrue(TEXT("Wild IVs stay in the 0..31 band"),
+        WildA.IVs.X >= 0.0f && WildA.IVs.X <= 31.0f && WildA.IVs.Y >= 0.0f && WildA.IVs.Y <= 31.0f
+            && WildA.IVs.Z >= 0.0f && WildA.IVs.Z <= 31.0f && WildA.IVs.W >= 0.0f && WildA.IVs.W <= 31.0f);
+
+    const FAstrawildGeneticsProfile WildC = UAstrawildGeneticsLibrary::RollOffspring(
+        TArray<FName>(), TArray<FName>(), 5678);
+    const bool bProfilesDiffer = !(WildC.Traits == WildA.Traits)
+        || WildC.IVs.X != WildA.IVs.X || WildC.IVs.Y != WildA.IVs.Y
+        || WildC.IVs.Z != WildA.IVs.Z || WildC.IVs.W != WildA.IVs.W;
+    TestTrue(TEXT("A different instance seed rolls a different profile (identity varies per instance)"),
+        bProfilesDiffer);
+
+    // --- 3) GetTraitDisplayName: the honest id-derived rendering.
+    TestEqual(TEXT("Trait_Swift displays as Swift"),
+        UAstrawildGeneticsLibrary::GetTraitDisplayName(TEXT("Trait_Swift")), FString(TEXT("Swift")));
+    TestEqual(TEXT("Unknown trait ids fall back to the full id (fail-closed)"),
+        UAstrawildGeneticsLibrary::GetTraitDisplayName(TEXT("Mystery")), FString(TEXT("Mystery")));
+
+    // --- 4) FormatInstanceGeneticsLine: the roster row's genetics line,
+    //     exact format pinned.
+    TestEqual(TEXT("Empty traits format to an empty string (legacy rows carry no line)"),
+        UAstrawildRosterScreenWidget::FormatInstanceGeneticsLine(false, TArray<FName>(), LowIVs), FString());
+    TestEqual(TEXT("Radiant + 2 traits + 4 IVs renders the exact pinned line"),
+        UAstrawildRosterScreenWidget::FormatInstanceGeneticsLine(true,
+            { TEXT("Trait_Swift"), TEXT("Trait_Lucky") }, { 12, 31, 4, 22 }),
+        FString(TEXT("\u2726 Radiant \u00b7 Swift \u00b7 Lucky | IVs 12/31/04/22")));
+    TestEqual(TEXT("Non-Radiant line carries no spark prefix"),
+        UAstrawildRosterScreenWidget::FormatInstanceGeneticsLine(false,
+            { TEXT("Trait_Swift"), TEXT("Trait_Lucky") }, { 12, 31, 4, 22 }),
+        FString(TEXT("Swift \u00b7 Lucky | IVs 12/31/04/22")));
+    TestEqual(TEXT("Traits without IVs omit the IV segment (fail-closed, never fabricated)"),
+        UAstrawildRosterScreenWidget::FormatInstanceGeneticsLine(false,
+            { TEXT("Trait_Hardy") }, TArray<int32>()),
+        FString(TEXT("Hardy")));
+
+    // --- 5) Persistence: the roster save row already carries genetics —
+    //     CGC-5's audit found Traits (SCP-10) and IVs (FCR-1-d, H-d5) on
+    //     FAstrawildEchoInstanceV2, so NO new save fields were added. The
+    //     compile-time presence + the round-trip + the schema pin keep that
+    //     contract honest (schema stays 5, additive-only history).
+    FAstrawildEchoInstanceV2 RosterRow;
+    RosterRow.Traits = { TEXT("Trait_Swift"), TEXT("Trait_Sturdy") };
+    RosterRow.IVs = FVector4(3.0, 31.0, 5.0, 17.0);
+    TestEqual(TEXT("Roster save row carries the traits field (SCP-10, additive)"),
+        RosterRow.Traits.Num(), 2);
+    TestTrue(TEXT("Roster save row carries the IVs field (FCR-1-d H-d5, additive)"),
+        RosterRow.IVs.Y == 31.0);
+    UAstrawildSaveSubsystem* SaveSubsystem = NewObject<UAstrawildSaveSubsystem>();
+    TestEqual(TEXT("World-save schema stays 5 (genetics ride the existing rows, no bump)"),
+        SaveSubsystem ? SaveSubsystem->GetCurrentSchemaVersion() : 0, 5);
+
+    // --- 6) ComputeZoneCensus: the per-zone completion census over the REAL
+    //     registry (the test-135/CGC-1 world-free build idiom).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    AstrawildBestiary::RegisterAll(Registry);
+
+    const TArray<FAstrawildZoneCensusRow> EmptyCensus =
+        UAstrawildJournalSubsystem::ComputeZoneCensus(Registry, TSet<FName>());
+    TestEqual(TEXT("The census emits one row per real zone (12)"),
+        EmptyCensus.Num(), 12);
+    bool bEnumOrder = true;
+    bool bAllObservedZero = true;
+    for (int32 Index = 0; Index < EmptyCensus.Num(); ++Index)
+    {
+        bEnumOrder &= static_cast<int32>(EmptyCensus[Index].Zone) == Index + 1;
+        bAllObservedZero &= EmptyCensus[Index].Observed == 0;
+    }
+    TestTrue(TEXT("Census rows arrive in enum order (the zone table's reading order)"), bEnumOrder);
+    TestTrue(TEXT("An empty observed set reads zero observed everywhere"), bAllObservedZero);
+
+    // Expected totals cross-derived TWICE (bestiary view + raw registry) —
+    // the two joins must agree, and every species carries a home zone, so
+    // the honest pinned sum is the full 229 census.
+    TArray<FAstrawildBestiaryRow> Bestiary;
+    UAstrawildWildlifeDirectorSubsystem::CollectBestiaryRows(Registry, Bestiary);
+    int32 ExpectedFromBestiary = 0;
+    TMap<EAstrawildZone, TArray<FName>> SpeciesByZone;
+    for (const FAstrawildBestiaryRow& Row : Bestiary)
+    {
+        if (Row.HomeZone != EAstrawildZone::None)
+        {
+            ++ExpectedFromBestiary;
+            SpeciesByZone.FindOrAdd(Row.HomeZone).Add(Row.SpeciesId);
+        }
+    }
+    int32 ExpectedFromRegistry = 0;
+    for (const UAstrawildEchoDefinition* Def : Registry->GetAllEchoDefinitions())
+    {
+        if (Def && Def->HomeZone != EAstrawildZone::None)
+        {
+            ++ExpectedFromRegistry;
+        }
+    }
+    TestEqual(TEXT("Bestiary view and raw registry agree on the home-zoned species count"),
+        ExpectedFromBestiary, ExpectedFromRegistry);
+    int32 CensusTotalSum = 0;
+    for (const FAstrawildZoneCensusRow& Row : EmptyCensus)
+    {
+        CensusTotalSum += Row.Total;
+        const TArray<FName>* ZoneSpecies = SpeciesByZone.Find(Row.Zone);
+        TestTrue(FString::Printf(TEXT("Zone %d census Total matches the bestiary grouping"),
+                static_cast<int32>(Row.Zone)),
+            ZoneSpecies && ZoneSpecies->Num() == Row.Total);
+    }
+    TestEqual(TEXT("Census totals sum to every home-zoned species (the honest computed number)"),
+        CensusTotalSum, ExpectedFromBestiary);
+    TestEqual(TEXT("Every one of the 229 census species carries a home zone (sum pin)"),
+        CensusTotalSum, 229);
+
+    // Sample observed set: 3 Dawn Fields species + ALL of Frostveil Expanse.
+    TSet<FName> Observed;
+    const TArray<FName>* DawnSpecies = SpeciesByZone.Find(EAstrawildZone::DawnFields);
+    const TArray<FName>* FrostSpecies = SpeciesByZone.Find(EAstrawildZone::FrostveilExpanse);
+    TestTrue(TEXT("Dawn Fields and Frostveil Expanse both carry species"), DawnSpecies && FrostSpecies);
+    if (DawnSpecies && FrostSpecies)
+    {
+        for (int32 Index = 0; Index < 3 && Index < DawnSpecies->Num(); ++Index)
+        {
+            Observed.Add((*DawnSpecies)[Index]);
+        }
+        for (const FName& SpeciesId : *FrostSpecies)
+        {
+            Observed.Add(SpeciesId);
+        }
+        const TArray<FAstrawildZoneCensusRow> SampleCensus =
+            UAstrawildJournalSubsystem::ComputeZoneCensus(Registry, Observed);
+        TestEqual(TEXT("Sample census still covers all 12 zones"), SampleCensus.Num(), 12);
+        for (const FAstrawildZoneCensusRow& Row : SampleCensus)
+        {
+            if (Row.Zone == EAstrawildZone::DawnFields)
+            {
+                TestEqual(TEXT("Dawn Fields observes exactly the 3 marked species"), Row.Observed, 3);
+            }
+            else if (Row.Zone == EAstrawildZone::FrostveilExpanse)
+            {
+                TestEqual(TEXT("Frostveil Expanse observes ALL of its species (complete zone)"),
+                    Row.Observed, Row.Total);
+            }
+            else
+            {
+                TestEqual(FString::Printf(TEXT("Unmarked zone %d observes nothing"),
+                        static_cast<int32>(Row.Zone)), Row.Observed, 0);
+            }
+        }
+    }
+
+    // Null registry fail-closes to 12 zeroed rows (never a crash, never fake data).
+    const TArray<FAstrawildZoneCensusRow> NullCensus =
+        UAstrawildJournalSubsystem::ComputeZoneCensus(nullptr, TSet<FName>());
+    TestEqual(TEXT("Null registry fail-closes to the 12-row zeroed census"), NullCensus.Num(), 12);
+    bool bNullAllZero = true;
+    for (const FAstrawildZoneCensusRow& Row : NullCensus)
+    {
+        bNullAllZero &= Row.Observed == 0 && Row.Total == 0;
+    }
+    TestTrue(TEXT("The fail-closed census carries no invented counts"), bNullAllZero);
+
+    // --- 7) GetMilestoneTitleForCrossing: stateless crossing semantics.
+    TestEqual(TEXT("(24 -> 25) earns Field Novice of the Vale"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(24, 25),
+        FString(TEXT("Field Novice of the Vale")));
+    TestEqual(TEXT("(25 -> 26) crosses nothing (exactly-once semantics)"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(25, 26), FString());
+    TestEqual(TEXT("(0 -> 229) jumps straight to the journal-complete title (highest wins)"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(0, 229),
+        FString(TEXT("Voice of the Vale \u2014 the journal is complete")));
+    TestEqual(TEXT("(99 -> 100) earns Field Warden of the Vale"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(99, 100),
+        FString(TEXT("Field Warden of the Vale")));
+    TestEqual(TEXT("(228 -> 229) earns the journal-complete title"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(228, 229),
+        FString(TEXT("Voice of the Vale \u2014 the journal is complete")));
+    TestEqual(TEXT("(150 -> 151) crosses nothing (150 is not a threshold)"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(150, 151), FString());
+    TestEqual(TEXT("(48 -> 52) crossing the 50 threshold earns Field Scholar (mid-jump)"),
+        UAstrawildJournalSubsystem::GetMilestoneTitleForCrossing(48, 52),
+        FString(TEXT("Field Scholar of the Vale")));
+
+    // --- 8) GetCurrentTitleForCount: the stateless journal-summary derivation.
+    TestEqual(TEXT("No title before the 25th species"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(0), FString());
+    TestEqual(TEXT("No title at 24"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(24), FString());
+    TestEqual(TEXT("Field Novice held at 25"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(25),
+        FString(TEXT("Field Novice of the Vale")));
+    TestEqual(TEXT("Field Scholar held at 74"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(74),
+        FString(TEXT("Field Scholar of the Vale")));
+    TestEqual(TEXT("Field Warden held at 100"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(100),
+        FString(TEXT("Field Warden of the Vale")));
+    TestEqual(TEXT("Vale Naturalist held at 150"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(150),
+        FString(TEXT("Vale Naturalist")));
+    TestEqual(TEXT("Master of the Wilds held at 200"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(200),
+        FString(TEXT("Master of the Wilds")));
+    TestEqual(TEXT("The complete journal carries Voice of the Vale"),
+        UAstrawildJournalSubsystem::GetCurrentTitleForCount(229),
+        FString(TEXT("Voice of the Vale \u2014 the journal is complete")));
+
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
