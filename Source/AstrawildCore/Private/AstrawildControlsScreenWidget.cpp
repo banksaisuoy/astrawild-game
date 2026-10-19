@@ -16,14 +16,15 @@ namespace
 }
 
 // ---------------------------------------------------------------------------
-// The 32-action control table (static — the automation contract pins the size)
+// The 33-action control table (static — the automation contract pins the size)
 // ---------------------------------------------------------------------------
 
 const TArray<FString>& UAstrawildControlsScreenWidget::GetControlRows()
 {
     // Transcribed faithfully from Docs/ASTRAWILD_INPUT_REFERENCE.md §1 (the
-    // 2026-09-03 PCR-5 sync — 32 runtime actions incl. AWD_Descend) + §1b's
-    // gamepad companion mapping. One row per ACTION, not per key.
+    // 2026-09-03 PCR-5 sync — 32 runtime actions incl. AWD_Descend, plus the
+    // CGC-4 2026-09-07 addition — 33 actions incl. AWD_ToggleHUD on F6) +
+    // §1b's gamepad companion mapping. One row per ACTION, not per key.
     static const TArray<FString> Rows = {
         TEXT("W / A / S / D — Move — WASD movement (gamepad: left stick)"),
         TEXT("Mouse — Look — camera (Y negated; gamepad: right stick)"),
@@ -54,6 +55,7 @@ const TArray<FString>& UAstrawildControlsScreenWidget::GetControlRows()
         TEXT("Escape — Pause — pause menu (gamepad: Start)"),
         TEXT("F5 — Quick Save — write the world save (KB/M only)"),
         TEXT("F9 — Quick Load — restore the world save (KB/M only)"),
+        TEXT("F6 — Toggle HUD — hide/show the 22-element HUD for a clean view (CGC-4, KB/M only)"),
         TEXT("Left Ctrl — Descend — skiff descent (gamepad: left stick click)"),
         TEXT("T — Party Ability — every owned Echo casts its best ready ability (gamepad: right stick click)"),
         TEXT("Y — Smart-Cast — best ready player skill (gamepad: LB + X chord)"),
@@ -110,7 +112,7 @@ void UAstrawildControlsScreenWidget::BuildWidgetTree()
     SummaryText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("ControlsSummary"));
     SummaryText->SetColorAndOpacity(FSlateColor(FLinearColor(0.85f, 0.88f, 0.92f, 1.0f)));
     SummaryText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
-    SummaryText->SetText(FText::FromString(TEXT("32 runtime actions — keyboard/mouse plus a full gamepad companion context (transcribed from the live input build)")));
+    SummaryText->SetText(FText::FromString(TEXT("33 runtime actions — keyboard/mouse plus a full gamepad companion context (transcribed from the live input build)")));
 
     RowsList = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("ControlsRows"));
 

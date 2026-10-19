@@ -26,7 +26,8 @@ namespace
     // DP-4: 3 menu buttons + the loadout caption + 3 slot buttons — the pause
     // panel grew with the skill loadout section.
     // CGC-2: + the Controls entry (one more menu row).
-    constexpr float PauseMenuHeight = 570.0f; // LCP-6: + LAN CO-OP panel
+    // CGC-4: + the Settings entry (one more menu row).
+    constexpr float PauseMenuHeight = 620.0f; // LCP-6: + LAN CO-OP panel
     constexpr int32 SkillLoadoutSlots = 3;
 }
 
@@ -111,10 +112,16 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     HuntButton = MakeMenuButton(TEXT("PauseHunt"), TEXT("Hunt Board [U]"), FLinearColor(0.5f, 0.35f, 0.2f, 1.0f));
     HuntButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleHuntClicked);
 
-    // CGC-2: the Controls entry — the 32-action reference's only path (the
-    // pause menu is the gamepad-reachable surface; NO new input action).
+    // CGC-2: the Controls entry — the action reference's only path (the
+    // pause menu is the gamepad-reachable surface; the button adds no input action).
     ControlsButton = MakeMenuButton(TEXT("PauseControls"), TEXT("Controls"), FLinearColor(0.33f, 0.38f, 0.5f, 1.0f));
     ControlsButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleControlsClicked);
+
+    // CGC-4: the Settings entry — volume / sensitivity / FOV / gamma, the
+    // first player-adjustable anything (pause-reachable on every input device;
+    // the button adds no input action).
+    SettingsButton = MakeMenuButton(TEXT("PauseSettings"), TEXT("Settings"), FLinearColor(0.2f, 0.42f, 0.52f, 1.0f));
+    SettingsButton->OnClicked.AddDynamic(this, &UAstrawildPauseMenuWidget::HandleSettingsClicked);
 
     // DCP-2: the New Game+ entry. Visible ONLY while post-game is active —
     // the widget is rebuilt on every open (the controller toggles create a
@@ -221,6 +228,11 @@ void UAstrawildPauseMenuWidget::BuildWidgetTree()
     {
         ControlsSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         ControlsSlot->SetPadding(FMargin(0.0f, 6.0f));
+    }
+    if (UVerticalBoxSlot* SettingsSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(SettingsButton)))
+    {
+        SettingsSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        SettingsSlot->SetPadding(FMargin(0.0f, 6.0f));
     }
     if (UVerticalBoxSlot* NGPlusSlot = Cast<UVerticalBoxSlot>(MenuBox->AddChildToVerticalBox(NGPlusButton)))
     {
@@ -397,8 +409,37 @@ void UAstrawildPauseMenuWidget::HandleSaveClicked()
     }
 }
 
+void UAstrawildPauseMenuWidget::HandleSettingsClicked()
+{
+    // CGC-4: same close-then-open sequence as the other screen buttons — the
+    // pause menu (SetPause + UIOnly input) steps aside for the settings screen.
+    if (AAstrawildPlayerController* PC = GetOwningPlayer<AAstrawildPlayerController>())
+    {
+        if (PC->IsPauseMenuOpen())
+        {
+            PC->TogglePauseMenu();
+        }
+        PC->ToggleSettingsScreen();
+    }
+}
+
 void UAstrawildPauseMenuWidget::HandleQuitClicked()
 {
+    // CGC-4 (save UX trinity): quit no longer eats up to 5 minutes of session
+    // progress. On the authority (standalone / listen host — the QuickSave
+    // guard class: SaveWorld itself is authority-guarded and refuses clients
+    // anyway) write the world to the manual slot BEFORE the engine quit. A
+    // failed save never blocks the quit (fail-closed: the player asked to
+    // leave, they leave).
+    UWorld* World = GetWorld();
+    if (World && World->GetGameInstance() && World->GetNetMode() != NM_Client)
+    {
+        if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+        {
+            SaveSubsystem->SaveWorld(World, TEXT("ASTRAWILD_Main"));
+        }
+    }
+
     // PIE ends the session; packaged builds exit to desktop (loop stage QUIT).
     UKismetSystemLibrary::QuitGame(this, GetOwningPlayer(), EQuitPreference::Quit, false);
 }

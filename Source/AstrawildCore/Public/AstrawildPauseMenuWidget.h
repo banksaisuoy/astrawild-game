@@ -69,9 +69,13 @@ private:
     UFUNCTION()
     void HandleHuntClicked();
 
-    /** CGC-2: open the read-only Controls screen (32-action reference; no new input action). */
+    /** CGC-2: open the read-only Controls screen (33-action reference; no new input action). */
     UFUNCTION()
     void HandleControlsClicked();
+
+    /** CGC-4: open the Settings screen (volume / sensitivity / FOV / gamma). */
+    UFUNCTION()
+    void HandleSettingsClicked();
 
     /** DCP-2: begin a New Game Plus cycle (host only; guarded by StartNewGamePlus's own post-game gate). */
     UFUNCTION()
@@ -152,9 +156,13 @@ private:
     UPROPERTY()
     TObjectPtr<UButton> HuntButton;
 
-    /** CGC-2: Controls reference entry — the pause menu is its only path (census 32 stays). */
+    /** CGC-2: Controls reference entry — the pause menu is its only path (the button adds no input action). */
     UPROPERTY()
     TObjectPtr<UButton> ControlsButton;
+
+    /** CGC-4: Settings entry — the pause menu is its only path (no new input action; F6 is the HUD toggle). */
+    UPROPERTY()
+    TObjectPtr<UButton> SettingsButton;
 
     /** DCP-2: New Game+ entry — only VISIBLE while post-game is active (an ending was chosen). One click = StartNewGamePlus. */
     UPROPERTY()

@@ -968,8 +968,16 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     PlayerSkillAction = MakeRuntimeAction(TEXT("AWD_PlayerSkill"), static_cast<uint8>(EInputActionValueType::Boolean));
     Context->MapKey(PlayerSkillAction, EKeys::Y);
 
+    // CGC-4: F6 — hide/show the HUD. The ONE planned additive action of the
+    // settings/QoL batch (census 32 -> 33); keyboard only, the gamepad context
+    // is untouched (Start already pauses; a gamepad HUD toggle can ride a
+    // future radial menu). F6 sits between the F5 quick-save and F9 quick-load
+    // and was unclaimed.
+    ToggleHUDAction = MakeRuntimeAction(TEXT("AWD_ToggleHUD"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(ToggleHUDAction, EKeys::F6);
+
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (28 actions, WASD+mouse+wheel+UI+skiff+GDP)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (33 actions, WASD+mouse+wheel+UI+skiff+GDP+HUD toggle)."));
 }
 
 void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
@@ -1036,7 +1044,11 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
     Context->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
 
     GamepadMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (17 mappings — DCP-6: LB+X smart-cast chord)."));
+    // CGC-4: stale-count fix — the log claimed "17 mappings" since DCP-6 but
+    // the context maps 19 (the GDP party-ability + skiff-descend companions
+    // were added after the string was written; the DCP-6 test pin was a
+    // tautology, never the real count — test 138 pins the honest number).
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (19 mappings — DCP-6: LB+X smart-cast chord; F6 HUD toggle is KB-only)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -1219,6 +1231,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         EnhancedInput->BindAction(PauseAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::TogglePauseMenuInput);
     }
+    if (ToggleHUDAction)
+    {
+        EnhancedInput->BindAction(ToggleHUDAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleHudInput);
+    }
 
     // Ensure mapping context is applied directly when the input component is wired up.
     ApplyMappingContext();
@@ -1277,8 +1293,22 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
 void AAstrawildPlayerCharacter::Look(const FInputActionValue& Value)
 {
     const FVector2D LookAxisVector = Value.Get<FVector2D>();
-    AddControllerYawInput(LookAxisVector.X);
-    AddControllerPitchInput(LookAxisVector.Y);
+    // CGC-4: the settings-screen sensitivity multiplier scales both axes (the
+    // row was a raw pass-through since the first build — nothing ever adjusted
+    // it). Static, so the local look path reads the persisted value with zero
+    // per-frame cost.
+    AddControllerYawInput(LookAxisVector.X * LookSensitivityMultiplier);
+    AddControllerPitchInput(LookAxisVector.Y * LookSensitivityMultiplier);
+}
+
+float AAstrawildPlayerCharacter::LookSensitivityMultiplier = 1.0f;
+
+void AAstrawildPlayerCharacter::SetLookSensitivityMultiplier(const float Multiplier)
+{
+    // CGC-4: clamped to the settings-row band (UAstrawildSettingsWidget's
+    // SensitivityMin/Max mirror: 0.5..2.0) — a corrupt or foreign preferences
+    // slot can never zero-out or double-double the look path.
+    LookSensitivityMultiplier = FMath::Clamp(Multiplier, 0.5f, 2.0f);
 }
 
 void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
@@ -2877,6 +2907,16 @@ void AAstrawildPlayerCharacter::TogglePauseMenuInput(const FInputActionValue& Va
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
     {
         PC->TogglePauseMenu();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleHudInput(const FInputActionValue& Value)
+{
+    // CGC-4: F6 — pure visibility flip on the PC-owned HUD widget (the same
+    // route every other screen toggle takes; the PC owns the widget).
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleHudVisibility();
     }
 }
 

@@ -192,6 +192,39 @@ public:
     TArray<FName> SeenHints;
 };
 
+/**
+ * CGC-4 (settings & QoL): the player-preferences save object — a COMPLETELY
+ * SEPARATE slot from the world saves (written to "ASTRAWILD_Settings", never
+ * through SaveWorld/LoadWorld, no schema version, no checksum machinery —
+ * preferences are loss-tolerant by design: a missing or corrupt slot simply
+ * means defaults). Persistence routes through the static helpers on
+ * UAstrawildSettingsWidget (SaveSettings / LoadSettingsOrDefaults /
+ * MakeDefaultSettings), which use the plain UGameplayStatics slot API the
+ * world saves use (SaveGameToSlot/LoadGameFromSlot, user index 0).
+ */
+UCLASS()
+class ASTRAWILDCORE_API UAstrawildSettingsSave : public USaveGame
+{
+    GENERATED_BODY()
+
+public:
+    /** Master volume 0..1 (applied through the CGC-3 audio director hook). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Settings")
+    float MasterVolume = 1.0f;
+
+    /** Look sensitivity multiplier 0.5..2.0 (consumed in Look()). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Settings")
+    float Sensitivity = 1.0f;
+
+    /** Camera field of view in degrees 70..110 (FollowCamera->SetFieldOfView). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Settings")
+    float FieldOfView = 90.0f;
+
+    /** Gamma 0.8..1.6 (the r.Gamma engine console variable). */
+    UPROPERTY(BlueprintReadWrite, Category="ASTRAWILD|Settings")
+    float Gamma = 1.0f;
+};
+
 UCLASS()
 class ASTRAWILDCORE_API UAstrawildSaveSubsystem : public UGameInstanceSubsystem
 {

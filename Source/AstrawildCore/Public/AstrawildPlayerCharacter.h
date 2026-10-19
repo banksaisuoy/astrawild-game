@@ -315,6 +315,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> PlayerSkillAction;
 
+    /** CGC-4: F6 — hide/show the HUD (the additive 33rd runtime action; KB only). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> ToggleHUDAction;
+
     // --- Tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat", meta=(ClampMin="0.0"))
     float AttackDamage = 25.0f;
@@ -375,6 +379,16 @@ public:
 
     /** Called by the skiff on mount/dismount (input routing switches over). */
     void SetPilotedSkiff(AAstrawildSkiffActor* Skiff);
+
+    // --- CGC-4: look sensitivity (the settings-screen consumer) ---
+
+    /** CGC-4: the persisted look-sensitivity multiplier (settings row; default ×1.0). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Camera")
+    static float GetLookSensitivityMultiplier() { return LookSensitivityMultiplier; }
+
+    /** CGC-4: set the look-sensitivity multiplier (the settings screen + boot apply). Consumed in Look(). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Camera")
+    static void SetLookSensitivityMultiplier(float Multiplier);
 
     // --- LCP-3: LAN co-op interaction/input routing (remote clients) ---
 
@@ -478,6 +492,9 @@ protected:
     void ToggleHuntScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
 
+    /** CGC-4: F6 — flip the local HUD widget's visibility (PC-owned widget). */
+    void ToggleHudInput(const FInputActionValue& Value);
+
     // Batch 8 — skiff flight inputs (routed to the piloted skiff).
     void OnJumpPressed(const FInputActionValue& Value);
     void OnJumpReleased(const FInputActionValue& Value);
@@ -547,6 +564,9 @@ private:
     void SetMovementSpeed(float NewSpeed);
     double LastAttackTimeSeconds = -BIG_NUMBER;
     bool bSprinting = false;
+
+    /** CGC-4: storage for the static look-sensitivity multiplier (settings row). */
+    static float LookSensitivityMultiplier;
 
     /** Runtime-built input objects kept alive for GC. */
     UPROPERTY()

@@ -13,6 +13,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -20,8 +21,109 @@
 namespace
 {
     constexpr float InvPanelWidth = 620.0f;
-    constexpr float InvPanelHeight = 560.0f;
+    // CGC-4: the panel grew for the details line + the taller scrollable rows
+    // region (the old fixed 400px stack slot silently clipped everything past
+    // 13 stacks and was UNSCROLLABLE — audit 2-c finding).
+    constexpr float InvPanelHeight = 780.0f;
     constexpr float InvRowHeight = 30.0f;
+    // CGC-4: the discard double-click window (second click must land inside).
+    constexpr double DiscardConfirmWindowSeconds = 3.0;
+}
+
+// ---------------------------------------------------------------------------
+// CGC-4: pure static contracts (world-free — test 138 pins them)
+// ---------------------------------------------------------------------------
+
+FString UAstrawildInventoryScreenWidget::FormatItemDetails(const UAstrawildItemDefinition* ItemDef)
+{
+    // Fail-closed: a null/missing definition renders NOTHING (the caller's
+    // details line clears — never a raw id or a lie).
+    if (!ItemDef)
+    {
+        return FString();
+    }
+
+    FString Lines;
+    if (!ItemDef->DisplayName.IsEmpty())
+    {
+        Lines = ItemDef->DisplayName.ToString();
+    }
+    if (!ItemDef->Description.IsEmpty())
+    {
+        if (!Lines.IsEmpty())
+        {
+            Lines += TEXT("\n");
+        }
+        Lines += ItemDef->Description.ToString();
+    }
+
+    // Stats line: ONLY the non-zero fields (the REAL ItemDefinition field
+    // names — Food/Water/Heal/Weight/VendorPrice). A zero-stat material
+    // renders no consumption/economy tokens at all (honest, not padded).
+    FString Stats;
+    auto AppendStat = [&Stats](const FString& Entry)
+    {
+        if (!Entry.IsEmpty())
+        {
+            if (!Stats.IsEmpty())
+            {
+                Stats += TEXT(" · ");
+            }
+            Stats += Entry;
+        }
+    };
+    if (ItemDef->FoodValue > 0.0f)
+    {
+        AppendStat(FString::Printf(TEXT("Food +%.0f"), ItemDef->FoodValue));
+    }
+    if (ItemDef->WaterValue > 0.0f)
+    {
+        AppendStat(FString::Printf(TEXT("Water +%.0f"), ItemDef->WaterValue));
+    }
+    if (ItemDef->HealValue > 0.0f)
+    {
+        AppendStat(FString::Printf(TEXT("Heals +%.0f"), ItemDef->HealValue));
+    }
+    if (ItemDef->Weight > 0.0f)
+    {
+        AppendStat(FString::Printf(TEXT("%.1f kg each"), ItemDef->Weight));
+    }
+    if (ItemDef->VendorPrice > 0)
+    {
+        AppendStat(FString::Printf(TEXT("Sells for %d"), ItemDef->VendorPrice));
+    }
+    if (!Stats.IsEmpty())
+    {
+        if (!Lines.IsEmpty())
+        {
+            Lines += TEXT("\n");
+        }
+        Lines += Stats;
+    }
+    return Lines;
+}
+
+bool UAstrawildInventoryScreenWidget::SortStacksByName(TArray<FAstrawildItemStack>& Stacks,
+    const UAstrawildItemRegistrySubsystem* Registry)
+{
+    // PRESENTATION sort only — callers pass a COPY of GetItemStacks(); the
+    // underlying inventory array order is untouched (documented contract).
+    // StableSort keeps equal-name rows in their original relative order.
+    auto DisplayNameOf = [Registry](const FAstrawildItemStack& Stack) -> FString
+    {
+        const UAstrawildItemDefinition* Def = Registry ? Registry->FindItem(Stack.ItemId) : nullptr;
+        return Def && !Def->DisplayName.IsEmpty()
+            ? Def->DisplayName.ToString()
+            : Stack.ItemId.ToString();
+    };
+
+    Stacks.StableSort([&DisplayNameOf](const FAstrawildItemStack& A, const FAstrawildItemStack& B)
+    {
+        // Case-insensitive: "a" sorts before "B".
+        return DisplayNameOf(A).Compare(DisplayNameOf(B), ESearchCase::IgnoreCase) < 0;
+    });
+
+    return Registry != nullptr; // false = the id-string fallback was used.
 }
 
 // ---------------------------------------------------------------------------
@@ -43,6 +145,28 @@ void UAstrawildInventoryRowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     BuildRowTree();
+}
+
+bool UAstrawildInventoryRowWidget::IsEquippedItem() const
+{
+    // The honest equipped-read: any of the six replicated slot ids matching
+    // this row means the item is in active use. (The smallest honest discard
+    // behavior is to SKIP the button — dropping an equipped stack would leave
+    // a dangling equipped id, and Unequip() clears ALL slots, which would be a
+    // far more destructive side effect than the feature asks for.)
+    APawn* OwningPawn = ParentScreen ? ParentScreen->GetOwningPlayerPawn() : nullptr;
+    const AAstrawildPlayerCharacter* Player = OwningPawn ? Cast<AAstrawildPlayerCharacter>(OwningPawn) : nullptr;
+    const UAstrawildInventoryComponent* Inventory = Player ? Player->InventoryComponent : nullptr;
+    if (!Inventory)
+    {
+        return false;
+    }
+    return Inventory->EquippedItemId == RowItemId
+        || Inventory->EquippedShieldItemId == RowItemId
+        || Inventory->EquippedArmorItemId == RowItemId
+        || Inventory->EquippedHelmetItemId == RowItemId
+        || Inventory->EquippedExosuitItemId == RowItemId
+        || Inventory->EquippedScannerItemId == RowItemId;
 }
 
 void UAstrawildInventoryRowWidget::BuildRowTree()
@@ -86,14 +210,33 @@ void UAstrawildInventoryRowWidget::BuildRowTree()
     const bool bConsumable = ItemDef->Category == EAstrawildItemCategory::Consumable;
     const bool bEquipment = ItemDef->Category == EAstrawildItemCategory::Equipment;
 
-    ActionButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("RowAction"));
-    ActionButton->SetBackgroundColor(FLinearColor(0.16f, 0.38f, 0.45f, 1.0f));
+    auto MakeRowButton = [this](const FName& Name, const TCHAR* Label, const FLinearColor& Color) -> UButton*
+    {
+        UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), *Name.ToString());
+        Button->SetBackgroundColor(Color);
+        UTextBlock* ButtonLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InvRowButtonLabel"));
+        ButtonLabel->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+        ButtonLabel->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12));
+        ButtonLabel->SetText(FText::FromString(Label));
+        Button->AddChild(ButtonLabel);
+        return Button;
+    };
+
+    ActionButton = MakeRowButton(TEXT("RowAction"), bConsumable ? TEXT("Use") : TEXT("Equip"), FLinearColor(0.16f, 0.38f, 0.45f, 1.0f));
     ActionButton->SetVisibility(bConsumable || bEquipment ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
-    UTextBlock* ButtonLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("RowActionLabel"));
-    ButtonLabel->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-    ButtonLabel->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12));
-    ButtonLabel->SetText(FText::FromString(bConsumable ? TEXT("Use") : TEXT("Equip")));
-    ActionButton->AddChild(ButtonLabel);
+
+    // CGC-4: the details button ("?") — every row gets one; it fills the
+    // screen's details line from the item definition.
+    DetailsButton = MakeRowButton(TEXT("RowDetails"), TEXT("?"), FLinearColor(0.3f, 0.34f, 0.42f, 1.0f));
+
+    // CGC-4: the discard button — EVERY row except an equipped stack (the
+    // overweight-junk trap escape: materials finally have an out).
+    DiscardButton = MakeRowButton(TEXT("RowDiscard"), TEXT("Discard"), FLinearColor(0.5f, 0.24f, 0.18f, 1.0f));
+    if (UTextBlock* ExistingLabel = Cast<UTextBlock>(DiscardButton->GetChildAt(0)))
+    {
+        DiscardButtonLabel = ExistingLabel;
+    }
+    DiscardButton->SetVisibility(IsEquippedItem() ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
 
     if (auto* NameSlot = Cast<UHorizontalBoxSlot>(Row->AddChildToHorizontalBox(NameText)))
     {
@@ -111,10 +254,25 @@ void UAstrawildInventoryRowWidget::BuildRowTree()
         ButtonSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
         ButtonSlot->SetVerticalAlignment(VAlign_Center);
     }
+    if (auto* DetailsSlot = Cast<UHorizontalBoxSlot>(Row->AddChildToHorizontalBox(DetailsButton)))
+    {
+        DetailsSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        DetailsSlot->SetVerticalAlignment(VAlign_Center);
+    }
+    if (auto* DiscardSlot = Cast<UHorizontalBoxSlot>(Row->AddChildToHorizontalBox(DiscardButton)))
+    {
+        DiscardSlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
+        DiscardSlot->SetVerticalAlignment(VAlign_Center);
+    }
 
     if (bConsumable || bEquipment)
     {
         ActionButton->OnClicked.AddDynamic(this, &UAstrawildInventoryRowWidget::HandleActionClicked);
+    }
+    DetailsButton->OnClicked.AddDynamic(this, &UAstrawildInventoryRowWidget::HandleDetailsClicked);
+    if (!IsEquippedItem())
+    {
+        DiscardButton->OnClicked.AddDynamic(this, &UAstrawildInventoryRowWidget::HandleDiscardClicked);
     }
 
     WidgetTree->RootWidget = Row;
@@ -156,6 +314,74 @@ void UAstrawildInventoryRowWidget::HandleActionClicked()
     if (ParentScreen)
     {
         ParentScreen->RefreshInventory();
+    }
+}
+
+void UAstrawildInventoryRowWidget::HandleDetailsClicked()
+{
+    // CGC-4: fill the screen's details line — fail-closed inside (a missing
+    // definition clears the line, never invents text).
+    if (ParentScreen)
+    {
+        ParentScreen->ShowItemDetails(RowItemId);
+    }
+}
+
+void UAstrawildInventoryRowWidget::HandleDiscardClicked()
+{
+    // CGC-4 (discard-with-confirm): first click arms ("Discard N?" — the
+    // pause-menu slot-label relabel idiom), a second click inside the 3s
+    // window drops the WHOLE stack via RemoveItem(ItemId, StackCount). Any
+    // refresh rebuilds the rows and resets every arm (stale confirms die with
+    // the row they belonged to).
+    APawn* OwningPawn = ParentScreen ? ParentScreen->GetOwningPlayerPawn() : nullptr;
+    AAstrawildPlayerCharacter* Player = OwningPawn ? Cast<AAstrawildPlayerCharacter>(OwningPawn) : nullptr;
+    if (!Player || !Player->InventoryComponent)
+    {
+        return;
+    }
+
+    // Destructive mutation: authority only (the QuickSave guard class — a
+    // pure LAN client's local pack mirror must not desync; SaveWorld-style
+    // fail-closed honesty for the trap escape).
+    if (Player->GetLocalRole() != ROLE_Authority)
+    {
+        if (AAstrawildPlayerController* PC = ParentScreen->GetOwningPlayer<AAstrawildPlayerController>())
+        {
+            PC->Notify(FText::FromString(TEXT("Discard refused — the host authority owns the pack.")));
+        }
+        return;
+    }
+
+    const double NowSeconds = FPlatformTime::Seconds();
+    const bool bArmedRecently = DiscardArmedAtSeconds > 0.0
+        && (NowSeconds - DiscardArmedAtSeconds) <= DiscardConfirmWindowSeconds;
+    if (!bArmedRecently)
+    {
+        DiscardArmedAtSeconds = NowSeconds;
+        if (DiscardButtonLabel)
+        {
+            DiscardButtonLabel->SetText(FText::FromString(FString::Printf(TEXT("Discard %d?"),
+                Player->InventoryComponent->GetQuantity(RowItemId))));
+        }
+        return;
+    }
+
+    // Confirmed inside the window: drop the whole stack (live quantity, not
+    // the possibly-stale armed label).
+    const int32 StackCount = Player->InventoryComponent->GetQuantity(RowItemId);
+    DiscardArmedAtSeconds = 0.0;
+    if (StackCount > 0 && Player->InventoryComponent->RemoveItem(RowItemId, StackCount))
+    {
+        if (AAstrawildPlayerController* PC = ParentScreen->GetOwningPlayer<AAstrawildPlayerController>())
+        {
+            PC->Notify(FText::FromString(FString::Printf(TEXT("Discarded ×%d."), StackCount)));
+        }
+    }
+
+    if (ParentScreen)
+    {
+        ParentScreen->RefreshInventory(); // rebuild resets every row's arm state
     }
 }
 
@@ -221,7 +447,30 @@ void UAstrawildInventoryScreenWidget::BuildWidgetTree()
     LoadoutText->SetColorAndOpacity(FSlateColor(FLinearColor(0.85f, 0.87f, 0.9f, 1.0f)));
     LoadoutText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
 
+    // CGC-4: the Sort header button — a PRESENTATION toggle over a copy of
+    // the stacks (the inventory array order itself is never touched).
+    SortButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("InvSort"));
+    SortButton->SetBackgroundColor(FLinearColor(0.28f, 0.36f, 0.46f, 1.0f));
+    SortButtonLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InvSortLabel"));
+    SortButtonLabel->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+    SortButtonLabel->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 12));
+    SortButton->AddChild(SortButtonLabel);
+    SortButton->OnClicked.AddDynamic(this, &UAstrawildInventoryScreenWidget::HandleSortClicked);
+
+    // CGC-4: the stacks container now lives inside a ScrollBox (the
+    // JournalScreen construction idiom, copied exactly — ConstructWidget +
+    // AddChild wrap) with an always-visible scrollbar: >13 stacks overflow is
+    // scrollable instead of silently clipped.
+    StacksScroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("InvStacksScroll"));
+    StacksScroll->SetScrollbarVisibility(EScrollBoxScrollbarVisibility::AlwaysVisible);
     StackBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("InvStacks"));
+    StacksScroll->AddChild(StackBox);
+
+    // CGC-4: the item details line (filled by a row's "?" button).
+    DetailsText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InvDetails"));
+    DetailsText->SetColorAndOpacity(FSlateColor(FLinearColor(0.86f, 0.9f, 0.82f, 1.0f)));
+    DetailsText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
+    DetailsText->SetAutoWrapText(true);
 
     CloseButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("InvClose"));
     CloseButton->SetBackgroundColor(FLinearColor(0.45f, 0.2f, 0.16f, 1.0f));
@@ -237,7 +486,13 @@ void UAstrawildInventoryScreenWidget::BuildWidgetTree()
     {
         TitleSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         TitleSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f));
-        TitleSlot->SetSize(FVector2D(InvPanelWidth, 32.0f));
+        TitleSlot->SetSize(FVector2D(InvPanelWidth * 0.5f, 32.0f));
+    }
+    if (UCanvasPanelSlot* SortSlot = Canvas->AddChildToCanvas(SortButton))
+    {
+        SortSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+        SortSlot->SetPosition(FVector2D(6.0f, -InvPanelHeight * 0.5f));
+        SortSlot->SetSize(FVector2D(160.0f, 30.0f));
     }
     if (UCanvasPanelSlot* WeightSlot = Canvas->AddChildToCanvas(WeightText))
     {
@@ -251,11 +506,19 @@ void UAstrawildInventoryScreenWidget::BuildWidgetTree()
         LoadoutSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f + 62.0f));
         LoadoutSlot->SetSize(FVector2D(InvPanelWidth, 40.0f));
     }
-    if (UCanvasPanelSlot* StacksSlot = Canvas->AddChildToCanvas(StackBox))
+    if (UCanvasPanelSlot* StacksSlot = Canvas->AddChildToCanvas(StacksScroll))
     {
         StacksSlot->SetAnchors(FAnchors(0.5f, 0.5f));
         StacksSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, -InvPanelHeight * 0.5f + 108.0f));
-        StacksSlot->SetSize(FVector2D(InvPanelWidth, InvPanelHeight - 160.0f));
+        // CGC-4: the rows region is now the tall SCROLL VIEWPORT (520px),
+        // not the old fixed 400px clip.
+        StacksSlot->SetSize(FVector2D(InvPanelWidth, 520.0f));
+    }
+    if (UCanvasPanelSlot* DetailsSlot = Canvas->AddChildToCanvas(DetailsText))
+    {
+        DetailsSlot->SetAnchors(FAnchors(0.5f, 0.5f));
+        DetailsSlot->SetPosition(FVector2D(-InvPanelWidth * 0.5f, InvPanelHeight * 0.5f - 150.0f));
+        DetailsSlot->SetSize(FVector2D(InvPanelWidth, 100.0f));
     }
     if (UCanvasPanelSlot* CloseSlot = Canvas->AddChildToCanvas(CloseButton))
     {
@@ -265,6 +528,40 @@ void UAstrawildInventoryScreenWidget::BuildWidgetTree()
     }
 
     WidgetTree->RootWidget = Canvas;
+
+    RefreshSortButtonLabel();
+}
+
+void UAstrawildInventoryScreenWidget::ShowItemDetails(const FName ItemId)
+{
+    if (!DetailsText)
+    {
+        return;
+    }
+    UWorld* World = GetWorld();
+    UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+    const UAstrawildItemDefinition* ItemDef = Registry ? Registry->FindItem(ItemId) : nullptr;
+    DetailsText->SetText(FText::FromString(FormatItemDetails(ItemDef)));
+}
+
+void UAstrawildInventoryScreenWidget::HandleSortClicked()
+{
+    // CGC-4: toggle the by-name presentation sort. Default OFF preserves the
+    // inventory's insertion order (crafting refunds and gather arrivals stay
+    // in the order they happened); one click reads A→Z, another restores.
+    bSortByName = !bSortByName;
+    RefreshSortButtonLabel();
+    RefreshInventory();
+}
+
+void UAstrawildInventoryScreenWidget::RefreshSortButtonLabel()
+{
+    if (SortButtonLabel)
+    {
+        SortButtonLabel->SetText(FText::FromString(bSortByName
+            ? TEXT("Sort: A→Z (on)")
+            : TEXT("Sort: A→Z (off)")));
+    }
 }
 
 void UAstrawildInventoryScreenWidget::RefreshInventory()
@@ -296,9 +593,17 @@ void UAstrawildInventoryScreenWidget::RefreshInventory()
         *SlotName(Player->InventoryComponent->EquippedExosuitItemId),
         *SlotName(Player->InventoryComponent->EquippedScannerItemId))));
 
-    // Stacks.
+    // Stacks — a COPY (the sort contract: the inventory array order itself is
+    // never touched), optionally sorted by display name for presentation.
+    TArray<FAstrawildItemStack> Stacks = Player->InventoryComponent->GetItemStacks();
+    if (bSortByName)
+    {
+        UWorld* World = GetWorld();
+        UAstrawildItemRegistrySubsystem* Registry = World ? World->GetSubsystem<UAstrawildItemRegistrySubsystem>() : nullptr;
+        SortStacksByName(Stacks, Registry);
+    }
+
     StackBox->ClearChildren();
-    const TArray<FAstrawildItemStack> Stacks = Player->InventoryComponent->GetItemStacks();
     for (const FAstrawildItemStack& Stack : Stacks)
     {
         UAstrawildInventoryRowWidget* Row = WidgetTree->ConstructWidget<UAstrawildInventoryRowWidget>(

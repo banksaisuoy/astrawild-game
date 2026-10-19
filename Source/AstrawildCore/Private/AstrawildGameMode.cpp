@@ -99,7 +99,19 @@ void AAstrawildGameMode::BeginPlay()
     {
         if (UAstrawildSaveSubsystem* SaveSubsystem = World->GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
         {
-            SaveSubsystem->LoadLatest(World);
+            const bool bLoaded = SaveSubsystem->LoadLatest(World);
+            // CGC-4 (save UX trinity): a fresh machine (no slots at all) stays
+            // silent — nothing was lost. But a slot EXISTING and failing to
+            // read (corrupt/foreign) deserves an honest line: queue it for the
+            // first player controller (flushed once in PostLogin — BeginPlay
+            // has no players to notify yet).
+            if (!bLoaded && (SaveSubsystem->DoesSaveExist(TEXT("ASTRAWILD_Main"))
+                || SaveSubsystem->DoesSaveExist(TEXT("ASTRAWILD_Auto"))))
+            {
+                PendingBootNotice = FText::FromString(
+                    TEXT("Your expedition record could not be read — a fresh expedition of the Vale begins."));
+                UE_LOG(LogAstrawild, Warning, TEXT("Boot load failed with slots present — fresh world, notice queued."));
+            }
         }
     }
 
@@ -183,7 +195,22 @@ void AAstrawildGameMode::HandleAutosave()
 
     if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
     {
-        SaveSubsystem->SaveWorld(World, TEXT("ASTRAWILD_Auto"));
+        // CGC-4 (save UX trinity): the autosave was completely silent — a
+        // player had no confirmation the 5-minute timer was doing anything.
+        // Toast every connected player through the PC iterator (the
+        // EchoCharacter cry-radius idiom); NotifyPlayer routes to the owning
+        // screen on every machine (host-local or remote client RPC).
+        if (SaveSubsystem->SaveWorld(World, TEXT("ASTRAWILD_Auto")))
+        {
+            const FText Notice = FText::FromString(TEXT("Autosaved."));
+            for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            {
+                if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(It->Get()))
+                {
+                    PC->NotifyPlayer(Notice);
+                }
+            }
+        }
     }
 }
 
@@ -191,6 +218,18 @@ void AAstrawildGameMode::HandleAutosave()
 void AAstrawildGameMode::PostLogin(AController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
+
+    // CGC-4 (save UX trinity): flush the queued boot load-failure notice to
+    // the FIRST player controller (the host in every shipped configuration) —
+    // once, regardless of who joined first or how many logins follow.
+    if (HasAuthority() && !PendingBootNotice.IsEmpty() && !bBootNoticeDelivered)
+    {
+        if (AAstrawildPlayerController* NoticePC = Cast<AAstrawildPlayerController>(NewPlayer))
+        {
+            NoticePC->NotifyPlayer(PendingBootNotice, EAstrawildToastCue::Warning);
+            bBootNoticeDelivered = true;
+        }
+    }
 
     // LCP-4: late join / reconnect restore. Runs on the LISTEN HOST only (the
     // GameMode exists solely on the server). The first player (host) restored

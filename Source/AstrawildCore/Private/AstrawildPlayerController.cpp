@@ -29,6 +29,7 @@
 #include "Net/UnrealNetwork.h" // PCR-2: DOREPLIFETIME
 #include "AstrawildResearchScreenWidget.h"
 #include "AstrawildSaveSubsystem.h" // CGC-2: ShowOnce hint store.
+#include "AstrawildSettingsWidget.h" // CGC-4: settings screen + ApplySettings boot path.
 #include "AstrawildShopWidget.h"
 #include "Blueprint/UserWidget.h"
 
@@ -74,6 +75,15 @@ void AAstrawildPlayerController::BeginPlay()
         UE_LOG(LogAstrawild, Log, TEXT("HUD widget created."));
     }
 
+    // CGC-4: apply the persisted player settings at boot, after the HUD
+    // exists (volume/sensitivity/gamma need no pawn; FOV re-applies on
+    // OnPossess for the late-possess case). Fail-closed: a missing
+    // preferences slot hands back defaults inside LoadSettingsOrDefaults.
+    if (UAstrawildSettingsSave* Settings = UAstrawildSettingsWidget::LoadSettingsOrDefaults())
+    {
+        UAstrawildSettingsWidget::ApplySettings(GetWorld(), Settings);
+    }
+
     // CGC-2: boot-time quest narration. The quest component is a SUBOBJECT —
     // its BeginPlay (and therefore the auto-started intro quest's "New quest"
     // toast) ran inside Super::BeginPlay, BEFORE the HUD existed, so the
@@ -111,6 +121,15 @@ void AAstrawildPlayerController::OnPossess(APawn* InPawn)
         if (AAstrawildPlayerCharacter* PlayerChar = Cast<AAstrawildPlayerCharacter>(InPawn))
         {
             PlayerChar->ApplyMappingContext();
+        }
+
+        // CGC-4: re-apply the persisted settings once the pawn exists — the
+        // BeginPlay pass may run before possession, when no camera exists yet
+        // (idempotent: volume/sensitivity/gamma just re-write the same values,
+        // FOV now finds its camera).
+        if (UAstrawildSettingsSave* Settings = UAstrawildSettingsWidget::LoadSettingsOrDefaults())
+        {
+            UAstrawildSettingsWidget::ApplySettings(GetWorld(), Settings);
         }
     }
 }
@@ -314,6 +333,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleControlsScreen();
     }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
+    }
 
     if (bOpen)
     {
@@ -399,6 +422,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     if (IsControlsOpen())
     {
         ToggleControlsScreen();
+    }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
     }
 
     if (bOpen)
@@ -486,6 +513,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     {
         ToggleControlsScreen();
     }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
+    }
 
     if (bOpen)
     {
@@ -570,6 +601,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsControlsOpen())
     {
         ToggleControlsScreen();
+    }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
     }
 
     if (bOpen)
@@ -656,6 +691,10 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     if (IsControlsOpen())
     {
         ToggleControlsScreen();
+    }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -744,6 +783,10 @@ void AAstrawildPlayerController::ToggleRosterScreen()
     if (IsControlsOpen())
     {
         ToggleControlsScreen();
+    }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
     }
     if (IsPauseMenuOpen())
     {
@@ -882,6 +925,10 @@ void AAstrawildPlayerController::ToggleMapScreen()
     {
         ToggleControlsScreen();
     }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
+    }
 
     if (bOpen)
     {
@@ -978,6 +1025,10 @@ void AAstrawildPlayerController::ToggleHuntScreen()
     {
         ToggleControlsScreen();
     }
+    if (IsSettingsOpen())
+    {
+        ToggleSettingsScreen();
+    }
 
     if (bOpen)
     {
@@ -1020,7 +1071,7 @@ bool AAstrawildPlayerController::IsHuntOpen() const
     return HuntScreen && HuntScreen->IsInViewport();
 }
 
-// --- CGC-2: the read-only Controls screen (32-action reference) ---
+// --- CGC-2: the read-only Controls screen (33-action reference since CGC-4's F6 row) ---
 
 void AAstrawildPlayerController::ToggleControlsScreen()
 {
@@ -1107,6 +1158,110 @@ bool AAstrawildPlayerController::IsControlsOpen() const
     return ControlsScreen && ControlsScreen->IsInViewport();
 }
 
+// --- CGC-4: the Settings screen (volume / sensitivity / FOV / gamma) ---
+
+void AAstrawildPlayerController::ToggleSettingsScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsSettingsOpen();
+
+    // Close siblings first — one full-screen UI at a time (the journal idiom).
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+    if (IsControlsOpen())
+    {
+        ToggleControlsScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+
+    if (bOpen)
+    {
+        PlayUiOpenSound();
+
+        if (!SettingsScreen)
+        {
+            const TSubclassOf<UAstrawildSettingsWidget> WidgetClass = SettingsScreenClass
+                ? SettingsScreenClass
+                : TSubclassOf<UAstrawildSettingsWidget>(UAstrawildSettingsWidget::StaticClass());
+            SettingsScreen = CreateWidget<UAstrawildSettingsWidget>(this, WidgetClass);
+        }
+        if (SettingsScreen)
+        {
+            SettingsScreen->AddToViewport(10);
+            // F-05 convention: keyboard focus so ESC closes without a mouse click.
+            SettingsScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        PlayUiCloseSound();
+
+        if (SettingsScreen)
+        {
+            SettingsScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsSettingsOpen() const
+{
+    return SettingsScreen && SettingsScreen->IsInViewport();
+}
+
+void AAstrawildPlayerController::ToggleHudVisibility()
+{
+    // CGC-4 (F6): pure visibility flip on the HUD. Screens are separate
+    // widgets — they open/work/close regardless of this state, and nothing
+    // auto-restores the HUD; the next F6 does. Fail-closed on a missing HUD.
+    if (!HudWidget)
+    {
+        return;
+    }
+    bHudHidden = !bHudHidden;
+    HudWidget->SetVisibility(bHudHidden ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+}
+
 bool AAstrawildPlayerController::RequestClaimHunt(const FName HuntId)
 {
     if (!IsLocalController())
@@ -1142,7 +1297,7 @@ void AAstrawildPlayerController::ServerClaimHunt_Implementation(const FName Hunt
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen() || IsControlsOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen() || IsControlsOpen() || IsSettingsOpen();
 }
 
 

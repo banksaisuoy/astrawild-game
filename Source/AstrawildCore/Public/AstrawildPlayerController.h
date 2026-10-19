@@ -20,6 +20,7 @@ class UAstrawildRosterScreenWidget;
 class UAstrawildMapScreenWidget;
 class UAstrawildHuntScreenWidget;
 class UAstrawildControlsScreenWidget;
+class UAstrawildSettingsWidget;
 
 #include "AstrawildTypes.h"
 
@@ -277,12 +278,39 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
     TSubclassOf<UAstrawildControlsScreenWidget> ControlsScreenClass;
 
-    /** CGC-2: toggle the read-only Controls screen (32-action reference) — pause-menu button only, NO new input action. */
+    /** CGC-2: toggle the read-only Controls screen (33-action reference incl. the CGC-4 F6 HUD toggle) — pause-menu button only. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
     void ToggleControlsScreen();
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsControlsOpen() const;
+
+    // --- CGC-4: the Settings screen (first player-adjustable anything) ---
+
+    /** CGC-4: settings screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildSettingsWidget> SettingsScreenClass;
+
+    /** CGC-4: toggle the settings screen (volume / sensitivity / FOV / gamma / reset) — pause-menu button only. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleSettingsScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsSettingsOpen() const;
+
+    /**
+     * CGC-4 (F6, AWD_ToggleHUD): flip the HUD widget's visibility
+     * (Collapsed <-> Visible). PURE TOGGLE by design — opening any screen
+     * while hidden does NOT auto-restore (the screens are separate widgets
+     * and keep working), and hiding survives screen open/close. Fail-closed:
+     * no HUD widget (very early boot) = no-op.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleHudVisibility();
+
+    /** CGC-4: true while the HUD is hidden by the F6 toggle. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsHudHidden() const { return bHudHidden; }
 
     /**
      * PCR-5: claim a completed hunt round. Local authority mutates directly;
@@ -349,4 +377,10 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildControlsScreenWidget> ControlsScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildSettingsWidget> SettingsScreen;
+
+    /** CGC-4: the F6 HUD-hidden state (pure visibility flip; boot starts visible). */
+    bool bHudHidden = false;
 };

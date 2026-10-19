@@ -1,7 +1,7 @@
 ﻿# ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-09-03** (PCR-5 sync — 32 actions incl. AWD_Journal Field Journal on P + AWD_Roster Echo Roster on L + AWD_Map World Map on M + AWD_Hunt Hunt Board on U; screens close with their advertised keys; crafting stations open the crafting screen on E)
+**Date: 2026-09-07** (CGC-4 sync — 33 actions incl. AWD_ToggleHUD on F6, the hide/show-HUD toggle; the settings screen [pause menu] carries the sensitivity/FOV/gamma rows; prior 2026-09-03 PCR-5 sync — journal/roster/map/hunt keys; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,10 +11,10 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (32 actions)
+## 1. Complete Keybinding Table (33 actions)
 
-`BuildRuntimeInputDefaults` creates **32 runtime actions** (`MakeRuntimeAction` count incl.
-Descend). Key count = physical keyboard keys (mouse inputs listed separately).
+`BuildRuntimeInputDefaults` creates **33 runtime actions** (`MakeRuntimeAction` count incl.
+Descend + the CGC-4 ToggleHUD). Key count = physical keyboard keys (mouse inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
 |---|---|---|---|---|---|
@@ -46,6 +46,7 @@ Descend). Key count = physical keyboard keys (mouse inputs listed separately).
 | **Escape** | Pause (`AWD_Pause`) | Started | `TogglePauseMenuInput` | **UI (final run):** pause menu — Resume / Save Now / Quit To Desktop (world paused) | Also on gamepad Start |
 | **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema v3) | Server/authority only |
 | **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world (work sites, battery, drones, robots included) | Server/authority only |
+| **F6** | Toggle HUD (`AWD_ToggleHUD`) | Started | `ToggleHudInput` → `PlayerController::ToggleHudVisibility` | **UI (CGC-4):** hide/show the 22-element HUD for a clean view | PURE toggle — opening screens while hidden does NOT auto-restore; screens keep working (separate widgets); KB/M only (gamepad untouched) |
 | *(LMB while placing)* | — (routes from Attack) | Started | `BuildingComponent::ConfirmPlacement` | Building: consume materials + server RPC | See LMB row |
 
 Death disables input until respawn (5 s GameMode timer). Building-cycling between piece types
@@ -77,7 +78,7 @@ objects — gamepad and KB/M work simultaneously, zero configuration needed.
 | Special Left (select) | Rotate Building | |
 | Special Right (start) | Pause Menu | The natural pause button |
 
-*(Scan/drone/robot/save/load remain keyboard-only on gamepad — the four face buttons and D-pad are
+*(Scan/drone/robot/save/load/HUD-toggle remain keyboard-only on gamepad — the four face buttons and D-pad are
 fully allocated; a future radial menu can host them. DCP-6 closed the smart-cast gap: LB+X is a
 chord on the committed bindings, not a new allocation — plain X stays Dodge.)*
 

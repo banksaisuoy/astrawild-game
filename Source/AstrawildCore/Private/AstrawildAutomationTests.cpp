@@ -71,7 +71,9 @@
 #include "AstrawildHuntSubsystem.h"
 #include "AstrawildWildlifeDirectorSubsystem.h"
 #include "AstrawildHudWidget.h" // CGC-2: pure bearing/distance formatting contracts.
-#include "AstrawildControlsScreenWidget.h" // CGC-2: the 32-action controls census pin.
+#include "AstrawildControlsScreenWidget.h" // CGC-2: the controls census pin (33 actions since CGC-4's F6 row).
+#include "AstrawildInventoryScreenWidget.h" // CGC-4: FormatItemDetails + SortStacksByName pure contracts.
+#include "AstrawildSettingsWidget.h" // CGC-4: settings step/format/save-defaults contracts.
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -6421,13 +6423,17 @@ bool FAstrawildGamepadSmartCastChordTest::RunTest(const FString& Parameters)
     TestNotEqual(TEXT("The chord key (LB) is not the face button"), ChordKey, SkillFaceButton);
     TestNotEqual(TEXT("The chord key is not RB (sprint)"), ChordKey, EKeys::Gamepad_RightShoulder);
 
-    // --- No committed binding regressed (the full gamepad map pinned) ---
+    // --- No committed binding regressed (the DCP-6 allocation contract) ---
     // A jump, B interact, X dodge, Y build; RB sprint, LB block, RT attack,
     // LT heavy; dpad up/right/down/left command/feed/consume/equip-best;
     // select rotate, start pause; RS click party ability, LS click descend
-    // (+17th: the LB+X smart-cast chord).
-    const int32 GamepadMappings = 17; // 16 committed + the DCP-6 chord.
-    TestEqual(TEXT("Gamepad context maps 17 mappings"), GamepadMappings, 16 + 1);
+    // (+ the LB+X smart-cast chord as the 17th ALLOCATION at DCP-6 time).
+    // CGC-4 honesty note: this design-count constant is NOT the live context
+    // size — the GDP party-ability + skiff-descend companions grew the real
+    // map to 19, which test 138 pins against the actual GetMappings() count.
+    const int32 GamepadAllocations = 17; // 16 committed + the DCP-6 chord.
+    TestEqual(TEXT("The DCP-6 chord is the 17th allocation (16 committed + 1)"),
+        GamepadAllocations, 16 + 1);
 
     // The KB/M smart-cast (Y) stays exactly as it was — the chord is additive.
     const FKey KeyboardSmartCast = EKeys::Y;
@@ -7044,9 +7050,11 @@ bool FAstrawildCGC2FirstHourGuidanceContractTest::RunTest(const FString& Paramet
             Objective.ProgressCount, 0);
     }
 
-    // 5) Controls table: the 32-action census pin (one row per runtime action).
-    TestEqual(TEXT("Controls screen pins the 32-action census"),
-        UAstrawildControlsScreenWidget::GetControlRows().Num(), 32);
+    // 5) Controls table: the input-census pin (one row per runtime action;
+    //    CGC-4's F6 AWD_ToggleHUD grew the census 32 -> 33 — this pin follows
+    //    the honest live count, and test 138 pins the F6 row itself).
+    TestEqual(TEXT("Controls screen pins the 33-action census"),
+        UAstrawildControlsScreenWidget::GetControlRows().Num(), 33);
     for (const FString& Row : UAstrawildControlsScreenWidget::GetControlRows())
     {
         TestTrue(FString::Printf(TEXT("Controls row non-empty: %s"), *Row.Left(24)),
@@ -7271,6 +7279,235 @@ bool FAstrawildCGC3AudioActivationContractTest::RunTest(const FString& Parameter
         UAstrawildAudioDirectorSubsystem::AmbienceVolume, 0.4f);
     TestEqual(TEXT("Footstep volume pinned at 0.3"),
         UAstrawildAudioDirectorSubsystem::FootstepVolume, 0.3f);
+
+    return true;
+}
+
+// ===========================================================================
+// CGC-4 (settings & QoL, audit 2-c): world-free contracts for the settings
+// screen — step/clamp math at the boundaries, the four display formatters,
+// the PURE preferences-save defaults (the disk round-trip itself stays
+// ENGINE-UNVERIFIED — only MakeDefaultSettings and the slot-name separation
+// are pinned), the look-sensitivity clamp static, the item-details formatter
+// (first runtime reader of ItemDefinition::Description on the inventory
+// screen), the case-insensitive stable sort comparator, and the input census
+// 32 -> 33 (F6 = AWD_ToggleHUD).
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCGC4SettingsAndQoLContractTest,
+    "ASTRAWILD.CGC4.SettingsAndQoLContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCGC4SettingsAndQoLContractTest::RunTest(const FString& Parameters)
+{
+    // --- 1) StepSettingValue: clamp/step math pinned at every row's bounds.
+    TestEqual(TEXT("Volume 0.95 + 0.1 clamps to 1.0 (never overshoots)"),
+        UAstrawildSettingsWidget::StepSettingValue(0.95f, 0.0f, 1.0f, 0.1f, true), 1.0f);
+    TestEqual(TEXT("Volume 0.05 - 0.1 clamps to 0.0"),
+        UAstrawildSettingsWidget::StepSettingValue(0.05f, 0.0f, 1.0f, 0.1f, false), 0.0f);
+    TestEqual(TEXT("Sensitivity 0.5 - 0.1 stays at the 0.5 floor"),
+        UAstrawildSettingsWidget::StepSettingValue(0.5f, 0.5f, 2.0f, 0.1f, false), 0.5f);
+    TestEqual(TEXT("Sensitivity 1.9 + 0.1 clamps to 2.0"),
+        UAstrawildSettingsWidget::StepSettingValue(1.9f, 0.5f, 2.0f, 0.1f, true), 2.0f);
+    TestEqual(TEXT("FOV 110 + 5 stays at the 110 ceiling"),
+        UAstrawildSettingsWidget::StepSettingValue(110.0f, 70.0f, 110.0f, 5.0f, true), 110.0f);
+    TestEqual(TEXT("FOV 70 - 5 stays at the 70 floor"),
+        UAstrawildSettingsWidget::StepSettingValue(70.0f, 70.0f, 110.0f, 5.0f, false), 70.0f);
+    TestEqual(TEXT("Gamma 1.0 + 0.05 steps to 1.05 (sub-display granularity holds)"),
+        UAstrawildSettingsWidget::StepSettingValue(1.0f, 0.8f, 1.6f, 0.05f, true), 1.05f);
+    TestEqual(TEXT("Gamma 0.8 - 0.05 stays at the 0.8 floor"),
+        UAstrawildSettingsWidget::StepSettingValue(0.8f, 0.8f, 1.6f, 0.05f, false), 0.8f);
+
+    // --- 2) Display formatters: one pinned string per row.
+    TestEqual(TEXT("Volume 0.8 formats as 80%"),
+        UAstrawildSettingsWidget::FormatVolumeText(0.8f), FString(TEXT("80%")));
+    TestEqual(TEXT("Volume 1.0 formats as 100%"),
+        UAstrawildSettingsWidget::FormatVolumeText(1.0f), FString(TEXT("100%")));
+    TestEqual(TEXT("Sensitivity 1.0 formats as x1.0"),
+        UAstrawildSettingsWidget::FormatSensitivityText(1.0f), FString(TEXT("×1.0")));
+    TestEqual(TEXT("FOV 90 formats as 90 degrees"),
+        UAstrawildSettingsWidget::FormatFovText(90.0f), FString(TEXT("90°")));
+    TestEqual(TEXT("Gamma 1.0 formats as 1.00"),
+        UAstrawildSettingsWidget::FormatGammaText(1.0f), FString(TEXT("1.00")));
+
+    // --- 3) Preferences save: the PURE defaults factory + the slot-name
+    //     separation (the LoadGameFromSlot/SaveGameToSlot round-trip stays
+    //     ENGINE-UNVERIFIED until the engine run — fresh machines get these
+    //     defaults through the fail-closed null path).
+    UAstrawildSettingsSave* Defaults = UAstrawildSettingsWidget::MakeDefaultSettings();
+    TestNotNull(TEXT("Default settings object builds"), Defaults);
+    if (Defaults)
+    {
+        TestEqual(TEXT("Default master volume 1.0"), Defaults->MasterVolume, 1.0f);
+        TestEqual(TEXT("Default sensitivity 1.0"), Defaults->Sensitivity, 1.0f);
+        TestEqual(TEXT("Default FOV 90"), Defaults->FieldOfView, 90.0f);
+        TestEqual(TEXT("Default gamma 1.0"), Defaults->Gamma, 1.0f);
+    }
+    TestTrue(TEXT("The preferences slot is ASTRAWILD_Settings — separate from the world saves"),
+        FString(UAstrawildSettingsWidget::SettingsSlotName) == TEXT("ASTRAWILD_Settings"));
+
+    // --- 4) Look sensitivity statics: the clamp band mirrors the settings row.
+    TestEqual(TEXT("Look sensitivity defaults to x1.0"),
+        AAstrawildPlayerCharacter::GetLookSensitivityMultiplier(), 1.0f);
+    AAstrawildPlayerCharacter::SetLookSensitivityMultiplier(0.42f);
+    TestEqual(TEXT("SetLookSensitivityMultiplier(0.42) clamps to the 0.5 floor"),
+        AAstrawildPlayerCharacter::GetLookSensitivityMultiplier(), 0.5f);
+    AAstrawildPlayerCharacter::SetLookSensitivityMultiplier(3.0f);
+    TestEqual(TEXT("SetLookSensitivityMultiplier(3.0) clamps to the 2.0 ceiling"),
+        AAstrawildPlayerCharacter::GetLookSensitivityMultiplier(), 2.0f);
+    AAstrawildPlayerCharacter::SetLookSensitivityMultiplier(1.35f);
+    TestEqual(TEXT("SetLookSensitivityMultiplier(1.35) holds mid-scale"),
+        AAstrawildPlayerCharacter::GetLookSensitivityMultiplier(), 1.35f);
+    AAstrawildPlayerCharacter::SetLookSensitivityMultiplier(1.0f); // restore for the rest of the suite
+
+    // --- 5) FormatItemDetails: real registry content (the test-135 build
+    //     idiom) — the honest non-zero-stat rendering.
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    AstrawildBestiary::RegisterAll(Registry);
+
+    const UAstrawildItemDefinition* RawMeat = Registry->FindItem(TEXT("Item_RawMeat"));
+    TestTrue(TEXT("Item_RawMeat is registered"), RawMeat != nullptr);
+    if (RawMeat)
+    {
+        const FString RawMeatDetails = UAstrawildInventoryScreenWidget::FormatItemDetails(RawMeat);
+        TestFalse(TEXT("Raw meat details are non-empty"), RawMeatDetails.IsEmpty());
+        TestTrue(TEXT("Raw meat details carry the description (the first inventory-screen reader)"),
+            RawMeatDetails.Contains(RawMeat->Description.ToString()));
+        TestTrue(TEXT("Raw meat renders its non-zero Food stat"),
+            RawMeatDetails.Contains(TEXT("Food +8")));
+        TestTrue(TEXT("Raw meat renders its per-unit weight"),
+            RawMeatDetails.Contains(TEXT("0.7 kg each")));
+        TestFalse(TEXT("Raw meat (Water 0) renders no Water token"),
+            RawMeatDetails.Contains(TEXT("Water")));
+        TestFalse(TEXT("Raw meat (Heal 0) renders no Heals token"),
+            RawMeatDetails.Contains(TEXT("Heals")));
+        TestFalse(TEXT("Raw meat (untradeable) renders no Sells token"),
+            RawMeatDetails.Contains(TEXT("Sells")));
+    }
+
+    const UAstrawildItemDefinition* Dawnbloom = Registry->FindItem(TEXT("Item_Dawnbloom"));
+    TestTrue(TEXT("Item_Dawnbloom is registered (the zero-stat material case)"), Dawnbloom != nullptr);
+    if (Dawnbloom)
+    {
+        const FString DawnbloomDetails = UAstrawildInventoryScreenWidget::FormatItemDetails(Dawnbloom);
+        TestTrue(TEXT("Dawnbloom details carry its authored description"),
+            DawnbloomDetails.Contains(TEXT("luminous petal")));
+        TestFalse(TEXT("Zero-stat material renders no Food token"),
+            DawnbloomDetails.Contains(TEXT("Food")));
+        TestFalse(TEXT("Zero-stat material renders no Water token"),
+            DawnbloomDetails.Contains(TEXT("Water")));
+        TestFalse(TEXT("Zero-stat material renders no Heals token"),
+            DawnbloomDetails.Contains(TEXT("Heals")));
+        TestFalse(TEXT("Zero-stat material renders no Sells token"),
+            DawnbloomDetails.Contains(TEXT("Sells")));
+        TestTrue(TEXT("The one real stat (weight) still renders"),
+            DawnbloomDetails.Contains(TEXT("kg each")));
+    }
+
+    TestEqual(TEXT("Null definition formats empty (fail-closed)"),
+        UAstrawildInventoryScreenWidget::FormatItemDetails(nullptr), FString());
+
+    // --- 6) SortStacksByName: case-insensitive + stable, over a COPY.
+    //     Transient display names give the exact (B, a, C) -> (a, B, C) pin.
+    UAstrawildItemRegistrySubsystem* SortRegistry = NewObject<UAstrawildItemRegistrySubsystem>();
+    auto MakeNamedStack = [&SortRegistry](const TCHAR* Id, const TCHAR* DisplayName) -> FAstrawildItemStack
+    {
+        UAstrawildItemDefinition* Def = NewObject<UAstrawildItemDefinition>();
+        Def->ItemId = FName(Id);
+        Def->DisplayName = FText::FromString(DisplayName);
+        SortRegistry->RegisterItem(Def);
+        FAstrawildItemStack Stack;
+        Stack.ItemId = FName(Id);
+        Stack.Quantity = 1;
+        return Stack;
+    };
+
+    TArray<FAstrawildItemStack> Mixed;
+    Mixed.Add(MakeNamedStack(TEXT("Item_CgcB"), TEXT("B")));
+    Mixed.Add(MakeNamedStack(TEXT("Item_Cgca"), TEXT("a")));
+    Mixed.Add(MakeNamedStack(TEXT("Item_CgcC"), TEXT("C")));
+    TestTrue(TEXT("Registry-backed sort reports display-name ordering"),
+        UAstrawildInventoryScreenWidget::SortStacksByName(Mixed, SortRegistry));
+    TestEqual(TEXT("Case-insensitive: 'a' sorts first"), Mixed[0].ItemId, FName(TEXT("Item_Cgca")));
+    TestEqual(TEXT("Case-insensitive: 'B' sorts before 'C'"), Mixed[1].ItemId, FName(TEXT("Item_CgcB")));
+    TestEqual(TEXT("'C' sorts last"), Mixed[2].ItemId, FName(TEXT("Item_CgcC")));
+
+    // Real content: display names Glimmer Berry < Raw Echo Meat < Seared Meat.
+    TArray<FAstrawildItemStack> RealOrder;
+    auto MakeStackOf = [](const TCHAR* Id) -> FAstrawildItemStack
+    {
+        FAstrawildItemStack Stack;
+        Stack.ItemId = FName(Id);
+        Stack.Quantity = 1;
+        return Stack;
+    };
+    RealOrder.Add(MakeStackOf(TEXT("Item_RawMeat")));
+    RealOrder.Add(MakeStackOf(TEXT("Item_Berry")));
+    RealOrder.Add(MakeStackOf(TEXT("Item_CookedMeat")));
+    TestTrue(TEXT("Real-content sort runs against the registry"),
+        UAstrawildInventoryScreenWidget::SortStacksByName(RealOrder, Registry));
+    TestEqual(TEXT("Glimmer Berry leads the sorted real list"), RealOrder[0].ItemId, FName(TEXT("Item_Berry")));
+    TestEqual(TEXT("Raw Echo Meat follows"), RealOrder[1].ItemId, FName(TEXT("Item_RawMeat")));
+    TestEqual(TEXT("Seared Meat closes"), RealOrder[2].ItemId, FName(TEXT("Item_CookedMeat")));
+
+    // Null registry: id-string fallback — deterministic, no crash, honest report.
+    TArray<FAstrawildItemStack> NoRegistry;
+    NoRegistry.Add(MakeStackOf(TEXT("Item_ZZLast")));
+    NoRegistry.Add(MakeStackOf(TEXT("Item_AAFirst")));
+    TestFalse(TEXT("Null registry reports the fallback (id ordering)"),
+        UAstrawildInventoryScreenWidget::SortStacksByName(NoRegistry, nullptr));
+    TestEqual(TEXT("Fallback sorts by id string"), NoRegistry[0].ItemId, FName(TEXT("Item_AAFirst")));
+
+    // --- 7) Input census 32 -> 33: the ONE planned additive action (F6).
+    AAstrawildPlayerCharacter* Player = NewObject<AAstrawildPlayerCharacter>();
+    TestNotNull(TEXT("Player character constructed"), Player);
+    if (Player)
+    {
+        Player->BuildRuntimeInputDefaults();
+        TestNotNull(TEXT("AWD_ToggleHUD action built (the 33rd action)"),
+            Player->ToggleHUDAction.Get());
+        if (Player->DefaultMappingContext.Get())
+        {
+            // 33 actions; 36 mappings (Move spreads over 4 WASD keys, Look over
+            // the mouse delta — every other action is one key each).
+            TestEqual(TEXT("KB context carries 36 mappings for the 33 actions"),
+                Player->DefaultMappingContext->GetMappings().Num(), 36);
+            bool bF6BoundToHudToggle = false;
+            for (const FEnhancedActionKeyMapping& Mapping : Player->DefaultMappingContext->GetMappings())
+            {
+                if (Mapping.Key == EKeys::F6 && Mapping.Action == Player->ToggleHUDAction.Get())
+                {
+                    bF6BoundToHudToggle = true;
+                }
+            }
+            TestTrue(TEXT("F6 is bound to AWD_ToggleHUD"), bF6BoundToHudToggle);
+        }
+        Player->BuildGamepadInputDefaults();
+        if (Player->GamepadMappingContext.Get())
+        {
+            // The gamepad context is UNTOUCHED by the F6 addition (KB-only by
+            // design). Honest count: 19 mappings (the old "17" log string and
+            // the DCP-6 tautology pin never read the real context — the GDP
+            // party-ability + skiff-descend companions grew it past 17).
+            TestEqual(TEXT("Gamepad context carries 19 mappings (F6 is KB-only, nothing added)"),
+                Player->GamepadMappingContext->GetMappings().Num(), 19);
+        }
+    }
+
+    // The controls table carries the transcribed 33rd row.
+    TestEqual(TEXT("Controls screen pins the 33-action census"),
+        UAstrawildControlsScreenWidget::GetControlRows().Num(), 33);
+    bool bF6RowPresent = false;
+    for (const FString& Row : UAstrawildControlsScreenWidget::GetControlRows())
+    {
+        if (Row.Contains(TEXT("F6")))
+        {
+            bF6RowPresent = true;
+        }
+    }
+    TestTrue(TEXT("The F6 HUD-toggle row is transcribed in the controls table"), bF6RowPresent);
 
     return true;
 }
