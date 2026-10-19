@@ -4,6 +4,7 @@
 #include "AstrawildDataAssets.h"
 #include "AstrawildLog.h"
 #include "AstrawildTerrainTileActor.h"
+#include "AstrawildVisualOverhaul.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -23,43 +24,43 @@ FAstrawildDressingProfile AAstrawildBiomeDressingActor::GetDressingProfile(const
     switch (Zone)
     {
     case EZone::DawnFields:
-        Profile = { 55, 30, 90, 0.9f, 1.6f, 0.6f, 1.8f, 0.7f, 1.4f, ECanopy::Broadleaf, 0.0f };
+        Profile = { 55, 30, 90, 0.9f, 1.6f, 0.6f, 1.8f, 0.7f, 1.4f, ECanopy::Broadleaf, 0.0f, 160 };
         break;
     case EZone::VerdantReach:
-        Profile = { 85, 30, 110, 1.0f, 1.9f, 0.6f, 1.8f, 0.8f, 1.6f, ECanopy::Broadleaf, 0.0f };
+        Profile = { 85, 30, 110, 1.0f, 1.9f, 0.6f, 1.8f, 0.8f, 1.6f, ECanopy::Broadleaf, 0.0f, 150 };
         break;
     case EZone::Glimmerwood:
-        Profile = { 60, 30, 80, 0.9f, 1.7f, 0.7f, 2.0f, 0.7f, 1.3f, ECanopy::Conifer, 0.0f };
+        Profile = { 60, 30, 80, 0.9f, 1.7f, 0.7f, 2.0f, 0.7f, 1.3f, ECanopy::Conifer, 0.0f, 90 };
         break;
     case EZone::FrostveilExpanse:
-        Profile = { 42, 28, 22, 0.8f, 1.5f, 0.7f, 2.1f, 0.6f, 1.2f, ECanopy::Conifer, 0.55f };
+        Profile = { 42, 28, 22, 0.8f, 1.5f, 0.7f, 2.1f, 0.6f, 1.2f, ECanopy::Conifer, 0.55f, 45 };
         break;
     case EZone::StormcrestHighlands:
-        Profile = { 30, 48, 24, 0.7f, 1.3f, 0.8f, 2.3f, 0.6f, 1.1f, ECanopy::Conifer, 0.30f };
+        Profile = { 30, 48, 24, 0.7f, 1.3f, 0.8f, 2.3f, 0.6f, 1.1f, ECanopy::Conifer, 0.30f, 30 };
         break;
     case EZone::EmberRidge:
-        Profile = { 30, 42, 14, 0.9f, 1.8f, 0.7f, 2.2f, 0.6f, 1.2f, ECanopy::Spire, 0.0f };
+        Profile = { 30, 42, 14, 0.9f, 1.8f, 0.7f, 2.2f, 0.6f, 1.2f, ECanopy::Spire, 0.0f, 35 };
         break;
     case EZone::DuskMarsh:
-        Profile = { 40, 24, 55, 0.9f, 1.7f, 0.6f, 1.7f, 0.9f, 1.7f, ECanopy::Dead, 0.0f };
+        Profile = { 40, 24, 55, 0.9f, 1.7f, 0.6f, 1.7f, 0.9f, 1.7f, ECanopy::Dead, 0.0f, 55 };
         break;
     case EZone::HollowApproach:
-        Profile = { 28, 28, 10, 0.9f, 1.8f, 0.7f, 2.0f, 0.6f, 1.1f, ECanopy::Dead, 0.0f };
+        Profile = { 28, 28, 10, 0.9f, 1.8f, 0.7f, 2.0f, 0.6f, 1.1f, ECanopy::Dead, 0.0f, 20 };
         break;
     case EZone::SunscarDesert:
-        Profile = { 22, 34, 30, 0.8f, 1.5f, 0.7f, 2.0f, 0.6f, 1.2f, ECanopy::Cactus, 0.0f };
+        Profile = { 22, 34, 30, 0.8f, 1.5f, 0.7f, 2.0f, 0.6f, 1.2f, ECanopy::Cactus, 0.0f, 35 };
         break;
     case EZone::AzureShallows:
-        Profile = { 14, 18, 22, 0.9f, 1.5f, 0.6f, 1.6f, 0.8f, 1.4f, ECanopy::Palm, 0.0f };
+        Profile = { 14, 18, 22, 0.9f, 1.5f, 0.6f, 1.6f, 0.8f, 1.4f, ECanopy::Palm, 0.0f, 30 };
         break;
     case EZone::TidebreakerIsles:
-        Profile = { 20, 24, 26, 0.9f, 1.6f, 0.6f, 1.7f, 0.8f, 1.4f, ECanopy::Palm, 0.0f };
+        Profile = { 20, 24, 26, 0.9f, 1.6f, 0.6f, 1.7f, 0.8f, 1.4f, ECanopy::Palm, 0.0f, 60 };
         break;
     case EZone::PearlseaReef:
-        Profile = { 8, 16, 12, 0.8f, 1.3f, 0.6f, 1.6f, 0.7f, 1.2f, ECanopy::Palm, 0.0f };
+        Profile = { 8, 16, 12, 0.8f, 1.3f, 0.6f, 1.6f, 0.7f, 1.2f, ECanopy::Palm, 0.0f, 14 };
         break;
     default:
-        Profile = { 20, 20, 20, 0.8f, 1.4f, 0.7f, 1.6f, 0.7f, 1.2f, ECanopy::Broadleaf, 0.0f };
+        Profile = { 20, 20, 20, 0.8f, 1.4f, 0.7f, 1.6f, 0.7f, 1.2f, ECanopy::Broadleaf, 0.0f, 0 };
         break;
     }
     return Profile;
@@ -97,11 +98,12 @@ float AAstrawildBiomeDressingActor::EvalSlope(const FVector2D& Point, const int3
 void AAstrawildBiomeDressingActor::ScatterDressingPoints(const int32 Seed, const FAstrawildZoneDescriptor& Zone,
     const FAstrawildDressingProfile& Profile, const TArray<FVector2D>& ExclusionCenters,
     const TArray<float>& ExclusionRadii, TArray<FVector>& OutTreePoints, TArray<FVector>& OutRockPoints,
-    TArray<FVector>& OutGrassPoints)
+    TArray<FVector>& OutGrassPoints, TArray<FVector>& OutFlowerPoints)
 {
     OutTreePoints.Reset();
     OutRockPoints.Reset();
     OutGrassPoints.Reset();
+    OutFlowerPoints.Reset();
 
     // Deterministic per-zone stream — the layout never changes between runs.
     const int32 ZoneIndex = static_cast<int32>(Zone.Zone);
@@ -145,6 +147,8 @@ void AAstrawildBiomeDressingActor::ScatterDressingPoints(const int32 Seed, const
     TryPlace(Profile.TreeCount, GetTreeSlopeLimit(), OutTreePoints);
     TryPlace(Profile.RockCount, GetRockSlopeLimit(), OutRockPoints);
     TryPlace(Profile.GrassCount, GetGrassSlopeLimit(), OutGrassPoints);
+    // VO-1R: flowers share the grass tolerance — they ARE grass-tier scatter.
+    TryPlace(Profile.FlowerCount, GetGrassSlopeLimit(), OutFlowerPoints);
 }
 
 // ===========================================================================
@@ -563,10 +567,11 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
     Profile.TreeCount = FMath::RoundToInt(Profile.TreeCount * Density);
     Profile.RockCount = FMath::RoundToInt(Profile.RockCount * Density);
     Profile.GrassCount = FMath::RoundToInt(Profile.GrassCount * Density);
+    Profile.FlowerCount = FMath::RoundToInt(Profile.FlowerCount * Density);
 
-    TArray<FVector> TreePoints, RockPoints, GrassPoints;
+    TArray<FVector> TreePoints, RockPoints, GrassPoints, FlowerPoints;
     ScatterDressingPoints(WorldSeed, Zone, Profile, ExclusionCenters, ExclusionRadii,
-        TreePoints, RockPoints, GrassPoints);
+        TreePoints, RockPoints, GrassPoints, FlowerPoints);
 
     const int32 ZoneIndex = static_cast<int32>(Zone.Zone);
     FRandomStream Stream(WorldSeed * 7919 + ZoneIndex * 104729 + 13);
@@ -669,6 +674,41 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
         }
     }
 
+    // Section 3: VO-1R flower fields. ALWAYS the placeholder geometry — no
+    // real flower mesh exists yet, so this layer has no ISM upgrade path
+    // (a future ArtSource pass can add one the same way trees/rocks/grass
+    // did). Petal tint comes from the deterministic zone palette so every
+    // machine (server + LAN clients) bakes the identical field.
+    if (AstrawildVisualOverhaul::IsVisualOverhaulEnabled() && FlowerPoints.Num() > 0)
+    {
+        TArray<FVector> SectionVertices;
+        TArray<int32> SectionTriangles;
+        TArray<FVector> SectionNormals;
+        TArray<FVector2D> SectionUVs;
+        TArray<FColor> SectionColors;
+
+        const FColor StemColor(70, 130, 60, 255);
+        const FColor CenterColor(255, 205, 90, 255);
+        int32 FlowerIndex = 0;
+        for (const FVector& Point : FlowerPoints)
+        {
+            const FLinearColor PetalTint = AstrawildVisualOverhaul::EvalPetalTint(
+                Zone.Zone, WorldSeed + FlowerIndex * 31);
+            const FColor PetalColor = PetalTint.ToFColor(false);
+            const float Scale = Stream.FRandRange(0.8f, 1.5f);
+            const float Yaw = Stream.FRandRange(0.0f, 360.0f);
+            AppendFlower(SectionVertices, SectionTriangles, SectionNormals, SectionUVs, SectionColors, Point,
+                Scale, Yaw, StemColor, PetalColor, CenterColor, Stream);
+            ++FlowerIndex;
+        }
+
+        if (SectionVertices.Num() > 0 && DressingMesh)
+        {
+            DressingMesh->CreateMeshSection(3, SectionVertices, SectionTriangles, SectionNormals, SectionUVs,
+                SectionColors, TArray<FProcMeshTangent>(), false);
+        }
+    }
+
     // Shared PBR material across every section.
     if (DressingMesh && DressingMesh->GetNumSections() > 0)
     {
@@ -691,7 +731,47 @@ void AAstrawildBiomeDressingActor::BuildDressing(const FAstrawildZoneDescriptor&
     }
 
     UE_LOG(LogAstrawildWorld, Log,
-        TEXT("Biome dressing built for %s: %d trees, %d rocks, %d grass tufts (placeholder paths: trees=%d rocks=%d grass=%d)."),
-        *Zone.ZoneId.ToString(), TreePoints.Num(), RockPoints.Num(), GrassPoints.Num(),
+        TEXT("Biome dressing built for %s: %d trees, %d rocks, %d grass tufts, %d flowers (placeholder paths: trees=%d rocks=%d grass=%d)."),
+        *Zone.ZoneId.ToString(), TreePoints.Num(), RockPoints.Num(), GrassPoints.Num(), FlowerPoints.Num(),
         bUsePlaceholderTrees ? 1 : 0, bUsePlaceholderRocks ? 1 : 0, bUsePlaceholderGrass ? 1 : 0);
+}
+
+void AAstrawildBiomeDressingActor::AppendFlower(TArray<FVector>& Vertices, TArray<int32>& Triangles,
+    TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FColor>& Colors, const FVector& Base, const float Scale,
+    const float Yaw, const FColor& StemColor, const FColor& PetalColor, const FColor& CenterColor,
+    FRandomStream& Stream)
+{
+    // VO-1R flower: thin stem + one leaf + a 5..6 petal ring around a golden
+    // center cone. Cheap on purpose — the meadow zones carry 150+ of these in
+    // ONE merged section, so each flower stays under ~40 triangles.
+    const FTransform FlowerTransform(FRotator(0.0f, Yaw, 0.0f), Base);
+
+    // Stem (ground -> head at 30u).
+    PushCylinder(Vertices, Triangles, Normals, UVs, Colors, FVector(0, 0, 15 * Scale), 2.5f * Scale, 15 * Scale,
+        StemColor, FlowerTransform, 5);
+
+    // One leaf near the stem base, flattened so it reads as a blade.
+    const float LeafYaw = Yaw + Stream.FRandRange(0.0f, 360.0f);
+    const FTransform LeafTransform(FRotator(65.0f, LeafYaw, 0.0f), Base + FVector(0, 0, 8 * Scale),
+        FVector(1.0f, 0.4f, 1.0f));
+    PushCone(Vertices, Triangles, Normals, UVs, Colors, FVector(0, 0, 0), 5 * Scale, 9 * Scale,
+        StemColor, LeafTransform, 4);
+
+    // Petal ring: flattened cones tilted outward from the flower head.
+    const int32 PetalCount = Stream.FRand() < 0.35f ? 6 : 5;
+    const FVector Head(0, 0, 30 * Scale);
+    for (int32 Petal = 0; Petal < PetalCount; ++Petal)
+    {
+        const float PetalYaw = (360.0f / PetalCount) * Petal + Stream.FRandRange(-6.0f, 6.0f);
+        const float PetalTilt = Stream.FRandRange(48.0f, 62.0f);
+        const FTransform PetalTransform(FRotator(PetalTilt, PetalYaw, 0.0f), Base + Head,
+            FVector(1.0f, 0.55f, 1.0f));
+        PushCone(Vertices, Triangles, Normals, UVs, Colors, FVector(0, 0, 0), 6.5f * Scale, 12 * Scale,
+            PetalColor, PetalTransform, 5);
+    }
+
+    // Golden center — the "pollen" dot that reads from gameplay distance.
+    const FTransform CenterTransform(FRotator(0.0f, Yaw, 0.0f), Base + Head + FVector(0, 0, 1.5f * Scale));
+    PushCone(Vertices, Triangles, Normals, UVs, Colors, FVector(0, 0, 0), 3.2f * Scale, 5 * Scale,
+        CenterColor, CenterTransform, 5);
 }
