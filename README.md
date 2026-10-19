@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > **Current status (v9.6 FRESH-MACHINE PLAYBOOK PACK — 2026)**: the repository is source-complete on branch
-> `final-completion` — 133 world-free automation contracts, full 12-zone world, 229 Echo
+> `final-completion` — 139 world-free automation contracts, full 12-zone world, 229 Echo
 > species, MQ-01..17 + 5 post-game side quests + two endings (each now with a pure-C++ staged cinematic) + NEW GAME PLUS,
 > save schema V5 (+ additive NGPlusCycle) — and the staged art is now **109 REAL
 > unique CC0 meshes** (no cylinders, no recolors): 3 survivor armor tiers (T1 Scavenger /
@@ -18,8 +18,8 @@
 > **One-click on a prepared machine: run `Setup_And_Play.bat`** — it imports everything, builds the
 > showcase map (`/Game/Maps/L_Showcase_ArtOverhaul`) and opens the editor; press Play.
 > **Everything engine-side is ENGINE-UNVERIFIED at this tip** — the one-time integration
-> run (build, 133 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
-> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.6 §8 and
+> run (build, 139 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
+> machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.10 §8 and
 > `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`. The canonical control doc is
 > **`Docs/ASTRAWILD_MASTER_CONTROL.md`**. The narrative text below this note is the
 > Vertical-Slice-era README, retained as history (its "Batch 7 / 54/54 tests" snapshot
@@ -35,13 +35,13 @@ ASTRAWILD is a third-person cooperative survival adventure prototype for Unreal 
 > **LATEST STATUS**: **SOURCE-COMPLETE / REAL-ART-CATALOG / DEFERRED-PACK-COMPLETE /
 > FRESH-MACHINE-PLAYBOOK SHIPPED / ENGINE-UNVERIFIED (v9.6 FMP)** —
 > `final-completion` @ the v9.6 tip (see `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` §1),
-> **133** automation contracts, 229 species, Sci-Fantasy mutation
+> **139** automation contracts, 229 species, Sci-Fantasy mutation
 > system wired (incl. runtime theme-material swap), LFS 586/586 pointers resolved.
 > Blank Windows machine → `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md` +
 > `Scripts/fresh_machine_preflight.ps1` + `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json`.
 > The live task-state truth is **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`** (canonical,
 > created 2026-09-06); the product rulebook is
-> **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.6)**;
+> **`Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.10)**;
 > engine-run history (the 54/54 + packaged-exe evidence at SHA 8313c61) is
 > [**`Docs/PROJECT_STATUS_SUMMARY.md`**](Docs/PROJECT_STATUS_SUMMARY.md) (HISTORICAL)
 > and [**`Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md`**](Docs/ENGINE_LOGS/ANTIGRAVITY_EVIDENCE_MANIFEST.md).

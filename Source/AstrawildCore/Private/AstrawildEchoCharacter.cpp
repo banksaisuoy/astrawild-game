@@ -1862,10 +1862,15 @@ void AAstrawildEchoCharacter::RefreshRadiantFlag()
 
 bool AAstrawildEchoCharacter::ComputeIsRadiant(const TArray<int32>& IVs, const TArray<FName>& Traits)
 {
-    // CGC-5 (audit 2-d): the mini-shiny contract — any IV >= 28 OR >= 3 trait
-    // slots. Boundaries are pinned by the automation contract (27 vs 28, 2 vs
-    // 3 traits). See the header note for the honest frequency consequence of
-    // the trait half against the always-4-slot roll.
+    // CGC-5 + CGC-6 review fix: the mini-shiny contract — any IV >= 28 ONLY.
+    // The original "OR >= 3 trait slots" half was removed by the independent
+    // review: RollOffspring fills exactly 4 trait slots in every branch
+    // (GeneticsLibrary.cpp:94-113), so the trait threshold was true for 100%
+    // of fresh instances — a rarity rule that discriminated nothing (the
+    // VIS-4 sunken-eye defect class). The IV >= 28 half alone gives the
+    // genre-correct ~6.6% shiny rate. The Traits parameter stays in the
+    // signature so the world-free/BP contract stays stable for future
+    // authored rarity rules; it is deliberately not consulted here.
     for (const int32 IV : IVs)
     {
         if (IV >= 28)
@@ -1873,7 +1878,7 @@ bool AAstrawildEchoCharacter::ComputeIsRadiant(const TArray<int32>& IVs, const T
             return true;
         }
     }
-    return Traits.Num() >= 3;
+    return false;
 }
 
 float AAstrawildEchoCharacter::GetCommandObedience() const

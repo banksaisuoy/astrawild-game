@@ -233,13 +233,15 @@ public:
     bool IsRadiant() const { return bRadiant; }
 
     /**
-     * CGC-5: PURE Radiant rule (world-free, the test contract pins the
-     * boundaries) — true iff any IV >= 28 OR the trait array carries >= 3
-     * slots. Honest note: a full 4-slot genetics roll meets the trait
-     * threshold by construction, so freshly rolled instances read the trait
-     * path as their baseline sparkle; the IV >= 28 half is the discriminating
-     * rarity signal. Legacy/partial arrays (pre-SCP saves, pool-filtered
-     * restores) keep the rule meaningful at the 2-vs-3 boundary.
+     * CGC-5 + CGC-6 review fix: PURE Radiant rule (world-free, the test
+     * contract pins the boundaries) — true iff any IV >= 28. The original
+     * trait-half (>= 3 slots) was removed by the independent review: the
+     * genetics roll always fills 4 trait slots, so the trait threshold was
+     * true for every fresh instance and discriminated nothing (a 100%
+     * \"shiny\" = a sparkle that carries zero information). IV >= 28 alone
+     * yields the genre-correct ~6.6% shiny rate. The Traits parameter is
+     * kept for BP/signature stability and reserved for future authored
+     * rarity rules; it is deliberately not consulted.
      */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo|Genetics")
     static bool ComputeIsRadiant(const TArray<int32>& IVs, const TArray<FName>& Traits);

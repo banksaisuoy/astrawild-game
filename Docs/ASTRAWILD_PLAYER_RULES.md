@@ -309,7 +309,7 @@ N rotate build · wheel cycle build · **G** consume · X equip best · Z disman
 F5 quicksave · F9 quickload · **V** (hold) scan · H deploy drone · J deploy
 robot · Tab inventory · K research · **P** Field Journal · **L** Echo Roster ·
 **M** World Map · **U** Hunt Board · **T** party abilities · **Y** player
-smart-cast · Esc pause · CTRL descend (skiff/flying mount)
+smart-cast · Esc pause · CTRL descend (skiff/flying mount) · **F6** toggle HUD
 
 *Gamepad note: full navigation/combat is mapped; the Y-key player smart-cast
 is keyboard-first (bind your loadout in the pause menu — the radial gamepad
@@ -317,11 +317,47 @@ cast is a known engine-pass backlog item).*
 
 ---
 
+---
+
+## COMFORT & FEEDBACK (CGC pack)
+
+- **Quest banners**: every quest start announces "New quest: <title> —
+  <summary>"; objectives announce completion; the HUD tracker leads with the
+  active quest title.
+- **Guidance line**: the HUD shows a bearing/distance line to the first
+  incomplete objective's target ("→ Lumewisp ~86m SW"). Dormant nocturnal
+  targets read "stirs after dark"; non-spatial objectives show no line.
+- **Controls screen**: pause menu → Controls shows the full 33-action map.
+- **Settings screen** (pause menu → Settings): Master Volume, Mouse
+  Sensitivity, Field of View, Gamma — [−]/[+] stepping, applies immediately,
+  persisted to the separate **ASTRAWILD_Settings** slot (world saves
+  untouched).
+- **Save UX**: autosaves announce themselves; quitting via the pause menu
+  saves the world first (hosts); a corrupted/unreadable save tells you at
+  boot and starts fresh.
+- **Inventory QoL**: scrolling stack list, per-row "?" details (description +
+  non-zero stats), per-row **Discard** (click once to arm "Discard N?", again
+  within 3s to drop the whole stack — equipped items excluded), **Sort: A→Z**
+  toggle.
+- **Wild genetics & Radiant** (✦): every wild Echo rolls unique traits + IVs
+  (0-31 each). An instance with any IV ≥ 28 is **Radiant** — double elemental
+  glow, +10% size, "✦ Radiant" prefix on capture and in the roster row
+  (traits + IVs shown). Roughly 1 in 15 wild Echoes is Radiant.
+- **Journal milestones**: crossing 25/50/100/150/200/229 species studied
+  grants a toast + title (Field Novice → Voice of the Vale); the journal
+  summary shows per-zone completion ("Dawn Fields 4/9 · …") and the map cells
+  show "N/M species".
+- **Audio**: zone ambience beds follow you between zones; storms bring wind
+  and rain beds; low health brings a heartbeat; footsteps change with the
+  surface; toast sounds differ by meaning (research / craft / warning).
+
 ## PERSISTENCE
 
 Save v5: world state, co-op per-player blocks, roster (owner-partitioned),
-quests, research, dialogue flags, hunts, ending state, weather pin. F5/F9
-quick save-load; hosts save the shared world in LAN co-op.
+quests, research, dialogue flags, first-time hint flags (SeenHints), hunts,
+ending state, weather pin. F5/F9 quick save-load; hosts save the shared
+world in LAN co-op; pause-quit saves before exiting; player comfort settings
+live in the separate ASTRAWILD_Settings slot.
 
 *Everything above is STATIC-VERIFIED source behavior — runtime confirmation
 happens in the one-time final UE5 build (see

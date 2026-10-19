@@ -7527,26 +7527,29 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCGC5CollectionLongTailContractTest,
 
 bool FAstrawildCGC5CollectionLongTailContractTest::RunTest(const FString& Parameters)
 {
-    // --- 1) ComputeIsRadiant: the mini-shiny rule + both boundaries pinned.
+    // --- 1) ComputeIsRadiant: the mini-shiny rule + the boundaries pinned.
+    //     CGC-6 review fix contract: IV >= 28 ONLY. The trait half of the
+    //     original spec was removed — the roll always fills 4 trait slots, so
+    //     a trait-count threshold never discriminated (100%-true no-op).
     const TArray<FName> TwoTraits = { TEXT("Trait_Swift"), TEXT("Trait_Lucky") };
-    const TArray<FName> ThreeTraits = { TEXT("Trait_Swift"), TEXT("Trait_Lucky"), TEXT("Trait_Calm") };
+    const TArray<FName> FourTraits = { TEXT("Trait_Swift"), TEXT("Trait_Lucky"), TEXT("Trait_Calm"), TEXT("Trait_Sturdy") };
     const TArray<int32> AllIVs27 = { 27, 27, 27, 27 };
     const TArray<int32> OneIV28 = { 27, 28, 27, 27 };
     const TArray<int32> LowIVs = { 12, 4, 9, 2 };
 
-    TestFalse(TEXT("All IVs 27 with 2 traits is NOT Radiant (27 boundary + 2-trait boundary)"),
+    TestFalse(TEXT("All IVs 27 with 2 traits is NOT Radiant (27 boundary)"),
         AAstrawildEchoCharacter::ComputeIsRadiant(AllIVs27, TwoTraits));
     TestTrue(TEXT("One IV at 28 makes the instance Radiant (28 boundary)"),
         AAstrawildEchoCharacter::ComputeIsRadiant(OneIV28, TwoTraits));
-    TestTrue(TEXT("Low IVs with 3 traits is Radiant (3-trait boundary)"),
-        AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, ThreeTraits));
+    TestFalse(TEXT("Low IVs with a FULL 4-slot trait roll is NOT Radiant (the removed trait half — review pin)"),
+        AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, FourTraits));
     TestFalse(TEXT("IVs at 27 with no traits never trip the IV path (27 < 28)"),
         AAstrawildEchoCharacter::ComputeIsRadiant(AllIVs27, TArray<FName>()));
     TestFalse(TEXT("No IVs and no traits is never Radiant (fail-closed default)"),
         AAstrawildEchoCharacter::ComputeIsRadiant(TArray<int32>(), TArray<FName>()));
-    TestTrue(TEXT("2 traits stays under the trait boundary, 3 traits crosses it"),
+    TestFalse(TEXT("Trait count alone can NEVER make an instance Radiant (2 or 4 slots alike — rarity discriminates)"),
         !AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, TwoTraits)
-            && AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, ThreeTraits));
+            && !AAstrawildEchoCharacter::ComputeIsRadiant(LowIVs, FourTraits));
 
     // --- 2) Wild-genetics determinism: the empty-parent RollOffspring path
     //     the wild roll at init uses (both parent pools empty -> pure

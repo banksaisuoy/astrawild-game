@@ -44,7 +44,12 @@ struct FAstrawildWeatherAudioAction
  * the skiff YOU pilot). Each machine resolves ITS local player pawn through
  * UGameplayStatics::GetPlayerController(World, 0) and the pure static zone
  * table (the exact RefreshZoneBanner idiom), so no replication is needed for
- * the bed to be right on every screen. Weather follows the REPLICATED
+ * the bed to be right on the local screen. Honest qualifier (CGC-6 review):
+ * a PURE LAN CLIENT reads an empty code-default registry by pre-existing
+ * canon (ItemRegistrySubsystem skips BuildDefaults on NM_Client), so the
+ * zone bed resolves to nothing there — fail-closed silence on pure clients,
+ * full ambience on standalone + listen-host (the pre-existing journal
+ * posture). Weather follows the REPLICATED
  * GameState->WeatherState poll (the server-only OnWeatherChanged delegate is
  * ALSO subscribed for instant host-side response — the second subscriber after
  * CGC-1's WildlifeDirector; pure clients converge through the 1s poll).

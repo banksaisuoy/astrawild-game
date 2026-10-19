@@ -11,7 +11,7 @@
 > spine P0→P13) + `Scripts/fresh_machine_preflight.ps1` (readiness gate) +
 > `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json` (43-step tick-off) — then execute this
 > queue top-to-bottom. Test-count note: §1's "54 tests" line below is the HISTORICAL
-> Antigravity-V2-era wording; the current gate is **133** (pinned by
+> Antigravity-V2-era wording; the current gate is **139** (pinned by
 > `Scripts/validate_final_run.py` — always read the count from the repo).
 
 ---

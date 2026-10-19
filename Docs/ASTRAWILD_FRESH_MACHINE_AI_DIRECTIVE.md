@@ -50,7 +50,7 @@ OPERATING RULES (binding):
   ~3,954 raw-pack flags is a DOCUMENTED non-corruption convention
   mismatch — leave it alone.
 - Read expected counts from the repo (Scripts/validate_final_run.py pins
-  them; at authoring: 133 tests, 229 species, 22 quests, 13 NPCs, 586 LFS
+  them; at authoring: 139 tests, 229 species, 22 quests, 13 NPCs, 586 LFS
   pointers, 189/189 manifest, 416 content packages).
 
 HUMAN-IN-THE-LOOP MOMENTS (stop and hand over the keyboard):
@@ -66,7 +66,7 @@ build (Build.ps1, exit 0) → P6 import + showcase (Setup_And_Play.bat →
 import_report.json total_missing == 0 incl. clips; import_echo_bases.py →
 echo_base_report.json total_missing == 0; assign M_Landscape_SciFiFrontier
 on MainMap's Landscape actor) → P7 PIE boot (census log line) → P8
-Test.ps1 133/133 → P9 full gameplay verification (23-stage golden path +
+Test.ps1 139/139 → P9 full gameplay verification (23-stage golden path +
 both endings + the DCP matrix: post-game quests, NG+, ending cinematics,
 Vess/Ione, toast sounds, journal detail, gamepad LB+X) → P10 save/load
 stress ×3 → P11 Build_Package.ps1 + packaged exe boot → P12 LAN 4-player
@@ -110,6 +110,6 @@ Begin with STEP 0 now. Read before you run. Report phase by phase.
 ลำดับสั้นๆ ของทั้งกระบวนการ: เช็คเครื่อง (พื้นที่/RAM/GPU) → ติดตั้ง Git+LFS /
 Python / VS2022 / UE 5.8.2 → clone repo (สาขา final-completion) + ดึงไฟล์ใหญ่
 ด้วย LFS → รัน validator 2 ตัว (ต้องผ่านก่อน) → คอมไพล์ → import ทรัพยากร
-109 ชิ้น (Setup_And_Play.bat) → เปิดเกม PIE เช็ค log census → รัน 133 เทส →
+109 ชิ้น (Setup_And_Play.bat) → เปิดเกม PIE เช็ค log census → รัน 139 เทส →
 เล่น golden path ครบ 23 ขั้น + จบเกมทั้ง 2 แบบ + ฟีเจอร์ DCP ทั้งหมด →
 เทสเซฟ 3 รอบ → แพ็กเกจเป็น .exe → เทส LAN 4 คน → ส่งหลักฐาน + commit + push

@@ -37,7 +37,7 @@
    binding.
 4. **Read counts from the repo, never from memory.** The static validator
    (`Scripts/validate_final_run.py`) pins the exact expected numbers (tests,
-   census). When this playbook says "133 tests", the validator's gate is the
+   census). When this playbook says "139 tests", the validator's gate is the
    authority — if they disagree, the repo wins and this playbook is stale.
 5. **Git discipline.** Work on `final-completion` (or an
    `agent/<your-task>` branch off it). Push every completed phase with the
@@ -91,7 +91,7 @@ content, zero-Blueprint gameplay). Product canon (v9.5):
 | Dungeons / bosses | 3 / 4 |
 | Endings + post-game + New Game Plus | A/B + yes + yes |
 | LAN co-op | private 4-player listen-server |
-| Automation contracts (your Test.ps1 target) | 133 |
+| Automation contracts (your Test.ps1 target) | 139 |
 | ArtSource real-mesh catalog | 109 assets, manifest 189/189 present |
 | Git LFS objects | 586 pointers |
 | Content (.uasset/.umap) packages | 416 |
@@ -295,7 +295,7 @@ flags — that is the documented convention mismatch, not corruption. If
 ```powershell
 python Scripts\validate_final_run.py
 # expect final line: FINAL RUN VALIDATION: ALL CHECKS PASSED
-# (133-test gate, census gates: 229 species / 204 rows / 22 quests /
+# (139-test gate, census gates: 229 species / 204 rows / 22 quests /
 #  13 NPCs / 189-manifest / 51 direct-mesh rows / Tier-B 36 ...)
 
 & "C:\Program Files\Git\bin\bash.exe" Scripts/validate_repository.sh
@@ -459,7 +459,7 @@ $env:UE_ROOT = "C:\Program Files\Epic Games\UE_5.8"     # your engine root
 # writes Automation_Output.txt (or $env:ASTRAWILD_AUTOMATION_OUTPUT)
 ```
 
-**PASS = `Result={Success}` count == 133 and `Result={Fail}` count == 0.**
+**PASS = `Result={Success}` count == 139 and `Result={Fail}` count == 0.**
 The exact number is pinned by the static validator (rule 4) — read it from
 `Automation_Output.txt`, never from memory. Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`,
@@ -613,7 +613,7 @@ late join → authority sanity → session flow honesty). Capture raw logs
 | Import report `total_missing > 0` | LFS sources incomplete | re-check P4.3 (`git lfs pull origin`); only then treat as engine finding |
 | Terrain renders flat/wrong | Landscape material unset | P6 manual step: assign M_Landscape_SciFiFrontier on MainMap |
 | PIE black screen / shader crash | DDC cold or RHI | wait for shader compile; retry; `-d3d11` only as a diagnostic, evidence on default RHI |
-| Test count != 133 | repo/version drift | read the count from `Scripts/validate_final_run.py` gate — it pins the truth; do not "fix" the count |
+| Test count != 139 | repo/version drift | read the count from `Scripts/validate_final_run.py` gate — it pins the truth; do not "fix" the count |
 | `git lfs fsck` exit 1 (~3,954 flags) | documented convention mismatch | NOTHING — do not rewrite history (rule 7) |
 | Disk fills mid-build | intermediates + DDC | point DDC elsewhere (`-DDC=<path>` or shared DDC env); clean `Intermediate/` between evidence builds (full rebuild then required) |
 | LAN clients cannot see session | firewall blocks beacon | allow the game binaries on Private networks; verify same subnet |
@@ -626,7 +626,7 @@ late join → authority sanity → session flow honesty). Capture raw logs
 | Metric | Expected |
 |---|---|
 | Branch / integration | `final-completion` |
-| Automation contracts | 133 (validator gate pins it) |
+| Automation contracts | 139 (validator gate pins it) |
 | Census | 229 species · 204 bestiary rows · 12 zones · 22 quests (17 MQ + 5 post-game) · 13 NPCs/trees · 17 techs · 58 recipes · 26 buildings · 78 items · 11 loot tables · 8 weapons · 10 resource nodes · 8 work sites · 16 world events · 17 POIs · 3 robots |
 | ArtSource manifest | 189 entries / 189 present / 0 pending (109 real meshes ← 109 unique CC0 sources) |
 | Direct-mesh species coverage | 51 / 229 |
@@ -651,7 +651,7 @@ late join → authority sanity → session flow honesty). Capture raw logs
 # 6b echo bases          (editor python) py "Content/Python/AwPipeline/import_echo_bases.py"   # echo_base_report.json
 # 6c landscape material  MainMap -> Landscape actor -> M_Landscape_SciFiFrontier (manual)
 # 7 PIE boot             open Content/ASTRAWILD/Maps/MainMap.umap -> Play -> census log line
-# 8 tests                .\Test.ps1                                        # 133/133 Result={Success}
+# 8 tests                .\Test.ps1                                        # 139/139 Result={Success}
 # 9 golden path          queue section 2 V-6..V-28 + AW.FastForward Quest_TheDrownedSovereign
 # 10 save/load           .\Test_RealSaveLoad.ps1  (+ manual 3-cycle protocol)
 # 11 package             .\Build_Package.ps1 -> <archive>\Windows\ASTRAWILD.exe -log
