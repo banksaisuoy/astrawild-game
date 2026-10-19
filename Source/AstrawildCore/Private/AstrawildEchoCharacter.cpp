@@ -1663,15 +1663,21 @@ bool AAstrawildEchoCharacter::IsCurrentlyActiveTime() const
         return true;
     }
 
-    const float Hour = GameState->GetTimeOfDayHours();
-    switch (EchoDefinition->ActivityPattern)
+    // CGC-1: the window math lives in the shared pure helper so the wildlife
+    // director's dormancy rule and this AI sleep gate stay identical.
+    return IsActivityWindowOpen(EchoDefinition->ActivityPattern, GameState->GetTimeOfDayHours());
+}
+
+bool AAstrawildEchoCharacter::IsActivityWindowOpen(const EAstrawildActivityPattern Pattern, const float HourOfDay)
+{
+    switch (Pattern)
     {
     case EAstrawildActivityPattern::Diurnal:
-        return Hour >= 5.5f && Hour < 19.5f;
+        return HourOfDay >= 5.5f && HourOfDay < 19.5f;
     case EAstrawildActivityPattern::Nocturnal:
-        return Hour < 5.5f || Hour >= 19.5f;
+        return HourOfDay < 5.5f || HourOfDay >= 19.5f;
     case EAstrawildActivityPattern::Crepuscular:
-        return (Hour >= 5.0f && Hour < 8.0f) || (Hour >= 17.0f && Hour < 20.5f);
+        return (HourOfDay >= 5.0f && HourOfDay < 8.0f) || (HourOfDay >= 17.0f && HourOfDay < 20.5f);
     default:
         return true;
     }

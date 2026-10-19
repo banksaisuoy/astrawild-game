@@ -31,6 +31,19 @@ struct FAstrawildAtmosphereSample
 };
 
 /**
+ * CGC-1: world-free view of one legacy per-zone wildlife table row. The
+ * wildlife director's spawn plan and the automation tests read the REAL
+ * placement table through this struct (AAstrawildWorldBootstrapper::
+ * GetLegacyZoneWildlife); the table literals themselves stay untouched.
+ */
+struct FAstrawildZoneWildlifeRow
+{
+    EAstrawildZone Zone = EAstrawildZone::None;
+    FName SpeciesId = NAME_None;
+    int32 Count = 0;
+};
+
+/**
  * Zero-asset world bootstrapper (directive §21/§50): on the server, builds the
  * Shattered Vale — twelve 800m x 800m terrain zones (Batch 8 "The Grand
  * Expanse", was six in Batch 7), the Dawnstead village + camp in the Dawn
@@ -146,6 +159,12 @@ public:
     /** Base sun intensity curve shared by UpdateSunRotation + UpdateAtmosphere (pure). */
     static float EvalSunBaseIntensity(float SunAlpha, bool bIsNight);
 
+    /** CGC-1: the legacy ZoneWildlife table as a world-free view (rows in table order). */
+    static void GetLegacyZoneWildlife(TArray<FAstrawildZoneWildlifeRow>& OutRows);
+
+    /** CGC-1: true once the authority BeginPlay finished ALL of its spawn phases. */
+    bool HasCompletedAuthoritySpawn() const { return bAuthoritySpawnComplete; }
+
 private:
     void BuildLighting();
     void BuildTerrain();
@@ -223,6 +242,9 @@ private:
 
     /** LCP-2: hard cap for the dressing actor-stream gate (seconds). */
     static constexpr float ClientDressingGateTimeoutSeconds = 15.0f;
+
+    /** CGC-1: authority spawn completion flag (the wildlife director's boot-pass gate). */
+    bool bAuthoritySpawnComplete = false;
 
     UPROPERTY()
     TObjectPtr<ADirectionalLight> SunLight;

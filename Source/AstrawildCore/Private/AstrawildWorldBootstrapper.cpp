@@ -328,6 +328,10 @@ void AAstrawildWorldBootstrapper::BeginPlay()
         ZoneCount, ResourceNodeCount, WildEchoCount, HostileCount,
         static_cast<int32>(sizeof(ZoneWildlife) / sizeof(ZoneWildlife[0])),
         static_cast<int32>(sizeof(ZoneResources) / sizeof(ZoneResources[0])));
+
+    // CGC-1: every authority spawn phase is complete — the wildlife director's
+    // boot pass gates on this so the two spawners never interleave.
+    bAuthoritySpawnComplete = true;
 }
 
 void AAstrawildWorldBootstrapper::BuildLighting()
@@ -1741,5 +1745,25 @@ void AAstrawildWorldBootstrapper::Tick(const float DeltaTime)
         UpdateSunRotation();
         UpdateAtmosphere();
         UpdateFlickerLights(GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CGC-1: legacy wildlife table view (world-free)
+// ---------------------------------------------------------------------------
+
+void AAstrawildWorldBootstrapper::GetLegacyZoneWildlife(TArray<FAstrawildZoneWildlifeRow>& OutRows)
+{
+    // Read-only projection of the placement table above — the rows and their
+    // literals stay byte-identical; the wildlife director and the automation
+    // tests consume this view instead of reaching into the anonymous table.
+    OutRows.Reset();
+    for (const FZoneWildlifeRow& Row : ZoneWildlife)
+    {
+        FAstrawildZoneWildlifeRow View;
+        View.Zone = Row.Zone;
+        View.SpeciesId = Row.SpeciesId;
+        View.Count = Row.Count;
+        OutRows.Add(View);
     }
 }

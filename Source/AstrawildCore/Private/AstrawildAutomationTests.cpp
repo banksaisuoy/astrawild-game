@@ -68,6 +68,7 @@
 #include "AstrawildMapScreenWidget.h"
 #include "AstrawildHuntScreenWidget.h"
 #include "AstrawildHuntSubsystem.h"
+#include "AstrawildWildlifeDirectorSubsystem.h"
 #include "Misc/AutomationTest.h"
 #include "NiagaraSystem.h"
 
@@ -6662,6 +6663,225 @@ bool FAstrawildVIS1CreatureIdentityContractTest::RunTest(const FString& Paramete
         UEnum::GetDisplayValueAsText(Band::Cool).ToString().IsEmpty());
     TestFalse(TEXT("Strange display name non-empty"),
         UEnum::GetDisplayValueAsText(Band::Strange).ToString().IsEmpty());
+
+    return true;
+}
+
+// ===========================================================================
+// CGC-1 (fauna completeness): the wildlife director contract
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCGC1FaunaCompletenessContractTest,
+    "ASTRAWILD.CGC1.FaunaCompletenessContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCGC1FaunaCompletenessContractTest::RunTest(const FString& Parameters)
+{
+    // 1) The real registered roster (world-free — the VIS-1 precedent): every
+    //    one of the 229 census species.
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    AstrawildBestiary::RegisterAll(Registry);
+
+    const TArray<UAstrawildEchoDefinition*> AllDefs = Registry->GetAllEchoDefinitions();
+    TestEqual(TEXT("Registered species census is 229"), AllDefs.Num(), 229);
+
+    // 2) The REAL director plan over the REAL bestiary view + REAL legacy table.
+    TArray<FAstrawildBestiaryRow> Bestiary;
+    UAstrawildWildlifeDirectorSubsystem::CollectBestiaryRows(Registry, Bestiary);
+    TestEqual(TEXT("Bestiary view covers every registered species"), Bestiary.Num(), 229);
+
+    int32 EvolvedOnlyFlags = 0;
+    for (const FAstrawildBestiaryRow& Row : Bestiary)
+    {
+        EvolvedOnlyFlags += Row.bEvolvedOnlyForm;
+    }
+    TestEqual(TEXT("Six evolved-only forms flagged (the evolution chains)"), EvolvedOnlyFlags, 6);
+
+    TArray<FAstrawildZoneWildlifeRow> LegacyRows;
+    AAstrawildWorldBootstrapper::GetLegacyZoneWildlife(LegacyRows);
+    TestEqual(TEXT("Legacy wildlife table exposes its 37 rows"), LegacyRows.Num(), 37);
+    TSet<FName> LegacySpeciesSet;
+    for (const FAstrawildZoneWildlifeRow& Row : LegacyRows)
+    {
+        LegacySpeciesSet.Add(Row.SpeciesId);
+    }
+    TestEqual(TEXT("Legacy wildlife table covers 35 distinct species"), LegacySpeciesSet.Num(), 35);
+
+    const TArray<FAstrawildDirectorSpawnRow> Plan =
+        UAstrawildWildlifeDirectorSubsystem::ComputeDirectorSpawnPlan(
+            Bestiary, LegacyRows, UAstrawildWildlifeDirectorSubsystem::PerZoneSpawnCap);
+    TestTrue(TEXT("Director plan is non-empty"), Plan.Num() > 0);
+
+    // 3) Per-zone cap discipline (pin the constant + audit the plan's sums).
+    TestEqual(TEXT("Per-zone spawn cap pinned at 24"),
+        (int32)UAstrawildWildlifeDirectorSubsystem::PerZoneSpawnCap, 24);
+    TMap<FName, int32> PerZoneTotals;
+    for (const FAstrawildDirectorSpawnRow& Row : Plan)
+    {
+        TestTrue(FString::Printf(TEXT("Plan row %s carries a positive count"), *Row.SpeciesId.ToString()),
+            Row.Count > 0);
+        PerZoneTotals.FindOrAdd(Row.ZoneId) += Row.Count;
+    }
+    for (const TPair<FName, int32>& Pair : PerZoneTotals)
+    {
+        TestTrue(FString::Printf(TEXT("Zone %s respects the per-zone cap (%d/%d)"),
+                *Pair.Key.ToString(), Pair.Value, (int32)UAstrawildWildlifeDirectorSubsystem::PerZoneSpawnCap),
+            Pair.Value <= UAstrawildWildlifeDirectorSubsystem::PerZoneSpawnCap);
+    }
+
+    // 4) TOTALITY — the 179-black-hole class kill: obtainable = legacy rows ∪
+    //    director plan ∪ evolved forms ∪ boss encounters ∪ authored one-offs;
+    //    the union must cover EVERY registered species id.
+    TSet<FName> Obtainable;
+    for (const FAstrawildZoneWildlifeRow& Row : LegacyRows)
+    {
+        Obtainable.Add(Row.SpeciesId);
+    }
+    for (const FAstrawildDirectorSpawnRow& Row : Plan)
+    {
+        Obtainable.Add(Row.SpeciesId);
+    }
+    // Evolved forms: earned through the level+bond evolution gate (data-driven
+    // from the registered chains).
+    int32 EvolutionChains = 0;
+    for (const UAstrawildEchoDefinition* Def : AllDefs)
+    {
+        if (Def && !Def->EvolveToDefinitionId.IsNone())
+        {
+            Obtainable.Add(Def->EvolveToDefinitionId);
+            ++EvolutionChains;
+        }
+    }
+    TestEqual(TEXT("Six evolution chains registered"), EvolutionChains, 6);
+    // Boss-encounter species: the authored finale encounters (Glass Tyrant
+    // world boss, Eye Sentinel summons, Drowned Sovereign dungeon boss).
+    TArray<FName> BossIds;
+    UAstrawildWildlifeDirectorSubsystem::GetBossEncounterSpeciesIds(BossIds);
+    TestEqual(TEXT("Three boss-encounter species"), BossIds.Num(), 3);
+    for (const FName BossId : BossIds)
+    {
+        Obtainable.Add(BossId);
+    }
+    // Authored one-off placements (bootstrapper + hostile spawner literals):
+    // the camp ring, the single Ancient-rare Auroraling (Glimmerwood) and the
+    // hostile refill targets.
+    const TCHAR* AuthoredOneOffs[] = {
+        TEXT("Echo_Lumewisp"), TEXT("Echo_Stonehide"), TEXT("Echo_Duskmoth"), TEXT("Echo_Sprigling"),
+        TEXT("Echo_Auroraling"),
+        TEXT("Echo_Gloomfang"), TEXT("Echo_Emberfang"), TEXT("Echo_Rimefang"), TEXT("Echo_Voltmaw"),
+    };
+    for (const FName OneOff : AuthoredOneOffs)
+    {
+        Obtainable.Add(OneOff);
+    }
+
+    TArray<FName> Unobtainable;
+    for (const UAstrawildEchoDefinition* Def : AllDefs)
+    {
+        if (Def && !Obtainable.Contains(Def->DefinitionId))
+        {
+            Unobtainable.Add(Def->DefinitionId);
+        }
+    }
+    if (!Unobtainable.IsEmpty())
+    {
+        for (const FName Id : Unobtainable)
+        {
+            AddError(FString::Printf(TEXT("CGC1: species with NO obtain path: %s"), *Id.ToString()));
+        }
+    }
+    TestTrue(FString::Printf(TEXT("Every registered species is obtainable (uncovered: %d)"), Unobtainable.Num()),
+        Unobtainable.IsEmpty());
+
+    // 5) Bug-grade fix pinned: Hunt_MonolithCull's target must actually spawn.
+    TestTrue(TEXT("Echo_Vespermonolith is obtainable (Hunt_MonolithCull auto-fix)"),
+        Obtainable.Contains(TEXT("Echo_Vespermonolith")));
+    bool bVesperInPlan = false;
+    for (const FAstrawildDirectorSpawnRow& Row : Plan)
+    {
+        if (Row.SpeciesId == TEXT("Echo_Vespermonolith"))
+        {
+            bVesperInPlan = Row.Count >= 1;
+        }
+    }
+    TestTrue(TEXT("Vespermonolith has a director spawn row in its home zone"), bVesperInPlan);
+
+    // 6) Every hunt contract target + every world-event boosted species is
+    //    obtainable (the contract systems can never point at a black hole again).
+    UAstrawildHuntSubsystem* Hunts = NewObject<UAstrawildHuntSubsystem>();
+    const TArray<FName> HuntIds = Hunts->GetHuntIds();
+    TestEqual(TEXT("Hunt contract table has 8 rows"), HuntIds.Num(), 8);
+    for (const FName HuntId : HuntIds)
+    {
+        const FName SpeciesId = Hunts->GetHuntSpeciesId(HuntId);
+        TestTrue(FString::Printf(TEXT("Hunt %s target %s is obtainable"), *HuntId.ToString(), *SpeciesId.ToString()),
+            Obtainable.Contains(SpeciesId));
+    }
+    int32 BoostEvents = 0;
+    for (const UAstrawildWorldEventDefinition* Event : Registry->GetAllWorldEvents())
+    {
+        if (Event && !Event->SpeciesBoostId.IsNone())
+        {
+            ++BoostEvents;
+            TestTrue(FString::Printf(TEXT("World-event boost species %s is obtainable"), *Event->SpeciesBoostId.ToString()),
+                Obtainable.Contains(Event->SpeciesBoostId));
+        }
+    }
+    TestTrue(FString::Printf(TEXT("World events with species boosts exist (%d)"), BoostEvents), BoostEvents > 0);
+
+    // 7) Dormancy rule: engagement always wins; the shared window math is
+    //    pinned at every half hour of the day (AI sleep == director visibility).
+    TestEqual(TEXT("Nocturnal at noon is dormant"),
+        UAstrawildWildlifeDirectorSubsystem::ShouldBeDormant(EAstrawildActivityPattern::Nocturnal, 12.0f, false), true);
+    TestEqual(TEXT("Diurnal at noon is active"),
+        UAstrawildWildlifeDirectorSubsystem::ShouldBeDormant(EAstrawildActivityPattern::Diurnal, 12.0f, false), false);
+    TestEqual(TEXT("Crepuscular at dawn (06:00) is active"),
+        UAstrawildWildlifeDirectorSubsystem::ShouldBeDormant(EAstrawildActivityPattern::Crepuscular, 6.0f, false), false);
+    TestEqual(TEXT("Crepuscular at noon is dormant"),
+        UAstrawildWildlifeDirectorSubsystem::ShouldBeDormant(EAstrawildActivityPattern::Crepuscular, 12.0f, false), true);
+    TestEqual(TEXT("Engaged creatures are never dormant (nocturnal, noon)"),
+        UAstrawildWildlifeDirectorSubsystem::ShouldBeDormant(EAstrawildActivityPattern::Nocturnal, 12.0f, true), false);
+    for (int32 HalfHour = 0; HalfHour <= 47; ++HalfHour)
+    {
+        const float Hour = HalfHour * 0.5f;
+        const bool bDiurnalOpen = AAstrawildEchoCharacter::IsActivityWindowOpen(EAstrawildActivityPattern::Diurnal, Hour);
+        const bool bNocturnalOpen = AAstrawildEchoCharacter::IsActivityWindowOpen(EAstrawildActivityPattern::Nocturnal, Hour);
+        const bool bCrepuscularOpen = AAstrawildEchoCharacter::IsActivityWindowOpen(EAstrawildActivityPattern::Crepuscular, Hour);
+        TestEqual(FString::Printf(TEXT("Diurnal window at %.1f"), Hour),
+            bDiurnalOpen, Hour >= 5.5f && Hour < 19.5f);
+        TestEqual(FString::Printf(TEXT("Nocturnal window at %.1f"), Hour),
+            bNocturnalOpen, Hour < 5.5f || Hour >= 19.5f);
+        TestEqual(FString::Printf(TEXT("Crepuscular window at %.1f"), Hour),
+            bCrepuscularOpen, (Hour >= 5.0f && Hour < 8.0f) || (Hour >= 17.0f && Hour < 20.5f));
+    }
+
+    // 8) Weather map totality: every state non-empty, only REAL element values,
+    //    and all six real elements reachable from at least one state.
+    TSet<EAstrawildElementType> ReachableElements;
+    for (int32 State = 0; State <= 7; ++State)
+    {
+        const EAstrawildWeatherState Weather = static_cast<EAstrawildWeatherState>(State);
+        const TArray<EAstrawildElementType> Boosted = UAstrawildWildlifeDirectorSubsystem::GetWeatherBoostedElements(Weather);
+        TestTrue(FString::Printf(TEXT("Weather state %d boosts a non-empty element set"), State), !Boosted.IsEmpty());
+        for (const EAstrawildElementType Element : Boosted)
+        {
+            TestTrue(FString::Printf(TEXT("Weather state %d boosts a REAL element"), State),
+                Element != EAstrawildElementType::None
+                    && static_cast<int32>(Element) >= 1
+                    && static_cast<int32>(Element) <= 6);
+            ReachableElements.Add(Element);
+        }
+    }
+    TestEqual(TEXT("All six real elements are weather-reachable"), ReachableElements.Num(), 6);
+
+    // 9) Zone resolution fail-closed: on-grid resolves, off-grid falls back to
+    //    the nearest zone center (never None).
+    TestTrue(TEXT("On-grid position resolves a real zone"),
+        UAstrawildWildlifeDirectorSubsystem::ResolveNearestZone(FVector2D(0.0f, 0.0f)) != EAstrawildZone::None);
+    TestTrue(TEXT("Off-grid position falls back to the nearest zone"),
+        UAstrawildWildlifeDirectorSubsystem::ResolveNearestZone(FVector2D(500000.0f, 500000.0f)) != EAstrawildZone::None);
 
     return true;
 }

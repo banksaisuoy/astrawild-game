@@ -370,6 +370,15 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
     bool IsCurrentlyActiveTime() const;
 
+    /**
+     * CGC-1: the shared pure activity-window test (directive §13) — the exact
+     * hour math behind IsCurrentlyActiveTime, factored so the wildlife
+     * director's dormancy rule and the AI sleep gate route through ONE
+     * function and can never disagree. Public static for tests.
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Echo")
+    static bool IsActivityWindowOpen(EAstrawildActivityPattern Pattern, float HourOfDay);
+
     // --- Personality-driven behavior modifiers (directive §5) ---
 
     /** Multiplier on flee health threshold (Timid > 1 = flees earlier). */
