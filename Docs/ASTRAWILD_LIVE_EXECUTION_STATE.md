@@ -72,7 +72,7 @@ verified + manifest + correct intended integration state; DOCUMENTATION task
 | ID | Task | State | Owner | Notes |
 |---|---|---|---|---|
 | **VIS-001** | CLOSED — see DONE below | **STATIC_VERIFIED (review closed, frozen)** | GLM | the 5-question independent review returned 4 genuine findings, ALL applied in VIS-4b (26b7600); freeze re-declared (MASTER_CONTROL v9.8) |
-| **ENGINE-RUN-1** | One-time engine integration: `Setup_And_Play.bat` → import 109 real meshes + clips (`import_report.json` total_missing == 0 incl. AM_ clips) → showcase map PIE (`/Game/Maps/L_Showcase_ArtOverhaul`) → build → 135 tests → PIE golden path §2 → package → V2-29..V2-36 rows | **BLOCKED (external)** — VIS cleared, this is now THE next task | Antigravity | Windows UE 5.8.2 machine only. Runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b/§20c/§20d/§20e + queue rows. Evidence: report files + clips + BUILD_STATUS playtest table. Fix-forward on FAIL, never silently defer. |
+| **ENGINE-RUN-1** | One-time engine integration: `Setup_And_Play.bat` → import 109 real meshes + clips (`import_report.json` total_missing == 0 incl. AM_ clips) → showcase map PIE (`/Game/Maps/L_Showcase_ArtOverhaul`) → build → 136 tests → PIE golden path §2 → package → V2-29..V2-36 rows | **BLOCKED (external)** — VIS cleared, this is now THE next task | Antigravity | Windows UE 5.8.2 machine only. Runbook: `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20b/§20c/§20d/§20e + queue rows. Evidence: report files + clips + BUILD_STATUS playtest table. Fix-forward on FAIL, never silently defer. |
 
 ### NEXT (after ENGINE-RUN-1 clears, or if it surfaces real defects)
 | ID | Task | State | Owner | Notes |
