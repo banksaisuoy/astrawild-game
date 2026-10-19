@@ -163,3 +163,30 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Security: the PAT was passed via environment variable only, never
   written to any file/log/commit; it self-expires ~30 min after creation
   (no manual revoke needed, though revoking early never hurts).
+
+## Session 2026-10-19 — VO-1R visual-overhaul rebuild (SUPER Z / GLM)
+
+- Context: the prior session (visual overhaul + EchoDex design) ran out of
+  context AFTER implementing+pushing EchoDex but BEFORE pushing the visual
+  overhaul; its sandbox was then destroyed by the quota limit — the VO branch
+  (c59613e) and its bundle are gone from every machine. Confirmed on origin:
+  `agent/echodex-v1` @ 33b64f9 IS live (1,381 LOC, Paldeck/Aniimo-parity
+  search — that deliverable survived); `agent/visual-overhaul-v1` was NOT.
+- User directive: "rebuild ให้ทั้งหมด ตรวจสอบให้เรียบร้อยนะขาดอะไรตรงไหนหรือ
+  บั๊กอะไรมั้ยด้วย" + confirmed the fine-grained PAT now lives 1 day
+  (previously ~30 min).
+- Rebuilt the whole VO layer ZERO-ASSET on new branch `agent/visual-overhaul-v1`
+  (base 5f86a47 = TOK-2 tip): AstrawildVisualOverhaul.h/.cpp (pure contracts +
+  director), bootstrapper toggle + atmosphere bias, 12-zone flower budgets +
+  petal geometry + deterministic palettes, kawaii cute-band amplification
+  (head/eyes/blush), ambient mote layer (day pollen / night fireflies).
+- Contracts 135→140; gates synced across validate_final_run,
+  validate_design_data, design_data.json envelope, first_day_orchestrator,
+  ON_PC_TASKS, REVIVAL_PLAN, README, LIVE_STATE current fields.
+- Honest scope note: the lost session's ~304MB LFS payload (AI-generated
+  textures) was NOT recreated byte-for-byte — the rebuild covers the same five
+  pillars procedurally (PP grade / light bias / flowers / kawaii / motes),
+  which is the part that survives compile and is machine-checkable. A real
+  art pass can layer on top via the existing ArtSource pipeline.
+- Security: PAT used via env-var + remote URL only, never written to any
+  file/log/commit; user should revoke it after the session window closes.
