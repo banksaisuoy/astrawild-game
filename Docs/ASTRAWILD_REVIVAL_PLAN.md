@@ -52,7 +52,7 @@ The repo is engineered so NO failure state is deep:
 
 - **Zero-asset-first**: every creature/prop renders engine-basic-shape
   placeholders — the game is walkable even with zero imported art.
-- **135 world-free contracts**: logic truth is machine-checkable in
+- **136 world-free contracts**: logic truth is machine-checkable in
   minutes (`Test.bat`), independent of maps, art, or saves.
 - **Traced design data**: every number re-derivable from Source/
   (`Scripts/extract_design_data.py` + validator) — no spreadsheet drift.

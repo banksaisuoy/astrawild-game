@@ -3,6 +3,7 @@
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
 #include "AstrawildCraftingScreenWidget.h"
+#include "AstrawildEchoDexScreenWidget.h"
 #include "AstrawildCraftingStationActor.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDialogueComponent.h"
@@ -284,6 +285,10 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     {
         ToggleRosterScreen();
     }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
+    }
     if (IsMapOpen())
     {
         ToggleMapScreen();
@@ -361,6 +366,10 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     if (IsRosterOpen())
     {
         ToggleRosterScreen();
+    }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
     }
     if (IsMapOpen())
     {
@@ -440,6 +449,10 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     {
         ToggleRosterScreen();
     }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
+    }
     if (IsMapOpen())
     {
         ToggleMapScreen();
@@ -486,6 +499,88 @@ bool AAstrawildPlayerController::IsCraftingOpen() const
     return CraftingScreen && CraftingScreen->IsInViewport();
 }
 
+void AAstrawildPlayerController::ToggleEchoDexScreen()
+{
+    if (!IsLocalController())
+    {
+        return;
+    }
+
+    const bool bOpen = !IsEchoDexOpen();
+
+    // Close siblings first — one full-screen UI at a time.
+    CloseShop();
+    CloseDialogue();
+    if (IsInventoryOpen())
+    {
+        ToggleInventoryScreen();
+    }
+    if (IsResearchOpen())
+    {
+        ToggleResearchScreen();
+    }
+    if (IsCraftingOpen())
+    {
+        ToggleCraftingScreen();
+    }
+    if (IsJournalOpen())
+    {
+        ToggleJournalScreen();
+    }
+    if (IsPauseMenuOpen())
+    {
+        TogglePauseMenu();
+    }
+    if (IsRosterOpen())
+    {
+        ToggleRosterScreen();
+    }
+    if (IsMapOpen())
+    {
+        ToggleMapScreen();
+    }
+    if (IsHuntOpen())
+    {
+        ToggleHuntScreen();
+    }
+
+    if (bOpen)
+    {
+        if (!EchoDexScreen)
+        {
+            const TSubclassOf<UAstrawildEchoDexScreenWidget> WidgetClass = EchoDexScreenClass
+                ? EchoDexScreenClass
+                : TSubclassOf<UAstrawildEchoDexScreenWidget>(UAstrawildEchoDexScreenWidget::StaticClass());
+            EchoDexScreen = CreateWidget<UAstrawildEchoDexScreenWidget>(this, WidgetClass);
+        }
+        if (EchoDexScreen)
+        {
+            EchoDexScreen->RefreshIndex();
+            EchoDexScreen->AddToViewport(10);
+            // Final-audit F-05 parity: keyboard focus so ESC/I close the screen.
+            EchoDexScreen->SetKeyboardFocus();
+            FInputModeUIOnly InputMode;
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            SetInputMode(InputMode);
+            bShowMouseCursor = true;
+        }
+    }
+    else
+    {
+        if (EchoDexScreen)
+        {
+            EchoDexScreen->RemoveFromParent();
+        }
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+    }
+}
+
+bool AAstrawildPlayerController::IsEchoDexOpen() const
+{
+    return EchoDexScreen && EchoDexScreen->IsInViewport();
+}
+
 void AAstrawildPlayerController::TogglePauseMenu()
 {
     if (!IsLocalController())
@@ -516,6 +611,10 @@ void AAstrawildPlayerController::TogglePauseMenu()
     if (IsRosterOpen())
     {
         ToggleRosterScreen();
+    }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
     }
     if (IsMapOpen())
     {
@@ -594,6 +693,10 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     if (IsRosterOpen())
     {
         ToggleRosterScreen();
+    }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
     }
     if (IsMapOpen())
     {
@@ -804,6 +907,10 @@ void AAstrawildPlayerController::ToggleMapScreen()
     {
         ToggleRosterScreen();
     }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
+    }
     if (IsPauseMenuOpen())
     {
         TogglePauseMenu();
@@ -892,6 +999,10 @@ void AAstrawildPlayerController::ToggleHuntScreen()
     {
         ToggleRosterScreen();
     }
+    if (IsEchoDexOpen())
+    {
+        ToggleEchoDexScreen();
+    }
     if (IsMapOpen())
     {
         ToggleMapScreen();
@@ -973,7 +1084,7 @@ void AAstrawildPlayerController::ServerClaimHunt_Implementation(const FName Hunt
 
 bool AAstrawildPlayerController::IsAnyScreenOpen() const
 {
-    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen() || IsTitleScreenOpen() || IsVictoryScreenOpen();
+    return IsShopOpen() || IsDialogueOpen() || IsInventoryOpen() || IsResearchOpen() || IsCraftingOpen() || IsEchoDexOpen() || IsPauseMenuOpen() || IsJournalOpen() || IsRosterOpen() || IsMapOpen() || IsHuntOpen() || IsTitleScreenOpen() || IsVictoryScreenOpen();
 }
 
 

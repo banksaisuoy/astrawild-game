@@ -279,6 +279,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> RosterAction;
 
+    /** EDX-1: toggle the EchoDex (searchable species index) screen — key I. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> EchoDexAction;
+
     /** PCR-3: toggle the world map screen. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> MapAction;
@@ -466,6 +470,11 @@ protected:
     void ToggleResearchScreenInput(const FInputActionValue& Value);
     void ToggleJournalScreenInput(const FInputActionValue& Value);
     void ToggleRosterScreenInput(const FInputActionValue& Value);
+    void ToggleEchoDexScreenInput(const FInputActionValue& Value);
+
+    /** EDX-1: capture results feed the EchoDex capture-ever record. */
+    UFUNCTION()
+    void HandleCaptureResultForDex(AAstrawildEchoCharacter* Echo, bool bSuccess);
     void ToggleMapScreenInput(const FInputActionValue& Value);
     void ToggleHuntScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
