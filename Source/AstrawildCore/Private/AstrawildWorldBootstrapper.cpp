@@ -18,6 +18,7 @@
 #include "AstrawildSkiffActor.h"
 #include "AstrawildTerrainTileActor.h"
 #include "AstrawildVillageActor.h"
+#include "AstrawildVisualOverhaul.h"
 #include "AstrawildWaterPlaneActor.h"
 #include "AstrawildWeatherSubsystem.h"
 #include "AstrawildWorkSiteActor.h"
@@ -250,6 +251,11 @@ void AAstrawildWorldBootstrapper::BeginPlay()
 {
     Super::BeginPlay();
 
+    // VO-1R: seed the global visual-overhaul flag BEFORE any path (client
+    // early-return included) so Echo body builds on every machine read the
+    // same kawaii setting as the authority.
+    AstrawildVisualOverhaul::SetVisualOverhaulEnabled(bEnableVisualOverhaul);
+
     if (GetLocalRole() != ROLE_Authority)
     {
         // LCP-2: LAN client — the authority path above never runs here. The
@@ -443,6 +449,17 @@ void AAstrawildWorldBootstrapper::BuildLighting()
             Settings.bOverride_AutoExposureBias = true;
             Settings.AutoExposureBias = 0.3f;
         }
+    }
+
+    // VO-1R: the toon-grade volume + ambient mote layer sits ABOVE this
+    // restrained baseline (its own priority-10 unbound volume). Spawned here
+    // so BOTH the authority path and the LCP-2 client cosmetic path get it —
+    // BuildLighting is the one shared lighting entry point, and the director
+    // itself never replicates (cosmetic, zero bandwidth).
+    if (bEnableVisualOverhaul && !VisualOverhaulDirector)
+    {
+        VisualOverhaulDirector = World->SpawnActor<AAstrawildVisualOverhaulDirector>(
+            AAstrawildVisualOverhaulDirector::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
     }
 }
 
@@ -1467,15 +1484,23 @@ void AAstrawildWorldBootstrapper::UpdateAtmosphere()
     const FAstrawildAtmosphereSample Sample = EvalAtmosphereRamp(
         GameState->GetSunCycleAlpha(), GameState->IsNight(), VisibilityMultiplier);
 
+    // VO-1R: anime bias on top of the authored ramp (single writer — the
+    // bootstrapper stays the only system touching these lights every tick).
+    FAstrawildAtmosphereSample BiasedSample = Sample;
+    if (bEnableVisualOverhaul)
+    {
+        ApplyVisualOverhaulBias(BiasedSample);
+    }
+
     if (SunLight)
     {
         if (ULightComponent* LightComponent = SunLight->GetLightComponent())
         {
-            LightComponent->SetLightColor(Sample.SunColor);
+            LightComponent->SetLightColor(BiasedSample.SunColor);
             // Base curve x weather dim — recomputed from scratch every tick so
             // the multiplier NEVER compounds across frames.
             const float BaseIntensity = EvalSunBaseIntensity(GameState->GetSunCycleAlpha(), GameState->IsNight());
-            LightComponent->SetIntensity(BaseIntensity * Sample.SunIntensityMultiplier);
+            LightComponent->SetIntensity(BaseIntensity * BiasedSample.SunIntensityMultiplier);
         }
     }
 
@@ -1483,7 +1508,7 @@ void AAstrawildWorldBootstrapper::UpdateAtmosphere()
     {
         if (USkyLightComponent* SkyComponent = SkyLightActor->GetLightComponent())
         {
-            SkyComponent->SetIntensity(Sample.SkyLightIntensity);
+            SkyComponent->SetIntensity(BiasedSample.SkyLightIntensity);
         }
     }
 
@@ -1491,10 +1516,26 @@ void AAstrawildWorldBootstrapper::UpdateAtmosphere()
     {
         if (UExponentialHeightFogComponent* FogComponent = HeightFogActor->GetComponent())
         {
-            FogComponent->SetFogDensity(Sample.FogDensity);
-            FogComponent->FogInscatteringLuminance = Sample.FogColor;
+            FogComponent->SetFogDensity(BiasedSample.FogDensity);
+            FogComponent->FogInscatteringLuminance = BiasedSample.FogColor;
         }
     }
+}
+
+void AAstrawildWorldBootstrapper::ApplyVisualOverhaulBias(FAstrawildAtmosphereSample& InOutSample)
+{
+    const AstrawildVisualOverhaul::FAnimeLightBias Bias = AstrawildVisualOverhaul::EvalAnimeLightBias();
+
+    // Warmer sun — lerp toward the warm tone by the authored amount.
+    InOutSample.SunColor = FMath::Lerp(InOutSample.SunColor, Bias.SunWarmColor,
+        FMath::Clamp(Bias.SunWarmthAmount, 0.0f, 1.0f));
+
+    // Softer sun, brighter/flatter ambient (the anime fill), thinner + pastel fog.
+    InOutSample.SunIntensityMultiplier *= FMath::Max(0.1f, Bias.SunIntensityScale);
+    InOutSample.SkyLightIntensity *= FMath::Max(0.1f, Bias.SkyIntensityScale);
+    InOutSample.FogDensity = FMath::Max(0.00002f, InOutSample.FogDensity * FMath::Clamp(Bias.FogDensityScale, 0.1f, 1.0f));
+    InOutSample.FogColor = FMath::Lerp(InOutSample.FogColor, Bias.FogPastelColor,
+        FMath::Clamp(Bias.FogPastelAmount, 0.0f, 1.0f));
 }
 
 void AAstrawildWorldBootstrapper::SpawnBiomeDressing()
