@@ -126,7 +126,8 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
             if (IsCrafting())
             {
                 NotifyOwnerPlayer(FText::FromString(FString::Printf(
-                    TEXT("Already crafting %s — wait or cancel first."), *GetRecipeDisplayName(ActiveRecipeId))));
+                    TEXT("Already crafting %s — wait or cancel first."), *GetRecipeDisplayName(ActiveRecipeId))),
+                    EAstrawildToastCue::Warning); // CGC-3: refusal beat.
             }
             else if (!CanCraftIgnoringStation(Recipe))
             {
@@ -134,14 +135,16 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
                     TEXT("Cannot craft %s — missing ingredients%s."),
                     *GetRecipeDisplayName(Recipe->RecipeId),
                     !Recipe->RequiredTechId.IsNone() && GetResearch() && !GetResearch()->IsTechUnlocked(Recipe->RequiredTechId)
-                        ? TEXT(" (research not unlocked)") : TEXT(""))));
+                        ? TEXT(" (research not unlocked)") : TEXT(""))),
+                    EAstrawildToastCue::Warning); // CGC-3: refusal beat.
             }
             else
             {
                 NotifyOwnerPlayer(FText::FromString(FString::Printf(
                     TEXT("%s needs a %s nearby — stand closer."),
                     *GetRecipeDisplayName(Recipe->RecipeId),
-                    *Recipe->RequiredStationId.ToString())));
+                    *Recipe->RequiredStationId.ToString())),
+                    EAstrawildToastCue::Warning); // CGC-3: refusal beat.
             }
         }
         return false;
@@ -162,7 +165,8 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
             TEXT("Craft refused (outputs would exceed carry weight): %s — free pack space first."),
             *Recipe->RecipeId.ToString());
         NotifyOwnerPlayer(FText::FromString(FString::Printf(
-            TEXT("Pack too full to craft %s — free some space first."), *GetRecipeDisplayName(Recipe->RecipeId))));
+            TEXT("Pack too full to craft %s — free some space first."), *GetRecipeDisplayName(Recipe->RecipeId))),
+            EAstrawildToastCue::Warning); // CGC-3: refusal beat.
         return false;
     }
 
@@ -202,13 +206,15 @@ bool UAstrawildCraftingComponent::CraftRecipe(const UAstrawildRecipeDefinition* 
             // FPP-1: the passive's payoff was log-only — the player never knew
             // the Craft attribute just saved their whole ingredient set.
             NotifyOwnerPlayer(FText::FromString(FString::Printf(
-                TEXT("MASTERWORK — %s ingredients refunded!"), *GetRecipeDisplayName(Recipe->RecipeId))));
+                TEXT("MASTERWORK — %s ingredients refunded!"), *GetRecipeDisplayName(Recipe->RecipeId))),
+                EAstrawildToastCue::Craft); // CGC-3: the passive's payoff rings the craft chime.
         }
         OnCraftCompleted.Broadcast(Recipe->RecipeId, true);
         // FPP-1: craft success toast — visible even when the screen is closed
         // (the timed path gets the same toast in CompleteActiveCraft).
         NotifyOwnerPlayer(FText::FromString(FString::Printf(
-            TEXT("Crafted: %s"), *GetRecipeDisplayName(Recipe->RecipeId))));
+            TEXT("Crafted: %s"), *GetRecipeDisplayName(Recipe->RecipeId))),
+            EAstrawildToastCue::Craft); // CGC-3: craft-success chime (A_UI_Craft_Done).
         if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
         {
             if (Player->AttributeComponent)
@@ -452,7 +458,8 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
         if (LostRefunds == 0)
         {
             NotifyOwnerPlayer(FText::FromString(FString::Printf(
-                TEXT("MASTERWORK — %s ingredients refunded!"), *GetRecipeDisplayName(CompletedRecipe))));
+                TEXT("MASTERWORK — %s ingredients refunded!"), *GetRecipeDisplayName(CompletedRecipe))),
+                EAstrawildToastCue::Craft); // CGC-3: timed-path Masterwork rings the craft chime too.
         }
     }
     bMasterworkPendingRefund = false;
@@ -475,7 +482,8 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
     // CraftRecipe) — the craft loop now closes with the player told what
     // landed in their pack.
     NotifyOwnerPlayer(FText::FromString(FString::Printf(
-        TEXT("Craft complete: %s"), *GetRecipeDisplayName(CompletedRecipe))));
+        TEXT("Craft complete: %s"), *GetRecipeDisplayName(CompletedRecipe))),
+        EAstrawildToastCue::Craft); // CGC-3: timed-craft completion chime.
 
     if (UWorld* World = GetWorld())
     {
@@ -490,13 +498,13 @@ void UAstrawildCraftingComponent::CompleteActiveCraft()
 // FPP-1: player-facing helpers — the craft loop's feedback path
 // ---------------------------------------------------------------------------
 
-void UAstrawildCraftingComponent::NotifyOwnerPlayer(const FText& Message) const
+void UAstrawildCraftingComponent::NotifyOwnerPlayer(const FText& Message, const EAstrawildToastCue Cue) const
 {
     if (const AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(GetOwner()))
     {
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(Player->GetController()))
         {
-            PC->NotifyPlayer(Message); // LCP-3: routes to the owning screen (host or client).
+            PC->NotifyPlayer(Message, Cue); // LCP-3: routes to the owning screen (host or client).
         }
     }
 }

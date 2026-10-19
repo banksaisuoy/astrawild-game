@@ -1,6 +1,7 @@
 #include "AstrawildEchoBossCharacter.h"
 
 #include "AstrawildArtPack.h"
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed AtLocation helper for windup/phase growls.
 #include "AstrawildBossHazardActor.h"
 #include "AstrawildBossTelegraphActor.h"
 #include "AstrawildCombatComponent.h"
@@ -527,6 +528,12 @@ void AAstrawildEchoBossCharacter::Tick(const float DeltaTime)
             TransitionToPhase(2);
         }
         TransitionToPhase(3);
+
+        // CGC-3: the enrage GROWL — the same energy-impact binding as the
+        // weakness hit, pitched down to a sub-bass roar (fail-closed).
+        UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+            GetWorld(), AstrawildArtPack::Sfx::WeaknessHitImpact, GetActorLocation(), 1.2f, 0.55f);
+
         UE_LOG(LogAstrawildCombat, Log, TEXT("Boss ENRAGED by timer at %.0f%% health."), GetHealthFraction() * 100.0f);
     }
 
@@ -561,12 +568,19 @@ void AAstrawildEchoBossCharacter::TransitionToPhase(const int32 NewPhase)
     CurrentPhase = NewPhase;
     OnPhaseChanged.Broadcast(NewPhase, FractionAtTransition);
 
+    // CGC-3: the phase-crossing GROWL — the fight audibly changes (the same
+    // energy-impact binding pitched down; fail-closed, never gates the fight).
+    UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+        GetWorld(), AstrawildArtPack::Sfx::WeaknessHitImpact, GetActorLocation(), 1.2f, 0.7f);
+
     // FPP-1: the phase beat is ANNOUNCED — the HUD bar text updates on its
     // own cadence, but the "the fight just changed" moment deserves a toast.
+    // CGC-3: phase beats carry the WARNING toast cue (danger semantics).
     if (NewPhase == 2)
     {
         NotifyNearbyPlayers(FText::FromString(FString::Printf(
-            TEXT("%s — PHASE 2: reinforcements incoming!"), *GetBossDisplayName().ToString())), 6000.0f);
+            TEXT("%s — PHASE 2: reinforcements incoming!"), *GetBossDisplayName().ToString())), 6000.0f,
+            EAstrawildToastCue::Warning);
     }
     else if (NewPhase == 3)
     {
@@ -574,7 +588,7 @@ void AAstrawildEchoBossCharacter::TransitionToPhase(const int32 NewPhase)
             TEXT("%s — PHASE 3%s!"),
             *GetBossDisplayName().ToString(),
             bEnraged ? TEXT(" ENRAGED — everything hits harder") : TEXT(""))),
-            6000.0f);
+            6000.0f, EAstrawildToastCue::Warning);
     }
 
     // Phase behavior changes (directive §24 — pattern change, not just HP):
@@ -663,6 +677,12 @@ void AAstrawildEchoBossCharacter::ExecuteAttack(const float DeltaTime)
         Pending.RemainingSeconds = BossMeleeWindupSeconds;
         Pending.Damage = GetAttackDamage();
         PendingMelees.Add(Pending);
+
+        // CGC-3: the windup SPEAKS — the charge/spool cue pitched low under the
+        // 0.5s telegraph disc, so the readable warning is audible too
+        // (fail-closed: a missing package leaves the visual telegraph intact).
+        UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+            World, AstrawildArtPack::Sfx::ChargeLoop, GetActorLocation(), 0.8f, 0.6f);
 
         FActorSpawnParameters DiscParams;
         DiscParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -1142,7 +1162,8 @@ void AAstrawildEchoBossCharacter::TickPendingMelees(const float DeltaTime)
     }
 }
 
-void AAstrawildEchoBossCharacter::NotifyNearbyPlayers(const FText& Message, const float Radius) const
+void AAstrawildEchoBossCharacter::NotifyNearbyPlayers(const FText& Message, const float Radius,
+    const EAstrawildToastCue Cue) const
 {
     UWorld* World = GetWorld();
     if (!World)
@@ -1165,7 +1186,7 @@ void AAstrawildEchoBossCharacter::NotifyNearbyPlayers(const FText& Message, cons
         }
         if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(PC))
         {
-            AstrawildPC->NotifyPlayer(Message); // LCP-3: routes to the owning screen.
+            AstrawildPC->NotifyPlayer(Message, Cue); // LCP-3: routes to the owning screen.
         }
     }
 }

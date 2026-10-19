@@ -247,7 +247,25 @@ void UAstrawildHudWidget::NativeTick(const FGeometry& MyGeometry, const float In
     }
 }
 
-void UAstrawildHudWidget::PushNotification(const FText& Message)
+const TCHAR* UAstrawildHudWidget::GetToastCuePath(const EAstrawildToastCue Cue)
+{
+    // CGC-3: the semantic toast-cue map — every path is a flat-imported
+    // Content/Audio package (the same import batch that landed A_UI_Confirm).
+    // PURE STATIC: no engine objects, test-pinned by 137 + the DCP-5 pin.
+    switch (Cue)
+    {
+    case EAstrawildToastCue::Research: return TEXT("/Game/Audio/A_UI_Research_Done");
+    case EAstrawildToastCue::Craft:    return TEXT("/Game/Audio/A_UI_Craft_Done");
+    case EAstrawildToastCue::Warning:  return TEXT("/Game/Audio/A_UI_Warning");
+    case EAstrawildToastCue::Click:    return TEXT("/Game/Audio/A_UI_Click");
+    case EAstrawildToastCue::Cancel:   return TEXT("/Game/Audio/A_UI_Cancel");
+    case EAstrawildToastCue::Confirm:
+    default:
+        return TEXT("/Game/Audio/A_UI_Confirm");
+    }
+}
+
+void UAstrawildHudWidget::PushNotification(const FText& Message, const EAstrawildToastCue Cue)
 {
     if (NotificationText)
     {
@@ -258,10 +276,12 @@ void UAstrawildHudWidget::PushNotification(const FText& Message)
     // DCP-5 (user directive: re-open deferred work): toasts carry a UI cue.
     // First PlaySound2D in the module — the A_UI_Confirm package exists in
     // Content/Audio (imported with the audio batch; the literal-path
-    // LoadObject idiom mirrors CaptureComponent's capture stinger). Fail
-    // closed: a missing/renamed cue logs nothing and the toast still shows —
-    // audio is enrichment, never a gate.
-    if (USoundBase* ToastCue = LoadObject<USoundBase>(nullptr, TEXT("/Game/Audio/A_UI_Confirm")))
+    // LoadObject idiom mirrors CaptureComponent's capture stinger).
+    // CGC-3: the cue now differentiates through GetToastCuePath (the DEFAULT
+    // param keeps every non-semantic call site on the same generic blip).
+    // Fail closed: a missing/renamed cue logs nothing and the toast still
+    // shows — audio is enrichment, never a gate.
+    if (USoundBase* ToastCue = LoadObject<USoundBase>(nullptr, GetToastCuePath(Cue)))
     {
         UGameplayStatics::PlaySound2D(this, ToastCue, 0.35f);
     }

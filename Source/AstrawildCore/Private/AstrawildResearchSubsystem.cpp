@@ -291,7 +291,9 @@ void UAstrawildResearchSubsystem::NotifyPlayersResearchUnlocked(const FName Tech
     {
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(*It))
         {
-            PC->NotifyPlayer(Message);
+            // CGC-3: research unlocks ring their OWN chime (A_UI_Research_Done)
+            // instead of the generic confirm blip.
+            PC->NotifyPlayer(Message, EAstrawildToastCue::Research);
         }
     }
 }

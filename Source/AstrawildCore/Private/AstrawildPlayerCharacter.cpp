@@ -4,6 +4,7 @@
 
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildAttributeComponent.h"
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed 2D blip helpers + footstep dispatcher.
 #include "AstrawildBuildingActor.h"
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
@@ -36,6 +37,7 @@
 #include "AstrawildUtilityRobotActor.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
+#include "AstrawildZoneSubsystem.h" // CGC-3: footstep surface resolves through the pure zone table.
 #include "Camera/CameraComponent.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Components/CapsuleComponent.h"
@@ -408,6 +410,55 @@ void AAstrawildPlayerCharacter::Tick(float DeltaSeconds)
         RangedBuffRemaining = FMath::Max(0.0f, RangedBuffRemaining - DeltaSeconds);
         CaptureFocusRemaining = FMath::Max(0.0f, CaptureFocusRemaining - DeltaSeconds);
     }
+
+    // CGC-3: footstep cadence — horizontal travel accumulates toward the next
+    // stride blip while WALKING on the ground (the coarse zone map picks the
+    // surface: GetFootstepCueForZone). LOCAL feedback only: the machine that
+    // locally controls this pawn plays its own strides, so a listen host never
+    // hears a remote client's footsteps twice and pure clients keep theirs.
+    // Piloting/riding suspend the cadence (the skiff/mount owns the motion).
+    if (IsLocallyControlled() && !PilotedSkiff.IsValid() && !MountedEcho.IsValid())
+    {
+        if (const UCharacterMovementComponent* Movement = GetCharacterMovement())
+        {
+            if (Movement->IsMovingOnGround())
+            {
+                const FVector Velocity = GetVelocity();
+                FootstepDistanceAccumulator +=
+                    FMath::Sqrt(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y) * DeltaSeconds;
+                if (FootstepDistanceAccumulator >= UAstrawildAudioDirectorSubsystem::FootstepStrideCm)
+                {
+                    FootstepDistanceAccumulator = 0.0f;
+                    if (UWorld* World = GetWorld())
+                    {
+                        if (UAstrawildAudioDirectorSubsystem* AudioDirector =
+                                World->GetSubsystem<UAstrawildAudioDirectorSubsystem>())
+                        {
+                            AudioDirector->PlayFootstep(UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(
+                                UAstrawildZoneSubsystem::GetZoneAt(GetActorLocation())));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Airborne/swimming: keep the accumulated distance but never
+                // cross the stride mid-air — the landing blip owns that beat.
+                FootstepDistanceAccumulator =
+                    FMath::Min(FootstepDistanceAccumulator, UAstrawildAudioDirectorSubsystem::FootstepStrideCm - 1.0f);
+            }
+        }
+    }
+}
+
+void AAstrawildPlayerCharacter::OnLanded(const FHitResult& Hit)
+{
+    Super::OnLanded(Hit);
+
+    // CGC-3: landing feedback — the ground receives the player (fail-closed 2D
+    // blip; the stride accumulator resumes from the ground on the next tick).
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(
+        GetWorld(), TEXT("/Game/Audio/A_Player_Land"), 0.4f);
 }
 
 void AAstrawildPlayerCharacter::CastPartyAbility(const FInputActionValue& Value)
@@ -1365,6 +1416,12 @@ void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
 
     // Art pack (Batch 4): jump one-shot (skips if the clip is not imported).
     PlaySurvivorOneShot(SurvivorJumpAnim.Get(), 0.9f);
+
+    // CGC-3: jump-start feedback (local input handler — plays on the machine
+    // that pressed SPACE). Fail-closed: a missing package is a silent jump.
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(
+        GetWorld(), TEXT("/Game/Audio/A_Player_Jump"), 0.35f);
+
     Jump();
 }
 
@@ -2088,11 +2145,14 @@ void AAstrawildPlayerCharacter::HandleAttributeLevelUp(const EAstrawildAttribute
 
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
     {
+        // CGC-3: the growth moment rings the research-unlock chime (the
+        // level-up IS an unlock beat — A_UI_Research_Done).
         PC->NotifyPlayer(FText::FromString(FString::Printf(
             TEXT("%s grew to level %d%s"),
             *UEnum::GetDisplayValueAsText(Attribute).ToString(),
             NewLevel,
-            bNewSkill ? TEXT(" — NEW SKILL UNLOCKED (see Skill Loadout in the pause menu)") : TEXT(""))));
+            bNewSkill ? TEXT(" — NEW SKILL UNLOCKED (see Skill Loadout in the pause menu)") : TEXT(""))),
+            EAstrawildToastCue::Research);
     }
 }
 
@@ -2523,6 +2583,11 @@ void AAstrawildPlayerCharacter::StartScan(const FInputActionValue& Value)
 
     bScanKeyHeld = true;
     Journal->BeginActiveScan(this, Multiplier);
+
+    // CGC-3: the scanner speaks — a soft ping at scan start (the local machine
+    // that pressed V; fail-closed through the director's literal helper).
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(
+        World, TEXT("/Game/Audio/A_Player_Scan_Ping"), 0.4f);
 
     // Production V2 Batch 2: world-space pulse ring — the scan now reads as an
     // action (tier-tinted; radius tracks the scanner's effective range).

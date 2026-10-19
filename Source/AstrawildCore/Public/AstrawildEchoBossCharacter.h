@@ -374,7 +374,13 @@ private:
     void TickPendingMelees(float DeltaTime);
 
     /** FPP-1: toast every player inside the radius (phase/enrage/defeat beats). */
-    void NotifyNearbyPlayers(const FText& Message, float Radius) const;
+    /**
+     * Toast every player within Radius. CGC-3: the optional Cue routes the
+     * toast's audio (phase/enrage beats pass Warning; the default keeps the
+     * generic confirm blip for loot/defeat/victory lines).
+     */
+    void NotifyNearbyPlayers(const FText& Message, float Radius,
+        EAstrawildToastCue Cue = EAstrawildToastCue::Confirm) const;
 
     /** FPP-1: attacker-facing weak-point/weakness confirmation (toast + SFX). */
     void NotifyBossHitFeedback(bool bWeaknessHit, bool bWeakPointHit, EAstrawildElementType Element);

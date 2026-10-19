@@ -459,6 +459,13 @@ protected:
     /** Production V2 Batch 2: throttles the element-glow proximity update (1s). */
     float ElementGlowAccumulator = 0.0f;
 
+    /**
+     * CGC-3: idle-voice cadence accumulator — wild creatures vocalize on a
+     * slow per-instance cadence (12-18s from the instance seed) while a
+     * player is within 1500cm. Zero-allocation: no strings, no arrays.
+     */
+    float IdleCryAccumulator = 0.0f;
+
     /** Production V2 Batch 2: element identity light (party + nearby wild elementals). */
     UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Echo|Appearance")
     TObjectPtr<UPointLightComponent> ElementGlowLight;

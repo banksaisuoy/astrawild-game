@@ -24,9 +24,23 @@ public:
     virtual void NativeConstruct() override;
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-    /** Show a transient notification line (craft results, captures, quest beats). */
+    /**
+     * Show a transient notification line (craft results, captures, quest beats).
+     * CGC-3: the optional Cue parameter differentiates the FEW semantic sites
+     * (research unlock / craft outcome / warning beats / cancellations) — the
+     * DEFAULT stays the generic Confirm blip so the other ~60 call sites are
+     * untouched. Fail-closed: a missing cue keeps the toast visible.
+     */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|HUD")
-    void PushNotification(const FText& Message);
+    void PushNotification(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm);
+
+    /**
+     * CGC-3: the toast-cue map — PURE STATIC so test 137 pins every enum
+     * value's path (and the DCP-5 pin test re-asserts it) without an engine
+     * world. Every path resolves against the flat-imported Content/Audio
+     * packages; unknown enum values fail closed to the Confirm blip.
+     */
+    static const TCHAR* GetToastCuePath(const EAstrawildToastCue Cue);
 
     // --- CGC-2 (B): pure guidance formatting (world-free, test-pinned) ---
 

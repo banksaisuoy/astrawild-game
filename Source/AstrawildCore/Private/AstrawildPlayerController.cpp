@@ -1,5 +1,7 @@
 #include "AstrawildPlayerController.h"
 
+#include "AstrawildArtPack.h" // CGC-3: Sfx:: UiClick/UiCancel screen feedback paths.
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed 2D blip helper.
 #include "AstrawildCheatManager.h"
 #include "AstrawildCore.h"
 #include "AstrawildControlsScreenWidget.h" // CGC-2: read-only controls screen.
@@ -113,14 +115,29 @@ void AAstrawildPlayerController::OnPossess(APawn* InPawn)
     }
 }
 
-void AAstrawildPlayerController::Notify(const FText& Message)
+void AAstrawildPlayerController::Notify(const FText& Message, const EAstrawildToastCue Cue)
 {
     // Audit C-2/C-7: gameplay feedback path — HUD notification previously existed but
     // had zero callers, so players never saw research/work/capture outcomes.
+    // CGC-3: the cue differentiates the semantic toasts (research/craft/warning/
+    // cancel); the default keeps the generic confirm blip.
     if (HudWidget)
     {
-        HudWidget->PushNotification(Message);
+        HudWidget->PushNotification(Message, Cue);
     }
+}
+
+void AAstrawildPlayerController::PlayUiOpenSound()
+{
+    // CGC-3: screen-open feedback — a quiet click, master-volume aware, fail
+    // closed (a missing package is a silent open, never a block).
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(GetWorld(), AstrawildArtPack::Sfx::UiClick, 0.25f);
+}
+
+void AAstrawildPlayerController::PlayUiCloseSound()
+{
+    // CGC-3: screen-close feedback — the soft cancel blip.
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(GetWorld(), AstrawildArtPack::Sfx::UiCancel, 0.25f);
 }
 
 void AAstrawildPlayerController::OpenShop(AAstrawildNPCCharacter* Vendor)
@@ -300,6 +317,8 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!InventoryScreen)
         {
             const TSubclassOf<UAstrawildInventoryScreenWidget> WidgetClass = InventoryScreenClass
@@ -322,6 +341,8 @@ void AAstrawildPlayerController::ToggleInventoryScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (InventoryScreen)
         {
             InventoryScreen->RemoveFromParent();
@@ -382,6 +403,8 @@ void AAstrawildPlayerController::ToggleResearchScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!ResearchScreen)
         {
             const TSubclassOf<UAstrawildResearchScreenWidget> WidgetClass = ResearchScreenClass
@@ -403,6 +426,8 @@ void AAstrawildPlayerController::ToggleResearchScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (ResearchScreen)
         {
             ResearchScreen->RemoveFromParent();
@@ -464,6 +489,8 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!CraftingScreen)
         {
             const TSubclassOf<UAstrawildCraftingScreenWidget> WidgetClass = CraftingScreenClass
@@ -485,6 +512,8 @@ void AAstrawildPlayerController::ToggleCraftingScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (CraftingScreen)
         {
             CraftingScreen->RemoveFromParent();
@@ -545,6 +574,8 @@ void AAstrawildPlayerController::TogglePauseMenu()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!PauseMenuWidget)
         {
             const TSubclassOf<UAstrawildPauseMenuWidget> WidgetClass = PauseMenuClass
@@ -567,6 +598,8 @@ void AAstrawildPlayerController::TogglePauseMenu()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (PauseMenuWidget)
         {
             PauseMenuWidget->RemoveFromParent();
@@ -631,6 +664,8 @@ void AAstrawildPlayerController::ToggleJournalScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!JournalScreen)
         {
             const TSubclassOf<UAstrawildJournalScreenWidget> WidgetClass = JournalScreenClass
@@ -652,6 +687,8 @@ void AAstrawildPlayerController::ToggleJournalScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (JournalScreen)
         {
             JournalScreen->RemoveFromParent();
@@ -715,6 +752,8 @@ void AAstrawildPlayerController::ToggleRosterScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!RosterScreen)
         {
             const TSubclassOf<UAstrawildRosterScreenWidget> WidgetClass = RosterScreenClass
@@ -736,6 +775,8 @@ void AAstrawildPlayerController::ToggleRosterScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (RosterScreen)
         {
             RosterScreen->RemoveFromParent();
@@ -844,6 +885,8 @@ void AAstrawildPlayerController::ToggleMapScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!MapScreen)
         {
             const TSubclassOf<UAstrawildMapScreenWidget> WidgetClass = MapScreenClass
@@ -865,6 +908,8 @@ void AAstrawildPlayerController::ToggleMapScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (MapScreen)
         {
             MapScreen->RemoveFromParent();
@@ -936,6 +981,8 @@ void AAstrawildPlayerController::ToggleHuntScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!HuntScreen)
         {
             const TSubclassOf<UAstrawildHuntScreenWidget> WidgetClass = HuntScreenClass
@@ -957,6 +1004,8 @@ void AAstrawildPlayerController::ToggleHuntScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (HuntScreen)
         {
             HuntScreen->RemoveFromParent();
@@ -1020,6 +1069,8 @@ void AAstrawildPlayerController::ToggleControlsScreen()
 
     if (bOpen)
     {
+        PlayUiOpenSound();
+
         if (!ControlsScreen)
         {
             const TSubclassOf<UAstrawildControlsScreenWidget> WidgetClass = ControlsScreenClass
@@ -1040,6 +1091,8 @@ void AAstrawildPlayerController::ToggleControlsScreen()
     }
     else
     {
+        PlayUiCloseSound();
+
         if (ControlsScreen)
         {
             ControlsScreen->RemoveFromParent();
@@ -1097,23 +1150,23 @@ bool AAstrawildPlayerController::IsAnyScreenOpen() const
 // LCP-3 — LAN co-op client routing (first Client RPCs in the module)
 // ===========================================================================
 
-void AAstrawildPlayerController::ClientNotify_Implementation(const FText& Message)
+void AAstrawildPlayerController::ClientNotify_Implementation(const FText& Message, const EAstrawildToastCue Cue)
 {
-    Notify(Message);
+    Notify(Message, Cue);
 }
 
-void AAstrawildPlayerController::NotifyPlayer(const FText& Message)
+void AAstrawildPlayerController::NotifyPlayer(const FText& Message, const EAstrawildToastCue Cue)
 {
     // Whatever machine owns this controller's screen gets the message: the
     // listen-host/standalone PC is its own local controller (Notify directly);
     // a server-side PC for a REMOTE player routes to that client.
     if (IsLocalController())
     {
-        Notify(Message);
+        Notify(Message, Cue);
     }
     else
     {
-        ClientNotify(Message);
+        ClientNotify(Message, Cue);
     }
 }
 

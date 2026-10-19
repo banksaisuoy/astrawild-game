@@ -2,6 +2,8 @@
 
 #include "Net/UnrealNetwork.h" // LCP-2: DOREPLIFETIME
 
+#include "AstrawildArtPack.h" // CGC-3: Sfx:: harvest impact cue constant.
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed AtLocation blip helper.
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDifficultySubsystem.h"
@@ -260,6 +262,16 @@ void AAstrawildResourceNode::Interact_Implementation(AActor* InteractingActor)
     if (!Inventory->AddItem(ResourceItemId, MultipliedQuantity))
     {
         return;
+    }
+
+    // CGC-3: the harvest CONNECTS — the shared kinetic impact cue at the node
+    // (pitch-jittered per swing; fail-closed: a missing package never blocks
+    // the grant — AddItem above already committed the yield).
+    if (UWorld* HarvestWorld = GetWorld())
+    {
+        UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+            HarvestWorld, AstrawildArtPack::Sfx::ImpactKinetic, GetActorLocation(),
+            0.35f, FMath::FRandRange(0.9f, 1.1f));
     }
 
     if (bInfiniteResource)

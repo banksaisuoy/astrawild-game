@@ -98,8 +98,13 @@ private:
     float CraftTimeTotal = 0.0f;
     TArray<FAstrawildItemStack> PendingOutputs;
 
-    /** FPP-1: toast the owning player (craft refusal reasons + completions). */
-    void NotifyOwnerPlayer(const FText& Message) const;
+    /**
+     * FPP-1: toast the owning player (craft refusal reasons + completions).
+     * CGC-3: the optional Cue differentiates the toast audio — refusals carry
+     * the WARNING blip, completions/Masterwork carry the CRAFT chime; the
+     * default stays the generic confirm blip.
+     */
+    void NotifyOwnerPlayer(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm) const;
 
     /** FPP-1: player-readable recipe label (registry display name fallback id). */
     FString GetRecipeDisplayName(FName RecipeId) const;

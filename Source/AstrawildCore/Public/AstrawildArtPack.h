@@ -89,6 +89,23 @@ namespace AstrawildArtPack
                  * /Game/ reference is introduced (validator check 8 stays clean).
                  */
                 extern ASTRAWILDCORE_API const TCHAR* WeaknessHitImpact;
+
+                /**
+                 * CGC-3 (audit 2-b audio activation): the widely-shared cue paths
+                 * promoted to named constants — every one resolves against the
+                 * flat-imported Content/Audio packages (validator check 8), and
+                 * each is consumed by MORE THAN ONE call site so the constant
+                 * genuinely removes literal duplication:
+                 *   - ChargeLoop: melee swing blip + boss melee windup + skiff hum
+                 *     (honest reuse — the 1.6s cue IS an engine spool).
+                 *   - ImpactKinetic: first-hit-in-swing melee impact + harvest node.
+                 *   - UiClick: screen-open feedback + building placement.
+                 *   - UiCancel: screen-close feedback + building dismantle.
+                 */
+                extern ASTRAWILDCORE_API const TCHAR* ChargeLoop;
+                extern ASTRAWILDCORE_API const TCHAR* ImpactKinetic;
+                extern ASTRAWILDCORE_API const TCHAR* UiClick;
+                extern ASTRAWILDCORE_API const TCHAR* UiCancel;
         }
 
         /** All 8 production weapon bindings (may contain null paths when a weapon has no art yet). */

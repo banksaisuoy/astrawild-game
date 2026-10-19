@@ -1,5 +1,7 @@
 #include "AstrawildBuildingComponent.h"
 
+#include "AstrawildArtPack.h" // CGC-3: Sfx:: place/dismantle cue constants.
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed AtLocation blip helper.
 #include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBuildingActor.h"
 #include "AstrawildCore.h"
@@ -331,6 +333,11 @@ void UAstrawildBuildingComponent::ServerPlaceBuilding_Implementation(const FName
         {
             EventBus->PublishEvent(TAG_Astrawild_Event_BuildingPlaced, Player, DefinitionId, 1, Location);
         }
+        // CGC-3: placement THUNKS — the shared UI click as a solid placement
+        // blip at the build site (fail-closed: a missing package never blocks
+        // the build — this branch already committed the building).
+        UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+            World, AstrawildArtPack::Sfx::UiClick, Location, 0.5f);
         UE_LOG(LogAstrawildBuilding, Log, TEXT("Building placed: %s at %s."), *DefinitionId.ToString(), *Location.ToCompactString());
     }
     else
@@ -407,6 +414,11 @@ bool UAstrawildBuildingComponent::DismantleBuilding(AActor* TargetBuilding)
             EventBus->PublishEvent(TAG_Astrawild_Event_BuildingPlaced, Player,
                 Def->DefinitionId, -1, Building->GetActorLocation());
         }
+
+        // CGC-3: dismantle UNDOES audibly — the shared UI cancel blip at the
+        // building before it goes (fail-closed, never gates the refund).
+        UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+            World, AstrawildArtPack::Sfx::UiCancel, Building->GetActorLocation(), 0.5f);
     }
 
     UE_LOG(LogAstrawildBuilding, Log,

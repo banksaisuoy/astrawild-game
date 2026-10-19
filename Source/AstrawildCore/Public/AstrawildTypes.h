@@ -1491,3 +1491,28 @@ enum class EAstrawildZoneHazard : uint8
     HeatPressure UMETA(DisplayName="Heat pressure (hotter than weather)"),
     AshLung UMETA(DisplayName="Ash lung (stamina regen suppression)")
 };
+
+/**
+ * CGC-3 — toast cue semantics. The single HUD notification hook
+ * (UAstrawildHudWidget::PushNotification) used ONE generic blip for ~67 call
+ * sites; this enum lets the FEW semantic sites pick an honest cue (research
+ * unlocks ring differently than craft refusals) while every other site keeps
+ * the default Confirm — zero churn for the unchanged majority. Appended-only,
+ * UI-only (never serialized into a save).
+ */
+UENUM(BlueprintType)
+enum class EAstrawildToastCue : uint8
+{
+    /** Default: the generic confirmation blip (A_UI_Confirm). */
+    Confirm UMETA(DisplayName="Confirm"),
+    /** A technology/level unlock lands (A_UI_Research_Done). */
+    Research UMETA(DisplayName="Research"),
+    /** A craft completes (A_UI_Craft_Done). */
+    Craft UMETA(DisplayName="Craft"),
+    /** Danger/danger-adjacent beats: boss phases, refusals (A_UI_Warning). */
+    Warning UMETA(DisplayName="Warning"),
+    /** UI open / neutral action feedback (A_UI_Click). */
+    Click UMETA(DisplayName="Click"),
+    /** UI close / cancellation beats (A_UI_Cancel). */
+    Cancel UMETA(DisplayName="Cancel")
+};

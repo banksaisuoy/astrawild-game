@@ -174,7 +174,10 @@ bool UAstrawildCaptureComponent::TryCapture(AActor* Target, const float InitialT
         }
         else
         {
-            PC->NotifyPlayer(FText::FromString(TEXT("The Echo broke free — weaken it, feed it, or observe longer."))); // LCP-3 remote routing
+            // CGC-3: the break-free beat carries the CANCEL cue (a refusal,
+            // not a danger state — the Warning blip stays for real threats).
+            PC->NotifyPlayer(FText::FromString(TEXT("The Echo broke free — weaken it, feed it, or observe longer.")),
+                EAstrawildToastCue::Cancel); // LCP-3 remote routing
         }
     }
     if (bSuccess)

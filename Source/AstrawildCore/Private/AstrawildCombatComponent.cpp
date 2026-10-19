@@ -1,6 +1,8 @@
 #include "AstrawildCombatComponent.h"
 
+#include "AstrawildArtPack.h" // CGC-3: Sfx:: melee swing/impact cue constants.
 #include "AstrawildAttributeComponent.h"
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed AtLocation blip helper.
 #include "AstrawildComboSubsystem.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
@@ -318,6 +320,12 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
         LastLightAttackTime = World->GetTimeSeconds();
     }
 
+    // CGC-3: melee swings SWING out loud — the 1.6s charge/spool cue as a
+    // short low-pitch blip at the instigator (honest reuse of an imported
+    // weapon cue; fail-closed: a missing package is a silent swing).
+    UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+        World, AstrawildArtPack::Sfx::ChargeLoop, OwnerCharacter->GetActorLocation(), 0.25f, 0.85f);
+
     // Sweep in front of the character — melee arc via multi-sphere trace.
     const FVector Start = OwnerCharacter->GetActorLocation();
     const FVector End = Start + OwnerCharacter->GetActorForwardVector() * AttackRange;
@@ -329,6 +337,10 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
         FCollisionShape::MakeSphere(SweepRadius), QueryParams);
 
     float TotalDamageDealt = 0.0f;
+
+    // CGC-3: first-melee-contact state (one impact blip per swing).
+    bool bLandedFirstHit = false;
+    FVector FirstHitPoint = OwnerCharacter->GetActorLocation();
 
     // GDP-3: Power Strike — the queued skill multiplies THIS swing's damage and
     // is consumed by it (window set by the smart-cast, spent here, never both).
@@ -382,6 +394,14 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
             TotalDamageDealt += BaseDamage;
         }
 
+        // CGC-3: first-hit bookkeeping — ONE kinetic impact blip per swing,
+        // at the first contact point (multi-hit swings stay readable).
+        if (!bLandedFirstHit)
+        {
+            bLandedFirstHit = true;
+            FirstHitPoint = Hit.ImpactPoint;
+        }
+
         // SCP Phase 6: every landed player melee hit drops a combo mark on
         // the victim — party Echo abilities striking the same target inside
         // 3s resolve a Dual-Tech reaction.
@@ -392,6 +412,14 @@ bool UAstrawildCombatComponent::ExecuteAttack(const bool bHeavy)
                 Combos->NotifyPlayerMeleeHit(HitActor, bEmpowered);
             }
         }
+    }
+
+    // CGC-3: the first connect IMPACTS — kinetic thud at the contact point
+    // (pitch-jittered so repeated swings never sound copy-pasted; fail-closed).
+    if (bLandedFirstHit)
+    {
+        UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+            World, AstrawildArtPack::Sfx::ImpactKinetic, FirstHitPoint, 0.5f, FMath::FRandRange(0.9f, 1.1f));
     }
 
     // GDP-3: Power Strike spent on this swing + Might XP for connecting hits.

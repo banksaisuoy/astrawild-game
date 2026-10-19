@@ -61,9 +61,11 @@ public:
     /**
      * Audit C-2/C-7: transient HUD notification for gameplay feedback (research
      * unlocks, work-site collection, capture results). No-op when no HUD exists.
+     * CGC-3: the optional Cue routes the toast's audio through the semantic map
+     * (default Confirm — the ~60 generic sites keep their existing blip).
      */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
-    void Notify(const FText& Message);
+    void Notify(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm);
 
     // --- LCP-3: LAN co-op client routing (the first Client RPCs in the module) ---
 
@@ -71,12 +73,14 @@ public:
      * LCP-3: server -> owning client notification. Host-local callers keep using
      * Notify(); server-side code that must reach a REMOTE player's screen routes
      * through NotifyPlayer (local -> Notify, remote -> ClientNotify).
+     * CGC-3: the Cue rides the RPC so remote screens hear the semantic toast
+     * audio too (explicit param — RPC declarations keep no default values).
      */
     UFUNCTION(Client, Reliable)
-    void ClientNotify(const FText& Message);
+    void ClientNotify(const FText& Message, EAstrawildToastCue Cue);
 
     /** LCP-3: delivery helper - whatever machine owns this controller's screen gets the message. */
-    void NotifyPlayer(const FText& Message);
+    void NotifyPlayer(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm);
 
     /**
      * CGC-2: one-shot first-time teaching hint. Checks the save subsystem's
@@ -301,6 +305,15 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
+    /**
+     * CGC-3: full-screen UI open/close feedback (A_UI_Click / A_UI_Cancel at
+     * 0.25) — fail-closed 2D blips on the local controller; a missing package
+     * is a silent open, never a block. Called by every Toggle*Screen at the
+     * moment the screen state actually resolves (open or close).
+     */
+    void PlayUiOpenSound();
+    void PlayUiCloseSound();
+
     UPROPERTY()
     TObjectPtr<UAstrawildHudWidget> HudWidget;
 

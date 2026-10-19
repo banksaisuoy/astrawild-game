@@ -2,6 +2,7 @@
 
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: species-cry map + fail-closed AtLocation helper.
 #include "AstrawildCore.h"
 #include "AstrawildCombatComponent.h"
 #include "AstrawildCreatureSanityComponent.h"
@@ -779,6 +780,48 @@ void AAstrawildEchoCharacter::Tick(const float DeltaTime)
 
         HandleNeedsDecay(DeltaTime);
 
+        // CGC-3: idle voice — wild creatures cry on a slow per-instance cadence
+        // (12-18s from the instance seed, the mutation-jitter idiom) while any
+        // player is within 1500cm. Dormant (CGC-1 hidden) creatures stay
+        // silent. Only the six imported species cries resolve; every other
+        // species fails closed to NAME_None and stays silent until the
+        // SFXSet import lands them engine-side. Allocation-free cadence.
+        if (!bCaptured && !IsHidden())
+        {
+            IdleCryAccumulator += DeltaTime;
+            const int32 CrySeed = static_cast<int32>(InstanceId.A ^ InstanceId.B);
+            const float CryInterval = 12.0f + static_cast<float>(CrySeed % 6);
+            if (IdleCryAccumulator >= CryInterval)
+            {
+                IdleCryAccumulator = 0.0f;
+                if (UWorld* CryWorld = GetWorld())
+                {
+                    bool bPlayerNearby = false;
+                    for (FConstPlayerControllerIterator It = CryWorld->GetPlayerControllerIterator();
+                         It && !bPlayerNearby; ++It)
+                    {
+                        const APlayerController* CryPC = It->Get();
+                        const APawn* CryPawn = CryPC ? CryPC->GetPawn() : nullptr;
+                        if (CryPawn &&
+                            FVector::DistSquared(GetActorLocation(), CryPawn->GetActorLocation()) <= FMath::Square(1500.0f))
+                        {
+                            bPlayerNearby = true;
+                        }
+                    }
+                    if (bPlayerNearby && IsValid(EchoDefinition))
+                    {
+                        const FName CryPath = UAstrawildAudioDirectorSubsystem::GetSpeciesCryPath(
+                            EchoDefinition->DefinitionId);
+                        if (!CryPath.IsNone())
+                        {
+                            UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+                                CryWorld, *CryPath.ToString(), GetActorLocation(), 0.4f);
+                        }
+                    }
+                }
+            }
+        }
+
         // Production V2 (Master Plan §6): party passive auras — captured Echoes
         // radiate their passive while healthy (throttled to once per second).
         if (bCaptured && IsValid(EchoDefinition) && EchoDefinition->Passive != EAstrawildEchoPassive::None)
@@ -1459,6 +1502,21 @@ float AAstrawildEchoCharacter::ApplyElementalDamage(const float DamageAmount, co
     if (IsDefeated())
     {
         OnDefeated.Broadcast(this);
+
+        // CGC-3: the death cry — the same species cue pitched down. Fail-closed:
+        // species without an imported cry die exactly as silently as before,
+        // and the loot/XP/defeat pipeline never waits on audio.
+        if (UWorld* DeathWorld = GetWorld())
+        {
+            const FName DeathCryPath = IsValid(EchoDefinition)
+                ? UAstrawildAudioDirectorSubsystem::GetSpeciesCryPath(EchoDefinition->DefinitionId)
+                : NAME_None;
+            if (!DeathCryPath.IsNone())
+            {
+                UAstrawildAudioDirectorSubsystem::PlaySoundAtLocationFromPath(
+                    DeathWorld, *DeathCryPath.ToString(), GetActorLocation(), 0.5f, 0.8f);
+            }
+        }
 
         // Loot + events (server-side).
         if (IsValid(EchoDefinition))

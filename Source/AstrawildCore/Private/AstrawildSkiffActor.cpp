@@ -1,5 +1,6 @@
 #include "AstrawildSkiffActor.h"
 
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: skiff engine hum.
 #include "AstrawildCore.h"
 #include "AstrawildErrorReporter.h"
 #include "AstrawildGameState.h"
@@ -224,6 +225,18 @@ void AAstrawildSkiffActor::MountPilot(AAstrawildPlayerCharacter* Player)
         Controller->Notify(FText::FromString(TEXT("Boarded the Dawn Skiff — WASD fly, SPACE/CTRL altitude, SHIFT boost, E dismount")));
     }
 
+    // CGC-3: engine hum ON — the audio director keeps a spool-loop handle for
+    // the ride (runs on this machine; single-player/listen-host the pilot IS
+    // local — the LAN-remote nuance is documented in the director header).
+    if (UWorld* BoardWorld = GetWorld())
+    {
+        if (UAstrawildAudioDirectorSubsystem* AudioDirector =
+                BoardWorld->GetSubsystem<UAstrawildAudioDirectorSubsystem>())
+        {
+            AudioDirector->OnSkiffBoarded();
+        }
+    }
+
     UE_LOG(LogAstrawildWorld, Log, TEXT("Skiff %s boarded by %s."), *SkiffId.ToString(), *Player->GetName());
 }
 
@@ -253,6 +266,16 @@ void AAstrawildSkiffActor::DismountPilot()
     if (AAstrawildPlayerController* Controller = Cast<AAstrawildPlayerController>(Player->GetController()))
     {
         Controller->Notify(FText::FromString(TEXT("Dismounted. The skiff will wait here.")));
+    }
+
+    // CGC-3: engine hum OFF (fail-closed — a missing director is a silent ride).
+    if (UWorld* ExitWorld = GetWorld())
+    {
+        if (UAstrawildAudioDirectorSubsystem* AudioDirector =
+                ExitWorld->GetSubsystem<UAstrawildAudioDirectorSubsystem>())
+        {
+            AudioDirector->OnSkiffExited();
+        }
     }
 
     UE_LOG(LogAstrawildWorld, Log, TEXT("Skiff %s dismounted."), *SkiffId.ToString());

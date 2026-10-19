@@ -110,6 +110,14 @@ public:
     virtual void PawnClientRestart() override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
 
+    /**
+     * CGC-3: landing feedback (A_Player_Land) — ACharacter's grounded landing
+     * hook, fires on the machine simulating this character's movement (the
+     * owning client for a player pawn). Fail-closed 2D blip via the audio
+     * director; a missing package is a silent landing, never a gameplay gate.
+     */
+    virtual void OnLanded(const FHitResult& Hit) override;
+
     /** (Re)binds the Enhanced Input mapping context — called from BeginPlay, PawnClientRestart, and PossessedBy. */
     void ApplyMappingContext();
     void BuildRuntimeInputDefaults();
@@ -521,6 +529,13 @@ protected:
 
     /** FPP-1: unlocked-skill count at the last level-up (milestone detector). */
     int32 LastSeenSkillCount = -1;
+
+    /**
+     * CGC-3: horizontal distance accumulated toward the next footstep blip
+     * (stride = UAstrawildAudioDirectorSubsystem::FootstepStrideCm). Local
+     * feedback only — the locally controlled machine plays its own strides.
+     */
+    float FootstepDistanceAccumulator = 0.0f;
 
     /** CGC-2: first-time teaching hints evaluated at a gentle cadence (first
      *  nightfall + first low vitals). Both are ShowOnce moments, so the check

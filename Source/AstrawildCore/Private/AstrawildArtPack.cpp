@@ -14,6 +14,13 @@ namespace AstrawildArtPack
                 // DP-5: reuses the existing CP-06 energy impact binding verbatim
                 // (no new /Game/ path — validator check 8 reads the same ref).
                 const TCHAR* WeaknessHitImpact = TEXT("/Game/Audio/A_Weapon_Impact_Energy");
+
+                // CGC-3: widely-shared cue constants (see AstrawildArtPack.h for
+                // the consumer list). All four resolve against Content/Audio.
+                const TCHAR* ChargeLoop = TEXT("/Game/Audio/A_Weapon_Charge_Loop");
+                const TCHAR* ImpactKinetic = TEXT("/Game/Audio/A_Weapon_Impact_Kinetic");
+                const TCHAR* UiClick = TEXT("/Game/Audio/A_UI_Click");
+                const TCHAR* UiCancel = TEXT("/Game/Audio/A_UI_Cancel");
         }
 
         namespace Paths

@@ -7,6 +7,7 @@
 #include "AstrawildAbilityLibrary.h"
 #include "AstrawildAssetFallback.h"
 #include "AstrawildAttributeComponent.h"
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: audio activation contracts.
 #include "AstrawildBaseTerminalActor.h"
 #include "AstrawildBestiaryData.h"
 #include "AstrawildComboSubsystem.h"
@@ -6322,6 +6323,32 @@ bool FAstrawildJournalDetailAndToastTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Toast cue is not the warning cue"),
         FString(ToastCuePath) != FString(TEXT("/Game/Audio/A_UI_Warning")));
 
+    // CGC-3 extension: the DEFAULT-param behavior + the full semantic map.
+    // PushNotification's Cue parameter defaults to Confirm, so the ~60 legacy
+    // call sites keep the exact blip pinned above — and the six semantic
+    // values map onto REAL imported packages.
+    TestEqual(TEXT("Default toast cue path is exactly the legacy confirm blip"),
+        FString(UAstrawildHudWidget::GetToastCuePath(EAstrawildToastCue::Confirm)),
+        FString(ToastCuePath));
+    const EAstrawildToastCue SemanticCues[] = {
+        EAstrawildToastCue::Confirm, EAstrawildToastCue::Research, EAstrawildToastCue::Craft,
+        EAstrawildToastCue::Warning, EAstrawildToastCue::Click,  EAstrawildToastCue::Cancel,
+    };
+    const TCHAR* SemanticPaths[] = {
+        TEXT("/Game/Audio/A_UI_Confirm"), TEXT("/Game/Audio/A_UI_Research_Done"),
+        TEXT("/Game/Audio/A_UI_Craft_Done"), TEXT("/Game/Audio/A_UI_Warning"),
+        TEXT("/Game/Audio/A_UI_Click"), TEXT("/Game/Audio/A_UI_Cancel"),
+    };
+    const TArray<FName> ImportedCues = UAstrawildAudioDirectorSubsystem::GetImportedAudioCueNames();
+    for (int32 CueIndex = 0; CueIndex < 6; ++CueIndex)
+    {
+        const TCHAR* CuePath = UAstrawildHudWidget::GetToastCuePath(SemanticCues[CueIndex]);
+        TestEqual(FString::Printf(TEXT("Toast cue %d maps to its semantic path"), CueIndex),
+            FString(CuePath), FString(SemanticPaths[CueIndex]));
+        TestTrue(FString::Printf(TEXT("Toast cue %d path is a real imported package"), CueIndex),
+            ImportedCues.Contains(FName(CuePath)));
+    }
+
     // --- Part B: the detail-view knowledge gating (the pure contract) ---
     // A discovered species with NO knowledge flags sees stats/habits but NOT
     // weakness/habitat/food (the exploration loop keeps its value — the exact
@@ -7047,6 +7074,203 @@ bool FAstrawildCGC2FirstHourGuidanceContractTest::RunTest(const FString& Paramet
     UAstrawildSaveGame* SaveObject = NewObject<UAstrawildSaveGame>();
     TestEqual(TEXT("Save object SeenHints defaults empty (legacy saves)"),
         SaveObject->SeenHints.Num(), 0);
+
+    return true;
+}
+
+// ===========================================================================
+// CGC-3 (audio activation): the audio director contract — world-free pins for
+// every pure decision map (audit 2-b: 27 of 36 imported cues unused, the
+// zone ambience beds BOUND+PRELOADED but never played, weather broadcast
+// without an audio consumer). The runtime halves (SpawnSound2D kept handles,
+// heartbeat hysteresis loop, skiff hum) stay ENGINE-UNVERIFIED until the
+// engine run — only their pure pieces are pinned here.
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildCGC3AudioActivationContractTest,
+    "ASTRAWILD.CGC3.AudioActivationContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildCGC3AudioActivationContractTest::RunTest(const FString& Parameters)
+{
+    // The canonical import mirror: every path any map below returns MUST be a
+    // member (single source of truth in the director — 36 real packages).
+    const TArray<FName> RealCues = UAstrawildAudioDirectorSubsystem::GetImportedAudioCueNames();
+    TestEqual(TEXT("Imported audio cue mirror counts 36 real packages"), RealCues.Num(), 36);
+    for (const FName Cue : RealCues)
+    {
+        TestTrue(FString::Printf(TEXT("Mirror entry %s is a /Game/Audio path"), *Cue.ToString()),
+            Cue.ToString().StartsWith(TEXT("/Game/Audio/")));
+    }
+
+    // --- 1) Footstep surface map: TOTALITY over all 12 zones + pinned surfaces.
+    int32 ZonesCovered = 0;
+    for (const FAstrawildZoneDescriptor& Desc : UAstrawildZoneSubsystem::GetAllZones())
+    {
+        const FName Surface = UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(Desc.Zone);
+        TestFalse(FString::Printf(TEXT("Zone %s resolves a footstep surface"), *Desc.ZoneId.ToString()),
+            Surface.IsNone());
+        const FName CuePath(*FString::Printf(TEXT("/Game/Audio/A_Footstep_%s"), *Surface.ToString()));
+        TestTrue(FString::Printf(TEXT("Zone %s footstep cue %s is a real import"),
+                *Desc.ZoneId.ToString(), *CuePath.ToString()),
+            RealCues.Contains(CuePath));
+        ZonesCovered += !Surface.IsNone();
+    }
+    TestEqual(TEXT("Footstep map totals over all 12 zones"), ZonesCovered, 12);
+    TestEqual(TEXT("Sunscar Desert strides on Sand"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::SunscarDesert),
+        FName(TEXT("Sand")));
+    TestEqual(TEXT("Azure Shallows strides on Water"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::AzureShallows),
+        FName(TEXT("Water")));
+    TestEqual(TEXT("Pearlsea Reef strides on Water"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::PearlseaReef),
+        FName(TEXT("Water")));
+    TestEqual(TEXT("Tidebreaker Isles stride on Water"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::TidebreakerIsles),
+        FName(TEXT("Water")));
+    TestEqual(TEXT("Frostveil Expanse strides on Stone"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::FrostveilExpanse),
+        FName(TEXT("Stone")));
+    TestEqual(TEXT("Stormcrest Highlands stride on Stone"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::StormcrestHighlands),
+        FName(TEXT("Stone")));
+    TestEqual(TEXT("Hollow Approach strides on Stone"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::HollowApproach),
+        FName(TEXT("Stone")));
+    TestEqual(TEXT("Dawn Fields stride on Grass (the coarse default)"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::DawnFields),
+        FName(TEXT("Grass")));
+    TestEqual(TEXT("Untamed wilds (None) stride on Grass (documented coarse rule)"),
+        UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(EAstrawildZone::None),
+        FName(TEXT("Grass")));
+
+    // --- 2) Weather action map: all 8 states covered; every playing bed is a
+    //     real import; Clear/Cloudy are explicit STOP actions.
+    int32 WeatherStatesCovered = 0;
+    for (int32 StateIndex = 0; StateIndex <= 7; ++StateIndex)
+    {
+        const EAstrawildWeatherState State = static_cast<EAstrawildWeatherState>(StateIndex);
+        const FAstrawildWeatherAudioAction Action =
+            UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(State);
+        ++WeatherStatesCovered;
+        if (Action.bStop)
+        {
+            TestTrue(FString::Printf(TEXT("Weather %s is a STOP action carrying no cue"),
+                    *UEnum::GetValueAsString(State)),
+                Action.CuePath.IsNone());
+        }
+        else
+        {
+            TestFalse(FString::Printf(TEXT("Weather %s carries a bed cue"),
+                    *UEnum::GetValueAsString(State)),
+                Action.CuePath.IsNone());
+            TestTrue(FString::Printf(TEXT("Weather %s bed %s is a real import"),
+                    *UEnum::GetValueAsString(State), *Action.CuePath.ToString()),
+                RealCues.Contains(Action.CuePath));
+            TestTrue(FString::Printf(TEXT("Weather %s bed volume is sane (0..1]"),
+                    *UEnum::GetValueAsString(State)),
+                Action.Volume > 0.0f && Action.Volume <= 1.0f);
+        }
+    }
+    TestEqual(TEXT("Weather map totals all 8 states"), WeatherStatesCovered, 8);
+    TestEqual(TEXT("Clear STOPS the weather layer (zone bed alone)"),
+        UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(EAstrawildWeatherState::Clear).bStop, true);
+    TestEqual(TEXT("Cloudy STOPS the weather layer"),
+        UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(EAstrawildWeatherState::Cloudy).bStop, true);
+    TestEqual(TEXT("Storm rides the wind bed"),
+        UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(EAstrawildWeatherState::Storm).CuePath,
+        FName(TEXT("/Game/Audio/A_Amb_Wind_Gentle")));
+    TestEqual(TEXT("HeavyRain rides the water bed"),
+        UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(EAstrawildWeatherState::HeavyRain).CuePath,
+        FName(TEXT("/Game/Audio/A_Amb_Water_Lake")));
+    TestEqual(TEXT("Rain rides the water bed quieter than the heavy state"),
+        UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(EAstrawildWeatherState::Rain).Volume
+            <= UAstrawildAudioDirectorSubsystem::GetWeatherAudioAction(EAstrawildWeatherState::HeavyRain).Volume,
+        true);
+
+    // --- 3) Species cry map: exactly the 6 imported cries; everyone else fails
+    //     closed to NAME_None (SFXSet species stay silent until that import).
+    struct FCryRow { FName Species; FName Cue; };
+    const FCryRow CryRows[] = {
+        { TEXT("Echo_Bastionbeetle"), TEXT("/Game/Audio/A_Echo_Bastionbeetle_Skitter") },
+        { TEXT("Echo_Cindermule"),    TEXT("/Game/Audio/A_Echo_Cindermule_Grunt") },
+        { TEXT("Echo_Deepdelver"),    TEXT("/Game/Audio/A_Echo_Deepdelver_Rumble") },
+        { TEXT("Echo_Mistmender"),    TEXT("/Game/Audio/A_Echo_Mistmender_Chime") },
+        { TEXT("Echo_Terraquill"),    TEXT("/Game/Audio/A_Echo_Terraquill_Call") },
+        { TEXT("Echo_Voltpylon"),     TEXT("/Game/Audio/A_Echo_Voltpylon_Hum") },
+    };
+    for (const FCryRow& Row : CryRows)
+    {
+        TestEqual(FString::Printf(TEXT("Cry path for %s"), *Row.Species.ToString()),
+            UAstrawildAudioDirectorSubsystem::GetSpeciesCryPath(Row.Species), Row.Cue);
+        TestTrue(FString::Printf(TEXT("Cry %s is a real import"), *Row.Cue.ToString()),
+            RealCues.Contains(Row.Cue));
+    }
+    TestEqual(TEXT("Species without an imported cry stay silent (Echo_Lumewisp)"),
+        UAstrawildAudioDirectorSubsystem::GetSpeciesCryPath(TEXT("Echo_Lumewisp")), NAME_None);
+    TestEqual(TEXT("NAME_None species never resolves a cry (fail-closed)"),
+        UAstrawildAudioDirectorSubsystem::GetSpeciesCryPath(NAME_None), NAME_None);
+
+    // --- 4) Master volume statics: pure clamp contract (the CGC-4 hook).
+    TestEqual(TEXT("Master volume defaults to 1.0"),
+        UAstrawildAudioDirectorSubsystem::GetMasterVolume(), 1.0f);
+    UAstrawildAudioDirectorSubsystem::SetMasterVolume(-0.5f);
+    TestEqual(TEXT("SetMasterVolume(-0.5) clamps to 0"),
+        UAstrawildAudioDirectorSubsystem::GetMasterVolume(), 0.0f);
+    UAstrawildAudioDirectorSubsystem::SetMasterVolume(2.0f);
+    TestEqual(TEXT("SetMasterVolume(2.0) clamps to 1"),
+        UAstrawildAudioDirectorSubsystem::GetMasterVolume(), 1.0f);
+    UAstrawildAudioDirectorSubsystem::SetMasterVolume(0.35f);
+    TestEqual(TEXT("SetMasterVolume(0.35) holds mid-scale"),
+        UAstrawildAudioDirectorSubsystem::GetMasterVolume(), 0.35f);
+    UAstrawildAudioDirectorSubsystem::SetMasterVolume(1.0f); // restore for the rest of the suite
+
+    // --- 5) Ambience totality: EVERY zone resolves a NON-empty bed through the
+    //     SAME resolution the runtime director uses (the world-free registry
+    //     build idiom; the join is the biome Zone ENUM field, because three
+    //     zone-table ids abbreviate their biome ids).
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildContentLibrary::BuildDefaults(Registry);
+    UAstrawildProductionContent::BuildAll(Registry);
+    AstrawildBestiary::RegisterAll(Registry);
+
+    int32 BedsResolved = 0;
+    for (const FAstrawildZoneDescriptor& Desc : UAstrawildZoneSubsystem::GetAllZones())
+    {
+        const FName Bed = UAstrawildAudioDirectorSubsystem::GetZoneAmbiencePath(Registry, Desc.Zone);
+        TestFalse(FString::Printf(TEXT("Zone %s resolves its bound+preloaded ambience bed"),
+                *Desc.ZoneId.ToString()),
+            Bed.IsNone());
+        if (!Bed.IsNone())
+        {
+            ++BedsResolved;
+            TestTrue(FString::Printf(TEXT("Zone %s bed %s is a real import"),
+                    *Desc.ZoneId.ToString(), *Bed.ToString()),
+                RealCues.Contains(Bed));
+        }
+    }
+    TestEqual(TEXT("All 12 zones resolve a real ambience bed"), BedsResolved, 12);
+    TestTrue(TEXT("Ambience resolution fails closed without a registry (null)"),
+        UAstrawildAudioDirectorSubsystem::GetZoneAmbiencePath(nullptr, EAstrawildZone::DawnFields).IsNone());
+    TestTrue(TEXT("The untamed wilds (None) resolve no bed (honest silence)"),
+        UAstrawildAudioDirectorSubsystem::GetZoneAmbiencePath(Registry, EAstrawildZone::None).IsNone());
+
+    // --- 6) Runtime constants pinned (the ENGINE-UNVERIFIED pieces assert only
+    //     their pure halves): heartbeat hysteresis, stride, volumes.
+    TestEqual(TEXT("Heartbeat starts below 0.25 health"),
+        UAstrawildAudioDirectorSubsystem::HeartbeatStartFraction, 0.25f);
+    TestEqual(TEXT("Heartbeat stops at 0.30 (hysteresis)"),
+        UAstrawildAudioDirectorSubsystem::HeartbeatStopFraction, 0.30f);
+    TestTrue(TEXT("Heartbeat hysteresis stop sits above the start (no flicker)"),
+        UAstrawildAudioDirectorSubsystem::HeartbeatStopFraction
+            > UAstrawildAudioDirectorSubsystem::HeartbeatStartFraction);
+    TestEqual(TEXT("Footstep stride pinned at 220cm"),
+        UAstrawildAudioDirectorSubsystem::FootstepStrideCm, 220.0f);
+    TestEqual(TEXT("Ambience bed volume pinned at 0.4"),
+        UAstrawildAudioDirectorSubsystem::AmbienceVolume, 0.4f);
+    TestEqual(TEXT("Footstep volume pinned at 0.3"),
+        UAstrawildAudioDirectorSubsystem::FootstepVolume, 0.3f);
 
     return true;
 }
