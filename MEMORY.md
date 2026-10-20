@@ -190,3 +190,38 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
   art pass can layer on top via the existing ArtSource pipeline.
 - Security: PAT used via env-var + remote URL only, never written to any
   file/log/commit; user should revoke it after the session window closes.
+
+## Session 2026-10-20 — VOQA-1 static-QA closure (SUPER Z / GLM)
+
+- Context: this sandbox came back RESTORED to the TOK-2 state (2026-10-15) —
+  the VO-1R sandbox was destroyed by quota AFTER its push, so the local VO
+  branch was gone while origin carried the truth. Re-fetched from origin:
+  `agent/visual-overhaul-v1` @ `1d22925` (VO-1R tip — 6 commits on
+  `5f86a47`, not the lost c59613e line) and `agent/echodex-v1` @ `4695e2c`
+  (the lost session's other deliverable, already live). Checked the VO tip
+  out locally with LFS smudge skipped (QA needs pointers only).
+- User directive: "ทำไรก็เช็คให้ละเอียดเเล้วรีวิวด้วย ดูว่าทำไรยังไม่เสร็จ เเล้วทำต่อให้เสร็จ
+  พร้อมกับดูในกิตว่าเกม v1 กับ 2 ต่างกันยังไงบ้าง".
+- Full static QA re-run at the tip: lint_unreal_cpp PASS (0 errors, 1 known
+  advisory dead-decl unchanged since L4); validate_final_run ALL PASS (census
+  15/15: species 229 / quests 22 / items 78 / recipes 58 / buildings 26 /
+  techs 17 / npcs 13 / loot 11 / weapons 8 / nodes 10 / sites 8 / events 16 /
+  pois 17 / trees 13 / robots 3); validate_repository PASS;
+  dryrun_unreal_tools 49/49 PASS.
+- ONE genuine leftover found & FIXED: validate_design_data 77/78 — the VO-1R
+  session ran the extractor BEFORE its commit batch, so design_data.json
+  still stamped repo_head `5f86a47` while HEAD had moved to `1d22925` with
+  Source/ changes (the envelope check correctly refused). Regenerated at the
+  tip: 3-file diff (envelope 2 lines + bosses/dungeons DataTable trace
+  line-shifts +17 from the VO bootstrapper growth); tunables 577 / tests 140
+  / source_files 208 / census all identical; validator now 78/78 ALL PASS.
+  Commit `c1bc8b1`.
+- v1→v2 git comparison delivered to the owner (final-completion `5f86a47`
+  vs visual-overhaul `1d22925`: 6 commits / 18 files / five pillars).
+- Honest remaining (UNCHANGED): ENGINE-RUN-1 machine day on Windows UE 5.8.2
+  (ON_PC_TASKS hour 0→8, now including the VO §7 PIE grading addendum) is
+  the only product-critical item; optional: co-op client-parity batch
+  (WHATS_MISSING §3 row 1), canonical-branch decision final-completion vs
+  playable-delivery, real art pass on top of the zero-asset VO layer.
+- Security: the user's 1-day PAT (set during the VO-1R session) reused for
+  the push via env-var only; never written to any file/log/commit.
