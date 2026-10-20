@@ -1,0 +1,175 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 691,
+   "id": "Node_Dawnwood",
+   "name": "Dawnwood Stand",
+   "item": "Item_Wood",
+   "rarity": "Common",
+   "qty_per_harvest": 2,
+   "max_qty": 3,
+   "respawn_seconds": 30.0,
+   "tint": [
+    0.55,
+    0.4,
+    0.25
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 693,
+   "id": "Node_Fieldstone",
+   "name": "Fieldstone Outcrop",
+   "item": "Item_Stone",
+   "rarity": "Common",
+   "qty_per_harvest": 2,
+   "max_qty": 3,
+   "respawn_seconds": 30.0,
+   "tint": [
+    0.6,
+    0.6,
+    0.58
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 695,
+   "id": "Node_Sunfiber",
+   "name": "Sunfiber Thicket",
+   "item": "Item_Fiber",
+   "rarity": "Common",
+   "qty_per_harvest": 2,
+   "max_qty": 3,
+   "respawn_seconds": 25.0,
+   "tint": [
+    0.4,
+    0.7,
+    0.35
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 697,
+   "id": "Node_DawnCrystal",
+   "name": "Dawn Crystal Cluster",
+   "item": "Item_CrystalShard",
+   "rarity": "Uncommon",
+   "qty_per_harvest": 2,
+   "max_qty": 3,
+   "respawn_seconds": 60.0,
+   "tint": [
+    0.45,
+    0.75,
+    1.0
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 699,
+   "id": "Node_EmberAsh",
+   "name": "Ember Ash Vent",
+   "item": "Item_EmberAsh",
+   "rarity": "Uncommon",
+   "qty_per_harvest": 2,
+   "max_qty": 3,
+   "respawn_seconds": 55.0,
+   "tint": [
+    0.9,
+    0.45,
+    0.2
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 701,
+   "id": "Node_SeaPearl",
+   "name": "Sea Pearl Bed",
+   "item": "Item_SeaPearl",
+   "rarity": "Uncommon",
+   "qty_per_harvest": 1,
+   "max_qty": 2,
+   "respawn_seconds": 70.0,
+   "tint": [
+    0.85,
+    0.9,
+    1.0
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 703,
+   "id": "Node_CoralShard",
+   "name": "Coral Shard Reef",
+   "item": "Item_CoralShard",
+   "rarity": "Uncommon",
+   "qty_per_harvest": 2,
+   "max_qty": 3,
+   "respawn_seconds": 60.0,
+   "tint": [
+    1.0,
+    0.55,
+    0.6
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 705,
+   "id": "Node_DuneGlass",
+   "name": "Dune Glass Seam",
+   "item": "Item_DuneGlass",
+   "rarity": "Rare",
+   "qty_per_harvest": 1,
+   "max_qty": 2,
+   "respawn_seconds": 90.0,
+   "tint": [
+    0.95,
+    0.85,
+    0.5
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 707,
+   "id": "Node_StormSilver",
+   "name": "Storm Silver Vein",
+   "item": "Item_StormSilver",
+   "rarity": "Rare",
+   "qty_per_harvest": 1,
+   "max_qty": 2,
+   "respawn_seconds": 100.0,
+   "tint": [
+    0.7,
+    0.75,
+    0.95
+   ],
+   "hidden": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 709,
+   "id": "Node_AncientVein",
+   "name": "Hidden Alloy Vein",
+   "item": "Item_AncientAlloy",
+   "rarity": "Epic",
+   "qty_per_harvest": 1,
+   "max_qty": 1,
+   "respawn_seconds": 480.0,
+   "tint": [
+    0.6,
+    0.95,
+    0.9
+   ],
+   "hidden": true
+  }
+ ]
+}

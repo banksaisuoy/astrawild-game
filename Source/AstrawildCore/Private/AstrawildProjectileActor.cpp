@@ -1,6 +1,7 @@
 #include "AstrawildProjectileActor.h"
 
 #include "AstrawildCombatComponent.h"
+#include "AstrawildComboSubsystem.h"
 #include "AstrawildCore.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildDamageTarget.h"
@@ -8,6 +9,7 @@
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildSurvivalComponent.h"
 #include "AstrawildVfxActor.h"
 #include "Components/SphereComponent.h"
@@ -241,6 +243,16 @@ void AAstrawildProjectileActor::SetWeaponVfxAssets(const UAstrawildWeaponDefinit
     }
 }
 
+void AAstrawildProjectileActor::SetStatusPayload(FName InStatusId, float InStatusSeconds, float InStatusSpeedMultiplier, float InStatusDamagePerSecond)
+{
+    // FCR-1-a (M-a9): authored ability payload — sanitized (positive seconds,
+    // speed clamped to a sane band).
+    StatusPayloadId = InStatusId;
+    StatusPayloadSeconds = FMath::Max(0.0f, InStatusSeconds);
+    StatusPayloadSpeedMultiplier = FMath::Clamp(InStatusSpeedMultiplier, 0.2f, 2.5f);
+    StatusPayloadDamagePerSecond = FMath::Max(0.0f, InStatusDamagePerSecond);
+}
+
 void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AActor* OtherActor, UPrimitiveComponent* /*OtherComp*/, FVector /*NormalImpulse*/, const FHitResult& /*Hit*/)
 {
     // CP-05: impact burst on every machine that sees the contact (visual only,
@@ -268,29 +280,132 @@ void AAstrawildProjectileActor::OnHit(UPrimitiveComponent* /*HitComponent*/, AAc
     {
         if (!Echo->IsDefeated())
         {
-            Echo->ApplyElementalDamage(DamageAmount, Element);
+            const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get());
+
+            // FCR-1-a fix (H-a6): party-friendly fire — a bolt from any CAPTURED
+            // (player-owned) echo never damages another captured echo. The T-key
+            // volley fires the whole party at once; the old caster-only exclusion
+            // let stray bolts shred the player's own echoes standing in the line
+            // of fire. Wild (uncaptured) sources still hit captured targets — that
+            // is a hostile attack, exactly as designed.
+            const bool bBothCaptured = SourceEcho && SourceEcho->bCaptured && Echo->bCaptured;
+            if (!bBothCaptured)
+            {
+            float ComboDamage = DamageAmount;
+            // SCP Phase 6: party Echo ability bolts striking a player-marked
+            // target resolve the Dual-Tech reaction (bonus damage + status).
+            if (SourceEcho && GetWorld())
+            {
+                if (UAstrawildComboSubsystem* Combos = GetWorld()->GetSubsystem<UAstrawildComboSubsystem>())
+                {
+                    const FAstrawildComboReaction Reaction = Combos->TryResolveEchoAbilityCombo(OtherActor, SourceEcho);
+                    if (Reaction.IsValid())
+                    {
+                        ComboDamage *= Reaction.DamageMultiplier;
+                        // FCR-1-d fix (L-d15): the Dual-Tech toast reaches the
+                        // PLAYER (GetLastComboName had zero consumers — reactions
+                        // happened invisibly).
+                        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(
+                                GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr))
+                        {
+                            PC->Notify(FText::FromString(FString::Printf(TEXT("Dual-Tech: %s (x%.1f)"),
+                                *Reaction.DisplayName, Reaction.DamageMultiplier)));
+                        }
+                        if (!Reaction.StatusId.IsNone())
+                        {
+                            // Hitstop reads as a hard brief slow; other ids map
+                            // onto the standard status vocabulary.
+                            FAstrawildStatusEffect ComboStatus;
+                            ComboStatus.StatusId = Reaction.StatusId;
+                            if (Reaction.StatusId == TEXT("Status.Hitstop"))
+                            {
+                                ComboStatus.RemainingSeconds = UAstrawildComboLibrary::HitstopSeconds;
+                                ComboStatus.SpeedMultiplier = UAstrawildComboLibrary::HitstopSpeedMultiplier;
+                                ComboStatus.DamagePerSecond = 0.0f;
+                            }
+                            else
+                            {
+                                const EAstrawildElementType ReactionElement = Element;
+                                ComboStatus = UAstrawildCombatComponent::MakeElementalStatusEffect(ReactionElement, ComboDamage);
+                                ComboStatus.StatusId = Reaction.StatusId;
+                            }
+                            Echo->AddStatusEffect(ComboStatus);
+                        }
+                    }
+                }
+            }
+            Echo->ApplyElementalDamage(ComboDamage, Element);
+
+            // FCR-1-a fix (M-a9): the AUTHORED ability status lands on hit (the
+            // old offensive path discarded Data->StatusId/Seconds/Speed — blind,
+            // fear, rally, chill variants never happened as authored).
+            if (!StatusPayloadId.IsNone() && StatusPayloadSeconds > 0.0f)
+            {
+                FAstrawildStatusEffect Payload;
+                Payload.StatusId = StatusPayloadId;
+                Payload.RemainingSeconds = StatusPayloadSeconds;
+                Payload.DamagePerSecond = StatusPayloadDamagePerSecond;
+                Payload.SpeedMultiplier = StatusPayloadSpeedMultiplier;
+                Echo->AddStatusEffect(Payload);
+            }
+            }
         }
     }
     else if (AAstrawildEchoBossCharacter* Boss = Cast<AAstrawildEchoBossCharacter>(OtherActor))
     {
         if (!Boss->IsDefeated())
         {
-            Boss->ApplyElementalBossDamage(DamageAmount, Element);
+            // FCR-1-d fix (M-d11): Dual-Tech reactions resolve against BOSSES and
+            // damage targets too — the old echo-only resolution made the entire
+            // combo system dead in every boss fight (where it matters most).
+            float BossDamage = DamageAmount;
+            if (const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get()))
+            {
+                if (UAstrawildComboSubsystem* Combos = GetWorld() ? GetWorld()->GetSubsystem<UAstrawildComboSubsystem>() : nullptr)
+                {
+                    const FAstrawildComboReaction Reaction = Combos->TryResolveEchoAbilityCombo(OtherActor, SourceEcho);
+                    if (Reaction.IsValid())
+                    {
+                        BossDamage *= Reaction.DamageMultiplier;
+                    }
+                }
+            }
+            Boss->ApplyElementalBossDamage(BossDamage, Element);
         }
     }
     else if (AAstrawildDamageTarget* DamageTarget = Cast<AAstrawildDamageTarget>(OtherActor))
     {
         if (!DamageTarget->IsDefeated())
         {
-            DamageTarget->ApplyDamage(DamageAmount);
+            // FCR-1-d fix (M-d11): same combo resolution for damage targets.
+            float TargetDamage = DamageAmount;
+            if (const AAstrawildEchoCharacter* SourceEcho = Cast<AAstrawildEchoCharacter>(OwnerActor.Get()))
+            {
+                if (UAstrawildComboSubsystem* Combos = GetWorld() ? GetWorld()->GetSubsystem<UAstrawildComboSubsystem>() : nullptr)
+                {
+                    const FAstrawildComboReaction Reaction = Combos->TryResolveEchoAbilityCombo(OtherActor, SourceEcho);
+                    if (Reaction.IsValid())
+                    {
+                        TargetDamage *= Reaction.DamageMultiplier;
+                    }
+                }
+            }
+            DamageTarget->ApplyDamage(TargetDamage);
         }
     }
     else if (AAstrawildPlayerCharacter* Player = Cast<AAstrawildPlayerCharacter>(OtherActor))
     {
-        // Final production run: HOSTILE bolts (boss-fired) hurt players — routed
-        // through the player's mitigation pipeline exactly like a boss melee hit.
+        // Final production run: HOSTILE bolts hurt players — routed through the
+        // player's mitigation pipeline exactly like a boss melee hit.
+        // FCR-1-a fix (H-a4): hostility is decided by the OWNER, not the class —
+        // the old boss-only gate made WILD hostile casters (Gloomfang, Emberfang…)
+        // fire bolts that impacted players and silently vanished. A boss owner OR
+        // any uncaptured hostile-definition echo owner makes the bolt hostile.
         // Player-fired bolts can never reach this branch with the owner as victim.
-        const bool bHostileBolt = Cast<AAstrawildEchoBossCharacter>(OwnerActor.Get()) != nullptr;
+        const AActor* Owner = OwnerActor.Get();
+        const AAstrawildEchoCharacter* OwnerEcho = Cast<AAstrawildEchoCharacter>(Owner);
+        const bool bHostileBolt = (Cast<AAstrawildEchoBossCharacter>(Owner) != nullptr)
+            || (OwnerEcho && !OwnerEcho->bCaptured && OwnerEcho->EchoDefinition && OwnerEcho->EchoDefinition->bHostileToPlayers);
         if (bHostileBolt && Player->IsAlive())
         {
             if (UAstrawildSurvivalComponent* Survival = Player->FindComponentByClass<UAstrawildSurvivalComponent>())

@@ -31,6 +31,19 @@ struct FAstrawildAtmosphereSample
 };
 
 /**
+ * CGC-1: world-free view of one legacy per-zone wildlife table row. The
+ * wildlife director's spawn plan and the automation tests read the REAL
+ * placement table through this struct (AAstrawildWorldBootstrapper::
+ * GetLegacyZoneWildlife); the table literals themselves stay untouched.
+ */
+struct FAstrawildZoneWildlifeRow
+{
+    EAstrawildZone Zone = EAstrawildZone::None;
+    FName SpeciesId = NAME_None;
+    int32 Count = 0;
+};
+
+/**
  * Zero-asset world bootstrapper (directive §21/§50): on the server, builds the
  * Shattered Vale — twelve 800m x 800m terrain zones (Batch 8 "The Grand
  * Expanse", was six in Batch 7), the Dawnstead village + camp in the Dawn
@@ -43,6 +56,16 @@ struct FAstrawildAtmosphereSample
  *
  * Deterministic: all spawns derive from the GameState WorldSeed through the
  * terrain height field (AAstrawildTerrainTileActor::EvalWorldHeight).
+ *
+ * LCP-2 (LAN co-op client world): the bootstrapper REPLICATES so clients receive
+ * it, then every machine builds its own deterministic COSMETIC copy of the world
+ * (lighting rig, terrain tiles, sea planes, zone landmarks, biome dressing) from
+ * the replicated seed — those layers never replicate (zero bandwidth). Gameplay
+ * actors (nodes/NPCs/stations/villages/skiffs/dungeons) stay authority-spawned
+ * and replicate normally. The landmark/dressing scatter uses a dedicated
+ * CosmeticStream (seed ^ salt) so its output is machine-order-independent;
+ * dressing additionally waits for the replicated gameplay actors to stream in so
+ * its exclusion bubbles match the server's exactly.
  */
 UCLASS(Blueprintable)
 class ASTRAWILDCORE_API AAstrawildWorldBootstrapper : public AActor
@@ -93,6 +116,24 @@ public:
     /** Dawn Fields camp center (spawn point). */
     static FVector2D GetCampCenterXY();
 
+    /**
+     * LCP-2 (world-free testable): which machines build the deterministic
+     * cosmetic world layers. Authority (standalone + listen host) builds inside
+     * BeginPlay; simulated clients build after the seed syncs (bWorldSeedSynced).
+     */
+    static bool ShouldBuildCosmeticWorld(const ENetRole InLocalRole, const ENetMode InNetMode);
+
+    /**
+     * LCP-2 (world-free testable): minimum replicated gameplay actor count a
+     * client waits for before building biome dressing (villages, dungeons,
+     * portals, POI markers, skiffs — the exclusion-bubble sources). PoiCount is
+     * the registry's POI definition count (identical on every machine).
+     */
+    static int32 ComputeExpectedReplicatedWorldActorCount(const int32 PoiCount);
+
+    /** Cosmetic-stream salt: landmarks/dressing derive from seed ^ this value. */
+    static constexpr uint32 CosmeticStreamSalt = 0x5C05E71Cu;
+
     /** Hollow Underlight dungeon center in the Hollow Approach. */
     static FVector2D GetDungeonCenterXY();
 
@@ -101,6 +142,12 @@ public:
 
     /** Batch 8 — Driftwood Landing village center in the Tidebreaker Isles. */
     static FVector2D GetDriftwoodLandingXY();
+
+    /** Final Run (FR-7) — Stormcrest zone center (the Eye gate + Glass Tyrant roam). */
+    static FVector2D GetStormcrestCenterXY();
+
+    /** Final Run (FR-7) — Eye of the Maelstrom dungeon anchor (~400m over Stormcrest). */
+    static FVector2D GetEyeDungeonCenterXY();
 
     /**
      * Pure atmosphere ramp (automation-tested): SunAlpha 0=dawn..0.5=noon..1=dusk
@@ -111,6 +158,12 @@ public:
 
     /** Base sun intensity curve shared by UpdateSunRotation + UpdateAtmosphere (pure). */
     static float EvalSunBaseIntensity(float SunAlpha, bool bIsNight);
+
+    /** CGC-1: the legacy ZoneWildlife table as a world-free view (rows in table order). */
+    static void GetLegacyZoneWildlife(TArray<FAstrawildZoneWildlifeRow>& OutRows);
+
+    /** CGC-1: true once the authority BeginPlay finished ALL of its spawn phases. */
+    bool HasCompletedAuthoritySpawn() const { return bAuthoritySpawnComplete; }
 
 private:
     void BuildLighting();
@@ -150,16 +203,48 @@ private:
     /** Random point inside a zone's inner rect (10% inset), snapped to terrain. */
     FVector RandomPointInZone(const FAstrawildZoneDescriptor& Zone, float MinDistanceToCenter);
 
+    /** LCP-2: stream-parameterized variant — cosmetic callers pass CosmeticStream so their scatter is machine-order-independent. */
+    FVector RandomPointInZoneWith(FRandomStream& Stream, const FAstrawildZoneDescriptor& Zone, float MinDistanceToCenter);
+
     void UpdateSunRotation();
     void UpdateFlickerLights(float TimeSeconds);
 
     /** Production V2 Batch 2: day/night + weather atmosphere grading (fog/sun/sky). */
     void UpdateAtmosphere();
 
+    // --- LCP-2: LAN client world build ---
+
+    /** Client: build the seed-independent-of-gameplay cosmetic layers (terrain/sea/lighting/landmarks). */
+    void BuildClientCosmeticWorld();
+
+    /** Client: build biome dressing once the replicated gameplay actors streamed in (or timeout). */
+    void TryBuildClientDressing();
+
+    /** True while a client-side actor-count gate still needs more streamed actors. */
+    bool ClientDressingGateSatisfied() const;
+
+    /** LCP-2 helper: count live actors of a class (client dressing gate). */
+    static int32 CountActorsOf(const UWorld* World, UClass* Class);
+
     class AAstrawildGameState* GetGameState() const;
 
     FRandomStream RandomStream;
     int32 WorldSeedCached = 1337;
+
+    /** LCP-2: dedicated stream for landmark/dressing scatter — identical on every machine. */
+    FRandomStream CosmeticStream;
+
+    /** LCP-2: client build state (authority machines stay false forever). */
+    bool bPendingClientWorldBuild = false;
+    bool bClientWorldBuilt = false;
+    bool bPendingClientDressing = false;
+    float ClientDressingWaitElapsed = 0.0f;
+
+    /** LCP-2: hard cap for the dressing actor-stream gate (seconds). */
+    static constexpr float ClientDressingGateTimeoutSeconds = 15.0f;
+
+    /** CGC-1: authority spawn completion flag (the wildlife director's boot-pass gate). */
+    bool bAuthoritySpawnComplete = false;
 
     UPROPERTY()
     TObjectPtr<ADirectionalLight> SunLight;

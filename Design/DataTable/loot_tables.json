@@ -1,0 +1,233 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1195,
+   "id": "Loot_DungeonBoss",
+   "guaranteed_drops": [],
+   "bonus_chance": 0.75,
+   "bonus_line": 1197
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1203,
+   "id": "Loot_VendorStarter",
+   "guaranteed_drops": [
+    {
+     "item": "Item_Berry",
+     "qty": 3
+    },
+    {
+     "item": "Item_WaterFlask",
+     "qty": 1
+    },
+    {
+     "item": "Item_Bandage",
+     "qty": 2
+    },
+    {
+     "item": "Item_HerbalSalve",
+     "qty": 1
+    },
+    {
+     "item": "Item_Resonator",
+     "qty": 1
+    }
+   ],
+   "bonus_chance": 0.0,
+   "drops_line": 1204,
+   "bonus_line": 1205
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1212,
+   "id": "Loot_VendorHerbalist",
+   "guaranteed_drops": [
+    {
+     "item": "Item_HerbalSalve",
+     "qty": 2
+    },
+    {
+     "item": "Item_Bandage",
+     "qty": 2
+    },
+    {
+     "item": "Item_WarmBroth",
+     "qty": 1
+    },
+    {
+     "item": "Item_Fertilizer",
+     "qty": 2
+    },
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.0,
+   "drops_line": 1213,
+   "bonus_line": 1214
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1219,
+   "id": "Loot_VendorArmory",
+   "guaranteed_drops": [
+    {
+     "item": "Item_DawnwoodClub",
+     "qty": 1
+    },
+    {
+     "item": "Item_StonehideShield",
+     "qty": 1
+    },
+    {
+     "item": "Item_FiberWeaveVest",
+     "qty": 1
+    },
+    {
+     "item": "Item_CrystalBlade",
+     "qty": 1
+    },
+    {
+     "item": "Item_StormSilver",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.0,
+   "drops_line": 1220,
+   "bonus_line": 1221
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1226,
+   "id": "Loot_VendorDriftwood",
+   "guaranteed_drops": [
+    {
+     "item": "Item_CookedMeat",
+     "qty": 2
+    },
+    {
+     "item": "Item_WaterFlask",
+     "qty": 1
+    },
+    {
+     "item": "Item_SeaPearl",
+     "qty": 1
+    },
+    {
+     "item": "Item_CoralShard",
+     "qty": 2
+    },
+    {
+     "item": "Item_Bandage",
+     "qty": 1
+    }
+   ],
+   "bonus_chance": 0.0,
+   "drops_line": 1227,
+   "bonus_line": 1228
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 883,
+   "id": "Loot_EventSupplyDrop",
+   "guaranteed_drops": [
+    {
+     "item": "Item_EnergyCell",
+     "qty": 6
+    },
+    {
+     "item": "Item_Bandage",
+     "qty": 2
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 1
+    }
+   ],
+   "bonus_chance": 0.5
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 885,
+   "id": "Loot_EventMeteor",
+   "guaranteed_drops": [
+    {
+     "item": "Item_StormSilver",
+     "qty": 3
+    },
+    {
+     "item": "Item_DuneGlass",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.4
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 887,
+   "id": "Loot_POIAncient",
+   "guaranteed_drops": [
+    {
+     "item": "Item_AncientAlloy",
+     "qty": 1
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.35
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 889,
+   "id": "Loot_POIRuin",
+   "guaranteed_drops": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.3
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 891,
+   "id": "Loot_POIWatchtower",
+   "guaranteed_drops": [
+    {
+     "item": "Item_Bandage",
+     "qty": 2
+    },
+    {
+     "item": "Item_WaterFlask",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.25
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 3002,
+   "id": "Loot_EyeCore",
+   "guaranteed_drops": [
+    {
+     "item": "Item_SovereignCore",
+     "qty": 1
+    },
+    {
+     "item": "Item_MaelstromGlass",
+     "qty": 2
+    }
+   ],
+   "bonus_chance": 0.5
+  }
+ ]
+}

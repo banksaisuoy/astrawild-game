@@ -1,5 +1,13 @@
 # ASTRAWILD — Production V2 Worklog & Status Report
 
+> **[HISTORICAL / SUPERSEDED — do not trust as current status]** This worklog is the
+> 2026-08-31 Antigravity engine-session record (Vertical-Slice era: 48 automation
+> tests, 25/54-test era predecessors). The `100%` pass-rate and `RUNTIME VERIFIED`
+> rows below are frozen to that date. The CURRENT state is branch `final-completion`
+> at tip: 126 automation contracts, 229 Echo species, Sci-Fantasy mutation system —
+> **all ENGINE-UNVERIFIED at tip** (engine claims belong only to a future V2-29..V2-35
+> run). Canonical: `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.1).
+
 **Date**: 2026-08-31
 **Role**: Unreal Engine 5.8 Production Engineer, Technical Artist & Runtime QA Lead
 **Working Directory**: `E:\AstrawildGame`

@@ -2,17 +2,31 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "AstrawildTypes.h"
 #include "AstrawildPlayerController.generated.h"
 
 class AAstrawildNPCCharacter;
 class UAstrawildQuestComponent;
+class UAstrawildEndingCinematicComponent;
 class UAstrawildHudWidget;
+class UAstrawildCraftingScreenWidget;
 class UAstrawildInventoryScreenWidget;
 class UAstrawildPauseMenuWidget;
 class UAstrawildResearchScreenWidget;
 class UAstrawildShopWidget;
 class UAstrawildDialogueWidget;
 class UAstrawildDialogueComponent;
+class UAstrawildJournalScreenWidget;
+class UAstrawildRosterScreenWidget;
+class UAstrawildMapScreenWidget;
+class UAstrawildHuntScreenWidget;
+class UAstrawildControlsScreenWidget;
+class UAstrawildSettingsWidget;
+class UAstrawildTitleMenuWidget;
+class UAstrawildVictoryScreenWidget;
+class UAstrawildDeathOverlayWidget;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildVictoryAchieved, FName, VictoryQuestId);
 
 /**
  * ASTRAWILD player controller: hosts the quest component (survives respawn) and
@@ -33,6 +47,10 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Dialogue")
     TObjectPtr<UAstrawildDialogueComponent> DialogueComponent;
 
+    /** DCP-3: ending cinematic sequence driver (letterbox + staged shots; local presentation only). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Ending")
+    TObjectPtr<UAstrawildEndingCinematicComponent> EndingCinematic;
+
     /** Dialogue screen class override point (defaults to the pure-C++ dialogue widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
     TSubclassOf<UAstrawildDialogueWidget> DialogueWidgetClass;
@@ -48,9 +66,74 @@ public:
     /**
      * Audit C-2/C-7: transient HUD notification for gameplay feedback (research
      * unlocks, work-site collection, capture results). No-op when no HUD exists.
+     * CGC-3: the optional Cue routes the toast's audio through the semantic map
+     * (default Confirm — the ~60 generic sites keep their existing blip).
      */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
-    void Notify(const FText& Message);
+    void Notify(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm);
+
+    // --- LCP-3: LAN co-op client routing (the first Client RPCs in the module) ---
+
+    /**
+     * LCP-3: server -> owning client notification. Host-local callers keep using
+     * Notify(); server-side code that must reach a REMOTE player's screen routes
+     * through NotifyPlayer (local -> Notify, remote -> ClientNotify).
+     * CGC-3: the Cue rides the RPC so remote screens hear the semantic toast
+     * audio too (explicit param — RPC declarations keep no default values).
+     */
+    UFUNCTION(Client, Reliable)
+    void ClientNotify(const FText& Message, EAstrawildToastCue Cue);
+
+    /** LCP-3: delivery helper - whatever machine owns this controller's screen gets the message. */
+    void NotifyPlayer(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm);
+
+    /**
+     * CGC-2: one-shot first-time teaching hint. Checks the save subsystem's
+     * SeenHints store (additive v5, the DialogueFlags pattern); when the flag
+     * is unseen it toasts via NotifyPlayer (LAN-safe: the call sites are
+     * server-side, so the mark lands on the host's persisted mirror and the
+     * message routes to the owning screen) and marks it seen. Fail-closed both
+     * ways: a missing save subsystem downgrades to a plain repeatable toast
+     * (better a repeated hint than a missing one), and an empty message no-ops.
+     */
+    void ShowOnce(FName HintFlag, const FText& Message);
+
+    /**
+     * LCP-4: STABLE per-player identity for roster partition + per-player save
+     * blocks: the PlayerState name when set, else a session-unique slot id.
+     * NOT the pawn object name (session-unique but unstable across saves).
+     */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Player")
+    FName GetPlayerKey() const;
+
+    /** LCP-3: server -> owning client shop open (remote vendor interaction). */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenVendorShop(class AAstrawildNPCCharacter* Vendor);
+
+    /** LCP-3: server -> owning client dialogue open (remote NPC conversation). */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenVendorDialogue(class AAstrawildNPCCharacter* Npc);
+
+    /** LCP-3: server -> owning client crafting screen open (remote station interaction). */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenCraftingScreen(class AAstrawildCraftingStationActor* Station);
+
+    /**
+     * LCP-3: remote shop row transaction intent. Server validates the vendor
+     * distance + routes through the authority-guarded TryPurchase/TrySell.
+     */
+    UFUNCTION(Server, Reliable)
+    void ServerVendorTrade(class AAstrawildNPCCharacter* Vendor, FName ItemId, int32 Quantity, bool bBuy);
+
+    /**
+     * LCP-3: remote dialogue choice submission. The client sends the node +
+     * choice index it displayed (static registry content); the server
+     * re-resolves and re-validates everything structurally + conditionally
+     * (fail-closed) before applying consequences through the authority
+     * DialogueComponent.
+     */
+    UFUNCTION(Server, Reliable)
+    void ServerSubmitDialogueChoice(class AAstrawildNPCCharacter* Npc, FName NodeId, int32 ChoiceIndex);
 
     /**
      * Batch 5 — Item C: open the vendor shop screen for the given NPC (switches
@@ -103,6 +186,18 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsResearchOpen() const;
 
+    /** Final-audit F-02: the crafting screen (recipe list + gates + timers + cancel)
+     *  existed fully implemented but was never instantiated — stations auto-crafted
+     *  the first passing recipe with no player agency. This is its open path. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildCraftingScreenWidget> CraftingScreenClass;
+
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleCraftingScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsCraftingOpen() const;
+
     /** Pause menu class override point (defaults to the pure-C++ widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
     TSubclassOf<UAstrawildPauseMenuWidget> PauseMenuClass;
@@ -113,6 +208,194 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsPauseMenuOpen() const;
 
+    // --- PCR: Field Journal / Echo Roster / World Map screens ---
+
+    /** PCR-1 (PG-1): Field Journal screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildJournalScreenWidget> JournalScreenClass;
+
+    /** PCR-1: toggle the Field Journal (bestiary) screen — key P. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleJournalScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsJournalOpen() const;
+
+    /** PCR-2 (PG-2): Echo Roster screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildRosterScreenWidget> RosterScreenClass;
+
+    /** PCR-2: toggle the captured-Echo roster/party screen — key L. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleRosterScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsRosterOpen() const;
+
+    /**
+     * PCR-2: this player's roster slice, replicated from the host's roster
+     * pool for read-only display on a pure LAN client (single-player/host
+     * reads it live through the roster subsystem — the mirror is kept in
+     * sync there too so the screen reads one source). Mutations always route
+     * through RequestSetEchoBenched -> ServerSetEchoBenched (authority).
+     */
+    UPROPERTY(ReplicatedUsing = OnRep_RosterMirror, BlueprintReadOnly, Category="ASTRAWILD|Echo")
+    TArray<FAstrawildEchoInstanceV2> RosterMirror;
+
+    UFUNCTION()
+    void OnRep_RosterMirror();
+
+    /**
+     * PCR-2: bench/unbench one of this player's captured Echoes. Local
+     * authority (single player / listen host) mutates directly; a remote
+     * client routes through the validated server RPC.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Echo")
+    bool RequestSetEchoBenched(const FGuid& InstanceId, bool bBenched);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetEchoBenched(const FGuid& InstanceId, bool bBenched);
+
+    /** PCR-3 (PG-3): World Map screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildMapScreenWidget> MapScreenClass;
+
+    /** PCR-3: toggle the world map screen — key M. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleMapScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsMapOpen() const;
+
+    /** PCR-5 (PG-5): Hunt Board screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildHuntScreenWidget> HuntScreenClass;
+
+    /** PCR-5: toggle the Hunt Board (post-game repeatable cull contracts) — key U. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleHuntScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsHuntOpen() const;
+
+    /** CGC-2: read-only Controls screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildControlsScreenWidget> ControlsScreenClass;
+
+    /** CGC-2: toggle the read-only Controls screen (33-action reference incl. the CGC-4 F6 HUD toggle) — pause-menu button only. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleControlsScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsControlsOpen() const;
+
+    // --- CGC-4: the Settings screen (first player-adjustable anything) ---
+
+    /** CGC-4: settings screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildSettingsWidget> SettingsScreenClass;
+
+    /** CGC-4: toggle the settings screen (volume / sensitivity / FOV / gamma / reset) — pause-menu button only. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleSettingsScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsSettingsOpen() const;
+
+    /**
+     * CGC-4 (F6, AWD_ToggleHUD): flip the HUD widget's visibility
+     * (Collapsed <-> Visible). PURE TOGGLE by design — opening any screen
+     * while hidden does NOT auto-restore (the screens are separate widgets
+     * and keep working), and hiding survives screen open/close. Fail-closed:
+     * no HUD widget (very early boot) = no-op.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleHudVisibility();
+
+    /** CGC-4: true while the HUD is hidden by the F6 toggle. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsHudHidden() const { return bHudHidden; }
+
+    /**
+     * PCR-5: claim a completed hunt round. Local authority mutates directly;
+     * a remote client routes through the validated server RPC.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Hunt")
+    bool RequestClaimHunt(FName HuntId);
+
+    UFUNCTION(Server, Reliable)
+    void ServerClaimHunt(FName HuntId);
+
+    // --- Completion stage: title screen / victory / death beat ---
+
+    /** Title screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildTitleMenuWidget> TitleMenuClass;
+
+    /** Victory screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildVictoryScreenWidget> VictoryScreenClass;
+
+    /** Death overlay class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildDeathOverlayWidget> DeathOverlayClass;
+
+    /**
+     * Completion stage (TITLE): show the title menu when a standalone/packaged
+     * session boots. PIE keeps iterating without it for dev speed. The menu is
+     * also skipped on dedicated servers and remote clients (local screens only).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    bool bShowTitleScreenAtBoot = true;
+
+    /**
+     * Completion stage (VICTORY): the quest whose completion raises the victory
+     * screen. Defaults to the chain-closer authored in ProductionContent
+     * (Signals → Vanguard closes the arc; free hunt begins afterwards).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Quest")
+    FName VictoryQuestId = TEXT("Quest_VanguardProtocol");
+
+    /** Broadcast (local) when the victory screen appears. */
+    UPROPERTY(BlueprintAssignable, Category="ASTRAWILD|Quest")
+    FAstrawildVictoryAchieved OnVictoryAchieved;
+
+    /** Show the title screen now (local controller only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ShowTitleScreen();
+
+    /**
+     * Close the title screen. With bContinueGame the newest save is loaded
+     * (the "Continue" path — autosave wins when newer); otherwise the fresh
+     * bootstrap session simply resumes.
+     */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void DismissTitleScreen(bool bContinueGame);
+
+    /** True while the title screen owns the viewport. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsTitleScreenOpen() const;
+
+    /** Raise the victory screen with the current session stats (local controller only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ShowVictoryScreen();
+
+    /** Dismiss the victory screen and return to the free hunt. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void HideVictoryScreen();
+
+    /** True while the victory screen is on the viewport. */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsVictoryScreenOpen() const;
+
+    /** Show the death overlay with a respawn countdown (local controller only). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ShowDeathOverlay(float RespawnSeconds);
+
+    /** Hide the death overlay (called on respawn). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void HideDeathOverlay();
+
     /** True when any full-screen UI owns the input (blocks gameplay shortcuts). */
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsAnyScreenOpen() const;
@@ -120,7 +403,19 @@ public:
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
 
+    /** PCR-2: the RosterMirror replicates to the owning client (LCP-5 pattern). */
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
+    /**
+     * CGC-3: full-screen UI open/close feedback (A_UI_Click / A_UI_Cancel at
+     * 0.25) — fail-closed 2D blips on the local controller; a missing package
+     * is a silent open, never a block. Called by every Toggle*Screen at the
+     * moment the screen state actually resolves (open or close).
+     */
+    void PlayUiOpenSound();
+    void PlayUiCloseSound();
+
     UPROPERTY()
     TObjectPtr<UAstrawildHudWidget> HudWidget;
 
@@ -137,5 +432,41 @@ private:
     TObjectPtr<UAstrawildResearchScreenWidget> ResearchScreen;
 
     UPROPERTY()
+    TObjectPtr<UAstrawildCraftingScreenWidget> CraftingScreen;
+
+    UPROPERTY()
     TObjectPtr<UAstrawildPauseMenuWidget> PauseMenuWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildJournalScreenWidget> JournalScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildRosterScreenWidget> RosterScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildMapScreenWidget> MapScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildHuntScreenWidget> HuntScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildControlsScreenWidget> ControlsScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildSettingsWidget> SettingsScreen;
+
+    /** CGC-4: the F6 HUD-hidden state (pure visibility flip; boot starts visible). */
+    bool bHudHidden = false;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildTitleMenuWidget> TitleMenuWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildVictoryScreenWidget> VictoryScreenWidget;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildDeathOverlayWidget> DeathOverlayWidget;
+
+    UFUNCTION()
+    void HandleQuestStateChanged(FName QuestId, bool bCompleted);
 };

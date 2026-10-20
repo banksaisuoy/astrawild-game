@@ -99,6 +99,21 @@ private:
     TArray<FAstrawildItemStack> PendingOutputs;
 
     /**
+     * FPP-1: toast the owning player (craft refusal reasons + completions).
+     * CGC-3: the optional Cue differentiates the toast audio — refusals carry
+     * the WARNING blip, completions/Masterwork carry the CRAFT chime; the
+     * default stays the generic confirm blip.
+     */
+    void NotifyOwnerPlayer(const FText& Message, EAstrawildToastCue Cue = EAstrawildToastCue::Confirm) const;
+
+    /** FPP-1: player-readable recipe label (registry display name fallback id). */
+    FString GetRecipeDisplayName(FName RecipeId) const;
+
+    /** GDP-3: Masterwork roll won at consume time — refund lands on completion. */
+    bool bMasterworkPendingRefund = false;
+    TArray<FAstrawildItemStack> PendingRefundInputs;
+
+    /**
      * H-11 guard (Production V2): true while completed outputs are held because
      * the pack is full — retries every second until space frees, blocks cancel
      * (a cancel here would refund ingredients AND keep granted outputs).

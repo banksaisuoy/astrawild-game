@@ -1,5 +1,10 @@
 #include "AstrawildPlayerCharacter.h"
 
+#include "Net/UnrealNetwork.h" // LCP-3: DOREPLIFETIME
+
+#include "AstrawildAbilityLibrary.h"
+#include "AstrawildAttributeComponent.h"
+#include "AstrawildAudioDirectorSubsystem.h" // CGC-3: fail-closed 2D blip helpers + footstep dispatcher.
 #include "AstrawildBuildingActor.h"
 #include "AstrawildBuildingComponent.h"
 #include "AstrawildCaptureComponent.h"
@@ -8,16 +13,21 @@
 #include "AstrawildCraftingComponent.h"
 #include "AstrawildDataAssets.h"
 #include "AstrawildArtPack.h"
+#include "AstrawildDifficultySubsystem.h"
+#include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoAIController.h"
 #include "AstrawildEchoRosterSubsystem.h"
+#include "AstrawildErrorReporter.h"
 #include "AstrawildEventBusSubsystem.h"
 #include "AstrawildGameMode.h"
 #include "AstrawildGameplayTags.h"
+#include "AstrawildGameState.h" // CGC-2: first-nightfall hint reads IsNight().
 #include "AstrawildInteractable.h"
 #include "AstrawildInventoryComponent.h"
 #include "AstrawildItemRegistrySubsystem.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildMountComponent.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerController.h"
 #include "AstrawildSkiffActor.h"
@@ -27,6 +37,7 @@
 #include "AstrawildUtilityRobotActor.h"
 #include "AstrawildVfxActor.h"
 #include "AstrawildWorkSiteActor.h"
+#include "AstrawildZoneSubsystem.h" // CGC-3: footstep surface resolves through the pure zone table.
 #include "Camera/CameraComponent.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Components/CapsuleComponent.h"
@@ -55,7 +66,11 @@
 
 AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    // GDP-3: the tick must ALWAYS run — skill cooldowns + buff windows decay in
+    // Tick (zero-asset mode included; the animation driver gate below used to be
+    // the only enabler, which would have frozen the skill system with no skinned mesh).
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 
     // Art pack soft bindings (Batch 4): AstrawildArtPack is the single source of
     // truth — the designer can still override per-archetype in a BP subclass.
@@ -85,8 +100,11 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 360.0f;
+    CameraBoom->TargetArmLength = 320.0f;
+    CameraBoom->SocketOffset = FVector(0.0f, 35.0f, 45.0f);
     CameraBoom->bUsePawnControlRotation = true;
+    CameraBoom->bEnableCameraLag = true;
+    CameraBoom->CameraLagSpeed = 15.0f;
 
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -95,14 +113,8 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     PlaceholderMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderMesh"));
     PlaceholderMesh->SetupAttachment(RootComponent);
     PlaceholderMesh->SetCollisionProfileName(TEXT("NoCollision"));
-
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-    if (CylinderMesh.Succeeded())
-    {
-        PlaceholderMesh->SetStaticMesh(CylinderMesh.Object);
-        PlaceholderMesh->SetWorldScale3D(FVector(0.45f, 0.45f, 0.95f));
-        PlaceholderMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 96.0f));
-    }
+    PlaceholderMesh->SetVisibility(false);
+    PlaceholderMesh->SetHiddenInGame(true);
 
     // Production V2 Batch 2: procedural survivor body + held weapon mesh.
     BodyMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("BodyMesh"));
@@ -124,6 +136,8 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     SurvivalComponent = CreateDefaultSubobject<UAstrawildSurvivalComponent>(TEXT("Survival"));
     CombatComponent = CreateDefaultSubobject<UAstrawildCombatComponent>(TEXT("Combat"));
     BuildingComponent = CreateDefaultSubobject<UAstrawildBuildingComponent>(TEXT("Building"));
+    AttributeComponent = CreateDefaultSubobject<UAstrawildAttributeComponent>(TEXT("Attributes"));
+    DurabilityComponent = CreateDefaultSubobject<UAstrawildDurabilityComponent>(TEXT("Durability"));
 
     // Audit C-3: broad navmesh generation around the player covers the camp, the
     // arena interior and the dungeon approach in the zero-asset world.
@@ -172,7 +186,14 @@ void AAstrawildPlayerCharacter::BeginPlay()
         {
             if (StarterItem.IsValid())
             {
-                InventoryComponent->AddItem(StarterItem.ItemId, StarterItem.Quantity);
+                // CGC-2 (D) MQ-1 integrity: the kit grants SILENTLY. AddItem would
+                // publish ItemCollected to the event bus, and the PlayerController's
+                // quest component is wired BEFORE the pawn spawns — so the 20 Wood +
+                // 20 Stone starter grant auto-completed "Collect 10 Dawnwood / 5
+                // Fieldstone" seconds after spawn and silently chain-skipped the
+                // whole tutorial. Silent grants keep the objectives PLAYED (the
+                // resource nodes around camp are the intended first beat).
+                InventoryComponent->AddItemSilent(StarterItem.ItemId, StarterItem.Quantity);
             }
         }
     }
@@ -186,6 +207,15 @@ void AAstrawildPlayerCharacter::BeginPlay()
         SurvivalComponent->OnStatusEffectRemoved.AddDynamic(this, &AAstrawildPlayerCharacter::OnStatusSpeedChanged);
         // Batch 4 — M-2a: stamina floor while sprinting → drop out of sprint speed.
         SurvivalComponent->OnSprintExhausted.AddDynamic(this, &AAstrawildPlayerCharacter::OnSprintExhausted);
+    }
+
+    // FPP-1: growth feedback — the level-up toast (with the new-skill
+    // milestone detector) rides the same dynamic-delegate path as the survival
+    // handlers above.
+    if (AttributeComponent)
+    {
+        AttributeComponent->OnAttributeLevelUp.AddDynamic(this, &AAstrawildPlayerCharacter::HandleAttributeLevelUp);
+        LastSeenSkillCount = AttributeComponent->GetUnlockedSkills().Num();
     }
 
     // Batch 3 — Item B: refresh speed when the stagger state changes.
@@ -210,6 +240,16 @@ void AAstrawildPlayerCharacter::BeginPlay()
         World->GetTimerManager().SetTimer(HeldWeaponTimerHandle, this,
             &AAstrawildPlayerCharacter::RefreshHeldWeaponVisual, 0.5f, true);
         RefreshHeldWeaponVisual();
+
+        // CGC-2: first-time teaching hints (first nightfall + first low vitals)
+        // checked on the same gentle-timer pattern. Authority-only: the marks
+        // belong on the host's persisted SeenHints store and the toasts route
+        // through NotifyPlayer, so a pure client never double-marks/double-shows.
+        if (HasAuthority())
+        {
+            World->GetTimerManager().SetTimer(FirstTimeHintTimerHandle, this,
+                &AAstrawildPlayerCharacter::RefreshFirstTimeHints, 2.0f, true);
+        }
     }
 }
 
@@ -219,15 +259,54 @@ void AAstrawildPlayerCharacter::BeginPlay()
 // ---------------------------------------------------------------------------
 bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
 {
-    USkeletalMesh* SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+    int32 MeshTier = 0;
+    USkeletalMesh* SkelMesh = SurvivorSkeletalMesh.LoadSynchronous();
+    if (SkelMesh)
+    {
+        MeshTier = 1;
+    }
     if (!SkelMesh)
     {
         SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+        if (SkelMesh)
+        {
+            MeshTier = 1;
+        }
     }
     if (!SkelMesh)
     {
-        return false; // pack not imported — PMC silhouette stays live
+        SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit/SkeletalMeshes/SK_Survivor_Exosuit.SK_Survivor_Exosuit"));
+        if (SkelMesh)
+        {
+            MeshTier = 1;
+        }
     }
+    if (!SkelMesh)
+    {
+        // SCP Phase 2: the PMC survivor silhouette is the designed fallback —
+        // report the miss once so Standalone diagnostics show which art pack
+        // pieces did not resolve, then keep the procedural body.
+        if (!bSkeletalBodyActive)
+        {
+            UAstrawildErrorReporterLibrary::ReportWarning(TEXT("AssetFallback"),
+                TEXT("SurvivorBody: SK_Survivor_Exosuit not found — procedural silhouette retained"));
+        }
+    }
+    if (!SkelMesh)
+    {
+        SkelMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+        if (SkelMesh)
+        {
+            MeshTier = 2;
+        }
+    }
+    if (!SkelMesh)
+    {
+        UE_LOG(LogAstrawild, Log, TEXT("Survivor mesh fallback: Tier 5 (9-part procedural exosuit active)."));
+        return false; // pack not imported — procedural silhouette stays live
+    }
+
+    UE_LOG(LogAstrawild, Log, TEXT("Survivor mesh active: Tier %d (%s)."), MeshTier, *SkelMesh->GetName());
 
     USkeletalMeshComponent* MeshComp = GetMesh();
     if (!MeshComp)
@@ -238,7 +317,7 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     MeshComp->SetSkeletalMesh(SkelMesh);
     MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     MeshComp->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 88.0f;
+    const float HalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 96.0f;
     MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -HalfHeight));
     MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     MeshComp->SetVisibility(true);
@@ -262,10 +341,10 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
     SetActorTickEnabled(true);
 
     // Warm the locomotion clips and play Idle loop immediately.
-    SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle"));
+    SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
     if (!SurvivorIdleAnim.Get())
     {
-        SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Idle.AM_Survivor_Idle"));
+        SurvivorIdleAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle"));
     }
     if (SurvivorIdleAnim.Get())
     {
@@ -273,25 +352,45 @@ bool AAstrawildPlayerCharacter::TryActivateSkeletalBody()
         CurrentLoopAnimation = SurvivorIdleAnim.Get();
     }
 
-    SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd"));
+    SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Walk.AM_Survivor_Walk"));
     if (!SurvivorWalkAnim.Get())
     {
-        SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Walk.AM_Survivor_Walk"));
+        SurvivorWalkAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd.MF_Unarmed_Walk_Fwd"));
     }
 
-    SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd"));
+    SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Run.AM_Survivor_Run"));
     if (!SurvivorRunAnim.Get())
     {
-        SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Run.AM_Survivor_Run"));
+        SurvivorRunAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd"));
     }
 
-    SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Pistol/Aim/AO_Pistol.AO_Pistol"));
-    SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump"));
-    SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01.MM_Attack_01"));
-    SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_02.MM_Attack_02"));
+    SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Aim.AM_Survivor_Aim"));
+    if (!SurvivorAimAnim.Get())
+    {
+        SurvivorAimAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Pistol/Aim/AO_Pistol.AO_Pistol"));
+    }
+
+    SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Jump.AM_Survivor_Jump"));
+    if (!SurvivorJumpAnim.Get())
+    {
+        SurvivorJumpAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump.MM_Jump"));
+    }
+
+    SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Fire.AM_Survivor_Fire"));
+    if (!SurvivorFireAnim.Get())
+    {
+        SurvivorFireAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_01.MM_Attack_01"));
+    }
+
+    SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Survivor/AM_Survivor_Gather.AM_Survivor_Gather"));
+    if (!SurvivorGatherAnim.Get())
+    {
+        SurvivorGatherAnim = LoadObject<UAnimSequenceBase>(nullptr, TEXT("/Game/Characters/Mannequins/Anims/Unarmed/Attack/MM_Attack_02.MM_Attack_02"));
+    }
 
     UE_LOG(LogAstrawild, Log,
-        TEXT("AAA Character active: SKM_Manny_Simple loaded with full locomotion animations."));
+        TEXT("Survivor character mesh active: %s (grounded at Z=%.1f, locomotion clips loaded)."),
+        *SkelMesh->GetName(), -HalfHeight);
     return true;
 }
 
@@ -301,6 +400,291 @@ void AAstrawildPlayerCharacter::Tick(float DeltaSeconds)
     if (bSkeletalBodyActive)
     {
         UpdateSurvivorAnimation();
+    }
+
+    // GDP-3: player growth upkeep — skill cooldowns + active buff windows.
+    if (AttributeComponent && GetLocalRole() == ROLE_Authority)
+    {
+        AttributeComponent->TickCooldowns(DeltaSeconds);
+        EmpoweredMeleeRemaining = FMath::Max(0.0f, EmpoweredMeleeRemaining - DeltaSeconds);
+        RangedBuffRemaining = FMath::Max(0.0f, RangedBuffRemaining - DeltaSeconds);
+        CaptureFocusRemaining = FMath::Max(0.0f, CaptureFocusRemaining - DeltaSeconds);
+    }
+
+    // CGC-3: footstep cadence — horizontal travel accumulates toward the next
+    // stride blip while WALKING on the ground (the coarse zone map picks the
+    // surface: GetFootstepCueForZone). LOCAL feedback only: the machine that
+    // locally controls this pawn plays its own strides, so a listen host never
+    // hears a remote client's footsteps twice and pure clients keep theirs.
+    // Piloting/riding suspend the cadence (the skiff/mount owns the motion).
+    if (IsLocallyControlled() && !PilotedSkiff.IsValid() && !MountedEcho.IsValid())
+    {
+        if (const UCharacterMovementComponent* Movement = GetCharacterMovement())
+        {
+            if (Movement->IsMovingOnGround())
+            {
+                const FVector Velocity = GetVelocity();
+                FootstepDistanceAccumulator +=
+                    FMath::Sqrt(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y) * DeltaSeconds;
+                if (FootstepDistanceAccumulator >= UAstrawildAudioDirectorSubsystem::FootstepStrideCm)
+                {
+                    FootstepDistanceAccumulator = 0.0f;
+                    if (UWorld* World = GetWorld())
+                    {
+                        if (UAstrawildAudioDirectorSubsystem* AudioDirector =
+                                World->GetSubsystem<UAstrawildAudioDirectorSubsystem>())
+                        {
+                            AudioDirector->PlayFootstep(UAstrawildAudioDirectorSubsystem::GetFootstepCueForZone(
+                                UAstrawildZoneSubsystem::GetZoneAt(GetActorLocation())));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Airborne/swimming: keep the accumulated distance but never
+                // cross the stride mid-air — the landing blip owns that beat.
+                FootstepDistanceAccumulator =
+                    FMath::Min(FootstepDistanceAccumulator, UAstrawildAudioDirectorSubsystem::FootstepStrideCm - 1.0f);
+            }
+        }
+    }
+}
+
+void AAstrawildPlayerCharacter::OnLanded(const FHitResult& Hit)
+{
+    Super::OnLanded(Hit);
+
+    // CGC-3: landing feedback — the ground receives the player (fail-closed 2D
+    // blip; the stride accumulator resumes from the ground on the next tick).
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(
+        GetWorld(), TEXT("/Game/Audio/A_Player_Land"), 0.4f);
+}
+
+void AAstrawildPlayerCharacter::CastPartyAbility(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    // Every owned party Echo picks and casts its own best ability with the same
+    // tactical brain the AI uses — the T key is "everyone, do your thing".
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    const FName OwnerId = GetFName();
+    const FVector PlayerLocation = GetActorLocation();
+    int32 Casts = 0;
+
+    // FCR-1-a fix (M-a11): ONE world query, reused by every party echo — the old
+    // per-echo GetAllActorsOfClass was O(N^2) on every keypress (200+ roaming
+    // echoes meant 200 x 200 casts per T-key press).
+    TArray<AActor*> Echoes;
+    UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+
+    // Pre-filter the hostile candidates once (the inner loop only needs these).
+    TArray<AAstrawildEchoCharacter*> HostileCandidates;
+    HostileCandidates.Reserve(Echoes.Num());
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* CandidateEcho = Cast<AAstrawildEchoCharacter>(Actor);
+        if (CandidateEcho && !CandidateEcho->bCaptured && !CandidateEcho->IsDefeated() &&
+            CandidateEcho->EchoDefinition && CandidateEcho->EchoDefinition->bHostileToPlayers)
+        {
+            HostileCandidates.Add(CandidateEcho);
+        }
+    }
+
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+        if (!Echo || !Echo->bCaptured || Echo->OwnerPlayerId != OwnerId || Echo->IsDefeated())
+        {
+            continue;
+        }
+
+        // Nearest hostile to THIS echo is its default cast target.
+        AActor* BestTarget = nullptr;
+        float BestDist = FLT_MAX;
+        for (AAstrawildEchoCharacter* CandidateEcho : HostileCandidates)
+        {
+            const float Dist = FVector::Dist(Echo->GetActorLocation(), CandidateEcho->GetActorLocation());
+            if (Dist < BestDist && Dist < 2000.0f)
+            {
+                BestDist = Dist;
+                BestTarget = CandidateEcho;
+            }
+        }
+
+        const float TargetDistance = BestTarget ? BestDist : 0.0f;
+        const float HealthFraction = Echo->GetHealthFraction();
+        const FName AbilityId = Echo->PickCombatAbility(TargetDistance, HealthFraction < 0.45f, HealthFraction < 0.3f);
+        if (AbilityId != NAME_None && Echo->ExecuteAbility(AbilityId, BestTarget))
+        {
+            Casts++;
+        }
+    }
+
+    UE_LOG(LogAstrawildAI, Log, TEXT("Party ability cast: %d echoes."), Casts);
+}
+
+void AAstrawildPlayerCharacter::CastPlayerSkill(const FInputActionValue& Value)
+{
+    if (!IsAlive() || GetLocalRole() != ROLE_Authority || !AttributeComponent)
+    {
+        return;
+    }
+
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // Battlefield read for the smart-cast ladder.
+    const float HealthFraction = SurvivalComponent ? SurvivalComponent->GetHealthFraction() : 1.0f;
+    const FVector PlayerLocation = GetActorLocation();
+
+    int32 NearbyEnemies = 0;
+    bool bEnemyInMelee = false;
+    bool bWeakenedPreyNear = false;
+    TArray<AActor*> Echoes;
+    UGameplayStatics::GetAllActorsOfClass(World, AAstrawildEchoCharacter::StaticClass(), Echoes);
+    for (AActor* Actor : Echoes)
+    {
+        AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+        if (!Echo || Echo->bCaptured || Echo->IsDefeated() || !Echo->EchoDefinition ||
+            !Echo->EchoDefinition->bHostileToPlayers)
+        {
+            continue;
+        }
+        const float Dist = FVector::Dist(PlayerLocation, Echo->GetActorLocation());
+        if (Dist < 700.0f)
+        {
+            NearbyEnemies++;
+            if (Dist < 420.0f)
+            {
+                bEnemyInMelee = true;
+            }
+            // FCR-1-b (M-b4): weakened hostile in capture reach — Hunter's Focus
+            // pre-capture priority signal.
+            if (Dist < 500.0f && Echo->GetHealthFraction() < 0.5f)
+            {
+                bWeakenedPreyNear = true;
+            }
+        }
+    }
+
+    const bool bMoving = GetVelocity().SizeSquared() > 4000.0f;
+    const EAstrawildPlayerSkillId Skill = AttributeComponent->PickBestReadySkill(
+        HealthFraction, NearbyEnemies, bEnemyInMelee, bMoving, bWeakenedPreyNear);
+
+    if (Skill == EAstrawildPlayerSkillId::None)
+    {
+        // FPP-1: a silent Y-press read as "the key does nothing" — say WHY
+        // nothing fired (all skills recharging) and when the next one lands.
+        if (AttributeComponent->GetUnlockedSkills().Num() > 0)
+        {
+            float NextReady = FLT_MAX;
+            for (const EAstrawildPlayerSkillId Unlocked : AttributeComponent->GetUnlockedSkills())
+            {
+                NextReady = FMath::Min(NextReady, AttributeComponent->GetSkillCooldownRemaining(Unlocked));
+            }
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+            {
+                PC->NotifyPlayer(FText::FromString(FString::Printf(
+                    TEXT("No skill ready — next in %.0fs."), FMath::Max(0.0f, NextReady))));
+            }
+        }
+        UE_LOG(LogAstrawildAI, Verbose, TEXT("Smart-cast: nothing ready for this situation."));
+        return;
+    }
+
+    bool bSuccess = false;
+    switch (Skill)
+    {
+    case EAstrawildPlayerSkillId::PowerStrike:
+        EmpoweredMeleeRemaining = 6.0f; // Consumed by the next melee hit.
+        bSuccess = true;
+        break;
+
+    case EAstrawildPlayerSkillId::Whirlwind:
+    {
+        // 360-degree sweep: every hostile echo in 350 units takes melee damage.
+        if (CombatComponent)
+        {
+            const float BaseDamage = CombatComponent->LightAttackDamage *
+                AttributeComponent->GetMeleeDamageMultiplier() * 1.2f;
+            for (AActor* Actor : Echoes)
+            {
+                AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(Actor);
+                // FCR-1-b fix (L-b8): the sweep hits HOSTILES only (the nearby-enemy
+                // scan's filter) — passive creatures no longer eat the 350cm sweep.
+                if (Echo && !Echo->bCaptured && !Echo->IsDefeated() &&
+                    Echo->EchoDefinition && Echo->EchoDefinition->bHostileToPlayers &&
+                    FVector::Dist(PlayerLocation, Echo->GetActorLocation()) <= 350.0f)
+                {
+                    Echo->ApplyElementalDamage(BaseDamage, EAstrawildElementType::None);
+                }
+            }
+            bSuccess = true;
+        }
+        break;
+    }
+
+    case EAstrawildPlayerSkillId::Dash:
+    {
+        FVector Direction = GetLastMovementInputVector().GetSafeNormal();
+        if (Direction.SizeSquared() < 0.01f)
+        {
+            Direction = GetActorForwardVector();
+        }
+        LaunchCharacter(Direction * 1350.0f + FVector(0, 0, 120.0f), true, true);
+        bSuccess = true;
+        break;
+    }
+
+    case EAstrawildPlayerSkillId::SecondWind:
+        if (SurvivalComponent)
+        {
+            // 40% of base max health — the milestone heal is a flat, readable number.
+            SurvivalComponent->RestoreHealth(40.0f);
+            SurvivalComponent->RestoreStamina(60.0f);
+            bSuccess = true;
+        }
+        break;
+
+    case EAstrawildPlayerSkillId::HuntersFocus:
+        CaptureFocusRemaining = 12.0f;
+        bSuccess = true;
+        break;
+
+    case EAstrawildPlayerSkillId::Overcharge:
+        RangedBuffRemaining = 10.0f;
+        bSuccess = true;
+        break;
+
+    default:
+        break;
+    }
+
+    if (bSuccess)
+    {
+        AttributeComponent->StartSkillCooldown(Skill);
+        AttributeComponent->OnPlayerSkillExecuted.Broadcast(Skill, true);
+        // FPP-1: execution feedback — the cast names itself and its cooldown so
+        // the Y key becomes a readable action instead of an invisible stat bump.
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->NotifyPlayer(FText::FromString(FString::Printf(TEXT("SKILL — %s (%.0fs cooldown)"),
+                *UEnum::GetDisplayValueAsText(Skill).ToString(),
+                UAstrawildAttributeComponent::GetSkillCooldown(Skill))));
+        }
+        UE_LOG(LogAstrawildAI, Log, TEXT("Player smart-cast: %s"), *UEnum::GetValueAsString(Skill));
     }
 }
 
@@ -383,6 +767,12 @@ void AAstrawildPlayerCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
     // Audit C-8: rebind input on every possession so respawned pawns keep control.
+    ApplyMappingContext();
+}
+
+void AAstrawildPlayerCharacter::PawnClientRestart()
+{
+    Super::PawnClientRestart();
     ApplyMappingContext();
 }
 
@@ -487,6 +877,10 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     DeployRobotAction = MakeRuntimeAction(TEXT("AWD_DeployRobot"), static_cast<uint8>(EInputActionValueType::Boolean));
     InventoryAction = MakeRuntimeAction(TEXT("AWD_Inventory"), static_cast<uint8>(EInputActionValueType::Boolean));
     ResearchAction = MakeRuntimeAction(TEXT("AWD_Research"), static_cast<uint8>(EInputActionValueType::Boolean));
+    JournalAction = MakeRuntimeAction(TEXT("AWD_Journal"), static_cast<uint8>(EInputActionValueType::Boolean));
+    RosterAction = MakeRuntimeAction(TEXT("AWD_Roster"), static_cast<uint8>(EInputActionValueType::Boolean));
+    MapAction = MakeRuntimeAction(TEXT("AWD_Map"), static_cast<uint8>(EInputActionValueType::Boolean));
+    HuntAction = MakeRuntimeAction(TEXT("AWD_Hunt"), static_cast<uint8>(EInputActionValueType::Boolean));
     PauseAction = MakeRuntimeAction(TEXT("AWD_Pause"), static_cast<uint8>(EInputActionValueType::Boolean));
 
     RuntimeMappingContext = NewObject<UInputMappingContext>(this, TEXT("AWD_DefaultIMC"));
@@ -558,13 +952,32 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(DeployRobotAction, EKeys::J);
     Context->MapKey(InventoryAction, EKeys::Tab);
     Context->MapKey(ResearchAction, EKeys::K);
+    Context->MapKey(JournalAction, EKeys::P);
+    Context->MapKey(RosterAction, EKeys::L);
+    Context->MapKey(MapAction, EKeys::M);
+    Context->MapKey(HuntAction, EKeys::U);
     Context->MapKey(PauseAction, EKeys::Escape);
     // Batch 8 — skiff descend: CTRL held (SPACE climbs through JumpAction).
     DescendAction = MakeRuntimeAction(TEXT("AWD_Descend"), static_cast<uint8>(EInputActionValueType::Boolean));
     Context->MapKey(DescendAction, EKeys::LeftControl);
 
+    // GDP: T = party ability cast, Y = player smart-cast skill (adjacent keys,
+    // both unused by the 26-action contract above).
+    PartyAbilityAction = MakeRuntimeAction(TEXT("AWD_PartyAbility"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(PartyAbilityAction, EKeys::T);
+    PlayerSkillAction = MakeRuntimeAction(TEXT("AWD_PlayerSkill"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(PlayerSkillAction, EKeys::Y);
+
+    // CGC-4: F6 — hide/show the HUD. The ONE planned additive action of the
+    // settings/QoL batch (census 32 -> 33); keyboard only, the gamepad context
+    // is untouched (Start already pauses; a gamepad HUD toggle can ride a
+    // future radial menu). F6 sits between the F5 quick-save and F9 quick-load
+    // and was unclaimed.
+    ToggleHUDAction = MakeRuntimeAction(TEXT("AWD_ToggleHUD"), static_cast<uint8>(EInputActionValueType::Boolean));
+    Context->MapKey(ToggleHUDAction, EKeys::F6);
+
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (26 actions, WASD+mouse+wheel+UI+skiff)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (33 actions, WASD+mouse+wheel+UI+skiff+GDP+HUD toggle)."));
 }
 
 void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
@@ -597,6 +1010,26 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
 
     // D-pad: up command, right feed, down consume, left equip-best.
     Context->MapKey(CommandAction, EKeys::Gamepad_DPad_Up);
+    // DCP-6 (user directive: re-open deferred work): the player smart-cast
+    // comes to gamepad as a CHORD — LB (hold-block) + X (dodge). The
+    // UInputModifierChordAction modifier disambiguates the plain X press
+    // (dodge) from the LB-held press (smart-cast), so no committed binding
+    // changes: the old "radial menu pass owns it" note is superseded by the
+    // directive (INPUT_REFERENCE §1b/§2 updated with it).
+    if (PlayerSkillAction)
+    {
+        FEnhancedActionKeyMapping& SkillMapping = Context->MapKey(PlayerSkillAction, EKeys::Gamepad_FaceButton_Left);
+        if (UInputModifierChordAction* Chord = NewObject<UInputModifierChordAction>(this))
+        {
+            Chord->Key = EKeys::Gamepad_LeftShoulder; // LB held + X = smart-cast.
+            SkillMapping.Modifiers.Add(Chord);
+        }
+    }
+    // GDP: party ability = right stick click.
+    if (PartyAbilityAction)
+    {
+        Context->MapKey(PartyAbilityAction, EKeys::Gamepad_RightThumbstick);
+    }
     // Batch 8 — LS click = skiff descend (A button climbs through JumpAction).
     if (DescendAction)
     {
@@ -611,7 +1044,11 @@ void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()
     Context->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
 
     GamepadMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (16 mappings)."));
+    // CGC-4: stale-count fix — the log claimed "17 mappings" since DCP-6 but
+    // the context maps 19 (the GDP party-ability + skiff-descend companions
+    // were added after the string was written; the DCP-6 test pin was a
+    // tautology, never the real count — test 138 pins the honest number).
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime gamepad input mapping built (19 mappings — DCP-6: LB+X smart-cast chord; F6 HUD toggle is KB-only)."));
 }
 
 void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -623,6 +1060,35 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         UE_LOG(LogAstrawild, Error, TEXT("ASTRAWILD player requires EnhancedInputComponent."));
         return;
+    }
+
+    // CRITICAL: Construct runtime input actions BEFORE attempting to bind them.
+    // If SetupPlayerInputComponent executes before BeginPlay/PossessedBy, runtime
+    // action pointers would be null and all BindAction calls would be skipped.
+    if (!DefaultMappingContext)
+    {
+        BuildRuntimeInputDefaults();
+    }
+    if (!GamepadMappingContext)
+    {
+        BuildGamepadInputDefaults();
+    }
+
+    UE_LOG(LogAstrawild, Log, TEXT("SetupPlayerInputComponent: MoveAction=%s, LookAction=%s, JumpAction=%s"),
+        MoveAction ? TEXT("VALID") : TEXT("NULL"),
+        LookAction ? TEXT("VALID") : TEXT("NULL"),
+        JumpAction ? TEXT("VALID") : TEXT("NULL"));
+
+    if (!MoveAction || !LookAction || !JumpAction || !SprintAction || !InteractAction || !AttackAction || !InventoryAction)
+    {
+        UE_LOG(LogAstrawild, Error, TEXT("CRITICAL: One or more core loop actions are NULL during SetupPlayerInputComponent! Move=%s, Look=%s, Jump=%s, Sprint=%s, Interact=%s, Attack=%s, Inventory=%s"),
+            MoveAction ? TEXT("VALID") : TEXT("NULL"),
+            LookAction ? TEXT("VALID") : TEXT("NULL"),
+            JumpAction ? TEXT("VALID") : TEXT("NULL"),
+            SprintAction ? TEXT("VALID") : TEXT("NULL"),
+            InteractAction ? TEXT("VALID") : TEXT("NULL"),
+            AttackAction ? TEXT("VALID") : TEXT("NULL"),
+            InventoryAction ? TEXT("VALID") : TEXT("NULL"));
     }
 
     if (MoveAction)
@@ -674,6 +1140,14 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (FeedAction)
     {
         EnhancedInput->BindAction(FeedAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::FeedTarget);
+    }
+    if (PartyAbilityAction)
+    {
+        EnhancedInput->BindAction(PartyAbilityAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::CastPartyAbility);
+    }
+    if (PlayerSkillAction)
+    {
+        EnhancedInput->BindAction(PlayerSkillAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::CastPlayerSkill);
     }
     if (BuildModeAction)
     {
@@ -737,10 +1211,33 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     {
         EnhancedInput->BindAction(ResearchAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleResearchScreenInput);
     }
+    if (JournalAction)
+    {
+        EnhancedInput->BindAction(JournalAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleJournalScreenInput);
+    }
+    if (RosterAction)
+    {
+        EnhancedInput->BindAction(RosterAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleRosterScreenInput);
+    }
+    if (MapAction)
+    {
+        EnhancedInput->BindAction(MapAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleMapScreenInput);
+    }
+    if (HuntAction)
+    {
+        EnhancedInput->BindAction(HuntAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleHuntScreenInput);
+    }
     if (PauseAction)
     {
         EnhancedInput->BindAction(PauseAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::TogglePauseMenuInput);
     }
+    if (ToggleHUDAction)
+    {
+        EnhancedInput->BindAction(ToggleHUDAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleHudInput);
+    }
+
+    // Ensure mapping context is applied directly when the input component is wired up.
+    ApplyMappingContext();
 }
 
 void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
@@ -756,7 +1253,27 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotMove(MovementVector.Y, MovementVector.X);
+        // LCP-3: remote pilots relay the intent to the server (send-on-change);
+        // the local call above is the prediction-lite visual.
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(MovementVector.Y, MovementVector.X, TrackedVerticalAxis, bLastSentPilotBoost);
+        }
         return;
+    }
+
+    // SCP Phase 5 — riding a mount: WASD drives the creature instead of the pawn.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderMove(MovementVector.Y, MovementVector.X);
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(MovementVector.Y, MovementVector.X, TrackedVerticalAxis);
+            }
+            return;
+        }
     }
 
     if (!Controller || MovementVector.IsNearlyZero())
@@ -776,8 +1293,22 @@ void AAstrawildPlayerCharacter::Move(const FInputActionValue& Value)
 void AAstrawildPlayerCharacter::Look(const FInputActionValue& Value)
 {
     const FVector2D LookAxisVector = Value.Get<FVector2D>();
-    AddControllerYawInput(LookAxisVector.X);
-    AddControllerPitchInput(LookAxisVector.Y);
+    // CGC-4: the settings-screen sensitivity multiplier scales both axes (the
+    // row was a raw pass-through since the first build — nothing ever adjusted
+    // it). Static, so the local look path reads the persisted value with zero
+    // per-frame cost.
+    AddControllerYawInput(LookAxisVector.X * LookSensitivityMultiplier);
+    AddControllerPitchInput(LookAxisVector.Y * LookSensitivityMultiplier);
+}
+
+float AAstrawildPlayerCharacter::LookSensitivityMultiplier = 1.0f;
+
+void AAstrawildPlayerCharacter::SetLookSensitivityMultiplier(const float Multiplier)
+{
+    // CGC-4: clamped to the settings-row band (UAstrawildSettingsWidget's
+    // SensitivityMin/Max mirror: 0.5..2.0) — a corrupt or foreign preferences
+    // slot can never zero-out or double-double the look path.
+    LookSensitivityMultiplier = FMath::Clamp(Multiplier, 0.5f, 2.0f);
 }
 
 void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
@@ -791,6 +1322,11 @@ void AAstrawildPlayerCharacter::StartSprint(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotBoost(true);
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            bLastSentPilotBoost = true;
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, true); // LCP-3 relay
+        }
         return;
     }
 
@@ -810,6 +1346,11 @@ void AAstrawildPlayerCharacter::StopSprint(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotBoost(false);
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            bLastSentPilotBoost = false;
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, false); // LCP-3 relay
+        }
         return;
     }
 
@@ -860,6 +1401,12 @@ void AAstrawildPlayerCharacter::RefreshMovementSpeed()
         TargetSpeed *= (1.0f + InventoryComponent->GetEquippedMoveSpeedBonus());
     }
 
+    // GDP-3: Agility adds a permanent fractional speed bonus (1 + 2% per level above 1).
+    if (AttributeComponent)
+    {
+        TargetSpeed *= AttributeComponent->GetMoveSpeedMultiplier();
+    }
+
     SetMovementSpeed(TargetSpeed);
 }
 
@@ -874,11 +1421,37 @@ void AAstrawildPlayerCharacter::HandleJump(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(1.0f);
+        TrackedVerticalAxis = 1.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, 1.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
         return;
+    }
+
+    // SCP Phase 5 — SPACE while riding a flying mount = climb.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(1.0f);
+            TrackedVerticalAxis = 1.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, 1.0f); // LCP-3 relay
+            }
+            return;
+        }
     }
 
     // Art pack (Batch 4): jump one-shot (skips if the clip is not imported).
     PlaySurvivorOneShot(SurvivorJumpAnim.Get(), 0.9f);
+
+    // CGC-3: jump-start feedback (local input handler — plays on the machine
+    // that pressed SPACE). Fail-closed: a missing package is a silent jump.
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(
+        GetWorld(), TEXT("/Game/Audio/A_Player_Jump"), 0.35f);
+
     Jump();
 }
 
@@ -893,7 +1466,27 @@ void AAstrawildPlayerCharacter::OnJumpReleased(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(0.0f);
+        TrackedVerticalAxis = 0.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
         return;
+    }
+
+    // SCP Phase 5 — mount climb release.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(0.0f);
+            TrackedVerticalAxis = 0.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, 0.0f); // LCP-3 relay
+            }
+            return;
+        }
     }
 
     StopJumping();
@@ -905,6 +1498,26 @@ void AAstrawildPlayerCharacter::StartDescend(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(-1.0f);
+        TrackedVerticalAxis = -1.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, -1.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
+        return;
+    }
+
+    // SCP Phase 5 — CTRL while riding a flying mount = descend.
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(-1.0f);
+            TrackedVerticalAxis = -1.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, -1.0f); // LCP-3 relay
+            }
+        }
     }
 }
 
@@ -913,6 +1526,25 @@ void AAstrawildPlayerCharacter::StopDescend(const FInputActionValue& Value)
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
         Skiff->ReceivePilotVertical(0.0f);
+        TrackedVerticalAxis = 0.0f; // LCP-3
+        if (GetLocalRole() != ROLE_Authority)
+        {
+            ServerSkiffPilotInput(0.0f, 0.0f, 0.0f, bLastSentPilotBoost); // LCP-3 relay
+        }
+        return;
+    }
+
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderVertical(0.0f);
+            TrackedVerticalAxis = 0.0f; // LCP-3
+            if (GetLocalRole() != ROLE_Authority)
+            {
+                ServerMountRiderInput(0.0f, 0.0f, 0.0f); // LCP-3 relay
+            }
+        }
     }
 }
 
@@ -930,6 +1562,22 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
         PlaySurvivorOneShot(SurvivorGatherAnim.Get(), 1.0f);
     }
 
+    // LCP-3: remote clients trace locally (collision replicates), then hand the
+    // intent to the server — the dismount-first checks + the whole authority
+    // ladder run there against the server's pawn state. Host/standalone keep
+    // the direct path (byte-identical behavior).
+    AActor* InteractableActor = FindInteractableActor();
+    if (GetLocalRole() != ROLE_Authority)
+    {
+        ServerInteract(InteractableActor);
+        return;
+    }
+
+    ExecuteInteractIntent(InteractableActor);
+}
+
+void AAstrawildPlayerCharacter::ExecuteInteractIntent(AActor* InteractableActor)
+{
     // Batch 8 — E while piloting = dismount (before any trace).
     if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
     {
@@ -937,7 +1585,42 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
         return;
     }
 
-    AActor* InteractableActor = FindInteractableActor();
+    // SCP Phase 5 — E while riding = dismount (before any trace).
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->DismountRider();
+            return;
+        }
+    }
+
+    // SCP Phase 5 — E at an own, bonded, rideable party Echo = board it
+    // (mount attempt BEFORE the generic interact path so seats beat menus).
+    if (AAstrawildEchoCharacter* Echo = Cast<AAstrawildEchoCharacter>(InteractableActor))
+    {
+        if (Echo->MountComponent && Echo->MountComponent->CanBeMountedBy(this))
+        {
+            if (Echo->MountComponent->MountRider(this))
+            {
+                return;
+            }
+        }
+        else if (Echo->MountComponent && Echo->bCaptured && Echo->OwnerPlayerId == GetFName() &&
+                 Echo->EchoDefinition && !Echo->IsDefeated() &&
+                 UAstrawildMountComponent::IsRideableSpecies(
+                     Echo->EchoDefinition->Family, Echo->EchoDefinition->BodyPlan, Echo->EchoDefinition->SizeClass))
+        {
+            // FPP-1: the bond gate was silent — a player pressing E on their own
+            // rideable echo got the vague evolve line instead of the real reason.
+            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+            {
+                PC->NotifyPlayer(FText::FromString(FString::Printf(
+                    TEXT("Bond %.0f/25 — keep feeding [R] and traveling together to ride this Echo."),
+                    Echo->Bond)));
+            }
+        }
+    }
 
     // Standard interactables (nodes, stations, rest points, NPCs).
     if (IsValid(InteractableActor) && InteractableActor->GetClass()->ImplementsInterface(UAstrawildInteractable::StaticClass()))
@@ -953,12 +1636,42 @@ void AAstrawildPlayerCharacter::Interact(const FInputActionValue& Value)
         {
             if (CaptureComponent->TryCapture(Echo))
             {
-                // Join the roster + party (directive §4/§10).
+                // Join the roster + party (directive §4/§10). LCP-4: the entry
+                // carries the STABLE owner key (per-player roster partition).
                 if (UGameInstance* GameInstance = GetGameInstance())
                 {
                     if (UAstrawildEchoRosterSubsystem* Roster = GameInstance->GetSubsystem<UAstrawildEchoRosterSubsystem>())
                     {
-                        Roster->AddToRoster(Echo);
+                        const FName PlayerKey = Cast<AAstrawildPlayerController>(GetController())
+                            ? Cast<AAstrawildPlayerController>(GetController())->GetPlayerKey() : NAME_None;
+                        Roster->AddToRoster(Echo, PlayerKey);
+                    }
+                }
+            }
+        }
+        else if (Echo->bCaptured && Echo->OwnerPlayerId == GetFName())
+        {
+            // Final-audit M-5: the evolution system (6 authored chains, gated,
+            // tested) had ZERO gameplay callers — real code, unreachable. E on your
+            // OWN party echo now evolves it when the gates clear; otherwise it
+            // reports what is missing. Identity (level/bond/trust) is preserved.
+            if (UGameInstance* GameInstance = GetGameInstance())
+            {
+                if (UAstrawildEchoRosterSubsystem* Roster = GameInstance->GetSubsystem<UAstrawildEchoRosterSubsystem>())
+                {
+                    if (Roster->CanEvolve(Echo->InstanceId))
+                    {
+                        if (Roster->EvolveInstance(Echo->InstanceId))
+                        {
+                            if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+                            {
+                                PC->NotifyPlayer(FText::FromString(TEXT("Your Echo evolved — its dream deepened."))); // LCP-3 remote routing
+                            }
+                        }
+                    }
+                    else if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+                    {
+                        PC->NotifyPlayer(FText::FromString(TEXT("Not ready to evolve — deepen the bond and level it first."))); // LCP-3 remote routing
                     }
                 }
             }
@@ -1009,6 +1722,15 @@ void AAstrawildPlayerCharacter::Dodge(const FInputActionValue& Value)
         DodgeDirection = GetActorForwardVector().GetSafeNormal2D();
     }
     CombatComponent->RequestDodge(DodgeDirection);
+
+    // FCR-1-b fix (H-b2): Agility XP — the attribute had ZERO live grant sites, so
+    // it was permanently level 1 (Dash skill and the speed/stamina-regen bonuses
+    // frozen). Every successful dodge roll trains Agility (small, throttled by the
+    // combat component's own dodge cooldown server-side).
+    if (AttributeComponent && GetLocalRole() == ROLE_Authority)
+    {
+        AttributeComponent->AddAttributeXP(EAstrawildAttributeType::Agility, 4.0f);
+    }
 }
 
 void AAstrawildPlayerCharacter::StartBlock(const FInputActionValue& Value)
@@ -1180,8 +1902,36 @@ void AAstrawildPlayerCharacter::SmartConsume(const FInputActionValue& Value)
     if (Best && BestScore > 0.0f && InventoryComponent->RemoveItem(Best->ItemId, 1))
     {
         SurvivalComponent->ApplyConsumption(Best->FoodValue, Best->WaterValue, Best->HealValue);
+        ApplyFieldConsumableEffects(Best); // DP-6: field consumables also carry timed verbs.
         UE_LOG(LogAstrawildEconomy, Log, TEXT("Consumed %s (+%.0f food, +%.0f water, +%.0f heal)."),
             *Best->ItemId.ToString(), Best->FoodValue, Best->WaterValue, Best->HealValue);
+    }
+}
+
+void AAstrawildPlayerCharacter::ApplyFieldConsumableEffects(const UAstrawildItemDefinition* ItemDef)
+{
+    if (!ItemDef || GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    // DP-6 (production → progression): base-made consumables feed the field with
+    // real verbs — a timed status through the survival component's effect system
+    // and/or the existing capture-focus window (the Hunter's Focus skill verb).
+    if (ItemDef->OnConsumeStatus.StatusId != NAME_None && SurvivalComponent)
+    {
+        SurvivalComponent->AddStatusEffect(ItemDef->OnConsumeStatus);
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Field effect %s active for %.0fs (+%.1f stamina/s)."),
+            *ItemDef->OnConsumeStatus.StatusId.ToString(),
+            ItemDef->OnConsumeStatus.RemainingSeconds,
+            ItemDef->OnConsumeStatus.StaminaRegenPerSecond);
+    }
+    if (ItemDef->CaptureFocusSeconds > 0.0f)
+    {
+        // Refresh, never stack — a tonic drunk mid-focus keeps the longer window.
+        CaptureFocusRemaining = FMath::Max(CaptureFocusRemaining, ItemDef->CaptureFocusSeconds);
+        UE_LOG(LogAstrawildEconomy, Log, TEXT("Capture focus granted for %.0fs (+25%% capture chance)."),
+            ItemDef->CaptureFocusSeconds);
     }
 }
 
@@ -1297,7 +2047,13 @@ void AAstrawildPlayerCharacter::QuickSave(const FInputActionValue& Value)
 
     if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
     {
-        SaveSubsystem->SaveWorld(GetWorld());
+        // Final-audit F21: F5 used to be completely silent — the player had no way
+        // to know the save landed (the pause-menu path always toasted).
+        const bool bSaved = SaveSubsystem->SaveWorld(GetWorld());
+        if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+        {
+            PC->Notify(FText::FromString(bSaved ? TEXT("Game saved.") : TEXT("Save failed.")));
+        }
     }
 }
 
@@ -1319,6 +2075,36 @@ void AAstrawildPlayerCharacter::OnPlayerDied()
 {
     UE_LOG(LogAstrawildCombat, Log, TEXT("Player died — awaiting respawn."));
 
+    // CGC-2: death UX — the screen used to go completely quiet (input disabled,
+    // no message, 5s of nothing), which reads exactly like a freeze. Every death
+    // now says what happened and where the player is going; the first death also
+    // teaches the genre-standard rule that death keeps your pack.
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->NotifyPlayer(FText::FromString(TEXT("You fell in the wilds\u2026 the watch-fire of the Dawn Camp calls you back.")));
+        PC->ShowOnce(TEXT("Hint_DeathKept"),
+            FText::FromString(TEXT("Everything you carry is kept — rest at the campfire to recover.")));
+    }
+
+    // SCP Phase 3: deaths feed the DDA metric (band pull-down).
+    if (UWorld* DDAWorld = GetWorld())
+    {
+        if (UAstrawildDifficultySubsystem* DDA = DDAWorld->GetSubsystem<UAstrawildDifficultySubsystem>())
+        {
+            DDA->NotifyPlayerDeath();
+        }
+    }
+
+    // SCP Phase 5: a dead rider falls off the mount (before input disable so
+    // the dismount path can run its notify).
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->DismountRider();
+        }
+    }
+
     // Batch 4 — M-2a: death ends any active sprint-drain (FullRestore refills
     // stamina; a stale drain request would immediately drain it again on respawn).
     bSprinting = false;
@@ -1337,7 +2123,15 @@ void AAstrawildPlayerCharacter::OnPlayerDied()
     {
         if (AAstrawildGameMode* GameMode = World->GetAuthGameMode<AAstrawildGameMode>())
         {
-            GameMode->RequestPlayerRespawn(GetController(), 5.0f);
+            const float RespawnDelay = GameMode->RespawnDelaySeconds;
+            GameMode->RequestPlayerRespawn(GetController(), RespawnDelay);
+
+            // Completion stage (DEATH): readable death beat with a live countdown
+            // on the local controller instead of a silent five-second freeze.
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(GetController()))
+            {
+                AstrawildPC->ShowDeathOverlay(RespawnDelay);
+            }
         }
     }
 }
@@ -1375,6 +2169,31 @@ void AAstrawildPlayerCharacter::OnSprintExhausted()
     RefreshMovementSpeed();
 }
 
+void AAstrawildPlayerCharacter::HandleAttributeLevelUp(const EAstrawildAttributeType Attribute, const int32 NewLevel)
+{
+    // FPP-1: the growth moment made visible — the level-up previously had
+    // exactly one subscriber (Vigor max-HP recompute) and zero player feedback.
+    if (LastSeenSkillCount < 0)
+    {
+        LastSeenSkillCount = AttributeComponent ? AttributeComponent->GetUnlockedSkills().Num() : 0;
+    }
+    const int32 UnlockedNow = AttributeComponent ? AttributeComponent->GetUnlockedSkills().Num() : 0;
+    const bool bNewSkill = UnlockedNow > LastSeenSkillCount;
+    LastSeenSkillCount = UnlockedNow;
+
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        // CGC-3: the growth moment rings the research-unlock chime (the
+        // level-up IS an unlock beat — A_UI_Research_Done).
+        PC->NotifyPlayer(FText::FromString(FString::Printf(
+            TEXT("%s grew to level %d%s"),
+            *UEnum::GetDisplayValueAsText(Attribute).ToString(),
+            NewLevel,
+            bNewSkill ? TEXT(" — NEW SKILL UNLOCKED (see Skill Loadout in the pause menu)") : TEXT(""))),
+            EAstrawildToastCue::Research);
+    }
+}
+
 void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)
 {
     SetActorTransform(SpawnTransform, false, nullptr, ETeleportType::TeleportPhysics);
@@ -1388,7 +2207,56 @@ void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)
     {
         EnableInput(PC);
     }
+
+    // Completion stage (DEATH): the countdown overlay retires with the pawn back.
+    if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        AstrawildPC->HideDeathOverlay();
+    }
+
+    // CGC-2: the second half of the death UX — the return beat (the fall toast
+    // landed on death; this closes the loop the moment control is restored).
+    if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        AstrawildPC->NotifyPlayer(FText::FromString(TEXT("The watch-fire takes you back — you live again.")));
+    }
+
     RefreshMovementSpeed();
+}
+
+void AAstrawildPlayerCharacter::RefreshFirstTimeHints()
+{
+    // CGC-2: two first-time teaching moments, evaluated at the 2s cadence the
+    // timer sets (no new ticks, no delegates — both checks are cheap reads).
+    // ShowOnce does the rest: one toast each, then the store suppresses repeats.
+    AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController());
+    if (!PC || !IsAlive())
+    {
+        return;
+    }
+
+    UWorld* World = GetWorld();
+
+    // 1) First nightfall — the day/night rhythm is a core system (dormancy,
+    // nocturnal species), and the first sunset deserves a teaching beat.
+    const AAstrawildGameState* GameState = World ? World->GetGameState<AAstrawildGameState>() : nullptr;
+    if (GameState && GameState->IsNight())
+    {
+        PC->ShowOnce(TEXT("Hint_FirstNight"),
+            FText::FromString(TEXT("Night falls over the Vale — some Echoes only stir after dark.")));
+    }
+
+    // 2) First low vitals — hunger/thirst below a quarter tank teaches the
+    // smart-consume key [G] (the real binding from ASTRAWILD_INPUT_REFERENCE).
+    if (SurvivalComponent)
+    {
+        const FAstrawildSurvivalStats& Stats = SurvivalComponent->GetStats();
+        if (Stats.Hunger <= 25.0f || Stats.Thirst <= 25.0f)
+        {
+            PC->ShowOnce(TEXT("Hint_LowVitals"),
+                FText::FromString(TEXT("Hunger or thirst runs low — press [G] to eat or drink.")));
+        }
+    }
 }
 
 void AAstrawildPlayerCharacter::SetMovementSpeed(const float NewSpeed)
@@ -1760,6 +2628,11 @@ void AAstrawildPlayerCharacter::StartScan(const FInputActionValue& Value)
     bScanKeyHeld = true;
     Journal->BeginActiveScan(this, Multiplier);
 
+    // CGC-3: the scanner speaks — a soft ping at scan start (the local machine
+    // that pressed V; fail-closed through the director's literal helper).
+    UAstrawildAudioDirectorSubsystem::PlaySound2DFromPath(
+        World, TEXT("/Game/Audio/A_Player_Scan_Ping"), 0.4f);
+
     // Production V2 Batch 2: world-space pulse ring — the scan now reads as an
     // action (tier-tinted; radius tracks the scanner's effective range).
     if (World)
@@ -1796,15 +2669,22 @@ AAstrawildUtilityDroneActor* AAstrawildPlayerCharacter::SpawnUtilityDrone()
         return nullptr;
     }
 
-    // Recall path: one drone per player — pressing H again recalls it (refund item? no —
-    // the drone is re-deployable for free within the session; the save system tracks it).
+    // Recall path: one drone per player — pressing H again recalls it.
+    // Final-audit M-6: the consumed Item_UtilityDrone is refunded (weight-gated,
+    // silent) on recall — the old path destroyed the actor with no refund while
+    // the next deploy consumed ANOTHER drone item, permanently losing one per
+    // recall+save cycle (the save only tracks DEPLOYED drones).
     if (AAstrawildUtilityDroneActor* Existing = ActiveDrone.Get())
     {
         Existing->Destroy();
         ActiveDrone = nullptr;
+        if (InventoryComponent)
+        {
+            InventoryComponent->AddItemSilent(TEXT("Item_UtilityDrone"), 1);
+        }
         if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
         {
-            PC->Notify(FText::FromString(TEXT("Drone recalled.")));
+            PC->Notify(FText::FromString(TEXT("Drone recalled — the unit is back in your pack.")));
         }
         return nullptr;
     }
@@ -2004,6 +2884,38 @@ void AAstrawildPlayerCharacter::ToggleResearchScreenInput(const FInputActionValu
     }
 }
 
+void AAstrawildPlayerCharacter::ToggleJournalScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleJournalScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleRosterScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleRosterScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleMapScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleMapScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleHuntScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleHuntScreen();
+    }
+}
+
 void AAstrawildPlayerCharacter::TogglePauseMenuInput(const FInputActionValue& Value)
 {
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
@@ -2012,12 +2924,115 @@ void AAstrawildPlayerCharacter::TogglePauseMenuInput(const FInputActionValue& Va
     }
 }
 
+void AAstrawildPlayerCharacter::ToggleHudInput(const FInputActionValue& Value)
+{
+    // CGC-4: F6 — pure visibility flip on the PC-owned HUD widget (the same
+    // route every other screen toggle takes; the PC owns the widget).
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleHudVisibility();
+    }
+}
+
 AAstrawildSkiffActor* AAstrawildPlayerCharacter::GetPilotedSkiff() const
 {
     return PilotedSkiff.Get();
 }
 
+void AAstrawildPlayerCharacter::SetMountedEcho(AAstrawildEchoCharacter* Echo)
+{
+    MountedEcho = Echo;
+    // Movement speed re-resolves on the next refresh (rider stance changes nothing
+    // for the pawn itself — its movement is disabled while seated).
+}
+
 void AAstrawildPlayerCharacter::SetPilotedSkiff(AAstrawildSkiffActor* Skiff)
 {
     PilotedSkiff = Skiff;
+}
+
+// ===========================================================================
+// LCP-3 — LAN co-op interaction / input routing (remote clients)
+// ===========================================================================
+
+void AAstrawildPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAstrawildPlayerCharacter, ReplicatedPilotedSkiff);
+    DOREPLIFETIME(AAstrawildPlayerCharacter, ReplicatedMountedEcho);
+}
+
+void AAstrawildPlayerCharacter::OnRep_PilotedSkiff()
+{
+    // Client mirror: the replicated identity refreshes the local weak pointer
+    // so input routing (Move/vertical/boost handlers) finds the skiff.
+    PilotedSkiff = ReplicatedPilotedSkiff;
+}
+
+void AAstrawildPlayerCharacter::OnRep_MountedEcho()
+{
+    MountedEcho = ReplicatedMountedEcho;
+}
+
+void AAstrawildPlayerCharacter::SetPilotedSkiff(AAstrawildSkiffActor* Skiff)
+{
+    PilotedSkiff = Skiff;
+    ReplicatedPilotedSkiff = Skiff; // LCP-3: authority write — replicates to the owner
+}
+
+void AAstrawildPlayerCharacter::SetMountedEcho(AAstrawildEchoCharacter* Echo)
+{
+    MountedEcho = Echo;
+    ReplicatedMountedEcho = Echo; // LCP-3: authority write — replicates to the owner
+}
+
+AActor* AAstrawildPlayerCharacter::ValidateInteractTargetForServer(AActor* Target) const
+{
+    // Fail-closed server re-validation of a client's interact intent:
+    // the target must exist, be an interactable, and sit within the pawn's
+    // interaction distance (no RPC-forged tele-interactions).
+    if (!IsValid(Target) || !IsAlive())
+    {
+        return nullptr;
+    }
+    if (!Target->GetClass()->ImplementsInterface(UAstrawildInteractable::StaticClass()) &&
+        !Cast<AAstrawildEchoCharacter>(Target))
+    {
+        return nullptr; // only interactables and Echoes (mount/capture) are routable
+    }
+    if (FVector::DistSquared(GetActorLocation(), Target->GetActorLocation()) >
+        FMath::Square(InteractionDistance * 1.5f))
+    {
+        UE_LOG(LogAstrawild, Warning,
+            TEXT("LCP-3: rejected out-of-range interact with %s (distance gate)."), *Target->GetName());
+        return nullptr;
+    }
+    return Target;
+}
+
+void AAstrawildPlayerCharacter::ServerInteract_Implementation(AActor* Target)
+{
+    ExecuteInteractIntent(ValidateInteractTargetForServer(Target));
+}
+
+void AAstrawildPlayerCharacter::ServerSkiffPilotInput_Implementation(const float ForwardAxis, const float TurnAxis, const float VerticalAxis, const bool bBoosting)
+{
+    if (AAstrawildSkiffActor* Skiff = PilotedSkiff.Get())
+    {
+        Skiff->ReceivePilotMove(ForwardAxis, TurnAxis);
+        Skiff->ReceivePilotVertical(VerticalAxis);
+        Skiff->ReceivePilotBoost(bBoosting);
+    }
+}
+
+void AAstrawildPlayerCharacter::ServerMountRiderInput_Implementation(const float ForwardAxis, const float TurnAxis, const float VerticalAxis)
+{
+    if (AAstrawildEchoCharacter* Mount = MountedEcho.Get())
+    {
+        if (Mount->MountComponent)
+        {
+            Mount->MountComponent->ReceiveRiderMove(ForwardAxis, TurnAxis);
+            Mount->MountComponent->ReceiveRiderVertical(VerticalAxis);
+        }
+    }
 }

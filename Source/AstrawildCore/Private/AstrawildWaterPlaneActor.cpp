@@ -24,9 +24,15 @@ AAstrawildWaterPlaneActor::AAstrawildWaterPlaneActor()
 
 void AAstrawildWaterPlaneActor::BuildPlane(const FBox2D& WorldRect)
 {
-    const float SeaLevel = UAstrawildZoneSubsystem::GetSeaLevelZ();
-    const FVector Center(WorldRect.GetCenter(), SeaLevel);
-    const FVector Extent(WorldRect.GetSize().X * 0.5f, WorldRect.GetSize().Y * 0.5f, 60.0f);
+    // World-ocean contract: the surface always sits at the global sea level.
+    BuildPlaneAtZ(WorldRect, UAstrawildZoneSubsystem::GetSeaLevelZ());
+}
+
+void AAstrawildWaterPlaneActor::BuildPlaneAtZ(const FBox2D& WorldRect, const float SurfaceZ, const float BoxThicknessCm)
+{
+    const FVector Center(WorldRect.GetCenter(), SurfaceZ);
+    const float BoxHalfZ = FMath::Max(5.0f, BoxThicknessCm * 0.5f);
+    const FVector Extent(WorldRect.GetSize().X * 0.5f, WorldRect.GetSize().Y * 0.5f, BoxHalfZ);
 
     SetActorLocation(Center);
     SurfaceCollision->InitBoxExtent(Extent);
@@ -119,5 +125,5 @@ void AAstrawildWaterPlaneActor::BuildPlane(const FBox2D& WorldRect)
     }
 
     UE_LOG(LogAstrawildWorld, Log, TEXT("Water plane built over %s at Z=%.0f (%d verts, %d tris)."),
-        *WorldRect.ToString(), SeaLevel, Vertices.Num(), Triangles.Num() / 3);
+        *WorldRect.ToString(), SurfaceZ, Vertices.Num(), Triangles.Num() / 3);
 }

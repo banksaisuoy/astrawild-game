@@ -10,10 +10,13 @@ class AAstrawildEchoCharacter;
 class AAstrawildSkiffActor;
 class AAstrawildUtilityDroneActor;
 class UAstrawildBuildingComponent;
+class UAstrawildAttributeComponent;
 class UAstrawildCaptureComponent;
 class UAstrawildCombatComponent;
 class UAstrawildCraftingComponent;
+class UAstrawildDurabilityComponent;
 class UAstrawildInventoryComponent;
+class UAstrawildItemDefinition;
 class UAstrawildSurvivalComponent;
 class UCameraComponent;
 class UInputAction;
@@ -102,8 +105,24 @@ public:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // LCP-3
     virtual void PossessedBy(AController* NewController) override;
+    virtual void PawnClientRestart() override;
     virtual void FellOutOfWorld(const UDamageType& DmgType) override;
+
+    /**
+     * CGC-3: landing feedback (A_Player_Land) — ACharacter's grounded landing
+     * hook, fires on the machine simulating this character's movement (the
+     * owning client for a player pawn). Fail-closed 2D blip via the audio
+     * director; a missing package is a silent landing, never a gameplay gate.
+     */
+    virtual void OnLanded(const FHitResult& Hit) override;
+
+    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay, PawnClientRestart, and PossessedBy. */
+    void ApplyMappingContext();
+    void BuildRuntimeInputDefaults();
+    void BuildGamepadInputDefaults();
+    void BuildProceduralBody();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
@@ -131,6 +150,36 @@ public:
     /** Base building placement (directive §16). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
     TObjectPtr<UAstrawildBuildingComponent> BuildingComponent;
+
+    /** GDP-3: player growth — five attributes + seven milestone skills. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildAttributeComponent> AttributeComponent;
+
+    /** SCP Phase 12: equipment durability + harvest specialization + repairs. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ASTRAWILD|Systems")
+    TObjectPtr<UAstrawildDurabilityComponent> DurabilityComponent;
+
+    // --- GDP-3: skill windows (public getters — the combat/capture components read them) ---
+
+    /** True while Power Strike is queued onto the next melee swing. */
+    bool IsNextMeleeEmpowered() const { return EmpoweredMeleeRemaining > 0.0f; }
+
+    /** Spent by the combat component the moment the empowered swing lands. */
+    void ConsumeEmpoweredMelee() { EmpoweredMeleeRemaining = 0.0f; }
+
+    /** Remaining seconds of the Overcharge ranged damage window (+30% while active). */
+    float GetRangedBuffRemaining() const { return RangedBuffRemaining; }
+
+    /** Remaining seconds of the Hunter's Focus capture window (+25% chance while active). */
+    float GetCaptureFocusRemaining() const { return CaptureFocusRemaining; }
+
+    /**
+     * DP-6: field-consumable timed effects — a consumed item may carry a timed
+     * status payload (applied through the survival component's status-effect
+     * system) and/or grant capture-focus seconds (the Hunter's Focus window).
+     * Called by both consumption paths after ApplyConsumption (server).
+     */
+    void ApplyFieldConsumableEffects(const UAstrawildItemDefinition* ItemDef);
 
     /**
      * Navigation invoker (audit C-3): generates navmesh tiles around the player in
@@ -230,6 +279,22 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> ResearchAction;
 
+    /** PCR-1: toggle the Field Journal (bestiary) screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> JournalAction;
+
+    /** PCR-2: toggle the Echo Roster (party-ring management) screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> RosterAction;
+
+    /** PCR-3: toggle the world map screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> MapAction;
+
+    /** PCR-5: toggle the Hunt Board screen. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> HuntAction;
+
     /** Toggle the pause menu (loop stage QUIT). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> PauseAction;
@@ -241,6 +306,18 @@ public:
     /** Batch 8 — skiff descend (CTRL held; SPACE climbs through JumpAction). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
     TObjectPtr<UInputAction> DescendAction;
+
+    /** GDP-1: T — every owned party Echo casts its best ready ability. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> PartyAbilityAction;
+
+    /** GDP-3: Y — smart-cast the player's best ready skill. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> PlayerSkillAction;
+
+    /** CGC-4: F6 — hide/show the HUD (the additive 33rd runtime action; KB only). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ASTRAWILD|Input")
+    TObjectPtr<UInputAction> ToggleHUDAction;
 
     // --- Tunables ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ASTRAWILD|Combat", meta=(ClampMin="0.0"))
@@ -293,8 +370,47 @@ public:
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|Skiff")
     AAstrawildSkiffActor* GetPilotedSkiff() const;
 
+    /** SCP Phase 5: the Echo this player is currently riding (null = afoot). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Mount")
+    AAstrawildEchoCharacter* GetMountedEcho() const { return MountedEcho.Get(); }
+
+    /** Called by the mount component on mount/dismount (input routing switches). */
+    void SetMountedEcho(AAstrawildEchoCharacter* Echo);
+
     /** Called by the skiff on mount/dismount (input routing switches over). */
     void SetPilotedSkiff(AAstrawildSkiffActor* Skiff);
+
+    // --- CGC-4: look sensitivity (the settings-screen consumer) ---
+
+    /** CGC-4: the persisted look-sensitivity multiplier (settings row; default ×1.0). */
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|Camera")
+    static float GetLookSensitivityMultiplier() { return LookSensitivityMultiplier; }
+
+    /** CGC-4: set the look-sensitivity multiplier (the settings screen + boot apply). Consumed in Look(). */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|Camera")
+    static void SetLookSensitivityMultiplier(float Multiplier);
+
+    // --- LCP-3: LAN co-op interaction/input routing (remote clients) ---
+
+    /**
+     * LCP-3: the single client→server interaction intent. The owning client
+     * traces locally (predictive), then sends the target; the server re-validates
+     * (alive + interact range + interface) and runs the SAME authority interact
+     * ladder (dismount-first → mount → generic interactable → capture → evolve).
+     */
+    UFUNCTION(Server, Reliable)
+    void ServerInteract(AActor* Target);
+
+    /**
+     * LCP-3: relays remote pilot input to the server's skiff (capped by the
+     * client at send-on-change; Unreliable — a dropped tick just coasts).
+     */
+    UFUNCTION(Server, Unreliable)
+    void ServerSkiffPilotInput(float ForwardAxis, float TurnAxis, float VerticalAxis, bool bBoosting);
+
+    /** LCP-3: relays remote rider input to the server's mount (same discipline). */
+    UFUNCTION(Server, Unreliable)
+    void ServerMountRiderInput(float ForwardAxis, float TurnAxis, float VerticalAxis);
 
     /** Server: spawn a drone bound to this player (deploy key / save-load). */
     AAstrawildUtilityDroneActor* SpawnUtilityDrone();
@@ -343,6 +459,21 @@ protected:
     void HandleJump(const FInputActionValue& Value);
     void CyclePartyCommand(const FInputActionValue& Value);
     void FeedTarget(const FInputActionValue& Value);
+
+    // GDP-1/3: T = every party Echo casts its best ready ability; Y = the
+    // player's smart-cast skill (priority ladder on the attribute component).
+    void CastPartyAbility(const FInputActionValue& Value);
+    void CastPlayerSkill(const FInputActionValue& Value);
+
+    /** GDP-3: Power Strike window (seconds; consumed by the next melee hit). */
+    float EmpoweredMeleeRemaining = 0.0f;
+
+    /** GDP-3: Overcharge window (seconds; +30% ranged damage while active). */
+    float RangedBuffRemaining = 0.0f;
+
+    /** GDP-3: Hunter's Focus window (seconds; +25% capture chance while active). */
+    float CaptureFocusRemaining = 0.0f;
+
     void ToggleBuildMode(const FInputActionValue& Value);
     void RotateBuilding(const FInputActionValue& Value);
     void CycleBuildingPiece(const FInputActionValue& Value);
@@ -355,7 +486,14 @@ protected:
     void DeployRobot(const FInputActionValue& Value);
     void ToggleInventoryScreenInput(const FInputActionValue& Value);
     void ToggleResearchScreenInput(const FInputActionValue& Value);
+    void ToggleJournalScreenInput(const FInputActionValue& Value);
+    void ToggleRosterScreenInput(const FInputActionValue& Value);
+    void ToggleMapScreenInput(const FInputActionValue& Value);
+    void ToggleHuntScreenInput(const FInputActionValue& Value);
     void TogglePauseMenuInput(const FInputActionValue& Value);
+
+    /** CGC-4: F6 — flip the local HUD widget's visibility (PC-owned widget). */
+    void ToggleHudInput(const FInputActionValue& Value);
 
     // Batch 8 — skiff flight inputs (routed to the piloted skiff).
     void OnJumpPressed(const FInputActionValue& Value);
@@ -373,23 +511,12 @@ protected:
 
     void RefreshMovementSpeed();
 
-    /** Production V2 Batch 2: vertex-colored survivor body (mirrors the Echo body idiom). */
-    void BuildProceduralBody();
-
     /** Production V2 Batch 2: rebuild the held weapon mesh when equipment changes (timer-polled). */
     void RefreshHeldWeaponVisual();
 
-    /** Builds a complete default Enhanced Input setup in code (zero-asset playability). */
-    void BuildRuntimeInputDefaults();
-
-    /** Final production run: gamepad companion mappings (coexist with KB/M — M9). */
-    void BuildGamepadInputDefaults();
     // Audit C-1b (latent compile error): every existing call passes 2 arguments while the
     // declaration demanded 3 — default bNegateY so the file compiles (value is unused).
     class UInputAction* MakeRuntimeAction(const FString& Name, uint8 ValueType, bool bNegateY = false);
-
-    /** (Re)binds the Enhanced Input mapping context — called from BeginPlay and every PossessedBy (audit C-8). */
-    void ApplyMappingContext();
 
     UFUNCTION()
     void OnPlayerDied();
@@ -412,10 +539,34 @@ protected:
     UFUNCTION()
     void OnSprintExhausted();
 
+    /** FPP-1: attribute level-up → toast (+ "new skill available" when a
+     *  milestone was crossed — the growth loop was previously invisible). */
+    UFUNCTION()
+    void HandleAttributeLevelUp(EAstrawildAttributeType Attribute, int32 NewLevel);
+
+    /** FPP-1: unlocked-skill count at the last level-up (milestone detector). */
+    int32 LastSeenSkillCount = -1;
+
+    /**
+     * CGC-3: horizontal distance accumulated toward the next footstep blip
+     * (stride = UAstrawildAudioDirectorSubsystem::FootstepStrideCm). Local
+     * feedback only — the locally controlled machine plays its own strides.
+     */
+    float FootstepDistanceAccumulator = 0.0f;
+
+    /** CGC-2: first-time teaching hints evaluated at a gentle cadence (first
+     *  nightfall + first low vitals). Both are ShowOnce moments, so the check
+     *  goes quiet on its own once each hint has played. Authority-only timer
+     *  (the marks belong on the host's persisted hint store). */
+    void RefreshFirstTimeHints();
+
 private:
     void SetMovementSpeed(float NewSpeed);
     double LastAttackTimeSeconds = -BIG_NUMBER;
     bool bSprinting = false;
+
+    /** CGC-4: storage for the static look-sensitivity multiplier (settings row). */
+    static float LookSensitivityMultiplier;
 
     /** Runtime-built input objects kept alive for GC. */
     UPROPERTY()
@@ -438,7 +589,43 @@ private:
     UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Skiff")
     TWeakObjectPtr<AAstrawildSkiffActor> PilotedSkiff;
 
+    /** SCP Phase 5: ridden Echo (weak — a defeated mount auto-dismounts). */
+    UPROPERTY(VisibleAnywhere, Category="ASTRAWILD|Mount")
+    TWeakObjectPtr<AAstrawildEchoCharacter> MountedEcho;
+
+    // --- LCP-3: replicated mount/pilot identity (remote clients need them for
+    // input routing; the weak mirrors above stay the local read surface) ---
+
+    UPROPERTY(ReplicatedUsing=OnRep_PilotedSkiff)
+    TObjectPtr<AAstrawildSkiffActor> ReplicatedPilotedSkiff;
+
+    UPROPERTY(ReplicatedUsing=OnRep_MountedEcho)
+    TObjectPtr<AAstrawildEchoCharacter> ReplicatedMountedEcho;
+
+    UFUNCTION()
+    void OnRep_PilotedSkiff();
+
+    UFUNCTION()
+    void OnRep_MountedEcho();
+
+    /** LCP-3: the shared authority interact ladder (host-local Interact and the
+     *  ServerInteract RPC land here; extraction of the original Interact body). */
+    void ExecuteInteractIntent(AActor* InteractableActor);
+
+    /** LCP-3 (world-free testable): server-side target re-validation — alive,
+     *  present, within InteractionDistance. Returns the target or null. */
+    AActor* ValidateInteractTargetForServer(AActor* Target) const;
+
+    /** LCP-3: pilot/rider input relay bookkeeping — the held vertical axis
+     *  (+1 climb / -1 descend / 0 rest) so per-frame move relays never cancel
+     *  a held key, and the boost state mirror for the same reason. */
+    float TrackedVerticalAxis = 0.0f;
+    bool bLastSentPilotBoost = false;
+
     /** Production V2 Batch 2: held-weapon refresh cadence + dedupe cache. */
     FTimerHandle HeldWeaponTimerHandle;
     FName LastHeldWeaponId = NAME_None;
+
+    /** CGC-2: repeating first-time-hint check (2s cadence, authority only). */
+    FTimerHandle FirstTimeHintTimerHandle;
 };

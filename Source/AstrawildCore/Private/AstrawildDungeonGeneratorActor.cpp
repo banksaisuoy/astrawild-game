@@ -46,6 +46,12 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
         Template.bIsBossRoom = true;
         Template.CreatureSpawnOffsets = { FVector(-300.0f, -300.0f, 120.0f) };
         Template.ClearLootTableId = TEXT("Loot_DungeonBoss"); // Wave 3: boss loot table.
+        // Final Run (FR-7): per-dungeon boss loot override (the Sovereign drops
+        // Loot_EyeCore — the Sovereign Core + Maelstrom Glass).
+        if (!BossLootTableId.IsNone())
+        {
+            Template.ClearLootTableId = BossLootTableId;
+        }
     }
     else if (RoomIndex == RoomCount - 2)
     {
@@ -57,7 +63,12 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
     {
         Template.RoomTypeId = TEXT("Puzzle");
         Template.HalfExtents = FVector(600.0f, 600.0f, 300.0f);
-        Template.CreatureSpawnOffsets = { FVector(0.0f, 300.0f, 120.0f) }; // Light guard.
+        // DP-9: resonance-pillar room — the light guard stands off the pillar
+        // line (pillar III sits at +0.42 * half-extents-Y), watching the puzzle.
+        Template.CreatureSpawnOffsets = { FVector(300.0f, -300.0f, 120.0f) };
+        // DP-9: the room only clears when the attunement sequence is solved
+        // (AND the guard defeated) — the gate unseals through the existing path.
+        Template.bRequiresPuzzleSolve = true;
     }
     else
     {
@@ -65,6 +76,18 @@ FAstrawildDungeonRoomTemplate AAstrawildDungeonGeneratorActor::MakeTemplate(cons
         Template.HalfExtents = FVector(650.0f, 650.0f, 320.0f);
         Template.CreatureSpawnOffsets = { FVector(-200.0f, -200.0f, 120.0f), FVector(200.0f, 200.0f, 120.0f) };
     }
+
+    // DP-9 (dungeon depth): per-dungeon identity rides on NEW template fields —
+    // the theme resolves from the STABLE DungeonId (the save mapping key), so
+    // the bootstrapper literals stay byte-identical. Room footprints scale by
+    // the theme profile (Underlight tighter, Sunken Vault wider, Eye standard
+    // with tall shells); unknown ids fail closed to the unthemed legacy shell.
+    Template.Theme = AAstrawildDungeonRoomActor::ResolveDungeonTheme(DungeonId);
+    const FAstrawildDungeonThemeProfile ThemeProfile = AAstrawildDungeonRoomActor::MakeThemeProfile(Template.Theme);
+    Template.HalfExtents = FVector(
+        Template.HalfExtents.X * ThemeProfile.ExtentScale.X,
+        Template.HalfExtents.Y * ThemeProfile.ExtentScale.Y,
+        Template.HalfExtents.Z);
 
     return Template;
 }
@@ -140,6 +163,7 @@ void AAstrawildDungeonGeneratorActor::Generate()
         if (Template.bIsBossRoom)
         {
             Room->BossDefeatEventId = BossDefeatEventId; // Batch 8: per-dungeon quest target.
+            Room->BossSummonSpeciesId = BossSummonSpeciesId; // FR-7: phase-2 adds override.
             Room->SpawnEncounter({ BossDefinitionId });
         }
         else if (!Template.CreatureSpawnOffsets.IsEmpty())

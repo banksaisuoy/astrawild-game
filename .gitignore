@@ -27,3 +27,7 @@ Packaged/
 StagedBuilds/
 
 # Keep project source, config, content, docs and uproject tracked.
+
+# Final-audit F-19 (AUD-5): Python bytecode must never be tracked (packaging scans copy it).
+__pycache__/
+*.pyc

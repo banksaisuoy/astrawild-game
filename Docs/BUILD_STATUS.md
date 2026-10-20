@@ -1,8 +1,33 @@
-# ASTRAWILD — Build Status
+﻿# ASTRAWILD — Build Status
+
+> [!NOTE]
+> **v9.4 MASTER SYNC qualifier (latest)**: this file is the DATED engine-verification
+> record of the Antigravity V2 session (last updated 2026-09-01 @ commit `03c2fe6` —
+> 54/54 tests at that SHA). It is retained as historical engine evidence, NOT as the
+> current-state doc. Current source-side state: `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.4
+> + **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical live execution state)** —
+> **v9.10 INTEGRATION qualifier (latest)**: tip = the INTEGRATION merge on `final-completion`
+> (CGC v9.10 line `3ecdcb3` + machine-ready line `5f86a47` unified — see LIVE_STATE §1; real-mesh
+> catalog: 109 unique CC0 models, manifest 189/189 present / 0 pending,
+> 140-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC contracts + 1 completion-stage victory chain),
+> census 78 items / 58 recipes / 8 sites / 16
+> events / 17 POIs, 229 species, Sci-Fantasy mutation system, LFS 586/586 pointers)
+> with the readiness verdict in `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`; the one-time re-verification
+> at the final SHA is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20e (engine-verified claims
+> belong only to that future run — the numbers below are frozen to their date).
 
 ## Status
 
-- Overall: `PASS` — **PRODUCTION V2 CERTIFIED (54/54 automation tests PASS, 0 compile errors, 115/115 ArtPack assets, packaged Win64 build PASS)**
+- Overall: `PASS (through 03c2fe6) + COMPLETION STAGE PENDING FIRST COMPILE` — see the 2026-09-18 entry below.
+  > **2026-10-12 merge note:** the completion stage described below was authored on the `main` line (base `94a398c`, "54→55" in that line's view) and is now merged into `final-completion` at `1b03a39`, where the full suite is **135 contracts**. Its first engine compile is still pending — folded into ENGINE-RUN-1 as the #1 machine-day action.
+  **Completion-stage session (2026-09-18, GLM/Super Z audit):**
+  - Full repository audit performed; 46 LFS objects verified present on GitHub LFS storage and restorable (`git lfs pull`) — fresh clones without git-lfs previously received 130-byte pointer files and could not boot (fixed by `Setup_FirstRun.bat` with pointer-file detection).
+  - **Game bookends added (source-complete, NOT yet engine-compiled):** title screen (`UAstrawildTitleMenuWidget` — New Journey / Continue / Controls / Quit), victory screen (`UAstrawildVictoryScreenWidget` on `Quest_VanguardProtocol` completion with session stats), death overlay with respawn countdown (`UAstrawildDeathOverlayWidget`), all pure-C++ UMG with zero new assets. Automation tests 54 → **55** (`ASTRAWILD.Quest.VictoryChainTermination`).
+  - **Launch tooling rewritten:** `_FindEngine.bat` (registry + common-path engine locator), `Setup_FirstRun.bat` (LFS bootstrap + content validation), `Launch_ASTRAWILD.bat` / `Launch_ASTRAWILD_Editor.bat` (relative paths), `Import_Art.bat`, `Package_Game.bat`, `Build_Project.bat`. The old hardcoded `E:\AstrawildGame` / `E:\Epic Games\UnrealEngine` scripts are retired.
+  - Static review of all post-`03c2fe6` drift (5 files, +291/−126) found no compile blockers. **First engine compile of this commit is the #1 pending action on the UE 5.8 machine.**
+  - Full findings + honest missing list: `Docs/WHATS_MISSING.md`.
+
+- Previous certification (baseline): **PRODUCTION V2 CERTIFIED at `03c2fe6` (54/54 automation tests PASS, 0 compile errors, 115/115 ArtPack assets, packaged Win64 build PASS)**
   Verified on host machine (`Docs/ENGINE_LOGS/ANTIGRAVITY_LATEST_VERIFICATION.md`):
   - **C++ Compile**: `ASTRAWILDEditor Win64 Development` — 0 errors (76.62s)
   - **Automation Tests**: 54 / 54 tests PASSED (100% Green, 100.40s)

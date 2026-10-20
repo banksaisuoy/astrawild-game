@@ -1,0 +1,39 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 840,
+   "id": "Echo_Gloomfang",
+   "kind": "dungeon"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 875,
+   "id": "Echo_Dawnfang",
+   "kind": "dungeon"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 937,
+   "id": "Echo_GlassTyrant",
+   "kind": "world",
+   "tuning": [
+    {
+     "line": 929,
+     "raw": "Tyrant->BossHealthScale = 3.0f; // tough, not final (Sovereign is 5.0)."
+    },
+    {
+     "line": 930,
+     "raw": "Tyrant->BossDamageScale = 1.4f;"
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
+   "line": 955,
+   "id": "Echo_DrownedSovereign",
+   "kind": "dungeon"
+  }
+ ]
+}

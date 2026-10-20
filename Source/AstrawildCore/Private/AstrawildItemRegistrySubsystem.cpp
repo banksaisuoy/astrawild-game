@@ -198,6 +198,50 @@ TArray<UAstrawildEchoDefinition*> UAstrawildItemRegistrySubsystem::GetAllEchoDef
     return Out;
 }
 
+// SCP Phase 1 (DataValidator) — full enumerations for reference integrity checks.
+TArray<UAstrawildItemDefinition*> UAstrawildItemRegistrySubsystem::GetAllItems() const
+{
+    TArray<UAstrawildItemDefinition*> Out;
+    Out.Reserve(Items.Num());
+    for (const auto& Pair : Items)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
+TArray<UAstrawildBuildingDefinition*> UAstrawildItemRegistrySubsystem::GetAllBuildings() const
+{
+    TArray<UAstrawildBuildingDefinition*> Out;
+    Out.Reserve(Buildings.Num());
+    for (const auto& Pair : Buildings)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
+TArray<UAstrawildQuestDefinition*> UAstrawildItemRegistrySubsystem::GetAllQuests() const
+{
+    // CGC-2: the GetAllPOIs pattern — every registered quest definition.
+    TArray<UAstrawildQuestDefinition*> Out;
+    Out.Reserve(Quests.Num());
+    for (const auto& Pair : Quests)
+    {
+        if (Pair.Value)
+        {
+            Out.Add(Pair.Value);
+        }
+    }
+    return Out;
+}
+
 // --- Production V2: data-driven content foundation registries ---
 
 void UAstrawildItemRegistrySubsystem::RegisterWeapon(UAstrawildWeaponDefinition* Definition)
@@ -400,4 +444,24 @@ TArray<UAstrawildResourceNodeDefinition*> UAstrawildItemRegistrySubsystem::GetAl
         }
     }
     return Out;
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumQuests() const
+{
+    return Quests.Num();
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumLootTables() const
+{
+    return LootTables.Num();
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumNPCs() const
+{
+    return NPCDefinitions.Num();
+}
+
+int32 UAstrawildItemRegistrySubsystem::GetNumRobots() const
+{
+    return Robots.Num();
 }

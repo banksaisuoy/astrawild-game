@@ -1,0 +1,1021 @@
+{
+  "assets": {
+    "SK_Base_ArmoredBeetle": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredBeetle.glb",
+      "source_model": "Flying/glTF/Armabee.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_ArmoredCrab": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ArmoredCrab.glb",
+      "source_model": "Flying/glTF/Armabee_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_CyborgBeast": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgBeast.glb",
+      "source_model": "Big/glTF/Demon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_CyborgSerpent": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_CyborgSerpent.glb",
+      "source_model": "Flying/glTF/Hywirl.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_ElemDrake": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemDrake.glb",
+      "source_model": "Flying/glTF/Dragon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_ElemWisp": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_ElemWisp.glb",
+      "source_model": "Flying/glTF/Glub.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_GolemQuadruped": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_GolemQuadruped.glb",
+      "source_model": "Flying/glTF/Goleling.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_MonolithColossus": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MonolithColossus.glb",
+      "source_model": "Big/glTF/Yeti.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_Mushroomling": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_Mushroomling.glb",
+      "source_model": "Blob/glTF/Mushnub.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_MutantAvian": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantAvian.glb",
+      "source_model": "Big/glTF/Birb.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_MutantBeast": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_MutantBeast.glb",
+      "source_model": "glTF/Wolf.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Base_PlantMaw": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_PlantMaw.glb",
+      "source_model": "Big/glTF/Cactoro.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_SpiritOrb": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritOrb.glb",
+      "source_model": "Flying/glTF/Ghost_Skull.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_SpiritWisp": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_SpiritWisp.glb",
+      "source_model": "Flying/glTF/Ghost.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_VoidBlob": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidBlob.glb",
+      "source_model": "Blob/glTF/GreenBlob.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Base_VoidTentacle": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/BaseMeshes/SK_Base_VoidTentacle.glb",
+      "source_model": "Flying/glTF/Squidle.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_AbyssDemon": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AbyssDemon.glb",
+      "source_model": "Big/glTF/BlueDemon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_AlpacaColossus": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AlpacaColossus.glb",
+      "source_model": "Flying/glTF/Alpaking.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_AlpacaWarlord": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AlpacaWarlord.glb",
+      "source_model": "Flying/glTF/Alpaking_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_AncientWarden": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_AncientWarden.glb",
+      "source_model": "Flying/glTF/Goleling_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_BoneShaman": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_BoneShaman.glb",
+      "source_model": "Big/glTF/Orc_Skull.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_FungalSovereign": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_FungalSovereign.glb",
+      "source_model": "Blob/glTF/Mushnub_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_MechRavager": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_MechRavager.glb",
+      "source_model": "Characters/GLTF/Mech_RaeTheRedPanda.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Boss_MechTitan": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_MechTitan.glb",
+      "source_model": "Characters/GLTF/Mech_BarbaraTheBee.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Boss_MushroomKing": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_MushroomKing.glb",
+      "source_model": "Big/glTF/MushroomKing.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_SentinelPrime": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_SentinelPrime.glb",
+      "source_model": "Characters/GLTF/Enemy_Large.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Boss_ShadowNinja": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_ShadowNinja.glb",
+      "source_model": "Big/glTF/Ninja.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_SkyTyrant": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_SkyTyrant.glb",
+      "source_model": "Flying/glTF/Dragon_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_VoidPrime": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_VoidPrime.glb",
+      "source_model": "Flying/glTF/Glub_Evolved.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Boss_WarlordOrc": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/Bosses/SK_Boss_WarlordOrc.glb",
+      "source_model": "Big/glTF/Orc.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Abyssjelly": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Abyssjelly.glb",
+      "source_model": "Blob/glTF/PinkBlob.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Astralmonolith": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Astralmonolith.glb",
+      "source_model": "Big/glTF/Alien.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Bastionbeetle": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Bastionbeetle.glb",
+      "source_model": "Big/glTF/Dino.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Brinefin": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Brinefin.glb",
+      "source_model": "Blob/glTF/GreenSpikyBlob.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Cindermule": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Cindermule.glb",
+      "source_model": "glTF/Donkey.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Coralray": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Coralray.glb",
+      "source_model": "Blob/glTF/Cactoro.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Deepdelver": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Deepdelver.glb",
+      "source_model": "Big/glTF/Bunny.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_DrownedSovereign": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_DrownedSovereign.glb",
+      "source_model": "Blob/glTF/Yeti.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Duskmoth": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Duskmoth.glb",
+      "source_model": "Big/glTF/Tribal.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Eldermonolith": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Eldermonolith.glb",
+      "source_model": "Blob/glTF/Orc.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Emberfang": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Emberfang.glb",
+      "source_model": "Flying/glTF/Tribal.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Embershade": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Embershade.glb",
+      "source_model": "Blob/glTF/Fish.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_EyeSentinel": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_EyeSentinel.glb",
+      "source_model": "Characters/GLTF/Astronaut_FernandoTheFlamingo.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Fernthorn": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Fernthorn.glb",
+      "source_model": "Blob/glTF/Birb.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Forgottencolossus": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Forgottencolossus.glb",
+      "source_model": "Blob/glTF/Ninja.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Frostblaze": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Frostblaze.glb",
+      "source_model": "glTF/Fox.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Geargolem": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Geargolem.glb",
+      "source_model": "Characters/GLTF/Enemy_Flying.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Ghostshade": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Ghostshade.glb",
+      "source_model": "Blob/glTF/Pigeon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_GlassTyrant": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_GlassTyrant.glb",
+      "source_model": "Big/glTF/Frog.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Glimmerhornet": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Glimmerhornet.glb",
+      "source_model": "Blob/glTF/Cat.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Hallowedcolossus": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Hallowedcolossus.glb",
+      "source_model": "Blob/glTF/Alien.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Lagoonfin": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Lagoonfin.glb",
+      "source_model": "glTF/Alpaca.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Magmawing": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Magmawing.glb",
+      "source_model": "glTF/Husky.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Mistmender": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Mistmender.glb",
+      "source_model": "Blob/glTF/Wizard.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Mistwing": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Mistwing.glb",
+      "source_model": "Blob/glTF/Dog.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Monolithcolossus": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Monolithcolossus.glb",
+      "source_model": "Flying/glTF/Demon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Monolithprimarch": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Monolithprimarch.glb",
+      "source_model": "Characters/GLTF/Enemy_Small.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Pearlcrest": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Pearlcrest.glb",
+      "source_model": "Characters/GLTF/Astronaut_BarbaraTheBee.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Pistongolem": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Pistongolem.glb",
+      "source_model": "Characters/GLTF/Enemy_ExtraSmall.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Primemonolith": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Primemonolith.glb",
+      "source_model": "Flying/glTF/Pigeon.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Pyreblaze": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Pyreblaze.glb",
+      "source_model": "glTF/Deer.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Reliccolossus": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Reliccolossus.glb",
+      "source_model": "Characters/GLTF/Mech_FinnTheFrog.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Rimefang": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Rimefang.glb",
+      "source_model": "Characters/GLTF/Mech_FernandoTheFlamingo.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Saltcrest": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Saltcrest.glb",
+      "source_model": "glTF/Horse.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Saltray": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Saltray.glb",
+      "source_model": "glTF/Bull.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Stonehide": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Stonehide.glb",
+      "source_model": "glTF/Cow.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Sunhide": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Sunhide.glb",
+      "source_model": "glTF/ShibaInu.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Sunhorn": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Sunhorn.glb",
+      "source_model": "Blob/glTF/Chicken.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Echo_Sunpaw": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Sunpaw.glb",
+      "source_model": "Characters/GLTF/Astronaut_RaeTheRedPanda.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Terraquill": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Terraquill.glb",
+      "source_model": "glTF/Stag.gltf",
+      "source_pack": "Quaternius_UltimateAnimatedAnimals",
+      "source_page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "SK_Echo_Tidewyrm": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Tidewyrm.glb",
+      "source_model": "Characters/GLTF/Astronaut_FinnTheFrog.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SK_Echo_Voltpylon": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Echoes/SK_Echo_Voltpylon.glb",
+      "source_model": "Big/glTF/Monkroose.gltf",
+      "source_pack": "Quaternius_UltimateMonsters",
+      "source_page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "SK_Survivor_Exosuit": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Characters/Survivor/SK_Survivor_Exosuit.glb",
+      "source_model": "Individual Characters/glTF/Swat.gltf",
+      "source_pack": "Quaternius_UltimateModularMen",
+      "source_page": "https://quaternius.com/packs/ultimatemodularmen.html"
+    },
+    "SK_Survivor_T1_Scavenger": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Characters/Survivor/SK_Survivor_T1_Scavenger.glb",
+      "source_model": "Individual Characters/glTF/Adventurer.gltf",
+      "source_pack": "Quaternius_UltimateModularMen",
+      "source_page": "https://quaternius.com/packs/ultimatemodularmen.html"
+    },
+    "SK_Survivor_T2_Astraite": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Characters/Survivor/SK_Survivor_T2_Astraite.glb",
+      "source_model": "Individual Characters/glTF/Spacesuit.gltf",
+      "source_pack": "Quaternius_UltimateModularMen",
+      "source_page": "https://quaternius.com/packs/ultimatemodularmen.html"
+    },
+    "SM_Cliff_Shard": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Cliff_Shard.glb",
+      "source_model": "GLB/cliff_blockDiagonal_rock.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Fern": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Fern.glb",
+      "source_model": "GLB/plant_bushDetailed.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Flower_Purple": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Flower_Purple.glb",
+      "source_model": "GLB/flower_purpleA.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Flower_Red": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Flower_Red.glb",
+      "source_model": "GLB/flower_redA.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_GlowReed": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_GlowReed.glb",
+      "source_model": "GLB/plant_flatTall.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Grass_Tuft": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Grass_Tuft.glb",
+      "source_model": "GLB/grass_large.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Log_Fallen": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Log_Fallen.glb",
+      "source_model": "GLB/log.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Mushroom_Group": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Mushroom_Group.glb",
+      "source_model": "GLB/mushroom_redGroup.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Mushroom_Red": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Mushroom_Red.glb",
+      "source_model": "GLB/mushroom_red.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Node_AncientVein": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Node_AncientVein.fbx",
+      "source_model": "FBX/Column_Round_Short.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html"
+    },
+    "SM_Node_Astraite": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Node_Astraite.glb",
+      "source_model": "GLB/rock_crystals.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Node_Pyronite": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Node_Pyronite.glb",
+      "source_model": "GLB/rock_crystalsLargeA.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Node_Voidstone": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Node_Voidstone.glb",
+      "source_model": "GLB/rock_crystalsLargeB.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Rock_Boulder_Moss": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Boulder_Moss.glb",
+      "source_model": "GLB/rocks_smallA.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Rock_Granite_L": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Granite_L.glb",
+      "source_model": "GLB/rock_largeA.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Rock_Granite_M": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Granite_M.glb",
+      "source_model": "GLB/rock_largeB.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Rock_Granite_S": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Rock_Granite_S.glb",
+      "source_model": "GLB/rock.glb",
+      "source_pack": "Kenney_SpaceKit",
+      "source_page": "https://kenney.nl/assets/space-kit"
+    },
+    "SM_Ruin_Arch": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Ruin_Arch.fbx",
+      "source_model": "FBX/Arch_Gothic.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html"
+    },
+    "SM_Ruin_Block": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Ruin_Block.fbx",
+      "source_model": "FBX/Brick.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html"
+    },
+    "SM_Ruin_Pillar": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Ruin_Pillar.fbx",
+      "source_model": "FBX/Column_Round.fbx",
+      "source_pack": "Quaternius_UltimateModularRuins",
+      "source_page": "https://quaternius.com/packs/ultimatemodularruins.html"
+    },
+    "SM_SporeBush": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_SporeBush.glb",
+      "source_model": "GLB/plant_bushLarge.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Stump_Round": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Stump_Round.glb",
+      "source_model": "GLB/stump_round.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Tree_Broadleaf": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Tree_Broadleaf.glb",
+      "source_model": "GLB/tree_oak.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Tree_Conifer": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Tree_Conifer.glb",
+      "source_model": "GLB/tree_cone.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Tree_SporeCanopy": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Environment/SM_Tree_SporeCanopy.glb",
+      "source_model": "GLB/tree_fat.glb",
+      "source_pack": "Kenney_NatureKit",
+      "source_page": "https://kenney.nl/assets/nature-kit"
+    },
+    "SM_Vehicle_DawnSkiff": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_DawnSkiff.glb",
+      "source_model": "Vehicles/GLTF/Spaceship_RaeTheRedPanda.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SM_Vehicle_GroundRover": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_GroundRover.glb",
+      "source_model": "Vehicles/GLTF/Rover_1.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SM_Vehicle_RoverHeavy": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_RoverHeavy.glb",
+      "source_model": "Vehicles/GLTF/Rover_2.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SM_Vehicle_SupportSkiff": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Vehicles/SM_Vehicle_SupportSkiff.glb",
+      "source_model": "Vehicles/GLTF/Spaceship_FinnTheFrog.gltf",
+      "source_pack": "Quaternius_UltimateSpaceKit",
+      "source_page": "https://quaternius.com/packs/ultimatespacekit.html"
+    },
+    "SM_Weapon_ArcCannon": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_ArcCannon.glb",
+      "source_model": "GLB/blaster-e.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit"
+    },
+    "SM_Weapon_PlasmaCarbine": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_PlasmaCarbine.glb",
+      "source_model": "GLB/blaster-c.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit"
+    },
+    "SM_Weapon_Railgun": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_Railgun.glb",
+      "source_model": "GLB/blaster-g.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit"
+    },
+    "SM_Weapon_ScrapRifle": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_ScrapRifle.glb",
+      "source_model": "GLB/blaster-a.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit"
+    },
+    "SM_Weapon_SingularityCannon": {
+      "author": "Quaternius / Kenney",
+      "license": "CC0 1.0 Universal",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "ArtSource/Meshes/Weapons/SM_Weapon_SingularityCannon.glb",
+      "source_model": "GLB/blaster-p.glb",
+      "source_pack": "Kenney_BlasterKit",
+      "source_page": "https://kenney.nl/assets/blaster-kit"
+    }
+  },
+  "generator": "Scripts/fetch_free_assets.py",
+  "note": "Per-asset license provenance for every real staged mesh. All external sources are CC0 1.0 Universal (verified from in-pack license files).",
+  "packs": {
+    "Kenney_BlasterKit": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://kenney.nl/assets/blaster-kit"
+    },
+    "Kenney_NatureKit": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://kenney.nl/assets/nature-kit"
+    },
+    "Kenney_SpaceKit": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://kenney.nl/assets/space-kit"
+    },
+    "Quaternius_UltimateAnimatedAnimals": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://quaternius.com/packs/ultimatedanimatedanimals.html"
+    },
+    "Quaternius_UltimateModularMen": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://quaternius.com/packs/ultimatemodularmen.html"
+    },
+    "Quaternius_UltimateModularRuins": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://quaternius.com/packs/ultimatemodularruins.html"
+    },
+    "Quaternius_UltimateMonsters": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://quaternius.com/packs/ultimatemonsters.html"
+    },
+    "Quaternius_UltimateSpaceKit": {
+      "license": "CC0 1.0 Universal",
+      "page": "https://quaternius.com/packs/ultimatespacekit.html"
+    }
+  }
+}
