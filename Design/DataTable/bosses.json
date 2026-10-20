@@ -3,35 +3,35 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 840,
+   "line": 857,
    "id": "Echo_Gloomfang",
    "kind": "dungeon"
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 875,
+   "line": 892,
    "id": "Echo_Dawnfang",
    "kind": "dungeon"
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 937,
+   "line": 954,
    "id": "Echo_GlassTyrant",
    "kind": "world",
    "tuning": [
     {
-     "line": 929,
+     "line": 946,
      "raw": "Tyrant->BossHealthScale = 3.0f; // tough, not final (Sovereign is 5.0)."
     },
     {
-     "line": 930,
+     "line": 947,
      "raw": "Tyrant->BossDamageScale = 1.4f;"
     }
    ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 955,
+   "line": 972,
    "id": "Echo_DrownedSovereign",
    "kind": "dungeon"
   }
