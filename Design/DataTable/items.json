@@ -1,0 +1,785 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 120,
+   "id": "Item_Wood",
+   "name": "Dawnwood",
+   "category": "Material",
+   "weight": 0.5,
+   "max_stack": 200,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 121,
+   "id": "Item_Stone",
+   "name": "Fieldstone",
+   "category": "Material",
+   "weight": 0.8,
+   "max_stack": 200,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 122,
+   "id": "Item_Fiber",
+   "name": "Sunfiber",
+   "category": "Material",
+   "weight": 0.1,
+   "max_stack": 200,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 123,
+   "id": "Item_WoodPlank",
+   "name": "Dawnwood Plank",
+   "category": "Material",
+   "weight": 1.0,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 124,
+   "id": "Item_CrystalShard",
+   "name": "Dawn Crystal Shard",
+   "category": "Material",
+   "weight": 0.3,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 135,
+   "id": "Item_Berry",
+   "name": "Glimmer Berry",
+   "category": "Consumable",
+   "weight": 0.2,
+   "max_stack": 50,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 143,
+   "id": "Item_RawMeat",
+   "name": "Raw Echo Meat",
+   "category": "Consumable",
+   "weight": 0.7,
+   "max_stack": 30,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 149,
+   "id": "Item_CookedMeat",
+   "name": "Seared Meat",
+   "category": "Consumable",
+   "weight": 0.6,
+   "max_stack": 30,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 154,
+   "id": "Item_WaterFlask",
+   "name": "Dew Flask",
+   "category": "Consumable",
+   "weight": 0.9,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 159,
+   "id": "Item_Bandage",
+   "name": "Sunfiber Bandage",
+   "category": "Consumable",
+   "weight": 0.2,
+   "max_stack": 30,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 164,
+   "id": "Item_Resonator",
+   "name": "Echo Resonator",
+   "category": "CreatureItem",
+   "weight": 0.4,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 167,
+   "id": "Item_AncientCore",
+   "name": "Ancient Core",
+   "category": "QuestItem",
+   "weight": 1.0,
+   "max_stack": 10,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 171,
+   "id": "Item_Dawnbloom",
+   "name": "Dawnbloom Petal",
+   "category": "Material",
+   "weight": 0.1,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 175,
+   "id": "Item_EmberAsh",
+   "name": "Ember Ash",
+   "category": "Material",
+   "weight": 0.2,
+   "max_stack": 50,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 179,
+   "id": "Item_FeedMix",
+   "name": "Echo Feed Mix",
+   "category": "Consumable",
+   "weight": 0.3,
+   "max_stack": 40,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 185,
+   "id": "Item_HerbalSalve",
+   "name": "Dawnbloom Salve",
+   "category": "Consumable",
+   "weight": 0.25,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 196,
+   "id": "Item_DawnShard",
+   "name": "Dawn Shard",
+   "category": "Material",
+   "weight": 0.1,
+   "max_stack": 200,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 202,
+   "id": "Item_SeaPearl",
+   "name": "Sea Pearl",
+   "category": "Material",
+   "weight": 0.2,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 207,
+   "id": "Item_CoralShard",
+   "name": "Coral Shard",
+   "category": "Material",
+   "weight": 0.4,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 212,
+   "id": "Item_DuneGlass",
+   "name": "Dune Glass",
+   "category": "Material",
+   "weight": 0.3,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 216,
+   "id": "Item_StormSilver",
+   "name": "Storm Silver",
+   "category": "Material",
+   "weight": 0.6,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 221,
+   "id": "Item_ChitinPlate",
+   "name": "Chitin Plate",
+   "category": "Material",
+   "weight": 0.5,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 227,
+   "id": "Item_DawnwoodClub",
+   "name": "Dawnwood Club",
+   "category": "Equipment",
+   "weight": 2.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 233,
+   "id": "Item_StonehideShield",
+   "name": "Stonehide Shield",
+   "category": "Equipment",
+   "weight": 4.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 238,
+   "id": "Item_CrystalBlade",
+   "name": "Dawn Crystal Blade",
+   "category": "Equipment",
+   "weight": 3.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 248,
+   "id": "Item_FieldPick",
+   "name": "Fieldstone Pick",
+   "category": "Equipment",
+   "weight": 2.8,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 256,
+   "id": "Item_FieldAxe",
+   "name": "Dawnwood Axe",
+   "category": "Equipment",
+   "weight": 2.6,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 264,
+   "id": "Item_SunSickle",
+   "name": "Sunfiber Sickle",
+   "category": "Equipment",
+   "weight": 1.4,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 274,
+   "id": "Item_SpoiledOrganics",
+   "name": "Spoiled Organics",
+   "category": "Material",
+   "weight": 0.3,
+   "max_stack": 100,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 278,
+   "id": "Item_Compost",
+   "name": "Dawn Compost",
+   "category": "Material",
+   "weight": 0.5,
+   "max_stack": 60,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 282,
+   "id": "Item_FieldRepairKit",
+   "name": "Field Repair Kit",
+   "category": "Material",
+   "weight": 0.8,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 288,
+   "id": "Item_CureTonic",
+   "name": "Echo Cure Tonic",
+   "category": "Consumable",
+   "weight": 0.3,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 295,
+   "id": "Item_BreedingCake",
+   "name": "Echo Breeding Cake",
+   "category": "Consumable",
+   "weight": 0.6,
+   "max_stack": 10,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 300,
+   "id": "Item_EchoEgg",
+   "name": "Echo Egg",
+   "category": "CreatureItem",
+   "weight": 1.5,
+   "max_stack": 5,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 307,
+   "id": "Item_FiberWeaveVest",
+   "name": "Fiberweave Vest",
+   "category": "Equipment",
+   "weight": 3.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 312,
+   "id": "Item_EmberhideJacket",
+   "name": "Emberhide Jacket",
+   "category": "Equipment",
+   "weight": 5.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 316,
+   "id": "Item_CrystalplateCuirass",
+   "name": "Crystalplate Cuirass",
+   "category": "Equipment",
+   "weight": 8.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 323,
+   "id": "Item_Frostbloom",
+   "name": "Frostbloom",
+   "category": "Material",
+   "weight": 0.2,
+   "max_stack": 50,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 328,
+   "id": "Item_VoltCore",
+   "name": "Volt Core",
+   "category": "Material",
+   "weight": 0.4,
+   "max_stack": 30,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 333,
+   "id": "Item_WarmBroth",
+   "name": "Hearth Broth",
+   "category": "Consumable",
+   "weight": 0.6,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 341,
+   "id": "Item_Fertilizer",
+   "name": "Dawnfield Fertilizer",
+   "category": "Material",
+   "weight": 0.3,
+   "max_stack": 50,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 350,
+   "id": "Item_AncientResonator",
+   "name": "Ancient Resonator",
+   "category": "Equipment",
+   "weight": 3.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 361,
+   "id": "Item_EnergyCell",
+   "name": "Pulse Cell",
+   "category": "Material",
+   "weight": 0.15,
+   "max_stack": 60,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 366,
+   "id": "Item_FieldScanner",
+   "name": "Field Scanner",
+   "category": "Equipment",
+   "weight": 1.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 373,
+   "id": "Item_ResonanceHelm",
+   "name": "Resonance Helm",
+   "category": "Equipment",
+   "weight": 2.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 381,
+   "id": "Item_DawnstriderExosuit",
+   "name": "Dawnstrider Exosuit",
+   "category": "Equipment",
+   "weight": 9.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 391,
+   "id": "Item_PulseLance",
+   "name": "Pulse Lance",
+   "category": "Equipment",
+   "weight": 4.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 401,
+   "id": "Item_UtilityDrone",
+   "name": "Utility Drone",
+   "category": "Equipment",
+   "weight": 6.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 408,
+   "id": "Item_UtilityRobot",
+   "name": "Utility Robot",
+   "category": "Equipment",
+   "weight": 10.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 307,
+   "id": "Item_Scrapshot",
+   "name": "Scrapshot",
+   "category": "Equipment",
+   "weight": 2.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 319,
+   "id": "Item_PlasmaCharger",
+   "name": "Plasma Charger",
+   "category": "Equipment",
+   "weight": 5.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 332,
+   "id": "Item_LumenBeam",
+   "name": "Lumen Beam",
+   "category": "Equipment",
+   "weight": 4.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 345,
+   "id": "Item_ArcCaster",
+   "name": "Arc Caster",
+   "category": "Equipment",
+   "weight": 5.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 358,
+   "id": "Item_MagrailDriver",
+   "name": "Magrail Driver",
+   "category": "Equipment",
+   "weight": 8.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 371,
+   "id": "Item_SkysingerLauncher",
+   "name": "Skysinger Launcher",
+   "category": "Equipment",
+   "weight": 9.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 384,
+   "id": "Item_StarlancePrototype",
+   "name": "Starlance Prototype",
+   "category": "Equipment",
+   "weight": 11.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 398,
+   "id": "Item_RailSlug",
+   "name": "Rail Slug",
+   "category": "Material",
+   "weight": 0.3,
+   "max_stack": 40,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 403,
+   "id": "Item_SeekerMissile",
+   "name": "Seeker Missile",
+   "category": "Material",
+   "weight": 0.6,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 408,
+   "id": "Item_NovaCell",
+   "name": "Nova Cell",
+   "category": "Material",
+   "weight": 0.5,
+   "max_stack": 12,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 415,
+   "id": "Item_AncientAlloy",
+   "name": "Ancient Alloy",
+   "category": "Material",
+   "weight": 1.2,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 462,
+   "id": "Item_VanguardHelm",
+   "name": "Vanguard Helm",
+   "category": "Equipment",
+   "weight": 3.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 473,
+   "id": "Item_VanguardVest",
+   "name": "Vanguard Vest",
+   "category": "Equipment",
+   "weight": 6.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 485,
+   "id": "Item_BastionHelm",
+   "name": "Bastion Helm",
+   "category": "Equipment",
+   "weight": 4.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 496,
+   "id": "Item_BastionPlate",
+   "name": "Bastion Plate",
+   "category": "Equipment",
+   "weight": 9.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 508,
+   "id": "Item_AstralforgedExosuit",
+   "name": "Astralforged Exosuit",
+   "category": "Equipment",
+   "weight": 12.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 523,
+   "id": "Item_ArrayScanner",
+   "name": "Array Scanner",
+   "category": "Equipment",
+   "weight": 2.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 535,
+   "id": "Item_OracleScanner",
+   "name": "Oracle Scanner",
+   "category": "Equipment",
+   "weight": 2.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 578,
+   "id": "Item_DroneCellExtender",
+   "name": "Drone Cell Extender",
+   "category": "Equipment",
+   "weight": 1.5,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 585,
+   "id": "Item_DroneFocusedArray",
+   "name": "Drone Focused Array",
+   "category": "Equipment",
+   "weight": 1.2,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 593,
+   "id": "Item_DroneSalvageClaw",
+   "name": "Drone Salvage Claw",
+   "category": "Equipment",
+   "weight": 2.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 636,
+   "id": "Item_RobotBorebot",
+   "name": "Borebot",
+   "category": "Equipment",
+   "weight": 11.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 645,
+   "id": "Item_RobotCultivator",
+   "name": "Cultivator Unit",
+   "category": "Equipment",
+   "weight": 10.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 654,
+   "id": "Item_RobotSentinel",
+   "name": "Sentinel Frame",
+   "category": "Equipment",
+   "weight": 12.0,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 783,
+   "id": "Item_FieldRation",
+   "name": "Field Ration",
+   "category": "Consumable",
+   "weight": 0.35,
+   "max_stack": 30,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 794,
+   "id": "Item_PulseTonic",
+   "name": "Pulse Tonic",
+   "category": "Consumable",
+   "weight": 0.25,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2926,
+   "id": "Item_SovereignCore",
+   "name": "Sovereign Core",
+   "category": "QuestItem",
+   "weight": 0.8,
+   "max_stack": 1,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2932,
+   "id": "Item_MaelstromGlass",
+   "name": "Maelstrom Glass",
+   "category": "Material",
+   "weight": 0.5,
+   "max_stack": 20,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2938,
+   "id": "Item_SkiffStratosCoil",
+   "name": "Skiff Stratos Coil",
+   "category": "QuestItem",
+   "weight": 2.0,
+   "max_stack": 1,
+   "attributes": []
+  }
+ ]
+}

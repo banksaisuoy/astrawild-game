@@ -1,6 +1,6 @@
 ﻿# ASTRAWILD — AUTOMATION TEST INVENTORY
 
-**Suite**: 139 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
+**Suite**: 140 world-free contract tests · `Source/AstrawildCore/Private/AstrawildAutomationTests.cpp`
 **Flags**: `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter` (guarded by `#if WITH_DEV_AUTOMATION_TESTS`)
 **Status**: IMPLEMENTED (ENGINE-UNVERIFIED — the suite compiles with the module and runs on the Antigravity machine at AG-3; this sandbox has no UE5/MSVC, so the run itself is pending)
 
@@ -297,3 +297,4 @@ Expected: 119 pass / 0 fail / 0 skip. Any failure → capture the raw log and fi
 | 137 | ASTRAWILD.CGC3.AudioActivationContract | CGC-3: audio activation — GetFootstepCueForZone totality over all 12 zones (real 36-cue membership), GetWeatherAudioAction 8/8 states (Clear/Cloudy stop; rain ≤ heavy-rain pin), GetToastCuePath per-enum → real-cue paths, GetSpeciesCryPath 6 real cries + NAME_None fail-closed, MasterVolume clamp 0..1, GetZoneAmbiencePath 12/12 zones resolve real beds |
 | 138 | ASTRAWILD.CGC4.SettingsAndQoLContract | CGC-4: settings & QoL — StepSettingValue boundary math (0.95+0.1→1.0 / 0.5−0.1→0.5 / 110+5→110), the four display formatters, MakeDefaultSettings (1/1/90/1.0) + ASTRAWILD_Settings slot-name separation, sensitivity clamps, FormatItemDetails real-content pins (RawMeat stats / Dawnbloom zero-stat / null→empty), SortStacksByName (B,a,C)→(a,B,C), input census 33 (36 KB mappings / 19 gamepad, F6→AWD_ToggleHUD) + controls-table 33 |
 | 139 | ASTRAWILD.CGC5.CollectionLongTailContract | CGC-5 + CGC-6 review fix: collection long-tail — ComputeIsRadiant IV≥28-only pins (27/28 boundary; a FULL 4-slot trait roll with low IVs is NOT Radiant — the removed trait half, review-pinned), empty-parent RollOffspring determinism (same seed identical traits+IVs, wild-pool membership, 0-31 band), GetTraitDisplayName + FormatInstanceGeneticsLine exact format pins, roster Traits/IVs round-trip + schema-stays-5, ComputeZoneCensus 12-zone/229-sum pins, milestone crossing + current-title pins |
+| 140 | ASTRAWILD.Quest.VictoryChainTermination | Completion stage (machine-ready line `af11ab4`, unified by the INTEGRATION merge): the main quest chain terminates at a real chain-closer — Quest_SignalsInTheStatic → Quest_VanguardProtocol wiring pin, the closer registered + closes the chain (NextQuestId = None) + carries ≥1 objective; guards content edits from silently orphaning the victory-screen wiring (PlayerController VictoryQuestId default) |

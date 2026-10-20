@@ -1,0 +1,83 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1642,
+   "id": "Dialogue_WardenMaren",
+   "node_count": 5
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1787,
+   "id": "Dialogue_TraderTam",
+   "node_count": 4
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1928,
+   "id": "Dialogue_ElderRowan",
+   "node_count": 5
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2062,
+   "id": "Dialogue_SkiffWardenKael",
+   "node_count": 3
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2133,
+   "id": "Dialogue_GuardSela",
+   "node_count": 5
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2269,
+   "id": "Dialogue_OldSaltPerry",
+   "node_count": 3
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2347,
+   "id": "Dialogue_HerbalistWren",
+   "node_count": 2
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2403,
+   "id": "Dialogue_BlacksmithBorin",
+   "node_count": 2
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2460,
+   "id": "Dialogue_GuardBram",
+   "node_count": 1
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2523,
+   "id": "Dialogue_FarmerJori",
+   "node_count": 3
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2596,
+   "id": "Dialogue_FisherNima",
+   "node_count": 1
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2693,
+   "id": "Dialogue_Vess",
+   "node_count": 7
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2843,
+   "id": "Dialogue_Ione",
+   "node_count": 3
+  }
+ ]
+}

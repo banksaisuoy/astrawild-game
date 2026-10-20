@@ -10,6 +10,7 @@ class UAstrawildBuildingDefinition;
 class UStaticMeshComponent;
 class UAstrawildCropComponent;
 class UAstrawildTurretComponent;
+class AAstrawildPlayerCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAstrawildBuildingDamaged, class AAstrawildBuildingActor*, Building);
 

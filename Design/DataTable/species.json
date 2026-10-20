@@ -1,0 +1,645 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 585,
+   "id": "Echo_Lumewisp",
+   "origin": "authored",
+   "name": "Lumewisp",
+   "element": "Light",
+   "role": "Support",
+   "hp": 60.0,
+   "atk": 8.0,
+   "def": 2.0,
+   "speed": 320.0,
+   "personality": "Curious",
+   "activity": "Diurnal",
+   "food": "BerryFood",
+   "capture_difficulty": 0.25,
+   "weakness": "None",
+   "hostile": false,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 601,
+   "id": "Echo_Stonehide",
+   "origin": "authored",
+   "name": "Stonehide",
+   "element": "Ash",
+   "role": "Combat",
+   "hp": 140.0,
+   "atk": 16.0,
+   "def": 8.0,
+   "speed": 260.0,
+   "personality": "Brave",
+   "activity": "Diurnal",
+   "food": "BerryFood",
+   "capture_difficulty": 0.55,
+   "weakness": "None",
+   "hostile": false,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 615,
+   "id": "Echo_Voltling",
+   "origin": "authored",
+   "name": "Voltling",
+   "element": "Pulse",
+   "role": "Base",
+   "hp": 55.0,
+   "atk": 10.0,
+   "def": 3.0,
+   "speed": 380.0,
+   "personality": "Energetic",
+   "activity": "Nocturnal",
+   "food": "BerryFood",
+   "capture_difficulty": 0.45,
+   "weakness": "Light",
+   "hostile": false,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 628,
+   "id": "Echo_Duskmoth",
+   "origin": "authored",
+   "name": "Duskmoth",
+   "element": "Flora",
+   "role": "Support",
+   "hp": 45.0,
+   "atk": 6.0,
+   "def": 2.0,
+   "speed": 300.0,
+   "personality": "Timid",
+   "activity": "Crepuscular",
+   "food": "BerryFood",
+   "capture_difficulty": 0.35,
+   "weakness": "Ember",
+   "hostile": false,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 646,
+   "id": "Echo_Gloomfang",
+   "origin": "authored",
+   "name": "Gloomfang",
+   "element": "Ash",
+   "role": "Combat",
+   "hp": 110.0,
+   "atk": 18.0,
+   "def": 4.0,
+   "speed": 420.0,
+   "personality": "Aggressive",
+   "activity": "Nocturnal",
+   "food": "TArray<FName>()",
+   "capture_difficulty": 0.85,
+   "weakness": "None",
+   "hostile": true,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 659,
+   "id": "Echo_Sprigling",
+   "origin": "authored",
+   "name": "Sprigling",
+   "element": "Flora",
+   "role": "Support",
+   "hp": 50.0,
+   "atk": 5.0,
+   "def": 3.0,
+   "speed": 290.0,
+   "personality": "Social",
+   "activity": "Diurnal",
+   "food": "BerryFood",
+   "capture_difficulty": 0.3,
+   "weakness": "Ember",
+   "hostile": false,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 676,
+   "id": "Echo_Emberfang",
+   "origin": "authored",
+   "name": "Emberfang",
+   "element": "Ember",
+   "role": "Combat",
+   "hp": 130.0,
+   "atk": 20.0,
+   "def": 5.0,
+   "speed": 400.0,
+   "personality": "Aggressive",
+   "activity": "Crepuscular",
+   "food": "TArray<FName>()",
+   "capture_difficulty": 0.9,
+   "weakness": "Frost",
+   "hostile": true,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 691,
+   "id": "Echo_Rimefang",
+   "origin": "authored",
+   "name": "Rimefang",
+   "element": "Frost",
+   "role": "Combat",
+   "hp": 120.0,
+   "atk": 17.0,
+   "def": 6.0,
+   "speed": 380.0,
+   "personality": "Aggressive",
+   "activity": "Nocturnal",
+   "food": "TArray<FName>()",
+   "capture_difficulty": 0.88,
+   "weakness": "Pulse",
+   "hostile": true,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 702,
+   "id": "Echo_Voltmaw",
+   "origin": "authored",
+   "name": "Voltmaw",
+   "element": "Pulse",
+   "role": "Combat",
+   "hp": 95.0,
+   "atk": 22.0,
+   "def": 3.0,
+   "speed": 440.0,
+   "personality": "Aggressive",
+   "activity": "Crepuscular",
+   "food": "TArray<FName>()",
+   "capture_difficulty": 0.92,
+   "weakness": "Light",
+   "hostile": true,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 712,
+   "id": "Echo_Auroraling",
+   "origin": "authored",
+   "name": "Auroraling",
+   "element": "Light",
+   "role": "Support",
+   "hp": 90.0,
+   "atk": 12.0,
+   "def": 6.0,
+   "speed": 350.0,
+   "personality": "Curious",
+   "activity": "Diurnal",
+   "food": "BerryFood",
+   "capture_difficulty": 0.95,
+   "weakness": "None",
+   "hostile": false,
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1262,
+   "id": "Echo_Terraquill",
+   "origin": "production",
+   "name": "Terraquill",
+   "element": "Flora",
+   "role": "Support",
+   "hp": 120.0,
+   "atk": 14.0,
+   "def": 18.0,
+   "speed": 420.0,
+   "personality": "Loyal",
+   "activity": "Diurnal",
+   "food": [
+    "Item_Berry",
+    "Item_Dawnbloom"
+   ],
+   "capture_difficulty": 0.35,
+   "weakness": "Ember",
+   "family": "Beast",
+   "body_plan": "Quadruped",
+   "size_class": "Small",
+   "home_zone": "DawnFields",
+   "rarity": "Uncommon",
+   "passive": "CarryBoost",
+   "work_affinities": [
+    [
+     "Gathering",
+     1.9
+    ],
+    [
+     "Farming",
+     1.2
+    ]
+   ],
+   "loot": [
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1272,
+   "id": "Echo_Cindermule",
+   "origin": "production",
+   "name": "Cindermule",
+   "element": "Ember",
+   "role": "Base",
+   "hp": 180.0,
+   "atk": 18.0,
+   "def": 26.0,
+   "speed": 380.0,
+   "personality": "Energetic",
+   "activity": "Diurnal",
+   "food": [
+    "Item_EmberAsh"
+   ],
+   "capture_difficulty": 0.45,
+   "weakness": "Frost",
+   "family": "Beast",
+   "body_plan": "Quadruped",
+   "size_class": "Medium",
+   "home_zone": "EmberRidge",
+   "rarity": "Uncommon",
+   "passive": "CarryBoost",
+   "work_affinities": [
+    [
+     "Transport",
+     1.9
+    ],
+    [
+     "Gathering",
+     1.0
+    ]
+   ],
+   "loot": [
+    {
+     "item": "Item_EmberAsh",
+     "qty": 2
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1283,
+   "id": "Echo_Voltpylon",
+   "origin": "production",
+   "name": "Voltpylon",
+   "element": "Pulse",
+   "role": "Base",
+   "hp": 140.0,
+   "atk": 20.0,
+   "def": 20.0,
+   "speed": 340.0,
+   "personality": "Energetic",
+   "activity": "Nocturnal",
+   "food": [
+    "Item_VoltCore"
+   ],
+   "capture_difficulty": 0.5,
+   "weakness": "Light",
+   "family": "Construct",
+   "body_plan": "Biped",
+   "size_class": "Medium",
+   "home_zone": "Glimmerwood",
+   "rarity": "Rare",
+   "passive": "PlayerStamina",
+   "work_affinities": [
+    [
+     "PowerGeneration",
+     1.8
+    ],
+    [
+     "Crafting",
+     1.1
+    ]
+   ],
+   "loot": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 1
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1296,
+   "id": "Echo_Bastionbeetle",
+   "origin": "production",
+   "name": "Bastionbeetle",
+   "element": "Ash",
+   "role": "Combat",
+   "hp": 260.0,
+   "atk": 22.0,
+   "def": 44.0,
+   "speed": 300.0,
+   "personality": "Protective",
+   "activity": "Diurnal",
+   "food": [
+    "Item_ChitinPlate"
+   ],
+   "capture_difficulty": 0.55,
+   "weakness": "None",
+   "family": "Insectoid",
+   "body_plan": "Insectoid",
+   "size_class": "Large",
+   "home_zone": "VerdantReach",
+   "rarity": "Rare",
+   "passive": "ThreatDampener",
+   "work_affinities": [
+    [
+     "Defense",
+     1.9
+    ],
+    [
+     "Mining",
+     1.0
+    ]
+   ],
+   "loot": [
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 2
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1307,
+   "id": "Echo_Mistmender",
+   "origin": "production",
+   "name": "Mistmender",
+   "element": "Light",
+   "role": "Support",
+   "hp": 130.0,
+   "atk": 12.0,
+   "def": 16.0,
+   "speed": 400.0,
+   "personality": "Social",
+   "activity": "Crepuscular",
+   "food": [
+    "Item_Dawnbloom",
+    "Item_HerbalSalve"
+   ],
+   "capture_difficulty": 0.4,
+   "weakness": "None",
+   "family": "Spirit",
+   "body_plan": "Floating",
+   "size_class": "Small",
+   "home_zone": "DuskMarsh",
+   "rarity": "Rare",
+   "passive": "PartyHeal",
+   "work_affinities": [
+    [
+     "Farming",
+     1.3
+    ],
+    [
+     "ResearchAssist",
+     1.5
+    ]
+   ],
+   "loot": [
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 1
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1320,
+   "id": "Echo_Deepdelver",
+   "origin": "production",
+   "name": "Deepdelver",
+   "element": "Ash",
+   "role": "Base",
+   "hp": 190.0,
+   "atk": 26.0,
+   "def": 30.0,
+   "speed": 320.0,
+   "personality": "Lazy",
+   "activity": "Nocturnal",
+   "food": [
+    "Item_Stone"
+   ],
+   "capture_difficulty": 0.5,
+   "weakness": "None",
+   "family": "Elemental",
+   "body_plan": "Amorphous",
+   "size_class": "Medium",
+   "home_zone": "StormcrestHighlands",
+   "rarity": "Rare",
+   "passive": "None",
+   "work_affinities": [
+    [
+     "Mining",
+     1.9
+    ],
+    [
+     "Construction",
+     1.3
+    ]
+   ],
+   "loot": [
+    {
+     "item": "Item_Stone",
+     "qty": 3
+    },
+    {
+     "item": "Item_StormSilver",
+     "qty": 1
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2950,
+   "id": "Echo_GlassTyrant",
+   "origin": "production",
+   "name": "Glass Tyrant",
+   "element": "Ash",
+   "role": "Combat",
+   "hp": 260.0,
+   "atk": 38.0,
+   "def": 22.0,
+   "speed": 520.0,
+   "personality": "Aggressive",
+   "activity": "Diurnal",
+   "food": [],
+   "capture_difficulty": 0.9,
+   "weakness": "Light",
+   "family": "Elemental",
+   "body_plan": "Crystalline",
+   "size_class": "Large",
+   "home_zone": "SunscarDesert",
+   "rarity": "Epic",
+   "passive": "None",
+   "work_affinities": [],
+   "loot": [
+    {
+     "item": "Item_MaelstromGlass",
+     "qty": 2
+    },
+    {
+     "item": "Item_DuneGlass",
+     "qty": 2
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2961,
+   "id": "Echo_EyeSentinel",
+   "origin": "production",
+   "name": "Eye Sentinel",
+   "element": "Pulse",
+   "role": "Combat",
+   "hp": 90.0,
+   "atk": 22.0,
+   "def": 12.0,
+   "speed": 480.0,
+   "personality": "Aggressive",
+   "activity": "Nocturnal",
+   "food": [],
+   "capture_difficulty": 0.85,
+   "weakness": "Light",
+   "family": "Construct",
+   "body_plan": "Floating",
+   "size_class": "Medium",
+   "home_zone": "StormcrestHighlands",
+   "rarity": "Rare",
+   "passive": "None",
+   "work_affinities": [],
+   "loot": [
+    {
+     "item": "Item_MaelstromGlass",
+     "qty": 1
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2975,
+   "id": "Echo_DrownedSovereign",
+   "origin": "production",
+   "name": "The Drowned Sovereign",
+   "element": "Pulse",
+   "role": "Combat",
+   "hp": 400.0,
+   "atk": 46.0,
+   "def": 26.0,
+   "speed": 430.0,
+   "personality": "Aggressive",
+   "activity": "Diurnal",
+   "food": [],
+   "capture_difficulty": 0.95,
+   "weakness": "Light",
+   "family": "Ancient",
+   "body_plan": "Serpent",
+   "size_class": "Huge",
+   "home_zone": "StormcrestHighlands",
+   "rarity": "Legendary",
+   "passive": "None",
+   "work_affinities": [],
+   "loot": [
+    {
+     "item": "Item_SovereignCore",
+     "qty": 1
+    },
+    {
+     "item": "Item_MaelstromGlass",
+     "qty": 3
+    }
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1420,
+   "id": "Echo_TerraquillVerdant",
+   "base_species": "Echo_Terraquill",
+   "name": "Terraquill Verdant",
+   "evolved_from": "Terraquill",
+   "level_gate": 20,
+   "bond_gate": 35.0,
+   "origin": "evolution_target",
+   "note": "stats derived at runtime by BuildEvolutionTargets loop (PC lines ~1435-1494: +35..40% HP, ~+30% ATK/DEF, rarity/size promotion, affinity +0.1) — formulas, not literals"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1421,
+   "id": "Echo_CindermulePyre",
+   "base_species": "Echo_Cindermule",
+   "name": "Cindermule Pyre",
+   "evolved_from": "Cindermule",
+   "level_gate": 22,
+   "bond_gate": 40.0,
+   "origin": "evolution_target",
+   "note": "stats derived at runtime by BuildEvolutionTargets loop (PC lines ~1435-1494: +35..40% HP, ~+30% ATK/DEF, rarity/size promotion, affinity +0.1) — formulas, not literals"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1422,
+   "id": "Echo_VoltpylonTempest",
+   "base_species": "Echo_Voltpylon",
+   "name": "Voltpylon Tempest",
+   "evolved_from": "Voltpylon",
+   "level_gate": 25,
+   "bond_gate": 45.0,
+   "origin": "evolution_target",
+   "note": "stats derived at runtime by BuildEvolutionTargets loop (PC lines ~1435-1494: +35..40% HP, ~+30% ATK/DEF, rarity/size promotion, affinity +0.1) — formulas, not literals"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1423,
+   "id": "Echo_BastionbeetleBulwark",
+   "base_species": "Echo_Bastionbeetle",
+   "name": "Bastionbeetle Bulwark",
+   "evolved_from": "Bastionbeetle",
+   "level_gate": 28,
+   "bond_gate": 50.0,
+   "origin": "evolution_target",
+   "note": "stats derived at runtime by BuildEvolutionTargets loop (PC lines ~1435-1494: +35..40% HP, ~+30% ATK/DEF, rarity/size promotion, affinity +0.1) — formulas, not literals"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1424,
+   "id": "Echo_MistmenderRime",
+   "base_species": "Echo_Mistmender",
+   "name": "Mistmender Rime",
+   "evolved_from": "Mistmender",
+   "level_gate": 24,
+   "bond_gate": 45.0,
+   "origin": "evolution_target",
+   "note": "stats derived at runtime by BuildEvolutionTargets loop (PC lines ~1435-1494: +35..40% HP, ~+30% ATK/DEF, rarity/size promotion, affinity +0.1) — formulas, not literals"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 1425,
+   "id": "Echo_DeepdelverAbyssal",
+   "base_species": "Echo_Deepdelver",
+   "name": "Deepdelver Abyssal",
+   "evolved_from": "Deepdelver",
+   "level_gate": 26,
+   "bond_gate": 40.0,
+   "origin": "evolution_target",
+   "note": "stats derived at runtime by BuildEvolutionTargets loop (PC lines ~1435-1494: +35..40% HP, ~+30% ATK/DEF, rarity/size promotion, affinity +0.1) — formulas, not literals"
+  }
+ ]
+}

@@ -8,6 +8,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
+// ENGINE-RUN-1 audit (P1): Cast<AAIController> below needs the complete type;
+// no other include in this TU provides it.
+#include "AIController.h"
 
 namespace
 {

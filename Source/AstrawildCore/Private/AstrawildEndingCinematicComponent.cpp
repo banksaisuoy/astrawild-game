@@ -56,9 +56,9 @@ AAstrawildGameState* UAstrawildEndingCinematicComponent::GetGameState() const
     return GetWorld() ? GetWorld()->GetGameState<AAstrawildGameState>() : nullptr;
 }
 
-UAstrawildPlayerController* UAstrawildEndingCinematicComponent::GetAstrawildController() const
+AAstrawildPlayerController* UAstrawildEndingCinematicComponent::GetAstrawildController() const
 {
-    return Cast<UAstrawildPlayerController>(GetOwner());
+    return Cast<AAstrawildPlayerController>(GetOwner());
 }
 
 void UAstrawildEndingCinematicComponent::HandleEndingTriggered(EAstrawildEndingState Ending, EAstrawildEndingState OldEnding)

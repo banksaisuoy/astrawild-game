@@ -20,6 +20,7 @@
 #include "AstrawildWorldEventSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
+#include "AstrawildPlayerController.h"
 #include "AstrawildPowerSubsystem.h"
 #include "AstrawildSpoilageSubsystem.h"
 #include "AstrawildQuestComponent.h"

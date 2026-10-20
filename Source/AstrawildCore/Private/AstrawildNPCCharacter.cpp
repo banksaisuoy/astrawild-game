@@ -213,7 +213,10 @@ void AAstrawildNPCCharacter::RefreshAppearanceFromDefinition()
         }
         else
         {
-            UE_LOG(LogAstrawildLog, Log,
+            // ENGINE-RUN-1 audit (P0): was LogAstrawildLog — a category that is
+            // declared nowhere in the module (compile error). General fallback
+            // chatter belongs to LogAstrawild.
+            UE_LOG(LogAstrawild, Log,
                 TEXT("NPC %s visual mesh not imported yet — keeping the procedural silhouette (fail-closed)."),
                 *NpcDefinition->NpcId.ToString());
         }

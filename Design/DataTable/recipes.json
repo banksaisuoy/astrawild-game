@@ -1,0 +1,1591 @@
+{
+ "TODO_ASK_OWNER": "no reflected USTRUCT row shape exists for this domain yet; author one in Source/ + a consumer, then add the mapping to TABLES in Tools/Python/generate_datatables.py",
+ "rows": [
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 423,
+   "id": "Recipe_Resonator",
+   "name": "Echo Resonator",
+   "inputs": [
+    {
+     "item": "Item_Stone",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_Resonator",
+     "qty": 1
+    }
+   ],
+   "duration": 3.0,
+   "tech_gate": null,
+   "station": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 427,
+   "id": "Recipe_Bandage",
+   "name": "Sunfiber Bandage",
+   "inputs": [
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_Bandage",
+     "qty": 1
+    }
+   ],
+   "duration": 2.0,
+   "tech_gate": null,
+   "station": null
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 431,
+   "id": "Recipe_WoodPlank",
+   "name": "Dawnwood Plank",
+   "inputs": [
+    {
+     "item": "Item_Wood",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_WoodPlank",
+     "qty": 1
+    }
+   ],
+   "duration": 2.0,
+   "tech_gate": null,
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 435,
+   "id": "Recipe_CookedMeat",
+   "name": "Seared Meat",
+   "inputs": [
+    {
+     "item": "Item_RawMeat",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_CookedMeat",
+     "qty": 1
+    }
+   ],
+   "duration": 5.0,
+   "tech_gate": "Tech_Cooking",
+   "station": "Station_Campfire"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 439,
+   "id": "Recipe_WaterFlask",
+   "name": "Dew Flask",
+   "inputs": [
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_WaterFlask",
+     "qty": 1
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": null,
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 445,
+   "id": "Recipe_FeedMix",
+   "name": "Echo Feed Mix",
+   "inputs": [
+    {
+     "item": "Item_Berry",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FeedMix",
+     "qty": 1
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_Husbandry",
+   "station": "Station_Campfire"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 449,
+   "id": "Recipe_HerbalSalve",
+   "name": "Dawnbloom Salve",
+   "inputs": [
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_HerbalSalve",
+     "qty": 1
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_Husbandry",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 455,
+   "id": "Recipe_DawnwoodClub",
+   "name": "Dawnwood Club",
+   "inputs": [
+    {
+     "item": "Item_Wood",
+     "qty": 3
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_DawnwoodClub",
+     "qty": 1
+    }
+   ],
+   "duration": 3.0,
+   "tech_gate": null,
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 459,
+   "id": "Recipe_StonehideShield",
+   "name": "Stonehide Shield",
+   "inputs": [
+    {
+     "item": "Item_Stone",
+     "qty": 3
+    },
+    {
+     "item": "Item_Wood",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_StonehideShield",
+     "qty": 1
+    }
+   ],
+   "duration": 5.0,
+   "tech_gate": "Tech_Armory",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 463,
+   "id": "Recipe_CrystalBlade",
+   "name": "Dawn Crystal Blade",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 2
+    },
+    {
+     "item": "Item_WoodPlank",
+     "qty": 2
+    },
+    {
+     "item": "Item_EmberAsh",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_CrystalBlade",
+     "qty": 1
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_Armory",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 469,
+   "id": "Recipe_FieldPick",
+   "name": "Fieldstone Pick",
+   "inputs": [
+    {
+     "item": "Item_Stone",
+     "qty": 3
+    },
+    {
+     "item": "Item_Wood",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FieldPick",
+     "qty": 1
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_BasicCrafting",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 473,
+   "id": "Recipe_FieldAxe",
+   "name": "Dawnwood Axe",
+   "inputs": [
+    {
+     "item": "Item_Wood",
+     "qty": 3
+    },
+    {
+     "item": "Item_Stone",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FieldAxe",
+     "qty": 1
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_BasicCrafting",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 477,
+   "id": "Recipe_SunSickle",
+   "name": "Sunfiber Sickle",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 1
+    },
+    {
+     "item": "Item_Wood",
+     "qty": 1
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_SunSickle",
+     "qty": 1
+    }
+   ],
+   "duration": 3.0,
+   "tech_gate": "Tech_Husbandry",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 481,
+   "id": "Recipe_FieldRepairKit",
+   "name": "Field Repair Kit",
+   "inputs": [
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    },
+    {
+     "item": "Item_WoodPlank",
+     "qty": 1
+    },
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FieldRepairKit",
+     "qty": 1
+    }
+   ],
+   "duration": 3.0,
+   "tech_gate": "Tech_BasicCrafting",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 485,
+   "id": "Recipe_Compost",
+   "name": "Dawn Compost",
+   "inputs": [
+    {
+     "item": "Item_SpoiledOrganics",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_Compost",
+     "qty": 1
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": "Tech_Agriculture",
+   "station": "Station_Composter"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 491,
+   "id": "Recipe_CureTonic",
+   "name": "Echo Cure Tonic",
+   "inputs": [
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 2
+    },
+    {
+     "item": "Item_Berry",
+     "qty": 1
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_CureTonic",
+     "qty": 2
+    }
+   ],
+   "duration": 5.0,
+   "tech_gate": "Tech_Husbandry",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 497,
+   "id": "Recipe_BreedingCake",
+   "name": "Echo Breeding Cake",
+   "inputs": [
+    {
+     "item": "Item_Berry",
+     "qty": 2
+    },
+    {
+     "item": "Item_FeedMix",
+     "qty": 1
+    },
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_BreedingCake",
+     "qty": 1
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_Husbandry",
+   "station": "Station_Campfire"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 503,
+   "id": "Recipe_FiberWeaveVest",
+   "name": "Fiberweave Vest",
+   "inputs": [
+    {
+     "item": "Item_Fiber",
+     "qty": 4
+    },
+    {
+     "item": "Item_Wood",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FiberWeaveVest",
+     "qty": 1
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_Armory",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 507,
+   "id": "Recipe_EmberhideJacket",
+   "name": "Emberhide Jacket",
+   "inputs": [
+    {
+     "item": "Item_EmberAsh",
+     "qty": 2
+    },
+    {
+     "item": "Item_WoodPlank",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_EmberhideJacket",
+     "qty": 1
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": "Tech_Armory",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 511,
+   "id": "Recipe_CrystalplateCuirass",
+   "name": "Crystalplate Cuirass",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_WoodPlank",
+     "qty": 3
+    },
+    {
+     "item": "Item_EmberAsh",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_CrystalplateCuirass",
+     "qty": 1
+    }
+   ],
+   "duration": 9.0,
+   "tech_gate": "Tech_Armory",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 518,
+   "id": "Recipe_PlankBatch",
+   "name": "Bulk Dawnwood Planks",
+   "inputs": [
+    {
+     "item": "Item_Wood",
+     "qty": 10
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_WoodPlank",
+     "qty": 6
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": "Tech_Mechanics",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 522,
+   "id": "Recipe_ResonatorBatch",
+   "name": "Resonator Batch",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 2
+    },
+    {
+     "item": "Item_VoltCore",
+     "qty": 1
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_Resonator",
+     "qty": 3
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_Mechanics",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 526,
+   "id": "Recipe_WarmBroth",
+   "name": "Hearth Broth",
+   "inputs": [
+    {
+     "item": "Item_RawMeat",
+     "qty": 1
+    },
+    {
+     "item": "Item_Frostbloom",
+     "qty": 1
+    },
+    {
+     "item": "Item_Berry",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_WarmBroth",
+     "qty": 2
+    }
+   ],
+   "duration": 5.0,
+   "tech_gate": "Tech_Thermal",
+   "station": "Station_Campfire"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 530,
+   "id": "Recipe_Fertilizer",
+   "name": "Dawnfield Fertilizer",
+   "inputs": [
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 1
+    },
+    {
+     "item": "Item_RawMeat",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_Fertilizer",
+     "qty": 3
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_Agriculture",
+   "station": "Station_Campfire"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 537,
+   "id": "Recipe_AncientResonator",
+   "name": "Ancient Resonator",
+   "inputs": [
+    {
+     "item": "Item_AncientCore",
+     "qty": 1
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 2
+    },
+    {
+     "item": "Item_Resonator",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_AncientResonator",
+     "qty": 1
+    }
+   ],
+   "duration": 10.0,
+   "tech_gate": "Tech_AncientResonance",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 546,
+   "id": "Recipe_EnergyCell",
+   "name": "Pulse Cells",
+   "inputs": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 2
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_EnergyCell",
+     "qty": 4
+    }
+   ],
+   "duration": 4.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 550,
+   "id": "Recipe_FieldScanner",
+   "name": "Field Scanner",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 2
+    },
+    {
+     "item": "Item_VoltCore",
+     "qty": 1
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FieldScanner",
+     "qty": 1
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 554,
+   "id": "Recipe_ResonanceHelm",
+   "name": "Resonance Helm",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_EmberAsh",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_ResonanceHelm",
+     "qty": 1
+    }
+   ],
+   "duration": 7.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 558,
+   "id": "Recipe_DawnstriderExosuit",
+   "name": "Dawnstrider Exosuit",
+   "inputs": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 4
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_EmberAsh",
+     "qty": 4
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_DawnstriderExosuit",
+     "qty": 1
+    }
+   ],
+   "duration": 12.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 562,
+   "id": "Recipe_PulseLance",
+   "name": "Pulse Lance",
+   "inputs": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 3
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_PulseLance",
+     "qty": 1
+    }
+   ],
+   "duration": 10.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 566,
+   "id": "Recipe_UtilityDrone",
+   "name": "Utility Drone",
+   "inputs": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 4
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 2
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_UtilityDrone",
+     "qty": 1
+    }
+   ],
+   "duration": 12.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 570,
+   "id": "Recipe_UtilityRobot",
+   "name": "Utility Robot",
+   "inputs": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 6
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 4
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 5
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_UtilityRobot",
+     "qty": 1
+    }
+   ],
+   "duration": 15.0,
+   "tech_gate": "Tech_AdvancedEnergy",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 422,
+   "id": "Recipe_Scrapshot",
+   "name": "Scrapshot",
+   "inputs": [
+    {
+     "item": "Item_Wood",
+     "qty": 4
+    },
+    {
+     "item": "Item_Stone",
+     "qty": 6
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_Scrapshot",
+     "qty": 1
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": "Tech_Armory",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 425,
+   "id": "Recipe_PlasmaCharger",
+   "name": "Plasma Charger",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 6
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 4
+    },
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_PlasmaCharger",
+     "qty": 1
+    }
+   ],
+   "duration": 12.0,
+   "tech_gate": "Tech_WeaponSystems",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 428,
+   "id": "Recipe_LumenBeam",
+   "name": "Lumen Beam",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 5
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 3
+    },
+    {
+     "item": "Item_VoltCore",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_LumenBeam",
+     "qty": 1
+    }
+   ],
+   "duration": 10.0,
+   "tech_gate": "Tech_WeaponSystems",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 431,
+   "id": "Recipe_ArcCaster",
+   "name": "Arc Caster",
+   "inputs": [
+    {
+     "item": "Item_VoltCore",
+     "qty": 2
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 4
+    },
+    {
+     "item": "Item_StormSilver",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_ArcCaster",
+     "qty": 1
+    }
+   ],
+   "duration": 12.0,
+   "tech_gate": "Tech_WeaponSystems",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 434,
+   "id": "Recipe_MagrailDriver",
+   "name": "Magrail Driver",
+   "inputs": [
+    {
+     "item": "Item_StormSilver",
+     "qty": 6
+    },
+    {
+     "item": "Item_DuneGlass",
+     "qty": 4
+    },
+    {
+     "item": "Item_RailSlug",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_MagrailDriver",
+     "qty": 1
+    }
+   ],
+   "duration": 18.0,
+   "tech_gate": "Tech_AdvancedBallistics",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 437,
+   "id": "Recipe_SkysingerLauncher",
+   "name": "Skysinger Launcher",
+   "inputs": [
+    {
+     "item": "Item_DuneGlass",
+     "qty": 5
+    },
+    {
+     "item": "Item_CoralShard",
+     "qty": 4
+    },
+    {
+     "item": "Item_SeekerMissile",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_SkysingerLauncher",
+     "qty": 1
+    }
+   ],
+   "duration": 18.0,
+   "tech_gate": "Tech_AdvancedBallistics",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 440,
+   "id": "Recipe_StarlancePrototype",
+   "name": "Starlance Prototype",
+   "inputs": [
+    {
+     "item": "Item_AncientAlloy",
+     "qty": 3
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 5
+    },
+    {
+     "item": "Item_NovaCell",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_StarlancePrototype",
+     "qty": 1
+    }
+   ],
+   "duration": 30.0,
+   "tech_gate": "Tech_ExperimentalArsenal",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 444,
+   "id": "Recipe_RailSlugBatch",
+   "name": "Rail Slug Batch",
+   "inputs": [
+    {
+     "item": "Item_StormSilver",
+     "qty": 1
+    },
+    {
+     "item": "Item_Stone",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_RailSlug",
+     "qty": 4
+    }
+   ],
+   "duration": 5.0,
+   "tech_gate": "Tech_AdvancedBallistics",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 447,
+   "id": "Recipe_SeekerMissileBatch",
+   "name": "Seeker Missile Batch",
+   "inputs": [
+    {
+     "item": "Item_DuneGlass",
+     "qty": 1
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 2
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_SeekerMissile",
+     "qty": 2
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": "Tech_AdvancedBallistics",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 450,
+   "id": "Recipe_NovaCell",
+   "name": "Nova Cell",
+   "inputs": [
+    {
+     "item": "Item_AncientAlloy",
+     "qty": 1
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_NovaCell",
+     "qty": 1
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_ExperimentalArsenal",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 548,
+   "id": "Recipe_VanguardHelm",
+   "name": "Vanguard Helm",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 2
+    },
+    {
+     "item": "Item_Fiber",
+     "qty": 4
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_VanguardHelm",
+     "qty": 1
+    }
+   ],
+   "duration": 10.0,
+   "tech_gate": "Tech_ExosuitEngineering",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 551,
+   "id": "Recipe_VanguardVest",
+   "name": "Vanguard Vest",
+   "inputs": [
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 3
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 4
+    },
+    {
+     "item": "Item_EmberAsh",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_VanguardVest",
+     "qty": 1
+    }
+   ],
+   "duration": 12.0,
+   "tech_gate": "Tech_ExosuitEngineering",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 554,
+   "id": "Recipe_BastionHelm",
+   "name": "Bastion Helm",
+   "inputs": [
+    {
+     "item": "Item_StormSilver",
+     "qty": 4
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 6
+    },
+    {
+     "item": "Item_Frostbloom",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_BastionHelm",
+     "qty": 1
+    }
+   ],
+   "duration": 16.0,
+   "tech_gate": "Tech_ExosuitEngineering",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 557,
+   "id": "Recipe_BastionPlate",
+   "name": "Bastion Plate",
+   "inputs": [
+    {
+     "item": "Item_StormSilver",
+     "qty": 6
+    },
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 4
+    },
+    {
+     "item": "Item_CoralShard",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_BastionPlate",
+     "qty": 1
+    }
+   ],
+   "duration": 18.0,
+   "tech_gate": "Tech_ExosuitEngineering",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 560,
+   "id": "Recipe_AstralforgedExosuit",
+   "name": "Astralforged Exosuit",
+   "inputs": [
+    {
+     "item": "Item_AncientAlloy",
+     "qty": 2
+    },
+    {
+     "item": "Item_DawnShard",
+     "qty": 4
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 6
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_AstralforgedExosuit",
+     "qty": 1
+    }
+   ],
+   "duration": 26.0,
+   "tech_gate": "Tech_ExosuitEngineering",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 563,
+   "id": "Recipe_ArrayScanner",
+   "name": "Array Scanner",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 4
+    },
+    {
+     "item": "Item_VoltCore",
+     "qty": 1
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_ArrayScanner",
+     "qty": 1
+    }
+   ],
+   "duration": 12.0,
+   "tech_gate": "Tech_ScannerArray",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 566,
+   "id": "Recipe_OracleScanner",
+   "name": "Oracle Scanner",
+   "inputs": [
+    {
+     "item": "Item_AncientAlloy",
+     "qty": 1
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 6
+    },
+    {
+     "item": "Item_VoltCore",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_OracleScanner",
+     "qty": 1
+    }
+   ],
+   "duration": 20.0,
+   "tech_gate": "Tech_ScannerArray",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 665,
+   "id": "Recipe_DroneCellExtender",
+   "name": "Drone Cell Extender",
+   "inputs": [
+    {
+     "item": "Item_EnergyCell",
+     "qty": 3
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_DroneCellExtender",
+     "qty": 1
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_AutomationII",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 668,
+   "id": "Recipe_DroneFocusedArray",
+   "name": "Drone Focused Array",
+   "inputs": [
+    {
+     "item": "Item_CrystalShard",
+     "qty": 3
+    },
+    {
+     "item": "Item_VoltCore",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_DroneFocusedArray",
+     "qty": 1
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_AutomationII",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 671,
+   "id": "Recipe_DroneSalvageClaw",
+   "name": "Drone Salvage Claw",
+   "inputs": [
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 2
+    },
+    {
+     "item": "Item_StormSilver",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_DroneSalvageClaw",
+     "qty": 1
+    }
+   ],
+   "duration": 8.0,
+   "tech_gate": "Tech_AutomationII",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 674,
+   "id": "Recipe_RobotBorebot",
+   "name": "Borebot",
+   "inputs": [
+    {
+     "item": "Item_Stone",
+     "qty": 8
+    },
+    {
+     "item": "Item_StormSilver",
+     "qty": 2
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_RobotBorebot",
+     "qty": 1
+    }
+   ],
+   "duration": 16.0,
+   "tech_gate": "Tech_AutomationII",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 677,
+   "id": "Recipe_RobotCultivator",
+   "name": "Cultivator Unit",
+   "inputs": [
+    {
+     "item": "Item_Fiber",
+     "qty": 8
+    },
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 2
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 3
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_RobotCultivator",
+     "qty": 1
+    }
+   ],
+   "duration": 16.0,
+   "tech_gate": "Tech_AutomationII",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 680,
+   "id": "Recipe_RobotSentinel",
+   "name": "Sentinel Frame",
+   "inputs": [
+    {
+     "item": "Item_ChitinPlate",
+     "qty": 3
+    },
+    {
+     "item": "Item_StormSilver",
+     "qty": 3
+    },
+    {
+     "item": "Item_EnergyCell",
+     "qty": 4
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_RobotSentinel",
+     "qty": 1
+    }
+   ],
+   "duration": 18.0,
+   "tech_gate": "Tech_AutomationII",
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 804,
+   "id": "Recipe_FieldRation",
+   "name": "Field Ration",
+   "inputs": [
+    {
+     "item": "Item_CookedMeat",
+     "qty": 1
+    },
+    {
+     "item": "Item_Berry",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_FieldRation",
+     "qty": 1
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": null,
+   "station": "Station_Campfire"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 808,
+   "id": "Recipe_PulseTonic",
+   "name": "Pulse Tonic",
+   "inputs": [
+    {
+     "item": "Item_Dawnbloom",
+     "qty": 1
+    },
+    {
+     "item": "Item_CrystalShard",
+     "qty": 1
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_PulseTonic",
+     "qty": 2
+    }
+   ],
+   "duration": 6.0,
+   "tech_gate": null,
+   "station": "Station_Workbench"
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 2996,
+   "id": "Recipe_SkiffStratosCoil",
+   "name": "Skiff Stratos Coil",
+   "inputs": [
+    {
+     "item": "Item_StormSilver",
+     "qty": 4
+    },
+    {
+     "item": "Item_DuneGlass",
+     "qty": 3
+    },
+    {
+     "item": "Item_MaelstromGlass",
+     "qty": 2
+    }
+   ],
+   "outputs": [
+    {
+     "item": "Item_SkiffStratosCoil",
+     "qty": 1
+    }
+   ],
+   "duration": 20.0,
+   "tech_gate": "Tech_SkiffEngineering",
+   "station": "Station_Workbench"
+  }
+ ]
+}

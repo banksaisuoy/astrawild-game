@@ -2123,7 +2123,15 @@ void AAstrawildPlayerCharacter::OnPlayerDied()
     {
         if (AAstrawildGameMode* GameMode = World->GetAuthGameMode<AAstrawildGameMode>())
         {
-            GameMode->RequestPlayerRespawn(GetController(), 5.0f);
+            const float RespawnDelay = GameMode->RespawnDelaySeconds;
+            GameMode->RequestPlayerRespawn(GetController(), RespawnDelay);
+
+            // Completion stage (DEATH): readable death beat with a live countdown
+            // on the local controller instead of a silent five-second freeze.
+            if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(GetController()))
+            {
+                AstrawildPC->ShowDeathOverlay(RespawnDelay);
+            }
         }
     }
 }
@@ -2198,6 +2206,12 @@ void AAstrawildPlayerCharacter::HandleRespawn(const FTransform& SpawnTransform)
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         EnableInput(PC);
+    }
+
+    // Completion stage (DEATH): the countdown overlay retires with the pawn back.
+    if (AAstrawildPlayerController* AstrawildPC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        AstrawildPC->HideDeathOverlay();
     }
 
     // CGC-2: the second half of the death UX — the return beat (the fall toast
