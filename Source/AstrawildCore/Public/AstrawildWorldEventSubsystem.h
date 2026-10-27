@@ -6,6 +6,8 @@
 #include "AstrawildWorldEventSubsystem.generated.h"
 
 class UAstrawildWorldEventDefinition;
+class UAstrawildItemRegistrySubsystem;
+class UAstrawildEchoDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAstrawildWorldEventStateChanged, FName, EventId, bool, bStarted);
 
@@ -93,6 +95,17 @@ public:
     static FName PickWeightedEvent(const TArray<UAstrawildWorldEventDefinition*>& Pool,
         const TMap<FName, int32>& CooldownEndMinutes, int32 CurrentAbsoluteMinute, int32 CurrentDay,
         int32 CurrentHour, int32 ActiveEventCount, int32 MaxConcurrent, FRandomStream& Stream);
+
+    /**
+     * FIX-1 (AUDIT-A finding): Night-raid raider pool — hostiles homed at the camp
+     * zone (DawnFields) OR its canon night-stalker neighbor HollowApproach (the
+     * Gloomfang home). No species is hostile-homed at DawnFields itself, so the old
+     * DawnFields-only filter left Event_NightRaid firing as a permanent false alarm
+     * (toast + cooldown consumed, zero raiders spawned). Static + pure so the
+     * world-free contract test can pin it.
+     */
+    static void CollectNightRaidPool(const UAstrawildItemRegistrySubsystem* Registry,
+        TArray<UAstrawildEchoDefinition*>& OutHostiles);
 
     /** Force-start an event (cheat manager / tests). Resolves effects immediately. */
     UFUNCTION(BlueprintCallable, Category="ASTRAWILD|WorldEvent")

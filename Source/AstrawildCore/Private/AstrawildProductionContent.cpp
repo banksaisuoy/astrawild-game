@@ -3447,6 +3447,20 @@ void UAstrawildProductionContent::BuildAll(UAstrawildItemRegistrySubsystem* Regi
     BuildFinalRunContent(Registry); // FR-5: Act 3 "The Storm Crown" + the two endings.
     BuildPostGameQuests(Registry);  // DCP-1: SQ-23 batch — five post-game side quests.
 
+    // LIVE from the registry — never hardcoded (AUDIT-A finding 2: the previous
+    // fixed string went stale after the DCP/FR/CGC content batches; docs must
+    // cite the registry census, not frozen era numbers).
     UE_LOG(LogAstrawildEconomy, Log,
-        TEXT("Production V2 + Final Run content registered: 8 weapon profiles, 7 armor/scanner pieces, 6 robotics items, 10 resource nodes, 4 work sites, 9 world events, 13 POIs, 12 biomes, 6 production Echoes + 6 evolution targets + 3 Final Run bosses, 6 + 1 technologies, 2 + 5 + 5 quests (22 total), 6 + 5 dialogue trees (11 total — every NPC converses), 5 post-game side-quest offers (DCP-1)."));
+        TEXT("Production V2 + Final Run content registered (live census): %d weapon profiles, %d resource nodes, %d work sites, %d world events, %d POIs, %d biomes, %d Echo definitions, %d technologies, %d quests, %d dialogue trees, %d robots."),
+        Registry->GetAllWeapons().Num(),
+        Registry->GetAllResourceNodeDefinitions().Num(),
+        Registry->GetAllWorkSiteDefinitions().Num(),
+        Registry->GetAllWorldEvents().Num(),
+        Registry->GetAllPOIs().Num(),
+        Registry->GetAllBiomes().Num(),
+        Registry->GetAllEchoDefinitions().Num(),
+        Registry->GetAllTechnologies().Num(),
+        Registry->GetNumQuests(),
+        Registry->GetAllDialogueTrees().Num(),
+        Registry->GetNumRobots());
 }

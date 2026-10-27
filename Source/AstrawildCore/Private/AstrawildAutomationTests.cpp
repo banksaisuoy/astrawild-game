@@ -7821,4 +7821,87 @@ bool FAstrawildVictoryChainTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// FIX-1 (AUDIT-A finding) — Night Raid pool contract. Event_NightRaid used to
+// fire as a permanent false alarm: its raider pool filtered for hostiles homed
+// at DawnFields, but no species is hostile-homed there (the canon night
+// raiders — Gloomfangs — home at HollowApproach), so the toast played, the
+// cooldown was consumed and zero raiders ever spawned. The pool collector now
+// accepts the camp zone OR its night-stalker neighbor; this contract pins it.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildNightRaidPoolContractTest,
+    "ASTRAWILD.WorldEvent.NightRaidPoolContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildNightRaidPoolContractTest::RunTest(const FString& Parameters)
+{
+    UAstrawildItemRegistrySubsystem* Registry = NewObject<UAstrawildItemRegistrySubsystem>();
+    TestNotNull(TEXT("transient registry created"), Registry);
+    if (!Registry)
+    {
+        return false;
+    }
+
+    // DawnFields-friendly species — must be excluded (not hostile).
+    UAstrawildEchoDefinition* Friendly = NewObject<UAstrawildEchoDefinition>();
+    Friendly->DefinitionId = TEXT("Echo_TestDawnFriendly");
+    Friendly->bHostileToPlayers = false;
+    Friendly->HomeZone = EAstrawildZone::DawnFields;
+    Registry->RegisterEcho(Friendly);
+
+    // The canon night-stalker pattern (Gloomfang): hostile homed at HollowApproach
+    // — must be INCLUDED (this is the row the old filter wrongly rejected).
+    UAstrawildEchoDefinition* Stalker = NewObject<UAstrawildEchoDefinition>();
+    Stalker->DefinitionId = TEXT("Echo_TestHollowStalker");
+    Stalker->bHostileToPlayers = true;
+    Stalker->HomeZone = EAstrawildZone::HollowApproach;
+    Registry->RegisterEcho(Stalker);
+
+    // Hostile homed in a distant, unrelated zone — must be excluded.
+    UAstrawildEchoDefinition* FarHostile = NewObject<UAstrawildEchoDefinition>();
+    FarHostile->DefinitionId = TEXT("Echo_TestEmberHostile");
+    FarHostile->bHostileToPlayers = true;
+    FarHostile->HomeZone = EAstrawildZone::EmberRidge;
+    Registry->RegisterEcho(FarHostile);
+
+    // Hypothetical hostile homed at the camp zone itself — still accepted.
+    UAstrawildEchoDefinition* CampHostile = NewObject<UAstrawildEchoDefinition>();
+    CampHostile->DefinitionId = TEXT("Echo_TestCampHostile");
+    CampHostile->bHostileToPlayers = true;
+    CampHostile->HomeZone = EAstrawildZone::DawnFields;
+    Registry->RegisterEcho(CampHostile);
+
+    TArray<UAstrawildEchoDefinition*> Pool;
+    UAstrawildWorldEventSubsystem::CollectNightRaidPool(Registry, Pool);
+    TestEqual(TEXT("Raid pool = camp hostile + night-stalker (friendly and far excluded)"),
+        Pool.Num(), 2);
+    TestTrue(TEXT("HollowApproach night-stalker is in the pool"), Pool.Contains(Stalker));
+    TestTrue(TEXT("DawnFields hostile is in the pool"), Pool.Contains(CampHostile));
+
+    // Null registry safety (pure contract, never crashes).
+    TArray<UAstrawildEchoDefinition*> NullPool;
+    UAstrawildWorldEventSubsystem::CollectNightRaidPool(nullptr, NullPool);
+    TestEqual(TEXT("Null registry yields an empty pool"), NullPool.Num(), 0);
+
+    // Production content must yield a spawnable pool — the actual regression:
+    // pre-FIX-1 this was provably empty (zero hostiles homed at DawnFields).
+    UAstrawildItemRegistrySubsystem* Production = NewObject<UAstrawildItemRegistrySubsystem>();
+    UAstrawildProductionContent::BuildAll(Production);
+    TArray<UAstrawildEchoDefinition*> ProductionPool;
+    UAstrawildWorldEventSubsystem::CollectNightRaidPool(Production, ProductionPool);
+    TestTrue(TEXT("Production content has a spawnable night-raid pool"),
+        ProductionPool.Num() > 0);
+
+    const UAstrawildWorldEventDefinition* NightRaid = Production->FindWorldEvent(TEXT("Event_NightRaid"));
+    TestNotNull(TEXT("Event_NightRaid is registered"), NightRaid);
+    if (NightRaid)
+    {
+        TestEqual(TEXT("Night Raid asks for 3 raiders"), NightRaid->RaidHostileCount, 3);
+        TestTrue(TEXT("Pool can satisfy the raid count (spawn loop draws with repetition)"),
+            ProductionPool.Num() >= 1);
+    }
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

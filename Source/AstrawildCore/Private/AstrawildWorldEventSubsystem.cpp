@@ -183,6 +183,29 @@ FName UAstrawildWorldEventSubsystem::PickWeightedEvent(const TArray<UAstrawildWo
     return Eligible.Last()->EventId;
 }
 
+void UAstrawildWorldEventSubsystem::CollectNightRaidPool(const UAstrawildItemRegistrySubsystem* Registry,
+    TArray<UAstrawildEchoDefinition*>& OutHostiles)
+{
+    OutHostiles.Reset();
+    if (!Registry)
+    {
+        return;
+    }
+    for (UAstrawildEchoDefinition* Def : Registry->GetAllEchoDefinitions())
+    {
+        // FIX-1 (AUDIT-A finding): no species is hostile-homed at DawnFields — the
+        // canon night raiders (Gloomfangs) home at HollowApproach, the camp's
+        // night-stalker neighbor (Quest_DawnGuard + the camp's legacy hostile ring
+        // both already establish them as the Dawn Fields night threat). Accept both
+        // homes so the raid payload can actually spawn raiders.
+        if (Def && Def->bHostileToPlayers &&
+            (Def->HomeZone == EAstrawildZone::DawnFields || Def->HomeZone == EAstrawildZone::HollowApproach))
+        {
+            OutHostiles.Add(Def);
+        }
+    }
+}
+
 void UAstrawildWorldEventSubsystem::RunRoll()
 {
     UWorld* World = GetWorld();
@@ -356,15 +379,12 @@ void UAstrawildWorldEventSubsystem::ResolveEventEffects(const UAstrawildWorldEve
         const FAstrawildZoneDescriptor* DawnFields = UAstrawildZoneSubsystem::FindZone(EAstrawildZone::DawnFields);
         if (Registry && DawnFields)
         {
-            // Deterministic hostile pick: any hostile species homed near the camp zone.
+            // FIX-1 (AUDIT-A finding): deterministic hostile pick via the pure
+            // pool collector (hostiles homed at the camp zone or its canon
+            // night-stalker neighbor — the old DawnFields-only filter was provably
+            // empty, so the raid payload never spawned anything).
             TArray<UAstrawildEchoDefinition*> Hostiles;
-            for (UAstrawildEchoDefinition* Def : Registry->GetAllEchoDefinitions())
-            {
-                if (Def && Def->bHostileToPlayers && Def->HomeZone == EAstrawildZone::DawnFields)
-                {
-                    Hostiles.Add(Def);
-                }
-            }
+            CollectNightRaidPool(Registry, Hostiles);
             if (!Hostiles.IsEmpty())
             {
                 const AAstrawildGameState* GameState = GetGameState();
