@@ -1,13 +1,13 @@
 {
  "schema": "astrawild-design-data/2",
- "generated": "2026-10-27T14:32:19",
+ "generated": "2026-10-27T14:36:12",
  "generator": "Scripts/extract_design_data.py",
- "repo_head": "b0e7238879792f541844d25db70f50b7c85b7aa4",
+ "repo_head": "4112c562e2bc081150e4fd0877c464ecde7b628d",
  "rule": "Every value below was parsed from Source/ by the generator. No value is hand-typed (Master Directive v1 rule R1).",
  "domains": {
   "tunables": {
-   "files_scanned": 107,
-   "count": 582,
+   "files_scanned": 109,
+   "count": 586,
    "entries": [
     {
      "file": "Source/AstrawildCore/Public/AstrawildBossHazardActor.h",
@@ -3653,6 +3653,60 @@
      "uproperty_line": 223
     },
     {
+     "file": "Source/AstrawildCore/Public/AstrawildEchoDexSubsystem.h",
+     "line": 41,
+     "class": "FAstrawildDexQuery",
+     "name": "bFilterRole",
+     "type": "bool",
+     "value": false,
+     "category": "ASTRAWILD|Dex",
+     "clamp": null,
+     "comment": "Role facet (only applied when bFilterRole).",
+     "uproperty_line": 40
+    },
+    {
+     "file": "Source/AstrawildCore/Public/AstrawildEchoDexSubsystem.h",
+     "line": 48,
+     "class": "FAstrawildDexQuery",
+     "name": "bFilterDiscovery",
+     "type": "bool",
+     "value": false,
+     "category": "ASTRAWILD|Dex",
+     "clamp": null,
+     "comment": "Discovery facet (only applied when bFilterDiscovery).",
+     "uproperty_line": 47
+    },
+    {
+     "file": "Source/AstrawildCore/Public/AstrawildEchoDexSubsystem.h",
+     "line": 151,
+     "class": "UAstrawildEchoDexSubsystem",
+     "name": "RareDifficultyThreshold",
+     "type": "float",
+     "value": 0.75,
+     "category": "ASTRAWILD|Dex",
+     "clamp": {
+      "ClampMin": "0.0",
+      "ClampMax": "1.0"
+     },
+     "comment": "Min capture difficulty for the radar to consider a species \"rare\".",
+     "uproperty_line": 150
+    },
+    {
+     "file": "Source/AstrawildCore/Public/AstrawildEchoDexSubsystem.h",
+     "line": 155,
+     "class": "UAstrawildEchoDexSubsystem",
+     "name": "RadarUnlockProgress",
+     "type": "float",
+     "value": 0.8,
+     "category": "ASTRAWILD|Dex",
+     "clamp": {
+      "ClampMin": "0.0",
+      "ClampMax": "1.0"
+     },
+     "comment": "Zone completion share that unlocks the radar (Aniimo: ~0.8).",
+     "uproperty_line": 154
+    },
+    {
      "file": "Source/AstrawildCore/Public/AstrawildEchoRosterSubsystem.h",
      "line": 30,
      "class": "UAstrawildEchoRosterSubsystem",
@@ -4412,7 +4466,7 @@
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 324,
+     "line": 328,
      "class": "AAstrawildPlayerCharacter",
      "name": "AttackDamage",
      "type": "float",
@@ -4422,11 +4476,11 @@
       "ClampMin": "0.0"
      },
      "comment": null,
-     "uproperty_line": 323
+     "uproperty_line": 327
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 327,
+     "line": 331,
      "class": "AAstrawildPlayerCharacter",
      "name": "AttackDistance",
      "type": "float",
@@ -4436,11 +4490,11 @@
       "ClampMin": "50.0"
      },
      "comment": null,
-     "uproperty_line": 326
+     "uproperty_line": 330
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 330,
+     "line": 334,
      "class": "AAstrawildPlayerCharacter",
      "name": "AttackCooldownSeconds",
      "type": "float",
@@ -4450,11 +4504,11 @@
       "ClampMin": "0.0"
      },
      "comment": null,
-     "uproperty_line": 329
+     "uproperty_line": 333
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 333,
+     "line": 337,
      "class": "AAstrawildPlayerCharacter",
      "name": "bGivePrototypeStarterItems",
      "type": "bool",
@@ -4462,11 +4516,11 @@
      "category": "ASTRAWILD|Prototype",
      "clamp": null,
      "comment": null,
-     "uproperty_line": 332
+     "uproperty_line": 336
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 339,
+     "line": 343,
      "class": "AAstrawildPlayerCharacter",
      "name": "WalkSpeed",
      "type": "float",
@@ -4476,11 +4530,11 @@
       "ClampMin": "0.0"
      },
      "comment": null,
-     "uproperty_line": 338
+     "uproperty_line": 342
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 342,
+     "line": 346,
      "class": "AAstrawildPlayerCharacter",
      "name": "SprintSpeed",
      "type": "float",
@@ -4490,11 +4544,11 @@
       "ClampMin": "0.0"
      },
      "comment": null,
-     "uproperty_line": 341
+     "uproperty_line": 345
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 345,
+     "line": 349,
      "class": "AAstrawildPlayerCharacter",
      "name": "InteractionDistance",
      "type": "float",
@@ -4504,11 +4558,11 @@
       "ClampMin": "50.0"
      },
      "comment": null,
-     "uproperty_line": 344
+     "uproperty_line": 348
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerCharacter.h",
-     "line": 348,
+     "line": 352,
      "class": "AAstrawildPlayerCharacter",
      "name": "bDrawInteractionDebug",
      "type": "bool",
@@ -4516,11 +4570,11 @@
      "category": "ASTRAWILD|Interaction",
      "clamp": null,
      "comment": null,
-     "uproperty_line": 347
+     "uproperty_line": 351
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerController.h",
-     "line": 349,
+     "line": 361,
      "class": "AAstrawildPlayerController",
      "name": "bShowTitleScreenAtBoot",
      "type": "bool",
@@ -4528,11 +4582,11 @@
      "category": "ASTRAWILD|UI",
      "clamp": null,
      "comment": null,
-     "uproperty_line": 348
+     "uproperty_line": 360
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPlayerController.h",
-     "line": 357,
+     "line": 369,
      "class": "AAstrawildPlayerController",
      "name": "VictoryQuestId",
      "type": "FName",
@@ -4540,7 +4594,7 @@
      "category": "ASTRAWILD|Quest",
      "clamp": null,
      "comment": null,
-     "uproperty_line": 356
+     "uproperty_line": 368
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildPowerSubsystem.h",
@@ -26872,13 +26926,13 @@
   },
   "counts": {
    "automation_tests": {
-    "value": 146
+    "value": 147
    },
    "source_files": {
-    "value": 216
+    "value": 220
    },
    "source_loc": {
-    "value": 82116
+    "value": 83484
    },
    "census_vs_validate_final_run": {
     "items": {
