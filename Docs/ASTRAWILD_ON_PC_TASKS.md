@@ -6,7 +6,7 @@
 > copy-paste, every expected output is written out, every failure has a
 > route. Engine authority: **UE 5.8.2 at `E:\Epic Games\UnrealEngine`** ·
 > Project home assumed `E:\AstrawildGame`. Success bar for the day:
-> **a walkable, lit runtime prototype + the 141 automation contracts green
+> **a walkable, lit runtime prototype + the 147 automation contracts green
 > + (stretch) a Shipping package.**
 > Written at HEAD after the L1-L8 run. Statuses here are UNVERIFIED — NEEDS
 > MACHINE until YOU run them; this file is your checklist, not a claim.
@@ -193,13 +193,13 @@ If only this much works by end of day, the MACHINE-READY promise held.
 Test.bat
 ```
 
-Runs the **146 world-free contracts** via
+Runs the **147 world-free contracts** via
 `-ExecCmds="Automation RunTests Astrawild; Quit" -nullrhi`.
 
 **Expected** console summary:
 ```
 >>> Test Execution Completed in <N>s <<<
-PASS  (140 successes, 0 failures)   [exact phrasing: Result={Success} x140]
+PASS  (147 successes, 0 failures)   [exact phrasing: Result={Success} x147]
 ```
 
 Output file: `Automation_Output.txt` beside the project.
@@ -282,7 +282,7 @@ self-hosted workflow audits clean statically (L8).
 | 0-1 | **compile** | `Build.bat` | 0 errors, DLL produced |
 | 1 | source-side flow (6 steps) | orchestrator cmdlet | `[AWFIRST] VERDICT: PASS` |
 | 2 | assets + map | `Setup_And_Play.bat` | `total_missing: 0`, PIE walks |
-| 3 | logic gate | `Test.bat` | 140/140 `Result={Success}` |
+| 3 | logic gate | `Test.bat` | 147/147 `Result={Success}` |
 | 4-6 | feel grading | play | ≥ 6/8 HIT on the probe table |
 | 7-8 | package | `Tools\package_windows.bat` | exe launches |
 | +10m | report | docs edits + push | state file truthful |

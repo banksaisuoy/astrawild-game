@@ -17,6 +17,7 @@
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildEchoCharacter.h"
 #include "AstrawildEchoAIController.h"
+#include "AstrawildEchoDexSubsystem.h"
 #include "AstrawildEchoRosterSubsystem.h"
 #include "AstrawildErrorReporter.h"
 #include "AstrawildEventBusSubsystem.h"
@@ -172,6 +173,12 @@ void AAstrawildPlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     RefreshMovementSpeed();
+
+    // EDX-1: capture results feed the EchoDex capture-ever record.
+    if (CaptureComponent)
+    {
+        CaptureComponent->OnCaptureResult.AddDynamic(this, &AAstrawildPlayerCharacter::HandleCaptureResultForDex);
+    }
 
     // Art pack: activate AAA character mesh (SKM_Manny_Simple) or fall back to procedural
     bSkeletalBodyActive = TryActivateSkeletalBody();
@@ -879,6 +886,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     ResearchAction = MakeRuntimeAction(TEXT("AWD_Research"), static_cast<uint8>(EInputActionValueType::Boolean));
     JournalAction = MakeRuntimeAction(TEXT("AWD_Journal"), static_cast<uint8>(EInputActionValueType::Boolean));
     RosterAction = MakeRuntimeAction(TEXT("AWD_Roster"), static_cast<uint8>(EInputActionValueType::Boolean));
+    EchoDexAction = MakeRuntimeAction(TEXT("AWD_EchoDex"), static_cast<uint8>(EInputActionValueType::Boolean));
     MapAction = MakeRuntimeAction(TEXT("AWD_Map"), static_cast<uint8>(EInputActionValueType::Boolean));
     HuntAction = MakeRuntimeAction(TEXT("AWD_Hunt"), static_cast<uint8>(EInputActionValueType::Boolean));
     PauseAction = MakeRuntimeAction(TEXT("AWD_Pause"), static_cast<uint8>(EInputActionValueType::Boolean));
@@ -954,6 +962,7 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(ResearchAction, EKeys::K);
     Context->MapKey(JournalAction, EKeys::P);
     Context->MapKey(RosterAction, EKeys::L);
+    Context->MapKey(EchoDexAction, EKeys::I);
     Context->MapKey(MapAction, EKeys::M);
     Context->MapKey(HuntAction, EKeys::U);
     Context->MapKey(PauseAction, EKeys::Escape);
@@ -1218,6 +1227,10 @@ void AAstrawildPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     if (RosterAction)
     {
         EnhancedInput->BindAction(RosterAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleRosterScreenInput);
+    }
+    if (EchoDexAction)
+    {
+        EnhancedInput->BindAction(EchoDexAction, ETriggerEvent::Started, this, &AAstrawildPlayerCharacter::ToggleEchoDexScreenInput);
     }
     if (MapAction)
     {
@@ -2897,6 +2910,32 @@ void AAstrawildPlayerCharacter::ToggleRosterScreenInput(const FInputActionValue&
     if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
     {
         PC->ToggleRosterScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::ToggleEchoDexScreenInput(const FInputActionValue& Value)
+{
+    if (AAstrawildPlayerController* PC = Cast<AAstrawildPlayerController>(GetController()))
+    {
+        PC->ToggleEchoDexScreen();
+    }
+}
+
+void AAstrawildPlayerCharacter::HandleCaptureResultForDex(AAstrawildEchoCharacter* Echo, bool bSuccess)
+{
+    // EDX-1: successful captures feed the EchoDex capture-ever record so the
+    // index can show [*] Captured state and the zone progress radar can rely
+    // on it. Failures leave the discovery ladder untouched.
+    if (!bSuccess || !Echo || !Echo->EchoDefinition)
+    {
+        return;
+    }
+    if (UWorld* World = GetWorld())
+    {
+        if (UAstrawildEchoDexSubsystem* Dex = World->GetSubsystem<UAstrawildEchoDexSubsystem>())
+        {
+            Dex->NotifySpeciesCaptured(Echo->EchoDefinition->DefinitionId);
+        }
     }
 }
 

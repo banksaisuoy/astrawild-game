@@ -6,6 +6,7 @@
 #include "AstrawildDifficultySubsystem.h"
 #include "AstrawildEchoBossCharacter.h"
 #include "AstrawildEchoCharacter.h"
+#include "AstrawildEchoDexSubsystem.h"
 #include "AstrawildEcosystemSubsystem.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
@@ -144,6 +145,22 @@ void AAstrawildEchoAIController::HandlePerception(AActor* Actor, FAIStimulus Sti
     }
 
     bPerceivedThreat = true;
+
+    // EDX-1 (Aniimo radar parity): when a rare, not-yet-seen species notices
+    // the player in a zone whose collection progress unlocked the radar,
+    // ping the EchoDex so HUD listeners can toast the encounter hint. Pure
+    // check — no state mutates here beyond the Dex broadcast itself.
+    if (Echo->EchoDefinition)
+    {
+        if (UAstrawildEchoDexSubsystem* Dex = GetWorld()->GetSubsystem<UAstrawildEchoDexSubsystem>())
+        {
+            const FName SpeciesId = Echo->EchoDefinition->DefinitionId;
+            if (Dex->ShouldRadarAlert(SpeciesId))
+            {
+                Dex->BroadcastRadarAlert(SpeciesId);
+            }
+        }
+    }
 
     // Curious personalities investigate unknown actors instead of immediately reacting (directive §5).
     if (!Echo->bCaptured && Echo->Personality == EAstrawildPersonality::Curious && Echo->GetHealthFraction() > 0.8f)

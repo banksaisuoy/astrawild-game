@@ -10,6 +10,7 @@ class UAstrawildQuestComponent;
 class UAstrawildEndingCinematicComponent;
 class UAstrawildHudWidget;
 class UAstrawildCraftingScreenWidget;
+class UAstrawildEchoDexScreenWidget;
 class UAstrawildInventoryScreenWidget;
 class UAstrawildPauseMenuWidget;
 class UAstrawildResearchScreenWidget;
@@ -197,6 +198,17 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
     bool IsCraftingOpen() const;
+
+    /** EDX-1: EchoDex screen class override point (defaults to the pure-C++ widget). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
+    TSubclassOf<UAstrawildEchoDexScreenWidget> EchoDexScreenClass;
+
+    /** EDX-1: toggle the EchoDex (searchable species index) screen — key I. */
+    UFUNCTION(BlueprintCallable, Category="ASTRAWILD|UI")
+    void ToggleEchoDexScreen();
+
+    UFUNCTION(BlueprintPure, Category="ASTRAWILD|UI")
+    bool IsEchoDexOpen() const;
 
     /** Pause menu class override point (defaults to the pure-C++ widget). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ASTRAWILD|UI")
@@ -433,6 +445,9 @@ private:
 
     UPROPERTY()
     TObjectPtr<UAstrawildCraftingScreenWidget> CraftingScreen;
+
+    UPROPERTY()
+    TObjectPtr<UAstrawildEchoDexScreenWidget> EchoDexScreen;
 
     UPROPERTY()
     TObjectPtr<UAstrawildPauseMenuWidget> PauseMenuWidget;

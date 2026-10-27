@@ -1,7 +1,7 @@
 ﻿# ASTRAWILD — Input Reference
 
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
-**Date: 2026-09-07** (CGC-4 sync — 33 actions incl. AWD_ToggleHUD on F6, the hide/show-HUD toggle; the settings screen [pause menu] carries the sensitivity/FOV/gamma rows; prior 2026-09-03 PCR-5 sync — journal/roster/map/hunt keys; screens close with their advertised keys; crafting stations open the crafting screen on E)
+**Date: 2026-10-27** (MERGE-2B/EDX-1 sync — 34 actions incl. AWD_EchoDex on I, the searchable species index; prior 2026-09-07 CGC-4 sync — 33 actions incl. AWD_ToggleHUD on F6, the hide/show-HUD toggle; the settings screen [pause menu] carries the sensitivity/FOV/gamma rows; prior 2026-09-03 PCR-5 sync — journal/roster/map/hunt keys; screens close with their advertised keys; crafting stations open the crafting screen on E)
 **Primary sources:** `AstrawildPlayerCharacter.cpp` (BuildRuntimeInputDefaults / BuildGamepadInputDefaults /
 SetupPlayerInputComponent / input handlers), `AstrawildCheatManager.h/.cpp`, `AstrawildNPCCharacter.cpp` (vendor transactions)
 
@@ -11,10 +11,10 @@ and works with zero configuration).
 
 ---
 
-## 1. Complete Keybinding Table (33 actions)
+## 1. Complete Keybinding Table (34 actions)
 
-`BuildRuntimeInputDefaults` creates **33 runtime actions** (`MakeRuntimeAction` count incl.
-Descend + the CGC-4 ToggleHUD). Key count = physical keyboard keys (mouse inputs listed separately).
+`BuildRuntimeInputDefaults` creates **34 runtime actions** (`MakeRuntimeAction` count incl.
+Descend, the CGC-4 ToggleHUD + the EDX-1 EchoDex). Key count = physical keyboard keys (mouse inputs listed separately).
 
 | Key | Action (runtime name) | Trigger events | Handler | System driven | Notes |
 |---|---|---|---|---|---|
@@ -41,6 +41,7 @@ Descend + the CGC-4 ToggleHUD). Key count = physical keyboard keys (mouse inputs
 | **TAB** | Inventory (`AWD_Inventory`) | Started | `ToggleInventoryScreenInput` | **UI (final run):** pack screen — stacks/weight/6-slot loadout, Use/Equip buttons | Closes other screens |
 | **K** | Research (`AWD_Research`) | Started | `ToggleResearchScreenInput` | **UI (final run):** research tree screen — costs/prereqs/unlock buttons | Also opens from the Research Desk [E] |
 | **P** | Field Journal (`AWD_Journal`) | Started | `ToggleJournalScreenInput` | **UI (PCR-1):** Field Journal bestiary screen — every species' scan/food/habitat/weakness knowledge, observation %, encounter count, collection totals | Undiscovered species read "???" (the collection pull); gamepad reaches it via the pause-menu button |
+| **I** | EchoDex (`AWD_EchoDex`) | Started | `ToggleEchoDexScreenInput` | **UI (EDX-1):** searchable species index — Paldeck/Aniimo parity: free-text search over name+id (case-insensitive), element/zone/role facets, highlight + jump-to-first-match, Aniimo-style rare-species radar ping, Paldeck '???' discovery gating (undiscovered entries never leak names) | Seen state derives from the Journal (no duplicate tracking); KB/M only |
 | **L** | Echo Roster (`AWD_Roster`) | Started | `ToggleRosterScreenInput` | **UI (PCR-2):** captured-Echo roster — identity/level/bond/top-work per Echo + Bench/Deploy ring management (server-authoritative; replicated mirror for LAN clients) | Ring = MaxPartySize (3); gamepad reaches it via the pause-menu button |
 | **M** | World Map (`AWD_Map`) | Started | `ToggleMapScreenInput` | **UI (PCR-3):** world map — 12-zone grid (name/threat/hazard tint), discovered-POI dots, villages, dungeons, active world-event pins, player marker, active-objective line + quest-target POI highlight | Read-only snapshot (reopen to refresh); undiscovered POIs stay hidden; gamepad reaches it via the pause-menu button |
 | **U** | Hunt Board (`AWD_Hunt`) | Started | `ToggleHuntScreenInput` | **UI (PCR-5):** post-game hunt board — 8 repeatable cull contracts with live progress + Claim buttons (server-authoritative; rewards land via AddItemSilent) | Rounds reset on claim — repeatable forever; gamepad reaches it via the pause-menu button |

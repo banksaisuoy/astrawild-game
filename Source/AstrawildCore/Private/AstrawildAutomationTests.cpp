@@ -64,6 +64,8 @@
 #include "AstrawildProductionContent.h"
 #include "AstrawildJournalScreenWidget.h"
 #include "AstrawildJournalSubsystem.h"
+#include "AstrawildEchoDexSubsystem.h"
+#include "AstrawildEchoDexScreenWidget.h"
 #include "AstrawildPauseMenuWidget.h"
 #include "AstrawildCraftingScreenWidget.h"
 #include "AstrawildRosterScreenWidget.h"
@@ -72,7 +74,7 @@
 #include "AstrawildHuntSubsystem.h"
 #include "AstrawildWildlifeDirectorSubsystem.h"
 #include "AstrawildHudWidget.h" // CGC-2: pure bearing/distance formatting contracts.
-#include "AstrawildControlsScreenWidget.h" // CGC-2: the controls census pin (33 actions since CGC-4's F6 row).
+#include "AstrawildControlsScreenWidget.h" // CGC-2: the controls census pin (34 actions after EDX-1's I row joined CGC-4's F6).
 #include "AstrawildInventoryScreenWidget.h" // CGC-4: FormatItemDetails + SortStacksByName pure contracts.
 #include "AstrawildSettingsWidget.h" // CGC-4: settings step/format/save-defaults contracts.
 #include "Misc/AutomationTest.h"
@@ -7067,10 +7069,11 @@ bool FAstrawildCGC2FirstHourGuidanceContractTest::RunTest(const FString& Paramet
     }
 
     // 5) Controls table: the input-census pin (one row per runtime action;
-    //    CGC-4's F6 AWD_ToggleHUD grew the census 32 -> 33 — this pin follows
-    //    the honest live count, and test 138 pins the F6 row itself).
-    TestEqual(TEXT("Controls screen pins the 33-action census"),
-        UAstrawildControlsScreenWidget::GetControlRows().Num(), 33);
+    //    CGC-4's F6 AWD_ToggleHUD grew the census 32 -> 33, EDX-1's I-key
+    //    AWD_EchoDex grew it 33 -> 34 — this pin follows the honest live
+    //    count, and test 138 pins the F6 row itself).
+    TestEqual(TEXT("Controls screen pins the 34-action census"),
+        UAstrawildControlsScreenWidget::GetControlRows().Num(), 34);
     for (const FString& Row : UAstrawildControlsScreenWidget::GetControlRows())
     {
         TestTrue(FString::Printf(TEXT("Controls row non-empty: %s"), *Row.Left(24)),
@@ -8142,6 +8145,112 @@ bool FAstrawildPetalPaletteVarietyTest::RunTest(const FString& Parameters)
     const FLinearColor Bad = AstrawildVisualOverhaul::EvalPetalTint(static_cast<EZone>(99), 1);
     TestTrue(TEXT("Invalid zone fails safe to white"),
         FMath::IsNearlyEqual(Bad.R, 1.0f, 0.001f) && FMath::IsNearlyEqual(Bad.G, 1.0f, 0.001f));
+// --- EDX-1: EchoDex search contracts (world-free) ---
+// Palworld's Paldeck ships no name search (players route through external
+// wikis; the community "Pal List Searchbar" mod closes the gap). The Dex
+// matcher must cover: free text over name AND id, case-insensitivity, the
+// four facets (element / zone / role / discovery), and the Paldeck-style
+// gating where undiscovered entries never leak names.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildEchoDexSearchTest,
+    "ASTRAWILD.Dex.Search",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildEchoDexSearchTest::RunTest(const FString& Parameters)
+{
+    // --- Part A: the screen/row widgets are concrete (CreateWidget-instantiable) ---
+    TestFalse(TEXT("EchoDexScreenWidget is concrete (CreateWidget-instantiable)"),
+        UAstrawildEchoDexScreenWidget::StaticClass()->HasAnyClassFlags(CLASS_Abstract));
+    TestFalse(TEXT("EchoDexRowWidget is concrete"),
+        UAstrawildDexRowWidget::StaticClass()->HasAnyClassFlags(CLASS_Abstract));
+
+    // --- Part B: the matcher contract (pure, world-free) ---
+    UAstrawildEchoDefinition* Def = NewObject<UAstrawildEchoDefinition>();
+    TestNotNull(TEXT("Echo definition constructible world-free"), Def);
+    if (Def)
+    {
+        Def->DefinitionId = TEXT("Echo_DexContract");
+        Def->DisplayName = FText::FromString(TEXT("Dex Contract Species"));
+        Def->Element = EAstrawildElementType::Light;
+        Def->HomeZone = EAstrawildZone::DawnFields;
+        Def->Role = EAstrawildEchoRole::Support;
+
+        FAstrawildDexQuery Query;
+
+        // Empty query = browse all.
+        TestTrue(TEXT("empty query matches"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Free text over name, case-insensitive, whitespace-trimmed.
+        Query.Text = TEXT("dex contract");
+        TestTrue(TEXT("name search is case-insensitive substring"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+        Query.Text = TEXT("  Dex Contract  ");
+        TestTrue(TEXT("name search trims whitespace"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+        Query.Text = TEXT("Glimmer");
+        TestFalse(TEXT("non-matching text rejects"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Free text over id — the wiki-ID workflow Palworld players lack.
+        Query.Text = TEXT("echo_dex");
+        TestTrue(TEXT("id search matches definition id"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Element facet.
+        Query.Text = TEXT("");
+        Query.Element = EAstrawildElementType::Light;
+        TestTrue(TEXT("element facet passes on match"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+        Query.Element = EAstrawildElementType::Frost;
+        TestFalse(TEXT("element facet rejects on mismatch"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Zone facet (canon 12 zones).
+        Query.Element = EAstrawildElementType::None;
+        Query.Zone = EAstrawildZone::DawnFields;
+        TestTrue(TEXT("zone facet passes on match"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+        Query.Zone = EAstrawildZone::EmberRidge;
+        TestFalse(TEXT("zone facet rejects on mismatch"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Role facet (opt-in).
+        Query.Zone = EAstrawildZone::None;
+        Query.bFilterRole = true;
+        Query.Role = EAstrawildEchoRole::Support;
+        TestTrue(TEXT("role facet passes on match"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+        Query.Role = EAstrawildEchoRole::Combat;
+        TestFalse(TEXT("role facet rejects on mismatch"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Discovery facet (Paldeck ladder).
+        Query.bFilterRole = false;
+        Query.bFilterDiscovery = true;
+        Query.Discovery = EAstrawildDexDiscoveryState::Seen;
+        TestTrue(TEXT("discovery facet passes on Seen state"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query,
+                EAstrawildDexDiscoveryState::Seen));
+        TestFalse(TEXT("discovery facet rejects Unknown when filtering Seen"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query,
+                EAstrawildDexDiscoveryState::Unknown));
+
+        // Combined: text + element together.
+        Query.bFilterDiscovery = false;
+        Query.Text = TEXT("contract");
+        Query.Element = EAstrawildElementType::Light;
+        TestTrue(TEXT("text + element combine conjunctively"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+        Query.Element = EAstrawildElementType::Ash;
+        TestFalse(TEXT("facet mismatch overrides text match"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(Def, Query));
+
+        // Null definition never matches (fail-closed).
+        Query.Text = TEXT("");
+        Query.Element = EAstrawildElementType::None;
+        TestFalse(TEXT("null definition fails closed"),
+            UAstrawildEchoDexSubsystem::MatchesQuery(nullptr, Query));
+    }
     return true;
 }
 

@@ -197,7 +197,7 @@ def main():
     if failed_at is None:
         log("VERDICT: PASS (map + input assets ready)")
         log("NEXT (machine steps this orchestrator does not own):")
-        log("  1. automation tests : Test.bat        (146 contracts)")
+        log("  1. automation tests : Test.bat        (147 contracts)")
         log("  2. PIE golden path  : Launch_ASTRAWILD.bat")
         log("  3. full showcase map: /Game/ASTRAWILD/Maps/L_Showcase_ArtOverhaul")
         log("  4. packaging        : Tools/package_windows.bat")

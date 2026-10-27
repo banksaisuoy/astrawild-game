@@ -23,7 +23,8 @@ const TArray<FString>& UAstrawildControlsScreenWidget::GetControlRows()
 {
     // Transcribed faithfully from Docs/ASTRAWILD_INPUT_REFERENCE.md §1 (the
     // 2026-09-03 PCR-5 sync — 32 runtime actions incl. AWD_Descend, plus the
-    // CGC-4 2026-09-07 addition — 33 actions incl. AWD_ToggleHUD on F6) +
+    // CGC-4 2026-09-07 addition — 33 actions incl. AWD_ToggleHUD on F6, plus
+    // the EDX-1 2026-10-27 unification — 34 actions incl. AWD_EchoDex on I) +
     // §1b's gamepad companion mapping. One row per ACTION, not per key.
     static const TArray<FString> Rows = {
         TEXT("W / A / S / D — Move — WASD movement (gamepad: left stick)"),
@@ -49,6 +50,7 @@ const TArray<FString>& UAstrawildControlsScreenWidget::GetControlRows()
         TEXT("TAB — Inventory — pack screen (gamepad: via the pause menu)"),
         TEXT("K — Research — research tree screen (gamepad: via the pause menu)"),
         TEXT("P — Field Journal — bestiary + species knowledge (gamepad: via the pause menu)"),
+        TEXT("I — EchoDex — searchable species index: search + element/zone/role facets + discovery gating (EDX-1, KB/M only)"),
         TEXT("L — Echo Roster — captured Echoes + party ring (gamepad: via the pause menu)"),
         TEXT("M — World Map — zone map + quest highlight (gamepad: via the pause menu)"),
         TEXT("U — Hunt Board — post-game cull contracts (gamepad: via the pause menu)"),

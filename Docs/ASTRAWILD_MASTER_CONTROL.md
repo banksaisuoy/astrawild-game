@@ -16,7 +16,7 @@
 **Runtime verification authority**: Antigravity (exclusive — GLM never claims runtime PASS)
 **Canonical LIVE EXECUTION STATE**: `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (directive MASTER SYNCHRONIZATION 2026-09-06) — the ONLY active task-state document; this rulebook stays canonical for game/product rules. When any status block elsewhere disagrees, LIVE_EXECUTION_STATE wins for execution state.
 **Baseline chain**: `main` (94a398c) ⊂ `agent/antigravity-ue5-v2` (f31f5e1 — PR #4 head) ⊂ `final-completion` (THE integration branch: ALL batches + FINAL-AUDIT A/B/C/D + GDP + SCP + FCR + ASSET ACQUISITION (26a7c7b, a09e566) + DEPTH PASSES DP-1..DP-10 (981250d → 00354da) + LAN CO-OP PACK LCP-1..LCP-8 + PRODUCT COMPLETION RUN PCR-0..PCR-6 + PRESENTATION PASS FPP-1 (this commit onward) — all pushed)
-**Last Updated**: 2026-10-27 (v9.10 CGC + INTEGRATION + FIX-1 + MERGE-1/2 — the MERGE-2 concept-union absorbed the parallel V1V2-INTEGRATION line: the VO-1R visual-overhaul layer (toon grade + anime bias + flower fields + kawaii Echo + ambient motes) joined the gameplay line; tests **146** (141 + 5 VO-1R); input actions 33; push complete (origin == local, astrawild-game-v2 mirror synced); the one-time engine run ENGINE-RUN-1 (V2-29..V2-36) is again THE next task, blocked on the Windows UE 5.8.2 machine — see LIVE_EXECUTION_STATE)
+**Last Updated**: 2026-10-27 (v9.10 CGC + INTEGRATION + FIX-1 + MERGE-1/2 — the MERGE-2 concept-union absorbed the parallel V1V2-INTEGRATION line (VO-1R visual overhaul: toon grade + anime bias + flower fields + kawaii Echo + ambient motes) AND the EDX-1 EchoDex searchable species index (AWD_EchoDex on I, input census 33 -> 34); tests **147** (141 + 5 VO-1R + 1 EDX-1); input actions 34 (EDX-1: AWD_EchoDex on I); push complete (origin == local, astrawild-game-v2 mirror synced); the one-time engine run ENGINE-RUN-1 (V2-29..V2-36) is again THE next task, blocked on the Windows UE 5.8.2 machine — see LIVE_EXECUTION_STATE)
 
 ---
 
@@ -85,7 +85,7 @@ A declared PASS without a raw log is a CLAIM, not evidence.
 | :--- | :--- | :--- |
 | **GLM** | Lead Programmer | C++, architecture, save/load, quests, AI, economy, tests; this document |
 | **Qwen** | Technical Art (optional) | Materials/meshes/animation polish — never blocks the project |
-| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 146-test automation run, playtest, package, push |
+| **Antigravity** | Integration & QA | Windows UE 5.8.2 build, 147-test automation run, playtest, package, push |
 | **Sonnet/Reviewers** | Auditors | Findings are inputs; only REAL BUG / STALE DOC / UNPROVEN CLAIM classes act on |
 
 ## 1b. Supported multiplayer target (v6.0 — user product decision, binding)
@@ -147,7 +147,7 @@ No cheat-command dependency anywhere in the chain.
   229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 13 NPCs,
   13 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots** (NPCs/trees 11→13 = DCP-4 Vess/Ione).
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
-  superseded. The automation suite holds **146 world-free contract tests** (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 LAN co-op + 1 PCR-1 Field Journal + 1 PCR-2 Echo Roster + 1 PCR-3 World Map + 1 PCR-4 Tier-B library + 1 PCR-5 hunt system + 1 FPP-1 presentation contract + 1 SCI-FANTASY mutation contract + 7 DCP + 1 VIS-1 creature identity + 5 CGC contracts + 1 completion-stage victory chain + 1 FIX-1 night-raid pool + 5 VO-1R visual-overhaul contracts). The player-facing rulebook is `Docs/ASTRAWILD_PLAYER_RULES.md` (every number sourced from live code at the freeze SHA).
+  superseded. The automation suite holds **147 world-free contract tests** (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 LAN co-op + 1 PCR-1 Field Journal + 1 PCR-2 Echo Roster + 1 PCR-3 World Map + 1 PCR-4 Tier-B library + 1 PCR-5 hunt system + 1 FPP-1 presentation contract + 1 SCI-FANTASY mutation contract + 7 DCP + 1 VIS-1 creature identity + 5 CGC contracts + 1 completion-stage victory chain + 1 FIX-1 night-raid pool + 5 VO-1R visual-overhaul contracts + 1 EDX-1 EchoDex search). The player-facing rulebook is `Docs/ASTRAWILD_PLAYER_RULES.md` (every number sourced from live code at the freeze SHA).
 
 ## 4. Final story canon (IMPLEMENTED — was frozen spec v1.7 §11)
 
@@ -204,7 +204,7 @@ Input contract grows 26 → 28 actions (T = party ability cast, Y = player smart
 | Gate | Status | Notes |
 | :--- | :--- | :--- |
 | MSVC build @ 8313c61 | DECLARED PASS (raw log) | superseded — rebuild on final SHA required |
-| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 146 tests now (109 through DP-9 + 22 DCP/VIS/CGC/victory/FIX-1/VO-1R era — full breakdown in the validator gate) — re-run required |
+| Automation 57/57 @ c65d734 | DECLARED PASS (raw log) | 147 tests now (109 through DP-9 + 23 DCP/VIS/CGC/victory/FIX-1/VO-1R/EDX era — full breakdown in the validator gate) — re-run required |
 | Final-audit static validation | **PASS 46/46 (this sandbox)** | re-run at AG-2 per HANDOFF §4 |
 | Cook & package | FAILED at 8313c61 (UBT ExitCode 6) per own log | FZ-A1 blocker — re-run on final SHA |
 | Packaged exe runtime | STALE binary evidence (FZ-A2) | re-run on final SHA |
@@ -237,7 +237,7 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 | W-19 | HUD/UI | LIVE + ending banner + boss labels | |
 | W-20 | **Ending + post-game** | **LIVE (FR-5/FR-6 + audit G-2 gate fix)** | ending gated on MQ-17 per canon |
 | W-21 | Content pipeline (ArtSource/LFS/import) | LIVE | 588 LFS pointers verified (AUDIT-B 2026-10-19 re-derivation: 586 CGC-era + 2 machine-ready Docs PNGs adopted by the INTEGRATION merge; all objects server-resolvable, TOK-2 push uploaded every object the server lacked; fsck raw-pack caveat in LIVE_EXECUTION_STATE §8) |
-| W-22 | Tests | 146 world-free contracts | ENGINE-UNVERIFIED until run |
+| W-22 | Tests | 147 world-free contracts | ENGINE-UNVERIFIED until run |
 | W-23 | **Sci-Fantasy mutation system** (directive SCI) | **LIVE source-side** — 204-spec table + mutator + 16 base GLBs + opt-in binding + runtime material/theme swap (8 masters, dynamic instances on the skinned path); runtime visuals | ENGINE-UNVERIFIED until V2-35 |
 | W-24 | **Real-mesh catalog (directive AO v9.3)** | **LIVE source-side** — 109 real unique CC0 meshes (3 armor tiers / 42+16+14 Echo/boss / 5 weapons / 4 vehicles / 4 nodes / 21 env), manifest 189/189 present / 0 pending, 1:1 source uniqueness, Setup_And_Play.bat one-click | ENGINE-UNVERIFIED until V2-36 |
 
@@ -245,7 +245,7 @@ Legend: IMPLEMENTED = code written + statically validated. Engine verification p
 
 1. `git fetch && git checkout final-completion` (or merge into main — subsumes PR #4)
 2. Build: `Engine\Build\BatchFiles\Build.bat AstrawildEditor Win64 Development -project=<repo>\ASTRAWILD.uproject`
-3. Run automation: 146/146 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*`, the 10 LAN co-op contracts `ASTRAWILD.LCP2..LCP6.*`, the PCR contracts `ASTRAWILD.PCR1..PCR5.*`, `ASTRAWILD.FPP1.PresentationContract`, `ASTRAWILD.SCI_FANTASY.MutationSystem`, the DCP/VIS/CGC/victory contracts, `ASTRAWILD.WorldEvent.NightRaidPoolContract` (FIX-1), and the 5 VO-1R visual-overhaul contracts `ASTRAWILD.VisualOverhaul.*` — full list in `ASTRAWILD_TEST_INVENTORY.md`; the count is read from the repo, never from memory)
+3. Run automation: 147/147 expected (incl. `ASTRAWILD.Quest.FinalRunChain`, `ASTRAWILD.Dialogue.EndingChoice`, `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`, `ASTRAWILD.Quest.OneShotBackFill`, the 12 GDP contracts: `ASTRAWILD.Ability.*` x5, `ASTRAWILD.Locomotion.Derivation`, `ASTRAWILD.Attributes.*` x4, `ASTRAWILD.NPC.Affinity*` x2, the 15 SCP contracts: `ASTRAWILD.SCP.*`, the 7 depth-pass contracts `ASTRAWILD.DP3..DP9.*`, the 10 LAN co-op contracts `ASTRAWILD.LCP2..LCP6.*`, the PCR contracts `ASTRAWILD.PCR1..PCR5.*`, `ASTRAWILD.FPP1.PresentationContract`, `ASTRAWILD.SCI_FANTASY.MutationSystem`, the DCP/VIS/CGC/victory contracts, `ASTRAWILD.WorldEvent.NightRaidPoolContract` (FIX-1), the 5 VO-1R visual-overhaul contracts `ASTRAWILD.VisualOverhaul.*`, and `ASTRAWILD.Dex.Search` (EDX-1) — full list in `ASTRAWILD_TEST_INVENTORY.md`; the count is read from the repo, never from memory)
 4. PIE smoke: MQ chain HUD tracker · save/load round-trip (schema 5 stamp in log) ·
    `AW.FastForward` to MQ-13+ if needed → verify anchor POIs, Eye Gate at 150 m with coil skiff,
    Sovereign fight, ending banner, post-game weather pin (Ending A).
@@ -273,7 +273,7 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | Save persistence model | YES — schema V5, every major system persisted |
 | UI player-accessible | YES — HUD/screens incl. ending banner |
 | AI complete source paths | YES (echo/hostile/boss) |
-| Automation deterministic | YES — scripts + 146 contracts + this document |
+| Automation deterministic | YES — scripts + 147 contracts + this document |
 | Documentation single control | YES — this file |
 | Task registry | YES — ASTRAWILD_MASTER_TASK_REGISTRY.md |
 | P0 source blockers | NONE KNOWN (static level) |
@@ -284,7 +284,7 @@ world-free automation tests for every fix · smallest-logical-change commits ref
 | **Real-mesh asset catalog (ASSET OVERHAUL)** | YES — 109 unique CC0 models, manifest 189/189 present / 0 pending, per-asset license provenance (Docs/ASTRAWILD_REAL_ASSET_CREDITS.json), live-verified remote fetch path (Kenney) |
 | **Post-game hunts (PCR)** | YES — 8 repeatable cull contracts + Hunt Board (the post-game claim is now TRUE) |
 
-**Overall status (v9.10 + INTEGRATION + FIX-1 + MERGE-2, synced 2026-10-27): SOURCE_PRODUCT_FROZEN — CGC-001 complete (fauna completeness + first-hour guidance + audio activation + settings/QoL + collection long-tail; review findings applied, the Radiant-tell real bug fixed), the INTEGRATION merge unified the CGC line with the machine-ready line (140 tests), FIX-1 closed the Night-Raid data-dead payload (+1 → 141), and the MERGE-2 concept-union absorbed the VO-1R visual-overhaul line (+5 → 146, toon grade + flower fields + kawaii Echo + ambient motes + petal palettes). The only remaining work is the one-time Antigravity engine integration: §20 build/automation/PIE/package + §20b-e imports + §22 LAN acceptance + V2-36 one-click. Post-freeze = evidence-driven fixes only. (Supersedes the v9.8 VIS-era freeze line below, kept for history.)**
+**Overall status (v9.10 + INTEGRATION + FIX-1 + MERGE-2, synced 2026-10-27): SOURCE_PRODUCT_FROZEN — CGC-001 complete (fauna completeness + first-hour guidance + audio activation + settings/QoL + collection long-tail; review findings applied, the Radiant-tell real bug fixed), the INTEGRATION merge unified the CGC line with the machine-ready line (140 tests), FIX-1 closed the Night-Raid data-dead payload (+1 → 141), and the MERGE-2 concept-union absorbed the VO-1R visual-overhaul line (+5) and the EDX-1 EchoDex line (+1 → 147, searchable species index on the I key). The only remaining work is the one-time Antigravity engine integration: §20 build/automation/PIE/package + §20b-e imports + §22 LAN acceptance + V2-36 one-click. Post-freeze = evidence-driven fixes only. (Supersedes the v9.8 VIS-era freeze line below, kept for history.)**
 Historical: SOURCE_PRODUCT_FROZEN (v8.0-era, superseded).
 Declared at DP-10, suspended twice (LAN CO-OP scope; PCR product audit),
 re-declared at the PCR-6 gate and now **FROZEN at the FPP-1 gate**: the six
@@ -300,7 +300,7 @@ verification.
 - LAN co-op: all LCP source work is ENGINE-UNVERIFIED until the Antigravity run executes the §22 LAN acceptance test (4 players, host + 3 clients).
 - Door visual state on pure clients (bIsSwitchedOn has no OnRep) — single-player/listen-server correct.
 - Imported skiff mesh orientation (glTF Y-up→Z-up assumption) — cosmetic; collision hull unaffected.
-- 146 automation tests never executed in a real engine.
+- 147 automation tests never executed in a real engine.
 - Package/cook success at the final SHA (FZ-A1 failure was at 8313c61).
 - Dungeon generator float-precision at 400 m altitude (Eye) — probes use world height; watch PIE log.
 - Dedicated-server paths remain out of scope by design (§1b — LAN listen server is the target).
