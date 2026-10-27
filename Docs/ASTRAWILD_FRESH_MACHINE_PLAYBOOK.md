@@ -37,7 +37,7 @@
    binding.
 4. **Read counts from the repo, never from memory.** The static validator
    (`Scripts/validate_final_run.py`) pins the exact expected numbers (tests,
-   census). When this playbook says "140 tests", the validator's gate is the
+   census). When this playbook says "146 tests", the validator's gate is the
    authority — if they disagree, the repo wins and this playbook is stale.
 5. **Git discipline.** Work on `final-completion` (or an
    `agent/<your-task>` branch off it). Push every completed phase with the
@@ -295,7 +295,7 @@ flags — that is the documented convention mismatch, not corruption. If
 ```powershell
 python Scripts\validate_final_run.py
 # expect final line: FINAL RUN VALIDATION: ALL CHECKS PASSED
-# (141-test gate, census gates: 229 species / 204 rows / 22 quests /
+# (146-test gate, census gates: 229 species / 204 rows / 22 quests /
 #  13 NPCs / 189-manifest / 51 direct-mesh rows / Tier-B 36 ...)
 
 & "C:\Program Files\Git\bin\bash.exe" Scripts/validate_repository.sh

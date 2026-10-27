@@ -231,3 +231,98 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
   astrawild-game `main` left as the frozen baseline mirror per convention.
 - Remaining after this merge: unchanged — ENGINE-RUN-1 (V2-29..V2-36) on the
   Windows UE 5.8.2 machine is still the only product-critical work.
+## Session 2026-10-19 — VO-1R visual-overhaul rebuild (SUPER Z / GLM)
+
+- Context: the prior session (visual overhaul + EchoDex design) ran out of
+  context AFTER implementing+pushing EchoDex but BEFORE pushing the visual
+  overhaul; its sandbox was then destroyed by the quota limit — the VO branch
+  (c59613e) and its bundle are gone from every machine. Confirmed on origin:
+  `agent/echodex-v1` @ 33b64f9 IS live (1,381 LOC, Paldeck/Aniimo-parity
+  search — that deliverable survived); `agent/visual-overhaul-v1` was NOT.
+- User directive: "rebuild ให้ทั้งหมด ตรวจสอบให้เรียบร้อยนะขาดอะไรตรงไหนหรือ
+  บั๊กอะไรมั้ยด้วย" + confirmed the fine-grained PAT now lives 1 day
+  (previously ~30 min).
+- Rebuilt the whole VO layer ZERO-ASSET on new branch `agent/visual-overhaul-v1`
+  (base 5f86a47 = TOK-2 tip): AstrawildVisualOverhaul.h/.cpp (pure contracts +
+  director), bootstrapper toggle + atmosphere bias, 12-zone flower budgets +
+  petal geometry + deterministic palettes, kawaii cute-band amplification
+  (head/eyes/blush), ambient mote layer (day pollen / night fireflies).
+- Contracts 135→140; gates synced across validate_final_run,
+  validate_design_data, design_data.json envelope, first_day_orchestrator,
+  ON_PC_TASKS, REVIVAL_PLAN, README, LIVE_STATE current fields.
+- Honest scope note: the lost session's ~304MB LFS payload (AI-generated
+  textures) was NOT recreated byte-for-byte — the rebuild covers the same five
+  pillars procedurally (PP grade / light bias / flowers / kawaii / motes),
+  which is the part that survives compile and is machine-checkable. A real
+  art pass can layer on top via the existing ArtSource pipeline.
+- Security: PAT used via env-var + remote URL only, never written to any
+  file/log/commit; user should revoke it after the session window closes.
+
+## Session 2026-10-20 — VOQA-1 static-QA closure (SUPER Z / GLM)
+
+- Context: this sandbox came back RESTORED to the TOK-2 state (2026-10-15) —
+  the VO-1R sandbox was destroyed by quota AFTER its push, so the local VO
+  branch was gone while origin carried the truth. Re-fetched from origin:
+  `agent/visual-overhaul-v1` @ `1d22925` (VO-1R tip — 6 commits on
+  `5f86a47`, not the lost c59613e line) and `agent/echodex-v1` @ `4695e2c`
+  (the lost session's other deliverable, already live). Checked the VO tip
+  out locally with LFS smudge skipped (QA needs pointers only).
+- User directive: "ทำไรก็เช็คให้ละเอียดเเล้วรีวิวด้วย ดูว่าทำไรยังไม่เสร็จ เเล้วทำต่อให้เสร็จ
+  พร้อมกับดูในกิตว่าเกม v1 กับ 2 ต่างกันยังไงบ้าง".
+- Full static QA re-run at the tip: lint_unreal_cpp PASS (0 errors, 1 known
+  advisory dead-decl unchanged since L4); validate_final_run ALL PASS (census
+  15/15: species 229 / quests 22 / items 78 / recipes 58 / buildings 26 /
+  techs 17 / npcs 13 / loot 11 / weapons 8 / nodes 10 / sites 8 / events 16 /
+  pois 17 / trees 13 / robots 3); validate_repository PASS;
+  dryrun_unreal_tools 49/49 PASS.
+- ONE genuine leftover found & FIXED: validate_design_data 77/78 — the VO-1R
+  session ran the extractor BEFORE its commit batch, so design_data.json
+  still stamped repo_head `5f86a47` while HEAD had moved to `1d22925` with
+  Source/ changes (the envelope check correctly refused). Regenerated at the
+  tip: 3-file diff (envelope 2 lines + bosses/dungeons DataTable trace
+  line-shifts +17 from the VO bootstrapper growth); tunables 577 / tests 140
+  / source_files 208 / census all identical; validator now 78/78 ALL PASS.
+  Commit `c1bc8b1`.
+- v1→v2 git comparison delivered to the owner (final-completion `5f86a47`
+  vs visual-overhaul `1d22925`: 6 commits / 18 files / five pillars).
+- Honest remaining (UNCHANGED): ENGINE-RUN-1 machine day on Windows UE 5.8.2
+  (ON_PC_TASKS hour 0→8, now including the VO §7 PIE grading addendum) is
+  the only product-critical item; optional: co-op client-parity batch
+  (WHATS_MISSING §3 row 1), canonical-branch decision final-completion vs
+  playable-delivery, real art pass on top of the zero-asset VO layer.
+- Security: the user's 1-day PAT (set during the VO-1R session) reused for
+  the push via env-var only; never written to any file/log/commit.
+
+## Session R-2026-10-27 — V1V2-INTEGRATION (concept-line unification)
+
+- User directive: "เอาอันที่ไม่มีไปใส่อันที่ไม่มี รวมคอนเซ็ปเปตละเวอร์ชั่น" — merge
+  the two diverged concept lines into one playable game line (NOT a Console
+  Edition; the console-skill repo was studied for methodology only).
+- Branch `agent/v1v2-integration` created from final-completion `4c706fc`
+  (the CGC v9.10 gameplay-completeness + INTEGRATION tip) and
+  agent/visual-overhaul-v1 `bcf7c81` (the VOQA-1 visual-overhaul tip) merged
+  in with --no-ff.
+- 5 content conflicts resolved, BOTH sides preserved:
+  WorldBootstrapper.h (CGC-1 wildlife view + VO-1R bias/director decls),
+  validate_final_run.py + validate_design_data.py (gates 140 -> 145),
+  LIVE_EXECUTION_STATE.md (both histories + synthesized snapshot + this
+  session's rows), README.md (unified status note), design_data.json
+  (regenerated at the merge — automation_tests 145, census 15/15 MATCH).
+- Auto-merged cleanly (verified semantically): AutomationTests.cpp (CGC
+  suite + VO suite coexist -> 145), EchoCharacter.cpp (Radiant tell
+  composes with kawaii scales: root scale x1.10 * Kawaii.Head, glow x2
+  unaffected), WorldBootstrapper.cpp (VisualOverhaulDirector spawn +
+  wildlife legacy view both present), first_day_orchestrator.py,
+  ON_PC_TASKS.md, REVIVAL_PLAN.md, validate_design_data.py.
+- Count surfaces synced 140 -> 145 with the "+ 5 VO-1R visual overhaul
+  contracts" composition across 10 files (TEST_INVENTORY + rows 141-145
+  appended, REVIVAL_PLAN, FRESH_MACHINE_PLAYBOOK, PLAYABLE_BUILD_STATUS,
+  WHATS_MISSING, BUILD_STATUS, FINAL_READINESS_REPORT x4, ON_PC_TASKS,
+  first_day_orchestrator.py, FRESH_MACHINE_CHECKLIST.json x4 — JSON
+  re-validated parseable).
+- Static suite at the merge: validate_final_run ALL PASS (145-test gate,
+  census 15/15) / validate_design_data 78/78 / lint 0 errors (1 advisory
+  F/H-IMPL-DRIFT pre-existing) / validate_repository PASS / dryrun 49/49.
+- Honest remaining (UNCHANGED in kind): ENGINE-RUN-1 machine day on Windows
+  UE 5.8.2 (now with the unified gameplay+visual line, 145 contracts, VO
+  PIE grading addendum) is the only product-critical item.

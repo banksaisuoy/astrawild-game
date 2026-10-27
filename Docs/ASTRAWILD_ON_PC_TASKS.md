@@ -193,7 +193,7 @@ If only this much works by end of day, the MACHINE-READY promise held.
 Test.bat
 ```
 
-Runs the **141 world-free contracts** via
+Runs the **146 world-free contracts** via
 `-ExecCmds="Automation RunTests Astrawild; Quit" -nullrhi`.
 
 **Expected** console summary:

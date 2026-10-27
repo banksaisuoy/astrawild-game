@@ -14,7 +14,7 @@
       "Expected numbers are pinned by Scripts/validate_final_run.py - when in doubt the validator gate wins over this file."
     ],
     "expected_numbers_at_authoring": {
-      "automation_tests": 140,
+      "automation_tests": 146,
       "echo_species": 229,
       "bestiary_rows": 204,
       "zones": 12,
@@ -227,7 +227,7 @@
           "id": "P4-04",
           "check": "Static validator (python) ALL PASS",
           "command": "python Scripts\\validate_final_run.py",
-          "expect": "final line: FINAL RUN VALIDATION: ALL CHECKS PASSED (140-test gate + census gates)",
+          "expect": "final line: FINAL RUN VALIDATION: ALL CHECKS PASSED (146-test gate + census gates)",
           "on_fail": "A fresh clean clone failing a gate means the clone or checkout is broken - capture full output and report; never edit source to force a pass.",
           "evidence": "validator output -> Docs/ENGINE_LOGS/raw/VALIDATOR_<sha>.txt",
           "status": "NOT_RUN"
@@ -360,12 +360,12 @@
     {
       "id": "P8",
       "title": "Automation tests (V-5)",
-      "goal": "All 140 world-free contracts pass in the real engine.",
+      "goal": "All 146 world-free contracts pass in the real engine.",
       "playbook_ref": "P8 (section 10); queue V-5",
       "steps": [
         {
           "id": "P8-01",
-          "check": "Test.ps1 run: 140/140 Result={Success}, 0 Result={Fail}",
+          "check": "Test.ps1 run: 146/146 Result={Success}, 0 Result={Fail}",
           "command": ".\\Test.ps1   (env-adaptive; output Automation_Output.txt)",
           "expect": "ALL TESTS PASSED banner; count read from the output file, not memory",
           "on_fail": "Record failing test names + log excerpts in BUILD_STATUS; world-free contract failures are source bugs - capture and route to GLM unless trivially mechanical.",

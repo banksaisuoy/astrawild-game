@@ -1,8 +1,8 @@
 ﻿# ASTRAWILD — Echoes of the First Dawn
 
 > [!NOTE]
-> **Current status (v9.10 CGC COMPLETION PASS + MACHINE-READY PACK, INTEGRATED — 2026)**: the repository is source-complete on branch
-> `final-completion` — **141 world-free automation contracts**, full 12-zone world, 229 Echo
+> **Current status (v9.10 CGC COMPLETION PASS + MACHINE-READY PACK + VO-1R VISUAL OVERHAUL, ALL LINES INTEGRATED — 2026)**: the repository is source-complete on branch
+> `final-completion` — **146 world-free automation contracts**, full 12-zone world, 229 Echo
 > species, MQ-01..17 + 5 post-game side quests + two endings (each now with a pure-C++ staged cinematic) + NEW GAME PLUS,
 > save schema V5 (+ additive NGPlusCycle) — and the staged art is now **109 REAL
 > unique CC0 meshes** (no cylinders, no recolors): 3 survivor armor tiers (T1 Scavenger /
@@ -13,7 +13,7 @@
 > enforced, per-asset CC0 provenance (`Docs/ASTRAWILD_REAL_ASSET_CREDITS.json`).
 > **FIRST DAY ON THE MACHINE: follow `Docs/ASTRAWILD_ON_PC_TASKS.md`** — the
 > hour-by-hour runbook (clone → build → orchestrated source-side flow → asset import →
-> 141-test gate → PIE feel grading → package), each step with exact commands, expected
+> 146-test gate → PIE feel grading → package), each step with exact commands, expected
 > results, and fail routes. **Came back to a broken/unknown state? `Docs/ASTRAWILD_REVIVAL_PLAN.md`** triages from ANY state.
 > The single-command source-side flow is `Tools\Python\first_day_orchestrator.py`
 > (verify → prototype map → input assets, idempotent).
@@ -22,7 +22,7 @@
 > Design numbers are never hand-typed: every value lives traced in `Design/design_data.json`
 > (`Scripts/extract_design_data.py` + `Scripts/validate_design_data.py` round-trip).
 > **Everything engine-side is ENGINE-UNVERIFIED at this tip** — the one-time integration
-> run (build, 140 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
+> run (build, 145 tests, PIE, package, V2-29..V2-36 queue) belongs to the Windows UE 5.8
 > machine per `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.10 §8 and
 > `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md`; risks are ranked with a binding fix-forward
 > protocol in `Docs/ASTRAWILD_COMPILE_RISK.md`. The canonical control doc is

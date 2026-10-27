@@ -9,7 +9,7 @@
 > **v9.10 INTEGRATION qualifier (latest, AUDIT-B synced 2026-10-19)**: tip = the INTEGRATION merge line on `final-completion`
 > (CGC v9.10 line `3ecdcb3` + machine-ready line `5f86a47` unified, then FIX-1 `b375d01` — see LIVE_STATE §1; real-mesh
 > catalog: 109 unique CC0 models, manifest 189/189 present / 0 pending,
-> **141**-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC contracts + 1 completion-stage victory chain + 1 FIX-1 night-raid pool contract),
+> **146**-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC contracts + 1 completion-stage victory chain + 1 FIX-1 night-raid pool contract + 5 VO-1R visual overhaul contracts),
 > census 78 items / 58 recipes / 8 sites / 16
 > events / 17 POIs, 229 species, Sci-Fantasy mutation system, **LFS 588/588** pointers — the merge adopted
 > the machine-ready line's two LFS-tracked Docs PNGs)
@@ -591,7 +591,7 @@ No `Source/` files were modified by DOCS-1.
 
 | Severity | Issue | File/asset | Reproduction | Owner/next action |
 |---|---|---|---|---|
-| ~~Blocker~~ ~~Closed~~ | ~~Repository has never been compiled~~ | `Source/AstrawildCore/` | Any build attempt | **SUPERSEDED (AUDIT-B sweep)**: green compile + 54/54 automation PASS at `03c2fe6` (2026-09-01, recorded §above) and `8313c61` (2026-09-02). The current tip (141 contracts, post-FIX-1) awaits the next compile at ENGINE-RUN-1 |
+| ~~Blocker~~ ~~Closed~~ | ~~Repository has never been compiled~~ | `Source/AstrawildCore/` | Any build attempt | **SUPERSEDED (AUDIT-B sweep)**: green compile + 54/54 automation PASS at `03c2fe6` (2026-09-01, recorded §above) and `8313c61` (2026-09-02). The current tip (146 contracts, post-MERGE-2) awaits the next compile at ENGINE-RUN-1 |
 | High | T-1 ObserveEcho quest wiring | `AstrawildQuestComponent.cpp` / `AstrawildJournalSubsystem.cpp` | Start Quest_FirstEcho and observe a Lumewisp | **Fix in code** (journal publishes `Event.EchoObserved` at the 25 % scan milestone) — verify at playtest |
 | High | T-2 AI think loop / LOD interval | `AstrawildEchoAIController.cpp:Think` | Spawn 10+ Echoes, profile | **Fix in code** (`SetTimer` with the LOD interval) — verify via Insights |
 | Medium | T-4 cold/heat damage reachability | `AstrawildWeatherSubsystem` / Survival | `AW.SetWeather cold` and wait | **Fix in code** (Cold −17 °C offset → felt 3 °C < 4 °C threshold) — verify at playtest |
