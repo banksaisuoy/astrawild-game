@@ -24,7 +24,7 @@ remaining work.
 (`Docs/ASTRAWILD_FINAL_CONTENT_MANIFEST.md`) is issued: 586/586 LFS pointers resolved at the
 current tip (491/491 at the v1.6 re-verification + 95 v9.3 real-mesh source files), all 65 hardcoded /Game/ references resolve, every content family carries a
 single CODE_DEFAULT source of truth, the authoritative content census is machine-enforced
-(validator equality gates), and the automation suite holds **140 world-free contract
+(validator equality gates), and the automation suite holds **145 world-free contract
 tests** behind an exact gate. The FINAL GAME COMPLETION RUN's five-agent deep audit fixed
 2 compile blockers + 17 HIGH + 13 MEDIUM + 15 LOW defects (FCR-1-A/B/C), and the DEPTH
 PASS batch (DP-1..DP-9, per the user directive "MAKE IT A REAL GAME") landed the real-game
@@ -110,7 +110,7 @@ Side content: 23 SQ roster remains staged (deferred by design, MASTER_CONTROL D)
 ## G. Automation Readiness
 
 - `Scripts/validate_repository.sh` v2 — PASS (structural ruleset).
-- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 140-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
+- `Scripts/validate_final_run.py` — **ALL CHECKS PASS** (content IDs, quest chain closure, ending wiring, LFS pointers ×3,890 files, 64 asset-path refs, 145-test exact gate, building catalog, + the 15 authoritative census equality gates — 61 checks total at the DP-10 tip; the LCP-1 re-gate bumped the suite to 111).
 - 109 world-free automation contracts (57 baseline + 4 hardening + 6 Final-Run + 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth passes DP-3..DP-9) — never yet executed in an engine (AG-3).
 - Deterministic content: single code-default library, same-id .uasset override contract, ArtSource generators + AwPipeline importer.
 - Git: conventional commits, FR/DP-id traceability; every batch pushed to `origin/final-completion` (the binding push-after-every-batch rule honored live — `git ls-remote` shows the full chain through the DP-10 final-gate commit).

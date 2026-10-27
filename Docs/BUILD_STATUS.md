@@ -9,7 +9,7 @@
 > **v9.10 INTEGRATION qualifier (latest)**: tip = the INTEGRATION merge on `final-completion`
 > (CGC v9.10 line `3ecdcb3` + machine-ready line `5f86a47` unified — see LIVE_STATE §1; real-mesh
 > catalog: 109 unique CC0 models, manifest 189/189 present / 0 pending,
-> 140-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC contracts + 1 completion-stage victory chain),
+> 145-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC + 5 VO-1R visual overhaul contracts + 1 completion-stage victory chain),
 > census 78 items / 58 recipes / 8 sites / 16
 > events / 17 POIs, 229 species, Sci-Fantasy mutation system, LFS 586/586 pointers)
 > with the readiness verdict in `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`; the one-time re-verification
