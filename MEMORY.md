@@ -326,3 +326,42 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Honest remaining (UNCHANGED in kind): ENGINE-RUN-1 machine day on Windows
   UE 5.8.2 (now with the unified gameplay+visual line, 145 contracts, VO
   PIE grading addendum) is the only product-critical item.
+
+## Session 2026-10-27 (later) — MERGE-2 concept-union series: VO-1R + EDX-1 + GS-1 absorbed (Z.ai Code, Lead Game Architect)
+
+- User directive: "จัดการรวมก็ได้ให้เกมสมบูรณ์ที่สุดอะ" — after MERGE-1 (repo
+  consolidation), audited ALL remaining branches for unique content. Real
+  content found on 3 lines: agent/v1v2-integration (VO-1R visual overhaul,
+  pushed the same day by a parallel session), agent/echodex-v1 (EDX-1 EchoDex
+  searchable species index), agent/game-shape-v1 (GS-1 canonical paths + P-5/P-6
+  landmark pillars). Historical/foreign lines left as-is: master + release/
+  vertical-slice-v1 + review-workspaces + understanding-* (pre-restructure
+  prototype era — merging would regress), fix/sveo-* (foreign repo's branch),
+  playable-delivery (content subset; its MEMORY notes cover the same MRC-1
+  session + project-B Oriverse bookkeeping).
+- MERGE-2A b0e7238 (+regen 89961fe): VO-1R absorbed — AstrawildVisualOverhaul
+  contract namespace + director (toon grade, anime light bias, kawaii scales,
+  12-zone flower fields + petal geometry, ambient motes golden-pollen day /
+  teal-firefly night); tests 141+5=146; count surfaces synced.
+- MERGE-2B 4112c56 (+regen): EDX-1 absorbed — UAstrawildEchoDexSubsystem
+  (FDexQuery search + facets + capture-ever + zone progress + Aniimo radar) +
+  EchoDexScreen/row widgets + AWD_EchoDex on I; input census 33→34 (controls
+  table row + CGC-4 pin + INPUT_REFERENCE synced); IsAnyScreenOpen 15 screens;
+  tests 146+1=147.
+- MERGE-2C 82dbc41 (+regen): GS-1 absorbed — CanonicalAssetPath() at every
+  art apply site (21+8+4+node/projectile/echo), GetLandmarkArt() ruin pillar
+  bound to ResonancePillar (P-5) + POIMarker (P-6), binding-contract test
+  reworked to the canonical-path era (4 unit assertions + landmark pins);
+  its 833bcf4 bookends were content-equivalent to the already-absorbed
+  af11ab4 — deduplicated by construction. Tests stay 147.
+- Lesson recorded: `git checkout --ours` on a conflicted file wipes the
+  auto-merged hunks from the other side too — the GS-1 PlayerCharacter (8
+  sites) + AutomationTests (2 hunks) changes were lost that way and had to be
+  re-applied manually from d410ac7's diff.
+- Validators at every regen tip: design 78/78 · final_run 147-gate ALL PASS ·
+  repository PASS · lint 0 errors (0 warnings after GS-1's dead-decl removal).
+  Census 15 gates UNCHANGED (229 species / 78 items / 58 recipes / 22 quests /
+  13 NPCs / 12 zones / 16 events / 17 POIs).
+- Remaining: ENGINE-RUN-1 (V2-29..V2-36) on the Windows UE 5.8.2 machine —
+  now the FULL unified game (gameplay + visual + dex + canonical art paths),
+  147 contracts, entry Docs/ASTRAWILD_ON_PC_TASKS.md.
