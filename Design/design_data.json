@@ -1,13 +1,13 @@
 {
  "schema": "astrawild-design-data/2",
- "generated": "2026-10-27T04:58:25",
+ "generated": "2026-10-27T14:32:19",
  "generator": "Scripts/extract_design_data.py",
- "repo_head": "9a285f7f36979cd7e6f2c02c90912b0c1d578513",
+ "repo_head": "b0e7238879792f541844d25db70f50b7c85b7aa4",
  "rule": "Every value below was parsed from Source/ by the generator. No value is hand-typed (Master Directive v1 rule R1).",
  "domains": {
   "tunables": {
-   "files_scanned": 106,
-   "count": 581,
+   "files_scanned": 107,
+   "count": 582,
    "entries": [
     {
      "file": "Source/AstrawildCore/Public/AstrawildBossHazardActor.h",
@@ -7422,7 +7422,7 @@
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 80,
+     "line": 81,
      "class": "AAstrawildWorldBootstrapper",
      "name": "TerrainResolution",
      "type": "int32",
@@ -7433,11 +7433,11 @@
       "ClampMax": "256"
      },
      "comment": "Terrain quads per tile side (~6.25m spacing at 128).",
-     "uproperty_line": 79
+     "uproperty_line": 80
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 84,
+     "line": 85,
      "class": "AAstrawildWorldBootstrapper",
      "name": "bBuildTerrain",
      "type": "bool",
@@ -7445,11 +7445,11 @@
      "category": "ASTRAWILD|World",
      "clamp": null,
      "comment": "Master toggles for perf tuning / test worlds.",
-     "uproperty_line": 83
+     "uproperty_line": 84
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 87,
+     "line": 88,
      "class": "AAstrawildWorldBootstrapper",
      "name": "bPopulateWildlife",
      "type": "bool",
@@ -7457,11 +7457,11 @@
      "category": "ASTRAWILD|World",
      "clamp": null,
      "comment": null,
-     "uproperty_line": 86
+     "uproperty_line": 87
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 90,
+     "line": 91,
      "class": "AAstrawildWorldBootstrapper",
      "name": "bBuildLandmarks",
      "type": "bool",
@@ -7469,11 +7469,11 @@
      "category": "ASTRAWILD|World",
      "clamp": null,
      "comment": null,
-     "uproperty_line": 89
+     "uproperty_line": 90
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 94,
+     "line": 95,
      "class": "AAstrawildWorldBootstrapper",
      "name": "bBuildBiomeDressing",
      "type": "bool",
@@ -7481,11 +7481,11 @@
      "category": "ASTRAWILD|World",
      "clamp": null,
      "comment": "Production V2 Batch 2: procedural biome dressing (trees/rocks/grass per zone).",
-     "uproperty_line": 93
+     "uproperty_line": 94
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 98,
+     "line": 99,
      "class": "AAstrawildWorldBootstrapper",
      "name": "bEnableAtmosphere",
      "type": "bool",
@@ -7493,11 +7493,23 @@
      "category": "ASTRAWILD|World|Atmosphere",
      "clamp": null,
      "comment": "Production V2 Batch 2: day/night fog + sun color grading + weather coupling.",
-     "uproperty_line": 97
+     "uproperty_line": 98
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 102,
+     "line": 108,
+     "class": "AAstrawildWorldBootstrapper",
+     "name": "bEnableVisualOverhaul",
+     "type": "bool",
+     "value": true,
+     "category": "ASTRAWILD|World|Visual",
+     "clamp": null,
+     "comment": null,
+     "uproperty_line": 107
+    },
+    {
+     "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
+     "line": 112,
      "class": "AAstrawildWorldBootstrapper",
      "name": "ResourceNodeCount",
      "type": "int32",
@@ -7507,11 +7519,11 @@
       "ClampMin": "0"
      },
      "comment": "Legacy knobs kept for compatibility — now scale the Dawn Fields population.",
-     "uproperty_line": 101
+     "uproperty_line": 111
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 105,
+     "line": 115,
      "class": "AAstrawildWorldBootstrapper",
      "name": "WildEchoCount",
      "type": "int32",
@@ -7521,11 +7533,11 @@
       "ClampMin": "0"
      },
      "comment": null,
-     "uproperty_line": 104
+     "uproperty_line": 114
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldBootstrapper.h",
-     "line": 108,
+     "line": 118,
      "class": "AAstrawildWorldBootstrapper",
      "name": "HostileCount",
      "type": "int32",
@@ -7535,7 +7547,7 @@
       "ClampMin": "0"
      },
      "comment": null,
-     "uproperty_line": 107
+     "uproperty_line": 117
     },
     {
      "file": "Source/AstrawildCore/Public/AstrawildWorldEventSubsystem.h",
@@ -26396,23 +26408,23 @@
    "entries": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 842,
+     "line": 859,
      "id": "Dungeon_HollowUnderlight",
      "properties": [
       {
        "prop": "RoomCount",
        "value": 5,
-       "line": 843
+       "line": 860
       },
       {
        "prop": "BossDefinitionId",
        "value": "Echo_Gloomfang",
-       "line": 844
+       "line": 861
       },
       {
        "prop": "BossDefeatEventId",
        "value": "Creature_UnderlightWarden",
-       "line": 845
+       "line": 862
       }
      ],
      "room_count": 5,
@@ -26420,33 +26432,33 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 877,
+     "line": 894,
      "id": "Dungeon_SunkenVault",
      "properties": [
       {
        "prop": "RoomCount",
        "value": 4,
-       "line": 878
+       "line": 895
       },
       {
        "prop": "BossDefinitionId",
        "value": "Echo_Dawnfang",
-       "line": 879
+       "line": 896
       },
       {
        "prop": "BossDefeatEventId",
        "value": "Creature_VaultColossus",
-       "line": 880
+       "line": 897
       },
       {
        "prop": "RewardTechnologyId",
        "value": null,
-       "line": 882
+       "line": 899
       },
       {
        "prop": "DungeonCompletionResearchPoints",
        "value": 20,
-       "line": 883
+       "line": 900
       }
      ],
      "room_count": 4,
@@ -26454,33 +26466,33 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 957,
+     "line": 974,
      "id": "Dungeon_EyeOfTheMaelstrom",
      "properties": [
       {
        "prop": "RoomCount",
        "value": 5,
-       "line": 958
+       "line": 975
       },
       {
        "prop": "BossDefinitionId",
        "value": "Echo_DrownedSovereign",
-       "line": 959
+       "line": 976
       },
       {
        "prop": "BossDefeatEventId",
        "value": "Creature_DrownedSovereign",
-       "line": 960
+       "line": 977
       },
       {
        "prop": "RewardTechnologyId",
        "value": null,
-       "line": 962
+       "line": 979
       },
       {
        "prop": "DungeonCompletionResearchPoints",
        "value": 30,
-       "line": 963
+       "line": 980
       }
      ],
      "room_count": 5,
@@ -26494,35 +26506,35 @@
    "entries": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 844,
+     "line": 861,
      "id": "Echo_Gloomfang",
      "kind": "dungeon"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 879,
+     "line": 896,
      "id": "Echo_Dawnfang",
      "kind": "dungeon"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 941,
+     "line": 958,
      "id": "Echo_GlassTyrant",
      "kind": "world",
      "tuning": [
       {
-       "line": 933,
+       "line": 950,
        "raw": "Tyrant->BossHealthScale = 3.0f; // tough, not final (Sovereign is 5.0)."
       },
       {
-       "line": 934,
+       "line": 951,
        "raw": "Tyrant->BossDamageScale = 1.4f;"
       }
      ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-     "line": 959,
+     "line": 976,
      "id": "Echo_DrownedSovereign",
      "kind": "dungeon"
     }
@@ -26860,13 +26872,13 @@
   },
   "counts": {
    "automation_tests": {
-    "value": 141
+    "value": 146
    },
    "source_files": {
-    "value": 214
+    "value": 216
    },
    "source_loc": {
-    "value": 81168
+    "value": 82116
    },
    "census_vs_validate_final_run": {
     "items": {
