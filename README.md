@@ -62,11 +62,16 @@ Tools\package_windows.bat
 
 > [!TIP]
 > **LATEST STATUS**: **SOURCE-COMPLETE / REAL-ART-CATALOG / DEFERRED-PACK-COMPLETE /
-> FRESH-MACHINE-PLAYBOOK SHIPPED / ENGINE-UNVERIFIED (v9.10 + INTEGRATION + FIX-1)** —
-> `final-completion` @ the v9.10 INTEGRATION line + FIX-1 (`b375d01` — see `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` §1),
+> FRESH-MACHINE-PLAYBOOK SHIPPED / REPO-CONSOLIDATION-DONE / ENGINE-UNVERIFIED (v9.10 + INTEGRATION + FIX-1 + MERGE-1)** —
+> `final-completion` @ the MERGE-1 consolidation merge (FIX-1 `b375d01` + the v2-repo line unified — see `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` §1),
 > **141** automation contracts, 229 species, Sci-Fantasy mutation
 > system wired (incl. runtime theme-material swap), LFS 588/588 pointers resolved
 > (the merge adopted the machine-ready line's two LFS-tracked Docs PNGs).
+> **Repo consolidation (2026-10-27)**: this repository is the canonical home;
+> [`astrawild-game-v2`](https://github.com/banksaisuoy/astrawild-game-v2) `develop` is its
+> synced mirror — same tip SHA, same content (its 2026-10-09 bookends rescue was the
+> same `af11ab4` this line had already absorbed via MRC-1; all v2-unique history is
+> preserved in `MEMORY.md`).
 > Blank Windows machine → `Docs/ASTRAWILD_FRESH_MACHINE_PLAYBOOK.md` +
 > `Scripts/fresh_machine_preflight.ps1` + `Docs/ASTRAWILD_FRESH_MACHINE_CHECKLIST.json`.
 > The live task-state truth is **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md`** (canonical,

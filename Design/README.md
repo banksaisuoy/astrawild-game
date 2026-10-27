@@ -61,8 +61,8 @@ truth audit that forced this completeness):
 | mutation specs | 204 | AstrawildEchoMutationData.cpp |
 | dungeons | 3 | AstrawildWorldBootstrapper.cpp |
 | bosses | 4 | AstrawildWorldBootstrapper.cpp (3 dungeon + 1 world) |
-| save schema | 29 fields + 22 record structs | AstrawildSaveSubsystem.h + AstrawildTypes.h |
-| automation tests | 134 | AstrawildAutomationTests.cpp |
+| save schema | 30 fields + 22 record structs | AstrawildSaveSubsystem.h + AstrawildTypes.h |
+| automation tests | 141 | AstrawildAutomationTests.cpp |
 
 Every entry — including each item/species/quest attribute setter line —
 carries `{file, line}`. Evolution-target stats are runtime-derived by

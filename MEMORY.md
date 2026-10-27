@@ -163,3 +163,71 @@ Antigravity must update `Docs/BUILD_STATUS.md`, push its branch/commit to GitHub
 - Security: the PAT was passed via environment variable only, never
   written to any file/log/commit; it self-expires ~30 min after creation
   (no manual revoke needed, though revoking early never hurts).
+
+## Session 2026-10-09 — BKE-1 bookends rescue + new project home (GLM, Unreal Division)
+
+> [HISTORICAL — recovered 2026-10-27 from the astrawild-game-v2 repo during the
+> MERGE-1 consolidation; describes the v2 repo's origin. Superseded by the
+> MERGE-1 session below it.]
+
+- User directive (Thai): token check + "สร้างเป็นโปรเจ็คใหม่ อย่าทับของเดิม" +
+  "เกมเล่นได้ยัง" — new project repo, old repo untouched, honest playability answer.
+- Verified new PAT (account banksaisuoy); created `astrawild-game-v2` (public);
+  mirrored ALL 8 remote branches + LFS (602 + 2033 objects, ~609 MB uploaded);
+  preserved the never-pushed local `af11ab4` as `legacy/local-main-af11ab4`.
+- Diagnosed the paused sandbox working tree: 440 "modified" files proved to be
+  pure CRLF/exec-bit noise (git diff --ignore-cr-at-eol: 0 insertions 0
+  deletions) — the only real un-pushed work was the committed af11ab4
+  (12 files unique: Title/Death/Victory widgets + Windows first-run bats).
+- `develop` = 3-way merge of final-completion `d326eee` + `af11ab4`
+  (base `94a398c`): 12 clean adds, 7 auto-merges, 4 positional conflicts
+  resolved keeping BOTH feature sets (PCR screens + LCP-3 co-op RPCs +
+  bookends; IsAnyScreenOpen checks all 12 screens). Merge commit `395cddd`.
+- Automation suite 134 -> 135 (BKE-1 FAstrawildVictoryChainTest guards the
+  Quest_SignalsInTheStatic -> Quest_VanguardProtocol chain-closer wiring).
+- Validators at merge: lint 0 errors / 1 pre-existing advisory; extractor
+  census 15/15 MATCH; design_data.json regenerated at 135; 31 doc references
+  repointed to the single count 135 across 10 active docs.
+- Playability answer (honest): repo has NO packaged exe and NO GitHub release;
+  historical engine evidence (54/54 + packaged exe) is from older SHAs on the
+  user's Windows machine; tip remains ENGINE-UNVERIFIED — ENGINE-RUN-1 on
+  Windows UE 5.8.2 is still the only remaining product-critical work.
+- Security: PAT was shared in chat (round 3) — user should rotate/revoke
+  after use.
+
+## Session 2026-10-27 — MERGE-1 repo consolidation: astrawild-game ⇄ astrawild-game-v2 (Z.ai Code, Lead Game Architect)
+
+- User directive (Thai): "นายลองดูRepo v1 กับ v2 อะเอามารวมกันได้ปะ ... เอาคอนเซ็ป
+  แต่ละเวอร์ชั้นมารวมกัน" — compare the two repos, merge what each side has
+  that the other lacks.
+- Analysis: NOT two different games — one lineage, two homes. Merge-base
+  `d326eee` (L10 tip). Both sides independently merged the same completion-stage
+  bookends `af11ab4` (v1 via `1b03a39` MRC-1, v2 via `395cddd` BKE-1) — bookends
+  content byte-identical at both tips. v1 (`final-completion` @ `9a285f7`) then
+  advanced +14 commits (the entire CGC-001 scope-expansion pack + INTEGRATION +
+  FIX-1: WildlifeDirector, AudioDirector, Settings, Journal genetics, first-hour
+  guidance, collection long-tail, Night-Raid pool fix, 141 tests). v2
+  (`develop` @ `4a8b7bb`) advanced only +4 commits (its bookends merge + state
+  docs + design pin 135).
+- Merge executed in astrawild-game: `git merge v2/develop` into
+  `final-completion` — 17 content conflicts (all v2-older-vs-v1-newer) resolved
+  to the v1 side; v2's unique 2026-10-09 session record recovered into MEMORY
+  (section above) so no history is lost; the merged tree is byte-identical to
+  the v1 tip for all Source/ and Content/ files.
+- REAL defect found & fixed during the merge: FIX-1 had changed 3 Source files
+  without regenerating `Design/design_data.json` (validator was not re-run:
+  75/80 — json head stale at de2d8ad, automation_tests 140 vs grep 141, 2
+  tunable line-drifts from the Night-Raid header change). Fixed in the merge:
+  design_data.json regenerated at `9a285f7` (tests 141, tunables re-pinned),
+  validate_design_data.py recount pin 140→141, Design/README.md census table
+  synced (automation tests 134→141 — also missed by the FIX-1 sweep — and save
+  schema 29→30 fields, stale since the INTEGRATION era).
+- Validators at the merge tree: validate_design_data.py **78/78 ALL PASS**
+  (first fully-green design gate since FIX-1), validate_final_run.py ALL PASS
+  (141-gate), validate_repository.sh PASS; census 15 gates UNCHANGED.
+- Push plan: merge commit pushed to BOTH repos — astrawild-game
+  `final-completion` (canonical dev line) and astrawild-game-v2 `develop`
+  (fast-forward from 4a8b7bb) — the two repos now share the same tip SHA;
+  astrawild-game `main` left as the frozen baseline mirror per convention.
+- Remaining after this merge: unchanged — ENGINE-RUN-1 (V2-29..V2-36) on the
+  Windows UE 5.8.2 machine is still the only product-critical work.
