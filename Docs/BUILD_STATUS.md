@@ -1,17 +1,18 @@
 ﻿# ASTRAWILD — Build Status
 
 > [!NOTE]
-> **v9.4 MASTER SYNC qualifier (latest)**: this file is the DATED engine-verification
-> record of the Antigravity V2 session (last updated 2026-09-01 @ commit `03c2fe6` —
+> **v9.4 MASTER SYNC qualifier (superseded 2026-09-07 — see the v9.10 block below)**: this file is the
+> DATED engine-verification record of the Antigravity V2 session (last updated 2026-09-01 @ commit `03c2fe6` —
 > 54/54 tests at that SHA). It is retained as historical engine evidence, NOT as the
-> current-state doc. Current source-side state: `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.4
+> current-state doc. Current source-side state: `Docs/ASTRAWILD_MASTER_CONTROL.md` **v9.10**
 > + **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical live execution state)** —
-> **v9.10 INTEGRATION qualifier (latest)**: tip = the INTEGRATION merge on `final-completion`
-> (CGC v9.10 line `3ecdcb3` + machine-ready line `5f86a47` unified — see LIVE_STATE §1; real-mesh
+> **v9.10 INTEGRATION qualifier (latest, AUDIT-B synced 2026-10-19)**: tip = the INTEGRATION merge line on `final-completion`
+> (CGC v9.10 line `3ecdcb3` + machine-ready line `5f86a47` unified, then FIX-1 `b375d01` — see LIVE_STATE §1; real-mesh
 > catalog: 109 unique CC0 models, manifest 189/189 present / 0 pending,
-> 140-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC contracts + 1 completion-stage victory chain),
+> **141**-test suite (126 pre-DCP + 7 DCP + 1 VIS + 5 CGC contracts + 1 completion-stage victory chain + 1 FIX-1 night-raid pool contract),
 > census 78 items / 58 recipes / 8 sites / 16
-> events / 17 POIs, 229 species, Sci-Fantasy mutation system, LFS 586/586 pointers)
+> events / 17 POIs, 229 species, Sci-Fantasy mutation system, **LFS 588/588** pointers — the merge adopted
+> the machine-ready line's two LFS-tracked Docs PNGs)
 > with the readiness verdict in `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`; the one-time re-verification
 > at the final SHA is `Docs/ASTRAWILD_FINAL_BUILD_HANDOFF.md` §20/§20e (engine-verified claims
 > belong only to that future run — the numbers below are frozen to their date).
@@ -590,13 +591,13 @@ No `Source/` files were modified by DOCS-1.
 
 | Severity | Issue | File/asset | Reproduction | Owner/next action |
 |---|---|---|---|---|
-| **Blocker** | Repository has never been compiled | `Source/AstrawildCore/` | Any build attempt | Antigravity: Test Plan §4, then fix-forward |
+| ~~Blocker~~ ~~Closed~~ | ~~Repository has never been compiled~~ | `Source/AstrawildCore/` | Any build attempt | **SUPERSEDED (AUDIT-B sweep)**: green compile + 54/54 automation PASS at `03c2fe6` (2026-09-01, recorded §above) and `8313c61` (2026-09-02). The current tip (141 contracts, post-FIX-1) awaits the next compile at ENGINE-RUN-1 |
 | High | T-1 ObserveEcho quest wiring | `AstrawildQuestComponent.cpp` / `AstrawildJournalSubsystem.cpp` | Start Quest_FirstEcho and observe a Lumewisp | **Fix in code** (journal publishes `Event.EchoObserved` at the 25 % scan milestone) — verify at playtest |
 | High | T-2 AI think loop / LOD interval | `AstrawildEchoAIController.cpp:Think` | Spawn 10+ Echoes, profile | **Fix in code** (`SetTimer` with the LOD interval) — verify via Insights |
 | Medium | T-4 cold/heat damage reachability | `AstrawildWeatherSubsystem` / Survival | `AW.SetWeather cold` and wait | **Fix in code** (Cold −17 °C offset → felt 3 °C < 4 °C threshold) — verify at playtest |
 | Medium | T-5 consume keybind | `AstrawildPlayerCharacter.cpp` | Have berries, press **G** | **Fix in code** (G = `SmartConsume`) — verify at playtest |
 | Medium | T-6 journal per-frame iteration | `AstrawildJournalSubsystem.cpp` | Insights capture | **Fix in code** (throttled observation sweep) — verify via Insights |
-| Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | Cosmetic fix (still present) |
+| Low | T-3 HUD weather label hard-codes 20 °C | `AstrawildHudWidget.cpp` | Look at HUD | **Fixed in code (M-4)** — prints the real `SurvivalComponent` temperature; verify at playtest |
 | Low | Log-line count drift | PlayerCharacter.cpp / ContentLibrary.cpp | Read logs | Resolved: log says "25 actions" / "35 items, 26 recipes, … 8 quests" and matches the code (final-run counts) |
 | ~~High~~ Closed | H-6 grid-level battery persistence | `PowerSubsystem` / `SaveSubsystem` | Save with charge, reload | **CLOSED in final run (`c417b22`)** — schema v3 stores `PowerGrid.StoredEnergy`; `SetStoredEnergy` clamps to live capacity on restore. Compile pending |
 | ~~High~~ Closed | H-9 ecosystem population counting | `EcosystemSubsystem` / `EchoCharacter` | Spawn + capture/defeat; observe WildCount | **CLOSED in final run (`750f87a`)** — actor-keyed idempotent counting; capture/defeat/destroy release exactly once; re-registration after InitializeFromDefinition no longer double-counts. Compile pending |

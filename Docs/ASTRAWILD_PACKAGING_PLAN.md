@@ -53,7 +53,7 @@ Runtime data note: saves/config write under `%LOCALAPPDATA%\ASTRAWILD\`
 |---|---|---|
 | Trigger | tags `v*` + manual `workflow_dispatch` | `on:` block |
 | Runner | `[self-hosted, Windows, X64]` | matches the doc'd machine layout |
-| LFS content pulled | YES | `actions/checkout@v4` with `lfs: true` — required: 586 LFS pointers (586/586 tracked per asset-truth) |
+| LFS content pulled | YES | `actions/checkout@v4` with `lfs: true` — required: 588 LFS pointers (588/588 tracked per asset-truth) |
 | Packaging step runs the SAME .bat | YES | `Tools\package_windows.bat` via `shell: cmd` — one command path, no CI-only fork |
 | `UE_ROOT` variable wiring | SOUND | `env: UE_ROOT: ${{ vars.UE_ROOT }}`; when the repo variable is unset the env arrives empty, the .bat's `if "%UE_ROOT%"==""` guard falls back to the default path — both paths work |
 | Zip method | SOUND | `tar -a -c -f` (bsdtar, built into Win10+) — avoids the 2 GB `Compress-Archive` limit; `-C Build\Windows ASTRAWILD` path matches the .bat's archive output exactly |

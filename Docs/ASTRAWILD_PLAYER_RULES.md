@@ -311,9 +311,10 @@ robot · Tab inventory · K research · **P** Field Journal · **L** Echo Roster
 **M** World Map · **U** Hunt Board · **T** party abilities · **Y** player
 smart-cast · Esc pause · CTRL descend (skiff/flying mount) · **F6** toggle HUD
 
-*Gamepad note: full navigation/combat is mapped; the Y-key player smart-cast
-is keyboard-first (bind your loadout in the pause menu — the radial gamepad
-cast is a known engine-pass backlog item).*
+*Gamepad note: full navigation/combat is mapped. Player smart-cast on gamepad =
+**LB held + X chord** (DCP-6 — `UInputModifierChordAction` on the committed
+bindings; plain X stays Dodge). The old "radial menu backlog" note is
+superseded. (AUDIT-B sweep 2026-10-19.)*
 
 ---
 

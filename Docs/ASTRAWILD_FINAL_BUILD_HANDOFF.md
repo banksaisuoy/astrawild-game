@@ -109,10 +109,11 @@ disabled in the final audit — no code referenced them), target `ASTRAWILDEdito
 ## 3. REQUIRED LFS STATE
 
 `.gitattributes` routes `*.uasset/*.umap/*.glb/*.png/*.wav/...` through Git LFS.
-**Verified in this sandbox: 586/586 LFS pointers resolve with on-disk OID-matched
-objects — re-derived at the v9.4 sync (491 pre-v9.3 objects + 95 v9.3 real-mesh
+**Verified in this sandbox: 588/588 LFS pointers resolve with on-disk OID-matched
+objects — 586 re-derived at the v9.4 sync (491 pre-v9.3 objects + 95 v9.3 real-mesh
 source files: the 109-asset CC0 catalog; `git lfs push --dry-run` = 0 pending
-upload).** Honest fsck caveat: `git lfs fsck` exits 1 with ~3,954
+upload) + the 2 machine-ready Docs PNGs adopted by the INTEGRATION merge
+(AUDIT-B re-derivation 2026-10-19).** Honest fsck caveat: `git lfs fsck` exits 1 with ~3,954
 "should have been a pointer" flags — ALL in pre-existing raw pack-source dirs
 (`ArtSource/Textures/Kenney*`, `Models/Kenney`, `Audio/Kenney`,
 `Models/Quaternius`), zero under `ArtSource/Meshes` (a pre-v9.3 acquisition-batch

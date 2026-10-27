@@ -22,6 +22,7 @@ Descend + the CGC-4 ToggleHUD). Key count = physical keyboard keys (mouse inputs
 | **Mouse delta** | Look (`AWD_Look`, Axis2D) | Triggered | `Look` | Camera | Y axis negated (standard 3rd-person pitch) |
 | **Left Shift** | Sprint (`AWD_Sprint`) | Started / Completed / Canceled | `StartSprint` / `StopSprint` | Movement (450→700 speed), stamina | Sprint drains 7 stamina/s while moving (≈14 s from full); blocked below 5 % stamina until recovery; exosuit adds +15 % speed |
 | **Space** | Jump (`AWD_Jump`) | Started / Completed | `HandleJump` / `StopJumping` | Movement | JumpZ 600 |
+| **Left Ctrl** | Descend (`AWD_Descend`) | Started / Completed / Canceled | `StartDescend` / `StopDescend` | Skiff piloting: vertical down (no-op on foot — Batch 8) | Gamepad mirror = left-stick click |
 | **E** | Interact (`AWD_Interact`) | Started | `Interact` | Interaction system: harvest / craft station / rest / NPC / **capture Echo** / **research desk opens tree screen** | Camera ray 300 cm; wild Echo in reach → capture attempt |
 | **Left Mouse Button** | Light Attack (`AWD_LightAttack`) | Started | `Attack` | Combat (25 dmg, 0.45 s CD) — **or Building confirm** while placing — **or fires the Pulse Lance when a ranged weapon is equipped** (auto-routed) | Placement mode intercepts the input |
 | **Right Mouse Button (hold)** | Block (`AWD_Block`) | Started / Completed / Canceled | `StartBlock` / `StopBlock` | Combat (45 % unarmed mitigation / 65 % with Stonehide Shield, ×0.45 move speed) | Shield replaces the unarmed baseline; speed penalty live |
@@ -44,7 +45,7 @@ Descend + the CGC-4 ToggleHUD). Key count = physical keyboard keys (mouse inputs
 | **M** | World Map (`AWD_Map`) | Started | `ToggleMapScreenInput` | **UI (PCR-3):** world map — 12-zone grid (name/threat/hazard tint), discovered-POI dots, villages, dungeons, active world-event pins, player marker, active-objective line + quest-target POI highlight | Read-only snapshot (reopen to refresh); undiscovered POIs stay hidden; gamepad reaches it via the pause-menu button |
 | **U** | Hunt Board (`AWD_Hunt`) | Started | `ToggleHuntScreenInput` | **UI (PCR-5):** post-game hunt board — 8 repeatable cull contracts with live progress + Claim buttons (server-authoritative; rewards land via AddItemSilent) | Rounds reset on claim — repeatable forever; gamepad reaches it via the pause-menu button |
 | **Escape** | Pause (`AWD_Pause`) | Started | `TogglePauseMenuInput` | **UI (final run):** pause menu — Resume / Save Now / Quit To Desktop (world paused) | Also on gamepad Start |
-| **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema v3) | Server/authority only |
+| **F5** | Quick Save (`AWD_Save`) | Started | `QuickSave` | Save system → `ASTRAWILD_Main` (schema V5) | Server/authority only |
 | **F9** | Quick Load (`AWD_Load`) | Started | `QuickLoad` | Save system → restores world (work sites, battery, drones, robots included) | Server/authority only |
 | **F6** | Toggle HUD (`AWD_ToggleHUD`) | Started | `ToggleHudInput` → `PlayerController::ToggleHudVisibility` | **UI (CGC-4):** hide/show the 22-element HUD for a clean view | PURE toggle — opening screens while hidden does NOT auto-restore; screens keep working (separate widgets); KB/M only (gamepad untouched) |
 | *(LMB while placing)* | — (routes from Attack) | Started | `BuildingComponent::ConfirmPlacement` | Building: consume materials + server RPC | See LMB row |
@@ -62,6 +63,7 @@ objects — gamepad and KB/M work simultaneously, zero configuration needed.
 | Gamepad input | Action | Notes |
 |---|---|---|
 | Left stick (`Gamepad_Left2D`) | Move | No modifiers |
+| Left stick click (`Gamepad_LeftThumbstick`) | Descend | Skiff vertical down (mirror of KB Left Ctrl) |
 | Right stick (`Gamepad_Right2D`) | Look | Stick up = look up (no negation, unlike mouse Y) |
 | Face Button Bottom (A/cross) | Jump | |
 | Face Button Right (B/circle) | Interact | |
@@ -96,7 +98,7 @@ chord on the committed bindings, not a new allocation — plain X stays Dodge.)*
 | Building | B, N, mouse wheel, LMB (place), **Z (delete — wave 4)** |
 | Survival (smart consume) | G |
 | Equipment (equip best) | X |
-| Economy (vendor buy/sell) | — console only: `AW.BuyItem` / `AW.SellItem` while within 6 m of Trader Tam (no keybind — shop UMG screen is a future round) |
+| Economy (vendor buy/sell) | **E** on the vendor (opens the shop UMG screen — `UAstrawildShopWidget`, one of the 14 screens) within 450 cm of Trader Tam; `AW.BuyItem` / `AW.SellItem` console equivalents also work |
 | Save / Load | F5, F9 |
 
 ---
@@ -110,8 +112,8 @@ prefix commands with `AW.`. All IDs are the registry ids from the Asset Manifest
 |---|---|---|
 | `AW.SpawnEcho` | `<EchoDefinitionId>` | Spawns that Echo 400 cm in front of the player (e.g. `AW.SpawnEcho Echo_Lumewisp`) |
 | `AW.GiveItem` | `<ItemId> [Quantity]` | Adds items to the player inventory (e.g. `AW.GiveItem Item_Wood 50`) |
-| `AW.BuyItem` | `<ItemId> [Quantity]` | **Batch 4 (M-11):** buys a ware from the nearest vendor NPC within 6 m in its currency (Dawn Shards at Trader Tam) — e.g. `AW.BuyItem Item_Bandage 2`. Server-authoritative: validates vendor → 450 cm trade range → ware membership + price → funds → weight before transferring anything (no partial transactions); result toast via `PlayerController::Notify` |
-| `AW.SellItem` | `<ItemId> [Quantity]` | **Batch 4 (M-11):** sells a priced item to the nearest vendor for half its buy price (floor 1) per unit — e.g. `AW.SellItem Item_Berry 5`. Junk (`VendorPrice 0`) and the currency itself are not sellable (no arbitrage) |
+| `AW.BuyItem` | `<ItemId> [Quantity]` | **Batch 4 (M-11):** buys a ware from the nearest vendor NPC within 450 cm in its currency (Dawn Shards at Trader Tam) — e.g. `AW.BuyItem Item_Bandage 2`. Server-authoritative: validates vendor → 450 cm trade range → ware membership + price → funds → weight before transferring anything (no partial transactions); result toast via `PlayerController::Notify`. (AUDIT-B sweep: the screen path is E-interact → `UAstrawildShopWidget`; the console command is the scripting equivalent) |
+| `AW.SellItem` | `<ItemId> [Quantity]` | **Batch 4 (M-11):** sells a priced item to the nearest vendor (within 450 cm) for half its buy price (floor 1) per unit — e.g. `AW.SellItem Item_Berry 5`. Junk (`VendorPrice 0`) and the currency itself are not sellable (no arbitrage) |
 | `AW.EquipItem` | `<ItemId>` | Equips an owned equipment item by id — routes to the weapon slot (`AttackPower > 0`) or shield slot (`BlockMitigation > 0`); warns when the item is missing or not equipment (wave 3) |
 | `AW.SetTime` | `<Hour> <Minute>` | Jumps the world clock (0–23 / 0–59); e.g. `AW.SetTime 22 0` for night |
 | `AW.SetWeather` | `<clear\|cloudy\|rain\|heavyrain\|storm\|fog\|heat\|cold>` | Forces a weather state (server) |

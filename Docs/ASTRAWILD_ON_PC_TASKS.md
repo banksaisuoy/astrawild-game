@@ -6,7 +6,7 @@
 > copy-paste, every expected output is written out, every failure has a
 > route. Engine authority: **UE 5.8.2 at `E:\Epic Games\UnrealEngine`** ·
 > Project home assumed `E:\AstrawildGame`. Success bar for the day:
-> **a walkable, lit runtime prototype + the 140 automation contracts green
+> **a walkable, lit runtime prototype + the 141 automation contracts green
 > + (stretch) a Shipping package.**
 > Written at HEAD after the L1-L8 run. Statuses here are UNVERIFIED — NEEDS
 > MACHINE until YOU run them; this file is your checklist, not a claim.
@@ -193,7 +193,7 @@ If only this much works by end of day, the MACHINE-READY promise held.
 Test.bat
 ```
 
-Runs the **140 world-free contracts** via
+Runs the **141 world-free contracts** via
 `-ExecCmds="Automation RunTests Astrawild; Quit" -nullrhi`.
 
 **Expected** console summary:

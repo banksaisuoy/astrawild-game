@@ -1,17 +1,24 @@
 # ASTRAWILD — Test Plan
 
-**Status: IMPLEMENTED IN C++ (compile validation pending on target machine) — 20 automation tests are
-written; **none have been executed** (no UE toolchain in the sandbox). Execution happens on the target
-Windows machine.**
+> **[2026-10-19 STALE-ERA SYNC (AUDIT-B sweep)]** This plan was authored 2026-08-30 at the
+> 20-test wave-10 era. Current truth: the suite holds **141 world-free automation contracts**
+> (pinned by `Scripts/validate_final_run.py` — read the count from the repo, never from a
+> frozen doc), **54/54 were executed green at the 8313c61 compile** (2026-09-02, see
+> BUILD_STATUS + PROJECT_STATUS_SUMMARY), and the title-screen menu exists (§2 step 2 below
+> is fixed). The §1 table below is the wave-10 snapshot, kept as historical evidence — the
+> live inventory is `AstrawildAutomationTests.cpp` + the TEST_INVENTORY ledger.
+
+**Status: IMPLEMENTED IN C++ — 141 world-free automation contracts registered; 54/54 executed green at the
+last green compile (8313c61, 2026-09-02); the current tip's 141-contract suite executes at ENGINE-RUN-1.**
 **Date: 2026-08-30** (wave 10 sync — +5 zone/terrain tests in Batch 7: `Zones.TableIntegrity`,
 `Zones.LookupCorrectness`, `Zones.BlendPartitionOfUnity`, `Terrain.HeightDeterministic`,
-`Terrain.SeamContinuity`; 10 of 20 now call production statics)
+`Terrain.SeamContinuity`; 10 of 20 then-existing tests called production statics)
 **Primary sources:** `AstrawildAutomationTests.cpp`, `Scripts/validate_repository.sh`,
 directive §39 (automation) + §50 (first-playable flow)
 
 ---
 
-## 1. Automation Tests (20)
+## 1. Automation Tests (wave-10 snapshot — 20 of the current 141)
 
 All tests are `IMPLEMENT_SIMPLE_AUTOMATION_TEST` under the `ASTRAWILD.` namespace,
 flags `EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter`, compiled behind
@@ -58,7 +65,7 @@ Run in PIE after a successful editor compile. Each step must pass before the nex
 | # | Step | Expected result | Systems exercised |
 |---|---|---|---|
 | 1 | **Launch** — open the project in UE 5.8 editor, press Play | No errors in Output Log beyond warnings; Dawn Fields visible (lit ground plane, sky) | Bootstrapper, lighting rig |
-| 2 | **Menu** — (deferred) | Direct-to-game by design; note it: real main menu is M7 work | — |
+| 2 | **Menu** — title screen boots first (`UAstrawildTitleMenuWidget`: New Journey / Continue / Controls / Quit; title-at-boot wired in the PlayerController) | Title screen visible at boot; New Journey enters the world; Continue loads the latest save | TitleMenu, PlayerController screens |
 | 3 | **Spawn** — player capsule spawns at the fallback PlayerStart near origin | Player standing on ground, camera behind | GameMode, PlayerStart fallback |
 | 4 | **Move** — WASD + mouse look, Shift sprint, Space jump | Movement responsive; sprint blocked when stamina < 5 % | Runtime IMC, movement |
 | 5 | **Explore** — walk toward a resource node | Interaction prompt appears when aimed at node; day clock advances (1 real sec = 1 world min); HUD vitals tick down slowly | HUD, TimeSubsystem, Survival |
@@ -97,7 +104,12 @@ First Echo quests unaided. That is the vertical-slice bar for this round.
 
 ## 4. Compile Validation Steps (user's Windows machine — REQUIRED FIRST)
 
-The repository has **never been compiled**. Do this before any test above:
+> **[AUDIT-B sweep]** The "never been compiled" claim below was true when written — superseded
+> 2026-09-02: green compile + 54/54 automation green at `8313c61` (recorded in BUILD_STATUS /
+> PROJECT_STATUS_SUMMARY). The current tip (141 contracts, post-FIX-1) has NOT been compiled
+> since that last green; first compile of the delta is the first machine-day action.
+
+The repository had **not been compiled before 8313c61 (2026-09-02)**. Do this before any test above:
 
 1. **Prereqs:** Windows 10/11, Visual Studio 2022 (Desktop development with C++ + Game development with
    C++ workloads), Unreal Engine **5.8** (launcher or source) installed.
@@ -112,7 +124,7 @@ The repository has **never been compiled**. Do this before any test above:
    proceeding (the code is compile-conservative, but UE API drift between 5.x minor versions is possible).
 6. Launch `ASTRAWILDEditor` → the project opens with an empty content tree (expected) → **PIE works
    without a map** via the bootstrapper (§2 step 1).
-7. Run the automation suite (§1 command) — 9/9 expected green.
+7. Run the automation suite (§1 command) — **141/141 expected green**.
 8. Fill `BUILD_STATUS.md`: Compile = PASS (with duration/warnings), Playtest rows with real results.
    **Do not mark COMPLETE before steps 1–17 of §2 pass.**
 9. Optional static validation re-run (sandbox): `Scripts/validate_repository.sh`.
@@ -121,15 +133,16 @@ The repository has **never been compiled**. Do this before any test above:
 
 ## 5. Known Issues to Verify During Playtest
 
-Status re-checked against code on 2026-08-30: T-1/T-2/T-4/T-5/T-6 have **fixes in code** (applied with
-the lead's foundation round) but none are verified — nothing has been compiled or run yet. Verify each
-during the first playtest; T-3 is still unfixed.
+Status re-checked against code on 2026-08-30 and re-synced 2026-10-19 (AUDIT-B sweep):
+T-1/T-2/T-3/T-4/T-5/T-6 ALL have **fixes in code** — none of the six is verified in-engine yet
+(no engine run since the fixes landed; the 8313c61 green predates most of them). Verify each
+during the first playtest.
 
 | ID | Issue | Where | Status / verification |
 |---|---|---|---|
 | T-1 | Quest 2 "Observe a Lumewisp" progression (no `Event.*` publisher for ObserveEcho) | QuestComponent / JournalSubsystem | **Fixed in code** — journal publishes `Event.EchoObserved` at the 25 % first-scan milestone; verify Quest_FirstEcho completes both objectives |
 | T-2 | AI think loop reschedules per frame (LOD interval computed but not applied) | EchoAIController::Think | **Fixed in code** — `SetTimer(ThinkIntervalSeconds)`; verify with Insights at 10+ Echoes |
-| T-3 | Weather temperature label hard-codes 20 °C on the HUD | HudWidget | **Still present** (`WeatherText` prints a literal `20.0f`); cosmetic |
+| T-3 | Weather temperature label hard-codes 20 °C on the HUD | HudWidget | **Fixed in code (M-4)** — `WeatherText` prints the REAL `SurvivalComponent` temperature (`AstrawildHudWidget.cpp`, "Audit fix (M-4)"; the `20.0f` literal is only the null-component fallback); verify at playtest |
 | T-4 | Cold/heat damage unreachable with default weather offsets | Survival + Weather | **Fixed in code** — Cold profile offset −17 (felt 3 °C < 4 °C threshold), Heat +20 (felt 40 °C ≥ 36 °C); verify with `AW.SetWeather cold` / `heat` |
 | T-5 | Player "consume food/drink" action has no keybind | Survival / input | **Fixed in code** — **G** = `SmartConsume` (`AWD_Consume`); verify with berries/flask in inventory |
 | T-6 | Journal per-frame actor iteration | JournalSubsystem | **Fixed in code** — throttled observation sweep; verify with Insights |

@@ -476,3 +476,23 @@ every claim cross-checked against the last green compile 8313c61 where
 possible (empirical transitive-include proof); engine rows V2-29..V2-36 stay
 NOT_RUN on this Linux sandbox — never faked; ENGINE-RUN-1 remains THE next
 task on the Windows UE 5.8.2 machine.
+
+## §T RESIDUAL-COMPLETION PASS (FIX-1 + AUDIT-B — 2026-10-19 session, user directive "โอเคทำที่เหลือให้เสร็จเลยนะ ทำไรเสร็จก็อัพขึ้นgitไว้นะ")
+
+> Directive: finish the remaining work; push whatever finishes to git. Method: two parallel
+> read-only audit agents over the INTEGRATION tip 4c706fc — AUDIT-A (authored-but-dormant
+> content, 12 dimensions: world events / dialogue trees / robots / weapons / work sites /
+> POIs / loot tables / resource nodes / items / quests / survival-speed / buildings) and
+> AUDIT-B (stale current-facing doc claims, 9 docs). Verdicts: AUDIT-A 11 PASS / 1 GAP;
+> AUDIT-B 32 confirmed stale claims. Both findings applied in two commits (code, then docs).
+
+| Task | Scope | Owner | Status | Notes |
+|----|------|-------------|-------|--------|-------|
+| FIX-1 | Night-Raid data-dead payload (the AUDIT-A GAP) | **REAL BUG**: `Event_NightRaid`'s raider pool filtered `bHostileToPlayers && HomeZone == DawnFields` — provably empty (no hostile species homes at DawnFields; the canon Gloomfangs home HollowApproach per ContentLibrary + Quest_DawnGuard + the camp's legacy hostile ring), so the raid fired as a permanent false alarm (toast + cooldown consumed, zero raiders ever spawned; the 27-dark-cues / 179-never-spawning defect class). DELIVERED: pool query extracted into PURE static `UAstrawildWorldEventSubsystem::CollectNightRaidPool` (DawnFields OR HollowApproach; null-registry safe) consumed by `ResolveEventEffects` + regression contract test 141 `ASTRAWILD.WorldEvent.NightRaidPoolContract` (pool membership rules, null safety, production pool non-empty, RaidHostileCount=3 pin) + validator gate 140→141 + validator docstring (119-era) synced + ProductionContent completion log switched from the frozen 2026-09 census string to LIVE registry-derived counts (mirroring the ContentLibrary authoritative log) | GLM | **COMPLETE (source) / ENGINE-UNVERIFIED** | commit `b375d01`; validators ALL PASS at the commit (141 gate); census 15 gates UNCHANGED; pushed |
+| AUDIT-B sweep | 32+3 stale-claim doc fixes | TEST_PLAN (T-3 actually fixed-in-code M-4 — the "still present" row was a 2-hour-window staleness from 2026-08-29; "20 tests/none executed" → 141 + 8313c61-era banner; "9/9 expected" → 141/141; menu row → title screen exists; "never compiled" → superseded) · BUILD_STATUS (v9.4 qualifier superseded; 141 suite; LFS 588/588 — the merge adopted 2 machine-ready Docs PNGs; never-compiled Blocker row struck; T-3 row fixed) · README (139→141; v9.6 tip→v9.10+FIX-1; 586→588) · INPUT_REFERENCE (+Left Ctrl AWD_Descend row; +gamepad LS-click row; vendor "console only/6m" → E-interact shop screen/450cm; save schema v3→V5; cheat rows 6m→450cm) · PLAYER_RULES (gamepad smart-cast "radial backlog" note → LB+X chord DCP-6) · MASTER_CONTROL (12 points: Last-Updated line; push status → complete; 126/125/133/139-era test counts → 141; 491/586 LFS → 588; §8 126/126 → 141/141; §10 v9.8 freeze line superseded; §11 honest ledger) · LIVE_EXECUTION_STATE (snapshot: head/tests/LFS; §8 risk-6 vocabulary 141; §9 doc map v9.10 + §A..§S; §3 DONE + §5 change-log rows) · ENGINE_VERIFICATION_QUEUE (139-gate note → 141) · FINAL_READINESS_REPORT (586→588) · PROJECT_STATUS_SUMMARY (historical banner's current-truth paragraph: 126/459/v9.1 → 141/588/v9.10) | GLM | **COMPLETE** | docs-only commit (this commit); validators ALL PASS; historical narrative sections intentionally untouched (legitimate history); census/test/LFS counts now single-sourced from the validator + registry logs |
+
+**§T ground rules** (binding): the SOURCE_PRODUCT_FROZEN state was re-opened by the user
+directive only for residual completion — the fix is evidence-driven (a proven data-dead
+payload) and the doc sweep is defect-closure (stale claims), not new scope. Census 15 gates
+UNCHANGED; tests 140→141 (one regression contract per the world-free discipline); every
+claim cites file:line; ENGINE-RUN-1 remains THE next task on the Windows UE 5.8.2 machine.

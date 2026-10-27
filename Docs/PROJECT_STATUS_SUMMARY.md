@@ -5,11 +5,12 @@
 > (2026-09-02) และถูกเก็บไว้เป็นหลักฐานประวัติศาสตร์เท่านั้น — ตัวเลข 54/54 tests,
 > "เล่นได้จริง 100%" และ packaged exe ด้านล่างเป็นความจริง**ของ SHA นั้นเท่านั้น**
 > ไม่ใช่สถานะของ branch ปัจจุบัน สถานะปัจจุบันที่แท้จริงคือ:
-> branch `final-completion` (source-side ครบ: 126 automation contracts, 229 species,
-> Sci-Fantasy mutation system, LFS 459/459) และ **ENGINE-UNVERIFIED ที่ tip นี้**
+> branch `final-completion` (source-side ครบ: **141** automation contracts, 229 species,
+> Sci-Fantasy mutation system, LFS **588/588**) และ **ENGINE-UNVERIFIED ที่ tip นี้**
 > (build/automation/PIE/package ต้องรันซ้ำที่ SHA ล่าสุดตาม
-> `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.1 §8 + `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md`)
+> `Docs/ASTRAWILD_MASTER_CONTROL.md` v9.10 §8 + `Docs/ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md`)
 > อย่าใช้เอกสารนี้ตัดสินใจ integration — ใช้ MASTER_CONTROL เท่านั้น
+> (AUDIT-B sweep 2026-10-19: ตัวเลขในย่อหน้านี้ถูก sync จาก 126/459/v9.1 ให้ตรง truth ปัจจุบัน)
 
 **สถานะ (ณ วันที่บันทึกนั้น)**: ✅ **PLAYABLE VERTICAL SLICE LOCKED & RE-CERTIFIED**
 **Branch ล่าสุด (ของ session นั้น)**: `agent/antigravity-ue5-v2`

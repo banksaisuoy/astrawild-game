@@ -295,7 +295,7 @@ flags — that is the documented convention mismatch, not corruption. If
 ```powershell
 python Scripts\validate_final_run.py
 # expect final line: FINAL RUN VALIDATION: ALL CHECKS PASSED
-# (140-test gate, census gates: 229 species / 204 rows / 22 quests /
+# (141-test gate, census gates: 229 species / 204 rows / 22 quests /
 #  13 NPCs / 189-manifest / 51 direct-mesh rows / Tier-B 36 ...)
 
 & "C:\Program Files\Git\bin\bash.exe" Scripts/validate_repository.sh

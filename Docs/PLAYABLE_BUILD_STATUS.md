@@ -7,8 +7,8 @@
 > journal panel — final-audit F-10) are **superseded**: the HUD vitals/banners are
 > real, the radar/journal are not in the current source. (PCR-1 later shipped a
 > Field Journal screen; this historical note describes its own date only.) The
-> live control set is `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.4 — Sci-Fantasy
-> mutation system + v9.3 real-mesh catalog + v9.5 DCP pack (post-game quests + NG+ + ending cinematics + Vess/Ione + journal detail + toast cues + gamepad chord + mesh coverage) + 140-test suite (VIS/CGC contracts + completion-stage victory chain), ENGINE-UNVERIFIED
+> live control set is `Docs/ASTRAWILD_MASTER_CONTROL.md` (v9.10 — Sci-Fantasy
+> mutation system + v9.3 real-mesh catalog + v9.5 DCP pack (post-game quests + NG+ + ending cinematics + Vess/Ione + journal detail + toast cues + gamepad chord + mesh coverage) + 141-test suite (VIS/CGC contracts + completion-stage victory chain + FIX-1 night-raid pool), ENGINE-UNVERIFIED
 > at tip); the live task state is
 > **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical)**; the live readiness
 > state is `Docs/ASTRAWILD_FINAL_READINESS_REPORT.md`.
