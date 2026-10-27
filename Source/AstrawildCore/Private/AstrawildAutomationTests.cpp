@@ -18,6 +18,7 @@
 #include "AstrawildDurabilityComponent.h"
 #include "AstrawildErrorReporter.h"
 #include "AstrawildMountComponent.h"
+#include "AstrawildVisualOverhaul.h"
 #include "AstrawildGeneticsLibrary.h"
 #include "AstrawildNPCScheduleComponent.h"
 #include "AstrawildPerformanceManager.h"
@@ -1458,15 +1459,15 @@ bool FAstrawildDressingDeterministicScatterTest::RunTest(const FString& Paramete
     }
 
     const FAstrawildDressingProfile Profile = AAstrawildBiomeDressingActor::GetDressingProfile(Zone->Zone);
-    TArray<FVector> TreesA, RocksA, GrassA;
-    TArray<FVector> TreesB, RocksB, GrassB;
-    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesA, RocksA, GrassA);
-    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB);
-    AAstrawildBiomeDressingActor::ScatterDressingPoints(4242, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB); // reuse arrays (different seed)
+    TArray<FVector> TreesA, RocksA, GrassA, FlowersA;
+    TArray<FVector> TreesB, RocksB, GrassB, FlowersB;
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesA, RocksA, GrassA, FlowersA);
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB, FlowersB);
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(4242, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB, FlowersB); // reuse arrays (different seed)
 
     // Same seed → identical layout: re-run the first seed fresh.
-    TreesB.Reset(); RocksB.Reset(); GrassB.Reset();
-    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB);
+    TreesB.Reset(); RocksB.Reset(); GrassB.Reset(); FlowersB.Reset();
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, {}, {}, TreesB, RocksB, GrassB, FlowersB);
     TestEqual(TEXT("Same seed → same tree count"), TreesA.Num(), TreesB.Num());
     bool bIdentical = TreesA.Num() == TreesB.Num();
     for (int32 i = 0; bIdentical && i < TreesA.Num(); ++i)
@@ -1475,13 +1476,24 @@ bool FAstrawildDressingDeterministicScatterTest::RunTest(const FString& Paramete
     }
     TestTrue(TEXT("Same seed → identical tree positions"), bIdentical);
 
+    // VO-1R: the flower layer is part of the same deterministic contract.
+    TestEqual(TEXT("Same seed → same flower count"), FlowersA.Num(), FlowersB.Num());
+    bool bFlowersIdentical = FlowersA.Num() == FlowersB.Num();
+    for (int32 i = 0; bFlowersIdentical && i < FlowersA.Num(); ++i)
+    {
+        bFlowersIdentical = FlowersA[i].Equals(FlowersB[i], 0.01f);
+    }
+    TestTrue(TEXT("Same seed → identical flower positions"), bFlowersIdentical);
+    TestTrue(TEXT("Dawn Fields flower budget actually lands flowers"),
+        FlowersA.Num() > 0);
+
     // Water rule: nothing dresses below the sea margin (deep sea zone scatter
     // lands only on islets — count can be small but every point must be dry).
     if (const FAstrawildZoneDescriptor* SeaZone = UAstrawildZoneSubsystem::FindZoneById(TEXT("Zone_AzureShallows")))
     {
         const FAstrawildDressingProfile SeaProfile = AAstrawildBiomeDressingActor::GetDressingProfile(SeaZone->Zone);
-        TArray<FVector> SeaTrees, SeaRocks, SeaGrass;
-        AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *SeaZone, SeaProfile, {}, {}, SeaTrees, SeaRocks, SeaGrass);
+        TArray<FVector> SeaTrees, SeaRocks, SeaGrass, SeaFlowers;
+        AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *SeaZone, SeaProfile, {}, {}, SeaTrees, SeaRocks, SeaGrass, SeaFlowers);
         const float SeaFloorZ = UAstrawildZoneSubsystem::GetSeaLevelZ() + AAstrawildBiomeDressingActor::GetSeaMargin();
         bool bAllDry = true;
         for (const FVector& Point : SeaTrees)
@@ -1496,10 +1508,14 @@ bool FAstrawildDressingDeterministicScatterTest::RunTest(const FString& Paramete
     TArray<float> CampRadius;
     Camp.Add(Zone->GetCenter());
     CampRadius.Add(3000.0f);
-    TArray<FVector> TreesC, RocksC, GrassC;
-    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, Camp, CampRadius, TreesC, RocksC, GrassC);
+    TArray<FVector> TreesC, RocksC, GrassC, FlowersC;
+    AAstrawildBiomeDressingActor::ScatterDressingPoints(1337, *Zone, Profile, Camp, CampRadius, TreesC, RocksC, GrassC, FlowersC);
     bool bNoneInCamp = true;
     for (const FVector& Point : TreesC)
+    {
+        bNoneInCamp &= FVector2D::DistSquared(FVector2D(Point.X, Point.Y), Camp[0]) >= FMath::Square(3000.0f);
+    }
+    for (const FVector& Point : FlowersC)
     {
         bNoneInCamp &= FVector2D::DistSquared(FVector2D(Point.X, Point.Y), Camp[0]) >= FMath::Square(3000.0f);
     }
@@ -7818,6 +7834,234 @@ bool FAstrawildVictoryChainTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("closer has at least one objective"),
             Vanguard->Objectives.Num() > 0);
     }
+    return true;
+}
+
+// ===========================================================================
+// VO-1R — Visual Overhaul (rebuild) contracts. Five world-free pillars:
+// toon grade + anime bias, flower budgets, kawaii scales, mote motion,
+// petal palette variety.
+// ===========================================================================
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildToonGradeContractTest,
+    "ASTRAWILD.VisualOverhaul.ToonGradeContract",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildToonGradeContractTest::RunTest(const FString& Parameters)
+{
+    const AstrawildVisualOverhaul::FToonGrade Grade = AstrawildVisualOverhaul::EvalToonGrade();
+
+    // Toon grade bounds — saturated/painted but never blown out.
+    TestTrue(TEXT("Bloom intensity in (0.5, 1.6]"), Grade.BloomIntensity > 0.5f && Grade.BloomIntensity <= 1.6f);
+    TestTrue(TEXT("Bloom threshold in (0.6, 1.0]"), Grade.BloomThreshold > 0.6f && Grade.BloomThreshold <= 1.0f);
+    TestTrue(TEXT("Saturation boost in (1.05, 1.35)"), Grade.ColorSaturation.X > 1.05f && Grade.ColorSaturation.X < 1.35f);
+    TestTrue(TEXT("Saturation is uniform across channels"),
+        FMath::IsNearlyEqual(Grade.ColorSaturation.X, Grade.ColorSaturation.Y, 0.001f) &&
+        FMath::IsNearlyEqual(Grade.ColorSaturation.Y, Grade.ColorSaturation.Z, 0.001f));
+    TestTrue(TEXT("Contrast in (0.98, 1.08)"), Grade.ColorContrast.X > 0.98f && Grade.ColorContrast.X < 1.08f);
+    TestTrue(TEXT("Gamma lift in (0.85, 1.0)"), Grade.ColorGamma.X > 0.85f && Grade.ColorGamma.X < 1.0f);
+    TestTrue(TEXT("Vignette stays gentle in (0.1, 0.25)"), Grade.VignetteIntensity > 0.1f && Grade.VignetteIntensity < 0.25f);
+    TestTrue(TEXT("Exposure clamps ordered"), Grade.AutoExposureMinBrightness < Grade.AutoExposureMaxBrightness);
+    TestTrue(TEXT("Exposure bias in (0.2, 0.5)"), Grade.AutoExposureBias > 0.2f && Grade.AutoExposureBias < 0.5f);
+
+    // Anime light bias bounds — warmer/flatter/pastel, never extreme.
+    const AstrawildVisualOverhaul::FAnimeLightBias Bias = AstrawildVisualOverhaul::EvalAnimeLightBias();
+    TestTrue(TEXT("Sun warmth amount in (0, 1)"), Bias.SunWarmthAmount > 0.0f && Bias.SunWarmthAmount < 1.0f);
+    TestTrue(TEXT("Sun intensity scale in (0.85, 1.0)"), Bias.SunIntensityScale > 0.85f && Bias.SunIntensityScale < 1.0f);
+    TestTrue(TEXT("Sky intensity scale in (1.0, 1.6)"), Bias.SkyIntensityScale > 1.0f && Bias.SkyIntensityScale < 1.6f);
+    TestTrue(TEXT("Fog density scale in (0.5, 0.95)"), Bias.FogDensityScale > 0.5f && Bias.FogDensityScale < 0.95f);
+    TestTrue(TEXT("Fog pastel amount in (0, 1)"), Bias.FogPastelAmount > 0.0f && Bias.FogPastelAmount < 1.0f);
+
+    // The bootstrapper bias application keeps every field in a sane range
+    // (pure in/out — no world needed).
+    FAstrawildAtmosphereSample Sample;
+    Sample.SunColor = FLinearColor(0.9f, 0.9f, 0.9f, 1.0f);
+    Sample.FogColor = FLinearColor(0.6f, 0.65f, 0.7f, 1.0f);
+    Sample.FogDensity = 0.00012f;
+    Sample.SkyLightIntensity = 1.4f;
+    Sample.SunIntensityMultiplier = 0.8f;
+    AAstrawildWorldBootstrapper::ApplyVisualOverhaulBias(Sample);
+    TestTrue(TEXT("Bias keeps fog density positive"), Sample.FogDensity > 0.0f);
+    TestTrue(TEXT("Bias thins the fog"), Sample.FogDensity < 0.00012f);
+    TestTrue(TEXT("Bias lifts the sky ambient"), Sample.SkyLightIntensity > 1.4f);
+    TestTrue(TEXT("Bias softens the sun"), Sample.SunIntensityMultiplier < 0.8f);
+    TestTrue(TEXT("Bias warms the sun (R rises over B)"), Sample.SunColor.R > Sample.SunColor.B);
+    TestTrue(TEXT("Bias pastels the fog"), Sample.FogColor.B > Sample.FogColor.R);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildFlowerFieldBudgetTest,
+    "ASTRAWILD.VisualOverhaul.FlowerFieldBudgets",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildFlowerFieldBudgetTest::RunTest(const FString& Parameters)
+{
+    using EZone = EAstrawildZone;
+
+    // Single source of truth: EvalFlowerBudget mirrors the dressing profile.
+    for (int32 ZoneIndex = 0; ZoneIndex <= static_cast<int32>(EZone::PearlseaReef); ++ZoneIndex)
+    {
+        const EZone Zone = static_cast<EZone>(ZoneIndex);
+        TestEqual(TEXT("EvalFlowerBudget mirrors the dressing profile table"),
+            AstrawildVisualOverhaul::EvalFlowerBudget(Zone),
+            AAstrawildBiomeDressingActor::GetDressingProfile(Zone).FlowerCount);
+    }
+
+    // The two meadow zones read as flower FIELDS (headline feature).
+    TestTrue(TEXT("Dawn Fields flower budget is field-scale (>120)"),
+        AstrawildVisualOverhaul::EvalFlowerBudget(EZone::DawnFields) > 120);
+    TestTrue(TEXT("Verdant Reach flower budget is field-scale (>120)"),
+        AstrawildVisualOverhaul::EvalFlowerBudget(EZone::VerdantReach) > 120);
+    TestTrue(TEXT("Glimmerwood carries a glowing flower layer (>60)"),
+        AstrawildVisualOverhaul::EvalFlowerBudget(EZone::Glimmerwood) > 60);
+
+    // Every zone budget is non-negative; at least 8 zones bloom.
+    int32 BloomingZones = 0;
+    for (int32 ZoneIndex = 0; ZoneIndex <= static_cast<int32>(EZone::PearlseaReef); ++ZoneIndex)
+    {
+        const int32 Budget = AstrawildVisualOverhaul::EvalFlowerBudget(static_cast<EZone>(ZoneIndex));
+        TestTrue(TEXT("Flower budget is non-negative"), Budget >= 0);
+        if (Budget > 0)
+        {
+            ++BloomingZones;
+        }
+    }
+    TestTrue(TEXT("At least 8 of the 12 zones bloom"), BloomingZones >= 8);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildKawaiiScalesTest,
+    "ASTRAWILD.VisualOverhaul.KawaiiScales",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildKawaiiScalesTest::RunTest(const FString& Parameters)
+{
+    const AstrawildVisualOverhaul::FKawaiiScales Neutral; // default-constructed
+    TestTrue(TEXT("Neutral kawaii profile is identity (Head)"), FMath::IsNearlyEqual(Neutral.Head, 1.0f, 0.001f));
+    TestTrue(TEXT("Neutral kawaii profile is identity (Eyes)"), FMath::IsNearlyEqual(Neutral.Eyes, 1.0f, 0.001f));
+    TestTrue(TEXT("Neutral kawaii profile disables blush"), Neutral.Blush <= 0.0f);
+
+    const AstrawildVisualOverhaul::FKawaiiScales Kawaii = AstrawildVisualOverhaul::EvalKawaiiScales();
+    TestTrue(TEXT("Kawaii head boost in [1.08, 1.25]"), Kawaii.Head >= 1.08f && Kawaii.Head <= 1.25f);
+    TestTrue(TEXT("Kawaii eye boost in [1.25, 1.5]"), Kawaii.Eyes >= 1.25f && Kawaii.Eyes <= 1.5f);
+    TestTrue(TEXT("Kawaii blush fraction in [0.06, 0.16]"), Kawaii.Blush >= 0.06f && Kawaii.Blush <= 0.16f);
+
+    // Toggle roundtrip — save/restore so this test never pollutes others.
+    const bool bOriginal = AstrawildVisualOverhaul::IsVisualOverhaulEnabled();
+    AstrawildVisualOverhaul::SetVisualOverhaulEnabled(false);
+    TestFalse(TEXT("Overhaul toggle turns off"), AstrawildVisualOverhaul::IsVisualOverhaulEnabled());
+    AstrawildVisualOverhaul::SetVisualOverhaulEnabled(true);
+    TestTrue(TEXT("Overhaul toggle turns back on"), AstrawildVisualOverhaul::IsVisualOverhaulEnabled());
+    AstrawildVisualOverhaul::SetVisualOverhaulEnabled(bOriginal);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildAmbientMoteMotionTest,
+    "ASTRAWILD.VisualOverhaul.AmbientMoteMotion",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildAmbientMoteMotionTest::RunTest(const FString& Parameters)
+{
+    const FVector Anchor(1000.0f, -2000.0f, 300.0f);
+
+    // Determinism: same seed + time + anchor → identical position.
+    FVector A, B;
+    const bool bOkA = AstrawildVisualOverhaul::EvalMoteTransform(4242, 12.5f, Anchor, A);
+    const bool bOkB = AstrawildVisualOverhaul::EvalMoteTransform(4242, 12.5f, Anchor, B);
+    TestTrue(TEXT("Mote transform resolves"), bOkA && bOkB);
+    TestTrue(TEXT("Same seed/time → identical mote position"), A.Equals(B, 0.01f));
+
+    // Bounded orbit: every mote stays inside the director's ceiling.
+    bool bBounded = true;
+    for (int32 Seed = 1; Seed <= 24; ++Seed)
+    {
+        FVector P;
+        if (AstrawildVisualOverhaul::EvalMoteTransform(Seed, 3.0f + Seed * 0.7f, Anchor, P))
+        {
+            bBounded &= FVector::Dist(P, Anchor) <= AAstrawildVisualOverhaulDirector::GetMoteOrbitRadius();
+        }
+    }
+    TestTrue(TEXT("Motes stay inside the orbit ceiling"), bBounded);
+
+    // Smooth motion: displacement over small dt never teleports (no wrap).
+    bool bSmooth = true;
+    for (int32 Seed = 1; Seed <= 24; ++Seed)
+    {
+        FVector P0, P1;
+        const float T0 = Seed * 1.3f;
+        const float Dt = 0.05f;
+        if (AstrawildVisualOverhaul::EvalMoteTransform(Seed, T0, Anchor, P0) &&
+            AstrawildVisualOverhaul::EvalMoteTransform(Seed, T0 + Dt, Anchor, P1))
+        {
+            bSmooth &= FVector::Dist(P0, P1) < 220.0f;
+        }
+    }
+    TestTrue(TEXT("Mote drift is smooth (bounded per-frame speed)"), bSmooth);
+
+    // Invalid input fails closed.
+    FVector Discard;
+    TestFalse(TEXT("Negative seed rejected"),
+        AstrawildVisualOverhaul::EvalMoteTransform(-1, 1.0f, Anchor, Discard));
+    TestFalse(TEXT("Negative time rejected"),
+        AstrawildVisualOverhaul::EvalMoteTransform(1, -1.0f, Anchor, Discard));
+
+    // Mote tint: day = warm, night = cool (the two anime "air" reads).
+    const FLinearColor Day = AstrawildVisualOverhaul::EvalMoteTint(false);
+    const FLinearColor Night = AstrawildVisualOverhaul::EvalMoteTint(true);
+    TestTrue(TEXT("Day motes read warm"), Day.R > Day.B);
+    TestTrue(TEXT("Night motes read cool"), Night.B > Night.R);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAstrawildPetalPaletteVarietyTest,
+    "ASTRAWILD.VisualOverhaul.PetalPaletteVariety",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAstrawildPetalPaletteVarietyTest::RunTest(const FString& Parameters)
+{
+    using EZone = EAstrawildZone;
+
+    // Three representative zones must produce at least 2 distinct petal
+    // tints across 8 seeds — a field never reads as one flat color.
+    const EZone Zones[3] = { EZone::DawnFields, EZone::FrostveilExpanse, EZone::VerdantReach };
+    for (const EZone Zone : Zones)
+    {
+        TArray<FLinearColor> Tints;
+        for (int32 Seed = 0; Seed < 8; ++Seed)
+        {
+            Tints.Add(AstrawildVisualOverhaul::EvalPetalTint(Zone, Seed * 97 + 11));
+        }
+        int32 DistinctPairs = 0;
+        for (int32 i = 0; i < Tints.Num(); ++i)
+        {
+            for (int32 j = i + 1; j < Tints.Num(); ++j)
+            {
+                if (!Tints[i].Equals(Tints[j], 0.01f))
+                {
+                    ++DistinctPairs;
+                    break; // per-i: one distinct partner is enough
+                }
+            }
+        }
+        TestTrue(TEXT("Zone petals show color variety (>=2 distinct)"), DistinctPairs >= 2);
+
+        // Brightness sanity — petals stay visible in daylight (luma 0.25..1).
+        for (const FLinearColor& Tint : Tints)
+        {
+            const float Luma = Tint.R * 0.3f + Tint.G * 0.59f + Tint.B * 0.11f;
+            TestTrue(TEXT("Petal luma stays visible"), Luma > 0.25f && Luma <= 1.0f);
+        }
+    }
+
+    // Determinism: same zone/seed → same petal tint.
+    const FLinearColor P0 = AstrawildVisualOverhaul::EvalPetalTint(EZone::TidebreakerIsles, 123);
+    const FLinearColor P1 = AstrawildVisualOverhaul::EvalPetalTint(EZone::TidebreakerIsles, 123);
+    TestTrue(TEXT("Petal tint is deterministic"), P0.Equals(P1, 0.001f));
+
+    // Out-of-range zone fails safe (white, never garbage).
+    const FLinearColor Bad = AstrawildVisualOverhaul::EvalPetalTint(static_cast<EZone>(99), 1);
+    TestTrue(TEXT("Invalid zone fails safe to white"),
+        FMath::IsNearlyEqual(Bad.R, 1.0f, 0.001f) && FMath::IsNearlyEqual(Bad.G, 1.0f, 0.001f));
     return true;
 }
 

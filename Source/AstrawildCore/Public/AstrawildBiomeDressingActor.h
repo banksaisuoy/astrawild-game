@@ -25,6 +25,9 @@ enum class EAstrawildDressingCanopy : uint8
  * Per-zone dressing budget (Production V2 Batch 2 — Visual Vertical Slice).
  * Plain data struct: counts are multiplied by the biome definition's
  * DressingDensity and the world seed drives the deterministic layout.
+ * VO-1R adds FlowerCount — the flower-field layer (Palworld/Animal Crossing
+ * read); the budget is mirrored by AstrawildVisualOverhaul::EvalFlowerBudget
+ * so the automation contract can verify the single source of truth.
  */
 struct ASTRAWILDCORE_API FAstrawildDressingProfile
 {
@@ -40,6 +43,9 @@ struct ASTRAWILDCORE_API FAstrawildDressingProfile
     EAstrawildDressingCanopy CanopyStyle = EAstrawildDressingCanopy::Broadleaf;
     /** 0..1 lerp of the canopy tint toward snow-white (frost biomes). */
     float SnowBlend = 0.0f;
+    /** VO-1R: per-zone flower budget (stem + petal ring geometry, petal tint
+     * from AstrawildVisualOverhaul::EvalPetalTint for deterministic variety). */
+    int32 FlowerCount = 0;
 };
 
 /**
@@ -95,15 +101,17 @@ public:
     static float GetGrassSlopeLimit() { return 210.0f; }
 
     /**
-     * Deterministic scatter (pure static — automation-tested): fills the three
+     * Deterministic scatter (pure static — automation-tested): fills the four
      * point arrays inside the zone rect using the terrain height field. Points
      * that fail the water/exclusion/slope gates are resampled up to 6 attempts
-     * each, so forest budgets actually land on land.
+     * each, so forest budgets actually land on land. VO-1R adds the flower
+     * output (flowers share the grass slope tolerance).
      */
     static void ScatterDressingPoints(int32 Seed, const FAstrawildZoneDescriptor& Zone,
         const FAstrawildDressingProfile& Profile, const TArray<FVector2D>& ExclusionCenters,
         const TArray<float>& ExclusionRadii, TArray<FVector>& OutTreePoints,
-        TArray<FVector>& OutRockPoints, TArray<FVector>& OutGrassPoints);
+        TArray<FVector>& OutRockPoints, TArray<FVector>& OutGrassPoints,
+        TArray<FVector>& OutFlowerPoints);
 
     /**
      * Builds this zone's dressing. BiomeDef may be null (zone-table defaults).
@@ -132,6 +140,16 @@ private:
     void AppendGrassTuft(TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals,
         TArray<FVector2D>& UVs, TArray<FColor>& Colors, const FVector& Base, float Scale, const FColor& GrassColor,
         FRandomStream& Stream);
+
+    /**
+     * VO-1R flower: thin stem + leaf + 5..6 flattened petal cones around a
+     * golden center cone. Petal color arrives pre-resolved (deterministic
+     * per-flower variety from EvalPetalTint); geometry stays budget-cheap so
+     * the meadow zones can carry 150+ flowers in one merged section.
+     */
+    void AppendFlower(TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals,
+        TArray<FVector2D>& UVs, TArray<FColor>& Colors, const FVector& Base, float Scale, float Yaw,
+        const FColor& StemColor, const FColor& PetalColor, const FColor& CenterColor, FRandomStream& Stream);
 
     /** Real-mesh upgrade path: ISM instances from the biome definition soft refs. */
     void BuildInstancedMeshes(UAstrawildBiomeDefinition* BiomeDef, const TArray<FVector>& TreePoints,
