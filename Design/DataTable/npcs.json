@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1243,
+   "line": 1244,
    "id": "NPC_WardenMaren",
    "name": "Warden Maren",
    "offered_quest": "Quest_FirstLight",
@@ -19,7 +19,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1254,
+   "line": 1255,
    "id": "NPC_VendorTam",
    "name": "Trader Tam",
    "role": "Vendor",
@@ -33,7 +33,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1256,
+     "line": 1257,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorStarter"
     }
@@ -41,7 +41,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1266,
+   "line": 1267,
    "id": "NPC_HerbalistWren",
    "name": "Herbalist Wren",
    "role": "Vendor",
@@ -55,13 +55,13 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1268,
+     "line": 1269,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorHerbalist"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1269,
+     "line": 1270,
      "prop": "CurrencyItemId",
      "value": "Item_DawnShard"
     }
@@ -69,7 +69,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1278,
+   "line": 1279,
    "id": "NPC_BlacksmithBorin",
    "name": "Blacksmith Borin",
    "role": "Vendor",
@@ -83,13 +83,13 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1280,
+     "line": 1281,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorArmory"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1281,
+     "line": 1282,
      "prop": "CurrencyItemId",
      "value": "Item_DawnShard"
     }
@@ -97,7 +97,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1290,
+   "line": 1291,
    "id": "NPC_ElderRowan",
    "name": "Elder Rowan",
    "offered_quest": "Quest_WingsOverTheVale",
@@ -114,7 +114,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1301,
+   "line": 1302,
    "id": "NPC_GuardSela",
    "name": "Guard Captain Sela",
    "role": "Guard",
@@ -130,7 +130,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1311,
+   "line": 1312,
    "id": "NPC_GuardBram",
    "name": "Guard Bram",
    "role": "Guard",
@@ -145,7 +145,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1321,
+   "line": 1322,
    "id": "NPC_FarmerJori",
    "name": "Farmer Jori",
    "role": "Villager",
@@ -160,7 +160,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1333,
+   "line": 1334,
    "id": "NPC_SkiffWardenKael",
    "name": "Skiff Warden Kael",
    "offered_quest": "Quest_SunkenVault",
@@ -177,7 +177,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1344,
+   "line": 1345,
    "id": "NPC_FisherNima",
    "name": "Fisher Nima",
    "role": "Vendor",
@@ -191,13 +191,13 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1346,
+     "line": 1347,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorDriftwood"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1347,
+     "line": 1348,
      "prop": "CurrencyItemId",
      "value": "Item_DawnShard"
     }
@@ -205,7 +205,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1356,
+   "line": 1357,
    "id": "NPC_OldSaltPerry",
    "name": "Old Salt Perry",
    "role": "Villager",
@@ -221,7 +221,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1373,
+   "line": 1374,
    "id": "NPC_Vess",
    "name": "Vess, the Storm-Scholar",
    "village": "Village_Dawnstead",
@@ -230,19 +230,19 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1380,
+     "line": 1381,
      "prop": "VisualMesh",
      "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1381,
+     "line": 1382,
      "prop": "VisualIdleAnimation",
      "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1382,
+     "line": 1383,
      "prop": "VisualMeshScale",
      "value": 1.0
     }
@@ -250,7 +250,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1386,
+   "line": 1387,
    "id": "NPC_Ione",
    "name": "Ione, the Relic Trader",
    "role": "Vendor",
@@ -260,19 +260,19 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1393,
+     "line": 1394,
      "prop": "VisualMesh",
      "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1394,
+     "line": 1395,
      "prop": "VisualIdleAnimation",
      "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1395,
+     "line": 1396,
      "prop": "VisualMeshScale",
      "value": 1.0
     }

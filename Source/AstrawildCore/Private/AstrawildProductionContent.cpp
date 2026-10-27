@@ -279,27 +279,27 @@ void UAstrawildProductionContent::BuildWeapons(UAstrawildItemRegistrySubsystem* 
         }
         if (!Art.MeshPath.IsEmpty())
         {
-            WeaponDef->Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(Art.MeshPath));
+            WeaponDef->Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.MeshPath)));
         }
         if (!Art.MuzzleVfxPath.IsEmpty())
         {
-            WeaponDef->MuzzleFlashVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Art.MuzzleVfxPath));
+            WeaponDef->MuzzleFlashVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.MuzzleVfxPath)));
         }
         if (!Art.ImpactVfxPath.IsEmpty())
         {
-            WeaponDef->ImpactVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Art.ImpactVfxPath));
+            WeaponDef->ImpactVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.ImpactVfxPath)));
         }
         if (!Art.TrailVfxPath.IsEmpty())
         {
-            WeaponDef->ProjectileTrailVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(Art.TrailVfxPath));
+            WeaponDef->ProjectileTrailVfx = TSoftObjectPtr<UNiagaraSystem>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.TrailVfxPath)));
         }
         if (!Art.FireSoundPath.IsEmpty())
         {
-            WeaponDef->FireSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art.FireSoundPath));
+            WeaponDef->FireSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.FireSoundPath)));
         }
         if (!Art.ImpactSoundPath.IsEmpty())
         {
-            WeaponDef->ImpactSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art.ImpactSoundPath));
+            WeaponDef->ImpactSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.ImpactSoundPath)));
         }
     }
 
@@ -715,7 +715,7 @@ void UAstrawildProductionContent::BuildResourceNodes(UAstrawildItemRegistrySubsy
     {
         if (UAstrawildResourceNodeDefinition* NodeDef = Registry->FindResourceNode(Art.NodeId))
         {
-            NodeDef->MeshOverride = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(Art.MeshPath));
+            NodeDef->MeshOverride = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.MeshPath)));
         }
     }
 }
@@ -1229,23 +1229,23 @@ void UAstrawildProductionContent::BuildBiomes(UAstrawildItemRegistrySubsystem* R
         {
             for (const FString& TreePath : Art->TreeMeshPaths)
             {
-                Biome->TreeMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TreePath)));
+                Biome->TreeMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(TreePath))));
             }
             for (const FString& RockPath : Art->RockMeshPaths)
             {
-                Biome->RockMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(RockPath)));
+                Biome->RockMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(RockPath))));
             }
             for (const FString& GrassPath : Art->GrassMeshPaths)
             {
-                Biome->GrassMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(GrassPath)));
+                Biome->GrassMeshes.Add(TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(GrassPath))));
             }
             if (!Art->LandscapeMaterialPath.IsEmpty())
             {
-                Biome->LandscapeMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(Art->LandscapeMaterialPath));
+                Biome->LandscapeMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art->LandscapeMaterialPath)));
             }
             if (!Art->AmbientAudioPath.IsEmpty())
             {
-                Biome->AmbientAudio = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art->AmbientAudioPath));
+                Biome->AmbientAudio = TSoftObjectPtr<USoundBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art->AmbientAudioPath)));
             }
         }
         Registry->RegisterBiome(Biome);
@@ -1333,14 +1333,14 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
     {
         if (UAstrawildEchoDefinition* EchoDef = Registry->FindEcho(Art.EchoId))
         {
-            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(Art.MeshPath));
+            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.MeshPath)));
             if (!Art.IdleAnimPath.IsEmpty())
             {
-                EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.IdleAnimPath));
+                EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.IdleAnimPath)));
             }
             if (!Art.MoveAnimPath.IsEmpty())
             {
-                EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.MoveAnimPath));
+                EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.MoveAnimPath)));
             }
         }
     }
@@ -1359,9 +1359,9 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
         }
         if (UAstrawildEchoDefinition* EchoDef = Registry->FindEcho(TierBId))
         {
-            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::BuildTierBMechPath(TierBId)));
-            EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, false)));
-            EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, true)));
+            EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::BuildTierBMechPath(TierBId))));
+            EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, false))));
+            EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::BuildTierBAnimPath(TierBId, true))));
         }
     }
 
@@ -1389,11 +1389,11 @@ void UAstrawildProductionContent::BuildProductionEchoes(UAstrawildItemRegistrySu
                 continue; // never overwrite an existing binding
             }
             EchoDef->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(
-                FAstrawildEchoMutator::BuildSciFantasyBaseMeshPath(MutationSpec.BaseMeshId)));
+                AstrawildArtPack::CanonicalAssetPath(FAstrawildEchoMutator::BuildSciFantasyBaseMeshPath(MutationSpec.BaseMeshId))));
             EchoDef->IdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(
-                FAstrawildEchoMutator::BuildSciFantasyAnimPath(MutationSpec.BaseMeshId, false)));
+                AstrawildArtPack::CanonicalAssetPath(FAstrawildEchoMutator::BuildSciFantasyAnimPath(MutationSpec.BaseMeshId, false))));
             EchoDef->MoveAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(
-                FAstrawildEchoMutator::BuildSciFantasyAnimPath(MutationSpec.BaseMeshId, true)));
+                AstrawildArtPack::CanonicalAssetPath(FAstrawildEchoMutator::BuildSciFantasyAnimPath(MutationSpec.BaseMeshId, true))));
         }
     }
 }

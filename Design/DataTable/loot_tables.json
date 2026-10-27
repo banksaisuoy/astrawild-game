@@ -3,15 +3,15 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1195,
+   "line": 1196,
    "id": "Loot_DungeonBoss",
    "guaranteed_drops": [],
    "bonus_chance": 0.75,
-   "bonus_line": 1197
+   "bonus_line": 1198
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1203,
+   "line": 1204,
    "id": "Loot_VendorStarter",
    "guaranteed_drops": [
     {
@@ -36,12 +36,12 @@
     }
    ],
    "bonus_chance": 0.0,
-   "drops_line": 1204,
-   "bonus_line": 1205
+   "drops_line": 1205,
+   "bonus_line": 1206
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1212,
+   "line": 1213,
    "id": "Loot_VendorHerbalist",
    "guaranteed_drops": [
     {
@@ -66,12 +66,12 @@
     }
    ],
    "bonus_chance": 0.0,
-   "drops_line": 1213,
-   "bonus_line": 1214
+   "drops_line": 1214,
+   "bonus_line": 1215
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1219,
+   "line": 1220,
    "id": "Loot_VendorArmory",
    "guaranteed_drops": [
     {
@@ -96,12 +96,12 @@
     }
    ],
    "bonus_chance": 0.0,
-   "drops_line": 1220,
-   "bonus_line": 1221
+   "drops_line": 1221,
+   "bonus_line": 1222
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1226,
+   "line": 1227,
    "id": "Loot_VendorDriftwood",
    "guaranteed_drops": [
     {
@@ -126,8 +126,8 @@
     }
    ],
    "bonus_chance": 0.0,
-   "drops_line": 1227,
-   "bonus_line": 1228
+   "drops_line": 1228,
+   "bonus_line": 1229
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",

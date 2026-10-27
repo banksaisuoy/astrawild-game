@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 585,
+   "line": 586,
    "id": "Echo_Lumewisp",
    "origin": "authored",
    "name": "Lumewisp",
@@ -23,7 +23,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 601,
+   "line": 602,
    "id": "Echo_Stonehide",
    "origin": "authored",
    "name": "Stonehide",
@@ -43,7 +43,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 615,
+   "line": 616,
    "id": "Echo_Voltling",
    "origin": "authored",
    "name": "Voltling",
@@ -63,7 +63,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 628,
+   "line": 629,
    "id": "Echo_Duskmoth",
    "origin": "authored",
    "name": "Duskmoth",
@@ -83,7 +83,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 646,
+   "line": 647,
    "id": "Echo_Gloomfang",
    "origin": "authored",
    "name": "Gloomfang",
@@ -103,7 +103,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 659,
+   "line": 660,
    "id": "Echo_Sprigling",
    "origin": "authored",
    "name": "Sprigling",
@@ -123,7 +123,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 676,
+   "line": 677,
    "id": "Echo_Emberfang",
    "origin": "authored",
    "name": "Emberfang",
@@ -143,7 +143,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 691,
+   "line": 692,
    "id": "Echo_Rimefang",
    "origin": "authored",
    "name": "Rimefang",
@@ -163,7 +163,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 702,
+   "line": 703,
    "id": "Echo_Voltmaw",
    "origin": "authored",
    "name": "Voltmaw",
@@ -183,7 +183,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 712,
+   "line": 713,
    "id": "Echo_Auroraling",
    "origin": "authored",
    "name": "Auroraling",

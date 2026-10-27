@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 120,
+   "line": 121,
    "id": "Item_Wood",
    "name": "Dawnwood",
    "category": "Material",
@@ -13,7 +13,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 121,
+   "line": 122,
    "id": "Item_Stone",
    "name": "Fieldstone",
    "category": "Material",
@@ -23,7 +23,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 122,
+   "line": 123,
    "id": "Item_Fiber",
    "name": "Sunfiber",
    "category": "Material",
@@ -33,7 +33,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 123,
+   "line": 124,
    "id": "Item_WoodPlank",
    "name": "Dawnwood Plank",
    "category": "Material",
@@ -43,7 +43,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 124,
+   "line": 125,
    "id": "Item_CrystalShard",
    "name": "Dawn Crystal Shard",
    "category": "Material",
@@ -53,7 +53,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 135,
+   "line": 136,
    "id": "Item_Berry",
    "name": "Glimmer Berry",
    "category": "Consumable",
@@ -63,7 +63,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 143,
+   "line": 144,
    "id": "Item_RawMeat",
    "name": "Raw Echo Meat",
    "category": "Consumable",
@@ -73,7 +73,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 149,
+   "line": 150,
    "id": "Item_CookedMeat",
    "name": "Seared Meat",
    "category": "Consumable",
@@ -83,7 +83,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 154,
+   "line": 155,
    "id": "Item_WaterFlask",
    "name": "Dew Flask",
    "category": "Consumable",
@@ -93,7 +93,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 159,
+   "line": 160,
    "id": "Item_Bandage",
    "name": "Sunfiber Bandage",
    "category": "Consumable",
@@ -103,7 +103,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 164,
+   "line": 165,
    "id": "Item_Resonator",
    "name": "Echo Resonator",
    "category": "CreatureItem",
@@ -113,7 +113,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 167,
+   "line": 168,
    "id": "Item_AncientCore",
    "name": "Ancient Core",
    "category": "QuestItem",
@@ -123,7 +123,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 171,
+   "line": 172,
    "id": "Item_Dawnbloom",
    "name": "Dawnbloom Petal",
    "category": "Material",
@@ -133,7 +133,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 175,
+   "line": 176,
    "id": "Item_EmberAsh",
    "name": "Ember Ash",
    "category": "Material",
@@ -143,7 +143,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 179,
+   "line": 180,
    "id": "Item_FeedMix",
    "name": "Echo Feed Mix",
    "category": "Consumable",
@@ -153,7 +153,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 185,
+   "line": 186,
    "id": "Item_HerbalSalve",
    "name": "Dawnbloom Salve",
    "category": "Consumable",
@@ -163,7 +163,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 196,
+   "line": 197,
    "id": "Item_DawnShard",
    "name": "Dawn Shard",
    "category": "Material",
@@ -173,7 +173,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 202,
+   "line": 203,
    "id": "Item_SeaPearl",
    "name": "Sea Pearl",
    "category": "Material",
@@ -183,7 +183,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 207,
+   "line": 208,
    "id": "Item_CoralShard",
    "name": "Coral Shard",
    "category": "Material",
@@ -193,7 +193,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 212,
+   "line": 213,
    "id": "Item_DuneGlass",
    "name": "Dune Glass",
    "category": "Material",
@@ -203,7 +203,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 216,
+   "line": 217,
    "id": "Item_StormSilver",
    "name": "Storm Silver",
    "category": "Material",
@@ -213,7 +213,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 221,
+   "line": 222,
    "id": "Item_ChitinPlate",
    "name": "Chitin Plate",
    "category": "Material",
@@ -223,7 +223,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 227,
+   "line": 228,
    "id": "Item_DawnwoodClub",
    "name": "Dawnwood Club",
    "category": "Equipment",
@@ -233,7 +233,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 233,
+   "line": 234,
    "id": "Item_StonehideShield",
    "name": "Stonehide Shield",
    "category": "Equipment",
@@ -243,7 +243,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 238,
+   "line": 239,
    "id": "Item_CrystalBlade",
    "name": "Dawn Crystal Blade",
    "category": "Equipment",
@@ -253,7 +253,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 248,
+   "line": 249,
    "id": "Item_FieldPick",
    "name": "Fieldstone Pick",
    "category": "Equipment",
@@ -263,7 +263,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 256,
+   "line": 257,
    "id": "Item_FieldAxe",
    "name": "Dawnwood Axe",
    "category": "Equipment",
@@ -273,7 +273,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 264,
+   "line": 265,
    "id": "Item_SunSickle",
    "name": "Sunfiber Sickle",
    "category": "Equipment",
@@ -283,7 +283,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 274,
+   "line": 275,
    "id": "Item_SpoiledOrganics",
    "name": "Spoiled Organics",
    "category": "Material",
@@ -293,7 +293,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 278,
+   "line": 279,
    "id": "Item_Compost",
    "name": "Dawn Compost",
    "category": "Material",
@@ -303,7 +303,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 282,
+   "line": 283,
    "id": "Item_FieldRepairKit",
    "name": "Field Repair Kit",
    "category": "Material",
@@ -313,7 +313,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 288,
+   "line": 289,
    "id": "Item_CureTonic",
    "name": "Echo Cure Tonic",
    "category": "Consumable",
@@ -323,7 +323,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 295,
+   "line": 296,
    "id": "Item_BreedingCake",
    "name": "Echo Breeding Cake",
    "category": "Consumable",
@@ -333,7 +333,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 300,
+   "line": 301,
    "id": "Item_EchoEgg",
    "name": "Echo Egg",
    "category": "CreatureItem",
@@ -343,7 +343,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 307,
+   "line": 308,
    "id": "Item_FiberWeaveVest",
    "name": "Fiberweave Vest",
    "category": "Equipment",
@@ -353,7 +353,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 312,
+   "line": 313,
    "id": "Item_EmberhideJacket",
    "name": "Emberhide Jacket",
    "category": "Equipment",
@@ -363,7 +363,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 316,
+   "line": 317,
    "id": "Item_CrystalplateCuirass",
    "name": "Crystalplate Cuirass",
    "category": "Equipment",
@@ -373,7 +373,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 323,
+   "line": 324,
    "id": "Item_Frostbloom",
    "name": "Frostbloom",
    "category": "Material",
@@ -383,7 +383,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 328,
+   "line": 329,
    "id": "Item_VoltCore",
    "name": "Volt Core",
    "category": "Material",
@@ -393,7 +393,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 333,
+   "line": 334,
    "id": "Item_WarmBroth",
    "name": "Hearth Broth",
    "category": "Consumable",
@@ -403,7 +403,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 341,
+   "line": 342,
    "id": "Item_Fertilizer",
    "name": "Dawnfield Fertilizer",
    "category": "Material",
@@ -413,7 +413,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 350,
+   "line": 351,
    "id": "Item_AncientResonator",
    "name": "Ancient Resonator",
    "category": "Equipment",
@@ -423,7 +423,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 361,
+   "line": 362,
    "id": "Item_EnergyCell",
    "name": "Pulse Cell",
    "category": "Material",
@@ -433,7 +433,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 366,
+   "line": 367,
    "id": "Item_FieldScanner",
    "name": "Field Scanner",
    "category": "Equipment",
@@ -443,7 +443,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 373,
+   "line": 374,
    "id": "Item_ResonanceHelm",
    "name": "Resonance Helm",
    "category": "Equipment",
@@ -453,7 +453,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 381,
+   "line": 382,
    "id": "Item_DawnstriderExosuit",
    "name": "Dawnstrider Exosuit",
    "category": "Equipment",
@@ -463,7 +463,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 391,
+   "line": 392,
    "id": "Item_PulseLance",
    "name": "Pulse Lance",
    "category": "Equipment",
@@ -473,7 +473,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 401,
+   "line": 402,
    "id": "Item_UtilityDrone",
    "name": "Utility Drone",
    "category": "Equipment",
@@ -483,7 +483,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 408,
+   "line": 409,
    "id": "Item_UtilityRobot",
    "name": "Utility Robot",
    "category": "Equipment",

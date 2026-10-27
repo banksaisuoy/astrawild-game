@@ -1437,13 +1437,13 @@ void AAstrawildEchoCharacter::NotifyWeaknessHit(const float AppliedDamage)
         if (const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId))
         {
             const TSoftObjectPtr<USoundBase> Vocal(FSoftObjectPath(
-                FAstrawildEchoMutator::BuildSoundSetCuePath(MutationSpec->SoundSetId, 0)));
+                AstrawildArtPack::CanonicalAssetPath(FAstrawildEchoMutator::BuildSoundSetCuePath(MutationSpec->SoundSetId, 0))));
             ChosenCue = Vocal.LoadSynchronous();
         }
     }
     if (!ChosenCue)
     {
-        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::Sfx::WeaknessHitImpact));
+        const TSoftObjectPtr<USoundBase> Cue(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::Sfx::WeaknessHitImpact)));
         ChosenCue = Cue.LoadSynchronous();
     }
     if (ChosenCue)

@@ -1,6 +1,7 @@
 #include "AstrawildContentLibrary.h"
 
 #include "AstrawildAbilityLibrary.h"
+#include "AstrawildArtPack.h" // GS-1: CanonicalAssetPath for NPC visual soft paths.
 #include "AstrawildBestiaryData.h"
 #include "AstrawildProductionContent.h"
 #include "AstrawildDataAssets.h"
@@ -1377,8 +1378,8 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     Vess->PrimaryTint = FLinearColor(0.55f, 0.60f, 0.95f); // Storm-violet.
     Vess->Greeting = FText::FromString(TEXT("The anchors are singing again. I charted this moment for twenty years."));
     Vess->DialogueTreeId = TEXT("Dialogue_Vess");
-    Vess->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite")));
-    Vess->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle")));
+    Vess->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite"))));
+    Vess->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"))));
     Vess->VisualMeshScale = 1.0f;
     Registry->RegisterNPC(Vess);
 
@@ -1390,8 +1391,8 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     Ione->PrimaryTint = FLinearColor(0.90f, 0.72f, 0.35f); // Amber glass.
     Ione->Greeting = FText::FromString(TEXT("Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest."));
     Ione->DialogueTreeId = TEXT("Dialogue_Ione");
-    Ione->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
-    Ione->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    Ione->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"))));
+    Ione->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"))));
     Ione->VisualMeshScale = 1.0f;
     Registry->RegisterNPC(Ione);
 }
@@ -1584,6 +1585,11 @@ void UAstrawildContentLibrary::WarmArtPackBindings(UAstrawildItemRegistrySubsyst
             Warm(Node->MeshOverride.ToSoftObjectPath());
         }
     }
+
+    // P-5/P-6 landmark binding: the ruin pillar behind the resonance pillars
+    // and the POI beacon markers (consumed directly by the actors, warmed here
+    // so the first spawn does not hitch).
+    Warm(FSoftObjectPath(AstrawildArtPack::GetLandmarkArt().PillarMeshPath));
 
     UE_LOG(LogAstrawild, Log,
         TEXT("Art pack warm pass: %d assets loaded, %d paths unresolved (fallbacks active)."),

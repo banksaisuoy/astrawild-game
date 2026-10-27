@@ -77,14 +77,15 @@ AAstrawildPlayerCharacter::AAstrawildPlayerCharacter()
     // truth — the designer can still override per-archetype in a BP subclass.
     {
         const AstrawildArtPack::FSurvivorArt& Art = AstrawildArtPack::GetSurvivorArt();
-        SurvivorSkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(Art.MeshPath));
-        SurvivorIdleAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.IdleAnimPath));
-        SurvivorWalkAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.WalkAnimPath));
-        SurvivorRunAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.RunAnimPath));
-        SurvivorJumpAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.JumpAnimPath));
-        SurvivorAimAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.AimAnimPath));
-        SurvivorFireAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.FireAnimPath));
-        SurvivorGatherAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(Art.GatherAnimPath));
+        // GS-1: canonical object-path form so every soft ref actually resolves.
+        SurvivorSkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.MeshPath)));
+        SurvivorIdleAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.IdleAnimPath)));
+        SurvivorWalkAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.WalkAnimPath)));
+        SurvivorRunAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.RunAnimPath)));
+        SurvivorJumpAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.JumpAnimPath)));
+        SurvivorAimAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.AimAnimPath)));
+        SurvivorFireAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.FireAnimPath)));
+        SurvivorGatherAnim = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art.GatherAnimPath)));
     }
 
     bReplicates = true;

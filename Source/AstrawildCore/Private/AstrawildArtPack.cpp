@@ -247,6 +247,43 @@ namespace AstrawildArtPack
                 }
                 return nullptr;
         }
+
+        const FLandmarkArt& GetLandmarkArt()
+        {
+                // P-5/P-6 (art plan §2): one shared CC0 ruin pillar serves the
+                // resonance pillars and the POI beacon markers. Canonical
+                // object-path form — resolves directly, stays fail-closed when
+                // the import pass has not landed the asset yet.
+                static const FLandmarkArt Art =
+                {
+                        TEXT("/Game/Environment/Ruins/SM_Ruin_Pillar.SM_Ruin_Pillar"),
+                };
+                return Art;
+        }
+
+        FString CanonicalAssetPath(const FString& PackageStylePath)
+        {
+                // GS-1: package-style Path/SM_A -> object-path Path/SM_A.SM_A
+                // (see the header doc). The object-name separator is the only
+                // '.' allowed after the last '/' in a canonical path, so the
+                // leaf test below never corrupts a path that already carries a
+                // suffix (or a subobject chain).
+                if (PackageStylePath.IsEmpty())
+                {
+                        return PackageStylePath;
+                }
+                int32 LastSlash = INDEX_NONE;
+                if (!PackageStylePath.FindLastChar(TEXT('/'), LastSlash))
+                {
+                        return PackageStylePath; // no '/' at all — engine parse handles it
+                }
+                const FString Leaf = PackageStylePath.RightChop(LastSlash + 1);
+                if (Leaf.IsEmpty() || Leaf.Contains(TEXT(".")))
+                {
+                        return PackageStylePath;
+                }
+                return PackageStylePath + TEXT(".") + Leaf;
+        }
 }
 
 namespace AstrawildArtPack

@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 784,
+   "line": 785,
    "id": "Building_Foundation",
    "name": "Foundation",
    "category": "Foundation",
@@ -19,7 +19,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 787,
+   "line": 788,
    "id": "Building_Wall",
    "name": "Wall",
    "category": "Wall",
@@ -35,7 +35,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 790,
+   "line": 791,
    "id": "Building_Workbench",
    "name": "Workbench",
    "category": "Workstation",
@@ -51,7 +51,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 793,
+   "line": 794,
    "id": "Building_Campfire",
    "name": "Campfire",
    "category": "Workstation",
@@ -67,7 +67,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 796,
+   "line": 797,
    "id": "Building_Generator",
    "name": "Echo Dynamo",
    "category": "Power",
@@ -83,7 +83,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 799,
+   "line": 800,
    "id": "Building_Battery",
    "name": "Charge Cell",
    "category": "Power",
@@ -99,7 +99,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 802,
+   "line": 803,
    "id": "Building_LampPost",
    "name": "Dawn Lamp",
    "category": "Decoration",
@@ -115,7 +115,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 805,
+   "line": 806,
    "id": "Building_FarmPlot",
    "name": "Farm Plot",
    "category": "Farm",
@@ -131,7 +131,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 808,
+   "line": 809,
    "id": "Building_ResearchDesk",
    "name": "Research Desk",
    "category": "Research",
@@ -147,7 +147,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 813,
+   "line": 814,
    "id": "Building_FeedTrough",
    "name": "Echo Feed Trough",
    "category": "Farm",
@@ -163,7 +163,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 819,
+   "line": 820,
    "id": "Building_Sawmill",
    "name": "Dawnwood Sawmill",
    "category": "Workstation",
@@ -179,7 +179,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 822,
+   "line": 823,
    "id": "Building_Heater",
    "name": "Hearth Coil",
    "category": "Workstation",
@@ -195,7 +195,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 825,
+   "line": 826,
    "id": "Building_Composter",
    "name": "Dawn Composter",
    "category": "Farm",
@@ -211,7 +211,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 832,
+   "line": 833,
    "id": "Building_Floor",
    "name": "Floor Deck",
    "category": "Floor",
@@ -227,7 +227,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 835,
+   "line": 836,
    "id": "Building_Roof",
    "name": "Roof Cap",
    "category": "Roof",
@@ -243,7 +243,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 838,
+   "line": 839,
    "id": "Building_Door",
    "name": "Sliding Door",
    "category": "Door",
@@ -259,7 +259,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 841,
+   "line": 842,
    "id": "Building_StorageCrate",
    "name": "Storage Crate",
    "category": "Storage",
@@ -275,7 +275,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 846,
+   "line": 847,
    "id": "Building_RepairBench",
    "name": "Repair Bench",
    "category": "Workstation",
@@ -291,7 +291,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 849,
+   "line": 850,
    "id": "Building_IceBox",
    "name": "Ice Box",
    "category": "Storage",
@@ -307,7 +307,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 854,
+   "line": 855,
    "id": "Building_BaseTerminal",
    "name": "Base Terminal",
    "category": "Decoration",
@@ -323,7 +323,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 857,
+   "line": 858,
    "id": "Building_CreatureBed",
    "name": "Creature Bed",
    "category": "CreatureHousing",
@@ -339,7 +339,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 860,
+   "line": 861,
    "id": "Building_HotSpring",
    "name": "Hot Spring Basin",
    "category": "CreatureHousing",
@@ -355,7 +355,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 863,
+   "line": 864,
    "id": "Building_MedicineBench",
    "name": "Medicine Bench",
    "category": "Workstation",
@@ -371,7 +371,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 868,
+   "line": 869,
    "id": "Building_DefenseTurret",
    "name": "Bolt Turret",
    "category": "Defense",
@@ -387,7 +387,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 873,
+   "line": 874,
    "id": "Building_BreedingPen",
    "name": "Breeding Pen",
    "category": "CreatureHousing",
@@ -403,7 +403,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 876,
+   "line": 877,
    "id": "Building_EggIncubator",
    "name": "Egg Incubator",
    "category": "CreatureHousing",

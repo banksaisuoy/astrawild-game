@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 887,
+   "line": 888,
    "id": "Tech_BasicCrafting",
    "name": "Basic Crafting",
    "era": "Primitive",
@@ -14,7 +14,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 890,
+   "line": 891,
    "id": "Tech_Cooking",
    "name": "Cooking",
    "era": "Primitive",
@@ -29,7 +29,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 893,
+   "line": 894,
    "id": "Tech_Electrical",
    "name": "Electrical Foundations",
    "era": "Electrical",
@@ -46,7 +46,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 896,
+   "line": 897,
    "id": "Tech_AdvancedEnergy",
    "name": "Advanced Energy",
    "era": "AdvancedEnergy",
@@ -67,7 +67,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 902,
+   "line": 903,
    "id": "Tech_Husbandry",
    "name": "Echo Husbandry",
    "era": "Primitive",
@@ -85,7 +85,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 907,
+   "line": 908,
    "id": "Tech_Armory",
    "name": "Armory",
    "era": "Primitive",
@@ -104,7 +104,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 916,
+   "line": 917,
    "id": "Tech_Mechanics",
    "name": "Mechanical Workshop",
    "era": "Mechanical",
@@ -122,7 +122,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 919,
+   "line": 920,
    "id": "Tech_Thermal",
    "name": "Thermal Engineering",
    "era": "Electrical",
@@ -139,7 +139,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 922,
+   "line": 923,
    "id": "Tech_Agriculture",
    "name": "Agriculture",
    "era": "Eco",
@@ -156,7 +156,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 930,
+   "line": 931,
    "id": "Tech_AncientResonance",
    "name": "Ancient Resonance",
    "era": "Ancient",

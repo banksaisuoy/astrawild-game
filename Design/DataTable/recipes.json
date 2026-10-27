@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 423,
+   "line": 424,
    "id": "Recipe_Resonator",
    "name": "Echo Resonator",
    "inputs": [
@@ -28,7 +28,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 427,
+   "line": 428,
    "id": "Recipe_Bandage",
    "name": "Sunfiber Bandage",
    "inputs": [
@@ -49,7 +49,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 431,
+   "line": 432,
    "id": "Recipe_WoodPlank",
    "name": "Dawnwood Plank",
    "inputs": [
@@ -70,7 +70,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 435,
+   "line": 436,
    "id": "Recipe_CookedMeat",
    "name": "Seared Meat",
    "inputs": [
@@ -91,7 +91,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 439,
+   "line": 440,
    "id": "Recipe_WaterFlask",
    "name": "Dew Flask",
    "inputs": [
@@ -116,7 +116,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 445,
+   "line": 446,
    "id": "Recipe_FeedMix",
    "name": "Echo Feed Mix",
    "inputs": [
@@ -141,7 +141,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 449,
+   "line": 450,
    "id": "Recipe_HerbalSalve",
    "name": "Dawnbloom Salve",
    "inputs": [
@@ -166,7 +166,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 455,
+   "line": 456,
    "id": "Recipe_DawnwoodClub",
    "name": "Dawnwood Club",
    "inputs": [
@@ -191,7 +191,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 459,
+   "line": 460,
    "id": "Recipe_StonehideShield",
    "name": "Stonehide Shield",
    "inputs": [
@@ -220,7 +220,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 463,
+   "line": 464,
    "id": "Recipe_CrystalBlade",
    "name": "Dawn Crystal Blade",
    "inputs": [
@@ -249,7 +249,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 469,
+   "line": 470,
    "id": "Recipe_FieldPick",
    "name": "Fieldstone Pick",
    "inputs": [
@@ -278,7 +278,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 473,
+   "line": 474,
    "id": "Recipe_FieldAxe",
    "name": "Dawnwood Axe",
    "inputs": [
@@ -307,7 +307,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 477,
+   "line": 478,
    "id": "Recipe_SunSickle",
    "name": "Sunfiber Sickle",
    "inputs": [
@@ -336,7 +336,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 481,
+   "line": 482,
    "id": "Recipe_FieldRepairKit",
    "name": "Field Repair Kit",
    "inputs": [
@@ -365,7 +365,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 485,
+   "line": 486,
    "id": "Recipe_Compost",
    "name": "Dawn Compost",
    "inputs": [
@@ -386,7 +386,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 491,
+   "line": 492,
    "id": "Recipe_CureTonic",
    "name": "Echo Cure Tonic",
    "inputs": [
@@ -415,7 +415,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 497,
+   "line": 498,
    "id": "Recipe_BreedingCake",
    "name": "Echo Breeding Cake",
    "inputs": [
@@ -444,7 +444,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 503,
+   "line": 504,
    "id": "Recipe_FiberWeaveVest",
    "name": "Fiberweave Vest",
    "inputs": [
@@ -469,7 +469,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 507,
+   "line": 508,
    "id": "Recipe_EmberhideJacket",
    "name": "Emberhide Jacket",
    "inputs": [
@@ -498,7 +498,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 511,
+   "line": 512,
    "id": "Recipe_CrystalplateCuirass",
    "name": "Crystalplate Cuirass",
    "inputs": [
@@ -527,7 +527,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 518,
+   "line": 519,
    "id": "Recipe_PlankBatch",
    "name": "Bulk Dawnwood Planks",
    "inputs": [
@@ -548,7 +548,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 522,
+   "line": 523,
    "id": "Recipe_ResonatorBatch",
    "name": "Resonator Batch",
    "inputs": [
@@ -577,7 +577,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 526,
+   "line": 527,
    "id": "Recipe_WarmBroth",
    "name": "Hearth Broth",
    "inputs": [
@@ -606,7 +606,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 530,
+   "line": 531,
    "id": "Recipe_Fertilizer",
    "name": "Dawnfield Fertilizer",
    "inputs": [
@@ -635,7 +635,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 537,
+   "line": 538,
    "id": "Recipe_AncientResonator",
    "name": "Ancient Resonator",
    "inputs": [
@@ -664,7 +664,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 546,
+   "line": 547,
    "id": "Recipe_EnergyCell",
    "name": "Pulse Cells",
    "inputs": [
@@ -689,7 +689,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 550,
+   "line": 551,
    "id": "Recipe_FieldScanner",
    "name": "Field Scanner",
    "inputs": [
@@ -718,7 +718,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 554,
+   "line": 555,
    "id": "Recipe_ResonanceHelm",
    "name": "Resonance Helm",
    "inputs": [
@@ -747,7 +747,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 558,
+   "line": 559,
    "id": "Recipe_DawnstriderExosuit",
    "name": "Dawnstrider Exosuit",
    "inputs": [
@@ -776,7 +776,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 562,
+   "line": 563,
    "id": "Recipe_PulseLance",
    "name": "Pulse Lance",
    "inputs": [
@@ -805,7 +805,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 566,
+   "line": 567,
    "id": "Recipe_UtilityDrone",
    "name": "Utility Drone",
    "inputs": [
@@ -834,7 +834,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 570,
+   "line": 571,
    "id": "Recipe_UtilityRobot",
    "name": "Utility Robot",
    "inputs": [

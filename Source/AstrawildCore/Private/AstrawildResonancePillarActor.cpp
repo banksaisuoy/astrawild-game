@@ -1,5 +1,6 @@
 #include "AstrawildResonancePillarActor.h"
 
+#include "AstrawildArtPack.h"
 #include "AstrawildDungeonRoomActor.h"
 #include "AstrawildLog.h"
 #include "AstrawildPlayerCharacter.h"
@@ -11,9 +12,44 @@
 
 namespace
 {
-    /** Dormant stone vs attuned resonance tints (placeholder shells read at gameplay distance). */
+    /** Dormant stone vs attuned resonance tints (applied to whichever mesh is live). */
     const FLinearColor DormantPillarTint(0.35f, 0.32f, 0.38f, 1.0f);
     const FLinearColor AttunedPillarTint(0.30f, 0.85f, 1.0f, 1.0f);
+
+    /** Authored resonance-stone height (matches the engine-cylinder stand-in: 100cm * 2.4). */
+    constexpr float ResonancePillarHeightCm = 240.0f;
+
+    /**
+     * P-5 resonance art swap (fail-closed): replace the engine-cylinder
+     * stand-in with the staged CC0 ruin pillar when it resolves. Bounds-fit
+     * keeps the authored 240cm interaction height and seats the base on the
+     * floor regardless of pivot convention; the dormant/attuned tint and the
+     * collision contract stay untouched.
+     */
+    void ApplyResonancePillarArt(UStaticMeshComponent* PillarMesh)
+    {
+        if (!PillarMesh)
+        {
+            return;
+        }
+        const FSoftObjectPath PillarPath(AstrawildArtPack::GetLandmarkArt().PillarMeshPath);
+        UStaticMesh* Pillar = Cast<UStaticMesh>(PillarPath.TryLoad());
+        if (!Pillar)
+        {
+            return; // import pass has not landed the asset — cylinder stays (CP-00 rule 2)
+        }
+        const FBoxSphereBounds Bounds = Pillar->GetBounds();
+        const float MeshHeightCm = 2.0f * Bounds.BoxExtent.Z;
+        if (MeshHeightCm < 5.0f)
+        {
+            return; // degenerate bounds — keep the primitive
+        }
+        PillarMesh->SetStaticMesh(Pillar);
+        const float Fit = ResonancePillarHeightCm / MeshHeightCm;
+        PillarMesh->SetRelativeScale3D(FVector(Fit, Fit, Fit));
+        // Seat the box minimum Z at the actor origin (base-pivot AND center-pivot).
+        PillarMesh->SetRelativeLocation(FVector(0.0f, 0.0f, Bounds.BoxExtent.Z - Bounds.Origin.Z));
+    }
 }
 
 AAstrawildResonancePillarActor::AAstrawildResonancePillarActor()
@@ -21,9 +57,10 @@ AAstrawildResonancePillarActor::AAstrawildResonancePillarActor()
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
 
-    // Tall resonance stone (engine cylinder — the same placeholder vocabulary
-    // as the gate pillars; REPLACE_BEFORE_RELEASE). Actor origin sits at the
-    // pillar BASE so room placement is a plain floor-level offset.
+    // Tall resonance stone: engine cylinder in the constructor (fail-closed
+    // stand-in), swapped for the staged CC0 ruin pillar in BeginPlay (P-5,
+    // bounds-fit). Actor origin sits at the pillar BASE so room placement is a
+    // plain floor-level offset.
     PillarMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PillarMesh"));
     RootComponent = PillarMesh;
 
@@ -37,6 +74,16 @@ AAstrawildResonancePillarActor::AAstrawildResonancePillarActor()
         PillarMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         PillarMesh->SetCollisionResponseToAllChannels(ECR_Block);
     }
+}
+
+void AAstrawildResonancePillarActor::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // P-5: swap the cylinder stand-in for the real ruin pillar (bounds-fit,
+    // fail-closed). Runs on server AND clients — the asset is identical local
+    // content on every machine.
+    ApplyResonancePillarArt(PillarMesh);
 }
 
 void AAstrawildResonancePillarActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

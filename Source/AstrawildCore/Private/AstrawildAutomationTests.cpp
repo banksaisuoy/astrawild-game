@@ -2113,6 +2113,15 @@ bool FAstrawildArtPackBindingTest::RunTest(const FString& Parameters)
             Art.MeshPath.StartsWith(TEXT("/Game/Environment/")));
     }
 
+    // --- Landmark (P-5/P-6): the shared ruin pillar binds resonance pillars
+    // and POI beacon markers. Canonical object-path form + the staged path.
+    TestTrue(TEXT("landmark pillar path is canonical"),
+        AstrawildArtPack::GetLandmarkArt().PillarMeshPath ==
+        FString(TEXT("/Game/Environment/Ruins/SM_Ruin_Pillar.SM_Ruin_Pillar")));
+    TestTrue(TEXT("landmark pillar path canonicalizes to itself"),
+        AstrawildArtPack::CanonicalAssetPath(AstrawildArtPack::GetLandmarkArt().PillarMeshPath) ==
+        AstrawildArtPack::GetLandmarkArt().PillarMeshPath);
+
     // --- Survivor: mesh + the 7 CP-01/CP-08 clips.
     {
         const AstrawildArtPack::FSurvivorArt& Art = AstrawildArtPack::GetSurvivorArt();
@@ -2126,25 +2135,36 @@ bool FAstrawildArtPackBindingTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("survivor gather path"), Art.GatherAnimPath.StartsWith(TEXT("/Game/Characters/Survivor/AM_")));
     }
 
-    // --- Zero-asset fallback rule survives the bindings: a soft path that has
-    // not been imported reports IsValid()==false (no accidental hard refs, no
-    // load-on-construct). The Weapon.AssetBindingContract test covers the
-    // CLASS defaults; this proves the CODE_DEFAULT BINDINGS behave the same.
+    // --- Canonical path contract (GS-1): every CODE_DEFAULT art binding stores
+    // the full object-path form ("/Game/X/SM_A.SM_A"), which parses as a valid
+    // soft reference in every engine version — import state no longer affects
+    // the path contract (load-vs-fallback is a runtime question, tested on the
+    // machine day). The Weapon.AssetBindingContract test covers the CLASS
+    // defaults; this proves the CODE_DEFAULT BINDINGS behave the same.
     {
         UAstrawildWeaponDefinition* Profile = NewObject<UAstrawildWeaponDefinition>();
         const AstrawildArtPack::FWeaponArt* Art = AstrawildArtPack::FindWeaponArt(TEXT("Weapon_PlasmaCharger"));
         TestTrue(TEXT("plasma binding present"), Art != nullptr);
         if (Art)
         {
-            Profile->Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(Art->MeshPath));
-            Profile->FireSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(Art->FireSoundPath));
-            TestTrue(TEXT("unimported mesh binding stays invalid (fallback rule)"),
-                !Profile->Mesh.IsValid());
-            TestTrue(TEXT("unimported sound binding stays invalid (fallback rule)"),
-                !Profile->FireSound.IsValid());
-            TestTrue(TEXT("mesh path round-trips"),
-                Profile->Mesh.ToSoftObjectPath().ToString() == Art->MeshPath);
+            Profile->Mesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art->MeshPath)));
+            Profile->FireSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(AstrawildArtPack::CanonicalAssetPath(Art->FireSoundPath)));
+            TestTrue(TEXT("canonical mesh path is a valid soft reference"),
+                Profile->Mesh.ToSoftObjectPath().IsValid());
+            TestTrue(TEXT("canonical sound path is a valid soft reference"),
+                Profile->FireSound.ToSoftObjectPath().IsValid());
+            TestTrue(TEXT("mesh path round-trips through the canonical form"),
+                Profile->Mesh.ToSoftObjectPath().ToString() == AstrawildArtPack::CanonicalAssetPath(Art->MeshPath));
         }
+        // CanonicalAssetPath unit contract (pure string data, no loads):
+        TestEqual(TEXT("package-style path gains the object suffix"),
+            AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/X/SM_A")), FString(TEXT("/Game/X/SM_A.SM_A")));
+        TestEqual(TEXT("already-canonical path passes through"),
+            AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/X/SM_A.SM_A")), FString(TEXT("/Game/X/SM_A.SM_A")));
+        TestEqual(TEXT("empty path passes through"),
+            AstrawildArtPack::CanonicalAssetPath(FString()), FString());
+        TestEqual(TEXT("subobject chain passes through"),
+            AstrawildArtPack::CanonicalAssetPath(TEXT("/Game/X/SM_A.Inner:2")), FString(TEXT("/Game/X/SM_A.Inner:2")));
     }
     return true;
 }

@@ -37,8 +37,10 @@ AAstrawildProjectileActor::AAstrawildProjectileActor()
     CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     RootComponent = CollisionSphere;
 
-    // Placeholder visual (zero-asset playability — REPLACE_BEFORE_RELEASE with a
-    // Niagara beam / asset mesh once art passes exist).
+    // Neutral bolt stand-in (constructor). The element-tinted PMC core
+    // (Production V2 Batch 2) and the Niagara trail/impact systems
+    // (TrailVfxAsset / ImpactVfxAsset, Art pack CP-05) layer on top at
+    // runtime — this sphere only shows when both art layers fail closed.
     VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
     VisualMesh->SetupAttachment(RootComponent);
     VisualMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
