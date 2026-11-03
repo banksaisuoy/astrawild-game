@@ -20,7 +20,7 @@
 
 | # | Check | Expected | Evidence to record |
 |---|-------|----------|--------------------|
-| V-1 | UHT pass on `AstrawildCore` (45 headers) | 0 errors; ~45 `.gen.cpp` produced | compiler output tail |
+| V-1 | UHT pass on `AstrawildCore` (102 GENERATED_BODY headers of 109 — AUDIT-R1/S13 sync, was 45) | 0 errors; ~102 `.gen.cpp` produced | compiler output tail |
 | V-2 | Full `Development Editor` build | 0 errors, 0 warnings-as-errors | build log |
 | V-3 | Link `ASTRAWILD.exe` / editor target | links clean (watch for the historical C-2 class of LNK2001) | build log |
 | V-4 | PIE boot, zero-asset world | terrain tiles + camp + spawners visible in <30 s | screenshot + log tail |

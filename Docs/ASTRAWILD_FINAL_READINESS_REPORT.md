@@ -9,7 +9,9 @@ directive), so "source-side feature work closed" now reads: **closed except
 evidence-driven audit amendments** (the v9.1 material-swap wiring and the
 v9.4 synchronization were exactly that class). Live task state:
 **`Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (canonical, 2026-09-06)** —
-CURRENT_HEAD `2637c13`, NOW task = ENGINE-RUN-1 (V2-29..V2-36, BLOCKED on the
+CURRENT_HEAD is whatever `git rev-parse origin/final-completion` says (the
+file-level pin here went stale at AUDIT-R1/S12 — trust the branch, not this
+line), NOW task = ENGINE-RUN-1 (V2-29..V2-36, BLOCKED on the
 external Windows UE machine). Current state: 229 species with the Sci-Fantasy
 mutation system (204 bestiary rows × 8 themes × real-mesh bases × per-part
 scale/attachments/theme-material swap/pattern tints/element VFX — runtime
@@ -181,10 +183,10 @@ Engine-only mechanical bugs: fix locally. Architectural discoveries: return to G
 | 11 | Save V5 model complete | **PASS** | AUD-2 checklist a–k: item-loss class fixed (chassis/drone refund/echo health); additive defeat counters |
 | 12 | Content/LFS manifest complete | **PASS** | FINAL_CONTENT_MANIFEST v1.6 (491/491 LFS re-verified at the FINAL-EXECUTION tip; v1.1-era 459/459 was pre-SCI) |
 | 13 | Asset paths validated | **PASS** | 65/65 /Game references resolve (validator) |
-| 14 | Tests complete at source level | **PASS** | 133 world-free contracts (126 + 7 v9.5 DCP: post-game quests + NG+ + ending cinematics + Act 3 NPCs + journal detail/toast + gamepad chord + mesh coverage) incl. 5 audit regressions + 12 GDP + 15 SCP + 3 FCR + 7 depth-pass + 10 LAN co-op + 1 PCR-1 journal + 1 PCR-2 roster + 1 PCR-3 map + 1 PCR-4 Tier-B + 1 PCR-5 hunts + 1 FPP-1 presentation + 1 SCI-Fantasy mutation contracts (ENGINE-UNVERIFIED) |
+| 14 | Tests complete at source level | **PASS** | **147 world-free contracts per the validator EXACT gate (AUDIT-R1/S7 sync — this row's old 133 described the DP-era count)**: 109 baseline through DP-9 + LCP/PCR/FPP/SCI/DCP/completion-stage batches + FIX-1 night-raid + 5 VO-1R visual overhaul + 1 EDX-1 EchoDex search contracts (ENGINE-UNVERIFIED) |
 | 15 | Final handoff executable | **PASS** | HANDOFF §1–20: live branch + SHAs, no dead references, corrected controls |
 | 16 | No duplicate gameplay architectures | **PASS** | one Echo platform (authored + bestiary share it); crafting screen single surface; no second combat/save stack |
-| 17 | No active contradictory documentation | **PASS** | ONE test count (139) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc; FINAL-EXECUTION round re-derived LFS (491/491) + manifest (175 entries) counts at tip |
+| 17 | No active contradictory documentation | **PASS** | ONE test count (147 per the AUDIT-R1/S7 sync) in all active docs; ONE content census (validator equality gates); dead glm/final-run refs purged; PLAYABLE_BUILD_STATUS radar claim marked HISTORICAL; DP-10 doc-consistency sweep re-ran the census values across every live doc; FINAL-EXECUTION round re-derived LFS (491/491) + manifest (175 entries) counts at tip |
 | 18 | Final branch/commit recorded | **PASS** | §J + HANDOFF §1 (tip = the DP-10 final-gate commit) |
 
 **Gate verdict: READY_FOR_FINAL_BUILD (18/18 + branch record, re-checked at the DP-10 final gate).**

@@ -2,7 +2,7 @@
 
 > Status: **SOURCE COMPLETE — compile/playtest pending on the UE 5.8 target machine**
 > (sandbox has no engine; see `ASTRAWILD_ENGINE_VERIFICATION_QUEUE.md` Batch 8 rows).
-> Companions: `ASTRAWILD_BESTIARY_CODEX.md` (the 214-species roster) and
+> Companions: `ASTRAWILD_BESTIARY_CODEX.md` (the 229-species roster per validator census) and
 > `ASTRAWILD_ZONE_WORLD.md` (the 12-zone Grand Expanse).
 
 ## 1. หมู่บ้าน (Living Villages)

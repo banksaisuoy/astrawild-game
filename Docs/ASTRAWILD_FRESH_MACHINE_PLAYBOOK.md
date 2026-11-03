@@ -37,7 +37,7 @@
    binding.
 4. **Read counts from the repo, never from memory.** The static validator
    (`Scripts/validate_final_run.py`) pins the exact expected numbers (tests,
-   census). When this playbook says "146 tests", the validator's gate is the
+   census). When this playbook says "147 tests", the validator's gate is the
    authority — if they disagree, the repo wins and this playbook is stale.
 5. **Git discipline.** Work on `final-completion` (or an
    `agent/<your-task>` branch off it). Push every completed phase with the

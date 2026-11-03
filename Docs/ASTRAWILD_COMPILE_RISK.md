@@ -1,6 +1,8 @@
 # ASTRAWILD COMPILE_RISK — LONG-RUN DIRECTIVE L4 output
 
-> Static-linter findings against the 197 Source files (99 .h + 98 .cpp) that
+> Static-linter findings against the 220 Source files (109 .h + 108 .cpp + 3
+> build/target files; AUDIT-R1/S13 sync — the old "197 (99+98)" described the
+> pre-EchoDex/pre-merge tip) that
 > have never been seen by a compiler. Tool: `Scripts/lint_unreal_cpp.py`
 > (9 check families A–I). Nothing here claims anything compiles — R3 stands:
 > the first real MSVC compile is still the only proof.

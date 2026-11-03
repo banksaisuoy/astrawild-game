@@ -3,6 +3,14 @@
 **Status: IMPLEMENTED IN C++ (compile validation pending on target machine)**
 **Date: 2026-08-29**
 
+> **HISTORICAL (AUDIT-R1/S11 / M-15):** this ledger is frozen as of 2026-08-29 — it
+> predates the Final Run / GDP / SCP / FCR / Depth Passes / CGC / VO-1R / EchoDex
+> / completion-stage / MERGE-1..2C eras. It is kept read-only as the era's quality
+> bar record. Current-facing truth: `Docs/ASTRAWILD_MASTER_CONTROL.md` (control),
+> `Docs/ASTRAWILD_LIVE_EXECUTION_STATE.md` (execution), and the validator suite
+> (`Scripts/validate_final_run.py` — census + 147-contract gate). Counts and
+> claims below describe their commit date only.
+
 This is the quality bar for the project and the **honest ledger** of where every system stands against it.
 Nothing may be reported as complete that has not passed the bar. Fake completion is forbidden (§51 — see §4).
 

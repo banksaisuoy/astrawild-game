@@ -52,7 +52,7 @@
   `Niagara` module dependency. (3) **Content specs**: `Docs/CONTENT_PACK/CP-00..CP-10` (player/exosuit,
   Echo/evolution, weapons, environment×12, Niagara, audio, materials, animation, quest/NPC, UX/HUD)
   with budgets, binding steps and acceptance criteria. Tests 48 → **53**.
-- Codebase: **140 C++ files (143 with build scripts), ~39,600 LOC, 53 automation tests, 91 docs** in/around `Source/AstrawildCore` (single module)
+- Codebase: **217 C++ files (220 with build scripts), ~84,000 LOC, 147 automation tests, 141 docs** in/around `Source/AstrawildCore` (single module) — AUDIT-R1/S14 sync (was 140/39.6k/53/91; the "135 contracts" note above is a dated merge-era fact, not current)
 
 ## Environment
 

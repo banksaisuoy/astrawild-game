@@ -5,9 +5,14 @@
 
 ## ภาพรวมสายพันธุ์ (Roster Overview)
 
-- **204 generated species + 10 hand-authored species = 214 Echo species ทั้งหมด** (และ NPC 12 ตัวใน 2 หมู่บ้าน = ตัวละครรวม 226+)
+> **AUDIT-R1/S1 — ตัวเลข authoritative อ่านจาก validator ไม่ใช่ไฟล์นี้**: census จริงของ
+> `Scripts/validate_final_run.py` คือ **Echo species 229 / NPC 13** (= ตัวละครรวม 242) —
+> ตารางในไฟล์นี้ (เจเนอเรตยุค Batch 8) ครอบคลุม 204 generated + 10 hand-authored = 214;
+> อีก 9 production heroes + 6 evolution targets อยู่นอกตารางนี้ (รวมเป็น 229) อย่าถือ 214 เป็นจำนวนรวม
+
+- **ตารางยุค Batch 8: 204 generated + 10 hand-authored = 214 Echo species** · ตัวเลขรวมที่แท้จริง per validator census = **229 species + 13 NPC ใน 2 หมู่บ้าน = 242 ตัวละครรวม**
 - ทุกตัวมีดีไซน์ครบ: ตระกูล (Family), โครงร่าง (BodyPlan), ขนาด (SizeClass), สีหลัก-สีรอง (tints 2 สี), ธาตุ, จุดอ่อน, บุคลิก, ช่วงเวลา active, อาหาร, loot, งานในฐาน (work affinity), ความยากในการจับ และโซนที่อยู่อาศัย
-- ธาตุ: 3 คู่ตรงข้าม — แสง↔เถ้า, พฤกษชาติ↔เพลิง, น้ำแข็ง↔สายฟ้า (จุดอ่อนคือคู่ตรงข้าม ×1.5)
+- ธาตุ (หมายเหตุ AUDIT-R1/S2 — ระบบสมมาตรเก่ายุค Batch 8: 3 คู่ตรงข้าม แสง↔เถ้า, พฤกษชาติ↔เพลิง, น้ำแข็ง↔สายฟ้า ×1.5 — **ถูกแทนแล้ว**): canon ปัจจุบันคือ **DP-3 Party Resonance** — 6 ธาตุ (Light/Ash/Flora/Frost/Pulse/Ember) จับคู่เป็น 15 คู่ คู่ละโบนัสเล็กมีชื่อเฉพาะ (mitigation/ability power/status potency แถบ 8-12%) ดูตารางเต็มที่ `AstrawildEchoCharacter.cpp` (GPartyResonanceTable) และหน้าจอ EchoDex
 - สถิติสเกลตาม ขนาด × ระดับอันตรายของโซน × ตัวคูณตระกูล (มังกร/โบราณแกร่งกว่า)
 - ระบบ AI เดิม (perception + state machine + personality + activity pattern) ทำงานกับทุกสายพันธุ์ทันที — data-driven 100%
 

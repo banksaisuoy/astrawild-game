@@ -34,11 +34,18 @@
 
 **เกมเอาชีวิตรอด/ผจญภัยสำรวจโลก มุมมองบุคคลที่สาม บน Unreal Engine 5 (C++)** — โปรเจ็คนี้เป็น Vertical Slice ที่สมบูรณ์: เริ่มเกมที่หน้า Title → เลือก New Journey / Continue → สำรวจโลกประมวลผลลัพธ์ (procedural) 12 โซน → จับ Echo → สร้างฐาน → วิจัยเทคโนโลยี → ลงดันเจี้ยนเจอบอส → จบเควสต์หลัก 12 ตอน → ฉากชัยชนะ
 
-A complete, playable third-person survival-adventure vertical slice for Unreal Engine 5, written almost entirely in C++ (~41,000 LOC). The runtime world generates procedurally — the game is fully playable even with zero imported art assets, and upgrades itself automatically when the optional art pack is imported.
+A complete, playable third-person survival-adventure vertical slice for Unreal Engine 5, written almost entirely in C++ (~66k LOC of .cpp + ~18k of headers = ~84k lines, 217 source files). The runtime world generates procedurally — the game is fully playable even with zero imported art assets, and upgrades itself automatically when the optional art pack is imported.
 
 ## Download & Play
 
-**Option 1 — packaged build (no Unreal Engine required on the playing PC)**
+**Status (AUDIT-R1/H-4): no published release yet — 0 tags, 0 GitHub Releases.**
+The repo is SOURCE-COMPLETE + ENGINE-UNVERIFIED: everything below works only after
+the one-time integration run on the Windows UE 5.8 machine (see
+`Docs/ASTRAWILD_ON_PC_TASKS.md`). When that run lands, the first release
+(`ASTRAWILD-Win64-Shipping.zip`) gets tagged here and this section becomes a
+plain download button. Until then, honest options:
+
+**Option 1 — packaged build (once the first release is published; not yet)**
 
 1. Open the **Releases** page of this repository.
 2. Download `ASTRAWILD-Win64-Shipping.zip` from the latest release.
@@ -166,7 +173,7 @@ Gamepad ใช้ได้พร้อมกับคีย์บอร์ด-�
 
 ```
 ASTRAWILD.uproject            เอนจิ้น 5.8 / โมดูล AstrawildCore
-Source/AstrawildCore/         C++ ทั้งหมด (145 ไฟล์, ~41k LOC)
+Source/AstrawildCore/         C++ ทั้งหมด (217 ไฟล์ .h+.cpp, ~84k บรรทัด)
 Content/                       แผนที่บูต + material + pipeline python (ผ่าน LFS)
 ArtSource/                     ต้นฉบับ art 112 ชิ้น (GLB/PNG/WAV — ผ่าน LFS)
 Config/                        Engine/Game/Input defaults

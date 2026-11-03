@@ -38,11 +38,11 @@ the resonance-pillar sequence verbs — correct order advances to completion,
 wrong order resets, window expiry resets; the unthemed default stays the
 legacy shell).
 
-**Count reconciliation (Final Completion Run Phase 0, binding)**: the single
-authoritative test count is **119** — derived from `AutomationTests.cpp`
+**Count reconciliation (updated AUDIT-R1/S8 — supersedes the old Phase-0 paragraph)**: the single
+authoritative test count is **147** — derived from `AutomationTests.cpp`
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` count), enforced by the static validator
-EXACT gate (`Automation tests == 119`), and listed in this inventory (rows 1-119).
-Historical counts (57/63/67/72/84/99/102/103/104/105/106/107/108) describe earlier commits only and appear
+EXACT gate (`Automation tests == 147`), and listed in this inventory (rows 1-147).
+Historical counts (57/63/67/72/84/99/102/103/104/105/106/107/108/119/135/140/141/145/146) describe earlier commits only and appear
 nowhere as current-state claims.
 
 ## Inventory (1-57: baseline hardening suite, landed c65d734)
