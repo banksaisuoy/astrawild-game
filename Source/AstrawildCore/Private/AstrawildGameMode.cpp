@@ -193,7 +193,11 @@ void AAstrawildGameMode::HandleAutosave()
         return;
     }
 
-    if (UAstrawildSaveSubsystem* SaveSubsystem = GetGameInstance()->GetSubsystem<UAstrawildSaveSubsystem>())
+    // AUDIT-R1/L-2: GetGameInstance() can be null (e.g. world cleanup, some
+    // automation/world-centroids contexts) — dereferencing it here crashed the
+    // autosave path. Guard through the subsystem resolution instead.
+    UGameInstance* GameInstance = GetGameInstance();
+    if (UAstrawildSaveSubsystem* SaveSubsystem = GameInstance ? GameInstance->GetSubsystem<UAstrawildSaveSubsystem>() : nullptr)
     {
         // CGC-4 (save UX trinity): the autosave was completely silent — a
         // player had no confirmation the 5-minute timer was doing anything.

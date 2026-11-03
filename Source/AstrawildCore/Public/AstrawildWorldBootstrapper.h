@@ -9,6 +9,7 @@
 class UStaticMeshComponent;
 class ADirectionalLight;
 class ASkyLight;
+class ASkyAtmosphere;
 class APointLight;
 class APostProcessVolume;
 class AExponentialHeightFog;
@@ -269,6 +270,10 @@ private:
 
     UPROPERTY()
     TObjectPtr<ASkyLight> SkyLightActor;
+
+    /** AUDIT-R1/M-3: cached so repeated bootstrap passes cannot stack atmospheres. */
+    UPROPERTY()
+    TObjectPtr<ASkyAtmosphere> SkyAtmosphereActor;
 
     UPROPERTY()
     TObjectPtr<AExponentialHeightFog> HeightFogActor;

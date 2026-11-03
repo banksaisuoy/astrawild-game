@@ -5,7 +5,7 @@ Generates the editor-side Enhanced Input asset layer for
 AAstrawildPlayerCharacter, in exact parity with the C++ runtime fallback
 (BuildRuntimeInputDefaults / BuildGamepadInputDefaults):
 
-  /Game/ASTRAWILD/Input/IA_*            32 InputActions (value types match)
+  /Game/ASTRAWILD/Input/IA_*            34 InputActions (value types match)
   /Game/ASTRAWILD/Input/IMC_Player      full Keyboard+Mouse mapping context
   /Game/ASTRAWILD/Input/IMC_Gamepad     full gamepad companion context
   /Game/ASTRAWILD/Blueprints/BP_AstrawildPlayer   pawn BP, defaults bound to
@@ -78,6 +78,10 @@ ACTIONS = [
     ("IA_Descend", "DescendAction", BOOLEAN),
     ("IA_PartyAbility", "PartyAbilityAction", BOOLEAN),
     ("IA_PlayerSkill", "PlayerSkillAction", BOOLEAN),
+    # AUDIT-R1/M-14: the two actions the editor layer was missing vs the C++
+    # runtime fallback — IA_EchoDex (EDX-1, key I) and IA_ToggleHUD (F6).
+    ("IA_EchoDex", "EchoDexAction", BOOLEAN),
+    ("IA_ToggleHUD", "ToggleHUDAction", BOOLEAN),
 ]
 
 # Modifier shorthands used by the binding tables.
@@ -124,6 +128,8 @@ KBM_MAPPINGS = [
     ("IA_Descend", "LeftControl", []),
     ("IA_PartyAbility", "T", []),
     ("IA_PlayerSkill", "Y", []),
+    ("IA_EchoDex", "I", []),
+    ("IA_ToggleHUD", "F6", []),
 ]
 
 # Gamepad context — 1:1 with BuildGamepadInputDefaults().

@@ -367,6 +367,10 @@ void AAstrawildWorldBootstrapper::BuildLighting()
             SunLight->SetMobility(EComponentMobility::Movable);
             if (UDirectionalLightComponent* DirLight = Cast<UDirectionalLightComponent>(SunLight->GetLightComponent()))
             {
+                // AUDIT-R1/L-1: boot-frame seed only — UpdateAtmosphere() owns sun
+                // intensity from its first tick (EvalSunBaseIntensity x weather bias),
+                // so this constant never survives into gameplay. Kept so the very
+                // first frame is not lit at the engine default (~10 lux).
                 DirLight->SetIntensity(65000.0f);
                 DirLight->SetLightColor(FLinearColor(1.0f, 0.95f, 0.88f));
                 DirLight->bAtmosphereSunLight = true;
@@ -405,7 +409,20 @@ void AAstrawildWorldBootstrapper::BuildLighting()
         }
     }
 
-    World->SpawnActor<ASkyAtmosphere>(ASkyAtmosphere::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
+    // Sky atmosphere (cached — AUDIT-R1/M-3: previously spawned unconditionally,
+    // so any repeated bootstrap pass stacked a fresh atmosphere actor).
+    if (!SkyAtmosphereActor)
+    {
+        for (TActorIterator<ASkyAtmosphere> It(World); It; ++It)
+        {
+            SkyAtmosphereActor = *It;
+            break;
+        }
+        if (!SkyAtmosphereActor)
+        {
+            SkyAtmosphereActor = World->SpawnActor<ASkyAtmosphere>(ASkyAtmosphere::StaticClass(), FVector(0, 0, 0), FRotator::ZeroRotator, Params);
+        }
+    }
 
     // Exponential height fog (cached — the atmosphere pass colors it every tick;
     // previously spawned with defaults and never touched again).

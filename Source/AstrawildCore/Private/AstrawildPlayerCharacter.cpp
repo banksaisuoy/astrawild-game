@@ -979,15 +979,15 @@ void AAstrawildPlayerCharacter::BuildRuntimeInputDefaults()
     Context->MapKey(PlayerSkillAction, EKeys::Y);
 
     // CGC-4: F6 — hide/show the HUD. The ONE planned additive action of the
-    // settings/QoL batch (census 32 -> 33); keyboard only, the gamepad context
-    // is untouched (Start already pauses; a gamepad HUD toggle can ride a
-    // future radial menu). F6 sits between the F5 quick-save and F9 quick-load
-    // and was unclaimed.
+    // settings/QoL batch (census 32 -> 33, then EDX-1 added IA_EchoDex -> 34);
+    // keyboard only, the gamepad context is untouched (Start already pauses; a
+    // gamepad HUD toggle can ride a future radial menu). F6 sits between the
+    // F5 quick-save and F9 quick-load and was unclaimed.
     ToggleHUDAction = MakeRuntimeAction(TEXT("AWD_ToggleHUD"), static_cast<uint8>(EInputActionValueType::Boolean));
     Context->MapKey(ToggleHUDAction, EKeys::F6);
 
     DefaultMappingContext = Context;
-    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (33 actions, WASD+mouse+wheel+UI+skiff+GDP+HUD toggle)."));
+    UE_LOG(LogAstrawild, Log, TEXT("Runtime default input mapping built (34 actions, WASD+mouse+wheel+UI+skiff+GDP+EchoDex+HUD toggle)."));
 }
 
 void AAstrawildPlayerCharacter::BuildGamepadInputDefaults()

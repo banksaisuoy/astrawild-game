@@ -178,6 +178,15 @@ void AAstrawildVisualOverhaulDirector::BeginPlay()
 {
     Super::BeginPlay();
 
+    // AUDIT-R1/L-8: a dedicated server has no renderer to feed — spawning the
+    // priority-10 PP volume and applying the toon grade there is pure waste.
+    // Tick already early-returns on NM_DedicatedServer; stop it entirely.
+    if (GetNetMode() == NM_DedicatedServer)
+    {
+        PrimaryActorTick.bCanEverTick = false;
+        return;
+    }
+
     ApplyToonGrade();
 
     UE_LOG(LogAstrawildWorld, Log,
@@ -242,7 +251,10 @@ void AAstrawildVisualOverhaulDirector::Tick(float DeltaTime)
         return; // no local pawn to orbit, no renderer to feed
     }
 
-    ElapsedSeconds += DeltaTime;
+    // AUDIT-R1/L-7: world clock instead of self-accumulated DeltaTime — the
+    // accumulated float drifted over long sessions and diverged from every other
+    // time-driven system. The orbit math is identical (same TimeSeconds feed).
+    const float WorldTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
 
     // Anchor = local player pawn; smoothed so the mote cloud glides with the
     // player instead of snapping on possession/teleport.
@@ -271,7 +283,15 @@ void AAstrawildVisualOverhaulDirector::Tick(float DeltaTime)
         bIsNight = GameState->IsNight();
     }
 
-    RebuildMotes(ElapsedSeconds, SmoothedAnchor, bIsNight);
+    // AUDIT-R1/M-6: throttle the vertex rebuild to ~15 Hz — the old path rebuilt
+    // the whole section every frame; at gameplay distance the motes are
+    // indistinguishable at 15 Hz and the tick cost drops by ~75%.
+    MoteRebuildAccumulator += DeltaTime;
+    if (MoteRebuildAccumulator >= MoteRebuildIntervalSeconds)
+    {
+        MoteRebuildAccumulator = 0.0f;
+        RebuildMotes(WorldTimeSeconds, SmoothedAnchor, bIsNight);
+    }
 }
 
 void AAstrawildVisualOverhaulDirector::RebuildMotes(const float TimeSeconds, const FVector& Anchor, const bool bIsNight)
@@ -285,6 +305,7 @@ void AAstrawildVisualOverhaulDirector::RebuildMotes(const float TimeSeconds, con
     if (Count <= 0)
     {
         MoteMesh->ClearAllMeshSections();
+        bMoteSectionBuilt = false; // AUDIT-R1/M-6: section is gone — recreate next time
         return;
     }
 
@@ -333,12 +354,29 @@ void AAstrawildVisualOverhaulDirector::RebuildMotes(const float TimeSeconds, con
 
     if (Vertices.Num() > 0)
     {
-        MoteMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, Colors,
-            TArray<FProcMeshTangent>(), false);
-
-        if (UMaterial* Material = AAstrawildBeamVfxActor::LoadVertexColorMaterial())
+        // AUDIT-R1/M-6: create the section once, then update it in place —
+        // CreateMeshSection every rebuild reallocated the section's buffers.
+        if (bMoteSectionBuilt)
         {
-            MoteMesh->SetMaterial(0, Material);
+            MoteMesh->UpdateMeshSection(0, Vertices, Triangles, Normals, UVs, Colors,
+                TArray<FProcMeshTangent>());
+        }
+        else
+        {
+            MoteMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, Colors,
+                TArray<FProcMeshTangent>(), false);
+            bMoteSectionBuilt = true;
+        }
+
+        // AUDIT-R1/M-6: resolve the material once and reuse it — the old path
+        // LoadObject'd the engine material on every single rebuild.
+        if (!CachedMoteMaterial)
+        {
+            CachedMoteMaterial = AAstrawildBeamVfxActor::LoadVertexColorMaterial();
+        }
+        if (CachedMoteMaterial)
+        {
+            MoteMesh->SetMaterial(0, CachedMoteMaterial);
         }
     }
 }

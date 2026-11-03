@@ -223,8 +223,16 @@ void UAstrawildHudWidget::NativeTick(const FGeometry& MyGeometry, const float In
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
 
+    // AUDIT-R1/M-4: while the HUD is collapsed (F6) the whole refresh pipeline —
+    // including the world-wide TActorIterator Echo sweeps — is wasted work on
+    // hidden Slate. Skip it; the first visible tick re-syncs everything.
+    if (GetVisibility() == ESlateVisibility::Collapsed)
+    {
+        return;
+    }
+
     RefreshAccumulator += InDeltaTime;
-    if (RefreshAccumulator >= 0.15f)
+    if (RefreshAccumulator >= 0.3f)
     {
         RefreshAccumulator = 0.0f;
         RefreshState();

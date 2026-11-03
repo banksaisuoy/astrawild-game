@@ -124,8 +124,14 @@ void AAstrawildPlayerController::BeginPlay()
 
     // Completion stage (TITLE): standalone/packaged boots show the title menu.
     // PIE keeps iterating without it; dedicated servers never get local screens.
+    // AUDIT-R1/M-1: NM_Client used to pass this gate — a LAN client booted into
+    // the title screen stacked over live gameplay (contradicting the contract in
+    // the header). Only the two netmodes that genuinely own a boot-time title
+    // (standalone + listen server) may show it; clients wait for replication.
     const UWorld* World = GetWorld();
-    const bool bStandaloneGame = World && !World->IsPlayInEditor() && World->GetNetMode() != NM_DedicatedServer;
+    const ENetMode BootNetMode = World ? World->GetNetMode() : NM_Standalone;
+    const bool bStandaloneGame = World && !World->IsPlayInEditor()
+        && (BootNetMode == NM_Standalone || BootNetMode == NM_ListenServer);
     if (bShowTitleScreenAtBoot && bStandaloneGame)
     {
         ShowTitleScreen();

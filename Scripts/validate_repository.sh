@@ -7,6 +7,15 @@ cd "$ROOT_DIR"
 command -v jq >/dev/null 2>&1 || { echo "ERROR: jq is required" >&2; exit 1; }
 jq empty ASTRAWILD.uproject
 
+# AUDIT-R1/H-2: without git-lfs in PATH the LFS smudge filter dies with a
+# silent "remote end hung up" (exit 128) that reads like a network failure.
+# Fail loudly up front instead — the fix is one PATH export away.
+command -v git-lfs >/dev/null 2>&1 || {
+  echo "ERROR: git-lfs is required but not on PATH." >&2
+  echo "       hint: export PATH=\"/path/to/git-lfs:\$PATH\" and re-run" >&2
+  exit 1
+}
+
 for required in \
   Source/AstrawildCore/AstrawildCore.Build.cs \
   Source/AstrawildCore/Public/AstrawildTypes.h \

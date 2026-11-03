@@ -5,7 +5,9 @@
 #include "GameFramework/Actor.h"
 #include "AstrawildVisualOverhaul.generated.h"
 
+class UMaterial;
 class UProceduralMeshComponent;
+
 class APostProcessVolume;
 
 /**
@@ -175,4 +177,18 @@ private:
     float ElapsedSeconds = 0.0f;
     FVector SmoothedAnchor = FVector::ZeroVector;
     bool bHasValidAnchor = false;
+
+    /** AUDIT-R1/M-6: mote mesh rebuild throttle (~15 Hz) — the per-frame vertex
+     *  rewrite + CreateMeshSection ran every tick; visually indistinguishable at
+     *  15 Hz for 7-11 cm motes, and the orbit math stays deterministic. */
+    float MoteRebuildAccumulator = 0.0f;
+    static constexpr float MoteRebuildIntervalSeconds = 1.0f / 15.0f;
+
+    /** AUDIT-R1/M-6: true once the (single) section exists — switch from
+     *  CreateMeshSection to the in-place UpdateMeshSection. */
+    bool bMoteSectionBuilt = false;
+
+    /** AUDIT-R1/M-6: material resolved once, not LoadObject'd every rebuild. */
+    UPROPERTY()
+    TObjectPtr<UMaterial> CachedMoteMaterial;
 };
