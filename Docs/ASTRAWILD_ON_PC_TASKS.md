@@ -59,7 +59,7 @@ git lfs pull
 ```
 
 **Expected**: `git lfs pull` ends without `pointer without content` errors
-(586 objects — first pull takes a while).
+(588 objects — first pull takes a while).
 **Fail route**: pointer errors → `git lfs pull --include="ArtSource/**"`,
 re-run; persisting → `Docs/ASTRAWILD_COMPILE_RISK.md` §4 O-items.
 

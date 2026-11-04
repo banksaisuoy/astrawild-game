@@ -91,9 +91,9 @@ content, zero-Blueprint gameplay). Product canon (v9.5):
 | Dungeons / bosses | 3 / 4 |
 | Endings + post-game + New Game Plus | A/B + yes + yes |
 | LAN co-op | private 4-player listen-server |
-| Automation contracts (your Test.ps1 target) | 140 |
+| Automation contracts (your Test.ps1 target) | 147 |
 | ArtSource real-mesh catalog | 109 assets, manifest 189/189 present |
-| Git LFS objects | 586 pointers |
+| Git LFS objects | 588 pointers |
 | Content (.uasset/.umap) packages | 416 |
 | Engine | UE 5.8.2 (EngineAssociation "5.8"), VS2022 MSVC v143 |
 
@@ -275,10 +275,10 @@ git pull origin final-completion
 git lfs pull
 ```
 
-**P4.3 Verify LFS (expect exactly 586):**
+**P4.3 Verify LFS (expect exactly 588):**
 
 ```powershell
-git lfs ls-files | Measure-Object -Line      # expect: Lines: 586
+git lfs ls-files | Measure-Object -Line      # expect: Lines: 588
 git lfs fetch --all                          # expect: no missing objects
 # spot-check one binary really resolved (not a pointer file):
 git show HEAD:Content/Vehicles/SM_Vehicle_DawnSkiff.uasset | Select-Object -First 3
@@ -295,7 +295,7 @@ flags — that is the documented convention mismatch, not corruption. If
 ```powershell
 python Scripts\validate_final_run.py
 # expect final line: FINAL RUN VALIDATION: ALL CHECKS PASSED
-# (146-test gate, census gates: 229 species / 204 rows / 22 quests /
+# (147-test gate, census gates: 229 species / 204 rows / 22 quests /
 #  13 NPCs / 189-manifest / 51 direct-mesh rows / Tier-B 36 ...)
 
 & "C:\Program Files\Git\bin\bash.exe" Scripts/validate_repository.sh
@@ -459,7 +459,7 @@ $env:UE_ROOT = "C:\Program Files\Epic Games\UE_5.8"     # your engine root
 # writes Automation_Output.txt (or $env:ASTRAWILD_AUTOMATION_OUTPUT)
 ```
 
-**PASS = `Result={Success}` count == 140 and `Result={Fail}` count == 0.**
+**PASS = `Result={Success}` count == 147 and `Result={Fail}` count == 0.**
 The exact number is pinned by the static validator (rule 4) — read it from
 `Automation_Output.txt`, never from memory. Contracts to watch:
 `ASTRAWILD.Inventory.TransactionSafety`, `ASTRAWILD.Save.SchemaV5Ending`,
@@ -613,7 +613,7 @@ late join → authority sanity → session flow honesty). Capture raw logs
 | Import report `total_missing > 0` | LFS sources incomplete | re-check P4.3 (`git lfs pull origin`); only then treat as engine finding |
 | Terrain renders flat/wrong | Landscape material unset | P6 manual step: assign M_Landscape_SciFiFrontier on MainMap |
 | PIE black screen / shader crash | DDC cold or RHI | wait for shader compile; retry; `-d3d11` only as a diagnostic, evidence on default RHI |
-| Test count != 140 | repo/version drift | read the count from `Scripts/validate_final_run.py` gate — it pins the truth; do not "fix" the count |
+| Test count != 147 | repo/version drift | read the count from `Scripts/validate_final_run.py` gate — it pins the truth; do not "fix" the count |
 | `git lfs fsck` exit 1 (~3,954 flags) | documented convention mismatch | NOTHING — do not rewrite history (rule 7) |
 | Disk fills mid-build | intermediates + DDC | point DDC elsewhere (`-DDC=<path>` or shared DDC env); clean `Intermediate/` between evidence builds (full rebuild then required) |
 | LAN clients cannot see session | firewall blocks beacon | allow the game binaries on Private networks; verify same subnet |
@@ -626,11 +626,11 @@ late join → authority sanity → session flow honesty). Capture raw logs
 | Metric | Expected |
 |---|---|
 | Branch / integration | `final-completion` |
-| Automation contracts | 139 (validator gate pins it) |
+| Automation contracts | 147 (validator gate pins it) |
 | Census | 229 species · 204 bestiary rows · 12 zones · 22 quests (17 MQ + 5 post-game) · 13 NPCs/trees · 17 techs · 58 recipes · 26 buildings · 78 items · 11 loot tables · 8 weapons · 10 resource nodes · 8 work sites · 16 world events · 17 POIs · 3 robots |
 | ArtSource manifest | 189 entries / 189 present / 0 pending (109 real meshes ← 109 unique CC0 sources) |
 | Direct-mesh species coverage | 51 / 229 |
-| LFS pointers | 586 (all objects on disk after `git lfs pull`) |
+| LFS pointers | 588 (all objects on disk after `git lfs pull`) |
 | Content packages | 416 .uasset/.umap with UE magic |
 | Engine | UE 5.8.2, target `ASTRAWILDEditor Win64 Development` |
 | Golden path stages | 23 (queue §2, V-6..V-28) |
