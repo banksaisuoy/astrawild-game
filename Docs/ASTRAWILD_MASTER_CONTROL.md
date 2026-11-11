@@ -145,7 +145,8 @@ No cheat-command dependency anywhere in the chain.
   `Scripts/validate_final_run.py` §11 equality gates and re-derived live by the
   engine-side "live census" registry log): **78 items, 58 recipes, 17 techs, 22 quests (17 MQ + 5 post-game DCP-1),
   229 Echo species, 26 buildings, 11 loot tables, 17 POIs, 16 world events, 13 NPCs,
-  13 dialogue trees, 8 weapon profiles, 10 resource nodes, 8 work sites, 3 robots** (NPCs/trees 11→13 = DCP-4 Vess/Ione).
+  13 dialogue trees, 8 weapon profiles, 10 resource nodes, 14 work sites, 3 robots** (NPCs/trees 11→13 = DCP-4 Vess/Ione;
+  sites 8→14 = CP-03 zone coverage — all 12 zones now carry an outpost).
   Historical doc counts (67 items / 49 recipes / 12 POIs / 17 buildings) were stale —
   superseded. The automation suite holds **147 world-free contract tests** (109 through DP-9 + 2 LCP-2 + 2 LCP-3 + 2 LCP-4 + 2 LCP-5 + 2 LCP-6 LAN co-op + 1 PCR-1 Field Journal + 1 PCR-2 Echo Roster + 1 PCR-3 World Map + 1 PCR-4 Tier-B library + 1 PCR-5 hunt system + 1 FPP-1 presentation contract + 1 SCI-FANTASY mutation contract + 7 DCP + 1 VIS-1 creature identity + 5 CGC contracts + 1 completion-stage victory chain + 1 FIX-1 night-raid pool + 5 VO-1R visual-overhaul contracts + 1 EDX-1 EchoDex search). The player-facing rulebook is `Docs/ASTRAWILD_PLAYER_RULES.md` (every number sourced from live code at the freeze SHA).
 

@@ -203,7 +203,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1262,
+   "line": 1345,
    "id": "Echo_Terraquill",
    "origin": "production",
    "name": "Terraquill",
@@ -247,7 +247,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1272,
+   "line": 1355,
    "id": "Echo_Cindermule",
    "origin": "production",
    "name": "Cindermule",
@@ -290,7 +290,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1283,
+   "line": 1366,
    "id": "Echo_Voltpylon",
    "origin": "production",
    "name": "Voltpylon",
@@ -333,7 +333,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1296,
+   "line": 1379,
    "id": "Echo_Bastionbeetle",
    "origin": "production",
    "name": "Bastionbeetle",
@@ -376,7 +376,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1307,
+   "line": 1390,
    "id": "Echo_Mistmender",
    "origin": "production",
    "name": "Mistmender",
@@ -420,7 +420,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1320,
+   "line": 1403,
    "id": "Echo_Deepdelver",
    "origin": "production",
    "name": "Deepdelver",
@@ -467,7 +467,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2950,
+   "line": 3041,
    "id": "Echo_GlassTyrant",
    "origin": "production",
    "name": "Glass Tyrant",
@@ -503,7 +503,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2961,
+   "line": 3052,
    "id": "Echo_EyeSentinel",
    "origin": "production",
    "name": "Eye Sentinel",
@@ -535,7 +535,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2975,
+   "line": 3066,
    "id": "Echo_DrownedSovereign",
    "origin": "production",
    "name": "The Drowned Sovereign",
@@ -571,7 +571,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1420,
+   "line": 1503,
    "id": "Echo_TerraquillVerdant",
    "base_species": "Echo_Terraquill",
    "name": "Terraquill Verdant",
@@ -583,7 +583,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1421,
+   "line": 1504,
    "id": "Echo_CindermulePyre",
    "base_species": "Echo_Cindermule",
    "name": "Cindermule Pyre",
@@ -595,7 +595,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1422,
+   "line": 1505,
    "id": "Echo_VoltpylonTempest",
    "base_species": "Echo_Voltpylon",
    "name": "Voltpylon Tempest",
@@ -607,7 +607,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1423,
+   "line": 1506,
    "id": "Echo_BastionbeetleBulwark",
    "base_species": "Echo_Bastionbeetle",
    "name": "Bastionbeetle Bulwark",
@@ -619,7 +619,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1424,
+   "line": 1507,
    "id": "Echo_MistmenderRime",
    "base_species": "Echo_Mistmender",
    "name": "Mistmender Rime",
@@ -631,7 +631,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1425,
+   "line": 1508,
    "id": "Echo_DeepdelverAbyssal",
    "base_species": "Echo_Deepdelver",
    "name": "Deepdelver Abyssal",

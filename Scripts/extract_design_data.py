@@ -1287,7 +1287,7 @@ def extract_save_schema():
 EXPECTED_CENSUS = {
     "items": 78, "recipes": 58, "species": 229, "buildings": 26,
     "techs": 17, "quests": 22, "loot_tables": 11, "npcs": 13,
-    "weapons": 8, "resource_nodes": 10, "work_sites": 8,
+    "weapons": 8, "resource_nodes": 10, "work_sites": 14,
     "world_events": 16, "pois": 17, "dialogue_trees": 13, "robots": 3,
 }
 

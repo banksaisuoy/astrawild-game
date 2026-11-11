@@ -293,7 +293,7 @@ EXPECTED_CENSUS = {
     "npcs": 13,
     "weapons": 8,
     "resource_nodes": 10,
-    "work_sites": 8,
+    "work_sites": 14,
     "world_events": 16,
     "pois": 17,
     "dialogue_trees": 13,

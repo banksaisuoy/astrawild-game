@@ -437,7 +437,7 @@ weather Clear, `Research: 0 RP`, quest tracker "First Light: Wood 0/10".
 ```
 78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies,
 22 quests (17 MQ + 5 post-game DCP-1), 11 loot tables, 13 NPCs (11 + DCP-4
-Vess/Ione), 8 weapon profiles, 10 resource nodes, 8 work sites,
+Vess/Ione), 8 weapon profiles, 10 resource nodes, 14 work sites,
 16 world events, 17 POIs, 12 biomes, 13 dialogue trees (11 + DCP-4), 3 robots.
 ```
 
@@ -627,7 +627,7 @@ late join → authority sanity → session flow honesty). Capture raw logs
 |---|---|
 | Branch / integration | `final-completion` |
 | Automation contracts | 147 (validator gate pins it) |
-| Census | 229 species · 204 bestiary rows · 12 zones · 22 quests (17 MQ + 5 post-game) · 13 NPCs/trees · 17 techs · 58 recipes · 26 buildings · 78 items · 11 loot tables · 8 weapons · 10 resource nodes · 8 work sites · 16 world events · 17 POIs · 3 robots |
+| Census | 229 species · 204 bestiary rows · 12 zones · 22 quests (17 MQ + 5 post-game) · 13 NPCs/trees · 17 techs · 58 recipes · 26 buildings · 78 items · 11 loot tables · 8 weapons · 10 resource nodes · 14 work sites · 16 world events · 17 POIs · 3 robots |
 | ArtSource manifest | 189 entries / 189 present / 0 pending (109 real meshes ← 109 unique CC0 sources) |
 | Direct-mesh species coverage | 51 / 229 |
 | LFS pointers | 588 (all objects on disk after `git lfs pull`) |

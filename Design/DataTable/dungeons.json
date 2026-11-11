@@ -3,23 +3,23 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 859,
+   "line": 876,
    "id": "Dungeon_HollowUnderlight",
    "properties": [
     {
      "prop": "RoomCount",
      "value": 5,
-     "line": 860
+     "line": 877
     },
     {
      "prop": "BossDefinitionId",
      "value": "Echo_Gloomfang",
-     "line": 861
+     "line": 878
     },
     {
      "prop": "BossDefeatEventId",
      "value": "Creature_UnderlightWarden",
-     "line": 862
+     "line": 879
     }
    ],
    "room_count": 5,
@@ -27,33 +27,33 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 894,
+   "line": 911,
    "id": "Dungeon_SunkenVault",
    "properties": [
     {
      "prop": "RoomCount",
      "value": 4,
-     "line": 895
+     "line": 912
     },
     {
      "prop": "BossDefinitionId",
      "value": "Echo_Dawnfang",
-     "line": 896
+     "line": 913
     },
     {
      "prop": "BossDefeatEventId",
      "value": "Creature_VaultColossus",
-     "line": 897
+     "line": 914
     },
     {
      "prop": "RewardTechnologyId",
      "value": null,
-     "line": 899
+     "line": 916
     },
     {
      "prop": "DungeonCompletionResearchPoints",
      "value": 20,
-     "line": 900
+     "line": 917
     }
    ],
    "room_count": 4,
@@ -61,33 +61,33 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildWorldBootstrapper.cpp",
-   "line": 974,
+   "line": 991,
    "id": "Dungeon_EyeOfTheMaelstrom",
    "properties": [
     {
      "prop": "RoomCount",
      "value": 5,
-     "line": 975
+     "line": 992
     },
     {
      "prop": "BossDefinitionId",
      "value": "Echo_DrownedSovereign",
-     "line": 976
+     "line": 993
     },
     {
      "prop": "BossDefeatEventId",
      "value": "Creature_DrownedSovereign",
-     "line": 977
+     "line": 994
     },
     {
      "prop": "RewardTechnologyId",
      "value": null,
-     "line": 979
+     "line": 996
     },
     {
      "prop": "DungeonCompletionResearchPoints",
      "value": 30,
-     "line": 980
+     "line": 997
     }
    ],
    "room_count": 5,

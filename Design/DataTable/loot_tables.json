@@ -131,7 +131,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 883,
+   "line": 966,
    "id": "Loot_EventSupplyDrop",
    "guaranteed_drops": [
     {
@@ -151,7 +151,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 885,
+   "line": 968,
    "id": "Loot_EventMeteor",
    "guaranteed_drops": [
     {
@@ -167,7 +167,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 887,
+   "line": 970,
    "id": "Loot_POIAncient",
    "guaranteed_drops": [
     {
@@ -183,7 +183,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 889,
+   "line": 972,
    "id": "Loot_POIRuin",
    "guaranteed_drops": [
     {
@@ -199,7 +199,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 891,
+   "line": 974,
    "id": "Loot_POIWatchtower",
    "guaranteed_drops": [
     {
@@ -215,7 +215,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3002,
+   "line": 3093,
    "id": "Loot_EyeCore",
    "guaranteed_drops": [
     {

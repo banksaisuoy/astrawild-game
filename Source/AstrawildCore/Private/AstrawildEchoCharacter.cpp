@@ -1426,15 +1426,43 @@ void AAstrawildEchoCharacter::NotifyWeaknessHit(const float AppliedDamage)
         return;
     }
 
-    // 2) Audio cue: the Sci-Fantasy sound-set vocalization first (opt-in —
-    // the SFXSet_* cues resolve only after the Phase 4 import lands them),
-    // then the ArtPack-bound energy impact sound — the SAME binding the
-    // weapons use (no new /Game/ reference; LoadSynchronous short-circuits
-    // once the asset is resident, matching the weapon impact path).
+    // 2) Audio cue — three fail-closed tiers (CP-03, 2026-11-04):
+    //   (a) the bespoke hero cries — twelve A_Echo_<Species>_* packages are
+    //       REAL imported assets in Content/Audio today (not import-pending),
+    //       so the six hero species AND their evolved forms vocalize now;
+    //   (b) the Sci-Fantasy sound-set vocalization (opt-in — the SFXSet_*
+    //       cues resolve only after the Phase 4 import lands them);
+    //   (c) the ArtPack-bound energy impact sound — the SAME binding the
+    //       weapons use. LoadSynchronous short-circuits once the asset is
+    //       resident, matching the weapon impact path.
     USoundBase* ChosenCue = nullptr;
     if (IsValid(EchoDefinition))
     {
-        if (const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId))
+        // (a) Bespoke hero cries — evolved forms inherit the base cry (the
+        // same inheritance rule the CP-03 evolution pack applies to meshes).
+        static const TMap<FName, const TCHAR*> BespokeCries = []()
+        {
+            TMap<FName, const TCHAR*> Table;
+            Table.Add(TEXT("Echo_Terraquill"), TEXT("/Game/Audio/A_Echo_Terraquill_Call"));
+            Table.Add(TEXT("Echo_TerraquillVerdant"), TEXT("/Game/Audio/A_Echo_Terraquill_Call"));
+            Table.Add(TEXT("Echo_Cindermule"), TEXT("/Game/Audio/A_Echo_Cindermule_Grunt"));
+            Table.Add(TEXT("Echo_CindermulePyre"), TEXT("/Game/Audio/A_Echo_Cindermule_Grunt"));
+            Table.Add(TEXT("Echo_Voltpylon"), TEXT("/Game/Audio/A_Echo_Voltpylon_Hum"));
+            Table.Add(TEXT("Echo_VoltpylonTempest"), TEXT("/Game/Audio/A_Echo_Voltpylon_Hum"));
+            Table.Add(TEXT("Echo_Bastionbeetle"), TEXT("/Game/Audio/A_Echo_Bastionbeetle_Skitter"));
+            Table.Add(TEXT("Echo_BastionbeetleBulwark"), TEXT("/Game/Audio/A_Echo_Bastionbeetle_Skitter"));
+            Table.Add(TEXT("Echo_Mistmender"), TEXT("/Game/Audio/A_Echo_Mistmender_Chime"));
+            Table.Add(TEXT("Echo_MistmenderRime"), TEXT("/Game/Audio/A_Echo_Mistmender_Chime"));
+            Table.Add(TEXT("Echo_Deepdelver"), TEXT("/Game/Audio/A_Echo_Deepdelver_Rumble"));
+            Table.Add(TEXT("Echo_DeepdelverAbyssal"), TEXT("/Game/Audio/A_Echo_Deepdelver_Rumble"));
+            return Table;
+        }();
+        if (const TCHAR* const* BespokePath = BespokeCries.Find(EchoDefinition->DefinitionId))
+        {
+            ChosenCue = TSoftObjectPtr<USoundBase>(FSoftObjectPath(
+                AstrawildArtPack::CanonicalAssetPath(*BespokePath))).LoadSynchronous();
+        }
+        else if (const FEchoMutationSpec* MutationSpec = FAstrawildEchoMutator::FindSpec(EchoDefinition->DefinitionId))
         {
             const TSoftObjectPtr<USoundBase> Vocal(FSoftObjectPath(
                 AstrawildArtPack::CanonicalAssetPath(FAstrawildEchoMutator::BuildSoundSetCuePath(MutationSpec->SoundSetId, 0))));

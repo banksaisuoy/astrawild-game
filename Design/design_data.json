@@ -1,8 +1,8 @@
 {
  "schema": "astrawild-design-data/2",
- "generated": "2026-11-03T11:18:26",
+ "generated": "2026-11-11T08:08:53",
  "generator": "Scripts/extract_design_data.py",
- "repo_head": "381a99b8abaa0dc5384ca8f7c6ebe76812af4167",
+ "repo_head": "b42d0310413e7db72d7ab5547b3afc048bc14ee0",
  "rule": "Every value below was parsed from Source/ by the generator. No value is hand-typed (Master Directive v1 rule R1).",
  "domains": {
   "tunables": {
@@ -15711,7 +15711,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1262,
+     "line": 1345,
      "id": "Echo_Terraquill",
      "origin": "production",
      "name": "Terraquill",
@@ -15755,7 +15755,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1272,
+     "line": 1355,
      "id": "Echo_Cindermule",
      "origin": "production",
      "name": "Cindermule",
@@ -15798,7 +15798,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1283,
+     "line": 1366,
      "id": "Echo_Voltpylon",
      "origin": "production",
      "name": "Voltpylon",
@@ -15841,7 +15841,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1296,
+     "line": 1379,
      "id": "Echo_Bastionbeetle",
      "origin": "production",
      "name": "Bastionbeetle",
@@ -15884,7 +15884,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1307,
+     "line": 1390,
      "id": "Echo_Mistmender",
      "origin": "production",
      "name": "Mistmender",
@@ -15928,7 +15928,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1320,
+     "line": 1403,
      "id": "Echo_Deepdelver",
      "origin": "production",
      "name": "Deepdelver",
@@ -15975,7 +15975,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2950,
+     "line": 3041,
      "id": "Echo_GlassTyrant",
      "origin": "production",
      "name": "Glass Tyrant",
@@ -16011,7 +16011,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2961,
+     "line": 3052,
      "id": "Echo_EyeSentinel",
      "origin": "production",
      "name": "Eye Sentinel",
@@ -16043,7 +16043,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2975,
+     "line": 3066,
      "id": "Echo_DrownedSovereign",
      "origin": "production",
      "name": "The Drowned Sovereign",
@@ -16079,7 +16079,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1420,
+     "line": 1503,
      "id": "Echo_TerraquillVerdant",
      "base_species": "Echo_Terraquill",
      "name": "Terraquill Verdant",
@@ -16091,7 +16091,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1421,
+     "line": 1504,
      "id": "Echo_CindermulePyre",
      "base_species": "Echo_Cindermule",
      "name": "Cindermule Pyre",
@@ -16103,7 +16103,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1422,
+     "line": 1505,
      "id": "Echo_VoltpylonTempest",
      "base_species": "Echo_Voltpylon",
      "name": "Voltpylon Tempest",
@@ -16115,7 +16115,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1423,
+     "line": 1506,
      "id": "Echo_BastionbeetleBulwark",
      "base_species": "Echo_Bastionbeetle",
      "name": "Bastionbeetle Bulwark",
@@ -16127,7 +16127,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1424,
+     "line": 1507,
      "id": "Echo_MistmenderRime",
      "base_species": "Echo_Mistmender",
      "name": "Mistmender Rime",
@@ -16139,7 +16139,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1425,
+     "line": 1508,
      "id": "Echo_DeepdelverAbyssal",
      "base_species": "Echo_Deepdelver",
      "name": "Deepdelver Abyssal",
@@ -16910,7 +16910,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2926,
+     "line": 3017,
      "id": "Item_SovereignCore",
      "name": "Sovereign Core",
      "category": "QuestItem",
@@ -16920,7 +16920,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2932,
+     "line": 3023,
      "id": "Item_MaelstromGlass",
      "name": "Maelstrom Glass",
      "category": "Material",
@@ -16930,7 +16930,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2938,
+     "line": 3029,
      "id": "Item_SkiffStratosCoil",
      "name": "Skiff Stratos Coil",
      "category": "QuestItem",
@@ -18506,7 +18506,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2996,
+     "line": 3087,
      "id": "Recipe_SkiffStratosCoil",
      "name": "Skiff Stratos Coil",
      "inputs": [
@@ -19254,7 +19254,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1505,
+     "line": 1596,
      "id": "Tech_WeaponSystems",
      "name": "Weapon Systems",
      "era": "Electrical",
@@ -19272,7 +19272,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1511,
+     "line": 1602,
      "id": "Tech_AdvancedBallistics",
      "name": "Advanced Ballistics",
      "era": "AdvancedEnergy",
@@ -19290,7 +19290,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1517,
+     "line": 1608,
      "id": "Tech_ExperimentalArsenal",
      "name": "Experimental Arsenal",
      "era": "Ancient",
@@ -19307,7 +19307,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1523,
+     "line": 1614,
      "id": "Tech_ExosuitEngineering",
      "name": "Exosuit Engineering",
      "era": "AdvancedEnergy",
@@ -19326,7 +19326,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1529,
+     "line": 1620,
      "id": "Tech_ScannerArray",
      "name": "Scanner Array",
      "era": "AdvancedEnergy",
@@ -19342,7 +19342,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1535,
+     "line": 1626,
      "id": "Tech_AutomationII",
      "name": "Automation II",
      "era": "AdvancedEnergy",
@@ -19363,7 +19363,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2991,
+     "line": 3082,
      "id": "Tech_SkiffEngineering",
      "name": "Skiff Engineering",
      "era": "AdvancedEnergy",
@@ -19768,12 +19768,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1549,
+     "line": 1640,
      "id": "Quest_SignalsInTheStatic",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1553,
+       "line": 1644,
        "type": "CraftRecipe",
        "target": "Recipe_ArrayScanner",
        "count": 1,
@@ -19781,7 +19781,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1561,
+       "line": 1652,
        "type": "DiscoverPOI",
        "target": "POI_FirstLightRuin",
        "count": 1,
@@ -19789,7 +19789,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1569,
+       "line": 1660,
        "type": "DiscoverPOI",
        "target": "POI_GlimmerwoodMonolith",
        "count": 1,
@@ -19800,7 +19800,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1576,
+       "line": 1667,
        "prop": "RewardItems",
        "value": [
         {
@@ -19821,12 +19821,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1582,
+     "line": 1673,
      "id": "Quest_VanguardProtocol",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1586,
+       "line": 1677,
        "type": "CraftRecipe",
        "target": "Recipe_VanguardVest",
        "count": 1,
@@ -19834,7 +19834,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1594,
+       "line": 1685,
        "type": "CraftRecipe",
        "target": "Recipe_RobotSentinel",
        "count": 1,
@@ -19842,7 +19842,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1602,
+       "line": 1693,
        "type": "SurviveTime",
        "target": null,
        "count": null,
@@ -19853,7 +19853,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 1609,
+       "line": 1700,
        "prop": "RewardItems",
        "value": [
         {
@@ -19874,12 +19874,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3007,
+     "line": 3098,
      "id": "Quest_StormAnchors",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3011,
+       "line": 3102,
        "type": "DiscoverPOI",
        "target": "POI_FrostveilSignalSource",
        "count": 1,
@@ -19887,7 +19887,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3019,
+       "line": 3110,
        "type": "DiscoverPOI",
        "target": "POI_SunscarMirageStone",
        "count": 1,
@@ -19895,7 +19895,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3027,
+       "line": 3118,
        "type": "DiscoverPOI",
        "target": "POI_StormcrestArray",
        "count": 1,
@@ -19906,7 +19906,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3034,
+       "line": 3125,
        "prop": "RewardItems",
        "value": [
         {
@@ -19923,12 +19923,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3041,
+     "line": 3132,
      "id": "Quest_CrownRelay",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3045,
+       "line": 3136,
        "type": "DefeatCreature",
        "target": "Creature_GlassTyrant",
        "count": 1,
@@ -19936,7 +19936,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3053,
+       "line": 3144,
        "type": "CraftRecipe",
        "target": "Recipe_SkiffStratosCoil",
        "count": 1,
@@ -19947,7 +19947,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3060,
+       "line": 3151,
        "prop": "RewardItems",
        "value": [
         {
@@ -19964,12 +19964,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3067,
+     "line": 3158,
      "id": "Quest_EyeOfTheMaelstrom",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3071,
+       "line": 3162,
        "type": "ReachLocation",
        "target": "Location_EyeGate",
        "count": 1,
@@ -19977,7 +19977,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3079,
+       "line": 3170,
        "type": "ReachLocation",
        "target": "Location_EyeOfTheMaelstrom",
        "count": 1,
@@ -19988,7 +19988,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3086,
+       "line": 3177,
        "prop": "RewardItems",
        "value": [
         {
@@ -20005,12 +20005,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3093,
+     "line": 3184,
      "id": "Quest_TheDrownedSovereign",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3097,
+       "line": 3188,
        "type": "DefeatCreature",
        "target": "Creature_DrownedSovereign",
        "count": 1,
@@ -20021,7 +20021,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3104,
+       "line": 3195,
        "prop": "RewardItems",
        "value": [
         {
@@ -20042,12 +20042,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3111,
+     "line": 3202,
      "id": "Quest_FirstDawnAgain",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3115,
+       "line": 3206,
        "type": "ReachLocation",
        "target": "Location_Dawnstead",
        "count": 1,
@@ -20058,7 +20058,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3122,
+       "line": 3213,
        "prop": "RewardItems",
        "value": []
       }
@@ -20069,12 +20069,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3207,
+     "line": 3298,
      "id": "Quest_PostVigil",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3211,
+       "line": 3302,
        "type": "DefeatCreature",
        "target": "Echo_Gloomfang",
        "count": 3,
@@ -20082,7 +20082,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3219,
+       "line": 3310,
        "type": "DefeatCreature",
        "target": "Echo_Emberfang",
        "count": 3,
@@ -20090,7 +20090,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3227,
+       "line": 3318,
        "type": "DefeatCreature",
        "target": "Echo_Rimefang",
        "count": 2,
@@ -20101,7 +20101,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3234,
+       "line": 3325,
        "prop": "RewardItems",
        "value": [
         {
@@ -20117,12 +20117,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3249,
+     "line": 3340,
      "id": "Quest_PostFieldNotes",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3253,
+       "line": 3344,
        "type": "ObserveEcho",
        "target": "Echo_Lumewisp",
        "count": 3,
@@ -20130,7 +20130,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3261,
+       "line": 3352,
        "type": "ObserveEcho",
        "target": "Echo_Auroraling",
        "count": 2,
@@ -20138,7 +20138,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3269,
+       "line": 3360,
        "type": "CaptureEcho",
        "target": "Echo_Sprigling",
        "count": 1,
@@ -20149,7 +20149,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3276,
+       "line": 3367,
        "prop": "RewardItems",
        "value": [
         {
@@ -20170,12 +20170,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3291,
+     "line": 3382,
      "id": "Quest_PostGlassTrade",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3295,
+       "line": 3386,
        "type": "CollectItem",
        "target": "Item_MaelstromGlass",
        "count": 6,
@@ -20183,7 +20183,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3303,
+       "line": 3394,
        "type": "CollectItem",
        "target": "Item_DuneGlass",
        "count": 4,
@@ -20191,7 +20191,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3311,
+       "line": 3402,
        "type": "DiscoverPOI",
        "target": "POI_TidebreakerWreck",
        "count": 1,
@@ -20202,7 +20202,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3318,
+       "line": 3409,
        "prop": "RewardItems",
        "value": [
         {
@@ -20219,12 +20219,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3333,
+     "line": 3424,
      "id": "Quest_PostDeepRecords",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3337,
+       "line": 3428,
        "type": "DiscoverPOI",
        "target": "POI_PearlseaTidecache",
        "count": 1,
@@ -20232,7 +20232,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3345,
+       "line": 3436,
        "type": "DiscoverPOI",
        "target": "POI_ShallowsSextant",
        "count": 1,
@@ -20240,7 +20240,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3353,
+       "line": 3444,
        "type": "CaptureEcho",
        "target": "Echo_Brinefin",
        "count": 2,
@@ -20251,7 +20251,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3360,
+       "line": 3451,
        "prop": "RewardItems",
        "value": [
         {
@@ -20268,12 +20268,12 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3375,
+     "line": 3466,
      "id": "Quest_PostLongWatch",
      "objectives": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3379,
+       "line": 3470,
        "type": "VisitZone",
        "target": "Zone_Stormcrest",
        "count": 1,
@@ -20281,7 +20281,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3387,
+       "line": 3478,
        "type": "VisitZone",
        "target": "Zone_Frostveil",
        "count": 1,
@@ -20289,7 +20289,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3395,
+       "line": 3486,
        "type": "VisitZone",
        "target": "Zone_TidebreakerIsles",
        "count": 1,
@@ -20297,7 +20297,7 @@
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3403,
+       "line": 3494,
        "type": "SurviveTime",
        "target": null,
        "count": 300,
@@ -20308,7 +20308,7 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-       "line": 3410,
+       "line": 3501,
        "prop": "RewardItems",
        "value": [
         {
@@ -20343,11 +20343,30 @@
       0.65
      ],
      "greeting": "The fields are calm — for now.",
-     "attributes": []
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1253,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1254,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1255,
+       "prop": "VisualMeshScale",
+       "value": 1.0
+      }
+     ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1255,
+     "line": 1260,
      "id": "NPC_VendorTam",
      "name": "Trader Tam",
      "role": "Vendor",
@@ -20361,15 +20380,33 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1257,
+       "line": 1262,
        "prop": "ShopLootTableId",
        "value": "Loot_VendorStarter"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1267,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1268,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1269,
+       "prop": "VisualMeshScale",
+       "value": 0.97
       }
      ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1267,
+     "line": 1275,
      "id": "NPC_HerbalistWren",
      "name": "Herbalist Wren",
      "role": "Vendor",
@@ -20383,21 +20420,39 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1269,
+       "line": 1277,
        "prop": "ShopLootTableId",
        "value": "Loot_VendorHerbalist"
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1270,
+       "line": 1278,
        "prop": "CurrencyItemId",
        "value": "Item_DawnShard"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1282,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1283,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1284,
+       "prop": "VisualMeshScale",
+       "value": 0.94
       }
      ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1279,
+     "line": 1290,
      "id": "NPC_BlacksmithBorin",
      "name": "Blacksmith Borin",
      "role": "Vendor",
@@ -20411,21 +20466,33 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1281,
+       "line": 1292,
        "prop": "ShopLootTableId",
        "value": "Loot_VendorArmory"
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1282,
+       "line": 1293,
        "prop": "CurrencyItemId",
        "value": "Item_DawnShard"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1297,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_Exosuit"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1298,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_Survivor_Idle"
       }
      ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1291,
+     "line": 1305,
      "id": "NPC_ElderRowan",
      "name": "Elder Rowan",
      "offered_quest": "Quest_WingsOverTheVale",
@@ -20438,11 +20505,30 @@
       0.9
      ],
      "greeting": "Sit. The Vale has grown wider while you slept.",
-     "attributes": []
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1312,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1313,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1314,
+       "prop": "VisualMeshScale",
+       "value": 0.96
+      }
+     ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1302,
+     "line": 1319,
      "id": "NPC_GuardSela",
      "name": "Guard Captain Sela",
      "role": "Guard",
@@ -20454,11 +20540,30 @@
      ],
      "greeting": "Keep the fire behind you and the dark ahead.",
      "dialogue_tree": "Dialogue_GuardSela",
-     "attributes": []
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1324,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_Exosuit"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1325,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_Survivor_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1326,
+       "prop": "VisualMeshScale",
+       "value": 1.04
+      }
+     ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1312,
+     "line": 1332,
      "id": "NPC_GuardBram",
      "name": "Guard Bram",
      "role": "Guard",
@@ -20469,11 +20574,24 @@
       0.9
      ],
      "greeting": "Gloomfangs again. Always Gloomfangs.",
-     "attributes": []
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1337,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_Exosuit"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1338,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_Survivor_Idle"
+      }
+     ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1322,
+     "line": 1345,
      "id": "NPC_FarmerJori",
      "name": "Farmer Jori",
      "role": "Villager",
@@ -20484,11 +20602,30 @@
       0.4
      ],
      "greeting": "Spriglings turn the soil better than any hoe.",
-     "attributes": []
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1350,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1351,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1352,
+       "prop": "VisualMeshScale",
+       "value": 0.95
+      }
+     ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1334,
+     "line": 1360,
      "id": "NPC_SkiffWardenKael",
      "name": "Skiff Warden Kael",
      "offered_quest": "Quest_SunkenVault",
@@ -20501,11 +20638,30 @@
       0.85
      ],
      "greeting": "Skiff's fueled. The isles are yours now.",
-     "attributes": []
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1367,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1368,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1369,
+       "prop": "VisualMeshScale",
+       "value": 1.02
+      }
+     ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1345,
+     "line": 1374,
      "id": "NPC_FisherNima",
      "name": "Fisher Nima",
      "role": "Vendor",
@@ -20519,21 +20675,39 @@
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1347,
+       "line": 1376,
        "prop": "ShopLootTableId",
        "value": "Loot_VendorDriftwood"
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1348,
+       "line": 1377,
        "prop": "CurrencyItemId",
        "value": "Item_DawnShard"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1381,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1382,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1383,
+       "prop": "VisualMeshScale",
+       "value": 0.93
       }
      ]
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1357,
+     "line": 1389,
      "id": "NPC_OldSaltPerry",
      "name": "Old Salt Perry",
      "role": "Villager",
@@ -20545,46 +20719,6 @@
      ],
      "greeting": "The tide took the old world. It can wait for you too.",
      "dialogue_tree": "Dialogue_OldSaltPerry",
-     "attributes": []
-    },
-    {
-     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1374,
-     "id": "NPC_Vess",
-     "name": "Vess, the Storm-Scholar",
-     "village": "Village_Dawnstead",
-     "greeting": "The anchors are singing again. I charted this moment for twenty years.",
-     "dialogue_tree": "Dialogue_Vess",
-     "attributes": [
-      {
-       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1381,
-       "prop": "VisualMesh",
-       "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
-      },
-      {
-       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1382,
-       "prop": "VisualIdleAnimation",
-       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
-      },
-      {
-       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1383,
-       "prop": "VisualMeshScale",
-       "value": 1.0
-      }
-     ]
-    },
-    {
-     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1387,
-     "id": "NPC_Ione",
-     "name": "Ione, the Relic Trader",
-     "role": "Vendor",
-     "village": "Village_Dawnstead",
-     "greeting": "Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest.",
-     "dialogue_tree": "Dialogue_Ione",
      "attributes": [
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
@@ -20597,10 +20731,63 @@
        "line": 1395,
        "prop": "VisualIdleAnimation",
        "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+      }
+     ]
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1409,
+     "id": "NPC_Vess",
+     "name": "Vess, the Storm-Scholar",
+     "village": "Village_Dawnstead",
+     "greeting": "The anchors are singing again. I charted this moment for twenty years.",
+     "dialogue_tree": "Dialogue_Vess",
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1416,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
       },
       {
        "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-       "line": 1396,
+       "line": 1417,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1418,
+       "prop": "VisualMeshScale",
+       "value": 1.0
+      }
+     ]
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1422,
+     "id": "NPC_Ione",
+     "name": "Ione, the Relic Trader",
+     "role": "Vendor",
+     "village": "Village_Dawnstead",
+     "greeting": "Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest.",
+     "dialogue_tree": "Dialogue_Ione",
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1429,
+       "prop": "VisualMesh",
+       "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1430,
+       "prop": "VisualIdleAnimation",
+       "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+      },
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+       "line": 1431,
        "prop": "VisualMeshScale",
        "value": 1.0
       }
@@ -20745,7 +20932,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 883,
+     "line": 966,
      "id": "Loot_EventSupplyDrop",
      "guaranteed_drops": [
       {
@@ -20765,7 +20952,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 885,
+     "line": 968,
      "id": "Loot_EventMeteor",
      "guaranteed_drops": [
       {
@@ -20781,7 +20968,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 887,
+     "line": 970,
      "id": "Loot_POIAncient",
      "guaranteed_drops": [
       {
@@ -20797,7 +20984,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 889,
+     "line": 972,
      "id": "Loot_POIRuin",
      "guaranteed_drops": [
       {
@@ -20813,7 +21000,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 891,
+     "line": 974,
      "id": "Loot_POIWatchtower",
      "guaranteed_drops": [
       {
@@ -20829,7 +21016,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3002,
+     "line": 3093,
      "id": "Loot_EyeCore",
      "guaranteed_drops": [
       {
@@ -20852,7 +21039,7 @@
    "entries": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 894,
+     "line": 977,
      "id": "Event_StormSurge",
      "name": "Storm Surge",
      "kind": "StormSurge",
@@ -20865,7 +21052,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 901,
+     "line": 984,
      "id": "Event_GreatMigration",
      "name": "Great Migration",
      "kind": "Migration",
@@ -20878,7 +21065,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 907,
+     "line": 990,
      "id": "Event_ResourceSurge",
      "name": "Resource Surge",
      "kind": "ResourceSurge",
@@ -20891,7 +21078,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 913,
+     "line": 996,
      "id": "Event_SupplyDrop",
      "name": "Supply Drop",
      "kind": "SupplyDrop",
@@ -20904,7 +21091,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 918,
+     "line": 1001,
      "id": "Event_AncientSignal",
      "name": "Ancient Signal",
      "kind": "AncientSignal",
@@ -20917,7 +21104,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 923,
+     "line": 1006,
      "id": "Event_NightRaid",
      "name": "Night Raid",
      "kind": "NightRaid",
@@ -20930,7 +21117,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 928,
+     "line": 1011,
      "id": "Event_MeteorFall",
      "name": "Meteor Fall",
      "kind": "MeteorFall",
@@ -20943,7 +21130,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 934,
+     "line": 1017,
      "id": "Event_RareEchoBloom",
      "name": "Rare Echo Bloom",
      "kind": "RareEchoBloom",
@@ -20956,7 +21143,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 941,
+     "line": 1024,
      "id": "Event_BossStirring",
      "name": "Boss Stirring",
      "kind": "BossStirring",
@@ -20969,7 +21156,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 954,
+     "line": 1037,
      "id": "Event_MistTide",
      "name": "Mist Tide",
      "kind": "StormSurge",
@@ -20982,7 +21169,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 963,
+     "line": 1046,
      "id": "Event_CinderFall",
      "name": "Cinder Fall",
      "kind": "ResourceSurge",
@@ -20995,7 +21182,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 971,
+     "line": 1054,
      "id": "Event_DuneBuriedCache",
      "name": "Dune-Buried Cache",
      "kind": "SupplyDrop",
@@ -21008,7 +21195,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 978,
+     "line": 1061,
      "id": "Event_ReefBloom",
      "name": "Reef Bloom",
      "kind": "Migration",
@@ -21021,7 +21208,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 986,
+     "line": 1069,
      "id": "Event_WreckSurge",
      "name": "Wreck Surge",
      "kind": "SupplyDrop",
@@ -21034,7 +21221,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 994,
+     "line": 1077,
      "id": "Event_StormFront",
      "name": "Storm Front",
      "kind": "StormSurge",
@@ -21047,7 +21234,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1004,
+     "line": 1087,
      "id": "Event_Pearlsong",
      "name": "Pearlsong",
      "kind": "RareEchoBloom",
@@ -21067,7 +21254,7 @@
    "entries": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1018,
+     "line": 1101,
      "id": "POI_FirstLightRuin",
      "name": "First Light Ruin",
      "lore": "Where the first survey team camped — the walls remember.",
@@ -21084,7 +21271,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1023,
+     "line": 1106,
      "id": "POI_DawnsteadWatchtower",
      "name": "Dawnstead Watchtower",
      "lore": "The wardens still climb it at dusk to read the horizon.",
@@ -21101,7 +21288,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1028,
+     "line": 1111,
      "id": "POI_SunkencollarCave",
      "name": "Sunkencollar Cave",
      "lore": "Something breathes cold out of this hillside.",
@@ -21118,7 +21305,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1033,
+     "line": 1116,
      "id": "POI_GlimmerwoodMonolith",
      "name": "Glimmerwood Monolith",
      "lore": "Older than the wood around it. The moss will not touch it.",
@@ -21135,7 +21322,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1038,
+     "line": 1121,
      "id": "POI_EmberFoundry",
      "name": "Ember Foundry Husk",
      "lore": "A pre-collapse forge, cracked open like an egg.",
@@ -21152,7 +21339,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1043,
+     "line": 1126,
      "id": "POI_FrostveilSignalSource",
      "name": "Frostveil Signal Source",
      "lore": "The oracle scanner pins it under the ice shelf — it is transmitting.",
@@ -21169,7 +21356,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1048,
+     "line": 1131,
      "id": "POI_HollowApproachSpire",
      "name": "Hollow Spire",
      "lore": "It was a doorway once. It is waiting to be one again.",
@@ -21186,7 +21373,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1053,
+     "line": 1136,
      "id": "POI_TidebreakerWreck",
      "name": "Tidebreaker Wreck",
      "lore": "The hull name is gone; the cargo holds are not.",
@@ -21203,7 +21390,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1058,
+     "line": 1141,
      "id": "POI_SunscarMirageStone",
      "name": "Mirage Stone",
      "lore": "Walk to it and it is never quite where it was.",
@@ -21220,7 +21407,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1063,
+     "line": 1146,
      "id": "POI_StormcrestArray",
      "name": "Stormcrest Antenna Array",
      "lore": "Lightning chose it; the surveyors did not.",
@@ -21237,7 +21424,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1068,
+     "line": 1151,
      "id": "POI_VerdantHeartTree",
      "name": "The Heart Tree",
      "lore": "Every seed in the Reach rolled downhill from here.",
@@ -21254,7 +21441,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1073,
+     "line": 1156,
      "id": "POI_PearlseaResonanceWell",
      "name": "Resonance Well",
      "lore": "The reef grows in rings around whatever is at the bottom.",
@@ -21271,7 +21458,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1080,
+     "line": 1163,
      "id": "POI_ShallowsSextant",
      "name": "The Shallows Sextant",
      "lore": "A drowned surveyor's ring — it still tracks something deep under the race.",
@@ -21288,7 +21475,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1090,
+     "line": 1173,
      "id": "POI_HollowUndergateVault",
      "name": "The Undergate Vault",
      "lore": "The scanner pins a strongbox under the ashfall — pre-collapse, still charged, facing the gate.",
@@ -21305,7 +21492,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1095,
+     "line": 1178,
      "id": "POI_SunscarMachineCoffin",
      "name": "The Machine Coffin",
      "lore": "Beneath the singing dune glass, machine bones keep their charge in a box the sun never reaches.",
@@ -21322,7 +21509,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1100,
+     "line": 1183,
      "id": "POI_TidebreakerHoldRoom",
      "name": "The Hold Room",
      "lore": "Every wreck kept one room dry. The scanner says this one kept it that way on purpose.",
@@ -21339,7 +21526,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1105,
+     "line": 1188,
      "id": "POI_PearlseaTidecache",
      "name": "The Tidecache",
      "lore": "A coral-sealed cache the reef grew around — the tide hides it, the scanner hums to it.",
@@ -21535,7 +21722,7 @@
   },
   "work_sites": {
    "source": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "count": 8,
+   "count": 14,
    "entries": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
@@ -21713,6 +21900,127 @@
       -500.0
      ],
      "attributes": []
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 883,
+     "id": "Site_DuskMarshReedCamp",
+     "name": "Dusk Marsh Reed-Cutter Camp",
+     "work_type": "Gathering",
+     "output_item": "Item_Fiber",
+     "output_qty": 3,
+     "seconds_per_output": 14.0,
+     "zone": "DuskMarsh",
+     "offset": [
+      1200.0,
+      -800.0
+     ],
+     "attributes": []
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 895,
+     "id": "Site_FrostveilDrill",
+     "name": "Frostveil Cold-Drill Rig",
+     "work_type": "Mining",
+     "output_item": "Item_Stone",
+     "output_qty": 3,
+     "seconds_per_output": 20.0,
+     "zone": "FrostveilExpanse",
+     "offset": [
+      -1500.0,
+      900.0
+     ],
+     "attributes": [
+      {
+       "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+       "line": 901,
+       "prop": "bRequiresPower",
+       "value": true
+      }
+     ]
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 908,
+     "id": "Site_GlimmerMill",
+     "name": "Glimmerwood Shard Mill",
+     "work_type": "Mining",
+     "output_item": "Item_CrystalShard",
+     "output_qty": 2,
+     "input_items": [
+      {
+       "item": "Item_Stone",
+       "qty": 2
+      }
+     ],
+     "seconds_per_output": 22.0,
+     "zone": "Glimmerwood",
+     "offset": [
+      800.0,
+      1600.0
+     ],
+     "attributes": []
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 921,
+     "id": "Site_ShallowsSaltRack",
+     "name": "Azure Shallows Salt-Dry Rack",
+     "work_type": "Cooking",
+     "output_item": "Item_CookedMeat",
+     "output_qty": 2,
+     "input_items": [
+      {
+       "item": "Item_RawMeat",
+       "qty": 2
+      }
+     ],
+     "seconds_per_output": 12.0,
+     "zone": "AzureShallows",
+     "offset": [
+      -1000.0,
+      1200.0
+     ],
+     "attributes": []
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 934,
+     "id": "Site_SunscarGlassworks",
+     "name": "Sunscar Glass-Works",
+     "work_type": "Mining",
+     "output_item": "Item_DuneGlass",
+     "output_qty": 2,
+     "input_items": [
+      {
+       "item": "Item_Stone",
+       "qty": 2
+      }
+     ],
+     "seconds_per_output": 24.0,
+     "zone": "SunscarDesert",
+     "offset": [
+      1400.0,
+      -600.0
+     ],
+     "attributes": []
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 947,
+     "id": "Site_PearlseaDiveDock",
+     "name": "Pearlsea Reef Dive Dock",
+     "work_type": "Gathering",
+     "output_item": "Item_SeaPearl",
+     "output_qty": 1,
+     "seconds_per_output": 26.0,
+     "zone": "PearlseaReef",
+     "offset": [
+      -1200.0,
+      -900.0
+     ],
+     "attributes": []
     }
    ]
   },
@@ -21786,79 +22094,79 @@
    "entries": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1642,
+     "line": 1733,
      "id": "Dialogue_WardenMaren",
      "node_count": 5
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1787,
+     "line": 1878,
      "id": "Dialogue_TraderTam",
      "node_count": 4
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1928,
+     "line": 2019,
      "id": "Dialogue_ElderRowan",
      "node_count": 5
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2062,
+     "line": 2153,
      "id": "Dialogue_SkiffWardenKael",
      "node_count": 3
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2133,
+     "line": 2224,
      "id": "Dialogue_GuardSela",
      "node_count": 5
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2269,
+     "line": 2360,
      "id": "Dialogue_OldSaltPerry",
      "node_count": 3
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2347,
+     "line": 2438,
      "id": "Dialogue_HerbalistWren",
      "node_count": 2
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2403,
+     "line": 2494,
      "id": "Dialogue_BlacksmithBorin",
      "node_count": 2
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2460,
+     "line": 2551,
      "id": "Dialogue_GuardBram",
      "node_count": 1
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2523,
+     "line": 2614,
      "id": "Dialogue_FarmerJori",
      "node_count": 3
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2596,
+     "line": 2687,
      "id": "Dialogue_FisherNima",
      "node_count": 1
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2693,
+     "line": 2784,
      "id": "Dialogue_Vess",
      "node_count": 7
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 2843,
+     "line": 2934,
      "id": "Dialogue_Ione",
      "node_count": 3
     }
@@ -26932,7 +27240,7 @@
     "value": 220
    },
    "source_loc": {
-    "value": 83764
+    "value": 84073
    },
    "census_vs_validate_final_run": {
     "items": {
@@ -26986,8 +27294,8 @@
      "match": true
     },
     "work_sites": {
-     "expected": 8,
-     "extracted": 8,
+     "expected": 14,
+     "extracted": 14,
      "match": true
     },
     "world_events": {

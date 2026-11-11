@@ -1248,6 +1248,11 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     WardenMaren->Role = EAstrawildNPCRole::QuestGiver;
     WardenMaren->VillageId = TEXT("Village_Dawnstead");
     WardenMaren->PrimaryTint = FLinearColor(0.40f, 0.85f, 0.65f);
+    // CP-03: real bodies for the village — soft-path survivor variants,
+    // fail-closed to the procedural silhouette before the engine import.
+    WardenMaren->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite")));
+    WardenMaren->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle")));
+    WardenMaren->VisualMeshScale = 1.0f;
     WardenMaren->Greeting = FText::FromString(TEXT("The fields are calm — for now."));
     Registry->RegisterNPC(WardenMaren);
 
@@ -1259,6 +1264,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     VendorTam->Role = EAstrawildNPCRole::Vendor;
     VendorTam->VillageId = TEXT("Village_Dawnstead");
     VendorTam->PrimaryTint = FLinearColor(0.90f, 0.75f, 0.35f);
+    VendorTam->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
+    VendorTam->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    VendorTam->VisualMeshScale = 0.97f;
     VendorTam->Greeting = FText::FromString(TEXT("Shards, friend. Shards for everything."));
     VendorTam->DialogueTreeId = TEXT("Dialogue_TraderTam"); // Batch 3: shop hand-off through conversation.
     Registry->RegisterNPC(VendorTam);
@@ -1271,6 +1279,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     HerbalistWren->Role = EAstrawildNPCRole::Vendor;
     HerbalistWren->VillageId = TEXT("Village_Dawnstead");
     HerbalistWren->PrimaryTint = FLinearColor(0.45f, 0.80f, 0.45f);
+    HerbalistWren->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
+    HerbalistWren->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    HerbalistWren->VisualMeshScale = 0.94f;
     HerbalistWren->Greeting = FText::FromString(TEXT("Bark, root, bloom — the marsh provides."));
     HerbalistWren->DialogueTreeId = TEXT("Dialogue_HerbalistWren"); // FR-10: full tree.
     Registry->RegisterNPC(HerbalistWren);
@@ -1283,6 +1294,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     BlacksmithBorin->Role = EAstrawildNPCRole::Vendor;
     BlacksmithBorin->VillageId = TEXT("Village_Dawnstead");
     BlacksmithBorin->PrimaryTint = FLinearColor(0.55f, 0.40f, 0.30f);
+    BlacksmithBorin->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit")));
+    BlacksmithBorin->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_Survivor_Idle")));
+    BlacksmithBorin->VisualMeshScale = 1.06f; // The forge frame: heaviest silhouette in the square.
     BlacksmithBorin->Greeting = FText::FromString(TEXT("Steel today, story tomorrow."));
     BlacksmithBorin->DialogueTreeId = TEXT("Dialogue_BlacksmithBorin"); // FR-10: full tree.
     Registry->RegisterNPC(BlacksmithBorin);
@@ -1295,6 +1309,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     ElderRowan->Role = EAstrawildNPCRole::Elder;
     ElderRowan->VillageId = TEXT("Village_Dawnstead");
     ElderRowan->PrimaryTint = FLinearColor(0.70f, 0.55f, 0.90f);
+    ElderRowan->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite")));
+    ElderRowan->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle")));
+    ElderRowan->VisualMeshScale = 0.96f;
     ElderRowan->Greeting = FText::FromString(TEXT("Sit. The Vale has grown wider while you slept."));
     Registry->RegisterNPC(ElderRowan);
 
@@ -1304,6 +1321,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     GuardSela->Role = EAstrawildNPCRole::Guard;
     GuardSela->VillageId = TEXT("Village_Dawnstead");
     GuardSela->PrimaryTint = FLinearColor(0.45f, 0.65f, 0.95f);
+    GuardSela->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit")));
+    GuardSela->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_Survivor_Idle")));
+    GuardSela->VisualMeshScale = 1.04f;
     GuardSela->Greeting = FText::FromString(TEXT("Keep the fire behind you and the dark ahead."));
     GuardSela->DialogueTreeId = TEXT("Dialogue_GuardSela");
     Registry->RegisterNPC(GuardSela);
@@ -1314,6 +1334,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     GuardBram->Role = EAstrawildNPCRole::Guard;
     GuardBram->VillageId = TEXT("Village_Dawnstead");
     GuardBram->PrimaryTint = FLinearColor(0.50f, 0.60f, 0.90f);
+    GuardBram->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_Exosuit")));
+    GuardBram->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_Survivor_Idle")));
+    GuardBram->VisualMeshScale = 1.08f; // The wall of the watch.
     GuardBram->Greeting = FText::FromString(TEXT("Gloomfangs again. Always Gloomfangs."));
     GuardBram->DialogueTreeId = TEXT("Dialogue_GuardBram"); // FR-10: full tree.
     Registry->RegisterNPC(GuardBram);
@@ -1324,6 +1347,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     FarmerJori->Role = EAstrawildNPCRole::Villager;
     FarmerJori->VillageId = TEXT("Village_Dawnstead");
     FarmerJori->PrimaryTint = FLinearColor(0.80f, 0.70f, 0.40f);
+    FarmerJori->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
+    FarmerJori->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    FarmerJori->VisualMeshScale = 0.95f;
     FarmerJori->Greeting = FText::FromString(TEXT("Spriglings turn the soil better than any hoe."));
     FarmerJori->DialogueTreeId = TEXT("Dialogue_FarmerJori"); // FR-10: full tree.
     Registry->RegisterNPC(FarmerJori);
@@ -1338,6 +1364,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     SkiffWardenKael->Role = EAstrawildNPCRole::QuestGiver;
     SkiffWardenKael->VillageId = TEXT("Village_DriftwoodLanding");
     SkiffWardenKael->PrimaryTint = FLinearColor(0.35f, 0.85f, 0.85f);
+    SkiffWardenKael->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T2_Astraite")));
+    SkiffWardenKael->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle")));
+    SkiffWardenKael->VisualMeshScale = 1.02f;
     SkiffWardenKael->Greeting = FText::FromString(TEXT("Skiff's fueled. The isles are yours now."));
     Registry->RegisterNPC(SkiffWardenKael);
 
@@ -1349,6 +1378,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     FisherNima->Role = EAstrawildNPCRole::Vendor;
     FisherNima->VillageId = TEXT("Village_DriftwoodLanding");
     FisherNima->PrimaryTint = FLinearColor(0.40f, 0.75f, 0.90f);
+    FisherNima->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
+    FisherNima->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    FisherNima->VisualMeshScale = 0.93f;
     FisherNima->Greeting = FText::FromString(TEXT("Fresh catch, sea pearls, and gossip — cheap."));
     FisherNima->DialogueTreeId = TEXT("Dialogue_FisherNima"); // FR-10: full tree.
     Registry->RegisterNPC(FisherNima);
@@ -1359,6 +1391,9 @@ void UAstrawildContentLibrary::BuildNPCs(UAstrawildItemRegistrySubsystem* Regist
     OldSaltPerry->Role = EAstrawildNPCRole::Villager;
     OldSaltPerry->VillageId = TEXT("Village_DriftwoodLanding");
     OldSaltPerry->PrimaryTint = FLinearColor(0.55f, 0.55f, 0.60f);
+    OldSaltPerry->VisualMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/SK_Survivor_T1_Scavenger")));
+    OldSaltPerry->VisualIdleAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle")));
+    OldSaltPerry->VisualMeshScale = 0.88f; // Weathered and salt-bent — the smallest silhouette on the dock.
     OldSaltPerry->Greeting = FText::FromString(TEXT("The tide took the old world. It can wait for you too."));
     OldSaltPerry->DialogueTreeId = TEXT("Dialogue_OldSaltPerry");
     Registry->RegisterNPC(OldSaltPerry);

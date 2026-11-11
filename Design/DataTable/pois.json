@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1018,
+   "line": 1101,
    "id": "POI_FirstLightRuin",
    "name": "First Light Ruin",
    "lore": "Where the first survey team camped — the walls remember.",
@@ -20,7 +20,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1023,
+   "line": 1106,
    "id": "POI_DawnsteadWatchtower",
    "name": "Dawnstead Watchtower",
    "lore": "The wardens still climb it at dusk to read the horizon.",
@@ -37,7 +37,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1028,
+   "line": 1111,
    "id": "POI_SunkencollarCave",
    "name": "Sunkencollar Cave",
    "lore": "Something breathes cold out of this hillside.",
@@ -54,7 +54,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1033,
+   "line": 1116,
    "id": "POI_GlimmerwoodMonolith",
    "name": "Glimmerwood Monolith",
    "lore": "Older than the wood around it. The moss will not touch it.",
@@ -71,7 +71,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1038,
+   "line": 1121,
    "id": "POI_EmberFoundry",
    "name": "Ember Foundry Husk",
    "lore": "A pre-collapse forge, cracked open like an egg.",
@@ -88,7 +88,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1043,
+   "line": 1126,
    "id": "POI_FrostveilSignalSource",
    "name": "Frostveil Signal Source",
    "lore": "The oracle scanner pins it under the ice shelf — it is transmitting.",
@@ -105,7 +105,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1048,
+   "line": 1131,
    "id": "POI_HollowApproachSpire",
    "name": "Hollow Spire",
    "lore": "It was a doorway once. It is waiting to be one again.",
@@ -122,7 +122,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1053,
+   "line": 1136,
    "id": "POI_TidebreakerWreck",
    "name": "Tidebreaker Wreck",
    "lore": "The hull name is gone; the cargo holds are not.",
@@ -139,7 +139,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1058,
+   "line": 1141,
    "id": "POI_SunscarMirageStone",
    "name": "Mirage Stone",
    "lore": "Walk to it and it is never quite where it was.",
@@ -156,7 +156,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1063,
+   "line": 1146,
    "id": "POI_StormcrestArray",
    "name": "Stormcrest Antenna Array",
    "lore": "Lightning chose it; the surveyors did not.",
@@ -173,7 +173,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1068,
+   "line": 1151,
    "id": "POI_VerdantHeartTree",
    "name": "The Heart Tree",
    "lore": "Every seed in the Reach rolled downhill from here.",
@@ -190,7 +190,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1073,
+   "line": 1156,
    "id": "POI_PearlseaResonanceWell",
    "name": "Resonance Well",
    "lore": "The reef grows in rings around whatever is at the bottom.",
@@ -207,7 +207,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1080,
+   "line": 1163,
    "id": "POI_ShallowsSextant",
    "name": "The Shallows Sextant",
    "lore": "A drowned surveyor's ring — it still tracks something deep under the race.",
@@ -224,7 +224,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1090,
+   "line": 1173,
    "id": "POI_HollowUndergateVault",
    "name": "The Undergate Vault",
    "lore": "The scanner pins a strongbox under the ashfall — pre-collapse, still charged, facing the gate.",
@@ -241,7 +241,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1095,
+   "line": 1178,
    "id": "POI_SunscarMachineCoffin",
    "name": "The Machine Coffin",
    "lore": "Beneath the singing dune glass, machine bones keep their charge in a box the sun never reaches.",
@@ -258,7 +258,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1100,
+   "line": 1183,
    "id": "POI_TidebreakerHoldRoom",
    "name": "The Hold Room",
    "lore": "Every wreck kept one room dry. The scanner says this one kept it that way on purpose.",
@@ -275,7 +275,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1105,
+   "line": 1188,
    "id": "POI_PearlseaTidecache",
    "name": "The Tidecache",
    "lore": "A coral-sealed cache the reef grew around — the tide hides it, the scanner hums to it.",

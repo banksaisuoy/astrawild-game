@@ -753,7 +753,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2926,
+   "line": 3017,
    "id": "Item_SovereignCore",
    "name": "Sovereign Core",
    "category": "QuestItem",
@@ -763,7 +763,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2932,
+   "line": 3023,
    "id": "Item_MaelstromGlass",
    "name": "Maelstrom Glass",
    "category": "Material",
@@ -773,7 +773,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2938,
+   "line": 3029,
    "id": "Item_SkiffStratosCoil",
    "name": "Skiff Stratos Coil",
    "category": "QuestItem",

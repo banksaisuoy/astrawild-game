@@ -113,8 +113,8 @@ Exosuit → Mannequin → procedural body — the pawn ALWAYS renders.
 | Buildings | ContentLibrary::BuildBuildings | 26 (incl. Floor/Roof/Door/StorageCrate + terminal/turret/farm/pen/incubator) | same-id override on `UAstrawildBuildingDefinition` |
 | Technologies | ContentLibrary::BuildTechnologies + ProductionContent | 17 | same-id override on `UAstrawildTechnologyDefinition` |
 | Recipes | ContentLibrary + ProductionContent | 58 (DP-6 adds the Field Ration + Pulse Tonic mirrors) | same-id override on `UAstrawildRecipeDefinition` |
-| NPCs + dialogue trees | ContentLibrary::BuildNPCs (11) + ProductionContent trees (11) | 11 NPCs / 11 trees | same-id override (`UAstrawildNPCDefinition`, `UAstrawildDialogueTreeDefinition`) |
-| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 11 / 16 / 17 / 12 / 8 / 10 / 8 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post; DP-7: +7 zone events for the bare zones, +4 scanner-gated secret POIs) | same-id override per family |
+| NPCs + dialogue trees | ContentLibrary::BuildNPCs (13 incl. DCP-4 Vess/Ione) + ProductionContent trees (13) | 13 NPCs / 13 trees | same-id override (`UAstrawildNPCDefinition`, `UAstrawildDialogueTreeDefinition`) |
+| Loot tables / world events / POIs / biomes / weapons / nodes / work sites | respective CODE_DEFAULT builders | 11 / 16 / 17 / 12 / 8 / 10 / 14 (DP-6: +Cargo Dock/Field Lab/Dynamo Hall/Bulwark Post; DP-7: +7 zone events for the bare zones, +4 scanner-gated secret POIs; CP-03: +Reed Camp/Cold-Drill/Shard Mill/Salt-Dry Rack/Glass-Works/Dive Dock — every one of the 12 zones now has an outpost) | same-id override per family |
 
 **There is NO `.uda` / `.uabp` / `.usk` requirement anywhere in this project.** UE5
 Data Assets are `.uasset` files of `UPrimaryDataAsset`-derived classes; this project's

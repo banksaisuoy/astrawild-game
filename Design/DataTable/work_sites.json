@@ -177,6 +177,127 @@
     -500.0
    ],
    "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 883,
+   "id": "Site_DuskMarshReedCamp",
+   "name": "Dusk Marsh Reed-Cutter Camp",
+   "work_type": "Gathering",
+   "output_item": "Item_Fiber",
+   "output_qty": 3,
+   "seconds_per_output": 14.0,
+   "zone": "DuskMarsh",
+   "offset": [
+    1200.0,
+    -800.0
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 895,
+   "id": "Site_FrostveilDrill",
+   "name": "Frostveil Cold-Drill Rig",
+   "work_type": "Mining",
+   "output_item": "Item_Stone",
+   "output_qty": 3,
+   "seconds_per_output": 20.0,
+   "zone": "FrostveilExpanse",
+   "offset": [
+    -1500.0,
+    900.0
+   ],
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+     "line": 901,
+     "prop": "bRequiresPower",
+     "value": true
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 908,
+   "id": "Site_GlimmerMill",
+   "name": "Glimmerwood Shard Mill",
+   "work_type": "Mining",
+   "output_item": "Item_CrystalShard",
+   "output_qty": 2,
+   "input_items": [
+    {
+     "item": "Item_Stone",
+     "qty": 2
+    }
+   ],
+   "seconds_per_output": 22.0,
+   "zone": "Glimmerwood",
+   "offset": [
+    800.0,
+    1600.0
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 921,
+   "id": "Site_ShallowsSaltRack",
+   "name": "Azure Shallows Salt-Dry Rack",
+   "work_type": "Cooking",
+   "output_item": "Item_CookedMeat",
+   "output_qty": 2,
+   "input_items": [
+    {
+     "item": "Item_RawMeat",
+     "qty": 2
+    }
+   ],
+   "seconds_per_output": 12.0,
+   "zone": "AzureShallows",
+   "offset": [
+    -1000.0,
+    1200.0
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 934,
+   "id": "Site_SunscarGlassworks",
+   "name": "Sunscar Glass-Works",
+   "work_type": "Mining",
+   "output_item": "Item_DuneGlass",
+   "output_qty": 2,
+   "input_items": [
+    {
+     "item": "Item_Stone",
+     "qty": 2
+    }
+   ],
+   "seconds_per_output": 24.0,
+   "zone": "SunscarDesert",
+   "offset": [
+    1400.0,
+    -600.0
+   ],
+   "attributes": []
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
+   "line": 947,
+   "id": "Site_PearlseaDiveDock",
+   "name": "Pearlsea Reef Dive Dock",
+   "work_type": "Gathering",
+   "output_item": "Item_SeaPearl",
+   "output_qty": 1,
+   "seconds_per_output": 26.0,
+   "zone": "PearlseaReef",
+   "offset": [
+    -1200.0,
+    -900.0
+   ],
+   "attributes": []
   }
  ]
 }

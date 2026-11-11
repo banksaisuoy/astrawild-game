@@ -27,7 +27,7 @@ Companion docs (detail lives there, not here): `ASTRAWILD_FINAL_BUILD_HANDOFF.md
 
 - **Pack numbers** re-verified on disk at `981250d`: 301 WAV + 657 GLB + 2,396 PNG + 4 FBX + 2 TTF = **3,360 exactly** (matches the manifest/import-ready census; per-pack splits in §2).
 - **Native numbers** re-verified on disk at the DP-10 gate: 36 flat WAV + 44 flat PNG + 40 GLB (14 echo meshes + 26 props) = **120** (the flat auto-import contract; `manifest.json` = 120 records, zero drift); `Content/` carries 414 `.uasset` + 2 `.umap` committed via LFS.
-- **Census facts** (229 species / 12 zones / 3 dungeons / 4 bosses / 11 NPCs / 2 villages / 8 weapons / 26 buildings / 78 items / 58 recipes / 17 techs / 17 quests / 11 loot tables / 10 resource nodes / 8 work sites / 16 world events / 17 POIs / 11 dialogue trees / 3 robots / **109 tests**) are the validator-enforced values — `validate_final_run.py` census gates re-ran PASS at the DP-10 tip (`018a95a`).
+- **Census facts** (229 species / 12 zones / 3 dungeons / 4 bosses / 13 NPCs / 2 villages / 8 weapons / 26 buildings / 78 items / 58 recipes / 17 techs / 22 quests / 11 loot tables / 10 resource nodes / 14 work sites / 16 world events / 17 POIs / 13 dialogue trees / 3 robots / **147 tests**) are the validator-enforced values — `validate_final_run.py` census gates re-ran PASS at the CP-03 tip (sites 8→14, engine-census line updated in sync).
 - **Placeholder evidence**: boss Cone (`AstrawildEchoBossCharacter.cpp:40-56`, opt-in skeletal path since DP-1b), NPC Cylinder+Sphere (`AstrawildNPCCharacter.cpp:48-61`), 3 `NS_AW_*` Niagara systems (`Content/VFX/`), text-glyph crosshair (pure-C++ `HudWidget`).
 - Nothing was imported, bound, replaced or deleted while writing this matrix — docs-only, per the DP-2 scope.
 

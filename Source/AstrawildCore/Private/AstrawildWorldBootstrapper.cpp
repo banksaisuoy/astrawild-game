@@ -1414,6 +1414,156 @@ void AAstrawildWorldBootstrapper::BuildZoneLandmarks()
             break;
         }
 
+        // --- CP-03 (2026-11-04): Batch-8 signature landmarks. The six Grand
+        // Expanse zones shipped terrain + wildlife + dressing but no landmark
+        // pass (the audit's zone-coverage gap): every zone now reads at a
+        // glance, same engine-basic idiom as Batch-7. ---
+
+        case EZone::AzureShallows:
+        {
+            // Pastel coral pillars over pale shoal mounds, cyan shimmer lights.
+            for (int32 i = 0; i < 7; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float Height = CosmeticStream.FRandRange(4.0f, 9.0f);
+                SpawnShape(ShapeCone, Point + FVector(0, 0, Height * 50.0f), FVector(CosmeticStream.FRandRange(1.4f, 2.4f), CosmeticStream.FRandRange(1.4f, 2.4f), Height),
+                    FRotator(CosmeticStream.FRandRange(-5.0f, 5.0f), CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
+            }
+            for (int32 i = 0; i < 5; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float ShoalScale = CosmeticStream.FRandRange(3.0f, 4.6f);
+                SpawnShape(ShapeSphere, Point + FVector(0, 0, 20), FVector(ShoalScale, ShoalScale, 0.7f), FRotator::ZeroRotator());
+            }
+            for (int32 i = 0; i < 3; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 9000.0f);
+                SpawnZoneLight(Point + FVector(0, 0, 240), FLinearColor(0.35f, 0.85f, 0.95f), 12000.0f, 2600.0f, true);
+            }
+            break;
+        }
+
+        case EZone::TidebreakerIsles:
+        {
+            // Broken mast spires, tide-rock stacks and cold signal fires.
+            for (int32 i = 0; i < 6; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                SpawnShape(ShapeCylinder, Point + FVector(0, 0, 320), FVector(0.55, 0.55, 6.4),
+                    FRotator(CosmeticStream.FRandRange(-16.0f, 16.0f), CosmeticStream.FRandRange(0.0f, 360.0f), CosmeticStream.FRandRange(-10.0f, 10.0f)));
+                SpawnShape(ShapeCube, Point + FVector(140, 60, 560), FVector(2.4, 0.5, 0.5), FRotator(0.0f, CosmeticStream.FRandRange(0.0f, 360.0f), 12.0f));
+            }
+            for (int32 i = 0; i < 5; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                SpawnShape(ShapeCube, Point + FVector(0, 0, 80), FVector(2.2, 2.2, 1.6), FRotator(0.0f, CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
+                SpawnShape(ShapeCube, Point + FVector(30, -40, 190), FVector(1.5, 1.5, 1.4), FRotator(0.0f, CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
+            }
+            for (int32 i = 0; i < 2; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 12000.0f);
+                SpawnZoneLight(Point + FVector(0, 0, 300), ZoneDesc.AmbientLightColor, 15000.0f, 3000.0f, true);
+            }
+            break;
+        }
+
+        case EZone::SunscarDesert:
+        {
+            // Sun-scar obelisks, long dune crests and burning amber light.
+            for (int32 i = 0; i < 6; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float Height = CosmeticStream.FRandRange(7.0f, 13.0f);
+                SpawnShape(ShapeCube, Point + FVector(0, 0, Height * 50.0f), FVector(0.8, 0.8, Height),
+                    FRotator(CosmeticStream.FRandRange(-2.0f, 2.0f), CosmeticStream.FRandRange(0.0f, 360.0f), CosmeticStream.FRandRange(-2.0f, 2.0f)));
+            }
+            for (int32 i = 0; i < 6; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float CrestScale = CosmeticStream.FRandRange(4.5f, 7.0f);
+                SpawnShape(ShapeSphere, Point + FVector(0, 0, 18), FVector(CrestScale, CrestScale * 0.6f, 0.55f), FRotator::ZeroRotator());
+            }
+            for (int32 i = 0; i < 3; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 10000.0f);
+                SpawnZoneLight(Point + FVector(0, 0, 360), FLinearColor(1.0f, 0.62f, 0.25f), 22000.0f, 3200.0f, true);
+            }
+            break;
+        }
+
+        case EZone::StormcrestHighlands:
+        {
+            // Storm monoliths, lightning spires and a cold violet rim.
+            for (int32 i = 0; i < 6; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float Height = CosmeticStream.FRandRange(8.0f, 14.0f);
+                SpawnShape(ShapeCube, Point + FVector(0, 0, Height * 50.0f), FVector(CosmeticStream.FRandRange(1.6f, 2.8f), CosmeticStream.FRandRange(1.6f, 2.8f), Height),
+                    FRotator(CosmeticStream.FRandRange(-3.0f, 3.0f), CosmeticStream.FRandRange(0.0f, 360.0f), CosmeticStream.FRandRange(-2.0f, 2.0f)));
+            }
+            for (int32 i = 0; i < 4; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                SpawnShape(ShapeCylinder, Point + FVector(0, 0, 430), FVector(0.35, 0.35, 8.6), FRotator::ZeroRotator());
+                SpawnZoneLight(Point + FVector(0, 0, 480), FLinearColor(0.75f, 0.70f, 1.0f), 26000.0f, 3600.0f, true);
+            }
+            for (int32 i = 0; i < 4; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                SpawnShape(ShapeSphere, Point + FVector(0, 0, 30), FVector(3.8, 3.8, 0.7f), FRotator::ZeroRotator());
+            }
+            break;
+        }
+
+        case EZone::VerdantReach:
+        {
+            // Giant broadleaf canopies, moss boulders and soft green glow.
+            for (int32 i = 0; i < 8; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                SpawnShape(ShapeCylinder, Point + FVector(0, 0, 230), FVector(1.4, 1.4, 4.6), FRotator::ZeroRotator());
+                SpawnShape(ShapeCone, Point + FVector(0, 0, 720), FVector(5.0, 5.0, 5.8), FRotator::ZeroRotator());
+            }
+            for (int32 i = 0; i < 6; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float BoulderScale = CosmeticStream.FRandRange(1.8f, 3.2f);
+                SpawnShape(ShapeSphere, Point + FVector(0, 0, BoulderScale * 40.0f), FVector(BoulderScale, BoulderScale, BoulderScale * 0.8f),
+                    FRotator(0.0f, CosmeticStream.FRandRange(0.0f, 360.0f), 0.0f));
+            }
+            for (int32 i = 0; i < 3; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 9000.0f);
+                SpawnZoneLight(Point + FVector(0, 0, 260), FLinearColor(0.45f, 1.0f, 0.55f), 11000.0f, 2400.0f, true);
+            }
+            break;
+        }
+
+        case EZone::PearlseaReef:
+        {
+            // Reef arches, pearl clusters and a deep lagoon glow.
+            for (int32 i = 0; i < 5; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float ArchSpan = CosmeticStream.FRandRange(3.2f, 4.8f);
+                SpawnShape(ShapeCylinder, Point + FVector(-ArchSpan * 90.0f, 0, 190), FVector(0.9, 0.9, 3.8), FRotator(0.0f, 0.0f, 6.0f));
+                SpawnShape(ShapeCylinder, Point + FVector(ArchSpan * 90.0f, 0, 190), FVector(0.9, 0.9, 3.8), FRotator(0.0f, 0.0f, -6.0f));
+                SpawnShape(ShapeSphere, Point + FVector(0, 0, 430), FVector(ArchSpan, ArchSpan, 1.1f), FRotator::ZeroRotator());
+            }
+            for (int32 i = 0; i < 6; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, MinDist);
+                const float PearlScale = CosmeticStream.FRandRange(0.5f, 0.9f);
+                SpawnShape(ShapeSphere, Point + FVector(0, 0, 60), FVector(PearlScale, PearlScale, PearlScale), FRotator::ZeroRotator());
+            }
+            for (int32 i = 0; i < 2; ++i)
+            {
+                const FVector Point = RandomPointInZoneWith(CosmeticStream, ZoneDesc, 11000.0f);
+                SpawnZoneLight(Point + FVector(0, 0, 330), FLinearColor(0.65f, 0.85f, 1.0f), 13000.0f, 2800.0f, true);
+            }
+            break;
+        }
+
         default:
             break;
         }

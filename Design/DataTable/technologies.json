@@ -171,7 +171,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1505,
+   "line": 1596,
    "id": "Tech_WeaponSystems",
    "name": "Weapon Systems",
    "era": "Electrical",
@@ -189,7 +189,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1511,
+   "line": 1602,
    "id": "Tech_AdvancedBallistics",
    "name": "Advanced Ballistics",
    "era": "AdvancedEnergy",
@@ -207,7 +207,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1517,
+   "line": 1608,
    "id": "Tech_ExperimentalArsenal",
    "name": "Experimental Arsenal",
    "era": "Ancient",
@@ -224,7 +224,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1523,
+   "line": 1614,
    "id": "Tech_ExosuitEngineering",
    "name": "Exosuit Engineering",
    "era": "AdvancedEnergy",
@@ -243,7 +243,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1529,
+   "line": 1620,
    "id": "Tech_ScannerArray",
    "name": "Scanner Array",
    "era": "AdvancedEnergy",
@@ -259,7 +259,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1535,
+   "line": 1626,
    "id": "Tech_AutomationII",
    "name": "Automation II",
    "era": "AdvancedEnergy",
@@ -280,7 +280,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 2991,
+   "line": 3082,
    "id": "Tech_SkiffEngineering",
    "name": "Skiff Engineering",
    "era": "AdvancedEnergy",

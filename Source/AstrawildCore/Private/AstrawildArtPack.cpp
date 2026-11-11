@@ -118,9 +118,13 @@ namespace AstrawildArtPack
                         //   Undertowray ← VoidPrime        (dark depth floater),
                         //   Voidwing    ← ShadowNinja      (dark agile avian),
                         //   Verdantbloom← FungalSovereign  (plant, perfect).
-                        // Five spares stay unbound for future binds (Alpaca
-                        // pair, BoneShaman, MechTitan, SentinelPrime) — the
-                        // showcase map still displays all 14 regardless.
+                        // CP-03 (2026-11-04): Voltling ← SentinelPrime — the
+                        // last authored species without any mesh binding joins
+                        // via the fourth orphan spare (ancient sentinel shell
+                        // for a nocturnal energy critter: the cage reads as
+                        // the charge it carries). Four spares stay unbound
+                        // (Alpaca pair, BoneShaman, MechTitan) — the showcase
+                        // map still displays them regardless.
                         struct FSpareBind { FName Species; const TCHAR* BossMeshName; };
                         const FSpareBind Spares[] =
                         {
@@ -133,6 +137,7 @@ namespace AstrawildArtPack
                                 { TEXT("Echo_Undertowray"),  TEXT("VoidPrime") },
                                 { TEXT("Echo_Voidwing"),     TEXT("ShadowNinja") },
                                 { TEXT("Echo_Verdantbloom"), TEXT("FungalSovereign") },
+                                { TEXT("Echo_Voltling"),     TEXT("SentinelPrime") },
                         };
                         for (const FSpareBind& Spare : Spares)
                         {

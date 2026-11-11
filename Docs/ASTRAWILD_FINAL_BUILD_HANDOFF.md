@@ -218,7 +218,7 @@ E:\Astrawild_Packaged\Windows\ASTRAWILD.exe
 Editor/PIE: MainMap loads → WorldBootstrapper builds the 12-zone world → camp with
 workbench/campfire/rest point, 2 skiffs, Dawnstead village; HUD shows
 Day 1 08:00, weather Clear, Research: 0 RP, quest tracker "First Light: Wood 0/10 …".
-Log markers (approximate): `Content library registered (live census): 78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies, 22 quests (17 MQ + 5 post-game DCP-1), 11 loot tables, 13 NPCs (11 + DCP-4 Vess/Ione), 8 weapon profiles, 10 resource nodes, 8 work sites, 16 world events, 17 POIs, 12 biomes, 13 dialogue trees (11 + DCP-4), 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
+Log markers (approximate): `Content library registered (live census): 78 items, 58 recipes, 229 Echo species, 26 buildings, 17 technologies, 22 quests (17 MQ + 5 post-game DCP-1), 11 loot tables, 13 NPCs (11 + DCP-4 Vess/Ione), 8 weapon profiles, 10 resource nodes, 14 work sites (8 DP-6/DP-7 + 6 CP-03 zone-coverage sites), 16 world events, 17 POIs, 12 biomes, 13 dialogue trees (11 + DCP-4), 3 robots.` (numbers are counted LIVE from the registry — the census line is the engine-side authority; if any number differs from this doc the log wins),
 `Final Run Act 3 content registered: …`, `Production V2 content registered: …`.
 Packaged exe: same, after the loading screen.
 
@@ -585,7 +585,7 @@ status at the DP-10 final gate):
 4. Creature visual strategy complete — strategy doc v1.2 issued; Tier-A bespoke set
    complete (14 meshes IMPORT_READY); Tier-B library is the documented P1 residual.
 5. World has meaningful content density — 12 zones, ≥1 anchored event + hazard identity
-   per zone (DP-7), 17 POIs incl. 4 scanner-gated secrets, 8 work sites (DP-6).
+   per zone (DP-7), 17 POIs incl. 4 scanner-gated secrets, 14 work sites (DP-6 + CP-03 zone-coverage: all 12 zones have an outpost).
 6. NPCs useful — schedules, shops, affinity tiers + affinity-gated dialogue evolution
    and regional knowledge (DP-8).
 7. Player progression meaningful — attributes, 7 milestone skills, 3-slot skill

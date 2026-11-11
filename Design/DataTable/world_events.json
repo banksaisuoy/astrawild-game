@@ -3,7 +3,7 @@
  "rows": [
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 894,
+   "line": 977,
    "id": "Event_StormSurge",
    "name": "Storm Surge",
    "kind": "StormSurge",
@@ -16,7 +16,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 901,
+   "line": 984,
    "id": "Event_GreatMigration",
    "name": "Great Migration",
    "kind": "Migration",
@@ -29,7 +29,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 907,
+   "line": 990,
    "id": "Event_ResourceSurge",
    "name": "Resource Surge",
    "kind": "ResourceSurge",
@@ -42,7 +42,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 913,
+   "line": 996,
    "id": "Event_SupplyDrop",
    "name": "Supply Drop",
    "kind": "SupplyDrop",
@@ -55,7 +55,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 918,
+   "line": 1001,
    "id": "Event_AncientSignal",
    "name": "Ancient Signal",
    "kind": "AncientSignal",
@@ -68,7 +68,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 923,
+   "line": 1006,
    "id": "Event_NightRaid",
    "name": "Night Raid",
    "kind": "NightRaid",
@@ -81,7 +81,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 928,
+   "line": 1011,
    "id": "Event_MeteorFall",
    "name": "Meteor Fall",
    "kind": "MeteorFall",
@@ -94,7 +94,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 934,
+   "line": 1017,
    "id": "Event_RareEchoBloom",
    "name": "Rare Echo Bloom",
    "kind": "RareEchoBloom",
@@ -107,7 +107,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 941,
+   "line": 1024,
    "id": "Event_BossStirring",
    "name": "Boss Stirring",
    "kind": "BossStirring",
@@ -120,7 +120,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 954,
+   "line": 1037,
    "id": "Event_MistTide",
    "name": "Mist Tide",
    "kind": "StormSurge",
@@ -133,7 +133,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 963,
+   "line": 1046,
    "id": "Event_CinderFall",
    "name": "Cinder Fall",
    "kind": "ResourceSurge",
@@ -146,7 +146,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 971,
+   "line": 1054,
    "id": "Event_DuneBuriedCache",
    "name": "Dune-Buried Cache",
    "kind": "SupplyDrop",
@@ -159,7 +159,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 978,
+   "line": 1061,
    "id": "Event_ReefBloom",
    "name": "Reef Bloom",
    "kind": "Migration",
@@ -172,7 +172,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 986,
+   "line": 1069,
    "id": "Event_WreckSurge",
    "name": "Wreck Surge",
    "kind": "SupplyDrop",
@@ -185,7 +185,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 994,
+   "line": 1077,
    "id": "Event_StormFront",
    "name": "Storm Front",
    "kind": "StormSurge",
@@ -198,7 +198,7 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1004,
+   "line": 1087,
    "id": "Event_Pearlsong",
    "name": "Pearlsong",
    "kind": "RareEchoBloom",

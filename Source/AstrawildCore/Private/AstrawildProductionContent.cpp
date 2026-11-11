@@ -870,6 +870,89 @@ void UAstrawildProductionContent::BuildWorkSites(UAstrawildItemRegistrySubsystem
     HollowBulwark->Zone = EAstrawildZone::HollowApproach;
     HollowBulwark->OffsetFromZoneCenter = FVector2D(-900.0f, -500.0f);
     Registry->RegisterWorkSite(HollowBulwark);
+
+    // --- CP-03 (2026-11-04): the last six zones join the work-site map.
+    // DuskMarsh / Frostveil / Glimmerwood / AzureShallows / Sunscar /
+    // PearlseaReef shipped wilderness with no outpost — a captured echo had
+    // nowhere to work in six of twelve zones. Every new site rides the
+    // existing definition-placed spawn loop (zone center + offset) and the
+    // existing work-type contracts — no new verbs, no new save fields.
+
+    // Marsh reed-cutter camp: fiber economy for the wet frontier (Gathering).
+    UAstrawildWorkSiteDefinition* DuskMarshReedCamp = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    DuskMarshReedCamp->SiteId = TEXT("Site_DuskMarshReedCamp");
+    DuskMarshReedCamp->DisplayName = FText::FromString(TEXT("Dusk Marsh Reed-Cutter Camp"));
+    DuskMarshReedCamp->WorkType = EAstrawildWorkType::Gathering;
+    DuskMarshReedCamp->OutputItemId = TEXT("Item_Fiber");
+    DuskMarshReedCamp->OutputQuantity = 3;
+    DuskMarshReedCamp->SecondsPerOutput = 14.0f;
+    DuskMarshReedCamp->Zone = EAstrawildZone::DuskMarsh;
+    DuskMarshReedCamp->OffsetFromZoneCenter = FVector2D(1200.0f, -800.0f);
+    Registry->RegisterWorkSite(DuskMarshReedCamp);
+
+    // Frostveil cold-drill rig: stone + crystal from the frozen crust (Mining).
+    UAstrawildWorkSiteDefinition* FrostveilDrill = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    FrostveilDrill->SiteId = TEXT("Site_FrostveilDrill");
+    FrostveilDrill->DisplayName = FText::FromString(TEXT("Frostveil Cold-Drill Rig"));
+    FrostveilDrill->WorkType = EAstrawildWorkType::Mining;
+    FrostveilDrill->OutputItemId = TEXT("Item_Stone");
+    FrostveilDrill->OutputQuantity = 3;
+    FrostveilDrill->SecondsPerOutput = 20.0f;
+    FrostveilDrill->bRequiresPower = true;
+    FrostveilDrill->Zone = EAstrawildZone::FrostveilExpanse;
+    FrostveilDrill->OffsetFromZoneCenter = FVector2D(-1500.0f, 900.0f);
+    Registry->RegisterWorkSite(FrostveilDrill);
+
+    // Glimmerwood glimmer mill: crystal shards from the spire fields (Mining).
+    UAstrawildWorkSiteDefinition* GlimmerMill = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    GlimmerMill->SiteId = TEXT("Site_GlimmerMill");
+    GlimmerMill->DisplayName = FText::FromString(TEXT("Glimmerwood Shard Mill"));
+    GlimmerMill->WorkType = EAstrawildWorkType::Mining;
+    GlimmerMill->OutputItemId = TEXT("Item_CrystalShard");
+    GlimmerMill->OutputQuantity = 2;
+    GlimmerMill->InputItems = { Stack(TEXT("Item_Stone"), 2) };
+    GlimmerMill->SecondsPerOutput = 22.0f;
+    GlimmerMill->Zone = EAstrawildZone::Glimmerwood;
+    GlimmerMill->OffsetFromZoneCenter = FVector2D(800.0f, 1600.0f);
+    Registry->RegisterWorkSite(GlimmerMill);
+
+    // Azure Shallows salt-dry rack: sea air cures the catch twice as fast (Cooking).
+    UAstrawildWorkSiteDefinition* ShallowsSaltRack = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    ShallowsSaltRack->SiteId = TEXT("Site_ShallowsSaltRack");
+    ShallowsSaltRack->DisplayName = FText::FromString(TEXT("Azure Shallows Salt-Dry Rack"));
+    ShallowsSaltRack->WorkType = EAstrawildWorkType::Cooking;
+    ShallowsSaltRack->OutputItemId = TEXT("Item_CookedMeat");
+    ShallowsSaltRack->OutputQuantity = 2;
+    ShallowsSaltRack->InputItems = { Stack(TEXT("Item_RawMeat"), 2) };
+    ShallowsSaltRack->SecondsPerOutput = 12.0f;
+    ShallowsSaltRack->Zone = EAstrawildZone::AzureShallows;
+    ShallowsSaltRack->OffsetFromZoneCenter = FVector2D(-1000.0f, 1200.0f);
+    Registry->RegisterWorkSite(ShallowsSaltRack);
+
+    // Sunscar glass-works: dune glass kilns for the desert crossing (Mining).
+    UAstrawildWorkSiteDefinition* SunscarGlassworks = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    SunscarGlassworks->SiteId = TEXT("Site_SunscarGlassworks");
+    SunscarGlassworks->DisplayName = FText::FromString(TEXT("Sunscar Glass-Works"));
+    SunscarGlassworks->WorkType = EAstrawildWorkType::Mining;
+    SunscarGlassworks->OutputItemId = TEXT("Item_DuneGlass");
+    SunscarGlassworks->OutputQuantity = 2;
+    SunscarGlassworks->InputItems = { Stack(TEXT("Item_Stone"), 2) };
+    SunscarGlassworks->SecondsPerOutput = 24.0f;
+    SunscarGlassworks->Zone = EAstrawildZone::SunscarDesert;
+    SunscarGlassworks->OffsetFromZoneCenter = FVector2D(1400.0f, -600.0f);
+    Registry->RegisterWorkSite(SunscarGlassworks);
+
+    // Pearlsea pearl-diving dock: reef pearls for the deep frontier (Gathering).
+    UAstrawildWorkSiteDefinition* PearlseaDiveDock = NewObject<UAstrawildWorkSiteDefinition>(Registry);
+    PearlseaDiveDock->SiteId = TEXT("Site_PearlseaDiveDock");
+    PearlseaDiveDock->DisplayName = FText::FromString(TEXT("Pearlsea Reef Dive Dock"));
+    PearlseaDiveDock->WorkType = EAstrawildWorkType::Gathering;
+    PearlseaDiveDock->OutputItemId = TEXT("Item_SeaPearl");
+    PearlseaDiveDock->OutputQuantity = 1;
+    PearlseaDiveDock->SecondsPerOutput = 26.0f;
+    PearlseaDiveDock->Zone = EAstrawildZone::PearlseaReef;
+    PearlseaDiveDock->OffsetFromZoneCenter = FVector2D(-1200.0f, -900.0f);
+    Registry->RegisterWorkSite(PearlseaDiveDock);
 }
 
 // ---------------------------------------------------------------------------
@@ -1455,6 +1538,14 @@ void UAstrawildProductionContent::BuildEvolutionTargets(UAstrawildItemRegistrySu
         Evolved->WeaknessElement = Base->WeaknessElement;
         Evolved->Family = Base->Family;
         Evolved->BodyPlan = Base->BodyPlan;
+        // CP-03 (2026-11-04, audit follow-up): the evolved form inherits the
+        // base's VISUAL contract too — before this the evolution pass copied
+        // stats but not the mesh, leaving all six evolved species unbound
+        // (PMC bodies). The hero rows carry real soft paths, so the evolved
+        // form rides the same imported body as its base.
+        Evolved->SkeletalMesh = Base->SkeletalMesh;
+        Evolved->IdleAnimation = Base->IdleAnimation;
+        Evolved->MoveAnimation = Base->MoveAnimation;
         // Size grows one class (Small→Medium, Medium→Large; Large stays — the cap).
         Evolved->SizeClass = Base->SizeClass == EAstrawildSizeClass::Small
             ? EAstrawildSizeClass::Medium

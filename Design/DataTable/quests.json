@@ -384,12 +384,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1549,
+   "line": 1640,
    "id": "Quest_SignalsInTheStatic",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1553,
+     "line": 1644,
      "type": "CraftRecipe",
      "target": "Recipe_ArrayScanner",
      "count": 1,
@@ -397,7 +397,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1561,
+     "line": 1652,
      "type": "DiscoverPOI",
      "target": "POI_FirstLightRuin",
      "count": 1,
@@ -405,7 +405,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1569,
+     "line": 1660,
      "type": "DiscoverPOI",
      "target": "POI_GlimmerwoodMonolith",
      "count": 1,
@@ -416,7 +416,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1576,
+     "line": 1667,
      "prop": "RewardItems",
      "value": [
       {
@@ -437,12 +437,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 1582,
+   "line": 1673,
    "id": "Quest_VanguardProtocol",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1586,
+     "line": 1677,
      "type": "CraftRecipe",
      "target": "Recipe_VanguardVest",
      "count": 1,
@@ -450,7 +450,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1594,
+     "line": 1685,
      "type": "CraftRecipe",
      "target": "Recipe_RobotSentinel",
      "count": 1,
@@ -458,7 +458,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1602,
+     "line": 1693,
      "type": "SurviveTime",
      "target": null,
      "count": null,
@@ -469,7 +469,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 1609,
+     "line": 1700,
      "prop": "RewardItems",
      "value": [
       {
@@ -490,12 +490,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3007,
+   "line": 3098,
    "id": "Quest_StormAnchors",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3011,
+     "line": 3102,
      "type": "DiscoverPOI",
      "target": "POI_FrostveilSignalSource",
      "count": 1,
@@ -503,7 +503,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3019,
+     "line": 3110,
      "type": "DiscoverPOI",
      "target": "POI_SunscarMirageStone",
      "count": 1,
@@ -511,7 +511,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3027,
+     "line": 3118,
      "type": "DiscoverPOI",
      "target": "POI_StormcrestArray",
      "count": 1,
@@ -522,7 +522,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3034,
+     "line": 3125,
      "prop": "RewardItems",
      "value": [
       {
@@ -539,12 +539,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3041,
+   "line": 3132,
    "id": "Quest_CrownRelay",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3045,
+     "line": 3136,
      "type": "DefeatCreature",
      "target": "Creature_GlassTyrant",
      "count": 1,
@@ -552,7 +552,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3053,
+     "line": 3144,
      "type": "CraftRecipe",
      "target": "Recipe_SkiffStratosCoil",
      "count": 1,
@@ -563,7 +563,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3060,
+     "line": 3151,
      "prop": "RewardItems",
      "value": [
       {
@@ -580,12 +580,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3067,
+   "line": 3158,
    "id": "Quest_EyeOfTheMaelstrom",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3071,
+     "line": 3162,
      "type": "ReachLocation",
      "target": "Location_EyeGate",
      "count": 1,
@@ -593,7 +593,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3079,
+     "line": 3170,
      "type": "ReachLocation",
      "target": "Location_EyeOfTheMaelstrom",
      "count": 1,
@@ -604,7 +604,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3086,
+     "line": 3177,
      "prop": "RewardItems",
      "value": [
       {
@@ -621,12 +621,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3093,
+   "line": 3184,
    "id": "Quest_TheDrownedSovereign",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3097,
+     "line": 3188,
      "type": "DefeatCreature",
      "target": "Creature_DrownedSovereign",
      "count": 1,
@@ -637,7 +637,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3104,
+     "line": 3195,
      "prop": "RewardItems",
      "value": [
       {
@@ -658,12 +658,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3111,
+   "line": 3202,
    "id": "Quest_FirstDawnAgain",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3115,
+     "line": 3206,
      "type": "ReachLocation",
      "target": "Location_Dawnstead",
      "count": 1,
@@ -674,7 +674,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3122,
+     "line": 3213,
      "prop": "RewardItems",
      "value": []
     }
@@ -685,12 +685,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3207,
+   "line": 3298,
    "id": "Quest_PostVigil",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3211,
+     "line": 3302,
      "type": "DefeatCreature",
      "target": "Echo_Gloomfang",
      "count": 3,
@@ -698,7 +698,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3219,
+     "line": 3310,
      "type": "DefeatCreature",
      "target": "Echo_Emberfang",
      "count": 3,
@@ -706,7 +706,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3227,
+     "line": 3318,
      "type": "DefeatCreature",
      "target": "Echo_Rimefang",
      "count": 2,
@@ -717,7 +717,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3234,
+     "line": 3325,
      "prop": "RewardItems",
      "value": [
       {
@@ -733,12 +733,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3249,
+   "line": 3340,
    "id": "Quest_PostFieldNotes",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3253,
+     "line": 3344,
      "type": "ObserveEcho",
      "target": "Echo_Lumewisp",
      "count": 3,
@@ -746,7 +746,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3261,
+     "line": 3352,
      "type": "ObserveEcho",
      "target": "Echo_Auroraling",
      "count": 2,
@@ -754,7 +754,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3269,
+     "line": 3360,
      "type": "CaptureEcho",
      "target": "Echo_Sprigling",
      "count": 1,
@@ -765,7 +765,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3276,
+     "line": 3367,
      "prop": "RewardItems",
      "value": [
       {
@@ -786,12 +786,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3291,
+   "line": 3382,
    "id": "Quest_PostGlassTrade",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3295,
+     "line": 3386,
      "type": "CollectItem",
      "target": "Item_MaelstromGlass",
      "count": 6,
@@ -799,7 +799,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3303,
+     "line": 3394,
      "type": "CollectItem",
      "target": "Item_DuneGlass",
      "count": 4,
@@ -807,7 +807,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3311,
+     "line": 3402,
      "type": "DiscoverPOI",
      "target": "POI_TidebreakerWreck",
      "count": 1,
@@ -818,7 +818,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3318,
+     "line": 3409,
      "prop": "RewardItems",
      "value": [
       {
@@ -835,12 +835,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3333,
+   "line": 3424,
    "id": "Quest_PostDeepRecords",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3337,
+     "line": 3428,
      "type": "DiscoverPOI",
      "target": "POI_PearlseaTidecache",
      "count": 1,
@@ -848,7 +848,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3345,
+     "line": 3436,
      "type": "DiscoverPOI",
      "target": "POI_ShallowsSextant",
      "count": 1,
@@ -856,7 +856,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3353,
+     "line": 3444,
      "type": "CaptureEcho",
      "target": "Echo_Brinefin",
      "count": 2,
@@ -867,7 +867,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3360,
+     "line": 3451,
      "prop": "RewardItems",
      "value": [
       {
@@ -884,12 +884,12 @@
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-   "line": 3375,
+   "line": 3466,
    "id": "Quest_PostLongWatch",
    "objectives": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3379,
+     "line": 3470,
      "type": "VisitZone",
      "target": "Zone_Stormcrest",
      "count": 1,
@@ -897,7 +897,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3387,
+     "line": 3478,
      "type": "VisitZone",
      "target": "Zone_Frostveil",
      "count": 1,
@@ -905,7 +905,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3395,
+     "line": 3486,
      "type": "VisitZone",
      "target": "Zone_TidebreakerIsles",
      "count": 1,
@@ -913,7 +913,7 @@
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3403,
+     "line": 3494,
      "type": "SurviveTime",
      "target": null,
      "count": 300,
@@ -924,7 +924,7 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildProductionContent.cpp",
-     "line": 3410,
+     "line": 3501,
      "prop": "RewardItems",
      "value": [
       {

@@ -15,11 +15,30 @@
     0.65
    ],
    "greeting": "The fields are calm — for now.",
-   "attributes": []
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1253,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1254,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1255,
+     "prop": "VisualMeshScale",
+     "value": 1.0
+    }
+   ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1255,
+   "line": 1260,
    "id": "NPC_VendorTam",
    "name": "Trader Tam",
    "role": "Vendor",
@@ -33,15 +52,33 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1257,
+     "line": 1262,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorStarter"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1267,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1268,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1269,
+     "prop": "VisualMeshScale",
+     "value": 0.97
     }
    ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1267,
+   "line": 1275,
    "id": "NPC_HerbalistWren",
    "name": "Herbalist Wren",
    "role": "Vendor",
@@ -55,21 +92,39 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1269,
+     "line": 1277,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorHerbalist"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1270,
+     "line": 1278,
      "prop": "CurrencyItemId",
      "value": "Item_DawnShard"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1282,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1283,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1284,
+     "prop": "VisualMeshScale",
+     "value": 0.94
     }
    ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1279,
+   "line": 1290,
    "id": "NPC_BlacksmithBorin",
    "name": "Blacksmith Borin",
    "role": "Vendor",
@@ -83,21 +138,33 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1281,
+     "line": 1292,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorArmory"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1282,
+     "line": 1293,
      "prop": "CurrencyItemId",
      "value": "Item_DawnShard"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1297,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_Exosuit"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1298,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_Survivor_Idle"
     }
    ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1291,
+   "line": 1305,
    "id": "NPC_ElderRowan",
    "name": "Elder Rowan",
    "offered_quest": "Quest_WingsOverTheVale",
@@ -110,11 +177,30 @@
     0.9
    ],
    "greeting": "Sit. The Vale has grown wider while you slept.",
-   "attributes": []
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1312,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1313,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1314,
+     "prop": "VisualMeshScale",
+     "value": 0.96
+    }
+   ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1302,
+   "line": 1319,
    "id": "NPC_GuardSela",
    "name": "Guard Captain Sela",
    "role": "Guard",
@@ -126,11 +212,30 @@
    ],
    "greeting": "Keep the fire behind you and the dark ahead.",
    "dialogue_tree": "Dialogue_GuardSela",
-   "attributes": []
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1324,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_Exosuit"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1325,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_Survivor_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1326,
+     "prop": "VisualMeshScale",
+     "value": 1.04
+    }
+   ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1312,
+   "line": 1332,
    "id": "NPC_GuardBram",
    "name": "Guard Bram",
    "role": "Guard",
@@ -141,11 +246,24 @@
     0.9
    ],
    "greeting": "Gloomfangs again. Always Gloomfangs.",
-   "attributes": []
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1337,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_Exosuit"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1338,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_Survivor_Idle"
+    }
+   ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1322,
+   "line": 1345,
    "id": "NPC_FarmerJori",
    "name": "Farmer Jori",
    "role": "Villager",
@@ -156,11 +274,30 @@
     0.4
    ],
    "greeting": "Spriglings turn the soil better than any hoe.",
-   "attributes": []
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1350,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1351,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1352,
+     "prop": "VisualMeshScale",
+     "value": 0.95
+    }
+   ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1334,
+   "line": 1360,
    "id": "NPC_SkiffWardenKael",
    "name": "Skiff Warden Kael",
    "offered_quest": "Quest_SunkenVault",
@@ -173,11 +310,30 @@
     0.85
    ],
    "greeting": "Skiff's fueled. The isles are yours now.",
-   "attributes": []
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1367,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1368,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1369,
+     "prop": "VisualMeshScale",
+     "value": 1.02
+    }
+   ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1345,
+   "line": 1374,
    "id": "NPC_FisherNima",
    "name": "Fisher Nima",
    "role": "Vendor",
@@ -191,21 +347,39 @@
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1347,
+     "line": 1376,
      "prop": "ShopLootTableId",
      "value": "Loot_VendorDriftwood"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1348,
+     "line": 1377,
      "prop": "CurrencyItemId",
      "value": "Item_DawnShard"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1381,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1382,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1383,
+     "prop": "VisualMeshScale",
+     "value": 0.93
     }
    ]
   },
   {
    "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1357,
+   "line": 1389,
    "id": "NPC_OldSaltPerry",
    "name": "Old Salt Perry",
    "role": "Villager",
@@ -217,46 +391,6 @@
    ],
    "greeting": "The tide took the old world. It can wait for you too.",
    "dialogue_tree": "Dialogue_OldSaltPerry",
-   "attributes": []
-  },
-  {
-   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1374,
-   "id": "NPC_Vess",
-   "name": "Vess, the Storm-Scholar",
-   "village": "Village_Dawnstead",
-   "greeting": "The anchors are singing again. I charted this moment for twenty years.",
-   "dialogue_tree": "Dialogue_Vess",
-   "attributes": [
-    {
-     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1381,
-     "prop": "VisualMesh",
-     "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
-    },
-    {
-     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1382,
-     "prop": "VisualIdleAnimation",
-     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
-    },
-    {
-     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1383,
-     "prop": "VisualMeshScale",
-     "value": 1.0
-    }
-   ]
-  },
-  {
-   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-   "line": 1387,
-   "id": "NPC_Ione",
-   "name": "Ione, the Relic Trader",
-   "role": "Vendor",
-   "village": "Village_Dawnstead",
-   "greeting": "Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest.",
-   "dialogue_tree": "Dialogue_Ione",
    "attributes": [
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
@@ -269,10 +403,63 @@
      "line": 1395,
      "prop": "VisualIdleAnimation",
      "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1409,
+   "id": "NPC_Vess",
+   "name": "Vess, the Storm-Scholar",
+   "village": "Village_Dawnstead",
+   "greeting": "The anchors are singing again. I charted this moment for twenty years.",
+   "dialogue_tree": "Dialogue_Vess",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1416,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T2_Astraite"
     },
     {
      "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
-     "line": 1396,
+     "line": 1417,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T2_Astraite_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1418,
+     "prop": "VisualMeshScale",
+     "value": 1.0
+    }
+   ]
+  },
+  {
+   "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+   "line": 1422,
+   "id": "NPC_Ione",
+   "name": "Ione, the Relic Trader",
+   "role": "Vendor",
+   "village": "Village_Dawnstead",
+   "greeting": "Storm-fused glass, pre-dawn salvage, honest weights. Mostly honest.",
+   "dialogue_tree": "Dialogue_Ione",
+   "attributes": [
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1429,
+     "prop": "VisualMesh",
+     "value": "/Game/Characters/Survivor/SK_Survivor_T1_Scavenger"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1430,
+     "prop": "VisualIdleAnimation",
+     "value": "/Game/Characters/Survivor/AM_SK_Survivor_T1_Scavenger_Idle"
+    },
+    {
+     "file": "Source/AstrawildCore/Private/AstrawildContentLibrary.cpp",
+     "line": 1431,
      "prop": "VisualMeshScale",
      "value": 1.0
     }
